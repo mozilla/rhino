@@ -243,7 +243,7 @@ public class Delegator implements Function, SymbolScriptable {
             Delegator n = newInstance();
             Scriptable delegee;
             if (args.length == 0) {
-                delegee = new NativeObject();
+                delegee = cx.newObject(scope);
             } else {
                 delegee = ScriptRuntime.toObject(cx, scope, args[0]);
             }

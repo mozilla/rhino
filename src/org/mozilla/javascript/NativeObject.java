@@ -160,7 +160,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return f.construct(cx, scope, args);
                     }
                     if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
-                        return new NativeObject();
+                        return cx.newObject(scope);
                     }
                     return ScriptRuntime.toObject(cx, scope, args[0]);
                 }

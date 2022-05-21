@@ -509,7 +509,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
             return prototypeProperty;
         }
         NativeObject obj = new NativeObject();
-        obj.defineProperty("constructor", this, DONTENUM);
+        obj.setParentScope(getParentScope());
+
         // put the prototype property into the object now, then in the
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.
@@ -519,6 +520,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
             // not the one we just made, it must remain grounded
             obj.setPrototype(proto);
         }
+
+        obj.defineProperty("constructor", this, DONTENUM);
         return obj;
     }
 

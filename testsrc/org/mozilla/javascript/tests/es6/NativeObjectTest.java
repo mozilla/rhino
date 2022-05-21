@@ -264,6 +264,16 @@ public class NativeObjectTest {
         evaluateAndAssert("Object.fromEntries(Object.entries(['x','y','z']))", map);
     }
 
+    @Test
+    public void issue943() {
+        evaluateAndAssert(
+                "var foo = function e() {}\n"
+                        + "var fooProto = foo.prototype;\n"
+                        + "var descProp = Object.getOwnPropertyDescriptor(fooProto, 'constructor');"
+                        + "descProp.hasOwnProperty('value');\n",
+                true);
+    }
+
     private void evaluateAndAssert(final String script, final Object expected) {
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
