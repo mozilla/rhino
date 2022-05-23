@@ -447,7 +447,7 @@ public class Test262SuiteTest {
 
             scope.put("$262", scope, this);
             scope.setAttributes("$262", ScriptableObject.DONTENUM);
-        };
+        }
 
         @JSFunction
         public void gc() {
@@ -480,7 +480,7 @@ public class Test262SuiteTest {
         public Object getAgent() {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
-    };
+    }
 
     public Test262SuiteTest(
             String testFilePath,
