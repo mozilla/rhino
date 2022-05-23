@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -479,7 +478,7 @@ public class Test262SuiteTest {
 
         @JSGetter
         public Object getAgent() {
-            throw new UnsupportedOperationException("#262.agent property not yet implemented");
+            throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
     };
 
