@@ -5,7 +5,6 @@
 package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
-
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
