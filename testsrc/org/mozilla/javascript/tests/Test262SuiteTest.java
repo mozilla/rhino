@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -438,9 +439,7 @@ public class Test262SuiteTest {
     private final Test262Case testCase;
     private final boolean markedAsFailing;
 
-    /**
-     * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
-     */
+    /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
     private class $262 {
         private ScriptableObject scope;
 
@@ -458,7 +457,8 @@ public class Test262SuiteTest {
 
         @JSFunction
         public Object evalScript(String source) {
-            return Context.getCurrentContext().evaluateString(this.scope, source, "<evalScript>", 1, null);
+            return Context.getCurrentContext()
+                    .evaluateString(this.scope, source, "<evalScript>", 1, null);
         }
 
         @JSGetter
@@ -473,12 +473,13 @@ public class Test262SuiteTest {
 
         @JSFunction
         public void detachArrayBuffer() {
-            throw new UnsupportedOperationException("$262.detachArrayBuffer() method not yet implemented");
+            throw new UnsupportedOperationException(
+                    "$262.detachArrayBuffer() method not yet implemented");
         }
 
         @JSGetter
         public Object getAgent() {
-            throw  new UnsupportedOperationException("#262.agent property not yet implemented");
+            throw new UnsupportedOperationException("#262.agent property not yet implemented");
         }
     };
 
