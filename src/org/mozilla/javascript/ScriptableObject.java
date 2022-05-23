@@ -2654,7 +2654,8 @@ public abstract class ScriptableObject
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
         Slot slot = querySlot(cx, id);
         if (slot == null) return null;
-        return slot.getPropertyDescriptor(cx, cx.topCallScope);
+        Scriptable scope = getParentScope();
+        return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
     }
 
     protected Slot querySlot(Context cx, Object id) {
