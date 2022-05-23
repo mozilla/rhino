@@ -439,8 +439,10 @@ public class Test262SuiteTest {
     private final boolean markedAsFailing;
 
     /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
-    private class $262 {
+    public class $262 {
         private ScriptableObject scope;
+
+        public $262() {}
 
         public $262(ScriptableObject scope) {
             this.scope = scope;
