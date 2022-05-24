@@ -439,16 +439,20 @@ public class Test262SuiteTest {
     private final boolean markedAsFailing;
 
     /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
-    public class $262 {
+    public static class $262 {
         private ScriptableObject scope;
 
-        public $262() {}
+        static $262 install(ScriptableObject scope) {
+            $262 instance = new $262(scope);
 
-        public $262(ScriptableObject scope) {
-            this.scope = scope;
-
-            scope.put("$262", scope, this);
+            scope.put("$262", scope, instance);
             scope.setAttributes("$262", ScriptableObject.DONTENUM);
+
+            return instance;
+        }
+
+        $262(ScriptableObject scope) {
+            this.scope = scope;
         }
 
         @JSFunction
@@ -469,7 +473,9 @@ public class Test262SuiteTest {
 
         @JSFunction
         public $262 createRealm() {
-            return new $262(Context.getCurrentContext().initSafeStandardObjects());
+            ScriptableObject realm = Context.getCurrentContext().initSafeStandardObjects();
+
+            return $262.install(realm);
         }
 
         @JSFunction
@@ -512,7 +518,7 @@ public class Test262SuiteTest {
             HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
         }
 
-        new $262(scope);
+        $262.install(scope);
 
         return scope;
     }
