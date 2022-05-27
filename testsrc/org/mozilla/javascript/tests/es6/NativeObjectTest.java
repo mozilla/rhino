@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
@@ -38,7 +39,8 @@ public class NativeObjectTest {
 
     @Test
     public void testAssignOneParameter() {
-        evaluateAndAssert("var obj = {};" + "res = Object.assign(obj);" + "res === obj;", true);
+        evaluateAndAssert(
+                "var obj = {};" + "res = Object.assign(obj);" + "res === obj;", Boolean.TRUE);
     }
 
     @Test
@@ -264,7 +266,39 @@ public class NativeObjectTest {
         evaluateAndAssert("Object.fromEntries(Object.entries(['x','y','z']))", map);
     }
 
-    private void evaluateAndAssert(final String script, final Object expected) {
+    @Test
+    public void issue943() {
+        evaluateAndAssert(
+                "var foo = function e() {}\n"
+                        + "var fooProto = foo.prototype;\n"
+                        + "var descProp = Object.getOwnPropertyDescriptor(fooProto, 'constructor');"
+                        + "descProp.hasOwnProperty('value');\n",
+                Boolean.TRUE);
+    }
+
+    @Test
+    public void issue943Realm() {
+        final String script =
+                "realm.Object.getOwnPropertyDescriptor(realm.Object, 'getOwnPropertyDescriptor').__proto__ === ({}).__proto__;";
+
+        String[] prefixes = {"", "'use strict;'\n"};
+        for (final String prefix : prefixes) {
+            Utils.runWithAllOptimizationLevels(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_ES6);
+                        ScriptableObject scope = cx.initStandardObjects();
+
+                        Scriptable realm = cx.initStandardObjects();
+                        scope.put("realm", scope, realm);
+
+                        Object result = cx.evaluateString(scope, prefix + script, "test", 1, null);
+                        assertEquals(Boolean.FALSE, result);
+                        return null;
+                    });
+        }
+    }
+
+    private static void evaluateAndAssert(final String script, final Object expected) {
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
             Utils.runWithAllOptimizationLevels(

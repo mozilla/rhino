@@ -225,7 +225,7 @@ public class Delegator implements Function, SymbolScriptable {
 
     /**
      * Note that if the <code>delegee</code> is <code>null</code>, this method creates a new
-     * instance of the Delegator itself rathert than forwarding the call to the <code>delegee</code>
+     * instance of the Delegator itself rather than forwarding the call to the <code>delegee</code>
      * . This permits the use of Delegator prototypes.
      *
      * @param cx the current Context for this thread
@@ -243,7 +243,7 @@ public class Delegator implements Function, SymbolScriptable {
             Delegator n = newInstance();
             Scriptable delegee;
             if (args.length == 0) {
-                delegee = new NativeObject();
+                delegee = cx.newObject(scope);
             } else {
                 delegee = ScriptRuntime.toObject(cx, scope, args[0]);
             }
