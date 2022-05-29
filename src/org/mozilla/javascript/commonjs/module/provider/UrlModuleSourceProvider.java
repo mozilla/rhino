@@ -161,7 +161,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
                 urlConnection.getInputStream(), getCharacterEncoding(urlConnection));
     }
 
-    private static String getCharacterEncoding(URLConnection urlConnection) {
+    protected String getCharacterEncoding(URLConnection urlConnection) {
         final ParsedContentType pct = new ParsedContentType(urlConnection.getContentType());
         final String encoding = pct.getEncoding();
         if (encoding != null) {
