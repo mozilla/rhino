@@ -156,7 +156,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
         }
     }
 
-    private static Reader getReader(URLConnection urlConnection) throws IOException {
+    private Reader getReader(URLConnection urlConnection) throws IOException {
         return new InputStreamReader(
                 urlConnection.getInputStream(), getCharacterEncoding(urlConnection));
     }
