@@ -778,7 +778,13 @@ public class NativeObject extends IdScriptableObject implements Map {
 
     @Override
     public Object put(Object key, Object value) {
-        throw new UnsupportedOperationException();
+        Object previousValue = get(key);
+        if (key instanceof String) {
+            super.put((String) key, this, value);
+        } else if (key instanceof Number) {
+            super.put(((Number) key).intValue(), this, value);
+        }
+        return previousValue == NOT_FOUND ? null : previousValue;
     }
 
     @Override
