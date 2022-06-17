@@ -1,21 +1,20 @@
 package org.mozilla.javascript.tests.es6;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.*;
 
-import static org.junit.Assert.*;
-
-/**
- * Tests for ES6+ tagged templates support.
- */
+/** Tests for ES6+ tagged templates support. */
 public class TaggedTemplateLiteralTest {
 
     /**
-     * Target and {@link org.mozilla.javascript.ast.TemplateLiteral} nodes inside the tagged template should have
-     * {@link org.mozilla.javascript.ast.TaggedTemplateLiteral} node as their parent.
+     * Target and {@link org.mozilla.javascript.ast.TemplateLiteral} nodes inside the tagged
+     * template should have {@link org.mozilla.javascript.ast.TaggedTemplateLiteral} node as their
+     * parent.
      *
-     * See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
+     * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
     public void testTaggedTemplateChildrenHaveParent() {
@@ -32,10 +31,10 @@ public class TaggedTemplateLiteralTest {
     }
 
     /**
-     * Target and {@link org.mozilla.javascript.ast.TemplateLiteral} nodes inside the tagged template should resolve
-     * the AST root.
+     * Target and {@link org.mozilla.javascript.ast.TemplateLiteral} nodes inside the tagged
+     * template should resolve the AST root.
      *
-     * See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
+     * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
     public void testTaggedTemplateChildrenHaveAstRoot() {
@@ -55,7 +54,7 @@ public class TaggedTemplateLiteralTest {
     /**
      * AST nodes, which are descendants of a tagged template node should resolve the AST root.
      *
-     * See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
+     * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
     public void testInnerNodeHasAstRoot() {
@@ -70,9 +69,7 @@ public class TaggedTemplateLiteralTest {
         assertEquals(root, nameNode.getAstRoot());
     }
 
-    /**
-     * Finds first {@link TaggedTemplateLiteral} node in the AST.
-     */
+    /** Finds first {@link TaggedTemplateLiteral} node in the AST. */
     private static class TaggedTemplateFinder implements NodeVisitor {
         private TaggedTemplateLiteral node;
 
@@ -90,9 +87,7 @@ public class TaggedTemplateLiteralTest {
         }
     }
 
-    /**
-     * Finds first {@link Name} node for given identifier.
-     */
+    /** Finds first {@link Name} node for given identifier. */
     private static class NameFinder implements NodeVisitor {
         private Name node;
         private String name;
