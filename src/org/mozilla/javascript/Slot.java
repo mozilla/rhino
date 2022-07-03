@@ -40,6 +40,24 @@ public class Slot implements Serializable {
         return false;
     }
 
+    /**
+     * Return true if this Slot has the {@link ScriptableObject#READONLY read-only} {@link
+     * #getAttributes() attribute}. Callers may wish to check if this is a {@link #isValueSlot()
+     * value slot} first.
+     *
+     * @param isThrow set to true to throw a type error instead of returning true
+     * @return true if this slot is read-only and {@code isThrow} is false
+     */
+    boolean isReadOnly(boolean isThrow) {
+        if ((attributes & ScriptableObject.READONLY) != 0) {
+            if (isThrow) {
+                throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
+            }
+            return true;
+        }
+        return false;
+    }
+
     protected Slot(Slot oldSlot) {
         name = oldSlot.name;
         indexOrHash = oldSlot.indexOrHash;
@@ -61,10 +79,7 @@ public class Slot implements Serializable {
     }
 
     public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        if ((attributes & ScriptableObject.READONLY) != 0) {
-            if (isThrow) {
-                throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
-            }
+        if (isReadOnly(isThrow)) {
             return true;
         }
         if (owner == start) {

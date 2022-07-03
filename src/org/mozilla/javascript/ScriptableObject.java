@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
@@ -2482,6 +2483,14 @@ public abstract class ScriptableObject
             }
             if (slot == null) {
                 return false;
+            }
+            // If this object is not the Receiver (start) object
+            // and if the slot is a Writeable data descriptor
+            // then invoke putImpl() on the Receiver (start) object
+            if (slot.isValueSlot()
+                    && !slot.isReadOnly(isThrow)
+                    && start instanceof ScriptableObject) {
+                return ((ScriptableObject) start).putImpl(key, index, start, value, isThrow);
             }
         } else if (!isExtensible) {
             slot = slotMap.query(key, index);
