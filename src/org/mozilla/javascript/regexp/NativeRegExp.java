@@ -1092,7 +1092,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     c = src[state.cp];
                                     if (min > max) {
                                         reportError(
-                                                "msg.max.lt.min", String.valueOf(src[state.cp]));
+                                                "msg.max.lt.min", String.valueOf(src[state.cp - 1]));
                                         return false;
                                     }
                                 }
