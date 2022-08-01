@@ -323,9 +323,7 @@ public class ScriptRuntime {
                 : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }
 
-    /**
-     * Android Polyfill about HashMap.putIfAbsent
-     */
+    /** Android Polyfill about HashMap.putIfAbsent */
     public static <K, V> V putIfAbsent(Map<K, V> map, K key, V value) {
         if (map.containsKey(key)) {
             return map.get(key);
