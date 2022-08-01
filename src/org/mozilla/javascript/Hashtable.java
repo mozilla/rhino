@@ -121,7 +121,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
     public void put(Object key, Object value) {
         final Entry nv = new Entry(key, value);
-        final Entry ev = map.putIfAbsent(nv, nv);
+        final Entry ev = ScriptRuntime.putIfAbsent(map, nv, nv);
         if (ev == null) {
             // New value -- insert to end of doubly-linked list
             if (first == null) {

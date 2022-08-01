@@ -379,7 +379,7 @@ class JavaMembers {
     static void registerMethod(Map<MethodSignature, Method> map, Method method) {
         MethodSignature sig = new MethodSignature(method);
         // Array may contain methods with same signature but different return value!
-        map.putIfAbsent(sig, method);
+        ScriptRuntime.putIfAbsent(map, sig, method);
     }
 
     static final class MethodSignature {
