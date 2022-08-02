@@ -14,7 +14,6 @@ import java.math.MathContext;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -321,16 +320,6 @@ public class ScriptRuntime {
         return "Dalvik".equals(System.getProperty("java.vm.name"))
                 ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
                 : new String[] {"java", "javax", "org", "com", "edu", "net"};
-    }
-
-    /** Android Polyfill about HashMap.putIfAbsent */
-    public static <K, V> V putIfAbsent(Map<K, V> map, K key, V value) {
-        if (map.containsKey(key)) {
-            return map.get(key);
-        } else {
-            map.put(key, value);
-            return null;
-        }
     }
 
     public static ScriptableObject getLibraryScopeOrNull(Scriptable scope) {
