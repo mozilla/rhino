@@ -4,10 +4,13 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 public class NativeObjectTest {
 
@@ -82,5 +85,28 @@ public class NativeObjectTest {
                         null);
         Assert.assertEquals("true true false", result);
         Context.exit();
+    }
+
+    public static class JavaObj {
+        public String name = "test";
+    }
+
+    @Test
+    public void testNativeJavaObject_hasOwnProperty() {
+        Context cx = Context.enter();
+        try {
+            Scriptable scope = cx.initStandardObjects();
+            ScriptableObject.putProperty(scope, "javaObj", Context.javaToJS(new JavaObj(), scope));
+            Object result =
+                    cx.evaluateString(
+                            scope,
+                            "Object.prototype.hasOwnProperty.call(javaObj, \"name\");",
+                            "",
+                            1,
+                            null);
+            assertTrue((Boolean) result);
+        } finally {
+            Context.exit();
+        }
     }
 }
