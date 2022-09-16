@@ -175,7 +175,9 @@ public class NativeRegExpTest {
                 cx.evaluateString(scope, source, "test", 0, null);
                 fail("Shoud throw");
             } catch (Exception e) {
-                assertEquals("SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.", e.getMessage());
+                assertEquals(
+                        "SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.",
+                        e.getMessage());
             }
         }
     }

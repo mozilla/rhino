@@ -1091,7 +1091,11 @@ public class NativeRegExp extends IdScriptableObject {
                                     max = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.max");
                                     c = src[state.cp];
                                     if (min > max) {
-                                        String msg = ScriptRuntime.getMessageById("msg.max.lt.min", Integer.valueOf(max), Integer.valueOf(min));
+                                        String msg =
+                                                ScriptRuntime.getMessageById(
+                                                        "msg.max.lt.min",
+                                                        Integer.valueOf(max),
+                                                        Integer.valueOf(min));
                                         throw ScriptRuntime.constructError("SyntaxError", msg);
                                     }
                                 }
