@@ -31,23 +31,39 @@ public class EqualObjectGraphsTest extends TestCase {
         return o1;
     }
 
+    private static class TestObject {
+        private final int x;
+        TestObject(int x) { this.x = x; }
+
+        @Override public boolean equals(Object o) {
+            if (o instanceof TestObject) {
+                return x == ((TestObject)o).x;
+            }
+            return false;
+        }
+
+        @Override public int hashCode() {
+            return x;
+        }
+    }
+
     public void testSameValueDifferentTopology() {
         Object[] o1 = new Object[2];
         Object[] o2 = new Object[2];
-        String s1 = new String("foo");
-        String s2 = new String("foo");
-        o1[0] = s1;
-        o1[1] = s2;
-        String s3 = new String("foo");
-        String s4 = new String("foo");
-        o2[0] = s3;
-        o2[1] = s4;
+        Object t1 = new TestObject(0);
+        Object t2 = new TestObject(0);
+        o1[0] = t1;
+        o1[1] = t2;
+        Object t3 = new TestObject(0);
+        Object t4 = new TestObject(0);
+        o2[0] = t3;
+        o2[1] = t4;
 
         // Same values, same topology
         assertTrue(equal(o1, o2));
 
         // Same values, different topology
-        o2[1] = s3;
+        o2[1] = t3;
         assertFalse(equal(o1, o2));
     }
 
