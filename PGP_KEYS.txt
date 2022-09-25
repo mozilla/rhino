@@ -1,0 +1,12 @@
+Recent releases of Rhino are signed using the GPG key:
+
+greg+rhino@brail.org
+
+which may be found using GPG at keyserver.ubuntu.com.
+
+The fingerprint is below:
+
+pub   rsa3072 2022-01-04 [SC]
+      E9AF 5293 C334 C7C0 B583  227D 2F45 F85C DF08 2E68
+uid           [ unknown] Gregory Brail (Rhino Automated Builds) <greg+rhino@brail.org>
+sub   rsa3072 2022-01-04 [E]
