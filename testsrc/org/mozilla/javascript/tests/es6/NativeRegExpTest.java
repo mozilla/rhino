@@ -164,4 +164,21 @@ public class NativeRegExpTest {
             assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
         }
     }
+
+    @Test
+    public void regExWrongQuantifier() {
+        try (Context cx = Context.enter()) {
+            ScriptableObject scope = cx.initStandardObjects();
+
+            String source = "'abc'.search(/b{2,1}/);";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail("Shoud throw");
+            } catch (Exception e) {
+                assertEquals(
+                        "SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.",
+                        e.getMessage());
+            }
+        }
+    }
 }

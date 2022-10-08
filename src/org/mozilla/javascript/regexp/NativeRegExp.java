@@ -1074,7 +1074,7 @@ public class NativeRegExp extends IdScriptableObject {
                     int max = -1;
                     int leftCurl = state.cp;
 
-                    /* For Perl etc. compatibility, if quntifier does not match
+                    /* For Perl etc. compatibility, if quantifier does not match
                      * \{\d+(,\d*)?\} exactly back off from it
                      * being a quantifier, and chew it up as a literal
                      * atom next time instead.
@@ -1091,9 +1091,12 @@ public class NativeRegExp extends IdScriptableObject {
                                     max = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.max");
                                     c = src[state.cp];
                                     if (min > max) {
-                                        reportError(
-                                                "msg.max.lt.min", String.valueOf(src[state.cp]));
-                                        return false;
+                                        String msg =
+                                                ScriptRuntime.getMessageById(
+                                                        "msg.max.lt.min",
+                                                        Integer.valueOf(max),
+                                                        Integer.valueOf(min));
+                                        throw ScriptRuntime.constructError("SyntaxError", msg);
                                     }
                                 }
                             } else {
