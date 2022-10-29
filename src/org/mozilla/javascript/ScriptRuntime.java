@@ -146,14 +146,10 @@ public class ScriptRuntime {
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         (new ClassCache()).associate(scope);
 
-        BaseFunction.init(scope, sealed);
         NativeObject.init(scope, sealed);
+        BaseFunction.init(scope, sealed);
 
         Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
-
-        // Function.prototype.__proto__ should be Object.prototype
-        Scriptable functionProto = ScriptableObject.getClassPrototype(scope, "Function");
-        functionProto.setPrototype(objectProto);
 
         // Set the prototype of the object passed in if need be
         if (scope.getPrototype() == null) scope.setPrototype(objectProto);
