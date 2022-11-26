@@ -22,11 +22,21 @@ public class BaseFunction extends IdScriptableObject implements Function {
     private static final String FUNCTION_CLASS = "Function";
     static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(Context cx, Scriptable scope, boolean sealed) {
         BaseFunction obj = new BaseFunction();
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            obj.namePropertyAttributes = READONLY | DONTENUM;
+            obj.lengthPropertyAttributes = READONLY | DONTENUM;
+        }
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+    }
+
+    /** @deprecated Use {@link #init(Context, Scriptable, boolean)} instead */
+    @Deprecated
+    static void init(Scriptable scope, boolean sealed) {
+        init(Context.getContext(), scope, sealed);
     }
 
     static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
