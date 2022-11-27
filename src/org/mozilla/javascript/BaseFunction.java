@@ -27,8 +27,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            obj.namePropertyAttributes = READONLY | DONTENUM;
-            obj.lengthPropertyAttributes = READONLY | DONTENUM;
+            obj.setStandardPropertyAttributes(READONLY | DONTENUM);
         }
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }

@@ -30,8 +30,8 @@ public class NativeFunctionTest {
                 cx.evaluateString(
                         scope,
                         "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'length');\n"
-                                + "var res = 'configurable: ' + desc.configurable;"
-                                + "res += '  enumerable: ' + desc.enumerable;"
+                                + "var res = 'configurable: ' + desc.configurable;\n"
+                                + "res += '  enumerable: ' + desc.enumerable;\n"
                                 + "res += '  writable: ' + desc.writable;",
                         "test",
                         1,
@@ -45,8 +45,40 @@ public class NativeFunctionTest {
                 cx.evaluateString(
                         scope,
                         "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'name');\n"
-                                + "var res = 'configurable: ' + desc.configurable;"
-                                + "res += '  enumerable: ' + desc.enumerable;"
+                                + "var res = 'configurable: ' + desc.configurable;\n"
+                                + "res += '  enumerable: ' + desc.enumerable;\n"
+                                + "res += '  writable: ' + desc.writable;",
+                        "test",
+                        1,
+                        null);
+        assertEquals("configurable: true  enumerable: false  writable: false", result);
+    }
+
+    @Test
+    public void testFunctionLength() {
+        Object result =
+                cx.evaluateString(
+                        scope,
+                        "var f=function(){};\n"
+                                + "var desc=Object.getOwnPropertyDescriptor(f, 'length');\n"
+                                + "var res = 'configurable: ' + desc.configurable;\n"
+                                + "res += '  enumerable: ' + desc.enumerable;\n"
+                                + "res += '  writable: ' + desc.writable;",
+                        "test",
+                        1,
+                        null);
+        assertEquals("configurable: true  enumerable: false  writable: false", result);
+    }
+
+    @Test
+    public void testFunctionName() {
+        Object result =
+                cx.evaluateString(
+                        scope,
+                        "var f=function(){};\n"
+                                + "var desc=Object.getOwnPropertyDescriptor(f, 'name');\n"
+                                + "var res = 'configurable: ' + desc.configurable;\n"
+                                + "res += '  enumerable: ' + desc.enumerable;\n"
                                 + "res += '  writable: ' + desc.writable;",
                         "test",
                         1,
