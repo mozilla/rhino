@@ -35,7 +35,7 @@ public class BoundFunction extends BaseFunction {
             length = 0;
         }
 
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, false);
 
         Function thrower = ScriptRuntime.typeErrorThrower(cx);
         NativeObject throwing = new NativeObject();

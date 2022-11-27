@@ -142,7 +142,7 @@ public class FunctionObject extends BaseFunction {
             }
         }
 
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope, false);
     }
 
     /**

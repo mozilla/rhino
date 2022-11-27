@@ -60,7 +60,7 @@ public class ScriptRuntime {
                             return 0;
                         }
                     };
-            ScriptRuntime.setFunctionProtoAndParent(thrower, cx.topCallScope);
+            ScriptRuntime.setFunctionProtoAndParent(thrower, cx, cx.topCallScope, false);
             thrower.preventExtensions();
             cx.typeErrorThrower = thrower;
         }
@@ -4260,6 +4260,15 @@ public class ScriptRuntime {
             fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
         } else {
             fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
+        }
+    }
+
+    public static void setFunctionProtoAndParent(
+            BaseFunction fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
+        setFunctionProtoAndParent(fn, scope, es6GeneratorFunction);
+
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            fn.setStandardPropertyAttributes(ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
     }
 

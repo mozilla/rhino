@@ -53,7 +53,7 @@ class JavaMembers {
             this.staticMembers = new HashMap<String, Object>();
             this.cl = cl;
             boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
-            reflect(scope, includeProtected, includePrivate);
+            reflect(cx, scope, includeProtected, includePrivate);
         } finally {
             Context.exit();
         }
@@ -412,7 +412,8 @@ class JavaMembers {
         }
     }
 
-    private void reflect(Scriptable scope, boolean includeProtected, boolean includePrivate) {
+    private void reflect(
+            Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
         // We reflect methods first, because we want overloaded field/method
         // names to be allocated to the NativeJavaMethod before the field
         // gets in the way.
@@ -465,7 +466,7 @@ class JavaMembers {
                 }
                 NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
                 if (scope != null) {
-                    ScriptRuntime.setFunctionProtoAndParent(fun, scope);
+                    ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                 }
                 ht.put(entry.getKey(), fun);
             }
