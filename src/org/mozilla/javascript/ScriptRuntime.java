@@ -4267,7 +4267,7 @@ public class ScriptRuntime {
             BaseFunction fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
         setFunctionProtoAndParent(fn, scope, es6GeneratorFunction);
 
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+        if (cx != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
             fn.setStandardPropertyAttributes(ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
     }
