@@ -178,7 +178,7 @@ public class ScriptRuntime {
 
         NativeWith.init(scope, sealed);
         NativeCall.init(scope, sealed);
-        NativeScript.init(scope, sealed);
+        NativeScript.init(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
