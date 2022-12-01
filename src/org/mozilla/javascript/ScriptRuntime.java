@@ -4249,23 +4249,36 @@ public class ScriptRuntime {
         return nw.getParentScope();
     }
 
+    /**
+     * @deprecated Use {@link #setFunctionProtoAndParent(BaseFunction, Context, Scriptable)} instead
+     */
+    @Deprecated
     public static void setFunctionProtoAndParent(BaseFunction fn, Scriptable scope) {
-        setFunctionProtoAndParent(fn, scope, false);
+        setFunctionProtoAndParent(fn, Context.getCurrentContext(), scope, false);
+    }
+
+    public static void setFunctionProtoAndParent(BaseFunction fn, Context cx, Scriptable scope) {
+        setFunctionProtoAndParent(fn, cx, scope, false);
+    }
+
+    /**
+     * @deprecated Use {@link #setFunctionProtoAndParent(BaseFunction, Context, Scriptable,
+     *     boolean)} instead
+     */
+    @Deprecated
+    public static void setFunctionProtoAndParent(
+            BaseFunction fn, Scriptable scope, boolean es6GeneratorFunction) {
+        setFunctionProtoAndParent(fn, Context.getCurrentContext(), scope, es6GeneratorFunction);
     }
 
     public static void setFunctionProtoAndParent(
-            BaseFunction fn, Scriptable scope, boolean es6GeneratorFunction) {
+            BaseFunction fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
         fn.setParentScope(scope);
         if (es6GeneratorFunction) {
             fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
         } else {
             fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
-    }
-
-    public static void setFunctionProtoAndParent(
-            BaseFunction fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
-        setFunctionProtoAndParent(fn, scope, es6GeneratorFunction);
 
         if (cx != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
             fn.setStandardPropertyAttributes(ScriptableObject.READONLY | ScriptableObject.DONTENUM);
