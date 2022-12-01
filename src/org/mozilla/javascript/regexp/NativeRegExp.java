@@ -122,7 +122,7 @@ public class NativeRegExp extends IdScriptableObject {
         // RegExp.prototype.constructor is the builtin RegExp constructor."
         proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
 
-        ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
+        ScriptRuntime.setFunctionProtoAndParent(ctor, cx, scope);
 
         ctor.setImmunePrototypeProperty(proto);
 

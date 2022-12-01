@@ -34,7 +34,7 @@ public class LambdaFunction extends BaseFunction {
         this.target = target;
         this.name = name;
         this.length = length;
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setupDefaultPrototype();
     }
 
@@ -43,7 +43,7 @@ public class LambdaFunction extends BaseFunction {
         this.target = target;
         this.length = length;
         this.name = "";
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
     }
 
     @Override
