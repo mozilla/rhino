@@ -44,6 +44,9 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.annotations.JSFunction;
+import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -102,7 +105,6 @@ public class Test262SuiteTest {
                             "class-fields-private",
                             "class-fields-public",
                             "computed-property-names",
-                            "cross-realm",
                             "default-arg",
                             "default-parameters",
                             "new.target",
@@ -436,6 +438,58 @@ public class Test262SuiteTest {
     private final Test262Case testCase;
     private final boolean markedAsFailing;
 
+    /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
+    public static class $262 {
+        private ScriptableObject scope;
+
+        static $262 install(ScriptableObject scope) {
+            $262 instance = new $262(scope);
+
+            scope.put("$262", scope, instance);
+            scope.setAttributes("$262", ScriptableObject.DONTENUM);
+
+            return instance;
+        }
+
+        $262(ScriptableObject scope) {
+            this.scope = scope;
+        }
+
+        @JSFunction
+        public void gc() {
+            System.gc();
+        }
+
+        @JSFunction
+        public Object evalScript(String source) {
+            return Context.getCurrentContext()
+                    .evaluateString(this.scope, source, "<evalScript>", 1, null);
+        }
+
+        @JSGetter
+        public Object getGlobal() {
+            return this.scope;
+        }
+
+        @JSFunction
+        public $262 createRealm() {
+            ScriptableObject realm = Context.getCurrentContext().initSafeStandardObjects();
+
+            return $262.install(realm);
+        }
+
+        @JSFunction
+        public void detachArrayBuffer() {
+            throw new UnsupportedOperationException(
+                    "$262.detachArrayBuffer() method not yet implemented");
+        }
+
+        @JSGetter
+        public Object getAgent() {
+            throw new UnsupportedOperationException("$262.agent property not yet implemented");
+        }
+    }
+
     public Test262SuiteTest(
             String testFilePath,
             int optLevel,
@@ -450,7 +504,8 @@ public class Test262SuiteTest {
     }
 
     private Scriptable buildScope(Context cx) throws IOException {
-        Scriptable scope = cx.initSafeStandardObjects();
+        ScriptableObject scope = cx.initSafeStandardObjects();
+
         for (String harnessFile : testCase.harnessFiles) {
             if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
                 String harnessPath = testHarnessDir + harnessFile;
@@ -462,6 +517,9 @@ public class Test262SuiteTest {
             }
             HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
         }
+
+        $262.install(scope);
+
         return scope;
     }
 

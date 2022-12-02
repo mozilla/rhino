@@ -142,7 +142,7 @@ public class FunctionObject extends BaseFunction {
             }
         }
 
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope, false);
     }
 
     /**
@@ -283,21 +283,39 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable#getClassName
      */
     public void addAsConstructor(Scriptable scope, Scriptable prototype) {
-        initAsConstructor(scope, prototype);
+        initAsConstructor(
+                scope,
+                prototype,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
         defineProperty(scope, prototype.getClassName(), this, ScriptableObject.DONTENUM);
     }
 
-    void initAsConstructor(Scriptable scope, Scriptable prototype) {
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+    /**
+     * Define this function as a JavaScript constructor.
+     *
+     * <p>Sets up the "prototype" and "constructor" properties. Also calls setParent and
+     * setPrototype with appropriate values. Then adds the function object as a property of the
+     * given scope, using <code>prototype.getClassName()</code> as the name of the property.
+     *
+     * @param scope the scope in which to define the constructor (typically the global object)
+     * @param prototype the prototype object
+     * @param attributes the attributes of the constructor property
+     * @see org.mozilla.javascript.Scriptable#setParentScope
+     * @see org.mozilla.javascript.Scriptable#setPrototype
+     * @see org.mozilla.javascript.Scriptable#getClassName
+     */
+    public void addAsConstructor(Scriptable scope, Scriptable prototype, int attributes) {
+        initAsConstructor(scope, prototype, attributes);
+        defineProperty(scope, prototype.getClassName(), this, ScriptableObject.DONTENUM);
+    }
+
+    void initAsConstructor(Scriptable scope, Scriptable prototype, int attributes) {
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setImmunePrototypeProperty(prototype);
 
         prototype.setParentScope(this);
 
-        defineProperty(
-                prototype,
-                "constructor",
-                this,
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+        defineProperty(prototype, "constructor", this, attributes);
         setParentScope(scope);
     }
 

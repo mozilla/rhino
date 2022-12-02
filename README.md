@@ -10,22 +10,25 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Releases
 
-<table>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td><td>January 29, 2015</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_6_RELEASE">Rhino 1.7.6</a></td><td>April 15, 2015</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_RELEASE">Rhino 1.7.7</a></td><td>June 17, 2015</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_1_RELEASE">Rhino 1.7.7.1</a></td><td>February 2, 2016</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_2_Release">Rhino 1.7.7.2</a></td><td>August 24, 2017</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_8_Release">Rhino 1.7.8</a></td><td>January 22, 2018</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_9_Release">Rhino 1.7.9</a></td><td>March 15, 2018</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_10_Release">Rhino 1.7.10</a></td><td>April 9, 2018</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_11_Release">Rhino 1.7.11</a></td><td>May 30, 2019</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_12_Release">Rhino 1.7.12</a></td><td>January 13, 2020</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_13_Release">Rhino 1.7.13</a></td><td>September 2, 2020</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a></td><td>January 6, 2022</td></tr>
-</table>
+The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
 
-[Release Notes](./RELEASE-NOTES.md) for recent releases.
+<details><summary>Releases</summary>
+<table>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a></td><td>January 6, 2022</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_13_Release">Rhino 1.7.13</a></td><td>September 2, 2020</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_12_Release">Rhino 1.7.12</a></td><td>January 13, 2020</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_11_Release">Rhino 1.7.11</a></td><td>May 30, 2019</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_10_Release">Rhino 1.7.10</a></td><td>April 9, 2018</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_9_Release">Rhino 1.7.9</a></td><td>March 15, 2018</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_8_Release">Rhino 1.7.8</a></td><td>January 22, 2018</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_2_Release">Rhino 1.7.7.2</a></td><td>August 24, 2017</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_1_RELEASE">Rhino 1.7.7.1</a></td><td>February 2, 2016</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_RELEASE">Rhino 1.7.7</a></td><td>June 17, 2015</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_6_RELEASE">Rhino 1.7.6</a></td><td>April 15, 2015</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td><td>January 29, 2015</td></tr>
+</table>
+</details>
+
 
 [Compatibility table](https://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES6, and ES2016+ are implemented in Rhino.

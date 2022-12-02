@@ -1108,7 +1108,10 @@ public abstract class ScriptableObject
         if (ctor.isVarArgsMethod()) {
             throw Context.reportRuntimeErrorById("msg.varargs.ctor", ctorMember.getName());
         }
-        ctor.initAsConstructor(scope, proto);
+        ctor.initAsConstructor(
+                scope,
+                proto,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
 
         Method finishInit = null;
         HashSet<String> staticNames = new HashSet<String>(), instanceNames = new HashSet<String>();
@@ -2654,8 +2657,7 @@ public abstract class ScriptableObject
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
         Slot slot = querySlot(cx, id);
         if (slot == null) return null;
-        Scriptable scope = getParentScope();
-        return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
+        return slot.getPropertyDescriptor(cx, this);
     }
 
     protected Slot querySlot(Context cx, Object id) {

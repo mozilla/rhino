@@ -22,11 +22,20 @@ public class BaseFunction extends IdScriptableObject implements Function {
     private static final String FUNCTION_CLASS = "Function";
     static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(Context cx, Scriptable scope, boolean sealed) {
         BaseFunction obj = new BaseFunction();
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            obj.setStandardPropertyAttributes(READONLY | DONTENUM);
+        }
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+    }
+
+    /** @deprecated Use {@link #init(Context, Scriptable, boolean)} instead */
+    @Deprecated
+    static void init(Scriptable scope, boolean sealed) {
+        init(Context.getContext(), scope, sealed);
     }
 
     static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
@@ -509,7 +518,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
             return prototypeProperty;
         }
         NativeObject obj = new NativeObject();
-        obj.defineProperty("constructor", this, DONTENUM);
+        obj.setParentScope(getParentScope());
+
         // put the prototype property into the object now, then in the
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.
@@ -519,6 +529,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
             // not the one we just made, it must remain grounded
             obj.setPrototype(proto);
         }
+
+        obj.defineProperty("constructor", this, DONTENUM);
         return obj;
     }
 

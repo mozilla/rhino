@@ -23,9 +23,15 @@ class NativeScript extends BaseFunction {
 
     private static final Object SCRIPT_TAG = "Script";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeScript obj = new NativeScript(null);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+    }
+
+    /** @deprecated Use {@link #init(Context, Scriptable, boolean)} instead */
+    @Deprecated
+    static void init(Scriptable scope, boolean sealed) {
+        init(Context.getContext(), scope, sealed);
     }
 
     private NativeScript(Script script) {
