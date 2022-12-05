@@ -286,14 +286,21 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
         switch (fromCode) {
             case JSTYPE_UNDEFINED:
-                if (to == ScriptRuntime.StringClass || to == ScriptRuntime.ObjectClass) {
+                if (to == ScriptRuntime.StringClass) {
                     return 1;
+                } else if (to == ScriptRuntime.ObjectClass) {
+                    return 2;
                 }
                 break;
 
             case JSTYPE_NULL:
                 if (!to.isPrimitive()) {
-                    return 1;
+                    if (to == ScriptRuntime.StringClass) {
+                        return 1;
+                    } else if (to == ScriptRuntime.ObjectClass) {
+                        return 2;
+                    }
+                    return 3;
                 }
                 break;
 
