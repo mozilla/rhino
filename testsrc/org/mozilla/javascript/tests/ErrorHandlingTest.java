@@ -22,7 +22,6 @@ import org.mozilla.javascript.WrappedException;
  * @author Roland Praml
  */
 public class ErrorHandlingTest {
-    static final String LS = System.getProperty("line.separator");
 
     public static void generateJavaError() {
         throw new java.lang.RuntimeException("foo");
