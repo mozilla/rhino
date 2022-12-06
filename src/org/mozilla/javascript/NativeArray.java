@@ -154,6 +154,7 @@ public class NativeArray extends IdScriptableObject implements List {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_at, "at", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -291,6 +292,10 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 2;
                 s = "copyWithin";
                 break;
+            case Id_at:
+                arity = 1;
+                s = "at";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -426,6 +431,9 @@ public class NativeArray extends IdScriptableObject implements List {
 
                 case Id_copyWithin:
                     return js_copyWithin(cx, scope, thisObj, args);
+
+                case Id_at:
+                    return js_at(cx, scope, thisObj, args);
 
                 case Id_every:
                 case Id_filter:
@@ -1962,6 +1970,30 @@ public class NativeArray extends IdScriptableObject implements List {
         return thisObj;
     }
 
+    private static Object js_at(
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args
+        ) {
+        int k;
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        int len = (int) getLengthProperty(cx, o);
+        int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
+        if (relativeIndex >= 0){
+            k = relativeIndex;
+        }
+        else {
+            k = len + relativeIndex;
+        }
+
+        if ((k < 0) || (k >= len)){
+            return Undefined.instance;
+        }
+
+        return ScriptableObject.getProperty(thisObj, k);
+    }
+
     /** Implements the methods "every", "filter", "forEach", "map", and "some". */
     private static Object iterativeMethod(
             Context cx,
@@ -2541,6 +2573,9 @@ public class NativeArray extends IdScriptableObject implements List {
             case "copyWithin":
                 id = Id_copyWithin;
                 break;
+            case "at":
+                id = Id_at;
+                break;
             default:
                 id = 0;
                 break;
@@ -2579,7 +2614,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_entries = 29,
             Id_includes = 30,
             Id_copyWithin = 31,
-            SymbolId_iterator = 32,
+            Id_at = 32,
+            SymbolId_iterator = 33,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
@@ -2602,6 +2638,7 @@ public class NativeArray extends IdScriptableObject implements List {
             ConstructorId_findIndex = -Id_findIndex,
             ConstructorId_reduce = -Id_reduce,
             ConstructorId_reduceRight = -Id_reduceRight,
+            ConstructorId_at = -Id_at,
             ConstructorId_isArray = -26,
             ConstructorId_of = -27,
             ConstructorId_from = -28;

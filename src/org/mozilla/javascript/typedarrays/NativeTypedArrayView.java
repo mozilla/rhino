@@ -12,18 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ExternalArrayData;
-import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.NativeArrayIterator;
+
+import org.mozilla.javascript.*;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Symbol;
-import org.mozilla.javascript.SymbolKey;
-import org.mozilla.javascript.Undefined;
-import org.mozilla.javascript.Wrapper;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one shows a view of a
@@ -253,6 +244,49 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 getClassName(),
                 new Object[] {arrayBuffer, Integer.valueOf(byteOff), Integer.valueOf(len)});
     }
+    private Object  js_at(
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args
+        ) {
+        int k;
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        int len = length;
+        int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
+        if (relativeIndex >= 0){
+            k = relativeIndex;
+        }
+        else {
+            k = len + relativeIndex;
+        }
+
+        if ((k < 0) || (k >= len)){
+            return Undefined.instance;
+        }
+
+        return ScriptableObject.getProperty(thisObj, k);
+    }
+
+    //    NativeTypedArrayView<T> O = realThis(thisObj, f);
+    //             int k;
+    //             int len = O.length;
+    //             int relativeIndex = ScriptRuntime.toInt32(args[0]);
+
+    //             if (relativeIndex >= 0){
+    //                 k = relativeIndex;
+    //             }
+    //             else {
+    //                 k = len + relativeIndex;
+    //             }
+
+    //             if ((k < 0) || (k >= len)){
+    //                 return Undefined.instance;
+    //             }
+
+    //             if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
+    //                 return ScriptableObject.getProperty(thisObj, k);
+    //             }
 
     // Dispatcher
 
@@ -323,6 +357,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 }
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
 
+            case Id_at:
+                NativeTypedArrayView<T> atSelf = realThis(thisObj, f);
+                if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
+                    return atSelf.js_at(cx, scope, thisObj, args);
+                }
+                throw ScriptRuntime.constructError("Error", "invalid arguments");
+
+
             case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
         }
@@ -359,6 +401,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 2;
                 s = "subarray";
                 break;
+            case Id_at:
+                arity = 1;
+                s = "at";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -392,6 +438,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "subarray":
                 id = Id_subarray;
                 break;
+            case "at":
+                id = Id_at;
+                break;
             default:
                 id = 0;
                 break;
@@ -405,7 +454,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Id_get = 3,
             Id_set = 4,
             Id_subarray = 5,
-            SymbolId_iterator = 6;
+            Id_at = 6,
+            SymbolId_iterator = 7;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
