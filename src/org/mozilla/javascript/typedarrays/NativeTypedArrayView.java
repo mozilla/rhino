@@ -272,27 +272,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         return ScriptableObject.getProperty(thisObj, k);
     }
-
-    //    NativeTypedArrayView<T> O = realThis(thisObj, f);
-    //             int k;
-    //             int len = O.length;
-    //             int relativeIndex = ScriptRuntime.toInt32(args[0]);
-
-    //             if (relativeIndex >= 0){
-    //                 k = relativeIndex;
-    //             }
-    //             else {
-    //                 k = len + relativeIndex;
-    //             }
-
-    //             if ((k < 0) || (k >= len)){
-    //                 return Undefined.instance;
-    //             }
-
-    //             if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
-    //                 return ScriptableObject.getProperty(thisObj, k);
-    //             }
-
+    
     // Dispatcher
 
     @Override
