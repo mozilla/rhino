@@ -13,7 +13,18 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ExternalArrayData;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeArrayIterator;
+import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 
 /**
