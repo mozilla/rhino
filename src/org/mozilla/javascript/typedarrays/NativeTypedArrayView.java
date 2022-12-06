@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
@@ -21,11 +20,11 @@ import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
-import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one shows a view of a
@@ -255,24 +254,19 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 getClassName(),
                 new Object[] {arrayBuffer, Integer.valueOf(byteOff), Integer.valueOf(len)});
     }
-    private Object  js_at(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args
-        ) {
+
+    private Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         int k;
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         int len = length;
         int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
-        if (relativeIndex >= 0){
+        if (relativeIndex >= 0) {
             k = relativeIndex;
-        }
-        else {
+        } else {
             k = len + relativeIndex;
         }
 
-        if ((k < 0) || (k >= len)){
+        if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
 
@@ -374,7 +368,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                     return atSelf.js_at(cx, scope, thisObj, args);
                 }
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
-
 
             case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);

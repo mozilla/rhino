@@ -1970,24 +1970,18 @@ public class NativeArray extends IdScriptableObject implements List {
         return thisObj;
     }
 
-    private static Object js_at(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args
-        ) {
+    private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         int k;
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         int len = (int) getLengthProperty(cx, o);
         int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
-        if (relativeIndex >= 0){
+        if (relativeIndex >= 0) {
             k = relativeIndex;
-        }
-        else {
+        } else {
             k = len + relativeIndex;
         }
 
-        if ((k < 0) || (k >= len)){
+        if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
 

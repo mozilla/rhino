@@ -747,18 +747,17 @@ final class NativeString extends IdScriptableObject {
                         int len = str.length();
                         int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
 
-                        if (relativeIndex >= 0){
+                        if (relativeIndex >= 0) {
                             k = relativeIndex;
-                        }
-                        else {
+                        } else {
                             k = len + relativeIndex;
                         }
 
-                        if ((k < 0) || (k >= len)){
+                        if ((k < 0) || (k >= len)) {
                             return Undefined.instance;
                         }
 
-                        return str.substring(k,k+1);
+                        return str.substring(k, k + 1);
                     }
 
                 case SymbolId_iterator:
