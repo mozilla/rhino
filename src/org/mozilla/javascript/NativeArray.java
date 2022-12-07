@@ -1971,21 +1971,16 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        int k;
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        int len = (int) getLengthProperty(cx, o);
-        int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
-        if (relativeIndex >= 0) {
-            k = relativeIndex;
-        } else {
-            k = len + relativeIndex;
-        }
+        long len = getLengthProperty(cx, o);
+        long relativeIndex = (long) ScriptRuntime.toInteger(args[0]);
+        long k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
 
         if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
 
-        return ScriptableObject.getProperty(thisObj, k);
+        return ScriptableObject.getProperty(thisObj, (int) k);
     }
 
     /** Implements the methods "every", "filter", "forEach", "map", and "some". */

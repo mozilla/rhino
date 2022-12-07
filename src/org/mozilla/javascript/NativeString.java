@@ -744,15 +744,10 @@ final class NativeString extends IdScriptableObject {
                     {
                         String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
 
-                        int k;
                         int len = str.length();
                         int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
 
-                        if (relativeIndex >= 0) {
-                            k = relativeIndex;
-                        } else {
-                            k = len + relativeIndex;
-                        }
+                        int k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
 
                         if ((k < 0) || (k >= len)) {
                             return Undefined.instance;
