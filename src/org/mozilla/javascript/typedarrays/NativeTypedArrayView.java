@@ -257,7 +257,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         int k;
-        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         int len = length;
         int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
         if (relativeIndex >= 0) {
@@ -272,7 +271,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         return ScriptableObject.getProperty(thisObj, k);
     }
-    
+
     // Dispatcher
 
     @Override
