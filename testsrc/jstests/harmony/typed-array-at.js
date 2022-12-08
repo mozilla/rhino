@@ -27,6 +27,6 @@ assertEquals(float32[1],float32.at(-1))
 assertEquals(float32[0],float32.at())
 assertEquals(float32[1],float32.at(1,2,3))
 
-assertEquals(float32[1],intArray.at(true));
-assertEquals(float32[1],intArray.at("1"));
+assertEquals(float32[1],float32.at(true));
+assertEquals(float32[1],float32.at("1"));
 "success"
