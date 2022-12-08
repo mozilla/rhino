@@ -6,4 +6,6 @@ assertEquals("f", s.at(undefined));
 assertEquals(undefined, s.at(Infinity));
 assertEquals("f", s.at("f"))
 assertEquals("f", s.at({}))
+assertEquals("o", s.at("1"))
+assertEquals("o", s.at(true))
 "success"

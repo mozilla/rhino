@@ -743,9 +743,9 @@ final class NativeString extends IdScriptableObject {
                 case Id_at:
                     {
                         String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-
+                        Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
                         int len = str.length();
-                        int relativeIndex = (int) ScriptRuntime.toInteger(args[0]);
+                        int relativeIndex = (int) ScriptRuntime.toInteger(targetArg);
 
                         int k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
 
