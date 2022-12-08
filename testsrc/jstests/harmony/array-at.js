@@ -16,7 +16,6 @@ assertEquals(0,intArray.at("a"));
 assertEquals(0,intArray.at({}));
 assertEquals(0,intArray.at(NaN));
 assertEquals(0,intArray.at(undefined));
-
 var arrayLike = {
   0: 0,
   length: 0x7fffffff + 1  // Integer.MAX_VALUE + 1
