@@ -20,7 +20,6 @@ import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -238,19 +237,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
-    private static Object getElem(Context cx, Scriptable target, long index) {
-        Object elem = getRawElem(target, index);
-        return (elem != Scriptable.NOT_FOUND ? elem : Undefined.instance);
-    }
-
-    // same as getElem, but without converting NOT_FOUND to undefined
-    private static Object getRawElem(Scriptable target, long index) {
-        if (index > Integer.MAX_VALUE) {
-            return ScriptableObject.getProperty(target, Long.toString(index));
-        }
-        return ScriptableObject.getProperty(target, (int) index);
-    }
-
     private Object js_subarray(Context cx, Scriptable scope, int s, int e) {
         int start = (s < 0 ? length + s : s);
         int end = (e < 0 ? length + e : e);
@@ -277,7 +263,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             return Undefined.instance;
         }
 
-        return getElem(cx, thisObj, k);
+        return getProperty(thisObj, (int) k);
     }
 
     // Dispatcher
