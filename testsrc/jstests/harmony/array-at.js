@@ -57,7 +57,7 @@ var al = makeArrayLike(2,[1,2]);
 assertEquals(1,al.at(0));
 
 //it performs as expected with integers and strings
-assertEquals(9,Array.prototype.at.call("123456789",-1));
+assertEquals("9",Array.prototype.at.call("123456789",-1));
 assertEquals(undefined,Array.prototype.at.call(123456789,-1));
 assertEquals(undefined,Array.prototype.at.call({'foo':'bar'},0));
 
