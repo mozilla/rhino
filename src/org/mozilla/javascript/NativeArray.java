@@ -1979,8 +1979,7 @@ public class NativeArray extends IdScriptableObject implements List {
         if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
-
-        return ScriptableObject.getProperty(thisObj, (int) k);
+        return getElem(cx, thisObj, k);
     }
 
     /** Implements the methods "every", "filter", "forEach", "map", and "some". */
