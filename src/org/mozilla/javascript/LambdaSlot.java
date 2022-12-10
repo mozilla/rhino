@@ -1,7 +1,7 @@
 package org.mozilla.javascript;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import org.mozilla.javascript.function.Consumer;
+import org.mozilla.javascript.function.Supplier;
 
 /**
  * This is a specialization of property access using some lambda functions. It behaves exactly like

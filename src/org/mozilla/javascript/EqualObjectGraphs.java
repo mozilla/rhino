@@ -44,7 +44,7 @@ final class EqualObjectGraphs {
     // Currently compared objects; used to avoid infinite recursion over cyclic object graphs.
     private final Map<Object, Object> currentlyCompared = new IdentityHashMap<>();
 
-    static <T> T withThreadLocal(java.util.function.Function<EqualObjectGraphs, T> action) {
+    static <T> T withThreadLocal(org.mozilla.javascript.function.Function<EqualObjectGraphs, T> action) {
         final EqualObjectGraphs currEq = instance.get();
         if (currEq == null) {
             final EqualObjectGraphs eq = new EqualObjectGraphs();

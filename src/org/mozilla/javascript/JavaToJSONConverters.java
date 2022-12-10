@@ -13,7 +13,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.function.UnaryOperator;
+import org.mozilla.javascript.function.UnaryOperator;
 
 /**
  * This class provides implementations of converters for Java objects to be used by the
