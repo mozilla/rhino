@@ -254,6 +254,18 @@ public class NativeConsoleTest {
     }
 
     @Test
+    public void formatStyling() {
+        assertFormat(new Object[] {"%c", "color: orange"}, "");
+        assertFormat(new Object[] {"12%c34", "color: orange"}, "1234");
+        assertFormat(new Object[] {"%c", "color: orange", "color: blue"}, "color: blue");
+
+        // %c counts
+        assertFormat(new Object[] {"12%c34%s", "color: orange", "ab"}, "1234ab");
+
+        assertFormat(new Object[] {"%c"}, "%c");
+    }
+
+    @Test
     public void formatValueOnly() {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();

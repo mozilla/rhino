@@ -21,7 +21,7 @@ public class NativeConsole extends IdScriptableObject {
 
     private static final String DEFAULT_LABEL = "default";
 
-    private static final Pattern FMT_REG = Pattern.compile("%[sfdioO%]");
+    private static final Pattern FMT_REG = Pattern.compile("%[sfdioOc%]");
 
     private final Map<String, Long> timers = new ConcurrentHashMap<>();
 
@@ -248,6 +248,9 @@ public class NativeConsole extends IdScriptableObject {
                         case "%O":
                             replaceArg = formatObj(cx, scope, val);
                             break;
+
+                            // %c is not supported,
+                            // simply removed from the output
 
                         default:
                             replaceArg = "";
