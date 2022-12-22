@@ -500,6 +500,12 @@ public class NativeConsoleTest {
                         new PrinterCall(Level.WARN, new Object[] {"Timer 'c' does not exist."})));
     }
 
+    @Test
+    public void printConsString() {
+        String js = "var msg = '['; msg += '%s'; msg += ']'; console.log(msg, 1234)";
+        assertPrintMsg(js, "[1234]");
+    }
+
     private static void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();

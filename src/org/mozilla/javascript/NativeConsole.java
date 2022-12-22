@@ -214,8 +214,8 @@ public class NativeConsole extends IdScriptableObject {
         int argIndex = 0;
 
         Object first = args[0];
-        if (first instanceof String) {
-            String msg = (String) first;
+        if (first instanceof String || first instanceof ConsString) {
+            String msg = first.toString();
             Matcher matcher = FMT_REG.matcher(msg);
 
             argIndex = 1;
