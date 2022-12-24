@@ -149,6 +149,76 @@ public class NativeObjectTest {
     }
 
     @Test
+    public void testAssignVariousKeyTypes() {
+        evaluateAndAssert(
+                "var strKeys = Object.assign({}, {a: 1, b: 2});\n"
+                        + "var arrayKeys = Object.assign({}, ['a', 'b']);\n"
+                        + "var res = 'strKeys: ' + JSON.stringify(strKeys) + "
+                        + "'  arrayKeys:' + JSON.stringify(arrayKeys);\n"
+                        + "res",
+                "strKeys: {\"a\":1,\"b\":2}  arrayKeys:{\"0\":\"a\",\"1\":\"b\"}");
+    }
+
+    @Test
+    public void testAssignWithPrototypeStringKeys() {
+        final String script =
+                "var targetProto = { a: 1, b: 2 };\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var source = { b: 4, c: 5 };\n"
+                        + "var assigned = Object.assign(target, source);\n"
+                        + "var res = 'targetProto: ' + JSON.stringify(targetProto) + "
+                        + "'  target: ' + JSON.stringify(target) + "
+                        + "'  assigned: ' + JSON.stringify(assigned);\n"
+                        + "res";
+
+        evaluateAndAssert(
+                script,
+                "targetProto: {\"a\":1,\"b\":2}  target: {\"b\":4,\"c\":5}  assigned: {\"b\":4,\"c\":5}");
+    }
+
+    @Test
+    public void testAssignWithPrototypeNumericKeys() {
+        final String script =
+                "var targetProto = {0: 'a', 1: 'b'};\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var source = {1: 'c', 2: 'd'};\n"
+                        + "var assigned = Object.assign(target, source);\n"
+                        + "var res = 'targetProto: ' + JSON.stringify(targetProto) + "
+                        + "'  target: ' + JSON.stringify(target) + "
+                        + "'  assigned: ' + JSON.stringify(assigned);\n"
+                        + "res";
+
+        evaluateAndAssert(
+                script,
+                "targetProto: {\"0\":\"a\",\"1\":\"b\"}  target: {\"1\":\"c\",\"2\":\"d\"}  assigned: {\"1\":\"c\",\"2\":\"d\"}");
+    }
+
+    @Test
+    public void testAssignWithPrototypeWithGettersAndSetters() {
+        final String script =
+                "var targetProto = {"
+                        + "_a: 1, get a() { return this._a }, set a(val) { this._a = val+10 },"
+                        + " _b: 2, get b() { return this._b }, set b(val) { this._b = val+10 }"
+                        + "};\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var source = {"
+                        + "_b: 4, get b() { return this._b * 4 }, set b(val) { this._b = val+10 },"
+                        + " _c: 5, get c() { return this._c }, set c(val) { this._c = val+10 }};\n"
+                        + "var assigned = Object.assign(target, source);\n"
+                        + "var res = 'targetProto: ' + JSON.stringify(targetProto) + "
+                        + "'  target: ' + JSON.stringify(target) + "
+                        + "'  assigned: ' + JSON.stringify(assigned) + "
+                        + "'  assigned.a: ' + assigned.a + "
+                        + "'  assigned.b: ' + assigned.b + "
+                        + "'  assigned.c: ' + assigned.c;\n"
+                        + "res";
+
+        evaluateAndAssert(
+                script,
+                "targetProto: {\"_a\":1,\"a\":1,\"_b\":2,\"b\":2}  target: {\"_b\":26,\"_c\":5,\"c\":5}  assigned: {\"_b\":26,\"_c\":5,\"c\":5}  assigned.a: 1  assigned.b: 26  assigned.c: 5");
+    }
+
+    @Test
     public void testSetPrototypeOfNull() {
         evaluateAndAssert(
                 "try { "
