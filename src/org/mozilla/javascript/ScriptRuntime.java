@@ -1335,7 +1335,7 @@ public class ScriptRuntime {
 
     public static long toLength(Object[] args, int index) {
         double len = toInteger(args, index);
-        if (len <= +0.0) {
+        if (len <= 0.0) {
             return 0;
         }
         return (long) Math.min(len, NativeNumber.MAX_SAFE_INTEGER);

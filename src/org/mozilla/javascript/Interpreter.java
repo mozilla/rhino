@@ -2237,7 +2237,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     --stackTop;
                                     int i = (int) sDbl[stackTop];
                                     ((Object[]) stack[stackTop])[i] = value;
-                                    ((int[]) stack[stackTop - 1])[i] = +1;
+                                    ((int[]) stack[stackTop - 1])[i] = 1;
                                     sDbl[stackTop] = i + 1;
                                     continue Loop;
                                 }
