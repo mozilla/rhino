@@ -557,7 +557,7 @@ public class Node implements Iterable<Node> {
 
     /** Can only be called when node has String context. */
     public Scope getScope() {
-        return this.getScope();
+        return ((Name) this).getScope();
     }
 
     /** Can only be called when node has String context. */
@@ -566,7 +566,7 @@ public class Node implements Iterable<Node> {
         if (!(this instanceof Name)) {
             throw Kit.codeBug();
         }
-        this.setScope(s);
+        ((Name) this).setScope(s);
     }
 
     public static Node newTarget() {
