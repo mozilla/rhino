@@ -390,7 +390,7 @@ public class ScriptRuntime {
             if (val == null || Undefined.isUndefined(val)) return false;
             if (val instanceof CharSequence) return ((CharSequence) val).length() != 0;
             if (val instanceof BigInteger) {
-                return !((BigInteger) val).equals(BigInteger.ZERO);
+                return !BigInteger.ZERO.equals(val);
             }
             if (val instanceof Number) {
                 double d = ((Number) val).doubleValue();
@@ -2337,7 +2337,7 @@ public class ScriptRuntime {
                 int intId = ((Number) id).intValue();
                 if (!x.obj.has(intId, x.obj)) continue; // must have been deleted
                 x.currentId =
-                        x.enumNumbers ? (Object) (Integer.valueOf(intId)) : String.valueOf(intId);
+                        x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
             }
             return Boolean.TRUE;
         }

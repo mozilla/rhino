@@ -353,7 +353,7 @@ public final class NativeJSON extends IdScriptableObject {
                 unwrappedJavaValue = null;
             }
         } else if (value instanceof XMLObject) {
-            value = ((XMLObject) value).toString();
+            value = value.toString();
         }
 
         if (value == null) return "null";

@@ -707,7 +707,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
         super.defineOwnProperty(cx, id, desc, checkValid);
 
-        if (id instanceof String && ((String) id).equals("length")) {
+        if ("length".equals(id)) {
             lengthAttr =
                     getAttributes("length"); // Update cached attributes value for length property
         }
@@ -937,7 +937,7 @@ public class NativeArray extends IdScriptableObject implements List {
             return ((NativeArray) obj).getLength();
         }
         if (obj instanceof XMLObject) {
-            Callable lengthFunc = (Callable) ((XMLObject) obj).get("length", obj);
+            Callable lengthFunc = (Callable) obj.get("length", obj);
             return ((Number) lengthFunc.call(cx, obj, obj, ScriptRuntime.emptyArgs)).longValue();
         }
 

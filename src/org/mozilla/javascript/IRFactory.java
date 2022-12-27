@@ -572,7 +572,7 @@ public final class IRFactory extends Parser {
             int declType = -1;
             AstNode iter = loop.getIterator();
             if (iter instanceof VariableDeclaration) {
-                declType = ((VariableDeclaration) iter).getType();
+                declType = iter.getType();
             }
             Node lhs = transform(iter);
             if (loop.isForOf()) {
@@ -2491,7 +2491,7 @@ public final class IRFactory extends Parser {
                 decompiler.addNumber(((NumberLiteral) node).getNumber());
                 break;
             case Token.BIGINT:
-                decompiler.addBigInt(((BigIntLiteral) node).getBigInt());
+                decompiler.addBigInt(node.getBigInt());
                 break;
             case Token.GETPROP:
                 decompilePropertyGet((PropertyGet) node);

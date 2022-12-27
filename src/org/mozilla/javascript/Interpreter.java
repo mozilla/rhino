@@ -230,9 +230,8 @@ public final class Interpreter extends Icode implements Evaluator {
                     final Scriptable top = ScriptableObject.getTopLevelScope(scope);
                     return ((Boolean)
                                     ScriptRuntime.doTopCall(
-                                            (Callable)
-                                                    (c, scope, thisObj, args) ->
-                                                            equalsInTopScope(other),
+                                            (c, scope, thisObj, args) ->
+                                                    equalsInTopScope(other),
                                             cx,
                                             top,
                                             top,
@@ -2128,8 +2127,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ++stackTop;
                                     stack[stackTop] =
                                             (op == Token.ENUM_NEXT)
-                                                    ? (Object) ScriptRuntime.enumNext(val, cx)
-                                                    : (Object) ScriptRuntime.enumId(val, cx);
+                                                    ? ScriptRuntime.enumNext(val, cx)
+                                                    : ScriptRuntime.enumId(val, cx);
                                     continue Loop;
                                 }
                             case Token.REF_SPECIAL:
@@ -3501,7 +3500,7 @@ public final class Interpreter extends Icode implements Evaluator {
         } else if (x == null || x == Undefined.instance) {
             return false;
         } else if (x instanceof BigInteger) {
-            return !((BigInteger) x).equals(BigInteger.ZERO);
+            return !x.equals(BigInteger.ZERO);
         } else if (x instanceof Number) {
             double d = ((Number) x).doubleValue();
             return (!Double.isNaN(d) && d != 0.0);
