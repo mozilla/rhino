@@ -73,7 +73,7 @@ public class VMBridge_jdk18 extends VMBridge {
         Class<?> cl = Proxy.getProxyClass(loader, interfaces);
         Constructor<?> c;
         try {
-            c = cl.getConstructor(new Class[] {InvocationHandler.class});
+            c = cl.getConstructor(InvocationHandler.class);
         } catch (NoSuchMethodException ex) {
             // Should not happen
             throw new IllegalStateException(ex);

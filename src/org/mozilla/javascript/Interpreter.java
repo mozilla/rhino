@@ -928,7 +928,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     break;
                 }
             }
-            sb.append(nativeStackTrace.substring(offset, pos));
+            sb.append(nativeStackTrace, offset, pos);
             offset = pos;
 
             CallFrame frame = array[arrayIndex];
