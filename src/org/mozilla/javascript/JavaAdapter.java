@@ -457,7 +457,7 @@ public final class JavaAdapter implements IdFunctionCall {
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             for (Class<?> intf : c.getInterfaces()) appendOverridableMethods(intf, list, skip);
         }
-        return list.toArray(new Method[list.size()]);
+        return list.toArray(new Method[0]);
     }
 
     private static void appendOverridableMethods(

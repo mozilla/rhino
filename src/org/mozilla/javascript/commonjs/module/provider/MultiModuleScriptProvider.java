@@ -31,7 +31,7 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider {
         for (ModuleScriptProvider provider : providers) {
             l.add(provider);
         }
-        this.providers = l.toArray(new ModuleScriptProvider[l.size()]);
+        this.providers = l.toArray(new ModuleScriptProvider[0]);
     }
 
     @Override

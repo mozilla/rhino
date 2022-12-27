@@ -173,7 +173,7 @@ class JavaMembers {
 
     Object[] getIds(boolean isStatic) {
         Map<String, Object> map = isStatic ? staticMembers : members;
-        return map.keySet().toArray(new Object[map.size()]);
+        return map.keySet().toArray(new Object[0]);
     }
 
     static String javaSignature(Class<?> type) {
@@ -299,7 +299,7 @@ class JavaMembers {
             Class<?> clazz, boolean includeProtected, boolean includePrivate) {
         Map<MethodSignature, Method> map = new HashMap<>();
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
-        return map.values().toArray(new Method[map.size()]);
+        return map.values().toArray(new Method[0]);
     }
 
     private void discoverAccessibleMethods(
@@ -667,7 +667,7 @@ class JavaMembers {
                     currentClass = currentClass.getSuperclass();
                 }
 
-                return fieldsList.toArray(new Field[fieldsList.size()]);
+                return fieldsList.toArray(new Field[0]);
             } catch (SecurityException e) {
                 // fall through to !includePrivate case
             }

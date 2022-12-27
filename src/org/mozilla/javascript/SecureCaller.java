@@ -137,8 +137,7 @@ public abstract class SecureCaller {
     private static byte[] loadBytecodePrivileged() {
         URL url = SecureCaller.class.getResource("SecureCallerImpl.clazz");
         try {
-            InputStream in = url.openStream();
-            try {
+            try (InputStream in = url.openStream()) {
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 for (; ; ) {
                     int r = in.read();
@@ -147,8 +146,6 @@ public abstract class SecureCaller {
                     }
                     bout.write(r);
                 }
-            } finally {
-                in.close();
             }
         } catch (IOException e) {
             throw new UndeclaredThrowableException(e);

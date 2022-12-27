@@ -338,7 +338,7 @@ public class NativeArray extends IdScriptableObject implements List {
                         if (args.length > 0) {
                             thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
                             Object[] newArgs = new Object[args.length - 1];
-                            for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
+                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
                             args = newArgs;
                         }
                         id = -id;
@@ -1380,9 +1380,7 @@ public class NativeArray extends IdScriptableObject implements List {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
                 System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
-                for (int i = 0; i < args.length; i++) {
-                    na.dense[i] = args[i];
-                }
+                System.arraycopy(args, 0, na.dense, 0, args.length);
                 na.length += args.length;
                 na.modCount++;
                 return ScriptRuntime.wrapNumber(na.length);
