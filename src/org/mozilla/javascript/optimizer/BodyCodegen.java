@@ -1993,7 +1993,7 @@ class BodyCodegen {
                 && !isGenerator
                 && !inLocalBlock) {
             if (literals == null) {
-                literals = new LinkedList<Node>();
+                literals = new LinkedList<>();
             }
             literals.add(node);
             String methodName =
@@ -2128,7 +2128,7 @@ class BodyCodegen {
                 && !isGenerator
                 && !inLocalBlock) {
             if (literals == null) {
-                literals = new LinkedList<Node>();
+                literals = new LinkedList<>();
             }
             literals.add(node);
             String methodName =
@@ -2689,7 +2689,7 @@ class BodyCodegen {
         if (isGenerator && finallyTarget != null) {
             FinallyReturnPoint ret = new FinallyReturnPoint();
             if (finallys == null) {
-                finallys = new HashMap<Node, FinallyReturnPoint>();
+                finallys = new HashMap<>();
             }
             // add the finally target to hashtable
             finallys.put(finallyTarget, ret);
@@ -2875,7 +2875,7 @@ class BodyCodegen {
      */
     private class ExceptionManager {
         ExceptionManager() {
-            exceptionInfo = new LinkedList<ExceptionInfo>();
+            exceptionInfo = new LinkedList<>();
         }
 
         /**
@@ -4391,7 +4391,7 @@ class BodyCodegen {
     private List<Node> literals;
 
     static class FinallyReturnPoint {
-        public List<Integer> jsrPoints = new ArrayList<Integer>();
+        public List<Integer> jsrPoints = new ArrayList<>();
         public int tableLabel = 0;
     }
 

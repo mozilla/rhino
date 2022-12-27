@@ -71,8 +71,7 @@ public class FunctionNode extends ScriptNode {
         METHOD
     }
 
-    private static final List<AstNode> NO_PARAMS =
-            Collections.unmodifiableList(new ArrayList<AstNode>());
+    private static final List<AstNode> NO_PARAMS = Collections.unmodifiableList(new ArrayList<>());
 
     private Name functionName;
     private List<AstNode> params;
@@ -168,7 +167,7 @@ public class FunctionNode extends ScriptNode {
     public void addParam(AstNode param) {
         assertNotNull(param);
         if (params == null) {
-            params = new ArrayList<AstNode>();
+            params = new ArrayList<>();
         }
         params.add(param);
         param.setParent(this);
@@ -286,7 +285,7 @@ public class FunctionNode extends ScriptNode {
     }
 
     public void addResumptionPoint(Node target) {
-        if (generatorResumePoints == null) generatorResumePoints = new ArrayList<Node>();
+        if (generatorResumePoints == null) generatorResumePoints = new ArrayList<>();
         generatorResumePoints.add(target);
     }
 
@@ -299,7 +298,7 @@ public class FunctionNode extends ScriptNode {
     }
 
     public void addLiveLocals(Node node, int[] locals) {
-        if (liveLocals == null) liveLocals = new HashMap<Node, int[]>();
+        if (liveLocals == null) liveLocals = new HashMap<>();
         liveLocals.put(node, locals);
     }
 

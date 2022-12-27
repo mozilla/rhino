@@ -415,7 +415,7 @@ public final class IRFactory extends Parser {
                 array.addChildToBack(transform(elem));
             } else {
                 if (skipIndexes == null) {
-                    skipIndexes = new ArrayList<Integer>();
+                    skipIndexes = new ArrayList<>();
                 }
                 skipIndexes.add(Integer.valueOf(i));
             }
@@ -483,7 +483,7 @@ public final class IRFactory extends Parser {
             pushScope((Scope) node);
         }
         try {
-            List<Node> kids = new ArrayList<Node>();
+            List<Node> kids = new ArrayList<>();
             for (Node kid : node) {
                 kids.add(transform((AstNode) kid));
             }

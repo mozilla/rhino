@@ -124,7 +124,7 @@ public class NativeJavaPackage extends ScriptableObject {
                 newValue = pkg;
             } else {
                 // add to negative cache
-                if (negativeCache == null) negativeCache = new HashSet<String>();
+                if (negativeCache == null) negativeCache = new HashSet<>();
                 negativeCache.add(name);
             }
         }

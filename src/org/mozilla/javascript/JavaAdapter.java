@@ -445,8 +445,8 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     static Method[] getOverridableMethods(Class<?> clazz) {
-        ArrayList<Method> list = new ArrayList<Method>();
-        HashSet<String> skip = new HashSet<String>();
+        ArrayList<Method> list = new ArrayList<>();
+        HashSet<String> skip = new HashSet<>();
         // Check superclasses before interfaces so we always choose
         // implemented methods over abstract ones, even if a subclass
         // re-implements an interface already implemented in a superclass
@@ -466,8 +466,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
         for (Method method : methods) {
             String methodKey =
-                    method.getName()
-                            + getMethodSignature(method, method.getParameterTypes());
+                    method.getName() + getMethodSignature(method, method.getParameterTypes());
             if (skip.contains(methodKey)) continue; // skip this method
             int mods = method.getModifiers();
             if (Modifier.isStatic(mods)) continue;

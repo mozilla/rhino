@@ -27,7 +27,7 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider {
      * @param providers the providers to multiplex.
      */
     public MultiModuleScriptProvider(Iterable<? extends ModuleScriptProvider> providers) {
-        final List<ModuleScriptProvider> l = new LinkedList<ModuleScriptProvider>();
+        final List<ModuleScriptProvider> l = new LinkedList<>();
         for (ModuleScriptProvider provider : providers) {
             l.add(provider);
         }

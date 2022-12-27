@@ -2336,8 +2336,7 @@ public class ScriptRuntime {
             } else {
                 int intId = ((Number) id).intValue();
                 if (!x.obj.has(intId, x.obj)) continue; // must have been deleted
-                x.currentId =
-                        x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
+                x.currentId = x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
             }
             return Boolean.TRUE;
         }

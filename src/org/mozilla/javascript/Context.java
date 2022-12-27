@@ -2095,7 +2095,7 @@ public class Context implements Closeable {
      */
     public final synchronized void putThreadLocal(Object key, Object value) {
         if (sealed) onSealedMutation();
-        if (threadLocalMap == null) threadLocalMap = new HashMap<Object, Object>();
+        if (threadLocalMap == null) threadLocalMap = new HashMap<>();
         threadLocalMap.put(key, value);
     }
 
@@ -2606,7 +2606,7 @@ public class Context implements Closeable {
      */
     public void addActivationName(String name) {
         if (sealed) onSealedMutation();
-        if (activationNames == null) activationNames = new HashSet<String>();
+        if (activationNames == null) activationNames = new HashSet<>();
         activationNames.add(name);
     }
 

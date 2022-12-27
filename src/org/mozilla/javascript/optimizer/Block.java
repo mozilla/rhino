@@ -113,7 +113,7 @@ class Block {
 
     private static Block[] buildBlocks(Node[] statementNodes) {
         // a mapping from each target node to the block it begins
-        Map<Node, FatBlock> theTargetBlocks = new HashMap<Node, FatBlock>();
+        Map<Node, FatBlock> theTargetBlocks = new HashMap<>();
         ObjArray theBlocks = new ObjArray();
 
         // there's a block that starts at index 0

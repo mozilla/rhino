@@ -195,7 +195,7 @@ public class Codegen implements Evaluator {
                         String name = ofn.fnode.getName();
                         if (name.length() != 0) {
                             if (possibleDirectCalls == null) {
-                                possibleDirectCalls = new HashMap<String, OptFunctionNode>();
+                                possibleDirectCalls = new HashMap<>();
                             }
                             possibleDirectCalls.put(name, ofn);
                         }

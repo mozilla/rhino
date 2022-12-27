@@ -230,8 +230,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     final Scriptable top = ScriptableObject.getTopLevelScope(scope);
                     return ((Boolean)
                                     ScriptRuntime.doTopCall(
-                                            (c, scope, thisObj, args) ->
-                                                    equalsInTopScope(other),
+                                            (c, scope, thisObj, args) -> equalsInTopScope(other),
                                             cx,
                                             top,
                                             top,
@@ -961,7 +960,7 @@ public final class Interpreter extends Icode implements Evaluator {
     @Override
     public List<String> getScriptStack(RhinoException ex) {
         ScriptStackElement[][] stack = getScriptStackElements(ex);
-        List<String> list = new ArrayList<String>(stack.length);
+        List<String> list = new ArrayList<>(stack.length);
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
         for (ScriptStackElement[] group : stack) {
             StringBuilder sb = new StringBuilder();
@@ -979,7 +978,7 @@ public final class Interpreter extends Icode implements Evaluator {
             return null;
         }
 
-        List<ScriptStackElement[]> list = new ArrayList<ScriptStackElement[]>();
+        List<ScriptStackElement[]> list = new ArrayList<>();
 
         CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
         int[] linePC = ex.interpreterLineData;
@@ -988,7 +987,7 @@ public final class Interpreter extends Icode implements Evaluator {
         while (arrayIndex != 0) {
             --arrayIndex;
             CallFrame frame = array[arrayIndex];
-            List<ScriptStackElement> group = new ArrayList<ScriptStackElement>();
+            List<ScriptStackElement> group = new ArrayList<>();
             while (frame != null) {
                 if (linePCIndex == 0) Kit.codeBug();
                 --linePCIndex;

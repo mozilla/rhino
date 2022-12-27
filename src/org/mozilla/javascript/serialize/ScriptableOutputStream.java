@@ -43,7 +43,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     public ScriptableOutputStream(OutputStream out, Scriptable scope) throws IOException {
         super(out);
         this.scope = scope;
-        table = new HashMap<Object, String>();
+        table = new HashMap<>();
         table.put(scope, "");
         enableReplaceObject(true);
         excludeStandardObjectNames(); // XXX

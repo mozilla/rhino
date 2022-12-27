@@ -1013,7 +1013,7 @@ public abstract class ScriptableObject
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
                 Object args[] = {
-                        Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
+                    Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
                 };
                 method.invoke(null, args);
                 return null;
@@ -1113,7 +1113,7 @@ public abstract class ScriptableObject
                 ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
 
         Method finishInit = null;
-        HashSet<String> staticNames = new HashSet<String>(), instanceNames = new HashSet<String>();
+        HashSet<String> staticNames = new HashSet<>(), instanceNames = new HashSet<>();
         for (Method method : methods) {
             if (method == ctorMember) {
                 continue;
@@ -2449,7 +2449,7 @@ public abstract class ScriptableObject
         if (value == null) throw new IllegalArgumentException();
         Map<Object, Object> h = associatedValues;
         if (h == null) {
-            h = new HashMap<Object, Object>();
+            h = new HashMap<>();
             associatedValues = h;
         }
         return Kit.initHash(h, key, value);
