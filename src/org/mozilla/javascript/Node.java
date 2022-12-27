@@ -1065,9 +1065,8 @@ public class Node implements Iterable<Node> {
                     sb.append(" [scope ");
                     appendPrintId(this, printIds, sb);
                     sb.append(": ");
-                    Iterator<String> iter = ((Scope) this).getSymbolTable().keySet().iterator();
-                    while (iter.hasNext()) {
-                        sb.append(iter.next());
+                    for (String s : ((Scope) this).getSymbolTable().keySet()) {
+                        sb.append(s);
                         sb.append(" ");
                     }
                     sb.append("]");
