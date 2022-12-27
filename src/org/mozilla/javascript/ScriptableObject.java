@@ -1004,8 +1004,7 @@ public abstract class ScriptableObject
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
+        for (Method method : methods) {
             if (!method.getName().equals("init")) continue;
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
@@ -1014,7 +1013,7 @@ public abstract class ScriptableObject
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
                 Object args[] = {
-                    Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
+                        Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
                 };
                 method.invoke(null, args);
                 return null;
@@ -1033,9 +1032,9 @@ public abstract class ScriptableObject
 
         Constructor<?>[] ctors = clazz.getConstructors();
         Constructor<?> protoCtor = null;
-        for (int i = 0; i < ctors.length; i++) {
-            if (ctors[i].getParameterTypes().length == 0) {
-                protoCtor = ctors[i];
+        for (Constructor<?> constructor : ctors) {
+            if (constructor.getParameterTypes().length == 0) {
+                protoCtor = constructor;
                 break;
             }
         }
@@ -1862,8 +1861,7 @@ public abstract class ScriptableObject
      */
     public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
+        for (String name : names) {
             Method m = FunctionObject.findSingleMethod(methods, name);
             if (m == null) {
                 throw Context.reportRuntimeErrorById("msg.method.not.found", name, clazz.getName());

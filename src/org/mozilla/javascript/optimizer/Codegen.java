@@ -383,8 +383,8 @@ public class Codegen implements Evaluator {
     // appended by "_gen".
     private void generateResumeGenerator(ClassFileWriter cfw) {
         boolean hasGenerators = false;
-        for (int i = 0; i < scriptOrFnNodes.length; i++) {
-            if (isGenerator(scriptOrFnNodes[i])) hasGenerators = true;
+        for (ScriptNode scriptOrFnNode : scriptOrFnNodes) {
+            if (isGenerator(scriptOrFnNode)) hasGenerators = true;
         }
 
         // if there are no generators defined, we don't implement a

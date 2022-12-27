@@ -1057,8 +1057,7 @@ public final class IRFactory extends Parser {
         List<AstNode> elems = node.getElements();
         // start with an empty string to ensure ToString() for each substitution
         Node pn = Node.newString("");
-        for (int i = 0; i < elems.size(); ++i) {
-            AstNode elem = elems.get(i);
+        for (AstNode elem : elems) {
             if (elem.getType() != Token.TEMPLATE_CHARS) {
                 decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 pn = createBinary(Token.ADD, pn, transform(elem));
@@ -1084,8 +1083,7 @@ public final class IRFactory extends Parser {
         TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
         List<AstNode> elems = templateLiteral.getElements();
         call.addChildToBack(templateLiteral);
-        for (int i = 0; i < elems.size(); ++i) {
-            AstNode elem = elems.get(i);
+        for (AstNode elem : elems) {
             if (elem.getType() != Token.TEMPLATE_CHARS) {
                 decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 call.addChildToBack(transform(elem));

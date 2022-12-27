@@ -359,8 +359,7 @@ public final class JavaAdapter implements IdFunctionCall {
         // generate methods to satisfy all specified interfaces.
         for (int i = 0; i < interfacesCount; i++) {
             Method[] methods = interfaces[i].getMethods();
-            for (int j = 0; j < methods.length; j++) {
-                Method method = methods[j];
+            for (Method method : methods) {
                 int mods = method.getModifiers();
                 if (Modifier.isStatic(mods) || Modifier.isFinal(mods) || method.isDefault()) {
                     continue;
@@ -396,8 +395,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
         // generate any additional overrides that the object might contain.
         Method[] methods = getOverridableMethods(superClass);
-        for (int j = 0; j < methods.length; j++) {
-            Method method = methods[j];
+        for (Method method : methods) {
             int mods = method.getModifiers();
             // if a method is marked abstract, must implement it or the
             // resulting class won't be instantiable. otherwise, if the object
@@ -466,12 +464,12 @@ public final class JavaAdapter implements IdFunctionCall {
             Class<?> c, ArrayList<Method> list, HashSet<String> skip) {
         Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
 
-        for (int i = 0; i < methods.length; i++) {
+        for (Method method : methods) {
             String methodKey =
-                    methods[i].getName()
-                            + getMethodSignature(methods[i], methods[i].getParameterTypes());
+                    method.getName()
+                            + getMethodSignature(method, method.getParameterTypes());
             if (skip.contains(methodKey)) continue; // skip this method
-            int mods = methods[i].getModifiers();
+            int mods = method.getModifiers();
             if (Modifier.isStatic(mods)) continue;
             if (Modifier.isFinal(mods)) {
                 // Make sure we don't add a final method to the list
@@ -480,7 +478,7 @@ public final class JavaAdapter implements IdFunctionCall {
                 continue;
             }
             if (Modifier.isPublic(mods) || Modifier.isProtected(mods)) {
-                list.add(methods[i]);
+                list.add(method);
                 skip.add(methodKey);
             }
         }

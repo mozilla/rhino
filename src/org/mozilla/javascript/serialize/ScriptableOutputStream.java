@@ -132,16 +132,16 @@ public class ScriptableOutputStream extends ObjectOutputStream {
             "Continuation",
             "Continuation.prototype",
         };
-        for (int i = 0; i < names.length; i++) {
-            addExcludedName(names[i]);
+        for (String name : names) {
+            addExcludedName(name);
         }
 
         String[] optionalNames = {
             "XML", "XML.prototype",
             "XMLList", "XMLList.prototype",
         };
-        for (int i = 0; i < optionalNames.length; i++) {
-            addOptionalExcludedName(optionalNames[i]);
+        for (String optionalName : optionalNames) {
+            addOptionalExcludedName(optionalName);
         }
     }
 

@@ -281,8 +281,7 @@ public class ScriptNode extends Scope {
                 // Just replace "symbols" with the symbols in this object's
                 // symbol table. Can't just work from symbolTable map since
                 // we need to retain duplicate parameters.
-                for (int i = 0; i < symbols.size(); i++) {
-                    Symbol symbol = symbols.get(i);
+                for (Symbol symbol : symbols) {
                     if (symbol.getContainingTable() == this) {
                         newSymbols.add(symbol);
                     }

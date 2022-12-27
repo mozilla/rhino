@@ -899,8 +899,7 @@ public class NativeArray extends IdScriptableObject implements List {
             if (length - longVal > 0x1000) {
                 // assume that the representation is sparse
                 Object[] e = getIds(); // will only find in object itself
-                for (int i = 0; i < e.length; i++) {
-                    Object id = e[i];
+                for (Object id : e) {
                     if (id instanceof String) {
                         // > MAXINT will appear as string
                         String strId = (String) id;
@@ -1269,8 +1268,8 @@ public class NativeArray extends IdScriptableObject implements List {
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
-                for (int i = 0; i < args.length; i++) {
-                    na.dense[(int) na.length++] = args[i];
+                for (Object arg : args) {
+                    na.dense[(int) na.length++] = arg;
                     na.modCount++;
                 }
                 return ScriptRuntime.wrapNumber(na.length);

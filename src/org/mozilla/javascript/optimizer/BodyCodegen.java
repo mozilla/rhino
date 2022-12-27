@@ -510,8 +510,7 @@ class BodyCodegen {
             Map<Node, int[]> liveLocals = ((FunctionNode) scriptOrFn).getLiveLocals();
             if (liveLocals != null) {
                 List<Node> nodes = ((FunctionNode) scriptOrFn).getResumptionPoints();
-                for (int i = 0; i < nodes.size(); i++) {
-                    Node node = nodes.get(i);
+                for (Node node : nodes) {
                     int[] live = liveLocals.get(node);
                     if (live != null) {
                         cfw.markTableSwitchCase(generatorSwitch, getNextGeneratorState(node));
