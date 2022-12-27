@@ -1190,7 +1190,7 @@ public class Context implements Closeable {
     public final Object evaluateReader(
             Scriptable scope, Reader in, String sourceName, int lineno, Object securityDomain)
             throws IOException {
-        Script script = compileReader(scope, in, sourceName, lineno, securityDomain);
+        Script script = compileReader(in, sourceName, lineno, securityDomain);
         if (script != null) {
             return script.exec(this, scope);
         }
