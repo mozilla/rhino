@@ -355,9 +355,8 @@ public class Parser {
                 new Comment(ts.tokenBeg, ts.getTokenLength(), ts.commentType, comment);
         if (ts.commentType == Token.CommentType.JSDOC
                 && compilerEnv.isRecordingLocalJsDocComments()) {
-            Comment jsDocCommentNode =
+            currentJsDocComment =
                     new Comment(ts.tokenBeg, ts.getTokenLength(), ts.commentType, comment);
-            currentJsDocComment = jsDocCommentNode;
             currentJsDocComment.setLineno(lineno);
         }
         commentNode.setLineno(lineno);

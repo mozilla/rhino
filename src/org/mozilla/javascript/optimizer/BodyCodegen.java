@@ -1597,10 +1597,9 @@ class BodyCodegen {
 
             case Token.WITHEXPR:
                 {
-                    Node enterWith = child;
-                    Node with = enterWith.getNext();
+                    Node with = child.getNext();
                     Node leaveWith = with.getNext();
-                    generateStatement(enterWith);
+                    generateStatement(child);
                     generateExpression(with.getFirstChild(), with);
                     generateStatement(leaveWith);
                     break;
@@ -1608,9 +1607,8 @@ class BodyCodegen {
 
             case Token.ARRAYCOMP:
                 {
-                    Node initStmt = child;
                     Node expr = child.getNext();
-                    generateStatement(initStmt);
+                    generateStatement(child);
                     generateExpression(expr, node);
                     break;
                 }

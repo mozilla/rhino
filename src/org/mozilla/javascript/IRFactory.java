@@ -1988,9 +1988,8 @@ public final class IRFactory extends Parser {
                         // Transform Delete(Name "a")
                         //  to Delete(Bind("a"), String("a"))
                         child.setType(Token.BINDNAME);
-                        Node left = child;
                         Node right = Node.newString(child.getString());
-                        n = new Node(nodeType, left, right);
+                        n = new Node(nodeType, child, right);
                     } else if (childType == Token.GETPROP || childType == Token.GETELEM) {
                         Node left = child.getFirstChild();
                         Node right = child.getLastChild();

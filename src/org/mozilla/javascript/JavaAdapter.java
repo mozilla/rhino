@@ -1059,9 +1059,8 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, methodName, methodSignature);
 
         // now, handle the return type appropriately.
-        Class<?> retType = returnType;
-        if (!retType.equals(Void.TYPE)) {
-            generatePopResult(cfw, retType);
+        if (!returnType.equals(Void.TYPE)) {
+            generatePopResult(cfw, returnType);
         } else {
             cfw.add(ByteCode.RETURN);
         }

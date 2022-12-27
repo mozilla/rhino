@@ -2482,8 +2482,7 @@ public class ScriptRuntime {
                 throw notFunctionError(result, name);
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            Scriptable thisObj = scope;
-            storeScriptable(cx, thisObj);
+            storeScriptable(cx, scope);
             return (Callable) result;
         }
 

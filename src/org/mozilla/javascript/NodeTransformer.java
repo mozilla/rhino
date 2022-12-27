@@ -169,8 +169,7 @@ public class NodeTransformer {
                                 Node unwind;
                                 if (elemtype == Token.TRY) {
                                     Jump jsrnode = new Jump(Token.JSR);
-                                    Node jsrtarget = ((Jump) n).getFinally();
-                                    jsrnode.target = jsrtarget;
+                                    jsrnode.target = ((Jump) n).getFinally();
                                     unwind = jsrnode;
                                 } else {
                                     unwind = new Node(Token.LEAVEWITH);
