@@ -245,7 +245,7 @@ class Block {
     }
 
     private static void reachingDefDataFlow(
-            OptFunctionNode fn, Node[] statementNodes, Block theBlocks[], int[] varTypes) {
+            OptFunctionNode fn, Node[] statementNodes, Block[] theBlocks, int[] varTypes) {
         /*
             initialize the liveOnEntry and liveOnExit sets, then discover the variables
             that are def'd by each function, and those that are used before being def'd
@@ -259,8 +259,8 @@ class Block {
             any block whose inputs change as a result of the dataflow.
             REMIND, better would be to visit in CFG postorder
         */
-        boolean visit[] = new boolean[theBlocks.length];
-        boolean doneOnce[] = new boolean[theBlocks.length];
+        boolean[] visit = new boolean[theBlocks.length];
+        boolean[] doneOnce = new boolean[theBlocks.length];
         int vIndex = theBlocks.length - 1;
         boolean needRescan = false;
         visit[vIndex] = true;
@@ -269,7 +269,7 @@ class Block {
                 doneOnce[vIndex] = true;
                 visit[vIndex] = false;
                 if (theBlocks[vIndex].doReachedUseDataFlow()) {
-                    Block pred[] = theBlocks[vIndex].itsPredecessors;
+                    Block[] pred = theBlocks[vIndex].itsPredecessors;
                     if (pred != null) {
                         for (Block block : pred) {
                             int index = block.itsBlockID;
@@ -300,9 +300,9 @@ class Block {
     }
 
     private static void typeFlow(
-            OptFunctionNode fn, Node[] statementNodes, Block theBlocks[], int[] varTypes) {
-        boolean visit[] = new boolean[theBlocks.length];
-        boolean doneOnce[] = new boolean[theBlocks.length];
+            OptFunctionNode fn, Node[] statementNodes, Block[] theBlocks, int[] varTypes) {
+        boolean[] visit = new boolean[theBlocks.length];
+        boolean[] doneOnce = new boolean[theBlocks.length];
         int vIndex = 0;
         boolean needRescan = false;
         visit[vIndex] = true;

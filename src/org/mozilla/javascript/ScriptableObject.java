@@ -1012,7 +1012,7 @@ public abstract class ScriptableObject
                     && parmTypes[1] == ScriptRuntime.ScriptableClass
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
-                Object args[] = {
+                Object[] args = {
                     Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
                 };
                 method.invoke(null, args);
@@ -1021,7 +1021,7 @@ public abstract class ScriptableObject
             if (parmTypes.length == 1
                     && parmTypes[0] == ScriptRuntime.ScriptableClass
                     && Modifier.isStatic(method.getModifiers())) {
-                Object args[] = {scope};
+                Object[] args = {scope};
                 method.invoke(null, args);
                 return null;
             }

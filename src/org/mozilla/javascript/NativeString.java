@@ -1137,7 +1137,7 @@ final class NativeString extends IdScriptableObject {
         /* step 4-5 */
         long rawLength = NativeArray.getLengthProperty(cx, raw);
         if (rawLength > Integer.MAX_VALUE) {
-            throw ScriptRuntime.rangeError("raw.length > " + Integer.toString(Integer.MAX_VALUE));
+            throw ScriptRuntime.rangeError("raw.length > " + Integer.MAX_VALUE);
         }
         int literalSegments = (int) rawLength;
         if (literalSegments <= 0) return "";

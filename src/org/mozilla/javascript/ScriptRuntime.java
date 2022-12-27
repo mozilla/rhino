@@ -4072,7 +4072,7 @@ public class ScriptRuntime {
                 sourceUri = "";
             }
             int line = re.lineNumber();
-            Object args[];
+            Object[] args;
             if (line > 0) {
                 args = new Object[] {errorMsg, sourceUri, Integer.valueOf(line)};
             } else {
@@ -4170,7 +4170,7 @@ public class ScriptRuntime {
             sourceUri = "";
         }
         int line = re.lineNumber();
-        Object args[];
+        Object[] args;
         if (line > 0) {
             args = new Object[] {errorMsg, sourceUri, Integer.valueOf(line)};
         } else {

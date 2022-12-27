@@ -480,7 +480,7 @@ public final class Interpreter extends Icode implements Evaluator {
             return;
         }
 
-        byte iCode[] = idata.itsICode;
+        byte[] iCode = idata.itsICode;
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
         BigInteger[] bigInts = idata.itsBigIntTable;

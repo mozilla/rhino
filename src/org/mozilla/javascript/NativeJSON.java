@@ -188,7 +188,7 @@ public final class NativeJSON extends IdScriptableObject {
     }
 
     private static String repeat(char c, int count) {
-        char chars[] = new char[count];
+        char[] chars = new char[count];
         Arrays.fill(chars, c);
         return new String(chars);
     }

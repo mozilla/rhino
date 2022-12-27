@@ -15,7 +15,7 @@ final class ClassFileMethod {
         itsFlags = flags;
     }
 
-    void setCodeAttribute(byte codeAttribute[]) {
+    void setCodeAttribute(byte[] codeAttribute) {
         itsCodeAttribute = codeAttribute;
     }
 
