@@ -124,12 +124,8 @@ public class ExternalArrayTest {
     private void runScript(String script, int opt) {
         try {
             cx.setOptimizationLevel(opt);
-            FileReader rdr = new FileReader(script);
-
-            try {
+            try (FileReader rdr = new FileReader(script)) {
                 cx.evaluateReader(root, rdr, script, 1, null);
-            } finally {
-                rdr.close();
             }
         } catch (IOException ioe) {
             assertFalse("I/O Error: " + ioe, true);

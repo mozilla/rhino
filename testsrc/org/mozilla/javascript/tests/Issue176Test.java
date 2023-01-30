@@ -19,13 +19,9 @@ public class Issue176Test extends TestCase {
     public void testThrowing() throws Exception {
         cx = Context.enter();
         try {
-            Script script =
-                    cx.compileReader(
-                            new InputStreamReader(
-                                    Bug482203Test.class.getResourceAsStream("Issue176.js")),
-                            "Issue176.js",
-                            1,
-                            null);
+            InputStreamReader in =
+                    new InputStreamReader(Bug482203Test.class.getResourceAsStream("Issue176.js"));
+            Script script = cx.compileReader(in, "Issue176.js", 1, null);
             scope = cx.initStandardObjects();
             scope.put("host", scope, this);
             script.exec(cx, scope); // calls our methods

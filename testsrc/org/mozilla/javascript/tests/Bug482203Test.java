@@ -15,16 +15,11 @@ import org.mozilla.javascript.ScriptableObject;
 public class Bug482203Test extends TestCase {
 
     public void testJsApi() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(-1);
-            Script script =
-                    cx.compileReader(
-                            new InputStreamReader(
-                                    Bug482203Test.class.getResourceAsStream("Bug482203.js")),
-                            "",
-                            1,
-                            null);
+            InputStreamReader in =
+                    new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
+            Script script = cx.compileReader(in, "", 1, null);
             Scriptable scope = cx.initStandardObjects();
             script.exec(cx, scope);
             int counter = 0;
@@ -38,22 +33,15 @@ public class Bug482203Test extends TestCase {
             }
             assertEquals(counter, 5);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
-        } finally {
-            Context.exit();
         }
     }
 
     public void testJavaApi() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(-1);
-            Script script =
-                    cx.compileReader(
-                            new InputStreamReader(
-                                    Bug482203Test.class.getResourceAsStream("Bug482203.js")),
-                            "",
-                            1,
-                            null);
+            InputStreamReader in =
+                    new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
+            Script script = cx.compileReader(in, "", 1, null);
             Scriptable scope = cx.initStandardObjects();
             cx.executeScriptWithContinuations(script, scope);
             int counter = 0;
@@ -67,8 +55,6 @@ public class Bug482203Test extends TestCase {
             }
             assertEquals(counter, 5);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
-        } finally {
-            Context.exit();
         }
     }
 }

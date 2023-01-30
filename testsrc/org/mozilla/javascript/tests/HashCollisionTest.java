@@ -15,9 +15,8 @@ public class HashCollisionTest {
     @BeforeClass
     public static void loadFile() throws IOException {
         StringWriter out = new StringWriter();
-        FileReader in = new FileReader(mediumInput);
 
-        try {
+        try (FileReader in = new FileReader(mediumInput)) {
             char[] buf = new char[16392];
             int rc;
             do {
@@ -28,9 +27,6 @@ public class HashCollisionTest {
             } while (rc > 0);
 
             collisions = out.toString();
-
-        } finally {
-            in.close();
         }
     }
 
@@ -41,15 +37,12 @@ public class HashCollisionTest {
      */
     @Test
     public void testMediumCollisions() throws IOException {
-        FileReader scriptIn = new FileReader("testsrc/jstests/hash-collisions.js");
-        Context cx = Context.enter();
-        try {
-            Global glob = new Global(cx);
-            glob.put("collisions", glob, collisions);
-            cx.evaluateReader(glob, scriptIn, "hash-collisons.js", 1, null);
-        } finally {
-            Context.exit();
-            scriptIn.close();
+        try (FileReader scriptIn = new FileReader("testsrc/jstests/hash-collisions.js")) {
+            try (Context cx = Context.enter()) {
+                Global glob = new Global(cx);
+                glob.put("collisions", glob, collisions);
+                cx.evaluateReader(glob, scriptIn, "hash-collisons.js", 1, null);
+            }
         }
     }
 }

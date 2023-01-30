@@ -18,14 +18,12 @@ public class NativeJsonTest {
     public void stringifyResultAndResultType() {
         String jsScript =
                 "function f(){ return JSON.stringify({property1:\"hello\", array1:[{subobject:1}]}); } f();";
-        Context jsContext = Context.enter();
-        try {
-            Scriptable jsScope = jsContext.initStandardObjects();
-            Object result = jsContext.evaluateString(jsScope, jsScript, "myscript.js", 1, null);
+
+        try (Context cx = Context.enter()) {
+            Scriptable jsScope = cx.initStandardObjects();
+            Object result = cx.evaluateString(jsScope, jsScript, "myscript.js", 1, null);
             assertEquals("{\"property1\":\"hello\",\"array1\":[{\"subobject\":1}]}", result);
             assertEquals("java.lang.String", result.getClass().getName());
-        } finally {
-            Context.exit();
         }
     }
 }
