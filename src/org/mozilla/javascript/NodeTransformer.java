@@ -169,8 +169,7 @@ public class NodeTransformer {
                                 Node unwind;
                                 if (elemtype == Token.TRY) {
                                     Jump jsrnode = new Jump(Token.JSR);
-                                    Node jsrtarget = ((Jump) n).getFinally();
-                                    jsrnode.target = jsrtarget;
+                                    jsrnode.target = ((Jump) n).getFinally();
                                     unwind = jsrnode;
                                 } else {
                                     unwind = new Node(Token.LEAVEWITH);
@@ -416,7 +415,7 @@ public class NodeTransformer {
         if (createWith) {
             result = new Node(isExpression ? Token.WITHEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
-            ArrayList<Object> list = new ArrayList<Object>();
+            ArrayList<Object> list = new ArrayList<>();
             Node objectLiteral = new Node(Token.OBJECTLIT);
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;

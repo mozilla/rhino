@@ -364,8 +364,7 @@ final class MemberBox implements Serializable {
             throws IOException {
         out.writeShort(parms.length);
         outer:
-        for (int i = 0; i < parms.length; i++) {
-            Class<?> parm = parms[i];
+        for (Class<?> parm : parms) {
             boolean primitive = parm.isPrimitive();
             out.writeBoolean(primitive);
             if (!primitive) {

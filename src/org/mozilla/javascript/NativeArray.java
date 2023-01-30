@@ -338,7 +338,7 @@ public class NativeArray extends IdScriptableObject implements List {
                         if (args.length > 0) {
                             thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
                             Object[] newArgs = new Object[args.length - 1];
-                            for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
+                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
                             args = newArgs;
                         }
                         id = -id;
@@ -627,7 +627,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
     public List<Integer> getIndexIds() {
         Object[] ids = getIds();
-        List<Integer> indices = new ArrayList<Integer>(ids.length);
+        List<Integer> indices = new ArrayList<>(ids.length);
         for (Object id : ids) {
             int int32Id = ScriptRuntime.toInt32(id);
             if (int32Id >= 0
@@ -707,7 +707,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
         super.defineOwnProperty(cx, id, desc, checkValid);
 
-        if (id instanceof String && ((String) id).equals("length")) {
+        if ("length".equals(id)) {
             lengthAttr =
                     getAttributes("length"); // Update cached attributes value for length property
         }
@@ -899,8 +899,7 @@ public class NativeArray extends IdScriptableObject implements List {
             if (length - longVal > 0x1000) {
                 // assume that the representation is sparse
                 Object[] e = getIds(); // will only find in object itself
-                for (int i = 0; i < e.length; i++) {
-                    Object id = e[i];
+                for (Object id : e) {
                     if (id instanceof String) {
                         // > MAXINT will appear as string
                         String strId = (String) id;
@@ -937,7 +936,7 @@ public class NativeArray extends IdScriptableObject implements List {
             return ((NativeArray) obj).getLength();
         }
         if (obj instanceof XMLObject) {
-            Callable lengthFunc = (Callable) ((XMLObject) obj).get("length", obj);
+            Callable lengthFunc = (Callable) obj.get("length", obj);
             return ((Number) lengthFunc.call(cx, obj, obj, ScriptRuntime.emptyArgs)).longValue();
         }
 
@@ -1269,8 +1268,8 @@ public class NativeArray extends IdScriptableObject implements List {
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
-                for (int i = 0; i < args.length; i++) {
-                    na.dense[(int) na.length++] = args[i];
+                for (Object arg : args) {
+                    na.dense[(int) na.length++] = arg;
                     na.modCount++;
                 }
                 return ScriptRuntime.wrapNumber(na.length);
@@ -1381,9 +1380,7 @@ public class NativeArray extends IdScriptableObject implements List {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
                 System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
-                for (int i = 0; i < args.length; i++) {
-                    na.dense[i] = args[i];
-                }
+                System.arraycopy(args, 0, na.dense, 0, args.length);
                 na.length += args.length;
                 na.modCount++;
                 return ScriptRuntime.wrapNumber(na.length);

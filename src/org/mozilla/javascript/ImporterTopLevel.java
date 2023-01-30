@@ -108,8 +108,8 @@ public class ImporterTopLevel extends TopLevel {
         if (elements == null) {
             return result;
         }
-        for (int i = 0; i < elements.length; i++) {
-            NativeJavaPackage p = (NativeJavaPackage) elements[i];
+        for (Object element : elements) {
+            NativeJavaPackage p = (NativeJavaPackage) element;
             Object v = p.getPkgProperty(name, start, false);
             if (v != null && !(v instanceof NativeJavaPackage)) {
                 if (result == NOT_FOUND) {
@@ -125,7 +125,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object[] getNativeJavaPackages(Scriptable scope) {
-        // retrive the native java packages stored in top scope.
+        // retrivee the native java packages stored in top scope.
         synchronized (scope) {
             if (scope instanceof ScriptableObject) {
                 ScriptableObject so = (ScriptableObject) scope;

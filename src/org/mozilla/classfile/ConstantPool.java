@@ -383,5 +383,5 @@ final class ConstantPool {
     private int itsTopIndex;
     private UintMap itsConstantData = new UintMap();
     private UintMap itsPoolTypes = new UintMap();
-    private byte itsPool[];
+    private byte[] itsPool;
 }

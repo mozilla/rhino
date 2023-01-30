@@ -1561,8 +1561,7 @@ public class ClassFileWriter {
             executeWorkList();
 
             // Replace dead code with no-ops.
-            for (int i = 0; i < superBlocks.length; i++) {
-                SuperBlock sb = superBlocks[i];
+            for (SuperBlock sb : superBlocks) {
                 if (!sb.isInitialized()) {
                     killSuperBlock(sb);
                 }

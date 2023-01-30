@@ -157,8 +157,7 @@ class TokenStream {
                 Id_volatile = Token.RESERVED; // ES3 only
 
         int id;
-        String s = name;
-        switch (s) {
+        switch (name) {
             case "break":
                 id = Id_break;
                 break;
@@ -414,8 +413,7 @@ class TokenStream {
                 Id_static = Token.RESERVED;
 
         int id = 0;
-        String s = name;
-        switch (s) {
+        switch (name) {
             case "break":
                 id = Id_break;
                 break;

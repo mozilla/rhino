@@ -23,7 +23,7 @@ import org.mozilla.javascript.Token;
  */
 public class VariableDeclaration extends AstNode {
 
-    private List<VariableInitializer> variables = new ArrayList<VariableInitializer>();
+    private List<VariableInitializer> variables = new ArrayList<>();
     private boolean isStatement;
 
     {

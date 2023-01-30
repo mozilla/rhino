@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.Iterator;
-
 public class NativeMap extends IdScriptableObject {
     private static final long serialVersionUID = 1171922614280016891L;
     private static final Object MAP_TAG = "Map";
@@ -133,8 +131,7 @@ public class NativeMap extends IdScriptableObject {
         final Callable f = (Callable) arg1;
 
         boolean isStrict = cx.isStrictMode();
-        Iterator<Hashtable.Entry> i = entries.iterator();
-        while (i.hasNext()) {
+        for (Hashtable.Entry entry : entries) {
             // Per spec must convert every time so that primitives are always regenerated...
             Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
@@ -145,7 +142,7 @@ public class NativeMap extends IdScriptableObject {
                 thisObj = Undefined.SCRIPTABLE_UNDEFINED;
             }
 
-            final Hashtable.Entry e = i.next();
+            final Hashtable.Entry e = entry;
             f.call(cx, scope, thisObj, new Object[] {e.value, e.key, this});
         }
         return Undefined.instance;
@@ -178,9 +175,7 @@ public class NativeMap extends IdScriptableObject {
                 cx,
                 scope,
                 arg1,
-                (key, value) -> {
-                    set.call(cx, scope, map, new Object[] {key, value});
-                });
+                (key, value) -> set.call(cx, scope, map, new Object[] {key, value}));
     }
 
     private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {

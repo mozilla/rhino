@@ -19,7 +19,7 @@ import org.mozilla.javascript.Token;
  */
 public class LabeledStatement extends AstNode {
 
-    private List<Label> labels = new ArrayList<Label>(); // always at least 1
+    private List<Label> labels = new ArrayList<>(); // always at least 1
     private AstNode statement;
 
     {

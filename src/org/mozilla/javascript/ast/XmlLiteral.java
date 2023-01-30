@@ -18,7 +18,7 @@ import org.mozilla.javascript.Token;
  */
 public class XmlLiteral extends AstNode {
 
-    private List<XmlFragment> fragments = new ArrayList<XmlFragment>();
+    private List<XmlFragment> fragments = new ArrayList<>();
 
     {
         type = Token.XML;

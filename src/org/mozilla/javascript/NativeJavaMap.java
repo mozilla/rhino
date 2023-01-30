@@ -183,7 +183,7 @@ public class NativeJavaMap extends NativeJavaObject {
             if (!iterator.hasNext()) {
                 return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
             }
-            Map.Entry e = iterator.next();
+            Map.Entry<Object, Object> e = iterator.next();
             return cx.newArray(scope, new Object[] {e.getKey(), e.getValue()});
         }
 

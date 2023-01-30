@@ -349,7 +349,7 @@ final class NativeString extends IdScriptableObject {
                                     ScriptRuntime.toObject(
                                             cx, scope, ScriptRuntime.toCharSequence(args[0]));
                             Object[] newArgs = new Object[args.length - 1];
-                            for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
+                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
                             args = newArgs;
                         } else {
                             thisObj =
@@ -1137,7 +1137,7 @@ final class NativeString extends IdScriptableObject {
         /* step 4-5 */
         long rawLength = NativeArray.getLengthProperty(cx, raw);
         if (rawLength > Integer.MAX_VALUE) {
-            throw ScriptRuntime.rangeError("raw.length > " + Integer.toString(Integer.MAX_VALUE));
+            throw ScriptRuntime.rangeError("raw.length > " + Integer.MAX_VALUE);
         }
         int literalSegments = (int) rawLength;
         if (literalSegments <= 0) return "";
