@@ -10,9 +10,9 @@ public class BackwardParseInt {
 
     @Test
     public void parseIntOctal_1_4() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_4);
-        try {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_1_4);
+
             Global root = new Global(cx);
             Object obj = cx.evaluateString(root, "parseInt('07');", "[test]", 1, null);
             assertEquals(7.0, obj);
@@ -31,16 +31,14 @@ public class BackwardParseInt {
 
             obj = cx.evaluateString(root, "parseInt('-090');", "[test]", 1, null);
             assertEquals(Double.NaN, obj);
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void parseIntOctal_1_5() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_5);
-        try {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_1_5);
+
             Global root = new Global(cx);
             Object obj = cx.evaluateString(root, "parseInt('07');", "[test]", 1, null);
             assertEquals(7.0, obj);
@@ -59,16 +57,14 @@ public class BackwardParseInt {
 
             obj = cx.evaluateString(root, "parseInt('-090');", "[test]", 1, null);
             assertEquals(-90.0, obj);
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void parseIntOctal_ES6() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        try {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+
             Global root = new Global(cx);
             Object obj = cx.evaluateString(root, "parseInt('07');", "[test]", 1, null);
             assertEquals(7.0, obj);
@@ -87,8 +83,6 @@ public class BackwardParseInt {
 
             obj = cx.evaluateString(root, "parseInt('-090');", "[test]", 1, null);
             assertEquals(-90.0, obj);
-        } finally {
-            Context.exit();
         }
     }
 }

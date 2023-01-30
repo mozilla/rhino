@@ -39,8 +39,7 @@ public class StackTraceExtensionMozillaTest {
                     }
                 };
 
-        Context cx = factory.enterContext();
-        try {
+        try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);
             cx.setOptimizationLevel(opt);
             cx.setGeneratingDebug(true);
@@ -48,17 +47,12 @@ public class StackTraceExtensionMozillaTest {
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
 
-            FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces-mozilla.js");
-
-            try {
+            try (FileReader rdr =
+                    new FileReader("testsrc/jstests/extensions/stack-traces-mozilla.js")) {
                 cx.evaluateReader(root, rdr, "stack-traces-mozilla.js", 1, null);
-            } finally {
-                rdr.close();
             }
         } catch (IOException ioe) {
             assertFalse("I/O Error: " + ioe, true);
-        } finally {
-            Context.exit();
         }
     }
 

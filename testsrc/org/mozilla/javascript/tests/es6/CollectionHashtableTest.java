@@ -301,10 +301,10 @@ public class CollectionHashtableTest {
     public void testEmptySerialization() throws IOException, ClassNotFoundException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bos);
-        oout.writeObject(ht);
-        oout.close();
-
+        try (ObjectOutputStream oout = new ObjectOutputStream(bos)) {
+            oout.writeObject(ht);
+            oout.close();
+        }
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
         ObjectInputStream oin = new ObjectInputStream(bis);
         Hashtable sht = (Hashtable) oin.readObject();
@@ -327,10 +327,10 @@ public class CollectionHashtableTest {
         ht.put("null", null);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bos);
-        oout.writeObject(ht);
-        oout.close();
-
+        try (ObjectOutputStream oout = new ObjectOutputStream(bos)) {
+            oout.writeObject(ht);
+            oout.close();
+        }
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
         ObjectInputStream oin = new ObjectInputStream(bis);
         Hashtable sht = (Hashtable) oin.readObject();

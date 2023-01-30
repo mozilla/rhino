@@ -32,7 +32,7 @@ public class JavaIterableTest extends TestCase {
 
     @Test
     public void testMap() {
-        Map map = new LinkedHashMap();
+        Map<Object, Object> map = new LinkedHashMap<>();
         String script =
                 "var a = [];\n"
                         + "for (var { key, value } of value.entrySet()) a.push(key, value);\n"
@@ -61,15 +61,15 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript("Array.from(value.entrySet())", map);
             assertEquals(3, res.size());
 
-            Map.Entry e0 = (Map.Entry) res.get(0);
+            Map.Entry<Object, Object> e0 = (Map.Entry<Object, Object>) res.get(0);
             assertEquals("a", e0.getKey());
             assertEquals("b", e0.getValue());
 
-            Map.Entry e1 = (Map.Entry) res.get(1);
+            Map.Entry<Object, Object> e1 = (Map.Entry<Object, Object>) res.get(1);
             assertEquals(123.0, Context.toNumber(e1.getKey()));
             assertEquals(234.0, Context.toNumber(e1.getValue()));
 
-            Map.Entry e2 = (Map.Entry) res.get(2);
+            Map.Entry<Object, Object> e2 = (Map.Entry<Object, Object>) res.get(2);
             assertEquals(o, e2.getKey());
             assertEquals(o, e2.getValue());
         }
@@ -77,7 +77,7 @@ public class JavaIterableTest extends TestCase {
 
     @Test
     public void testList() {
-        List list = new ArrayList();
+        List<Object> list = new ArrayList<>();
         String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
         NativeArray resEmpty = (NativeArray) runScript(script, list);
@@ -107,7 +107,7 @@ public class JavaIterableTest extends TestCase {
 
     @Test
     public void testSet() {
-        Set set = new LinkedHashSet();
+        Set<Object> set = new LinkedHashSet<>();
         String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
         NativeArray resEmpty = (NativeArray) runScript(script, set);
