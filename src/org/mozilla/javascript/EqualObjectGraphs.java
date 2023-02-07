@@ -63,9 +63,9 @@ final class EqualObjectGraphs {
             return true;
         } else if (o1 == null || o2 == null) {
             return false;
-        // String (and ConsStrings), Booleans, and Doubles are considered
-        // JavaScript primitive values and are thus compared by value and
-        // with no regard to their object identity.
+            // String (and ConsStrings), Booleans, and Doubles are considered
+            // JavaScript primitive values and are thus compared by value and
+            // with no regard to their object identity.
         } else if (o1 instanceof String) {
             if (o2 instanceof ConsString) {
                 return o1.equals(o2.toString());
