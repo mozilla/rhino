@@ -249,7 +249,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
         private boolean isResourceChanged(URLConnection urlConnection) throws IOException {
             if (urlConnection instanceof HttpURLConnection) {
                 return ((HttpURLConnection) urlConnection).getResponseCode()
-                        == HttpURLConnection.HTTP_NOT_MODIFIED;
+                        != HttpURLConnection.HTTP_NOT_MODIFIED;
             }
             return lastModified != urlConnection.getLastModified();
         }
