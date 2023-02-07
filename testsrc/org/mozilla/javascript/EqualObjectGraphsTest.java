@@ -33,16 +33,21 @@ public class EqualObjectGraphsTest extends TestCase {
 
     private static class TestObject {
         private final int x;
-        TestObject(int x) { this.x = x; }
 
-        @Override public boolean equals(Object o) {
+        TestObject(int x) {
+            this.x = x;
+        }
+
+        @Override
+        public boolean equals(Object o) {
             if (o instanceof TestObject) {
-                return x == ((TestObject)o).x;
+                return x == ((TestObject) o).x;
             }
             return false;
         }
 
-        @Override public int hashCode() {
+        @Override
+        public int hashCode() {
             return x;
         }
     }
