@@ -4,13 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -45,42 +48,108 @@ public class ForEachForOfTest {
 
     @Test
     public void testForEach() {
-        testIt("dtos.forEach(dto => { dto.data = 'bar' })");
+        testList("dtos.forEach(dto => { dto.data = 'bar' })");
+        testArray("dtos.forEach(dto => { dto.data = 'bar' })");
+        testSet("dtos.forEach(dto => { dto.data = 'bar' })");
+        testMap("dtos.forEach(dto => { dto.data = 'bar' })");
     }
 
     @Test
     public void testForOf() {
-        testIt("for (var dto of dtos) { dto.data = 'bar' }");
+        testList("for (var dto of dtos) { dto.data = 'bar' }");
+        testArray("for (var dto of dtos) { dto.data = 'bar' }");
+        testSet("for (var dto of dtos) { dto.data = 'bar' }");
+        testMap("for (var dto of dtos) { dto[0].data = 'bar' }");
+        testMap("for (var dto of dtos) { dto[1].data = 'bar' }");
     }
 
     @Test
     public void testForEachStrict() {
-        testIt("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
+        testList("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
+        testArray("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
+        testSet("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
+        testMap("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
     }
 
     @Test
     public void testForOfStrict() {
-        testIt("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
+        testList("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
+        testArray("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
+        testSet("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
+        testMap("'use strict'; for (var dto of dtos) { dto[0].data = 'bar' }");
+        testMap("'use strict'; for (var dto of dtos) { dto[1].data = 'bar' }");
     }
 
-    private void testIt(final String script) {
+    private void testList(final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Global scope = new Global();
                     scope.init(cx);
-                    List<Dto> dtos = new ArrayList<>();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
+                    List<Dto> dtos = Arrays.asList(dto);
+                    scope.put("dtos", scope, dtos);
+
+                    cx.evaluateString(scope, script, "myScript.js", 1, null);
+                    Assert.assertEquals("bar", dto.getData());
+                    return null;
+                });
+    }
+
+    private void testArray(final String script) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Global scope = new Global();
+                    scope.init(cx);
+
+                    Dto dto = new Dto();
+                    dto.setData("foo");
+                    Dto[] dtos = new Dto[] {dto};
+                    scope.put("dtos", scope, dtos);
+
+                    cx.evaluateString(scope, script, "myScript.js", 1, null);
+                    Assert.assertEquals("bar", dto.getData());
+                    return null;
+                });
+    }
+
+    private void testSet(final String script) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Global scope = new Global();
+                    scope.init(cx);
+
+                    Dto dto = new Dto();
+                    dto.setData("foo");
+                    Set<Dto> dtos = new HashSet<>();
                     dtos.add(dto);
                     scope.put("dtos", scope, dtos);
 
-                    Object ret = cx.evaluateString(scope, script, "myScript.js", 1, null);
-                    if (ret instanceof Wrapper) {
-                        ret = ((Wrapper) ret).unwrap();
-                    }
-                    Assert.assertEquals("bar", dtos.get(0).getData());
+                    cx.evaluateString(scope, script, "myScript.js", 1, null);
+                    Assert.assertEquals("bar", dto.getData());
+                    return null;
+                });
+    }
+
+    private void testMap(final String script) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Global scope = new Global();
+                    scope.init(cx);
+
+                    Dto dto = new Dto();
+                    dto.setData("foo");
+                    Map<Dto, Dto> dtos = new HashMap<>();
+                    dtos.put(dto, dto);
+                    scope.put("dtos", scope, dtos);
+
+                    cx.evaluateString(scope, script, "myScript.js", 1, null);
+                    Assert.assertEquals("bar", dto.getData());
                     return null;
                 });
     }
