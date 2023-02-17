@@ -7,6 +7,8 @@
 package org.mozilla.javascript;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +38,19 @@ import org.mozilla.javascript.debug.DebuggableObject;
  */
 final class EqualObjectGraphs {
     private static final ThreadLocal<EqualObjectGraphs> instance = new ThreadLocal<>();
+
+    private static final Set<Class<?>> valueClasses =
+            Collections.unmodifiableSet(
+                    new HashSet<>(
+                            Arrays.asList(
+                                    Boolean.class,
+                                    Byte.class,
+                                    Character.class,
+                                    Double.class,
+                                    Float.class,
+                                    Integer.class,
+                                    Long.class,
+                                    Short.class)));
 
     // Object pairs already known to be equal. Used to short-circuit repeated traversals of objects
     // reachable through
@@ -76,7 +91,7 @@ final class EqualObjectGraphs {
                 return o1.toString().equals(o2.toString());
             }
             return false;
-        } else if (o1 instanceof Boolean || o1 instanceof Double) {
+        } else if (valueClasses.contains(o1.getClass())) {
             return o1.equals(o2);
         }
 
