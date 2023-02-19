@@ -168,7 +168,14 @@ final class MemberBox implements Serializable {
                             Object setterThis;
                             Object[] args;
                             Object value =
-                                    originalArgs.length > 0 ? originalArgs[0] : Undefined.instance;
+                                    originalArgs.length > 0
+                                            ? FunctionObject.convertArg(
+                                                    cx,
+                                                    thisObj,
+                                                    originalArgs[0],
+                                                    FunctionObject.getTypeTag(
+                                                            nativeSetter.argTypes[0]))
+                                            : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
                                 args = new Object[] {value};
