@@ -151,6 +151,7 @@ public class NativeArray extends IdScriptableObject implements List {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex, "findIndex", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce, "reduce", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight, "reduceRight", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_flat, "flat", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
@@ -291,6 +292,10 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 2;
                 s = "copyWithin";
                 break;
+            case Id_flat:
+                arity = 0;
+                s = "flat";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -329,6 +334,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 case ConstructorId_findIndex:
                 case ConstructorId_reduce:
                 case ConstructorId_reduceRight:
+                case ConstructorId_flat:
                     {
                         // this is a small trick; we will handle all the ConstructorId_xxx calls
                         // the same way the object calls are processed
@@ -426,6 +432,9 @@ public class NativeArray extends IdScriptableObject implements List {
 
                 case Id_copyWithin:
                     return js_copyWithin(cx, scope, thisObj, args);
+
+                case Id_flat:
+                    return js_flat(cx, scope, thisObj, args);
 
                 case Id_every:
                 case Id_filter:
@@ -1959,6 +1968,44 @@ public class NativeArray extends IdScriptableObject implements List {
         return thisObj;
     }
 
+    private static Object js_flat(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        double depth;
+        if (args.length < 1) {
+            depth = 1;
+        } else {
+            depth = ScriptRuntime.toInteger(args[0]);
+        }
+
+        return flat(cx, scope, o, depth);
+    }
+
+    private static Scriptable flat(Context cx, Scriptable scope, Scriptable source, double depth) {
+        long length = getLengthProperty(cx, source);
+
+        Scriptable result;
+        result = cx.newArray(scope, 0);
+        long j = 0;
+        for (long i = 0; i < length; i++) {
+            Object elem = getRawElem(source, i);
+            if (elem == Scriptable.NOT_FOUND) {
+                continue;
+            }
+            if (depth >= 1 && js_isArray(elem)) {
+                Scriptable arr = flat(cx, scope, (Scriptable) elem, depth - 1);
+                long arrLength = getLengthProperty(cx, arr);
+                for (long k = 0; k < arrLength; k++) {
+                    Object temp = getRawElem(arr, k);
+                    defineElem(cx, result, j++, temp);
+                }
+            } else {
+              defineElem(cx, result, j++, elem);
+            }
+        }
+        setLengthProperty(cx, result, j);
+        return result;
+    }
+
     /** Implements the methods "every", "filter", "forEach", "map", and "some". */
     private static Object iterativeMethod(
             Context cx,
@@ -2538,6 +2585,9 @@ public class NativeArray extends IdScriptableObject implements List {
             case "copyWithin":
                 id = Id_copyWithin;
                 break;
+            case "flat":
+                id = Id_flat;
+                break;
             default:
                 id = 0;
                 break;
@@ -2576,7 +2626,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_entries = 29,
             Id_includes = 30,
             Id_copyWithin = 31,
-            SymbolId_iterator = 32,
+            Id_flat = 32,
+            SymbolId_iterator = 33,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
@@ -2599,6 +2650,7 @@ public class NativeArray extends IdScriptableObject implements List {
             ConstructorId_findIndex = -Id_findIndex,
             ConstructorId_reduce = -Id_reduce,
             ConstructorId_reduceRight = -Id_reduceRight,
+            ConstructorId_flat = -Id_flat,
             ConstructorId_isArray = -26,
             ConstructorId_of = -27,
             ConstructorId_from = -28;
