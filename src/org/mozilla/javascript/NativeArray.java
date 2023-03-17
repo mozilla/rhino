@@ -1971,7 +1971,7 @@ public class NativeArray extends IdScriptableObject implements List {
     private static Object js_flat(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         double depth;
-        if (args.length < 1) {
+        if (args.length < 1 || Undefined.isUndefined(args[0])) {
             depth = 1;
         } else {
             depth = ScriptRuntime.toInteger(args[0]);
