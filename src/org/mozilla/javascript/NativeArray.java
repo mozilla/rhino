@@ -1009,6 +1009,14 @@ public class NativeArray extends IdScriptableObject implements List {
         }
     }
 
+    private static void defineElemOrThrow(Context cx, Scriptable target, long index, Object value) {
+        if (index > NativeNumber.MAX_SAFE_INTEGER) {
+            throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", String.valueOf(index));
+        } else {
+            defineElem(cx, target, index, value);
+        }
+    }
+
     private static void setElem(Context cx, Scriptable target, long index, Object value) {
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
@@ -1996,10 +2004,10 @@ public class NativeArray extends IdScriptableObject implements List {
                 long arrLength = getLengthProperty(cx, arr);
                 for (long k = 0; k < arrLength; k++) {
                     Object temp = getRawElem(arr, k);
-                    defineElem(cx, result, j++, temp);
+                    defineElemOrThrow(cx, result, j++, temp);
                 }
             } else {
-              defineElem(cx, result, j++, elem);
+                defineElemOrThrow(cx, result, j++, elem);
             }
         }
         setLengthProperty(cx, result, j);
