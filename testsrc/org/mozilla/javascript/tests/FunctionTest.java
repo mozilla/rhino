@@ -30,8 +30,7 @@ public class FunctionTest {
     @Test
     public void functionHasNameOfVarStrictMode() throws Exception {
         final String script =
-                ""
-                        + "'use strict';\n"
+                "'use strict';\n"
                         + "var result = '';\n"
                         + "var abc = 1;\n"
                         + "var foo = function abc() { result += '-inner abc = ' + typeof abc; };\n"
@@ -45,8 +44,7 @@ public class FunctionTest {
     @Test
     public void innerFunctionWithSameName() throws Exception {
         final String script =
-                ""
-                        + "var result = '';\n"
+                "var result = '';\n"
                         + "var a = function () {\n"
                         + "  var x = (function x () { result += 'a'; });\n"
                         + "  return function () { x(); };\n"
@@ -65,8 +63,7 @@ public class FunctionTest {
     @Test
     public void innerFunctionWithSameNameAsOutsideStrict() throws Exception {
         final String script =
-                ""
-                        + "var result = '';\n"
+                "var result = '';\n"
                         + "'use strict';\n"
                         + "var a = function () {\n"
                         + "  var x = (function x () { result += 'a'; });\n"
@@ -82,8 +79,7 @@ public class FunctionTest {
     @Test
     public void secondFunctionWithSameNameStrict() throws Exception {
         final String script =
-                ""
-                        + "var result = '';\n"
+                "var result = '';\n"
                         + "'use strict';\n"
                         + "function norm(foo) { return ('' + foo).replace(/(\\s)/gm,''); }\n"
                         + "function func () { result += 'outer'; }\n"
@@ -140,7 +136,18 @@ public class FunctionTest {
         assertEvaluates("f1f2f3!f4f5!f6!f7!f8f10f11f12f11f12f13", script);
     }
 
-    private void assertEvaluates(final Object expected, final String source) {
+    @Test
+    public void conditionallyCreatedFunction() {
+        final String script =
+                "var log = 'foo = ' + foo;\n"
+                        + "if (false) {\n"
+                        + "  function foo() { return 1; }\n"
+                        + "}\n"
+                        + "log";
+        assertEvaluates("foo = undefined", script);
+    }
+
+    private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
