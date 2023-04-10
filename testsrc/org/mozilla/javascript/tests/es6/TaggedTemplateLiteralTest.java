@@ -78,9 +78,9 @@ public class TaggedTemplateLiteralTest {
         }
 
         @Override
-        public boolean visit(AstNode node) {
-            if (node instanceof TaggedTemplateLiteral) {
-                this.node = (TaggedTemplateLiteral) node;
+        public boolean visit(AstNode astNode) {
+            if (astNode instanceof TaggedTemplateLiteral) {
+                this.node = (TaggedTemplateLiteral) astNode;
                 return false;
             }
             return true;
@@ -101,9 +101,9 @@ public class TaggedTemplateLiteralTest {
         }
 
         @Override
-        public boolean visit(AstNode node) {
-            if (node instanceof Name) {
-                Name nameNode = (Name) node;
+        public boolean visit(AstNode astNode) {
+            if (astNode instanceof Name) {
+                Name nameNode = (Name) astNode;
                 if (nameNode.getIdentifier().equals(name)) {
                     this.node = nameNode;
                     return false;
