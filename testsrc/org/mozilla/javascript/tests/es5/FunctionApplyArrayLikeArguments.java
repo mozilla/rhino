@@ -23,7 +23,7 @@ public class FunctionApplyArrayLikeArguments {
 
                     Object result = null;
                     try {
-                        result = cx.evaluateString(scope,testCode,"test",1,null);
+                        result = cx.evaluateString(scope, testCode, "test", 1, null);
                     } catch (Exception e) {
                         result = "EXCEPTIONCAUGHT";
                     }
@@ -49,9 +49,7 @@ public class FunctionApplyArrayLikeArguments {
                         + "test.apply(this, {'length':'1', '0':'lala'});",
                 "lala");
 
-        test(
-                "function test() { return arguments[0]; }" + "test.apply(2,2);",
-                "EXCEPTIONCAUGHT");
+        test("function test() { return arguments[0]; }" + "test.apply(2,2);", "EXCEPTIONCAUGHT");
 
         test(
                 "function test() { return arguments[0]; }"
