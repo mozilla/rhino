@@ -16,21 +16,21 @@ import org.mozilla.javascript.Scriptable;
  */
 public class Utils {
     /** The default set of levels to run tests at. */
-    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
+    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1};
 
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(final ContextAction<?> action) {
-        runWithOptimizationLevel(action, -1);
-        runWithOptimizationLevel(action, 0);
-        runWithOptimizationLevel(action, 1);
+        for (int level : getTestOptLevels()) {
+            runWithOptimizationLevel(action, level);
+        }
     }
 
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(
             final ContextFactory contextFactory, final ContextAction<?> action) {
-        runWithOptimizationLevel(contextFactory, action, -1);
-        runWithOptimizationLevel(contextFactory, action, 0);
-        runWithOptimizationLevel(contextFactory, action, 1);
+        for (int level : getTestOptLevels()) {
+            runWithOptimizationLevel(contextFactory, action, level);
+        }
     }
 
     /** Runs the provided action at the given optimization level */
