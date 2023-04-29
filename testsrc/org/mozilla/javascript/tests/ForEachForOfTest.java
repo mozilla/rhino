@@ -47,7 +47,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForEach() {
+    public void forEach() {
         testList("dtos.forEach(dto => { dto.data = 'bar' })");
         testArray("dtos.forEach(dto => { dto.data = 'bar' })");
         testSet("dtos.forEach(dto => { dto.data = 'bar' })");
@@ -55,7 +55,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForOf() {
+    public void forOf() {
         testList("for (var dto of dtos) { dto.data = 'bar' }");
         testArray("for (var dto of dtos) { dto.data = 'bar' }");
         testSet("for (var dto of dtos) { dto.data = 'bar' }");
@@ -64,7 +64,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForEachStrict() {
+    public void forEachStrict() {
         testList("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
         testArray("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
         testSet("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
@@ -72,7 +72,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForOfStrict() {
+    public void forOfStrict() {
         testList("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
         testArray("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
         testSet("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");

@@ -29,13 +29,13 @@ import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 /** Ensure that the "List" contract is valid for a typed array. */
 public class TypedArrayJavaTest {
     @Test
-    public void testInt8() {
+    public void int8() {
         NativeInt8Array a = new NativeInt8Array(2);
         testTwoList(a, (byte) 1, (byte) 2, (byte) 3);
     }
 
     @Test
-    public void testInt8Equals() {
+    public void int8Equals() {
         byte a = 3;
         byte b = 4;
 
@@ -80,49 +80,49 @@ public class TypedArrayJavaTest {
     }
 
     @Test
-    public void testUInt8() {
+    public void uInt8() {
         NativeUint8Array a = new NativeUint8Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testUInt8Clamped() {
+    public void uInt8Clamped() {
         NativeUint8ClampedArray a = new NativeUint8ClampedArray(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testInt16() {
+    public void int16() {
         NativeInt16Array a = new NativeInt16Array(2);
         testTwoList(a, (short) 1, (short) 2, (short) 3);
     }
 
     @Test
-    public void testUint16() {
+    public void uInt16() {
         NativeUint16Array a = new NativeUint16Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testInt32() {
+    public void int32() {
         NativeInt32Array a = new NativeInt32Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testUint32() {
+    public void uInt32() {
         NativeUint32Array a = new NativeUint32Array(2);
         testTwoList(a, 1L, 2L, 3L);
     }
 
     @Test
-    public void testFloat32() {
+    public void float32() {
         NativeFloat32Array a = new NativeFloat32Array(2);
         testTwoList(a, 1.0f, 2.0f, 3.0F);
     }
 
     @Test
-    public void testFloat64() {
+    public void float64() {
         NativeFloat64Array a = new NativeFloat64Array(2);
         testTwoList(a, 1.0, 2.0, 3.0);
     }

@@ -46,7 +46,7 @@ public class FactoryTest {
     }
 
     @Test
-    public void testRhinoFactory() {
+    public void rhinoFactory() {
         // This will always uniquely return our engine.
         // In Java 8, other ways to find it may return Nashorn.
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("rhino");

@@ -34,7 +34,7 @@ public class FunctionApplyArrayLikeArguments {
     }
 
     @Test
-    public void testArrayLikeArgumentsOfFunctionApply() {
+    public void arrayLikeArgumentsOfFunctionApply() {
         test(
                 "function test() { return arguments[0]; }" + "test.apply(this, {});",
                 Undefined.instance);

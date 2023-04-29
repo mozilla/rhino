@@ -33,7 +33,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testInsertionSort() {
+    public void insertionSort() {
         insertionSort(forwardArray(100));
         insertionSort(reverseArray(100));
         insertionSort(randomArray(100));
@@ -50,7 +50,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testHybridSort() {
+    public void hybridSort() {
         hybridSort(randomArray(10));
         hybridSort(forwardArray(100));
         hybridSort(reverseArray(100));
@@ -61,7 +61,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testMedian() {
+    public void median() {
         Object[] a = new Object[] {1, 2, 3, 4, 5};
         assertEquals(2, sorter.median(a, 0, 4, new IntComparator()));
         a = new Object[] {5, 4, 3, 2, 1};
@@ -74,7 +74,7 @@ public class SortingTest {
 
     /*
     @Test
-    public void testBenchInsertionRandom()
+    public void nenchInsertionRandom()
     {
         Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
         Sorting.insertionSort(a, new IntComparator());
@@ -82,7 +82,7 @@ public class SortingTest {
     */
 
     @Test
-    public void testBenchRandomHybrid() {
+    public void benchRandomHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
             sorter.hybridSort(a, new IntComparator());
@@ -90,7 +90,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchRandomJavaUtil() {
+    public void benchRandomJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
             Arrays.sort(a, new IntComparator());
@@ -99,7 +99,7 @@ public class SortingTest {
 
     /*
     @Test
-    public void testBenchInsertionReverse()
+    public void benchInsertionReverse()
     {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
@@ -109,7 +109,7 @@ public class SortingTest {
     */
 
     @Test
-    public void testBenchReverseHybrid() {
+    public void benchReverseHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
             sorter.hybridSort(a, new IntComparator());
@@ -117,7 +117,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchReverseJavaUtil() {
+    public void benchReverseJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
             Arrays.sort(a, new IntComparator());
@@ -125,7 +125,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialInsertion() {
+    public void benchSequentialInsertion() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             sorter.insertionSort(a, new IntComparator());
@@ -133,7 +133,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialHybrid() {
+    public void benchSequentialHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             sorter.hybridSort(a, new IntComparator());
@@ -141,7 +141,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialJavaUtil() {
+    public void benchSequentialJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             Arrays.sort(a, new IntComparator());

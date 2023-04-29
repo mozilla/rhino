@@ -20,7 +20,7 @@ import org.mozilla.javascript.tests.Utils;
 /** Test for NativeObject. */
 public class NativeObjectTest {
     @Test
-    public void testAssignPropertyGetter() {
+    public void assignPropertyGetter() {
         evaluateAndAssert(
                 "var obj = Object.defineProperty({}, 'propA', {\n"
                         + "                 enumerable: true,\n"
@@ -38,20 +38,20 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignOneParameter() {
+    public void assignOneParameter() {
         evaluateAndAssert(
                 "var obj = {};" + "res = Object.assign(obj);" + "res === obj;", Boolean.TRUE);
     }
 
     @Test
-    public void testAssignMissingParameters() {
+    public void assignMissingParameters() {
         evaluateAndAssert(
                 "try { " + "  Object.assign();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
-    public void testAssignNumericPropertyGetter() {
+    public void assignNumericPropertyGetter() {
         evaluateAndAssert(
                 "var obj = Object.defineProperty({}, 1, {\n"
                         + "                 enumerable: true,\n"
@@ -69,12 +69,12 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignUndefined() {
+    public void assignUndefined() {
         evaluateAndAssert("Object.keys(Object.assign({a:undefined}, {b:undefined})).join()", "a,b");
     }
 
     @Test
-    public void testAssignInextensible() {
+    public void assignInextensible() {
         evaluateAndAssert(
                 "var obj = Object.freeze({});\n"
                         + "try {\n"
@@ -96,7 +96,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignUnwritable() {
+    public void assignUnwritable() {
         evaluateAndAssert(
                 "var src = Object.defineProperty({}, 1, {\n"
                         + "  enumerable: true,\n"
@@ -149,7 +149,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignVariousKeyTypes() {
+    public void assignVariousKeyTypes() {
         evaluateAndAssert(
                 "var strKeys = Object.assign({}, {a: 1, b: 2});\n"
                         + "var arrayKeys = Object.assign({}, ['a', 'b']);\n"
@@ -160,7 +160,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignWithPrototypeStringKeys() {
+    public void assignWithPrototypeStringKeys() {
         final String script =
                 "var targetProto = { a: 1, b: 2 };\n"
                         + "var target = Object.create(targetProto);\n"
@@ -177,7 +177,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignWithPrototypeNumericKeys() {
+    public void assignWithPrototypeNumericKeys() {
         final String script =
                 "var targetProto = {0: 'a', 1: 'b'};\n"
                         + "var target = Object.create(targetProto);\n"
@@ -194,7 +194,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testAssignWithPrototypeWithGettersAndSetters() {
+    public void assignWithPrototypeWithGettersAndSetters() {
         final String script =
                 "var targetProto = {"
                         + "_a: 1, get a() { return this._a }, set a(val) { this._a = val+10 },"
@@ -219,7 +219,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testSetPrototypeOfNull() {
+    public void setPrototypeOfNull() {
         evaluateAndAssert(
                 "try { "
                         + "  Object.setPrototypeOf(null, new Object());"
@@ -228,7 +228,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testSetPrototypeOfUndefined() {
+    public void setPrototypeOfUndefined() {
         evaluateAndAssert(
                 "try { "
                         + "  Object.setPrototypeOf(undefined, new Object());"
@@ -237,7 +237,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testSetPrototypeOfMissingParameters() {
+    public void setPrototypeOfMissingParameters() {
         evaluateAndAssert(
                 "try { " + "  Object.setPrototypeOf();" + "} catch (e) { e.message }",
                 "Object.setPrototypeOf: At least 2 arguments required, but only 0 passed");
@@ -248,87 +248,87 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testKeysMissingParameter() {
+    public void keysMissingParameter() {
         evaluateAndAssert(
                 "try { " + "  Object.keys();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
-    public void testKeysOnObjectParameter() {
+    public void keysOnObjectParameter() {
         evaluateAndAssert("Object.keys({'foo':'bar', 2: 'y', 1: 'x'}).join()", "1,2,foo");
     }
 
     @Test
-    public void testKeysOnArray() {
+    public void keysOnArray() {
         evaluateAndAssert("Object.keys(['x','y','z']).join()", "0,1,2");
     }
 
     @Test
-    public void testKeysOnArrayWithProp() {
+    public void keysOnArrayWithProp() {
         evaluateAndAssert(
                 "var arr = ['x','y','z'];\n" + "arr['foo'] = 'bar';\n" + "Object.keys(arr).join()",
                 "0,1,2,foo");
     }
 
     @Test
-    public void testValuesMissingParameter() {
+    public void valuesMissingParameter() {
         evaluateAndAssert(
                 "try { " + "  Object.values();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
-    public void testValuesOnObjectParameter() {
+    public void valuesOnObjectParameter() {
         evaluateAndAssert("Object.values({'foo':'bar', 2: 'y', 1: 'x'}).join()", "x,y,bar");
     }
 
     @Test
-    public void testValuesOnArray() {
+    public void valuesOnArray() {
         evaluateAndAssert("Object.values(['x','y','z']).join()", "x,y,z");
     }
 
     @Test
-    public void testValuesOnArrayWithProp() {
+    public void valuesOnArrayWithProp() {
         evaluateAndAssert(
                 "var arr = [3,4,5];\n" + "arr['foo'] = 'bar';\n" + "Object.values(arr).join();",
                 "3,4,5,bar");
     }
 
     @Test
-    public void testEntriesMissingParameter() {
+    public void entriesMissingParameter() {
         evaluateAndAssert(
                 "try { " + "  Object.entries();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
-    public void testEntriesOnObjectParameter() {
+    public void entriesOnObjectParameter() {
         evaluateAndAssert(
                 "Object.entries({'foo':'bar', 2: 'y', 1: 'x'}).join()", "1,x,2,y,foo,bar");
     }
 
     @Test
-    public void testEntriesOnArray() {
+    public void entriesOnArray() {
         evaluateAndAssert("Object.entries(['x','y','z']).join()", "0,x,1,y,2,z");
     }
 
     @Test
-    public void testEntriesOnArrayWithProp() {
+    public void entriesOnArrayWithProp() {
         evaluateAndAssert(
                 "var arr = [3,4,5];\n" + "arr['foo'] = 'bar';\n" + "Object.entries(arr).join()",
                 "0,3,1,4,2,5,foo,bar");
     }
 
     @Test
-    public void testFromEntriesMissingParameter() {
+    public void fromEntriesMissingParameter() {
         evaluateAndAssert(
                 "try { " + "  Object.fromEntries();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
-    public void testFromEntriesOnArray() {
+    public void fromEntriesOnArray() {
         Map<Object, Object> map = new HashMap<>();
         map.put("0", "x");
         map.put("1", "y");

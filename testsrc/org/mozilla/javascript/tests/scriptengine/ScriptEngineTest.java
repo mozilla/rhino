@@ -40,20 +40,20 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testHello() throws ScriptException {
+    public void hello() throws ScriptException {
         Object result = engine.eval("'Hello, World!';");
         assertEquals(result, "Hello, World!");
     }
 
     @Test
-    public void testHelloInterpreted() throws ScriptException {
+    public void helloInterpreted() throws ScriptException {
         engine.put(RhinoScriptEngine.OPTIMIZATION_LEVEL, -1);
         Object result = engine.eval("'Hello, World!';");
         assertEquals(result, "Hello, World!");
     }
 
     @Test
-    public void testHelloReader() throws ScriptException {
+    public void helloReader() throws ScriptException {
         String src = "1 + 1;";
         StringReader sr = new StringReader(src);
         Object result = engine.eval(sr);
@@ -61,7 +61,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testGenericStatements() throws ScriptException {
+    public void genericStatements() throws ScriptException {
         Object result =
                 engine.eval(engine.getFactory().getProgram("let x = 1;", "let y = 2", "x + y"));
         assertEquals(3L, result);
@@ -77,7 +77,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testEngineBindings() throws IOException, ScriptException {
+    public void engineBindings() throws IOException, ScriptException {
         engine.put("string", "Hello");
         engine.put("integer", 123);
         engine.put("a", "a");
@@ -114,7 +114,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testEngineScope() throws IOException, ScriptException {
+    public void engineScope() throws IOException, ScriptException {
         engine.put("string", "Hello");
         engine.put("integer", 123);
         engine.eval(new FileReader("testsrc/assert.js"));
@@ -130,7 +130,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testScopedBindings() throws IOException, ScriptException {
+    public void scopedBindings() throws IOException, ScriptException {
         ScriptContext sc = new SimpleScriptContext();
 
         // We treat engine and global scope the same -- if the user actually
@@ -150,7 +150,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testReservedBindings() throws ScriptException {
+    public void reservedBindings() throws ScriptException {
         engine.put(ScriptEngine.ENGINE, "engine");
         engine.put(ScriptEngine.ENGINE_VERSION, "123");
         engine.put(ScriptEngine.LANGUAGE, "foo");
@@ -162,7 +162,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testCompiled() throws ScriptException, IOException {
+    public void compiled() throws ScriptException, IOException {
         CompiledScript asserts = cEngine.compile(new FileReader("testsrc/assert.js"));
         CompiledScript tests = cEngine.compile("assertEquals(compiled, true);");
 
@@ -178,7 +178,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testCompiled2() throws ScriptException, IOException {
+    public void compiled2() throws ScriptException, IOException {
         CompiledScript asserts = cEngine.compile(new FileReader("testsrc/assert.js"));
         CompiledScript init = cEngine.compile("value = 0;");
         CompiledScript tests =
@@ -193,7 +193,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testCompiledThrows() throws ScriptException {
+    public void compiledThrows() throws ScriptException {
         engine.put(ScriptEngine.FILENAME, "throws1.js");
         CompiledScript throw1 = cEngine.compile("throw 'one';");
         engine.put(ScriptEngine.FILENAME, "throws2.js");
@@ -219,7 +219,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testCantCompile() {
+    public void cantCompile() {
         assertThrows(
                 ScriptException.class,
                 () -> {
@@ -228,7 +228,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testLanguageVersion() throws ScriptException {
+    public void languageVersion() throws ScriptException {
         // Default language version is modernish
         ScriptEngine newEngine = manager.getEngineByName("rhino");
         assertEquals(newEngine.eval("Symbol() == Symbol()"), Boolean.FALSE);
@@ -253,7 +253,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testBadLanguageVersion() {
+    public void badLanguageVersion() {
         assertThrows(
                 ScriptException.class,
                 () -> {
@@ -269,7 +269,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testFilename() {
+    public void filename() {
         engine.put(ScriptEngine.FILENAME, "test.js");
         try {
             engine.eval("throw 'This is an exception';");
@@ -279,7 +279,7 @@ public class ScriptEngineTest {
     }
 
     @Test
-    public void testJavaObject() throws ScriptException {
+    public void javaObject() throws ScriptException {
         File f = new File("testsrc/assert.js");
         String absVal = f.getAbsolutePath();
         engine.put("file", f);

@@ -10,7 +10,7 @@ import org.mozilla.javascript.NativeObject;
 public class StringSubstrTest {
 
     @Test
-    public void testLengthUndefined() {
+    public void lengthUndefined() {
         NativeObject object = new NativeObject();
 
         Object result = eval("'1234'.substr(1, undefined);", "obj", object);
@@ -22,7 +22,7 @@ public class StringSubstrTest {
      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substr.
      */
     @Test
-    public void testVarious() {
+    public void various() {
         NativeObject object = new NativeObject();
 
         assertEquals("M", eval("var aString = 'Mozilla'; aString.substr(0, 1);", "obj", object));

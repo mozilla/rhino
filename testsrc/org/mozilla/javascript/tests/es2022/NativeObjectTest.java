@@ -15,7 +15,7 @@ import org.mozilla.javascript.tests.Utils;
 public class NativeObjectTest {
 
     @Test
-    public void testHasStringOwn() {
+    public void hasStringOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -36,7 +36,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testHasUndefinedOwn() {
+    public void hasUndefinedOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -57,7 +57,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testHasNullOwn() {
+    public void hasNullOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -78,7 +78,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testHasArrayPropertyOwn() {
+    public void hasArrayPropertyOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -100,7 +100,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testHasNoOwn() {
+    public void hHasNoOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -121,7 +121,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testCreateHasOwn() {
+    public void createHasOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -144,7 +144,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testCreateNoHasOwn() {
+    public void createNoHasOwn() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -165,7 +165,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testCalledTest() {
+    public void calledTest() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

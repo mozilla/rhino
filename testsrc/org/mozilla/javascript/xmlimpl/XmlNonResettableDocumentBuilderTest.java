@@ -27,7 +27,7 @@ public class XmlNonResettableDocumentBuilderTest {
     }
 
     @Test
-    public void testNonResettableDocumentBuilder() {
+    public void nonResettableDocumentBuilder() {
         Context cx = new ContextFactory().enterContext();
         try {
             Scriptable scope = cx.initStandardObjects();

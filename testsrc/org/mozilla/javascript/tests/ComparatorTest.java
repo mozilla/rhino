@@ -31,7 +31,7 @@ public class ComparatorTest {
     as per the spec.
      */
     @Test
-    public void testObjectIDComparator() {
+    public void objectIDComparator() {
         idChk(0, 0, 0);
         idChk(1, 0, 1);
         idChk(0, 1, -1);
@@ -53,7 +53,7 @@ public class ComparatorTest {
     a string.
      */
     @Test
-    public void testArrayComparator() {
+    public void arrayComparator() {
         aChk("a", "b", -1);
         aChk("b", "a", 1);
         aChk("a", "a", 0);
@@ -72,7 +72,7 @@ public class ComparatorTest {
     on Array.sort.
      */
     @Test
-    public void testCustomComparator() throws IOException {
+    public void customComparator() throws IOException {
         Context cx = Context.enter();
         Global global = new Global(cx);
         Scriptable root = cx.newObject(global);

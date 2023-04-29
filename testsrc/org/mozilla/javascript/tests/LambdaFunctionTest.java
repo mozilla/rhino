@@ -41,7 +41,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testNativeFunction() {
+    public void nativeFunction() {
         eval(
                 "function foo() { return 'Hello'; }\n"
                         + "assertEquals(foo.name, 'foo');\n"
@@ -54,7 +54,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testNoArgLambdaFunction() {
+    public void noArgLambdaFunction() {
         LambdaFunction f =
                 new LambdaFunction(
                         root,
@@ -74,7 +74,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testConstructLambdaClass() {
+    public void constructLambdaClass() {
         TestClass.init(root);
         eval(
                 "let tc = new TestClass('foo');\n"
@@ -90,7 +90,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testNativePrototypeFunctions() {
+    public void nativePrototypeFunctions() {
         eval(
                 "function TestClass(v) { this.value = v; }\n"
                         + "TestClass.prototype.appendToValue = function(x) { return this.value + x; }\n"
@@ -104,7 +104,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaPrototypeFunctions() {
+    public void lambdaPrototypeFunctions() {
         TestClass.init(root);
         eval(
                 "let tc = new TestClass('foo');\n"
@@ -117,7 +117,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaPrototypeFunctionNotFound() {
+    public void lambdaPrototypeFunctionNotFound() {
         TestClass.init(root);
         assertThrows(
                 RhinoException.class,
@@ -127,7 +127,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaPrototypeFunctionInvalidThis() {
+    public void lambdaPrototypeFunctionInvalidThis() {
         TestClass.init(root);
         eval(
                 "let tc = new TestClass();\n"
@@ -137,7 +137,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaConstructorFunctions() {
+    public void lambdaConstructorFunctions() {
         TestClass.init(root);
         eval(
                 "assertEquals(TestClass.sayHello('World'), 'Hello, World!');\n"
@@ -147,7 +147,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaConstructorValues() {
+    public void lambdaConstructorValues() {
         TestClass.init(root);
         eval(
                 "let tc = new TestClass();\n"
@@ -156,7 +156,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaConstructorNewOnly() {
+    public void lambdaConstructorNewOnly() {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         root,
@@ -172,7 +172,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaConstructorFunctionOnly() {
+    public void lambdaConstructorFunctionOnly() {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         root,
@@ -188,7 +188,7 @@ public class LambdaFunctionTest {
     }
 
     @Test
-    public void testLambdaFunctionNoNew() {
+    public void lambdaFunctionNoNew() {
         LambdaFunction func =
                 new LambdaFunction(
                         root,
