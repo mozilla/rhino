@@ -6,13 +6,18 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContinuationPending;
@@ -29,7 +34,8 @@ import org.mozilla.javascript.serialize.ScriptableOutputStream;
  *
  * @author Norris Boyd
  */
-public class ContinuationsApiTest extends TestCase {
+public class ContinuationsApiTest {
+
     Scriptable globalScope;
 
     public static class MyClass implements Serializable {
@@ -61,7 +67,7 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    @Override
+    @Before
     public void setUp() {
         try (Context cx = Context.enter()) {
             globalScope = cx.initStandardObjects();
@@ -70,7 +76,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testScriptWithContinuations() {
+    @Test
+    public void scriptWithContinuations() {
         try (Context cx = Context.enter()) {
             try {
                 cx.setOptimizationLevel(-1); // must use interpreter mode
@@ -88,7 +95,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testScriptWithMultipleContinuations() {
+    @Test
+    public void scriptWithMultipleContinuations() {
         try (Context cx = Context.enter()) {
             try {
                 cx.setOptimizationLevel(-1); // must use interpreter mode
@@ -117,7 +125,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testScriptWithNestedContinuations() {
+    @Test
+    public void scriptWithNestedContinuations() {
         try (Context cx = Context.enter()) {
             try {
                 cx.setOptimizationLevel(-1); // must use interpreter mode
@@ -146,7 +155,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testFunctionWithContinuations() {
+    @Test
+    public void functionWithContinuations() {
         try (Context cx = Context.enter()) {
             try {
                 cx.setOptimizationLevel(-1); // must use interpreter mode
@@ -176,7 +186,8 @@ public class ContinuationsApiTest extends TestCase {
      * Rhino throws an exception when the JavaScript frames don't reach all the way to the code
      * called by executeScriptWithContinuations or callFunctionWithContinuations.
      */
-    public void testErrorOnEvalCall() {
+    @Test
+    public void errorOnEvalCall() {
         try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(-1); // must use interpreter mode
             Script script = cx.compileString("eval('myObject.f(3);');", "test source", 1, null);
@@ -189,7 +200,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testSerializationWithContinuations() throws IOException, ClassNotFoundException {
+    @Test
+    public void serializationWithContinuations() throws IOException, ClassNotFoundException {
         try (Context cx = Context.enter()) {
             try {
                 cx.setOptimizationLevel(-1); // must use interpreter mode
@@ -232,7 +244,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testContinuationsPrototypesAndSerialization()
+    @Test
+    public void continuationsPrototypesAndSerialization()
             throws IOException, ClassNotFoundException {
 
         byte[] serializedData = null;
@@ -294,7 +307,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testContinuationsInlineFunctionsSerialization()
+    @Test
+    public void continuationsInlineFunctionsSerialization()
             throws IOException, ClassNotFoundException {
 
         Scriptable globalScope;
@@ -348,8 +362,8 @@ public class ContinuationsApiTest extends TestCase {
         }
     }
 
-    public void testConsStringSerialization() throws IOException, ClassNotFoundException {
-
+    @Test
+    public void consStringSerialization() throws IOException, ClassNotFoundException {
         ConsString r1 = new ConsString("foo", "bar");
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

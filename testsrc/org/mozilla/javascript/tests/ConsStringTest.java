@@ -1,15 +1,20 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.lang.reflect.Method;
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.annotations.JSFunction;
 
-public class ConsStringTest extends TestCase {
+public class ConsStringTest {
 
-    public void testAppend() {
+    @Test
+    public void append() {
         ConsString current = new ConsString("a", "b");
         current = new ConsString(current, "c");
         current = new ConsString(current, "d");
@@ -23,7 +28,8 @@ public class ConsStringTest extends TestCase {
         assertEquals("abcd", current.toString());
     }
 
-    public void testAppendManyStrings() {
+    @Test
+    public void appendManyStrings() {
         ConsString current = new ConsString("a", "a");
         for (int i = 0; i < 1000000; i++) {
             current = new ConsString(current, "a");
@@ -31,7 +37,8 @@ public class ConsStringTest extends TestCase {
         assertNotNull(current.toString());
     }
 
-    public void testAppendManyStringsRecursive() {
+    @Test
+    public void appendManyStringsRecursive() {
         recurseAndAppend(4000);
     }
 
@@ -47,7 +54,8 @@ public class ConsStringTest extends TestCase {
         }
     }
 
-    public void testDoNotLeakConsStringIntoSetter() throws Exception {
+    @Test
+    public void doNotLeakConsStringIntoSetter() throws Exception {
         Context cx = Context.enter();
         try {
             final ScriptableObject topScope = cx.initStandardObjects();
@@ -70,7 +78,8 @@ public class ConsStringTest extends TestCase {
         }
     }
 
-    public void testDoNotLeakConsStringIntoFunction() throws Exception {
+    @Test
+    public void doNotLeakConsStringIntoFunction() throws Exception {
         Context cx = Context.enter();
         try {
             final ScriptableObject topScope = cx.initStandardObjects();
@@ -79,7 +88,7 @@ public class ConsStringTest extends TestCase {
             final String script = "var a = 'Rhino'; new MyHostObject().test('#' + a);";
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
-            assertEquals("java.lang.String", result);
+            Assert.assertEquals("java.lang.String", result);
         } finally {
             Context.exit();
         }

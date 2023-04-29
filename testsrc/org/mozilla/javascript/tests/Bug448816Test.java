@@ -4,11 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -17,13 +22,13 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Hannes Wallnoefer
  */
-public class Bug448816Test extends TestCase {
+public class Bug448816Test {
 
     Map<Object, Object> map, reference;
 
     @SuppressWarnings("unchecked")
-    @Override
-    protected void setUp() {
+    @Before
+    public void setUp() {
         // set up a reference map
         reference = new LinkedHashMap<Object, Object>();
         reference.put("a", "a");
@@ -44,6 +49,7 @@ public class Bug448816Test extends TestCase {
         Context.exit();
     }
 
+    @Test
     public void testEqual() {
         // FIXME we do not override equals() and hashCode() in ScriptableObject
         // so calling this with swapped argument fails. This breaks symmetry
@@ -51,7 +57,8 @@ public class Bug448816Test extends TestCase {
         assertEquals(reference, map);
     }
 
-    public void testBasicAccess() {
+    @Test
+    public void basicAccess() {
         assertTrue(map.size() == 4);
         assertEquals(map.get("a"), reference.get("a"));
         assertEquals(map.get("b"), reference.get("b"));
@@ -65,7 +72,8 @@ public class Bug448816Test extends TestCase {
         assertFalse(map.containsValue(null));
     }
 
-    public void testCollections() {
+    @Test
+    public void collections() {
         assertEquals(map.keySet(), reference.keySet());
         assertEquals(map.entrySet(), reference.entrySet());
         // java.util.Collection does not imply overriding equals(), so:
@@ -73,25 +81,29 @@ public class Bug448816Test extends TestCase {
         assertTrue(reference.values().containsAll(map.values()));
     }
 
-    public void testRemoval() {
+    @Test
+    public void removal() {
         // the only update we implement is removal
         assertTrue(map.size() == 4);
         assertEquals(map.remove("b"), Boolean.TRUE);
         reference.remove("b");
         assertTrue(map.size() == 3);
         assertEquals(reference, map);
-        testCollections();
+        collections();
     }
 
-    public void testKeyIterator() {
+    @Test
+    public void keyIterator() {
         compareIterators(map.keySet().iterator(), reference.keySet().iterator());
     }
 
-    public void testEntryIterator() {
+    @Test
+    public void entryIterator() {
         compareIterators(map.entrySet().iterator(), reference.entrySet().iterator());
     }
 
-    public void testValueIterator() {
+    @Test
+    public void valueIterator() {
         compareIterators(map.values().iterator(), reference.values().iterator());
     }
 

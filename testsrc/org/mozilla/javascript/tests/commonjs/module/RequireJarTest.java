@@ -1,10 +1,14 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -17,8 +21,10 @@ import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
  * @version $Id: RequireTest.java,v 1.1 2011/04/07 22:24:37 hannes%helma.at Exp $
  */
 public class RequireJarTest extends RequireTest {
+
+    @Test
     @Override
-    public void testSandboxed() throws Exception {
+    public void sandboxed() throws Exception {
         final Context cx = createContext();
         final Require require = getSandboxedRequire(cx);
         require.requireMain(cx, "testSandboxed");
@@ -39,8 +45,9 @@ public class RequireJarTest extends RequireTest {
         return cx;
     }
 
+    @Test
     @Override
-    public void testNonSandboxed() throws Exception {
+    public void nonSandboxed() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
@@ -49,13 +56,15 @@ public class RequireJarTest extends RequireTest {
         require.requireMain(cx, "testNonSandboxed");
     }
 
+    @Test
     @Override
-    public void testVariousUsageErrors() throws Exception {
+    public void variousUsageErrors() throws Exception {
         testWithSandboxedRequire("testNoArgsRequire");
     }
 
+    @Test
     @Override
-    public void testRelativeId() throws Exception {
+    public void relativeId() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
@@ -63,8 +72,9 @@ public class RequireJarTest extends RequireTest {
         cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
     }
 
+    @Test
     @Override
-    public void testSetMainForAlreadyLoadedModule() throws Exception {
+    public void setMainForAlreadyLoadedModule() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);

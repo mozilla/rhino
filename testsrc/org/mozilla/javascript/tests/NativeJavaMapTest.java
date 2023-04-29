@@ -6,13 +6,15 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
@@ -22,8 +24,10 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
-public class NativeJavaMapTest extends TestCase {
+public class NativeJavaMapTest {
+
     protected final Global global = new Global();
+
     private final ContextFactory contextFactoryWithMapAccess =
             new ContextFactory() {
                 @Override
@@ -39,7 +43,8 @@ public class NativeJavaMapTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
-    public void testAccessingNullValues() {
+    @Test
+    public void accessingNullValues() {
         Map<Object, Number> map = new HashMap<>();
         map.put("a", null);
         map.put(1, null);
@@ -48,7 +53,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(null, runScript("value[1]", map, true));
     }
 
-    public void testAccessingJavaMapIntegerValues() {
+    @Test
+    public void accessingJavaMapIntegerValues() {
         Map<Number, Number> map = new HashMap<>();
         map.put(0, 1);
         map.put(1, 2);
@@ -58,7 +64,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(3, runScriptAsInt("value[2]", map, true));
     }
 
-    public void testJavaMethodCalls() {
+    @Test
+    public void javaMethodCalls() {
         Map<String, Number> map = new HashMap<>();
         map.put("a", 1);
         map.put("b", 2);
@@ -68,7 +75,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(4, runScriptAsInt("value.put('d', 4);value.size()", map, true));
     }
 
-    public void testUpdatingJavaMapIntegerValues() {
+    @Test
+    public void updatingJavaMapIntegerValues() {
         Map<Number, Number> map = new HashMap<>();
         map.put(0, 1);
         map.put(1, 2);
@@ -79,7 +87,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(5, map.get(1).intValue());
     }
 
-    public void testAccessingJavaMapStringValues() {
+    @Test
+    public void accessingJavaMapStringValues() {
         Map<String, String> map = new HashMap<>();
         map.put("a", "a");
         map.put("b", "b");
@@ -91,7 +100,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals("c", runScriptAsString("value.c", map, true));
     }
 
-    public void testUpdatingJavaMapStringValues() {
+    @Test
+    public void updatingJavaMapStringValues() {
         Map<String, String> map = new HashMap<>();
         map.put("a", "a");
         map.put("b", "b");
@@ -104,7 +114,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals("g", runScriptAsString("value.b=\"g\";value.b", map, true));
     }
 
-    public void testAccessMapInMap() {
+    @Test
+    public void accessMapInMap() {
         Map<String, Map<String, String>> map = new HashMap<>();
         map.put("a", new HashMap<>());
         map.get("a").put("a", "a");
@@ -113,7 +124,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals("a", runScriptAsString("value.a.a", map, true));
     }
 
-    public void testUpdatingMapInMap() {
+    @Test
+    public void updatingMapInMap() {
         Map<String, Map<String, String>> map = new HashMap<>();
         map.put("a", new HashMap<>());
         map.get("a").put("a", "a");
@@ -123,7 +135,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals("b", runScriptAsString("value.a.a = 'b';value.a.a", map, true));
     }
 
-    public void testKeys() {
+    @Test
+    public void keys() {
         Map<String, String> map = new HashMap<>();
         NativeArray resEmpty = (NativeArray) runScript("Object.keys(value)", map, true);
         assertEquals(0, resEmpty.size());
@@ -144,7 +157,8 @@ public class NativeJavaMapTest extends TestCase {
         assertTrue(resInt.contains("42")); // Object.keys always return Strings as key
     }
 
-    public void testJavaMapWithoutAccessEntries() {
+    @Test
+    public void javaMapWithoutAccessEntries() {
         Map<Object, Object> map = new HashMap<>();
         map.put(0, 1);
         map.put("put", "method");
@@ -157,7 +171,8 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(true, runScript("Object.keys(value).includes('getClass')", map, false));
     }
 
-    public void testSymbolIterator() {
+    @Test
+    public void symbolIterator() {
         Map map = new LinkedHashMap();
         String script =
                 "var a = [];\n" + "for (var [key, value] of value) a.push(key, value);\n" + "a";
@@ -175,8 +190,8 @@ public class NativeJavaMapTest extends TestCase {
             assertEquals(6, res.size());
             assertEquals("a", res.get(0));
             assertEquals("b", res.get(1));
-            assertEquals(123.0, Context.toNumber(res.get(2)));
-            assertEquals(234.0, Context.toNumber(res.get(3)));
+            assertEquals(123.0, Context.toNumber(res.get(2)), 0.000001);
+            assertEquals(234.0, Context.toNumber(res.get(3)), 0.000001);
             assertEquals(o, res.get(4));
             assertEquals(o, res.get(5));
         }
@@ -190,8 +205,8 @@ public class NativeJavaMapTest extends TestCase {
             assertEquals("b", e0.get(1));
 
             NativeArray e1 = (NativeArray) res.get(1);
-            assertEquals(123.0, Context.toNumber(e1.get(0)));
-            assertEquals(234.0, Context.toNumber(e1.get(1)));
+            assertEquals(123.0, Context.toNumber(e1.get(0)), 0.000001);
+            assertEquals(234.0, Context.toNumber(e1.get(1)), 0.000001);
 
             NativeArray e2 = (NativeArray) res.get(2);
             assertEquals(o, e2.get(0));

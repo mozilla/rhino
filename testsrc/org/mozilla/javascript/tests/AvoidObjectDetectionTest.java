@@ -4,13 +4,17 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
 
 /** There is some special handling for document.all */
-public class AvoidObjectDetectionTest extends TestCase {
+public class AvoidObjectDetectionTest {
+
     public static class Foo extends ScriptableObject {
         private static final long serialVersionUID = -6284330659327161113L;
 
@@ -41,7 +45,8 @@ public class AvoidObjectDetectionTest extends TestCase {
      *
      * @throws Exception in case of errors
      */
-    public void testCtor() throws Exception {
+    @Test
+    public void ctor() throws Exception {
         final ContextFactory factory = new ContextFactory();
         final Context cx = factory.enterContext();
 

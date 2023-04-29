@@ -4,11 +4,17 @@
 
 package org.mozilla.javascript.tests;
 
-import java.io.IOException;
-import junit.framework.TestCase;
-import org.mozilla.javascript.*;
+import static org.junit.Assert.assertEquals;
 
-public class CatchTest extends TestCase {
+import java.io.IOException;
+import org.junit.Test;
+import org.mozilla.javascript.ClassShutter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+
+public class CatchTest {
     public static class Foo extends ScriptableObject {
         private static final long serialVersionUID = -8771045033217033529L;
 
@@ -22,7 +28,8 @@ public class CatchTest extends TestCase {
         }
     }
 
-    public void testCatchWrappedException() throws Exception {
+    @Test
+    public void catchWrappedException() throws Exception {
         String res = doCatchWrappedException(null);
         assertEquals("JavaException: java.io.IOException: oops", res);
 

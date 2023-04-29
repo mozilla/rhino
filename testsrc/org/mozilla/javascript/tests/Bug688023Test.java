@@ -17,6 +17,7 @@ import org.mozilla.javascript.ast.AstRoot;
 
 /** @author André Bargull */
 public class Bug688023Test {
+
     private Context cx;
 
     @Before

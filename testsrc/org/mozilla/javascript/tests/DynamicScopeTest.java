@@ -1,6 +1,9 @@
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -13,7 +16,7 @@ import org.mozilla.javascript.TopLevel;
  *
  * @author Raimund Jacob-Bloedorn <jacob@pinuts.de>
  */
-public class DynamicScopeTest extends TestCase {
+public class DynamicScopeTest {
 
     /** Define the specific behaviour of our application. */
     static class DynamicScopeContextFactory extends ContextFactory {
@@ -46,8 +49,9 @@ public class DynamicScopeTest extends TestCase {
         }
     }
 
+    @Test
     /** Sealed standard objects vs dynamic scopes. */
-    public void testInitStandardObjectsSealed() {
+    public void initStandardObjectsSealed() {
         ContextFactory contextFactory = new DynamicScopeContextFactory();
 
         // This is what we do on initialization ...
@@ -79,8 +83,9 @@ public class DynamicScopeTest extends TestCase {
         }
     }
 
+    @Test
     /** Standard method Object.create */
-    public void testStandardMethodObjectCreate() {
+    public void standardMethodObjectCreate() {
         ContextFactory contextFactory = new DynamicScopeContextFactory();
 
         final Context cx = contextFactory.enterContext();

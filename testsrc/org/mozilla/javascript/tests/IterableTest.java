@@ -3,7 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
@@ -22,7 +24,7 @@ import org.mozilla.javascript.Undefined;
  *
  * @author Stijn Kliemesch
  */
-public class IterableTest extends TestCase {
+public class IterableTest {
 
     public static final class FooWithoutSymbols extends FooBoilerplate {
 
@@ -115,7 +117,8 @@ public class IterableTest extends TestCase {
      * <p>Note: no spec is (knowingly) being adhered to with the "expected" in this test, merely the
      * situation as-is being "noted".
      */
-    public void testForOfUsingNonSymbolScriptable() {
+    @Test
+    public void forOfUsingNonSymbolScriptable() {
 
         Context cx = Context.enter();
         try {
@@ -142,7 +145,8 @@ public class IterableTest extends TestCase {
      * <p>Note: no spec is (knowingly) being adhered to with the "expected" in this test, merely the
      * situation as-is being "noted".
      */
-    public void testForOfUsingNonIterable() {
+    @Test
+    public void forOfUsingNonIterable() {
         Context cx = Context.enter();
         try {
             Scriptable foo = new FooWithSymbols(top);
@@ -164,7 +168,8 @@ public class IterableTest extends TestCase {
      * Test for a host object to be able to supply an iterator, specifically
      * Array.prototype[Symbol.iterator], for a for-of loop.
      */
-    public void testForOfUsingArrayIterator() {
+    @Test
+    public void forOfUsingArrayIterator() {
         Context cx = Context.enter();
         try {
             Scriptable foo = new FooWithArrayIterator(top);

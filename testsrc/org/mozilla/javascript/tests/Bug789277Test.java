@@ -29,6 +29,7 @@ import org.mozilla.javascript.ast.IdeErrorReporter;
 @SuppressWarnings("serial")
 @RunWith(Parameterized.class)
 public class Bug789277Test {
+
     private static final String SOURCE_NAME = "<eval>";
     private static final String MISSING_SEMI = "missing ; after statement";
     private static final int SOURCE_BUFFER_LENGTH = 512; // cf. TokenStream

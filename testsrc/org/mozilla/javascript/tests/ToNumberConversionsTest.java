@@ -22,7 +22,6 @@ import org.mozilla.javascript.Scriptable;
  */
 @RunWith(Parameterized.class)
 public class ToNumberConversionsTest {
-    private static final int[] OPT_LEVELS = {-1, 0, 9};
     private static final Object[][] TESTS = {
         // order: expected result, source string
         // (0) special
@@ -92,7 +91,7 @@ public class ToNumberConversionsTest {
     public static Collection<Object[]> data() {
         List<Object[]> cases = new ArrayList<>();
 
-        for (int optLevel : OPT_LEVELS) {
+        for (int optLevel : Utils.DEFAULT_OPT_LEVELS) {
             for (Object[] test : TESTS) {
                 cases.add(new Object[] {test[0], test[1], optLevel});
             }
