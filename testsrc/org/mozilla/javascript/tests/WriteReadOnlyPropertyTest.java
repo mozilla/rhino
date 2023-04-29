@@ -24,13 +24,13 @@ public class WriteReadOnlyPropertyTest {
 
     /** @throws Exception if the test fails */
     @Test
-    public void testWriteReadOnly_accepted() throws Exception {
+    public void writeReadOnly_accepted() throws Exception {
         testWriteReadOnly(true);
     }
 
     /** @throws Exception if the test fails */
     @Test
-    public void testWriteReadOnly_throws() throws Exception {
+    public void writeReadOnly_throws() throws Exception {
         try {
             testWriteReadOnly(false);
             Assert.fail();

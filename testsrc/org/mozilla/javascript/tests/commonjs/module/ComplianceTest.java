@@ -64,7 +64,7 @@ public class ComplianceTest {
     }
 
     @Test
-    public void testRequire() throws Throwable {
+    public void require() throws Throwable {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();

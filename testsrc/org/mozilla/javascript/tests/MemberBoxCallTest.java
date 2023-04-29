@@ -22,7 +22,7 @@ public class MemberBoxCallTest {
     Scriptable scope;
 
     @Test
-    public void testPrototypeProperty() {
+    public void prototypeProperty() {
         Context cx = Context.enter();
         try {
             assertEquals(
@@ -43,7 +43,7 @@ public class MemberBoxCallTest {
     }
 
     @Test
-    public void testPropertyGetterName() {
+    public void propertyGetterName() {
         Context cx = Context.enter();
         try {
             assertEquals(
@@ -63,7 +63,7 @@ public class MemberBoxCallTest {
     }
 
     @Test
-    public void testPropertySetterName() {
+    public void propertySetterName() {
         Context cx = Context.enter();
         try {
             assertEquals(

@@ -41,7 +41,7 @@ public class BackwardUseStrict {
     }
 
     @Test
-    public void testStrictIgnored() {
+    public void strictIgnored() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_1_8);
@@ -58,7 +58,7 @@ public class BackwardUseStrict {
     }
 
     @Test
-    public void testStrictHonored() {
+    public void strictHonored() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

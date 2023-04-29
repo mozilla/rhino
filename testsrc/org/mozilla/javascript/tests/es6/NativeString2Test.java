@@ -19,7 +19,7 @@ import org.mozilla.javascript.tests.Utils;
 public class NativeString2Test {
 
     @Test
-    public void testGetOwnPropertyDescriptorWithIndex() {
+    public void getOwnPropertyDescriptorWithIndex() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -50,7 +50,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testNormalizeNoParam() {
+    public void normalizeNoParam() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -64,7 +64,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testNormalizeNoUndefined() {
+    public void normalizeNoUndefined() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -79,7 +79,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testNormalizeNoNull() {
+    public void normalizeNoNull() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -103,7 +103,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testReplaceReplacementAsString() {
+    public void replaceReplacementAsString() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -118,7 +118,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testIndexOfEmpty() {
+    public void indexOfEmpty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -145,7 +145,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testIncludesEmpty() {
+    public void includesEmpty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -192,7 +192,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testStartsWithEmpty() {
+    public void startsWithEmpty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -239,7 +239,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testEndsWithEmpty() {
+    public void endsWithEmpty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -286,7 +286,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testTagify() {
+    public void tagify() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -325,7 +325,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testTagifyPrototypeNull() {
+    public void tagifyPrototypeNull() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -361,7 +361,7 @@ public class NativeString2Test {
     }
 
     @Test
-    public void testTagifyPrototypeUndefined() {
+    public void tagifyPrototypeUndefined() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

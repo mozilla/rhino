@@ -17,7 +17,7 @@ import org.mozilla.javascript.tests.Utils;
 public class ObjectSealFreezeTest {
 
     @Test
-    public void testSealWriteToExistingWritableProperty() {
+    public void sealWriteToExistingWritableProperty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -46,7 +46,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testSealWriteToExistingWritablePropertyStrict() {
+    public void sealWriteToExistingWritablePropertyStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -76,7 +76,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testSealWriteToExistingSymbolProperty() {
+    public void sealWriteToExistingSymbolProperty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -106,7 +106,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testSealWriteToExistingSymbolPropertyStrict() {
+    public void sealWriteToExistingSymbolPropertyStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -137,7 +137,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testFreezeWriteToExistingWritableProperty() {
+    public void freezeWriteToExistingWritableProperty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -166,7 +166,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testFreezeWriteToExistingWritablePropertyStrict() {
+    public void freezeWriteToExistingWritablePropertyStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -198,7 +198,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testFreezeWriteToExistingSymbolProperty() {
+    public void freezeWriteToExistingSymbolProperty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -228,7 +228,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testFreezeWriteToExistingSymbolPropertyStrict() {
+    public void freezeWriteToExistingSymbolPropertyStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -261,7 +261,7 @@ public class ObjectSealFreezeTest {
     }
 
     @Test
-    public void testObjectConstructorForNonExtensibleFunctions() {
+    public void objectConstructorForNonExtensibleFunctions() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

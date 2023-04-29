@@ -18,7 +18,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class ObjectGetOwnPropertyNamesTest {
 
     @Test
-    public void testShouldReturnAllPropertiesOfArg() {
+    public void shouldReturnAllPropertiesOfArg() {
         NativeObject object = new NativeObject();
         object.defineProperty("a", "1", ScriptableObject.EMPTY);
         object.defineProperty("b", "2", ScriptableObject.DONTENUM);

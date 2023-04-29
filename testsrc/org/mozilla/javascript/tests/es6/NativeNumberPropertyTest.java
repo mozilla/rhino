@@ -10,7 +10,7 @@ import org.mozilla.javascript.tests.Utils;
 public class NativeNumberPropertyTest {
 
     @Test
-    public void testDefiningAProperty() {
+    public void definingAProperty() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -36,7 +36,7 @@ public class NativeNumberPropertyTest {
     }
 
     @Test
-    public void testDefiningAPropertyStrict() {
+    public void definingAPropertyStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -64,7 +64,7 @@ public class NativeNumberPropertyTest {
     }
 
     @Test
-    public void testExtensible() {
+    public void extensible() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -89,7 +89,7 @@ public class NativeNumberPropertyTest {
     }
 
     @Test
-    public void testExtensibleStrict() {
+    public void extensibleStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -115,7 +115,7 @@ public class NativeNumberPropertyTest {
     }
 
     @Test
-    public void testSealed() {
+    public void sealed() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -140,7 +140,7 @@ public class NativeNumberPropertyTest {
     }
 
     @Test
-    public void testSealedStrict() {
+    public void sealedStrict() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

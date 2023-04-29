@@ -29,19 +29,19 @@ public class JsTestsTest extends JsTestsBase {
     }
 
     @Test
-    public void testJsTestsInterpreted() throws IOException {
+    public void jsTestsInterpreted() throws IOException {
         setOptimizationLevel(-1);
         runJsTests();
     }
 
     @Test
-    public void testJsTestsCompiled() throws IOException {
+    public void jsTestsCompiled() throws IOException {
         setOptimizationLevel(0);
         runJsTests();
     }
 
     @Test
-    public void testJsTestsOptimized() throws IOException {
+    public void jsTestsOptimized() throws IOException {
         setOptimizationLevel(9);
         runJsTests();
     }

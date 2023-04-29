@@ -23,7 +23,7 @@ public class BugGetterSetterTest {
     }
 
     @Test
-    public void testNodeReplacementInWhileLoopWithBrackets() throws IOException {
+    public void nodeReplacementInWhileLoopWithBrackets() throws IOException {
         String script =
                 "var o = {\n"
                         + "  _x: 123, \n"

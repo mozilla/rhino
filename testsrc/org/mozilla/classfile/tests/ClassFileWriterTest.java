@@ -13,7 +13,7 @@ import org.mozilla.javascript.DefiningClassLoader;
 
 public class ClassFileWriterTest {
     @Test
-    public void testStackMapTable() throws Exception {
+    public void stackMapTable() throws Exception {
         final String CLASS_NAME = "TestStackMapTable";
         final String METHOD_NAME = "returnObject";
 

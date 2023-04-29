@@ -13,7 +13,7 @@ import org.mozilla.javascript.tests.Utils;
 public class NativeFunctionTest {
 
     @Test
-    public void testFunctionPrototypeLength() {
+    public void functionPrototypeLength() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -36,7 +36,7 @@ public class NativeFunctionTest {
     }
 
     @Test
-    public void testFunctionPrototypeName() {
+    public void functionPrototypeName() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -59,7 +59,7 @@ public class NativeFunctionTest {
     }
 
     @Test
-    public void testFunctionLength() {
+    public void functionLength() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -83,7 +83,7 @@ public class NativeFunctionTest {
     }
 
     @Test
-    public void testFunctionName() {
+    public void functionName() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -107,7 +107,7 @@ public class NativeFunctionTest {
     }
 
     @Test
-    public void testFunctionNameJavaObject() throws Exception {
+    public void functionNameJavaObject() throws Exception {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

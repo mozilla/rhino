@@ -37,7 +37,7 @@ public class RegexpTest {
 
     /** see https://github.com/mozilla/rhino/issues/684. */
     @Test
-    public void testSideEffect() {
+    public void sideEffect() {
         Object result2 =
                 cx.evaluateString(
                         scope,

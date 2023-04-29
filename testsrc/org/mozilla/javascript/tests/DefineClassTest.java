@@ -23,7 +23,7 @@ public class DefineClassTest {
     Scriptable scope;
 
     @Test
-    public void testAnnotatedHostObject() {
+    public void annotatedHostObject() {
         Context cx = Context.enter();
         try {
             Object result = evaluate(cx, "a = new AnnotatedHostObject(); a.initialized;");
@@ -48,7 +48,7 @@ public class DefineClassTest {
     }
 
     @Test
-    public void testTraditionalHostObject() {
+    public void traditionalHostObject() {
         Context cx = Context.enter();
         try {
             Object result = evaluate(cx, "t = new TraditionalHostObject(); t.initialized;");

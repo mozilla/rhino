@@ -112,7 +112,7 @@ public class SealedSharedScopeTest {
     }
 
     @Test
-    public void testGlobalScope() throws FileNotFoundException, IOException {
+    public void globalScope() throws FileNotFoundException, IOException {
         evaluateString(scope1, "importPackage(Packages.java.io);");
 
         // Loading object via direct class type evaluate and then checking with typeof

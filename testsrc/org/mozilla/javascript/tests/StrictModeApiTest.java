@@ -38,7 +38,7 @@ public class StrictModeApiTest {
     }
 
     @Test
-    public void testStrictModeError() {
+    public void strictModeError() {
         contextFactory = new MyContextFactory();
         Context cx = contextFactory.enterContext();
         try {

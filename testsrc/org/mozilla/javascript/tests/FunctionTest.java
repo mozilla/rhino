@@ -23,7 +23,7 @@ public class FunctionTest {
      * "//".
      */
     @Test
-    public void testFunctionWithSlashSlash() {
+    public void functionWithSlashSlash() {
         assertEvaluates(true, "new Function('return true//;').call()");
     }
 

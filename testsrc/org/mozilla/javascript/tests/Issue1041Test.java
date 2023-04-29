@@ -11,7 +11,7 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class Issue1041Test {
     @Test
-    public void testQuantifierWithMax0() {
+    public void quantifierWithMax0() {
         Context cx = Context.enter();
         try {
             ScriptableObject scope = cx.initStandardObjects();

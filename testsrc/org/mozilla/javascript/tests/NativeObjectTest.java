@@ -92,7 +92,7 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testNativeJavaObject_hasOwnProperty() {
+    public void nativeJavaObject_hasOwnProperty() {
         Context cx = Context.enter();
         try {
             Scriptable scope = cx.initStandardObjects();
