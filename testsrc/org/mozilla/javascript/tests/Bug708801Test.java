@@ -32,6 +32,7 @@ import org.mozilla.javascript.optimizer.OptFunctionNode;
 
 /** @author André Bargull */
 public class Bug708801Test {
+
     private static final ContextFactory factory =
             new ContextFactory() {
                 static final int COMPILER_MODE = 9;
@@ -113,7 +114,7 @@ public class Bug708801Test {
     }
 
     @Test
-    public void testIncDec() {
+    public void incDec() {
         factory.call(
                 new Action() {
                     @Override
@@ -148,7 +149,7 @@ public class Bug708801Test {
     }
 
     @Test
-    public void testTypeofName() {
+    public void typeofName() {
         factory.call(
                 new Action() {
                     @Override
@@ -168,7 +169,7 @@ public class Bug708801Test {
     }
 
     @Test
-    public void testEval() {
+    public void eval() {
         factory.call(
                 new Action() {
                     @Override
@@ -189,7 +190,7 @@ public class Bug708801Test {
     }
 
     @Test
-    public void testRelOp() {
+    public void relOp() {
         factory.call(
                 new Action() {
                     @Override
@@ -211,7 +212,7 @@ public class Bug708801Test {
     }
 
     @Test
-    public void testMore() {
+    public void more() {
         factory.call(
                 new Action() {
                     @Override

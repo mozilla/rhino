@@ -4,9 +4,9 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
  *
  * @author Norris Boyd
  */
-public class Bug419940Test extends TestCase {
+public class Bug419940Test {
     static final int value = 12;
 
     public abstract static class BaseFoo {
@@ -28,16 +28,17 @@ public class Bug419940Test extends TestCase {
         }
     }
 
-    public void testAdapter() {
+    @Test
+    public void adapter() {
         String source = "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
 
-        Context cx = ContextFactory.getGlobal().enterContext();
-        try {
-            Scriptable scope = cx.initStandardObjects();
-            Object result = cx.evaluateString(scope, source, "source", 1, null);
-            assertEquals(Integer.valueOf(value), result);
-        } finally {
-            Context.exit();
-        }
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects();
+                    Object result = cx.evaluateString(scope, source, "source", 1, null);
+                    assertEquals(Integer.valueOf(value), result);
+
+                    return null;
+                });
     }
 }

@@ -4,14 +4,19 @@
 
 package org.mozilla.javascript;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class EqualObjectGraphsTest extends TestCase {
-    public void testCyclic() {
+public class EqualObjectGraphsTest {
+
+    @Test
+    public void cyclic() {
         assertTrue(equal(makeCyclic("foo"), makeCyclic("foo")));
         // countertest; make unequal ones and make sure they test unequal
         assertFalse(equal(makeCyclic("foo"), makeCyclic("bar")));
@@ -52,7 +57,8 @@ public class EqualObjectGraphsTest extends TestCase {
         }
     }
 
-    public void testSameValueDifferentTopology() {
+    @Test
+    public void sameValueDifferentTopology() {
         Object[] o1 = new Object[2];
         Object[] o2 = new Object[2];
         Object t1 = new TestObject(0);
@@ -72,7 +78,8 @@ public class EqualObjectGraphsTest extends TestCase {
         assertFalse(equal(o1, o2));
     }
 
-    public void testHeterogenousScriptables() {
+    @Test
+    public void heterogenousScriptables() {
         Context cx = Context.enter();
         ScriptableObject top = cx.initStandardObjects();
         ScriptRuntime.doTopCall(

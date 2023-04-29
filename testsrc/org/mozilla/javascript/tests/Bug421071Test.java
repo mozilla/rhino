@@ -9,19 +9,21 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
-public class Bug421071Test extends TestCase {
+public class Bug421071Test {
     private ContextFactory factory;
     private TopLevelScope globalScope;
     private Script testScript;
 
-    public void testProblemReplicator() throws Exception {
+    @Test
+    public void problemReplicator() throws Exception {
         // before debugging please put the breakpoint in the
         // NativeJavaPackage.getPkgProperty()
         // and observe names passed in there
@@ -81,9 +83,8 @@ public class Bug421071Test extends TestCase {
         return globalScope;
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         globalScope = createGlobalScope();
     }
 

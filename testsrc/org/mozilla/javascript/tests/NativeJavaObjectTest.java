@@ -6,17 +6,19 @@
  */
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigInteger;
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
 
-public class NativeJavaObjectTest extends TestCase {
+public class NativeJavaObjectTest {
 
     @Test
-    public void testCoerceType() {
+    public void coerceType() {
         Context cx = Context.enter();
         try {
             cx.setLanguageVersion(Context.VERSION_ES6);

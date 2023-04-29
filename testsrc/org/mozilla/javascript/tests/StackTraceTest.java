@@ -5,21 +5,25 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
 
 /** @author Marc Guillemot */
-public class StackTraceTest extends TestCase {
+public class StackTraceTest {
+
     static final String LS = System.getProperty("line.separator");
 
     /**
      * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some native
      * function has been made.
      */
-    public void testFailureStackTraceRhino() {
+    @Test
+    public void failureStackTraceRhino() {
         final StackStyle stackStyle = RhinoException.getStackStyle();
         try {
             RhinoException.setStackStyle(StackStyle.RHINO);
@@ -42,7 +46,8 @@ public class StackTraceTest extends TestCase {
      * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some native
      * function has been made.
      */
-    public void testFailureStackTraceMozilla() {
+    @Test
+    public void failureStackTraceMozilla() {
         final StackStyle stackStyle = RhinoException.getStackStyle();
         try {
             RhinoException.setStackStyle(StackStyle.MOZILLA);
@@ -65,7 +70,8 @@ public class StackTraceTest extends TestCase {
      * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some native
      * function has been made.
      */
-    public void testFailureStackTraceMozillaLf() {
+    @Test
+    public void failureStackTraceMozillaLf() {
         final StackStyle stackStyle = RhinoException.getStackStyle();
         try {
             RhinoException.setStackStyle(StackStyle.MOZILLA_LF);
@@ -88,7 +94,8 @@ public class StackTraceTest extends TestCase {
      * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some native
      * function has been made.
      */
-    public void testFailureStackTraceV8() {
+    @Test
+    public void failureStackTraceV8() {
         final StackStyle stackStyle = RhinoException.getStackStyle();
         try {
             RhinoException.setStackStyle(StackStyle.V8);

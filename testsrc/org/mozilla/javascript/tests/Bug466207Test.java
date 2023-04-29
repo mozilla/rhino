@@ -4,6 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -11,7 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptableObject;
@@ -21,13 +27,13 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Hannes Wallnoefer
  */
-public class Bug466207Test extends TestCase {
+public class Bug466207Test {
 
     List<Object> list, reference;
 
     @SuppressWarnings("unchecked")
-    @Override
-    protected void setUp() {
+    @Before
+    public void setUp() {
         // set up a reference map
         reference = new ArrayList<Object>();
         reference.add("a");
@@ -49,6 +55,7 @@ public class Bug466207Test extends TestCase {
         Context.exit();
     }
 
+    @Test
     public void testEqual() {
         // FIXME we do not override equals() and hashCode() in NativeArray
         // so calling this with swapped argument fails. This breaks symmetry
@@ -56,7 +63,8 @@ public class Bug466207Test extends TestCase {
         assertEquals(reference, list);
     }
 
-    public void testIndexedAccess() {
+    @Test
+    public void indexedAccess() {
         assertTrue(list.size() == 5);
         assertEquals(list.get(0), reference.get(0));
         assertEquals(list.get(1), reference.get(1));
@@ -65,7 +73,8 @@ public class Bug466207Test extends TestCase {
         assertEquals(list.get(4), reference.get(4));
     }
 
-    public void testContains() {
+    @Test
+    public void contains() {
         assertTrue(list.contains("a"));
         assertTrue(list.contains(Boolean.TRUE));
         assertFalse(list.contains("x"));
@@ -73,7 +82,8 @@ public class Bug466207Test extends TestCase {
         assertFalse(list.contains(null));
     }
 
-    public void testIndexOf() {
+    @Test
+    public void indexOf() {
         assertTrue(list.indexOf("a") == 0);
         assertTrue(list.indexOf(Boolean.TRUE) == 1);
         assertTrue(list.lastIndexOf("a") == 4);
@@ -84,13 +94,15 @@ public class Bug466207Test extends TestCase {
         assertTrue(list.lastIndexOf(null) == -1);
     }
 
-    public void testToArray() {
+    @Test
+    public void toArray() {
         assertTrue(Arrays.equals(list.toArray(), reference.toArray()));
         assertTrue(Arrays.equals(list.toArray(new Object[5]), reference.toArray(new Object[5])));
         assertTrue(Arrays.equals(list.toArray(new Object[6]), reference.toArray(new Object[6])));
     }
 
-    public void testIterator() {
+    @Test
+    public void iterator() {
         compareIterators(list.iterator(), reference.iterator());
         compareIterators(list.listIterator(), reference.listIterator());
         compareIterators(list.listIterator(2), reference.listIterator(2));
@@ -117,14 +129,16 @@ public class Bug466207Test extends TestCase {
         compareIterators(it1, it2);
     }
 
-    public void testSublist() {
+    @Test
+    public void sublist() {
         assertTrue(Arrays.equals(list.subList(0, 5).toArray(), reference.toArray()));
         assertTrue(Arrays.equals(list.subList(2, 4).toArray(), reference.subList(2, 4).toArray()));
         assertTrue(list.subList(0, 0).isEmpty());
         assertTrue(list.subList(5, 5).isEmpty());
     }
 
-    public void testSublistMod() {
+    @Test
+    public void sublistMod() {
 
         List<Object> sl = reference.subList(2, 4);
         reference.remove(0);
@@ -145,7 +159,8 @@ public class Bug466207Test extends TestCase {
         }
     }
 
-    public void testIteratorMod() {
+    @Test
+    public void iteratorMod() {
 
         ListIterator<Object> iter = reference.listIterator();
         reference.remove(0);
@@ -180,7 +195,8 @@ public class Bug466207Test extends TestCase {
         Context.exit();
     }
 
-    public void testBigList() {
+    @Test
+    public void bigList() {
         Context context = Context.enter();
         ScriptableObject scope = context.initStandardObjects();
         NativeArray array =

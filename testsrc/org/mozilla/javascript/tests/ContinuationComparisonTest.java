@@ -6,18 +6,21 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.ScriptableObject;
 
-public class ContinuationComparisonTest extends TestCase {
+public class ContinuationComparisonTest {
 
+    @Test
     public void test1() throws Exception {
         // Create two identical executions
         NativeContinuation c1 = createContinuation();

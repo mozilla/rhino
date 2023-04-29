@@ -18,6 +18,7 @@ import org.mozilla.javascript.ast.AstRoot;
 
 /** @author André Bargull */
 public class Bug689308Test {
+
     private Context cx;
 
     @Before
@@ -44,7 +45,7 @@ public class Bug689308Test {
     }
 
     @Test
-    public void testToSourceArray() {
+    public void toSourceArray() {
         assertEquals("[];\n", toSource("[]"));
         assertEquals("[,];\n", toSource("[,]"));
         assertEquals("[, ,];\n", toSource("[,,]"));

@@ -4,7 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -16,9 +19,10 @@ import org.mozilla.javascript.Wrapper;
  *
  * @author Hannes Wallnoefer
  */
-public class Bug467396Test extends TestCase {
+public class Bug467396Test {
 
-    public void testOverloadedVarargs() {
+    @Test
+    public void overloadedVarargs() {
         Context cx = ContextFactory.getGlobal().enterContext();
         try {
             Scriptable scope = cx.initStandardObjects();

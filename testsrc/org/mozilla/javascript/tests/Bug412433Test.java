@@ -5,8 +5,7 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-import org.mozilla.javascript.Context;
+import org.junit.Test;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -14,14 +13,16 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Norris Boyd
  */
-public class Bug412433Test extends TestCase {
-    public void testMalformedJavascript2() {
-        Context context = Context.enter();
-        try {
-            ScriptableObject scope = context.initStandardObjects();
-            context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
-        } finally {
-            Context.exit();
-        }
+public class Bug412433Test {
+
+    @Test
+    public void malformedJavascript2() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    ScriptableObject scope = cx.initStandardObjects();
+                    cx.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
+
+                    return null;
+                });
     }
 }

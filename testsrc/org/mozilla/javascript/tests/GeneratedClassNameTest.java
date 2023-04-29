@@ -4,7 +4,9 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
 
@@ -14,8 +16,10 @@ import org.mozilla.javascript.Script;
  *
  * @author Marc Guillemot
  */
-public class GeneratedClassNameTest extends TestCase {
-    public void testGeneratedClassName() throws Exception {
+public class GeneratedClassNameTest {
+
+    @Test
+    public void generatedClassName() throws Exception {
         doTest("myScript_js", "myScript.js");
         doTest("foo", "foo");
         doTest("c", "");

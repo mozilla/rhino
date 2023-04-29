@@ -18,6 +18,7 @@ import org.mozilla.javascript.ast.AstRoot;
 
 /** @author André Bargull */
 public class Bug689314Test {
+
     private Context cx;
 
     @Before
@@ -44,13 +45,13 @@ public class Bug689314Test {
     }
 
     @Test
-    public void testToSourceFunctionStatement() {
+    public void toSourceFunctionStatement() {
         assertEquals("function F() 1 + 2;\n", toSource("function F() 1+2"));
         assertEquals("function F() {\n  return 1 + 2;\n}\n", toSource("function F() {return 1+2}"));
     }
 
     @Test
-    public void testToSourceFunctionExpression() {
+    public void toSourceFunctionExpression() {
         assertEquals("var x = function() 1 + 2;\n", toSource("var x = function () 1+2"));
         assertEquals(
                 "var x = function() {\n  return 1 + 2;\n};\n",

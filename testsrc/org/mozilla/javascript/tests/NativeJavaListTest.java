@@ -6,11 +6,16 @@
  */
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
@@ -19,14 +24,16 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
-public class NativeJavaListTest extends TestCase {
+public class NativeJavaListTest {
+
     protected final Global global = new Global();
 
     public NativeJavaListTest() {
         global.init(ContextFactory.getGlobal());
     }
 
-    public void testAccessingNullValues() {
+    @Test
+    public void accessingNullValues() {
         List<Integer> list = new ArrayList<>();
         list.add(null);
 
@@ -34,7 +41,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(1, runScriptAsInt("value.length", list));
     }
 
-    public void testAutoGrowList() {
+    @Test
+    public void autoGrowList() {
         List<String> list = new ArrayList<>();
         runScriptAsInt("value[10] = 'Foo'", list);
         assertEquals(11, list.size());
@@ -48,7 +56,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("Foo", list.get(10));
     }
 
-    public void testAccessingJavaListIntegerValues() {
+    @Test
+    public void accessingJavaListIntegerValues() {
         List<Integer> list = new ArrayList<>();
         list.add(1);
         list.add(2);
@@ -59,7 +68,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(3, runScriptAsInt("value.length", list));
     }
 
-    public void testLengthProperty() {
+    @Test
+    public void lengthProperty() {
         List<Integer> list = new ArrayList<>();
         assertEquals(0, runScriptAsInt("value.length", list));
         list.add(1);
@@ -72,7 +82,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(2, list.size());
     }
 
-    public void testJavaMethodsCalls() {
+    @Test
+    public void javaMethodsCalls() {
         List<Integer> list = new ArrayList<>();
         assertEquals(0, runScriptAsInt("value.size()", list));
         list.add(1);
@@ -81,7 +92,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(3, runScriptAsInt("value.size()", list));
     }
 
-    public void testUpdatingJavaListIntegerValues() {
+    @Test
+    public void updatingJavaListIntegerValues() {
         List<Number> list = new ArrayList<>();
         list.add(1);
         list.add(2);
@@ -93,7 +105,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(5.0, list.get(1));
     }
 
-    public void testAccessingJavaListStringValues() {
+    @Test
+    public void accessingJavaListStringValues() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
@@ -103,7 +116,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("c", runScriptAsString("value[2]", list));
     }
 
-    public void testUpdatingJavaListStringValues() {
+    @Test
+    public void updatingJavaListStringValues() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
@@ -114,7 +128,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("f", list.get(1));
     }
 
-    public void testAutoGrow() {
+    @Test
+    public void autoGrow() {
         List<String> list = new ArrayList<>();
         // Object list = runScript("[]", null, Function.identity());
         assertEquals(0, runScriptAsInt("value.length", list));
@@ -128,7 +143,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("a,,c", runScriptAsString("Array.prototype.join.call(value)", list));
     }
 
-    public void testLength() {
+    @Test
+    public void length() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
@@ -160,7 +176,8 @@ public class NativeJavaListTest extends TestCase {
         }
     }
 
-    public void testDelete() {
+    @Test
+    public void delete() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
@@ -171,7 +188,8 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("a,,c", runScriptAsString("Array.prototype.join.call(value)", list));
     }
 
-    public void testAdd() {
+    @Test
+    public void add() {
         List<String> list = new ArrayList<>();
         runScriptAsString("value[0] = 'a'", list);
         runScriptAsString("value[1] = 'b'", list);
@@ -184,11 +202,12 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("[a, b, c, d, e, f]", list.toString());
     }
 
-    public void testKeys() {
+    @Test
+    public void keys() {
         List<String> list = new ArrayList<>();
         NativeArray resEmpty =
                 (NativeArray) runScript("Object.keys(value)", list, Function.identity());
-        assertEquals(0, resEmpty.size());
+        Assert.assertEquals(0, resEmpty.size());
 
         list.add("a");
         list.add("b");

@@ -4,7 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -12,9 +13,10 @@ import org.mozilla.javascript.Scriptable;
 /**
  * Tests the ConsString class to ensure it properly supports String, StringBuffer and StringBuilder.
  */
-public class Issue1206Test extends TestCase {
+public class Issue1206Test {
+
     @Test
-    public void testConsStringUsingString() {
+    public void consStringUsingString() {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, "hello");
@@ -23,7 +25,7 @@ public class Issue1206Test extends TestCase {
     }
 
     @Test
-    public void testConsStringUsingStringBuffer() {
+    public void consStringUsingStringBuffer() {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, new StringBuffer("hello"));
@@ -32,7 +34,7 @@ public class Issue1206Test extends TestCase {
     }
 
     @Test
-    public void testConsStringUsingStringBuilder() {
+    public void consStringUsingStringBuilder() {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, new StringBuilder("hello"));

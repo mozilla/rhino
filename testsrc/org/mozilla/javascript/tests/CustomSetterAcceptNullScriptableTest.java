@@ -5,7 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import java.lang.reflect.Method;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -17,7 +17,8 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Marc Guillemot
  */
-public class CustomSetterAcceptNullScriptableTest extends TestCase {
+public class CustomSetterAcceptNullScriptableTest {
+
     public static class Foo extends ScriptableObject {
         private static final long serialVersionUID = -8771045033217033529L;
 
@@ -38,7 +39,8 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase {
         }
     }
 
-    public void testSetNullForScriptableSetter() throws Exception {
+    @Test
+    public void setNullForScriptableSetter() throws Exception {
 
         final String scriptCode = "foo.myProp = new Foo2();\n" + "foo.myProp = null;";
 

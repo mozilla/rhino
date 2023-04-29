@@ -4,7 +4,9 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
@@ -15,7 +17,9 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Marc Guillemot
  */
-public class ApplyOnPrimitiveNumberTest extends TestCase {
+public class ApplyOnPrimitiveNumberTest {
+
+    @Test
     public void testIt() {
         final String script = "var fn = function() { return this; }\n" + "fn.apply(1)";
 

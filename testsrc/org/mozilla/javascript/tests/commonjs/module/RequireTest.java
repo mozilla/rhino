@@ -1,11 +1,14 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -17,8 +20,10 @@ import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
  * @author Attila Szegedi
  * @version $Id: RequireTest.java,v 1.1 2011/04/07 22:24:37 hannes%helma.at Exp $
  */
-public class RequireTest extends TestCase {
-    public void testSandboxed() throws Exception {
+public class RequireTest {
+
+    @Test
+    public void sandboxed() throws Exception {
         final Context cx = createContext();
         final Require require = getSandboxedRequire(cx);
         require.requireMain(cx, "testSandboxed");
@@ -39,7 +44,8 @@ public class RequireTest extends TestCase {
         return cx;
     }
 
-    public void testNonSandboxed() throws Exception {
+    @Test
+    public void nonSandboxed() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
@@ -59,7 +65,8 @@ public class RequireTest extends TestCase {
         }
     }
 
-    public void testCustomGlobal() throws Exception {
+    @Test
+    public void customGlobal() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         ScriptableObject.defineClass(scope, CustomGlobal.class);
@@ -91,11 +98,13 @@ public class RequireTest extends TestCase {
         }
     }
 
-    public void testVariousUsageErrors() throws Exception {
+    @Test
+    public void variousUsageErrors() throws Exception {
         testWithSandboxedRequire("testNoArgsRequire");
     }
 
-    public void testRelativeId() throws Exception {
+    @Test
+    public void relativeId() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
@@ -103,7 +112,8 @@ public class RequireTest extends TestCase {
         cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
     }
 
-    public void testSetMainForAlreadyLoadedModule() throws Exception {
+    @Test
+    public void setMainForAlreadyLoadedModule() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);

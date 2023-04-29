@@ -10,6 +10,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 
 public class Bug496585Test {
+
     public String method(String one, Function function) {
         return "string+function";
     }
