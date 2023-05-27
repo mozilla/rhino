@@ -150,15 +150,4 @@ final class InterpretedFunction extends NativeFunction implements Script {
     protected boolean getParamOrVarConst(int index) {
         return idata.argIsConst[index];
     }
-
-    boolean hasFunctionNamed(String name) {
-        for (int f = 0; f < idata.getFunctionCount(); f++) {
-            InterpreterData functionData = (InterpreterData) idata.getFunction(f);
-            if (!functionData.declaredAsFunctionExpression
-                    && name.equals(functionData.getFunctionName())) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
