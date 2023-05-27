@@ -225,9 +225,7 @@ public class NativeObjectTest {
                 "var obj = Object.defineProperty({}, 'prop', {\n"
                         + "                 get: function() {}\n"
                         + "          });\n"
-
                         + "var desc = Object.getOwnPropertyDescriptor(obj, 'prop');\n"
-
                         + "'' + obj.prop"
                         + "+ ' ' + desc.get"
                         + "+ ' ' + desc.set"

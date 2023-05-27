@@ -39,10 +39,12 @@ public class AccessorSlot extends Slot {
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
         if (es6) {
             if (getter == null && setter == null) {
-                desc.defineProperty("writable", (attr & ScriptableObject.READONLY) == 0, ScriptableObject.EMPTY);
+                desc.defineProperty(
+                        "writable",
+                        (attr & ScriptableObject.READONLY) == 0,
+                        ScriptableObject.EMPTY);
             }
-        }
-        else {
+        } else {
             desc.setCommonDescriptorProperties(attr, getter == null && setter == null);
         }
 
@@ -59,8 +61,12 @@ public class AccessorSlot extends Slot {
         }
 
         if (es6) {
-            desc.defineProperty("enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
-            desc.defineProperty("configurable", (attr & ScriptableObject.PERMANENT) == 0, ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "configurable",
+                    (attr & ScriptableObject.PERMANENT) == 0,
+                    ScriptableObject.EMPTY);
         }
 
         return desc;
