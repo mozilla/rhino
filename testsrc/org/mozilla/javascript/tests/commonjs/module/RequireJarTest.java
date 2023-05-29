@@ -25,21 +25,22 @@ public class RequireJarTest extends RequireTest {
     @Test
     @Override
     public void sandboxed() throws Exception {
-        final Context cx = createContext();
-        final Require require = getSandboxedRequire(cx);
-        require.requireMain(cx, "testSandboxed");
-        // Also, test idempotent double-require of same main:
-        require.requireMain(cx, "testSandboxed");
-        // Also, test failed require of different main:
-        try {
-            require.requireMain(cx, "blah");
-            fail();
-        } catch (IllegalStateException e) {
-            // Expected, success
+        try (Context cx = createContext()) {
+            final Require require = getSandboxedRequire(cx);
+            require.requireMain(cx, "testSandboxed");
+            // Also, test idempotent double-require of same main:
+            require.requireMain(cx, "testSandboxed");
+            // Also, test failed require of different main:
+            try {
+                require.requireMain(cx, "blah");
+                fail();
+            } catch (IllegalStateException e) {
+                // Expected, success
+            }
         }
     }
 
-    private Context createContext() {
+    private static Context createContext() {
         final Context cx = Context.enter();
         cx.setOptimizationLevel(-1);
         return cx;
@@ -48,12 +49,13 @@ public class RequireJarTest extends RequireTest {
     @Test
     @Override
     public void nonSandboxed() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
-        ScriptableObject.putProperty(scope, "moduleUri", jsFile);
-        require.requireMain(cx, "testNonSandboxed");
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
+            ScriptableObject.putProperty(scope, "moduleUri", jsFile);
+            require.requireMain(cx, "testNonSandboxed");
+        }
     }
 
     @Test
@@ -65,31 +67,33 @@ public class RequireJarTest extends RequireTest {
     @Test
     @Override
     public void relativeId() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        require.install(scope);
-        cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            require.install(scope);
+            cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
+        }
     }
 
     @Test
     @Override
     public void setMainForAlreadyLoadedModule() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        require.install(scope);
-        cx.evaluateReader(
-                scope,
-                getReader("testSetMainForAlreadyLoadedModule.js"),
-                "testSetMainForAlreadyLoadedModule.js",
-                1,
-                null);
-        try {
-            require.requireMain(cx, "assert");
-            fail();
-        } catch (IllegalStateException e) {
-            assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            require.install(scope);
+            cx.evaluateReader(
+                    scope,
+                    getReader("testSetMainForAlreadyLoadedModule.js"),
+                    "testSetMainForAlreadyLoadedModule.js",
+                    1,
+                    null);
+            try {
+                require.requireMain(cx, "assert");
+                fail();
+            } catch (IllegalStateException e) {
+                assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
+            }
         }
     }
 
@@ -98,8 +102,9 @@ public class RequireJarTest extends RequireTest {
     }
 
     private void testWithSandboxedRequire(String moduleId) throws Exception {
-        final Context cx = createContext();
-        getSandboxedRequire(cx).requireMain(cx, moduleId);
+        try (Context cx = createContext()) {
+            getSandboxedRequire(cx).requireMain(cx, moduleId);
+        }
     }
 
     private Require getSandboxedRequire(final Context cx) throws URISyntaxException {

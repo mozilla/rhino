@@ -56,8 +56,7 @@ public class ConsStringTest {
 
     @Test
     public void doNotLeakConsStringIntoSetter() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             final ScriptableObject topScope = cx.initStandardObjects();
             final MyHostObject myHostObject = new MyHostObject();
 
@@ -73,15 +72,12 @@ public class ConsStringTest {
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
             assertEquals("java.lang.String", result);
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void doNotLeakConsStringIntoFunction() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             final ScriptableObject topScope = cx.initStandardObjects();
             ScriptableObject.defineClass(topScope, MyHostObject.class);
 
@@ -89,8 +85,6 @@ public class ConsStringTest {
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
             Assert.assertEquals("java.lang.String", result);
-        } finally {
-            Context.exit();
         }
     }
 

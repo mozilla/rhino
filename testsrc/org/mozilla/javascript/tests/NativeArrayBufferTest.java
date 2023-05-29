@@ -19,11 +19,11 @@ public class NativeArrayBufferTest {
      */
     @Test
     public void test() throws Exception {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        Scriptable global = cx.initStandardObjects();
-        Object result = cx.evaluateString(global, "(new ArrayBuffer(5)).isView", "", 1, null);
-        Assert.assertEquals(Undefined.instance, result);
-        Context.exit();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            Scriptable global = cx.initStandardObjects();
+            Object result = cx.evaluateString(global, "(new ArrayBuffer(5)).isView", "", 1, null);
+            Assert.assertEquals(Undefined.instance, result);
+        }
     }
 }

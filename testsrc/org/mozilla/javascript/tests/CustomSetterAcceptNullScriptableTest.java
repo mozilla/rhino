@@ -45,9 +45,8 @@ public class CustomSetterAcceptNullScriptableTest {
         final String scriptCode = "foo.myProp = new Foo2();\n" + "foo.myProp = null;";
 
         final ContextFactory factory = new ContextFactory();
-        final Context cx = factory.enterContext();
 
-        try {
+        try (Context cx = factory.enterContext()) {
             final ScriptableObject topScope = cx.initStandardObjects();
             final Foo foo = new Foo();
 
@@ -60,8 +59,6 @@ public class CustomSetterAcceptNullScriptableTest {
             ScriptableObject.defineClass(topScope, Foo2.class);
 
             cx.evaluateString(topScope, scriptCode, "myScript", 1, null);
-        } finally {
-            Context.exit();
         }
     }
 }

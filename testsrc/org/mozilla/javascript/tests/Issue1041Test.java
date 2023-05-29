@@ -12,8 +12,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class Issue1041Test {
     @Test
     public void quantifierWithMax0() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             ScriptableObject scope = cx.initStandardObjects();
             Boolean result =
                     (Boolean) cx.evaluateString(scope, "/ab{0}c/.test('abc')", "<eval>", 1, null);
@@ -21,8 +20,6 @@ public class Issue1041Test {
 
             result = (Boolean) cx.evaluateString(scope, "/ab{0}c/.test('ac')", "<eval>", 1, null);
             Assert.assertTrue(result);
-        } finally {
-            Context.exit();
         }
     }
 }

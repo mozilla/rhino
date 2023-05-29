@@ -17,28 +17,31 @@ public class Issue1206Test {
 
     @Test
     public void consStringUsingString() {
-        Context cx = Context.enter();
-        Scriptable scope = cx.initStandardObjects(null);
-        scope.put("var1", scope, "hello");
-        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
-        assertEquals("hello world", result);
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects(null);
+            scope.put("var1", scope, "hello");
+            Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+            assertEquals("hello world", result);
+        }
     }
 
     @Test
     public void consStringUsingStringBuffer() {
-        Context cx = Context.enter();
-        Scriptable scope = cx.initStandardObjects(null);
-        scope.put("var1", scope, new StringBuffer("hello"));
-        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
-        assertEquals("hello world", result);
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects(null);
+            scope.put("var1", scope, new StringBuffer("hello"));
+            Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+            assertEquals("hello world", result);
+        }
     }
 
     @Test
     public void consStringUsingStringBuilder() {
-        Context cx = Context.enter();
-        Scriptable scope = cx.initStandardObjects(null);
-        scope.put("var1", scope, new StringBuilder("hello"));
-        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
-        assertEquals("hello world", result);
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects(null);
+            scope.put("var1", scope, new StringBuilder("hello"));
+            Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+            assertEquals("hello world", result);
+        }
     }
 }

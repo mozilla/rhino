@@ -23,8 +23,7 @@ public class Bug467396Test {
 
     @Test
     public void overloadedVarargs() {
-        Context cx = ContextFactory.getGlobal().enterContext();
-        try {
+        try (Context cx = ContextFactory.getGlobal().enterContext()) {
             Scriptable scope = cx.initStandardObjects();
             Object result =
                     unwrap(
@@ -68,12 +67,10 @@ public class Bug467396Test {
             assertTrue(result instanceof Object[][]);
             assertEquals(1, ((Object[][]) result).length);
             assertEquals(1, ((Object[][]) result)[0].length);
-        } finally {
-            Context.exit();
         }
     }
 
-    private Object unwrap(Object obj) {
+    private static Object unwrap(Object obj) {
         return obj instanceof Wrapper ? ((Wrapper) obj).unwrap() : obj;
     }
 }

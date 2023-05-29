@@ -127,7 +127,7 @@ public class TypedArrayJavaTest {
         testTwoList(a, 1.0, 2.0, 3.0);
     }
 
-    private <T> void testTwoList(List<T> list, T a, T b, T bogus) {
+    private static <T> void testTwoList(List<T> list, T a, T b, T bogus) {
         assertEquals(2, list.size());
         assertFalse(list.isEmpty());
         list.set(0, a);
@@ -291,17 +291,16 @@ public class TypedArrayJavaTest {
             "Uint8ClampedArray"
         };
 
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        Scriptable global = cx.initStandardObjects();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            Scriptable global = cx.initStandardObjects();
 
-        for (String type : allNativeTypes) {
-            ScriptableObject obj =
-                    (ScriptableObject)
-                            cx.evaluateString(global, "new " + type + "(5)", "", 1, null);
-            obj.getAllIds();
+            for (String type : allNativeTypes) {
+                ScriptableObject obj =
+                        (ScriptableObject)
+                                cx.evaluateString(global, "new " + type + "(5)", "", 1, null);
+                obj.getAllIds();
+            }
         }
-
-        Context.exit();
     }
 }

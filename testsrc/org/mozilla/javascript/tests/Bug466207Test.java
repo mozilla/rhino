@@ -42,17 +42,18 @@ public class Bug466207Test {
         reference.add(Integer.valueOf(42));
         reference.add("a");
         // get a js object as map
-        Context context = Context.enter();
-        ScriptableObject scope = context.initStandardObjects();
-        list =
-                (List<Object>)
-                        context.evaluateString(
-                                scope,
-                                "(['a', true, new java.util.HashMap(), 42, 'a']);",
-                                "testsrc",
-                                1,
-                                null);
-        Context.exit();
+
+        try (Context context = Context.enter()) {
+            ScriptableObject scope = context.initStandardObjects();
+            list =
+                    (List<Object>)
+                            context.evaluateString(
+                                    scope,
+                                    "(['a', true, new java.util.HashMap(), 42, 'a']);",
+                                    "testsrc",
+                                    1,
+                                    null);
+        }
     }
 
     @Test
@@ -188,27 +189,28 @@ public class Bug466207Test {
     }
 
     private void listPop() {
-        Context context = Context.enter();
-        ScriptableObject scope = context.initStandardObjects();
-        scope.put("list", scope, list);
-        context.evaluateString(scope, "list.pop()", "testsrc", 1, null);
-        Context.exit();
+        try (Context context = Context.enter()) {
+            ScriptableObject scope = context.initStandardObjects();
+            scope.put("list", scope, list);
+            context.evaluateString(scope, "list.pop()", "testsrc", 1, null);
+        }
     }
 
     @Test
     public void bigList() {
-        Context context = Context.enter();
-        ScriptableObject scope = context.initStandardObjects();
-        NativeArray array =
-                (NativeArray)
-                        context.evaluateString(scope, "new Array(4294967295)", "testsrc", 1, null);
-        Context.exit();
-        assertEquals(4294967295L, array.getLength());
-        try {
-            array.size();
-            fail("Exception expected");
-        } catch (IllegalStateException e) {
-            assertEquals("list.length (4294967295) exceeds Integer.MAX_VALUE", e.getMessage());
+        try (Context context = Context.enter()) {
+            ScriptableObject scope = context.initStandardObjects();
+            NativeArray array =
+                    (NativeArray)
+                            context.evaluateString(
+                                    scope, "new Array(4294967295)", "testsrc", 1, null);
+            assertEquals(4294967295L, array.getLength());
+            try {
+                array.size();
+                fail("Exception expected");
+            } catch (IllegalStateException e) {
+                assertEquals("list.length (4294967295) exceeds Integer.MAX_VALUE", e.getMessage());
+            }
         }
     }
 }

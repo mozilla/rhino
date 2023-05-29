@@ -34,10 +34,10 @@ public class SealedSharedScopeTest {
 
     @Before
     public void setUp() throws Exception {
-        Context tmpCtx = Context.enter();
-        sharedScope = new ImporterTopLevel(tmpCtx, true);
-        sharedScope.sealObject();
-        Context.exit();
+        try (Context tmpCtx = Context.enter()) {
+            sharedScope = new ImporterTopLevel(tmpCtx, true);
+            sharedScope.sealObject();
+        }
 
         ctx = Context.enter();
         scope1 = ctx.newObject(sharedScope);

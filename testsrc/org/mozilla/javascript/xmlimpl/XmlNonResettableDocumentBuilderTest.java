@@ -28,8 +28,7 @@ public class XmlNonResettableDocumentBuilderTest {
 
     @Test
     public void nonResettableDocumentBuilder() {
-        Context cx = new ContextFactory().enterContext();
-        try {
+        try (Context cx = new ContextFactory().enterContext()) {
             Scriptable scope = cx.initStandardObjects();
             Object result =
                     cx.evaluateString(
@@ -40,8 +39,6 @@ public class XmlNonResettableDocumentBuilderTest {
                             1,
                             null);
             Assert.assertEquals("John", String.valueOf(result));
-        } finally {
-            Context.exit();
         }
     }
 }

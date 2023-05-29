@@ -80,27 +80,27 @@ public class EqualObjectGraphsTest {
 
     @Test
     public void heterogenousScriptables() {
-        Context cx = Context.enter();
-        ScriptableObject top = cx.initStandardObjects();
-        ScriptRuntime.doTopCall(
-                (Callable)
-                        (c, scope, thisObj, args) -> {
-                            assertTrue(
-                                    equal(
-                                            makeHeterogenousScriptable(cx, "v1"),
-                                            makeHeterogenousScriptable(cx, "v1")));
-                            assertFalse(
-                                    equal(
-                                            makeHeterogenousScriptable(cx, "v1"),
-                                            makeHeterogenousScriptable(cx, "v2")));
-                            return null;
-                        },
-                cx,
-                top,
-                top,
-                null,
-                false);
-        Context.exit();
+        try (Context cx = Context.enter()) {
+            ScriptableObject top = cx.initStandardObjects();
+            ScriptRuntime.doTopCall(
+                    (Callable)
+                            (c, scope, thisObj, args) -> {
+                                assertTrue(
+                                        equal(
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v1")));
+                                assertFalse(
+                                        equal(
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v2")));
+                                return null;
+                            },
+                    cx,
+                    top,
+                    top,
+                    null,
+                    false);
+        }
     }
 
     private static Object makeHeterogenousScriptable(Context cx, String discriminator) {

@@ -48,9 +48,8 @@ public class AvoidObjectDetectionTest {
     @Test
     public void ctor() throws Exception {
         final ContextFactory factory = new ContextFactory();
-        final Context cx = factory.enterContext();
 
-        try {
+        try (Context cx = factory.enterContext()) {
             final ScriptableObject topScope = cx.initStandardObjects();
             ScriptableObject.defineClass(topScope, Foo.class);
             ScriptableObject.defineClass(topScope, Avoid.class);
@@ -85,8 +84,6 @@ public class AvoidObjectDetectionTest {
                             cx.evaluateString(
                                     topScope, "Boolean(new Avoid())", "myScript", 1, null);
             assertFalse(ctor);
-        } finally {
-            Context.exit();
         }
     }
 }
