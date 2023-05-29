@@ -181,7 +181,7 @@ public class SwitchCommentsTest {
         Assert.assertEquals(Token.BLOCK, case17.getStatements().get(0).getType());
     }
 
-    private List<SwitchCase> assertSwitch(AstNode scriptRoot, int noOfCaseNodes) {
+    private static List<SwitchCase> assertSwitch(AstNode scriptRoot, int noOfCaseNodes) {
         Assert.assertNotNull(scriptRoot);
         Node firstChild = scriptRoot.getFirstChild();
         Assert.assertNotNull(firstChild);

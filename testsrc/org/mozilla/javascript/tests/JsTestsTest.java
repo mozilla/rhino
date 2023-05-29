@@ -21,6 +21,7 @@ public class JsTestsTest extends JsTestsBase {
                 TestUtils.recursiveListFiles(
                         new File(baseDirectory),
                         new FileFilter() {
+                            @Override
                             public boolean accept(File f) {
                                 return f.getName().endsWith(jstestsExtension);
                             }

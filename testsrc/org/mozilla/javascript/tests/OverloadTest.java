@@ -49,7 +49,7 @@ public class OverloadTest {
                 "String(org.mozilla.javascript.tests.OverloadTest.x(function() {}));");
     }
 
-    private void assertEvaluates(final Object expected, final String source) {
+    private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -59,7 +59,7 @@ public class OverloadTest {
                 });
     }
 
-    private void assertThrows(
+    private static void assertThrows(
             final Class<? extends Exception> exceptionClass, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {

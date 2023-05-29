@@ -30,14 +30,11 @@ public class DefineFunctionPropertiesTest {
      */
     @Before
     public void setUp() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             global = cx.initStandardObjects();
             String[] names = {"f", "g"};
             global.defineFunctionProperties(
                     names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
-        } finally {
-            Context.exit();
         }
     }
 
@@ -49,12 +46,9 @@ public class DefineFunctionPropertiesTest {
     /** Simple test: call 'f' defined above */
     @Test
     public void simpleFunction() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             Object result = cx.evaluateString(global, "f(7) + 1", "test source", 1, null);
             assertEquals(15.0, result);
-        } finally {
-            Context.exit();
         }
     }
 
@@ -76,13 +70,10 @@ public class DefineFunctionPropertiesTest {
     /** Associate a value with the global scope and call function 'g' defined above. */
     @Test
     public void privateData() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             global.associateValue(key, "bar");
             Object result = cx.evaluateString(global, "g('foo');", "test source", 1, null);
             assertEquals("foobar", result);
-        } finally {
-            Context.exit();
         }
     }
 }

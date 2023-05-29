@@ -48,6 +48,7 @@ public class DoctestsTest {
         return TestUtils.recursiveListFiles(
                 new File(baseDirectory),
                 new FileFilter() {
+                    @Override
                     public boolean accept(File f) {
                         String name = f.getName();
                         return !name.contains("feature18enabled")

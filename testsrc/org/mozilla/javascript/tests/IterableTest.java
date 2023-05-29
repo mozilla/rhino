@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -74,7 +73,7 @@ public class IterableTest {
         public Object get(Symbol key, Scriptable start) {
             if (SymbolKey.ITERATOR.equals(key)) {
                 return ScriptableObject.getProperty(
-                        TopLevel.getArrayPrototype(scope), SymbolKey.ITERATOR);
+                        ScriptableObject.getArrayPrototype(scope), SymbolKey.ITERATOR);
             }
             throw new IllegalStateException();
         }
@@ -82,31 +81,6 @@ public class IterableTest {
         @Override
         public boolean has(Symbol key, Scriptable start) {
             return SymbolKey.ITERATOR.equals(key);
-        }
-    }
-
-    private final Scriptable top;
-
-    static {
-        ContextFactory.initGlobal(
-                new ContextFactory() {
-                    @Override
-                    protected Context makeContext() {
-                        return new Context(this) {
-                            {
-                                this.setLanguageVersion(VERSION_ES6);
-                            }
-                        };
-                    }
-                });
-    }
-
-    public IterableTest() {
-        Context cx = Context.enter();
-        try {
-            top = cx.initSafeStandardObjects();
-        } finally {
-            Context.exit();
         }
     }
 
@@ -119,23 +93,29 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingNonSymbolScriptable() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-        Context cx = Context.enter();
-        try {
-            Scriptable foo = new FooWithoutSymbols(top);
-            ScriptableObject.putProperty(top, "foo", foo);
+                    Scriptable foo = new FooWithoutSymbols(scope);
+                    ScriptableObject.putProperty(scope, "foo", foo);
 
-            try {
-                cx.evaluateString(
-                        top, "(function(){for(x of foo) { return x; }})();", "<eval>", 0, null);
+                    try {
+                        cx.evaluateString(
+                                scope,
+                                "(function(){for(x of foo) { return x; }})();",
+                                "<eval>",
+                                0,
+                                null);
 
-            } catch (Throwable t) {
-                assertEquals(t.getClass(), EcmaError.class);
-                assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
-            }
-        } finally {
-            Context.exit();
-        }
+                    } catch (Throwable t) {
+                        assertEquals(t.getClass(), EcmaError.class);
+                        assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
+                    }
+
+                    return null;
+                });
     }
 
     /**
@@ -147,21 +127,28 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingNonIterable() {
-        Context cx = Context.enter();
-        try {
-            Scriptable foo = new FooWithSymbols(top);
-            ScriptableObject.putProperty(top, "foo", foo);
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-            try {
-                cx.evaluateString(
-                        top, "(function(){for(x of foo) { return x; }})();", "<eval>", 0, null);
-            } catch (Throwable t) {
-                assertEquals(t.getClass(), EcmaError.class);
-                assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
-            }
-        } finally {
-            Context.exit();
-        }
+                    Scriptable foo = new FooWithSymbols(scope);
+                    ScriptableObject.putProperty(scope, "foo", foo);
+
+                    try {
+                        cx.evaluateString(
+                                scope,
+                                "(function(){for(x of foo) { return x; }})();",
+                                "<eval>",
+                                0,
+                                null);
+                    } catch (Throwable t) {
+                        assertEquals(t.getClass(), EcmaError.class);
+                        assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
+                    }
+
+                    return null;
+                });
     }
 
     /**
@@ -170,31 +157,34 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingArrayIterator() {
-        Context cx = Context.enter();
-        try {
-            Scriptable foo = new FooWithArrayIterator(top);
-            ScriptableObject.putProperty(top, "foo", foo);
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-            assertEquals(
-                    true,
-                    cx.evaluateString(
-                            top,
-                            "foo[Symbol.iterator] === Array.prototype[Symbol.iterator]",
-                            "<eval>",
-                            0,
-                            null));
+                    Scriptable foo = new FooWithArrayIterator(scope);
+                    ScriptableObject.putProperty(scope, "foo", foo);
 
-            assertEquals(
-                    123,
-                    cx.evaluateString(
-                            top,
-                            "(function(){for(x of foo) { return x; }})();",
-                            "<eval>",
-                            0,
-                            null));
-        } finally {
-            Context.exit();
-        }
+                    assertEquals(
+                            true,
+                            cx.evaluateString(
+                                    scope,
+                                    "foo[Symbol.iterator] === Array.prototype[Symbol.iterator]",
+                                    "<eval>",
+                                    0,
+                                    null));
+
+                    assertEquals(
+                            123,
+                            cx.evaluateString(
+                                    scope,
+                                    "(function(){for(x of foo) { return x; }})();",
+                                    "<eval>",
+                                    0,
+                                    null));
+
+                    return null;
+                });
     }
 
     // Explicitly not a ScriptableObject

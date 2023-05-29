@@ -20,7 +20,7 @@ public class ComparatorTest {
     An inconsistent comparator will result in an IllegalArgumentException
     with the message "Comparison method violates its general contract!"
     */
-    private void idChk(Object o1, Object o2, int expected) {
+    private static void idChk(Object o1, Object o2, int expected) {
         assertEquals(expected, new ScriptableObject.KeyComparator().compare(o1, o2));
         assertEquals(-expected, new ScriptableObject.KeyComparator().compare(o2, o1));
     }
@@ -42,7 +42,7 @@ public class ComparatorTest {
         idChk(1, "a", -1);
     }
 
-    private void aChk(Object o1, Object o2, int expected) {
+    private static void aChk(Object o1, Object o2, int expected) {
         assertEquals(expected, new NativeArray.ElementComparator().compare(o1, o2));
         assertEquals(-expected, new NativeArray.ElementComparator().compare(o2, o1));
     }
@@ -73,18 +73,15 @@ public class ComparatorTest {
      */
     @Test
     public void customComparator() throws IOException {
-        Context cx = Context.enter();
-        Global global = new Global(cx);
-        Scriptable root = cx.newObject(global);
-        FileReader fr = new FileReader("testsrc/jstests/extensions/custom-comparators.js");
+        try (Context cx = Context.enter()) {
+            Global global = new Global(cx);
+            Scriptable root = cx.newObject(global);
+            FileReader fr = new FileReader("testsrc/jstests/extensions/custom-comparators.js");
 
-        try {
             cx.evaluateReader(root, fr, "custom-comparators.js", 1, null);
         } catch (RhinoException re) {
             System.err.println(re.getScriptStackTrace());
             throw re;
-        } finally {
-            Context.exit();
         }
     }
 }
