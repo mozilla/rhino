@@ -47,6 +47,7 @@ public class ShellTest {
 
     public static final FileFilter DIRECTORY_FILTER =
             new FileFilter() {
+                @Override
                 public boolean accept(File pathname) {
                     return pathname.isDirectory() && !pathname.getName().equals("CVS");
                 }
@@ -54,6 +55,7 @@ public class ShellTest {
 
     public static final FileFilter TEST_FILTER =
             new FileFilter() {
+                @Override
                 public boolean accept(File pathname) {
                     return pathname.getName().endsWith(".js")
                             && !pathname.getName().equals("shell.js")
@@ -321,6 +323,7 @@ public class ShellTest {
         Thread t =
                 new Thread(
                         new Runnable() {
+                            @Override
                             public void run() {
                                 try {
                                     shellContextFactory.call(

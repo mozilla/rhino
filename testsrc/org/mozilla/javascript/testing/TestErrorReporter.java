@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.testing;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
 
@@ -33,6 +33,7 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
         this.warnings = warnings;
     }
 
+    @Override
     public void error(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         if (errors != null && errorsIndex < errors.length) {
@@ -42,6 +43,7 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
         }
     }
 
+    @Override
     public void warning(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         if (warnings != null && warningsIndex < warnings.length) {
@@ -51,6 +53,7 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
         }
     }
 
+    @Override
     public EvaluatorException runtimeError(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         throw new UnsupportedOperationException();

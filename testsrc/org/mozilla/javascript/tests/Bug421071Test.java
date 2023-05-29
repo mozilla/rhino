@@ -103,6 +103,7 @@ public class Bug421071Test {
             this.script = script;
         }
 
+        @Override
         public void run() {
             Context context = factory.enterContext();
             try {

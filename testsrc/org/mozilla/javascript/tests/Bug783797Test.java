@@ -52,6 +52,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope1, "String.prototype.foo = 'scope1'");
@@ -75,6 +76,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope1, "String.prototype.foo = 'scope1'");
@@ -98,6 +100,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope1, "String.prototype.foo = 'scope1'");
@@ -118,6 +121,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope2, "String.prototype.foo = 'scope2'");
@@ -138,6 +142,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -167,6 +172,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -196,6 +202,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -225,6 +232,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -254,6 +262,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -283,6 +292,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -316,6 +326,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 String code = "";
@@ -349,6 +360,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope1, "String.prototype.foo = 'scope1'");
@@ -372,6 +384,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(
@@ -401,6 +414,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(
@@ -431,6 +445,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope1, "String.prototype.foo = 'scope1'");
@@ -452,6 +467,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 eval(cx, scope2, "String.prototype.foo = 'scope1'");
@@ -472,6 +488,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertSame(scope2, eval(cx, scope2, "test.__parent__"));
@@ -490,6 +507,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertSame(scope2, eval(cx, scope2, "test()"));
@@ -511,6 +529,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertSame(scope2, eval(cx, scope2, "test()"));
@@ -532,6 +551,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertSame(scope2, eval(cx, scope2, "test()"));
@@ -564,6 +584,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));
@@ -596,6 +617,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));
@@ -628,6 +650,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));
@@ -660,6 +683,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test.call('')"));
@@ -684,6 +708,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));
@@ -716,6 +741,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));
@@ -748,6 +774,7 @@ public class Bug783797Test {
                 action(
                         fn,
                         new Action() {
+                            @Override
                             public void run(
                                     Context cx, ScriptableObject scope1, ScriptableObject scope2) {
                                 assertTRUE(eval(cx, scope2, "String.prototype === test()"));

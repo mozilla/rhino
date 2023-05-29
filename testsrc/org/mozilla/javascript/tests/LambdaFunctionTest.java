@@ -60,7 +60,7 @@ public class LambdaFunctionTest {
                         root,
                         "foo",
                         0,
-                        (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
                             return "Hello";
                         });
         ScriptableObject.putProperty(root, "foo", f);
@@ -163,7 +163,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context cx, Scriptable scope, Object[] args) -> cx.newObject(scope));
+                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -179,7 +179,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context cx, Scriptable scope, Object[] args) -> cx.newObject(scope));
+                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -193,7 +193,7 @@ public class LambdaFunctionTest {
                 new LambdaFunction(
                         root,
                         0,
-                        (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
+                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
         ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
         eval(
                 "let o = noNewFunc();\n"

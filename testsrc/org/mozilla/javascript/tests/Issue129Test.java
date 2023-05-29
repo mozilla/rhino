@@ -92,7 +92,7 @@ public class Issue129Test {
         }
     }
 
-    private String getFromSource(String source, AstNode node) {
+    private static String getFromSource(String source, AstNode node) {
         return source.substring(
                 node.getAbsolutePosition(), node.getAbsolutePosition() + node.getLength());
     }
