@@ -20,26 +20,27 @@ public class ClassShutterExceptionTest {
 
     /** Define a ClassShutter that prevents access to all Java classes. */
     static class OpaqueShutter implements ClassShutter {
+        @Override
         public boolean visibleToScripts(String name) {
             return false;
         }
     }
 
     public void helper(String source) {
-        Context cx = Context.enter();
-        Context.ClassShutterSetter setter = cx.getClassShutterSetter();
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            if (setter == null) {
-                setter = classShutterSetter;
-            } else {
-                classShutterSetter = setter;
+        try (Context cx = Context.enter()) {
+            Context.ClassShutterSetter setter = cx.getClassShutterSetter();
+            try {
+                Scriptable globalScope = cx.initStandardObjects();
+                if (setter == null) {
+                    setter = classShutterSetter;
+                } else {
+                    classShutterSetter = setter;
+                }
+                setter.setClassShutter(new OpaqueShutter());
+                cx.evaluateString(globalScope, source, "test source", 1, null);
+            } finally {
+                setter.setClassShutter(null);
             }
-            setter.setClassShutter(new OpaqueShutter());
-            cx.evaluateString(globalScope, source, "test source", 1, null);
-        } finally {
-            setter.setClassShutter(null);
-            Context.exit();
         }
     }
 

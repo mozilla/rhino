@@ -24,8 +24,7 @@ public class DefineClassTest {
 
     @Test
     public void annotatedHostObject() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             Object result = evaluate(cx, "a = new AnnotatedHostObject(); a.initialized;");
             assertEquals(result, Boolean.TRUE);
             assertEquals(evaluate(cx, "a.instanceFunction();"), "instanceFunction");
@@ -42,15 +41,12 @@ public class DefineClassTest {
             // ignored in non-strict mode.
             evaluate(cx, "a.bar = 'new bar'");
             assertEquals("bar", evaluate(cx, "a.bar;"));
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void traditionalHostObject() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             Object result = evaluate(cx, "t = new TraditionalHostObject(); t.initialized;");
             assertEquals(result, Boolean.TRUE);
             assertEquals(evaluate(cx, "t.instanceFunction();"), "instanceFunction");
@@ -63,8 +59,6 @@ public class DefineClassTest {
             // ignored in non-strict mode.
             evaluate(cx, "t.bar = 'new bar'");
             assertEquals("bar", evaluate(cx, "t.bar;"));
-        } finally {
-            Context.exit();
         }
     }
 
@@ -74,13 +68,10 @@ public class DefineClassTest {
 
     @Before
     public void init() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, AnnotatedHostObject.class);
             ScriptableObject.defineClass(scope, TraditionalHostObject.class);
-        } finally {
-            Context.exit();
         }
     }
 
@@ -167,8 +158,8 @@ public class DefineClassTest {
             return foo;
         }
 
-        public void jsSet_foo(String foo) {
-            this.foo = foo.toUpperCase();
+        public void jsSet_foo(String fooStr) {
+            foo = fooStr.toUpperCase();
         }
 
         public String jsGet_bar() {

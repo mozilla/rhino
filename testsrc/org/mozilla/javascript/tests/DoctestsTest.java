@@ -89,8 +89,7 @@ public class DoctestsTest {
     @Test
     public void runDoctest() throws Exception {
         ContextFactory factory = ContextFactory.getGlobal();
-        Context cx = factory.enterContext();
-        try {
+        try (Context cx = factory.enterContext()) {
             cx.setOptimizationLevel(optimizationLevel);
             Global global = new Global(cx);
             // global.runDoctest throws an exception on any failure
@@ -99,8 +98,6 @@ public class DoctestsTest {
         } catch (Exception ex) {
             System.out.println(name + "(" + optimizationLevel + "): FAILED due to " + ex);
             throw ex;
-        } finally {
-            Context.exit();
         }
     }
 }

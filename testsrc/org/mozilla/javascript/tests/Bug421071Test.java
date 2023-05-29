@@ -48,12 +48,9 @@ public class Bug421071Test {
                         + "myDate.set(Calendar.YEAR, searchyear);\n"
                         + "searchwkday.value = myDate.get(Calendar.DAY_OF_WEEK);";
         Script script;
-        Context context = factory.enterContext();
-        try {
+        try (Context context = factory.enterContext()) {
             script = context.compileString(scriptSource, "testScript", 1, null);
             return script;
-        } finally {
-            Context.exit();
         }
     }
 
@@ -76,11 +73,12 @@ public class Bug421071Test {
 
     private TopLevelScope createGlobalScope() {
         factory = new DynamicScopeContextFactory();
-        Context context = factory.enterContext();
-        // noinspection deprecation
-        TopLevelScope globalScope = new TopLevelScope(context);
-        Context.exit();
-        return globalScope;
+
+        try (Context context = factory.enterContext()) {
+            // noinspection deprecation
+            TopLevelScope topLevelScope = new TopLevelScope(context);
+            return topLevelScope;
+        }
     }
 
     @Before
@@ -105,8 +103,7 @@ public class Bug421071Test {
 
         @Override
         public void run() {
-            Context context = factory.enterContext();
-            try {
+            try (Context context = factory.enterContext()) {
                 // Run each script in its own scope, to keep global variables
                 // defined in each script separate
                 Scriptable threadScope = context.newObject(globalScope);
@@ -115,8 +112,6 @@ public class Bug421071Test {
                 script.exec(context, threadScope);
             } catch (Exception ee) {
                 ee.printStackTrace();
-            } finally {
-                Context.exit();
             }
         }
     }

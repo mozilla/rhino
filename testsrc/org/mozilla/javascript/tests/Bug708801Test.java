@@ -104,6 +104,7 @@ public class Bug708801Test {
             }
         }
 
+        @Override
         public final Object run(Context cx) {
             this.cx = cx;
             scope = cx.initStandardObjects(null, true);

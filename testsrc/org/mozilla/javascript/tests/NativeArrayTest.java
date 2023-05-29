@@ -130,15 +130,12 @@ public class NativeArrayTest {
                         + "};\n"
                         + "f();";
 
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             Scriptable scope = cx.initStandardObjects();
             String result = cx.evaluateString(scope, source, "source", 1, null).toString();
             Assert.assertEquals("0,1,0,1", result);
-        } finally {
-            Context.exit();
         }
     }
 }

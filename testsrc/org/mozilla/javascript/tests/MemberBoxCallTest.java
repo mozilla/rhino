@@ -23,8 +23,7 @@ public class MemberBoxCallTest {
 
     @Test
     public void prototypeProperty() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             assertEquals(
                     "SUPERVAL",
                     evaluate(
@@ -37,15 +36,12 @@ public class MemberBoxCallTest {
                                     + "result = valueProperty.get.call(hostObj);"
                                     + "}"
                                     + "result;"));
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void propertyGetterName() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             assertEquals(
                     "foo",
                     evaluate(
@@ -57,15 +53,12 @@ public class MemberBoxCallTest {
                                     + "result = '' + valueProperty.get.name;"
                                     + "}"
                                     + "result;"));
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
     public void propertySetterName() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             assertEquals(
                     "foo",
                     evaluate(
@@ -77,8 +70,6 @@ public class MemberBoxCallTest {
                                     + "result = '' + valueProperty.set.name;"
                                     + "}"
                                     + "result;"));
-        } finally {
-            Context.exit();
         }
     }
 
@@ -88,12 +79,9 @@ public class MemberBoxCallTest {
 
     @Before
     public void init() throws Exception {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, AnnotatedHostObject.class);
-        } finally {
-            Context.exit();
         }
     }
 

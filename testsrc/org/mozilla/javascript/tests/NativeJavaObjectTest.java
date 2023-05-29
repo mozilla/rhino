@@ -19,8 +19,7 @@ public class NativeJavaObjectTest {
 
     @Test
     public void coerceType() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             Scriptable scope = cx.initStandardObjects();
@@ -50,9 +49,6 @@ public class NativeJavaObjectTest {
                 assertTrue(rawObj instanceof BigInteger);
                 assertEquals(BigInteger.valueOf(123), rawObj);
             }
-
-        } finally {
-            Context.exit();
         }
     }
 }

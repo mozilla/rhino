@@ -79,14 +79,11 @@ public class GeneratedMethodNameTest {
     }
 
     public void doTest(final String scriptCode) throws Exception {
-        final Context cx = ContextFactory.getGlobal().enterContext();
-        try {
+        try (Context cx = ContextFactory.getGlobal().enterContext()) {
             Scriptable topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());
             Script script = cx.compileString(scriptCode, "myScript", 1, null);
             script.exec(cx, topScope);
-        } finally {
-            Context.exit();
         }
     }
 }
