@@ -41,6 +41,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -517,9 +518,19 @@ public class Test262SuiteTest {
             if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
                 String harnessPath = testHarnessDir + harnessFile;
                 try (Reader reader = new FileReader(harnessPath)) {
+                    String script = Kit.readReader(reader);
+
+                    // fix for missing features in Rhino
+                    if ("compareArray.js".equalsIgnoreCase(harnessFile)) {
+                        script =
+                                script.replace(
+                                        "assert.compareArray = function(actual, expected, message = '')",
+                                        "assert.compareArray = function(actual, expected, message)");
+                    }
+
                     HARNESS_SCRIPT_CACHE
                             .get(optLevel)
-                            .put(harnessFile, cx.compileReader(reader, harnessPath, 1, null));
+                            .put(harnessFile, cx.compileString(script, harnessPath, 1, null));
                 }
             }
             HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
