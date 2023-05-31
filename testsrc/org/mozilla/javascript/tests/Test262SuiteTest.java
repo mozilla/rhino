@@ -89,7 +89,6 @@ public class Test262SuiteTest {
             new HashSet<>(
                     Arrays.asList(
                             "Array.prototype.flatMap",
-                            "Array.prototype.flat",
                             "Atomics",
                             "IsHTMLDDA",
                             "Proxy",
