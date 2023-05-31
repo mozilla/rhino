@@ -1,4 +1,9 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 load("testsrc/assert.js");
+
 assertEquals(1,Array.prototype.at.length)
 
 const alphaArray = ["b","c","d"];
@@ -12,6 +17,9 @@ assertEquals({a:"b"}, [{a:"b"}, {c: "d"}].at(0))
 assertEquals(0, intArray.at(0))
 assertEquals(-50, intArray.at(-1))
 assertEquals(-10, intArray.at(2))
+
+//it treats missing arg like 0
+assertEquals(0,intArray.at());
 
 //it treats certain non numerics like 0
 assertEquals(0,intArray.at("a"));
@@ -62,8 +70,7 @@ assertEquals(undefined,Array.prototype.at.call(123456789,-1));
 assertEquals(undefined,Array.prototype.at.call({'foo':'bar'},0));
 
 //it throws when called on null or undefined
-assertThrows(function() { Array.prototype.at.call(null);
-}, TypeError);
-assertThrows(function() { Array.prototype.at.call(undefined);
-}, TypeError);
+assertThrows(function() { Array.prototype.at.call(null); }, TypeError);
+assertThrows(function() { Array.prototype.at.call(undefined); }, TypeError);
+
 "success"

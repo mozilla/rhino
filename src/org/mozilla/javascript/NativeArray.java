@@ -154,7 +154,6 @@ public class NativeArray extends IdScriptableObject implements List {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_at, "at", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -1984,9 +1983,12 @@ public class NativeArray extends IdScriptableObject implements List {
 
     private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
-        long relativeIndex = (long) ScriptRuntime.toInteger(targetArg);
         long len = getLengthProperty(cx, o);
+
+        long relativeIndex = 0;
+        if (args.length >= 1) {
+            relativeIndex = (long) ScriptRuntime.toInteger(args[0]);
+        }
         long k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
         if ((k < 0) || (k >= len)) {
             return Undefined.instance;
@@ -2680,7 +2682,6 @@ public class NativeArray extends IdScriptableObject implements List {
             ConstructorId_findIndex = -Id_findIndex,
             ConstructorId_reduce = -Id_reduce,
             ConstructorId_reduceRight = -Id_reduceRight,
-            ConstructorId_at = -Id_at,
             ConstructorId_isArray = -26,
             ConstructorId_of = -27,
             ConstructorId_from = -28;

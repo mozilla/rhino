@@ -255,9 +255,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
-        int relativeIndex = (int) ScriptRuntime.toInteger(targetArg);
-        int k = (relativeIndex >= 0) ? relativeIndex : length + relativeIndex;
+        long relativeIndex = 0;
+        if (args.length >= 1) {
+            relativeIndex = (long) ScriptRuntime.toInteger(args[0]);
+        }
+
+        long k = (relativeIndex >= 0) ? relativeIndex : length + relativeIndex;
 
         if ((k < 0) || (k >= length)) {
             return Undefined.instance;
