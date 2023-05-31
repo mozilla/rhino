@@ -56,17 +56,17 @@ public class StackTraceExtensionV8Test {
     }
 
     @Test
-    public void testStackTrace0() {
+    public void stackTrace0() {
         testTraces(0);
     }
 
     @Test
-    public void testStackTrace9() {
+    public void stackTrace9() {
         testTraces(9);
     }
 
     @Test
-    public void testStackTraceInt() {
+    public void stackTraceInt() {
         testTraces(-1);
     }
 }

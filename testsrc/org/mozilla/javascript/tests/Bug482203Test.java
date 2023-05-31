@@ -4,17 +4,20 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.InputStreamReader;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class Bug482203Test extends TestCase {
+public class Bug482203Test {
 
-    public void testJsApi() throws Exception {
+    @Test
+    public void jsApi() throws Exception {
         try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(-1);
             InputStreamReader in =
@@ -36,7 +39,8 @@ public class Bug482203Test extends TestCase {
         }
     }
 
-    public void testJavaApi() throws Exception {
+    @Test
+    public void javaApi() throws Exception {
         try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(-1);
             InputStreamReader in =

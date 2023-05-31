@@ -5,7 +5,9 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.fail;
+
+import org.junit.Test;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
@@ -13,35 +15,37 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 
 /** @author Norris Boyd */
-public class ClassShutterExceptionTest extends TestCase {
+public class ClassShutterExceptionTest {
     private static Context.ClassShutterSetter classShutterSetter;
 
     /** Define a ClassShutter that prevents access to all Java classes. */
     static class OpaqueShutter implements ClassShutter {
+        @Override
         public boolean visibleToScripts(String name) {
             return false;
         }
     }
 
     public void helper(String source) {
-        Context cx = Context.enter();
-        Context.ClassShutterSetter setter = cx.getClassShutterSetter();
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            if (setter == null) {
-                setter = classShutterSetter;
-            } else {
-                classShutterSetter = setter;
+        try (Context cx = Context.enter()) {
+            Context.ClassShutterSetter setter = cx.getClassShutterSetter();
+            try {
+                Scriptable globalScope = cx.initStandardObjects();
+                if (setter == null) {
+                    setter = classShutterSetter;
+                } else {
+                    classShutterSetter = setter;
+                }
+                setter.setClassShutter(new OpaqueShutter());
+                cx.evaluateString(globalScope, source, "test source", 1, null);
+            } finally {
+                setter.setClassShutter(null);
             }
-            setter.setClassShutter(new OpaqueShutter());
-            cx.evaluateString(globalScope, source, "test source", 1, null);
-        } finally {
-            setter.setClassShutter(null);
-            Context.exit();
         }
     }
 
-    public void testClassShutterException() {
+    @Test
+    public void classShutterException() {
         try {
             helper("java.lang.System.out.println('hi');");
             fail();
@@ -51,13 +55,15 @@ public class ClassShutterExceptionTest extends TestCase {
         }
     }
 
-    public void testThrowingException() {
+    @Test
+    public void throwingException() {
         // JavaScript exceptions with no reference to Java
         // should not be affected by the ClassShutter
         helper("try { throw 3; } catch (e) { }");
     }
 
-    public void testThrowingEcmaError() {
+    @Test
+    public void throwingEcmaError() {
         try {
             // JavaScript exceptions with no reference to Java
             // should not be affected by the ClassShutter
@@ -68,7 +74,8 @@ public class ClassShutterExceptionTest extends TestCase {
         }
     }
 
-    public void testThrowingEvaluatorException() {
+    @Test
+    public void throwingEvaluatorException() {
         // JavaScript exceptions with no reference to Java
         // should not be affected by the ClassShutter
         helper("try { eval('for;if;else'); } catch (e) { }");

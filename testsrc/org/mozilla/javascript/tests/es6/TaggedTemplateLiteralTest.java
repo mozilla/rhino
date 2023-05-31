@@ -17,7 +17,7 @@ public class TaggedTemplateLiteralTest {
      * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
-    public void testTaggedTemplateChildrenHaveParent() {
+    public void taggedTemplateChildrenHaveParent() {
         String script = "tag`template`;";
 
         AstRoot root = new Parser().parse(script, "test", 0);
@@ -37,7 +37,7 @@ public class TaggedTemplateLiteralTest {
      * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
-    public void testTaggedTemplateChildrenHaveAstRoot() {
+    public void taggedTemplateChildrenHaveAstRoot() {
         String script = "tag`template`";
 
         AstRoot root = new Parser().parse(script, "test", 0);
@@ -57,7 +57,7 @@ public class TaggedTemplateLiteralTest {
      * <p>See <a href="https://github.com/mozilla/rhino/issues/1238">#1238</a> for details.
      */
     @Test
-    public void testInnerNodeHasAstRoot() {
+    public void innerNodeHasAstRoot() {
         String script = "someObj.property()`template`";
 
         AstRoot root = new Parser().parse(script, "test", 0);
@@ -78,9 +78,9 @@ public class TaggedTemplateLiteralTest {
         }
 
         @Override
-        public boolean visit(AstNode node) {
-            if (node instanceof TaggedTemplateLiteral) {
-                this.node = (TaggedTemplateLiteral) node;
+        public boolean visit(AstNode astNode) {
+            if (astNode instanceof TaggedTemplateLiteral) {
+                this.node = (TaggedTemplateLiteral) astNode;
                 return false;
             }
             return true;
@@ -101,9 +101,9 @@ public class TaggedTemplateLiteralTest {
         }
 
         @Override
-        public boolean visit(AstNode node) {
-            if (node instanceof Name) {
-                Name nameNode = (Name) node;
+        public boolean visit(AstNode astNode) {
+            if (astNode instanceof Name) {
+                Name nameNode = (Name) astNode;
                 if (nameNode.getIdentifier().equals(name)) {
                     this.node = nameNode;
                     return false;

@@ -13,7 +13,6 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -22,17 +21,6 @@ import org.mozilla.javascript.tools.shell.Global;
  * @author Roland Praml
  */
 public class ForEachForOfTest {
-
-    private ContextFactory contextFactoryIntl402 =
-            new ContextFactory() {
-                @Override
-                protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == Context.FEATURE_E4X) {
-                        return true;
-                    }
-                    return super.hasFeature(cx, featureIndex);
-                }
-            };
 
     public static class Dto {
         private String data;
@@ -47,7 +35,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForEach() {
+    public void forEach() {
         testList("dtos.forEach(dto => { dto.data = 'bar' })");
         testArray("dtos.forEach(dto => { dto.data = 'bar' })");
         testSet("dtos.forEach(dto => { dto.data = 'bar' })");
@@ -55,7 +43,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForOf() {
+    public void forOf() {
         testList("for (var dto of dtos) { dto.data = 'bar' }");
         testArray("for (var dto of dtos) { dto.data = 'bar' }");
         testSet("for (var dto of dtos) { dto.data = 'bar' }");
@@ -64,7 +52,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForEachStrict() {
+    public void forEachStrict() {
         testList("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
         testArray("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
         testSet("'use strict'; dtos.forEach(dto => { dto.data = 'bar' })");
@@ -72,7 +60,7 @@ public class ForEachForOfTest {
     }
 
     @Test
-    public void testForOfStrict() {
+    public void forOfStrict() {
         testList("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
         testArray("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
         testSet("'use strict'; for (var dto of dtos) { dto.data = 'bar' }");
@@ -80,7 +68,7 @@ public class ForEachForOfTest {
         testMap("'use strict'; for (var dto of dtos) { dto[1].data = 'bar' }");
     }
 
-    private void testList(final String script) {
+    private static void testList(final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -98,7 +86,7 @@ public class ForEachForOfTest {
                 });
     }
 
-    private void testArray(final String script) {
+    private static void testArray(final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -116,7 +104,7 @@ public class ForEachForOfTest {
                 });
     }
 
-    private void testSet(final String script) {
+    private static void testSet(final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -135,7 +123,7 @@ public class ForEachForOfTest {
                 });
     }
 
-    private void testMap(final String script) {
+    private static void testMap(final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

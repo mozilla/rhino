@@ -20,7 +20,7 @@ public class ComparatorTest {
     An inconsistent comparator will result in an IllegalArgumentException
     with the message "Comparison method violates its general contract!"
     */
-    private void idChk(Object o1, Object o2, int expected) {
+    private static void idChk(Object o1, Object o2, int expected) {
         assertEquals(expected, new ScriptableObject.KeyComparator().compare(o1, o2));
         assertEquals(-expected, new ScriptableObject.KeyComparator().compare(o2, o1));
     }
@@ -31,7 +31,7 @@ public class ComparatorTest {
     as per the spec.
      */
     @Test
-    public void testObjectIDComparator() {
+    public void objectIDComparator() {
         idChk(0, 0, 0);
         idChk(1, 0, 1);
         idChk(0, 1, -1);
@@ -42,7 +42,7 @@ public class ComparatorTest {
         idChk(1, "a", -1);
     }
 
-    private void aChk(Object o1, Object o2, int expected) {
+    private static void aChk(Object o1, Object o2, int expected) {
         assertEquals(expected, new NativeArray.ElementComparator().compare(o1, o2));
         assertEquals(-expected, new NativeArray.ElementComparator().compare(o2, o1));
     }
@@ -53,7 +53,7 @@ public class ComparatorTest {
     a string.
      */
     @Test
-    public void testArrayComparator() {
+    public void arrayComparator() {
         aChk("a", "b", -1);
         aChk("b", "a", 1);
         aChk("a", "a", 0);
@@ -72,19 +72,16 @@ public class ComparatorTest {
     on Array.sort.
      */
     @Test
-    public void testCustomComparator() throws IOException {
-        Context cx = Context.enter();
-        Global global = new Global(cx);
-        Scriptable root = cx.newObject(global);
-        FileReader fr = new FileReader("testsrc/jstests/extensions/custom-comparators.js");
+    public void customComparator() throws IOException {
+        try (Context cx = Context.enter()) {
+            Global global = new Global(cx);
+            Scriptable root = cx.newObject(global);
+            FileReader fr = new FileReader("testsrc/jstests/extensions/custom-comparators.js");
 
-        try {
             cx.evaluateReader(root, fr, "custom-comparators.js", 1, null);
         } catch (RhinoException re) {
             System.err.println(re.getScriptStackTrace());
             throw re;
-        } finally {
-            Context.exit();
         }
     }
 }

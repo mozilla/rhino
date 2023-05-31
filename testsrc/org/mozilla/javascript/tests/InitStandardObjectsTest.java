@@ -4,7 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
@@ -15,7 +19,7 @@ import org.mozilla.javascript.tools.shell.Global;
  *
  * @author Roland Praml, FOCONIS AG
  */
-public class InitStandardObjectsTest extends TestCase {
+public class InitStandardObjectsTest {
 
     private Global global = new Global();
     private Context context;
@@ -24,13 +28,13 @@ public class InitStandardObjectsTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         context = ContextFactory.getGlobal().enterContext();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         context.close();
     }
 
@@ -39,7 +43,8 @@ public class InitStandardObjectsTest extends TestCase {
      * objects are reset to default. Due a caching issue <code>[] instanceof Object</code> was not
      * always true.
      */
-    public void testInitStandardObjects() {
+    @Test
+    public void initStandardObjects() {
 
         // Modify some prototypes
         exec("Array.prototype.toString = function() { return 'foo' }");

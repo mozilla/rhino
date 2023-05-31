@@ -19,6 +19,7 @@ import org.mozilla.javascript.ScriptableObject;
 
 /** @author André Bargull */
 public class Bug685403Test {
+
     private Context cx;
     private ScriptableObject scope;
 

@@ -32,7 +32,7 @@ public class Test262RegExpTest {
     }
 
     @Test
-    public void testS15_10_2_9_A1_T4() {
+    public void s15_10_2_9_A1_T4() {
         String source = "/\\b(\\w+) \\2\\b/.test('do you listen the the band');";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.9_AtomEscape/S15.10.2.9_A1_T4.js";
@@ -40,7 +40,7 @@ public class Test262RegExpTest {
     }
 
     @Test
-    public void testS15_10_2_11_A1_T2() {
+    public void s15_10_2_11_A1_T2() {
         List<String> sources = new ArrayList<String>();
         sources.add("/\\1/.exec('');");
         sources.add("/\\2/.exec('');");
@@ -61,7 +61,7 @@ public class Test262RegExpTest {
     }
 
     @Test
-    public void testS15_10_2_11_A1_T3() {
+    public void s15_10_2_11_A1_T3() {
         String source = "/(?:A)\\2/.exec('AA');";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.11_DecimalEscape/S15.10.2.11_A1_T3.js";
@@ -69,7 +69,7 @@ public class Test262RegExpTest {
     }
 
     @Test(expected = EcmaError.class)
-    public void testS15_10_2_15_A1_T4() {
+    public void s15_10_2_15_A1_T4() {
         String source = "(new RegExp('[\\\\Db-G]').exec('a'))";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T4.js";
@@ -77,7 +77,7 @@ public class Test262RegExpTest {
     }
 
     @Test(expected = EcmaError.class)
-    public void testS15_10_2_15_A1_T5() {
+    public void s15_10_2_15_A1_T5() {
         String source = "(new RegExp('[\\\\sb-G]').exec('a'))";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T5.js";
@@ -85,7 +85,7 @@ public class Test262RegExpTest {
     }
 
     @Test(expected = EcmaError.class)
-    public void testS15_10_2_15_A1_T6() {
+    public void s15_10_2_15_A1_T6() {
         String source = "(new RegExp('[\\\\Sb-G]').exec('a'))";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T6.js";
@@ -93,7 +93,7 @@ public class Test262RegExpTest {
     }
 
     @Test(expected = EcmaError.class)
-    public void testS15_10_2_15_A1_T7() {
+    public void s15_10_2_15_A1_T7() {
         String source = "(new RegExp('[\\\\wb-G]').exec('a'))";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T7.js";
@@ -101,7 +101,7 @@ public class Test262RegExpTest {
     }
 
     @Test(expected = EcmaError.class)
-    public void testS15_10_2_15_A1_T8() {
+    public void s15_10_2_15_A1_T8() {
         String source = "(new RegExp('[\\\\Wb-G]').exec('a'))";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T8.js";
@@ -109,7 +109,7 @@ public class Test262RegExpTest {
     }
 
     @Test
-    public void testS15_10_4_1_T1() {
+    public void s15_10_4_1_T1() {
         String source = "new RegExp().test('AA');";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.4_Pattern_Semantics/15.10.2.11_DecimalEscape/S15.10.2.11_A1_T3.js";
@@ -117,7 +117,7 @@ public class Test262RegExpTest {
     }
 
     @Test
-    public void testS15_10_4_1_T2_Undefined() {
+    public void s15_10_4_1_T2_Undefined() {
         String source = "new RegExp(undefined).test('AA');";
         String sourceName =
                 "Conformance/15_Native/15.10_RegExp_Objects/15.10.4_Pattern_Semantics/15.10.2.11_DecimalEscape/S15.10.2.11_A1_T3.js";

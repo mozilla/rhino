@@ -2,6 +2,7 @@ package org.mozilla.javascript.tests.backwardcompat;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.tests.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class BackwardUseStrict {
@@ -38,61 +40,37 @@ public class BackwardUseStrict {
         }
     }
 
-    private static void strictIgnored(int opt) {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_1_8);
-            cx.setOptimizationLevel(opt);
-            try {
-                Global root = new Global(cx);
-                cx.evaluateString(root, source, "[test]", 1, null);
-            } catch (RhinoException re) {
-                System.err.println(re.getScriptStackTrace());
-                assertTrue("Unexpected code error: " + re, false);
-            }
-        }
-    }
+    @Test
+    public void strictIgnored() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_1_8);
+                    try {
+                        Global root = new Global(cx);
+                        cx.evaluateString(root, source, "[test]", 1, null);
+                    } catch (RhinoException re) {
+                        System.err.println(re.getScriptStackTrace());
+                        fail("Unexpected code error: " + re);
+                    }
 
-    private static void strictHonored(int opt) {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(opt);
-            try {
-                Global root = new Global(cx);
-                cx.evaluateString(root, source, "[test]", 1, null);
-                assertTrue("Expected a runtime exception", false);
-            } catch (RhinoException re) {
-                // We expect an error here.
-            }
-        }
+                    return null;
+                });
     }
 
     @Test
-    public void testStrictIgnored0() {
-        strictIgnored(0);
-    }
+    public void strictHonored() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    try {
+                        Global root = new Global(cx);
+                        cx.evaluateString(root, source, "[test]", 1, null);
+                        assertTrue("Expected a runtime exception", false);
+                    } catch (RhinoException re) {
+                        // We expect an error here.
+                    }
 
-    @Test
-    public void testStrictIgnored1() {
-        strictIgnored(1);
-    }
-
-    @Test
-    public void testStrictIgnored9() {
-        strictIgnored(9);
-    }
-
-    @Test
-    public void testStrictHonored0() {
-        strictHonored(0);
-    }
-
-    @Test
-    public void testStrictHonored1() {
-        strictHonored(1);
-    }
-
-    @Test
-    public void testStrictHonored9() {
-        strictHonored(9);
+                    return null;
+                });
     }
 }

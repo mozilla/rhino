@@ -36,7 +36,7 @@ public class HashCollisionTest {
      * over two minutes to execute.
      */
     @Test
-    public void testMediumCollisions() throws IOException {
+    public void mediumCollisions() throws IOException {
         try (FileReader scriptIn = new FileReader("testsrc/jstests/hash-collisions.js")) {
             try (Context cx = Context.enter()) {
                 Global glob = new Global(cx);

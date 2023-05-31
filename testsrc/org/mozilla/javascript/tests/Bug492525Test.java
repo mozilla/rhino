@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.NativeArray;
 
 public class Bug492525Test {
+
     @Test
     public void getAllIdsShouldIncludeArrayIndices() {
         NativeArray array = new NativeArray(new String[] {"a", "b"});

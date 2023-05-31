@@ -4,14 +4,19 @@
 
 package org.mozilla.javascript;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class EqualObjectGraphsTest extends TestCase {
-    public void testCyclic() {
+public class EqualObjectGraphsTest {
+
+    @Test
+    public void cyclic() {
         assertTrue(equal(makeCyclic("foo"), makeCyclic("foo")));
         // countertest; make unequal ones and make sure they test unequal
         assertFalse(equal(makeCyclic("foo"), makeCyclic("bar")));
@@ -31,48 +36,71 @@ public class EqualObjectGraphsTest extends TestCase {
         return o1;
     }
 
-    public void testSameValueDifferentTopology() {
+    private static class TestObject {
+        private final int x;
+
+        TestObject(int x) {
+            this.x = x;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof TestObject) {
+                return x == ((TestObject) o).x;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return x;
+        }
+    }
+
+    @Test
+    public void sameValueDifferentTopology() {
         Object[] o1 = new Object[2];
         Object[] o2 = new Object[2];
-        String s1 = new String("foo");
-        String s2 = new String("foo");
-        o1[0] = s1;
-        o1[1] = s2;
-        String s3 = new String("foo");
-        String s4 = new String("foo");
-        o2[0] = s3;
-        o2[1] = s4;
+        Object t1 = new TestObject(0);
+        Object t2 = new TestObject(0);
+        o1[0] = t1;
+        o1[1] = t2;
+        Object t3 = new TestObject(0);
+        Object t4 = new TestObject(0);
+        o2[0] = t3;
+        o2[1] = t4;
 
         // Same values, same topology
         assertTrue(equal(o1, o2));
 
         // Same values, different topology
-        o2[1] = s3;
+        o2[1] = t3;
         assertFalse(equal(o1, o2));
     }
 
-    public void testHeterogenousScriptables() {
-        Context cx = Context.enter();
-        ScriptableObject top = cx.initStandardObjects();
-        ScriptRuntime.doTopCall(
-                (Callable)
-                        (c, scope, thisObj, args) -> {
-                            assertTrue(
-                                    equal(
-                                            makeHeterogenousScriptable(cx, "v1"),
-                                            makeHeterogenousScriptable(cx, "v1")));
-                            assertFalse(
-                                    equal(
-                                            makeHeterogenousScriptable(cx, "v1"),
-                                            makeHeterogenousScriptable(cx, "v2")));
-                            return null;
-                        },
-                cx,
-                top,
-                top,
-                null,
-                false);
-        Context.exit();
+    @Test
+    public void heterogenousScriptables() {
+        try (Context cx = Context.enter()) {
+            ScriptableObject top = cx.initStandardObjects();
+            ScriptRuntime.doTopCall(
+                    (Callable)
+                            (c, scope, thisObj, args) -> {
+                                assertTrue(
+                                        equal(
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v1")));
+                                assertFalse(
+                                        equal(
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v2")));
+                                return null;
+                            },
+                    cx,
+                    top,
+                    top,
+                    null,
+                    false);
+        }
     }
 
     private static Object makeHeterogenousScriptable(Context cx, String discriminator) {

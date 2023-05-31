@@ -6,7 +6,8 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -14,7 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
@@ -23,7 +23,8 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-public class JavaIterableTest extends TestCase {
+public class JavaIterableTest {
+
     protected final Global global = new Global();
 
     public JavaIterableTest() {
@@ -31,7 +32,7 @@ public class JavaIterableTest extends TestCase {
     }
 
     @Test
-    public void testMap() {
+    public void map() {
         Map<Object, Object> map = new LinkedHashMap<>();
         String script =
                 "var a = [];\n"
@@ -51,8 +52,8 @@ public class JavaIterableTest extends TestCase {
             assertEquals(6, res.size());
             assertEquals("a", res.get(0));
             assertEquals("b", res.get(1));
-            assertEquals(123.0, Context.toNumber(res.get(2)));
-            assertEquals(234.0, Context.toNumber(res.get(3)));
+            assertEquals(123.0, Context.toNumber(res.get(2)), 0.000001);
+            assertEquals(234.0, Context.toNumber(res.get(3)), 0.000001);
             assertEquals(o, res.get(4));
             assertEquals(o, res.get(5));
         }
@@ -66,8 +67,8 @@ public class JavaIterableTest extends TestCase {
             assertEquals("b", e0.getValue());
 
             Map.Entry<Object, Object> e1 = (Map.Entry<Object, Object>) res.get(1);
-            assertEquals(123.0, Context.toNumber(e1.getKey()));
-            assertEquals(234.0, Context.toNumber(e1.getValue()));
+            assertEquals(123.0, Context.toNumber(e1.getKey()), 0.000001);
+            assertEquals(234.0, Context.toNumber(e1.getValue()), 0.000001);
 
             Map.Entry<Object, Object> e2 = (Map.Entry<Object, Object>) res.get(2);
             assertEquals(o, e2.getKey());
@@ -76,7 +77,7 @@ public class JavaIterableTest extends TestCase {
     }
 
     @Test
-    public void testList() {
+    public void list() {
         List<Object> list = new ArrayList<>();
         String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
@@ -92,7 +93,7 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript(script, list);
             assertEquals(3, res.size());
             assertEquals("a", res.get(0));
-            assertEquals(123.0, Context.toNumber(res.get(1)));
+            assertEquals(123.0, Context.toNumber(res.get(1)), 0.000001);
             assertEquals(o, res.get(2));
         }
 
@@ -100,13 +101,13 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript("Array.from(value)", list);
             assertEquals(3, res.size());
             assertEquals("a", res.get(0));
-            assertEquals(123.0, Context.toNumber(res.get(1)));
+            assertEquals(123.0, Context.toNumber(res.get(1)), 0.000001);
             assertEquals(o, res.get(2));
         }
     }
 
     @Test
-    public void testSet() {
+    public void set() {
         Set<Object> set = new LinkedHashSet<>();
         String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
@@ -123,7 +124,7 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript(script, set);
             assertEquals(3, res.size());
             assertEquals("a", res.get(0));
-            assertEquals(123.0, Context.toNumber(res.get(1)));
+            assertEquals(123.0, Context.toNumber(res.get(1)), 0.000001);
             assertEquals(o, res.get(2));
         }
 
@@ -131,13 +132,13 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript("Array.from(value)", set);
             assertEquals(3, res.size());
             assertEquals("a", res.get(0));
-            assertEquals(123.0, Context.toNumber(res.get(1)));
+            assertEquals(123.0, Context.toNumber(res.get(1)), 0.000001);
             assertEquals(o, res.get(2));
         }
     }
 
     @Test
-    public void testNoIterable() {
+    public void noIterable() {
         Object o = new Object();
         String script = "for (var e of value) ;";
 

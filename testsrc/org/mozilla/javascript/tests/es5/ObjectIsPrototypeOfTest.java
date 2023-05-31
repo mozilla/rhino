@@ -33,7 +33,7 @@ public class ObjectIsPrototypeOfTest {
     }
 
     @Test
-    public void testIsPrototypeOfUndefined() {
+    public void isPrototypeOfUndefined() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -47,7 +47,7 @@ public class ObjectIsPrototypeOfTest {
     }
 
     @Test
-    public void testIsPrototypeOfNull() {
+    public void isPrototypeOfNull() {
         Object result =
                 cx.evaluateString(
                         scope,

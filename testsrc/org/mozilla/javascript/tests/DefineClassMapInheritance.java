@@ -28,8 +28,7 @@ public class DefineClassMapInheritance {
     @Test
     public void test()
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             ScriptableObject scope = cx.initStandardObjects();
 
             // define two classes that share a parent prototype
@@ -38,8 +37,6 @@ public class DefineClassMapInheritance {
 
             assertEquals(Boolean.TRUE, evaluate(cx, scope, "(new Fruit instanceof Food)"));
             assertEquals(Boolean.TRUE, evaluate(cx, scope, "(new Vegetable instanceof Food)"));
-        } finally {
-            Context.exit();
         }
     }
 

@@ -28,7 +28,7 @@ public class Issue533Test {
     }
 
     @Test
-    public void testGetPosition() {
+    public void getPosition() {
         String script =
                 "function a() {\n    //testtest\n   function b() {\n        //password\n    }\n}";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);

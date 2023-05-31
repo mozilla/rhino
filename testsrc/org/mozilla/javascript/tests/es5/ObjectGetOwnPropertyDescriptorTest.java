@@ -22,7 +22,7 @@ import org.mozilla.javascript.annotations.JSSetter;
 public class ObjectGetOwnPropertyDescriptorTest {
 
     @Test
-    public void testContentsOfPropertyDescriptorShouldReflectAttributesOfProperty() {
+    public void contentsOfPropertyDescriptorShouldReflectAttributesOfProperty() {
         NativeObject descriptor;
         NativeObject object = new NativeObject();
         object.defineProperty("a", "1", ScriptableObject.EMPTY);

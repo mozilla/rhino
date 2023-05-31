@@ -29,7 +29,7 @@ public class UndefinedTest {
     }
 
     @Test
-    public void testUndefinedInstances() {
+    public void undefinedInstances() {
         // Ensure that our two internal representations of "undefined" are equivalent
         assertEquals(Undefined.instance, Undefined.SCRIPTABLE_UNDEFINED);
         assertEquals(Undefined.instance.hashCode(), Undefined.SCRIPTABLE_UNDEFINED.hashCode());
@@ -39,7 +39,7 @@ public class UndefinedTest {
     }
 
     @Test
-    public void testUndefinedThis() {
+    public void undefinedThis() {
         // Run a function that checks the value of "this"
         final String testFuncSource =
                 "load('testsrc/assert.js');\n"
@@ -54,7 +54,7 @@ public class UndefinedTest {
     }
 
     @Test
-    public void testInstanceOf() {
+    public void instanceOf() {
         // These are specific instanceof checks used in the "kangax/compat-table" code
         // that once failed because of a SCRIPTABLE_UNDEFINED implementation.
         final String testSource =

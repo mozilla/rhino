@@ -29,7 +29,7 @@ public class StringSearchTest {
     }
 
     @Test
-    public void testSearch() {
+    public void search() {
         NativeObject object = new NativeObject();
 
         Object result = eval("String.prototype.search(1, 1)", "obj", object);

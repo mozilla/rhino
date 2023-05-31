@@ -5,18 +5,19 @@
 package org.mozilla.javascript.tests;
 
 import java.io.InputStreamReader;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 
-public class Issue176Test extends TestCase {
+public class Issue176Test {
 
     Context cx;
     Scriptable scope;
 
-    public void testThrowing() throws Exception {
+    @Test
+    public void throwing() throws Exception {
         cx = Context.enter();
         try {
             InputStreamReader in =

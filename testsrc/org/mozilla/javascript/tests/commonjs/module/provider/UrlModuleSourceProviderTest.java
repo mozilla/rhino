@@ -24,7 +24,7 @@ public class UrlModuleSourceProviderTest {
     private static final UrlConnectionExpiryCalculator ALWAYS_CHECK_EXPIRED = urlConnection -> 0;
 
     @Test
-    public void testModuleNotModified() throws Exception {
+    public void moduleNotModified() throws Exception {
         // given
         final Path filePath = Files.createTempFile("test", ".js");
         final ModuleSource result;
@@ -46,7 +46,7 @@ public class UrlModuleSourceProviderTest {
     }
 
     @Test
-    public void testModuleModified() throws Exception {
+    public void moduleModified() throws Exception {
         // given
         final Path filePath = Files.createTempFile("test", ".js");
         final ModuleSource result;
