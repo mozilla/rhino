@@ -44,32 +44,32 @@ public class StackTraceExtensionRhinoTest {
     }
 
     @Test
-    public void testStackTrace0() {
+    public void stackTrace0() {
         testTraces(0, true);
     }
 
     @Test
-    public void testStackTrace0NoDebug() {
+    public void stackTrace0NoDebug() {
         testTraces(0, false);
     }
 
     @Test
-    public void testStackTrace9() {
+    public void stackTrace9() {
         testTraces(9, true);
     }
 
     @Test
-    public void testStackTrace9NoDebug() {
+    public void stackTrace9NoDebug() {
         testTraces(9, false);
     }
 
     @Test
-    public void testStackTraceInt() {
+    public void stackTraceInt() {
         testTraces(-1, true);
     }
 
     @Test
-    public void testStackTraceIntNoDebug() {
+    public void stackTraceIntNoDebug() {
         testTraces(-1, false);
     }
 }

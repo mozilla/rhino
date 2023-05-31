@@ -6,8 +6,8 @@ package org.mozilla.javascript.tests;
 
 import java.io.IOException;
 import java.io.StringReader;
-import junit.framework.TestCase;
 import org.junit.Assert;
+import org.junit.Test;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -17,9 +17,10 @@ import org.mozilla.javascript.Scriptable;
  *
  * @author RBRi
  */
-public class CodegenTest extends TestCase {
+public class CodegenTest {
 
-    public void testLargeMethod() {
+    @Test
+    public void largeMethod() {
         final StringBuilder scriptSource = new StringBuilder();
 
         scriptSource.append("var a = 0;");
@@ -83,7 +84,8 @@ public class CodegenTest extends TestCase {
                 });
     }
 
-    public void testManyExceptionHandlers() {
+    @Test
+    public void manyExceptionHandlers() {
         final StringBuilder scriptSource = new StringBuilder();
 
         scriptSource.append("var a = 0;");
@@ -104,7 +106,8 @@ public class CodegenTest extends TestCase {
                 });
     }
 
-    public void testLargeVarList() {
+    @Test
+    public void largeVarList() {
         final StringBuilder scriptSource = new StringBuilder();
 
         int i = 0;
@@ -171,7 +174,8 @@ public class CodegenTest extends TestCase {
                 });
     }
 
-    public void testLargeLocalVarList() {
+    @Test
+    public void largeLocalVarList() {
         final StringBuilder scriptSource = new StringBuilder();
 
         scriptSource.append("function foo() {");
@@ -242,7 +246,8 @@ public class CodegenTest extends TestCase {
                 });
     }
 
-    public void testTooManyMethods() {
+    @Test
+    public void tooManyMethods() {
         final StringBuilder scriptSource = new StringBuilder();
 
         int i = 0;

@@ -38,10 +38,9 @@ public class StrictModeApiTest {
     }
 
     @Test
-    public void testStrictModeError() {
+    public void strictModeError() {
         contextFactory = new MyContextFactory();
-        Context cx = contextFactory.enterContext();
-        try {
+        try (Context cx = contextFactory.enterContext()) {
             global = cx.initStandardObjects();
             try {
                 runScript("({}.nonexistent);");
@@ -49,8 +48,6 @@ public class StrictModeApiTest {
             } catch (EvaluatorException e) {
                 assertTrue(e.getMessage().startsWith("Reference to undefined property"));
             }
-        } finally {
-            Context.exit();
         }
     }
 

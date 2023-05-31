@@ -12,6 +12,7 @@ import org.mozilla.javascript.ContextFactory;
 
 /** @author André Bargull */
 public class Bug637811Test {
+
     private Context cx;
 
     @Before

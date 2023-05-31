@@ -34,10 +34,10 @@ public class SealedSharedScopeTest {
 
     @Before
     public void setUp() throws Exception {
-        Context tmpCtx = Context.enter();
-        sharedScope = new ImporterTopLevel(tmpCtx, true);
-        sharedScope.sealObject();
-        Context.exit();
+        try (Context tmpCtx = Context.enter()) {
+            sharedScope = new ImporterTopLevel(tmpCtx, true);
+            sharedScope.sealObject();
+        }
 
         ctx = Context.enter();
         scope1 = ctx.newObject(sharedScope);
@@ -112,7 +112,7 @@ public class SealedSharedScopeTest {
     }
 
     @Test
-    public void testGlobalScope() throws FileNotFoundException, IOException {
+    public void globalScope() throws FileNotFoundException, IOException {
         evaluateString(scope1, "importPackage(Packages.java.io);");
 
         // Loading object via direct class type evaluate and then checking with typeof

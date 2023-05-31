@@ -41,7 +41,7 @@ public class NativeWrappedArrayTest {
     }
 
     @Test
-    public void testNativeArray() throws IOException {
+    public void nativeArray() throws IOException {
         final String setFunc = "function makeTestArray() { return makeNativeArray(); }";
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
@@ -55,7 +55,7 @@ public class NativeWrappedArrayTest {
     }
 
     @Test
-    public void testArrayLikeArray() throws IOException {
+    public void arrayLikeArray() throws IOException {
         final String setFunc = "function makeTestArray() { return makeArrayLikeArray(); }";
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
@@ -69,7 +69,7 @@ public class NativeWrappedArrayTest {
     }
 
     @Test
-    public void testJavaArray() throws IOException {
+    public void javaArray() throws IOException {
         final String setFunc = "function makeTestArray() { return makeJavaArray(); }";
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
@@ -83,7 +83,7 @@ public class NativeWrappedArrayTest {
     }
 
     @Test
-    public void testCustomArray() throws IOException {
+    public void customArray() throws IOException {
         ((ScriptableObject) global)
                 .defineFunctionProperties(
                         new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);

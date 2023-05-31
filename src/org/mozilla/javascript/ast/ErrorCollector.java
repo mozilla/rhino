@@ -19,7 +19,7 @@ import org.mozilla.javascript.EvaluatorException;
  */
 public class ErrorCollector implements IdeErrorReporter {
 
-    private List<ParseProblem> errors = new ArrayList<ParseProblem>();
+    private List<ParseProblem> errors = new ArrayList<>();
 
     /**
      * This is not called during AST generation. {@link #warning(String,String,int,int)} is used

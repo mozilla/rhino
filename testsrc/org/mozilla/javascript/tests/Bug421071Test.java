@@ -9,19 +9,21 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
-public class Bug421071Test extends TestCase {
+public class Bug421071Test {
     private ContextFactory factory;
     private TopLevelScope globalScope;
     private Script testScript;
 
-    public void testProblemReplicator() throws Exception {
+    @Test
+    public void problemReplicator() throws Exception {
         // before debugging please put the breakpoint in the
         // NativeJavaPackage.getPkgProperty()
         // and observe names passed in there
@@ -46,12 +48,9 @@ public class Bug421071Test extends TestCase {
                         + "myDate.set(Calendar.YEAR, searchyear);\n"
                         + "searchwkday.value = myDate.get(Calendar.DAY_OF_WEEK);";
         Script script;
-        Context context = factory.enterContext();
-        try {
+        try (Context context = factory.enterContext()) {
             script = context.compileString(scriptSource, "testScript", 1, null);
             return script;
-        } finally {
-            Context.exit();
         }
     }
 
@@ -74,16 +73,16 @@ public class Bug421071Test extends TestCase {
 
     private TopLevelScope createGlobalScope() {
         factory = new DynamicScopeContextFactory();
-        Context context = factory.enterContext();
-        // noinspection deprecation
-        TopLevelScope globalScope = new TopLevelScope(context);
-        Context.exit();
-        return globalScope;
+
+        try (Context context = factory.enterContext()) {
+            // noinspection deprecation
+            TopLevelScope topLevelScope = new TopLevelScope(context);
+            return topLevelScope;
+        }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         globalScope = createGlobalScope();
     }
 
@@ -102,9 +101,9 @@ public class Bug421071Test extends TestCase {
             this.script = script;
         }
 
+        @Override
         public void run() {
-            Context context = factory.enterContext();
-            try {
+            try (Context context = factory.enterContext()) {
                 // Run each script in its own scope, to keep global variables
                 // defined in each script separate
                 Scriptable threadScope = context.newObject(globalScope);
@@ -113,8 +112,6 @@ public class Bug421071Test extends TestCase {
                 script.exec(context, threadScope);
             } catch (Exception ee) {
                 ee.printStackTrace();
-            } finally {
-                Context.exit();
             }
         }
     }

@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
@@ -16,8 +16,10 @@ import org.mozilla.javascript.Scriptable;
  *
  * @author Marc Guillemot
  */
-public class GeneratedMethodNameTest extends TestCase {
-    public void testStandardFunction() throws Exception {
+public class GeneratedMethodNameTest {
+
+    @Test
+    public void standardFunction() throws Exception {
         final String scriptCode =
                 "function myFunc() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
@@ -27,7 +29,8 @@ public class GeneratedMethodNameTest extends TestCase {
         doTest(scriptCode);
     }
 
-    public void testFunctionDollar() throws Exception {
+    @Test
+    public void functionDollar() throws Exception {
         final String scriptCode =
                 "function $() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
@@ -37,14 +40,16 @@ public class GeneratedMethodNameTest extends TestCase {
         doTest(scriptCode);
     }
 
-    public void testScriptName() throws Exception {
+    @Test
+    public void scriptName() throws Exception {
         final String scriptCode =
                 "var m = javaNameGetter.readCurrentFunctionJavaName();\n"
                         + "if (m != 'script') throw 'got '  + m;";
         doTest(scriptCode);
     }
 
-    public void testConstructor() throws Exception {
+    @Test
+    public void constructor() throws Exception {
         final String scriptCode =
                 "function myFunc() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
@@ -54,7 +59,8 @@ public class GeneratedMethodNameTest extends TestCase {
         doTest(scriptCode);
     }
 
-    public void testAnonymousFunction() throws Exception {
+    @Test
+    public void anonymousFunction() throws Exception {
         final String scriptCode =
                 "var myFunc = function() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
@@ -73,14 +79,11 @@ public class GeneratedMethodNameTest extends TestCase {
     }
 
     public void doTest(final String scriptCode) throws Exception {
-        final Context cx = ContextFactory.getGlobal().enterContext();
-        try {
+        try (Context cx = ContextFactory.getGlobal().enterContext()) {
             Scriptable topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());
             Script script = cx.compileString(scriptCode, "myScript", 1, null);
             script.exec(cx, topScope);
-        } finally {
-            Context.exit();
         }
     }
 }

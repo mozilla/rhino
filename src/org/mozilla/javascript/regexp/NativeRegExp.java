@@ -252,7 +252,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        int indexp[] = {(int) d};
+        int[] indexp = {(int) d};
         Object rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
         if (globalOrSticky) {
             if (rval == null || rval == Undefined.instance) {
@@ -1849,7 +1849,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static boolean executeREBytecode(REGlobalData gData, String input, int end) {
         int pc = 0;
-        byte program[] = gData.regexp.program;
+        byte[] program = gData.regexp.program;
         int continuationOp = REOP_END;
         int continuationPc = 0;
         boolean result = false;
@@ -2384,7 +2384,7 @@ public class NativeRegExp extends IdScriptableObject {
      * indexp is assumed to be an array of length 1
      */
     Object executeRegExp(
-            Context cx, Scriptable scope, RegExpImpl res, String str, int indexp[], int matchType) {
+            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
 
         int start = indexp[0];
@@ -2865,7 +2865,7 @@ class CompilerState {
     }
 
     Context cx;
-    char cpbegin[];
+    char[] cpbegin;
     int cpend;
     int cp;
     int flags;

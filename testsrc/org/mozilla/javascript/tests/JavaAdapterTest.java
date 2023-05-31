@@ -31,7 +31,7 @@ public class JavaAdapterTest {
     public abstract class A implements B {}
 
     @Test
-    public void testOverrideMethodInMultiLayerInterface() throws NoSuchMethodException {
+    public void overrideMethodInMultiLayerInterface() throws NoSuchMethodException {
         String testCode =
                 "JavaAdapter(Packages." + A.class.getName() + ",{methodInC:function(){}},null)";
 

@@ -43,7 +43,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     public ScriptableOutputStream(OutputStream out, Scriptable scope) throws IOException {
         super(out);
         this.scope = scope;
-        table = new HashMap<Object, String>();
+        table = new HashMap<>();
         table.put(scope, "");
         enableReplaceObject(true);
         excludeStandardObjectNames(); // XXX
@@ -132,16 +132,16 @@ public class ScriptableOutputStream extends ObjectOutputStream {
             "Continuation",
             "Continuation.prototype",
         };
-        for (int i = 0; i < names.length; i++) {
-            addExcludedName(names[i]);
+        for (String name : names) {
+            addExcludedName(name);
         }
 
         String[] optionalNames = {
             "XML", "XML.prototype",
             "XMLList", "XMLList.prototype",
         };
-        for (int i = 0; i < optionalNames.length; i++) {
-            addOptionalExcludedName(optionalNames[i]);
+        for (String optionalName : optionalNames) {
+            addOptionalExcludedName(optionalName);
         }
     }
 

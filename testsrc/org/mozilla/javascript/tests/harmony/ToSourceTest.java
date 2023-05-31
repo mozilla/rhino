@@ -23,7 +23,7 @@ public class ToSourceTest {
 
     /** Tests that var declaration AST nodes is properly decompiled. */
     @Test
-    public void testArrowFunctionToSource() {
+    public void arrowFunctionToSource() {
         assertSource("var a3 = a.map(s => s.length);", "var a3 = a.map(s => s.length);\n");
     }
 }

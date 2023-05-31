@@ -5,7 +5,11 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeJavaObject;
@@ -15,7 +19,7 @@ import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /** @author donnamalayeri */
-public class JavaAcessibilityTest extends TestCase {
+public class JavaAcessibilityTest {
 
     protected final Global global = new Global();
     String importClass = "importClass(Packages.org.mozilla.javascript.tests.PrivateAccessClass)\n";
@@ -24,13 +28,13 @@ public class JavaAcessibilityTest extends TestCase {
         global.init(contextFactory);
     }
 
-    @Override
-    protected void setUp() {
+    @Before
+    public void setUp() {
         TestUtils.setGlobalContextFactory(contextFactory);
     }
 
-    @Override
-    protected void tearDown() {
+    @After
+    public void tearDown() {
         TestUtils.setGlobalContextFactory(null);
     }
 
@@ -43,7 +47,8 @@ public class JavaAcessibilityTest extends TestCase {
                 }
             };
 
-    public void testAccessingFields() {
+    @Test
+    public void accessingFields() {
         Object result = runScript(importClass + "PrivateAccessClass.staticPackagePrivateInt");
         assertEquals(Integer.valueOf(0), result);
 
@@ -76,7 +81,8 @@ public class JavaAcessibilityTest extends TestCase {
         assertEquals(Integer.valueOf(2), result);
     }
 
-    public void testAccessingMethods() {
+    @Test
+    public void accessingMethods() {
         Object result = runScript(importClass + "PrivateAccessClass.staticPackagePrivateMethod()");
         assertEquals(Integer.valueOf(0), result);
 
@@ -96,13 +102,15 @@ public class JavaAcessibilityTest extends TestCase {
         assertEquals(Integer.valueOf(5), result);
     }
 
-    public void testAccessingConstructors() {
+    @Test
+    public void accessingConstructors() {
         runScript(importClass + "new PrivateAccessClass(\"foo\")");
         runScript(importClass + "new PrivateAccessClass(5)");
         runScript(importClass + "new PrivateAccessClass(5, \"foo\")");
     }
 
-    public void testAccessingJavaBeanProperty() {
+    @Test
+    public void accessingJavaBeanProperty() {
         Object result =
                 runScript(
                         importClass
@@ -144,7 +152,8 @@ public class JavaAcessibilityTest extends TestCase {
         assertEquals("10 true", result);
     }
 
-    public void testOverloadFunctionRegression() {
+    @Test
+    public void overloadFunctionRegression() {
         Object result = runScript("(new java.util.GregorianCalendar()).set(3,4);'success';");
         assertEquals("success", result);
     }

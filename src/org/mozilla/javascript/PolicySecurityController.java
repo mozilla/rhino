@@ -36,7 +36,7 @@ public class PolicySecurityController extends SecurityController {
     // and soft references all the way, since we don't want to interfere with
     // cleanup of either CodeSource or ClassLoader objects.
     private static final Map<CodeSource, Map<ClassLoader, SoftReference<SecureCaller>>> callers =
-            new WeakHashMap<CodeSource, Map<ClassLoader, SoftReference<SecureCaller>>>();
+            new WeakHashMap<>();
 
     @Override
     public Class<?> getStaticSecurityDomainClassInternal() {
@@ -106,7 +106,7 @@ public class PolicySecurityController extends SecurityController {
         synchronized (callers) {
             classLoaderMap = callers.get(codeSource);
             if (classLoaderMap == null) {
-                classLoaderMap = new WeakHashMap<ClassLoader, SoftReference<SecureCaller>>();
+                classLoaderMap = new WeakHashMap<>();
                 callers.put(codeSource, classLoaderMap);
             }
         }
@@ -138,7 +138,7 @@ public class PolicySecurityController extends SecurityController {
                                                     return c.newInstance();
                                                 }
                                             });
-                    classLoaderMap.put(classLoader, new SoftReference<SecureCaller>(caller));
+                    classLoaderMap.put(classLoader, new SoftReference<>(caller));
                 } catch (PrivilegedActionException ex) {
                     throw new UndeclaredThrowableException(ex.getCause());
                 }

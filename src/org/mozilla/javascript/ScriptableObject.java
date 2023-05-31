@@ -1004,8 +1004,7 @@ public abstract class ScriptableObject
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
+        for (Method method : methods) {
             if (!method.getName().equals("init")) continue;
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
@@ -1013,7 +1012,7 @@ public abstract class ScriptableObject
                     && parmTypes[1] == ScriptRuntime.ScriptableClass
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
-                Object args[] = {
+                Object[] args = {
                     Context.getContext(), scope, sealed ? Boolean.TRUE : Boolean.FALSE
                 };
                 method.invoke(null, args);
@@ -1022,7 +1021,7 @@ public abstract class ScriptableObject
             if (parmTypes.length == 1
                     && parmTypes[0] == ScriptRuntime.ScriptableClass
                     && Modifier.isStatic(method.getModifiers())) {
-                Object args[] = {scope};
+                Object[] args = {scope};
                 method.invoke(null, args);
                 return null;
             }
@@ -1033,9 +1032,9 @@ public abstract class ScriptableObject
 
         Constructor<?>[] ctors = clazz.getConstructors();
         Constructor<?> protoCtor = null;
-        for (int i = 0; i < ctors.length; i++) {
-            if (ctors[i].getParameterTypes().length == 0) {
-                protoCtor = ctors[i];
+        for (Constructor<?> constructor : ctors) {
+            if (constructor.getParameterTypes().length == 0) {
+                protoCtor = constructor;
                 break;
             }
         }
@@ -1114,7 +1113,7 @@ public abstract class ScriptableObject
                 ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
 
         Method finishInit = null;
-        HashSet<String> staticNames = new HashSet<String>(), instanceNames = new HashSet<String>();
+        HashSet<String> staticNames = new HashSet<>(), instanceNames = new HashSet<>();
         for (Method method : methods) {
             if (method == ctorMember) {
                 continue;
@@ -1862,8 +1861,7 @@ public abstract class ScriptableObject
      */
     public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
+        for (String name : names) {
             Method m = FunctionObject.findSingleMethod(methods, name);
             if (m == null) {
                 throw Context.reportRuntimeErrorById("msg.method.not.found", name, clazz.getName());
@@ -2451,7 +2449,7 @@ public abstract class ScriptableObject
         if (value == null) throw new IllegalArgumentException();
         Map<Object, Object> h = associatedValues;
         if (h == null) {
-            h = new HashMap<Object, Object>();
+            h = new HashMap<>();
             associatedValues = h;
         }
         return Kit.initHash(h, key, value);

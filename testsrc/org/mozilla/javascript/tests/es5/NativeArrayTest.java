@@ -30,7 +30,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testConcatNull() {
+    public void concatNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -44,7 +44,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testCopyWithinNull() {
+    public void copyWithinNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -58,7 +58,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testEntriesNull() {
+    public void entriesNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -72,7 +72,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testEveryNull() {
+    public void everyNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -86,7 +86,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testFillNull() {
+    public void fillNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -100,7 +100,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testFilterNull() {
+    public void filterNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -114,7 +114,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testFindNull() {
+    public void findNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -128,7 +128,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testFindIndexNull() {
+    public void findIndexNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -142,7 +142,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testIncludesNull() {
+    public void includesNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -156,7 +156,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testIndexOfNull() {
+    public void indexOfNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -170,7 +170,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testJoinNull() {
+    public void joinNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -184,7 +184,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testKeysNull() {
+    public void keysNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -198,7 +198,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testLastIndexOfNull() {
+    public void lastIndexOfNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -212,7 +212,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testMapNull() {
+    public void mapNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -226,7 +226,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testPopNull() {
+    public void popNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -240,7 +240,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testPushNull() {
+    public void pushNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -254,7 +254,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testReduceNull() {
+    public void reduceNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -268,7 +268,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testReduceRightNull() {
+    public void reduceRightNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -282,7 +282,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testReverseNull() {
+    public void reverseNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -296,7 +296,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testShiftNull() {
+    public void shiftNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -310,7 +310,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testSliceNull() {
+    public void sliceNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -324,7 +324,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testSomeNull() {
+    public void someNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -338,7 +338,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testSortNull() {
+    public void sortNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -352,7 +352,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testSpliceNull() {
+    public void spliceNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -366,7 +366,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testToLocaleStringNull() {
+    public void toLocaleStringNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -380,7 +380,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testToSourceNull() {
+    public void toSourceNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -394,7 +394,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testToStringNull() {
+    public void toStringNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -408,7 +408,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testUnshiftNull() {
+    public void unshiftNull() {
         Object result =
                 cx.evaluateString(
                         scope,
@@ -422,7 +422,7 @@ public class NativeArrayTest {
     }
 
     @Test
-    public void testValuesNull() {
+    public void valuesNull() {
         Object result =
                 cx.evaluateString(
                         scope,

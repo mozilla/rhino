@@ -1,8 +1,10 @@
 package org.mozilla.javascript.tests.scriptengine;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -61,55 +63,62 @@ public class InvocableTest {
     }
 
     @Test
-    public void invokeMethodTest()
-            throws ScriptException, NoSuchMethodException, FileNotFoundException {
-        engine.eval(new FileReader("testsrc/assert.js"));
-        engine.eval(
-                "function FooObj() { this.x = 0; }\n"
-                        + "FooObj.prototype.set = function(a, b) { this.x = a + b; }");
-        engine.eval(
-                "let f = new FooObj();\n"
-                        + "assertEquals(f.x, 0);\n"
-                        + "f.set(2, 2);\n"
-                        + "assertEquals(f.x, 4);");
+    public void invokeMethodTest() throws Exception {
+        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+            engine.eval(reader);
+            engine.eval(
+                    "function FooObj() { this.x = 0; }\n"
+                            + "FooObj.prototype.set = function(a, b) { this.x = a + b; }");
+            engine.eval(
+                    "let f = new FooObj();\n"
+                            + "assertEquals(f.x, 0);\n"
+                            + "f.set(2, 2);\n"
+                            + "assertEquals(f.x, 4);");
 
-        Object fooObj = engine.eval("let y = new FooObj(); y");
-        assertNotNull(fooObj);
-        iEngine.invokeMethod(fooObj, "set", 3, 3);
-        Object result = engine.eval("y.x");
-        assertEquals(result, 6L);
+            Object fooObj = engine.eval("let y = new FooObj(); y");
+            assertNotNull(fooObj);
+            iEngine.invokeMethod(fooObj, "set", 3, 3);
+            Object result = engine.eval("y.x");
+            assertEquals(result, 6L);
+        }
     }
 
     @Test
-    public void interfaceFunctionTest() throws ScriptException, FileNotFoundException {
-        engine.eval(new FileReader("testsrc/assert.js"));
-        engine.eval(
-                "var foo = 'initialized';\n"
-                        + "function setFoo(v) { foo = v; }\n"
-                        + "function getFoo() { return foo; }\n"
-                        + "function addItUp(a, b) { return a + b; }");
-        I tester = iEngine.getInterface(I.class);
-        assertEquals(tester.getFoo(), "initialized");
-        tester.setFoo("tested");
-        assertEquals(tester.getFoo(), "tested");
-        assertEquals(tester.addItUp(100, 1), 101);
+    public void interfaceFunctionTest() throws Exception {
+        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+            engine.eval(reader);
+
+            engine.eval(
+                    "var foo = 'initialized';\n"
+                            + "function setFoo(v) { foo = v; }\n"
+                            + "function getFoo() { return foo; }\n"
+                            + "function addItUp(a, b) { return a + b; }");
+            I tester = iEngine.getInterface(I.class);
+            assertEquals(tester.getFoo(), "initialized");
+            tester.setFoo("tested");
+            assertEquals(tester.getFoo(), "tested");
+            assertEquals(tester.addItUp(100, 1), 101);
+        }
     }
 
     @Test
-    public void interfaceMethodTest() throws ScriptException, FileNotFoundException {
-        engine.eval(new FileReader("testsrc/assert.js"));
-        Object foo =
-                engine.eval(
-                        "function Foo() { this.foo = 'initialized' }\n"
-                                + "Foo.prototype.setFoo = function(v) { this.foo = v; };\n"
-                                + "Foo.prototype.getFoo = function() { return this.foo; };\n"
-                                + "Foo.prototype.addItUp = function(a, b) { return a + b; };\n"
-                                + "new Foo();");
-        I tester = iEngine.getInterface(foo, I.class);
-        assertEquals(tester.getFoo(), "initialized");
-        tester.setFoo("tested");
-        assertEquals(tester.getFoo(), "tested");
-        assertEquals(tester.addItUp(100, 1), 101);
+    public void interfaceMethodTest() throws Exception {
+        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+            engine.eval(reader);
+
+            Object foo =
+                    engine.eval(
+                            "function Foo() { this.foo = 'initialized' }\n"
+                                    + "Foo.prototype.setFoo = function(v) { this.foo = v; };\n"
+                                    + "Foo.prototype.getFoo = function() { return this.foo; };\n"
+                                    + "Foo.prototype.addItUp = function(a, b) { return a + b; };\n"
+                                    + "new Foo();");
+            I tester = iEngine.getInterface(foo, I.class);
+            assertEquals(tester.getFoo(), "initialized");
+            tester.setFoo("tested");
+            assertEquals(tester.getFoo(), "tested");
+            assertEquals(tester.addItUp(100, 1), 101);
+        }
     }
 
     @Test

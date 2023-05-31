@@ -41,7 +41,7 @@ public class KitTest {
      * Test various code paths in Kit.readStream. Especially if bufferCapacity matches stream size.
      */
     @Test
-    public void testReadSteam() throws IOException {
+    public void readSteam() throws IOException {
 
         byte[] buf = Kit.readStream(emptyStream(), 4096); // test, too big
         assertEquals(0, buf.length);

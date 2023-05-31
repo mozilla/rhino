@@ -255,7 +255,7 @@ public abstract class RhinoException extends RuntimeException {
      * @since 1.8.0
      */
     public ScriptStackElement[] getScriptStack(int limit, String hideFunction) {
-        List<ScriptStackElement> list = new ArrayList<ScriptStackElement>();
+        List<ScriptStackElement> list = new ArrayList<>();
         ScriptStackElement[][] interpreterStack = null;
         if (interpreterStackInfo != null) {
             Evaluator interpreter = Context.createInterpreter();

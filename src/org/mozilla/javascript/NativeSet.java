@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.Iterator;
-
 public class NativeSet extends IdScriptableObject {
     private static final long serialVersionUID = -8442212766987072986L;
     private static final Object SET_TAG = "Set";
@@ -122,8 +120,7 @@ public class NativeSet extends IdScriptableObject {
         final Callable f = (Callable) arg1;
 
         boolean isStrict = cx.isStrictMode();
-        Iterator<Hashtable.Entry> i = entries.iterator();
-        while (i.hasNext()) {
+        for (Hashtable.Entry entry : entries) {
             // Per spec must convert every time so that primitives are always regenerated...
             Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
@@ -134,7 +131,7 @@ public class NativeSet extends IdScriptableObject {
                 thisObj = Undefined.SCRIPTABLE_UNDEFINED;
             }
 
-            final Hashtable.Entry e = i.next();
+            final Hashtable.Entry e = entry;
             f.call(cx, scope, thisObj, new Object[] {e.value, e.value, this});
         }
         return Undefined.instance;

@@ -886,7 +886,7 @@ final class NativeDate extends IdScriptableObject {
     private static final int MAXARGS = 7;
 
     private static double date_msecFromArgs(Object[] args) {
-        double array[] = new double[MAXARGS];
+        double[] array = new double[MAXARGS];
         int loop;
         double d;
 

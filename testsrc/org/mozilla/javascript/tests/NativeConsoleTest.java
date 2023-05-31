@@ -254,6 +254,18 @@ public class NativeConsoleTest {
     }
 
     @Test
+    public void formatStyling() {
+        assertFormat(new Object[] {"%c", "color: orange"}, "");
+        assertFormat(new Object[] {"12%c34", "color: orange"}, "1234");
+        assertFormat(new Object[] {"%c", "color: orange", "color: blue"}, "color: blue");
+
+        // %c counts
+        assertFormat(new Object[] {"12%c34%s", "color: orange", "ab"}, "1234ab");
+
+        assertFormat(new Object[] {"%c"}, "%c");
+    }
+
+    @Test
     public void formatValueOnly() {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
@@ -498,6 +510,12 @@ public class NativeConsoleTest {
                         new PrinterCall(
                                 Level.INFO, new Object[] {Pattern.compile("default: [\\d.]+ms")}),
                         new PrinterCall(Level.WARN, new Object[] {"Timer 'c' does not exist."})));
+    }
+
+    @Test
+    public void printConsString() {
+        String js = "var msg = '['; msg += '%s'; msg += ']'; console.log(msg, 1234)";
+        assertPrintMsg(js, "[1234]");
     }
 
     private static void assertFormat(Object[] args, String expected) {

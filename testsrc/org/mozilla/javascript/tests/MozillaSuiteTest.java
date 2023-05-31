@@ -198,53 +198,55 @@ public class MozillaSuiteTest {
      * print out a list of all the tests that pass.
      */
     public static void main(String[] args) throws IOException {
-        PrintStream out = new PrintStream("fix-tests-files.sh");
-        try {
-            for (int i = 0; i < OPT_LEVELS.length; i++) {
-                int optLevel = OPT_LEVELS[i];
-                File testDir = getTestDir();
-                File[] allTests =
-                        TestUtils.recursiveListFiles(
-                                testDir,
-                                new FileFilter() {
-                                    public boolean accept(File pathname) {
-                                        return ShellTest.DIRECTORY_FILTER.accept(pathname)
-                                                || ShellTest.TEST_FILTER.accept(pathname);
-                                    }
-                                });
-                HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
-                File testFiles[] = getTestFiles(optLevel);
-                diff.removeAll(Arrays.asList(testFiles));
-                ArrayList<String> skippedPassed = new ArrayList<String>();
-                int absolutePathLength = testDir.getAbsolutePath().length() + 1;
-                for (File testFile : diff) {
-                    try {
-                        (new MozillaSuiteTest(testFile, optLevel)).runMozillaTest();
-                        // strip off testDir
-                        String canonicalized =
-                                testFile.getAbsolutePath().substring(absolutePathLength);
-                        canonicalized = canonicalized.replace('\\', '/');
-                        skippedPassed.add(canonicalized);
-                    } catch (Throwable t) {
-                        // failed, so skip
+        try (PrintStream out = new PrintStream("fix-tests-files.sh")) {
+            try {
+                for (int i = 0; i < OPT_LEVELS.length; i++) {
+                    int optLevel = OPT_LEVELS[i];
+                    File testDir = getTestDir();
+                    File[] allTests =
+                            TestUtils.recursiveListFiles(
+                                    testDir,
+                                    new FileFilter() {
+                                        @Override
+                                        public boolean accept(File pathname) {
+                                            return ShellTest.DIRECTORY_FILTER.accept(pathname)
+                                                    || ShellTest.TEST_FILTER.accept(pathname);
+                                        }
+                                    });
+                    HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
+                    File testFiles[] = getTestFiles(optLevel);
+                    diff.removeAll(Arrays.asList(testFiles));
+                    ArrayList<String> skippedPassed = new ArrayList<String>();
+                    int absolutePathLength = testDir.getAbsolutePath().length() + 1;
+                    for (File testFile : diff) {
+                        try {
+                            (new MozillaSuiteTest(testFile, optLevel)).runMozillaTest();
+                            // strip off testDir
+                            String canonicalized =
+                                    testFile.getAbsolutePath().substring(absolutePathLength);
+                            canonicalized = canonicalized.replace('\\', '/');
+                            skippedPassed.add(canonicalized);
+                        } catch (Throwable t) {
+                            // failed, so skip
+                        }
+                    }
+                    // "skippedPassed" now contains all the tests that are currently
+                    // skipped but now pass. Print out shell commands to update the
+                    // appropriate *.tests file.
+                    if (skippedPassed.size() > 0) {
+                        out.println("cat >> " + getTestFilename(optLevel) + " <<EOF");
+                        String[] sorted = skippedPassed.toArray(new String[0]);
+                        Arrays.sort(sorted);
+                        for (int j = 0; j < sorted.length; j++) {
+                            out.println(sorted[j]);
+                        }
+                        out.println("EOF");
                     }
                 }
-                // "skippedPassed" now contains all the tests that are currently
-                // skipped but now pass. Print out shell commands to update the
-                // appropriate *.tests file.
-                if (skippedPassed.size() > 0) {
-                    out.println("cat >> " + getTestFilename(optLevel) + " <<EOF");
-                    String[] sorted = skippedPassed.toArray(new String[0]);
-                    Arrays.sort(sorted);
-                    for (int j = 0; j < sorted.length; j++) {
-                        out.println(sorted[j]);
-                    }
-                    out.println("EOF");
-                }
+                System.out.println("Done.");
+            } finally {
+                out.close();
             }
-            System.out.println("Done.");
-        } finally {
-            out.close();
         }
     }
 }

@@ -42,28 +42,28 @@ public class ArrowFnPositionBugTest {
     }
 
     @Test
-    public void testArrowFnPositionInAssignment() {
+    public void arrowFnPositionInAssignment() {
         FunctionNode arrowFn = parseAndExtractArrowFn("var a = () => 1;");
         assertEquals(4, arrowFn.getPosition());
         assertEquals(8, arrowFn.getAbsolutePosition());
     }
 
     @Test
-    public void testArrowFnPositionInCall() {
+    public void arrowFnPositionInCall() {
         FunctionNode arrowFn = parseAndExtractArrowFn("test(() => { return 2; }, a);");
         assertEquals(5, arrowFn.getPosition());
         assertEquals(5, arrowFn.getAbsolutePosition());
     }
 
     @Test
-    public void testArrowFnWithArgsPosition() {
+    public void arrowFnWithArgsPosition() {
         FunctionNode arrowFn = parseAndExtractArrowFn("var a = (b, c) => b + c;");
         assertEquals(4, arrowFn.getPosition());
         assertEquals(8, arrowFn.getAbsolutePosition());
     }
 
     @Test
-    public void testArrowFnReturnPosition() {
+    public void arrowFnReturnPosition() {
         FunctionNode arrowFn = parseAndExtractArrowFn("test((cb) => cb() + 1);");
         ReturnStatement returnStatement = (ReturnStatement) arrowFn.getBody().getFirstChild();
         assertEquals(0, returnStatement.getPosition());

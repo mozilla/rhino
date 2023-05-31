@@ -5,7 +5,9 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -13,14 +15,15 @@ import org.mozilla.javascript.Scriptable;
  *
  * @author Marc Guillemot
  */
-public class GlobalParseXTest extends TestCase {
+public class GlobalParseXTest {
 
     /**
      * Test for bug #501972 https://bugzilla.mozilla.org/show_bug.cgi?id=501972 Leading whitespaces
      * should be ignored with following white space chars (see ECMA spec 15.1.2.3) <TAB>, <SP>,
      * <NBSP>, <FF>, <VT>, <CR>, <LF>, <LS>, <PS>, <USP>
      */
-    public void testParseFloatAndIntWhiteSpaces() {
+    @Test
+    public void parseFloatAndIntWhiteSpaces() {
         testParseFloatWhiteSpaces("\\u00A0 "); // <NBSP>
 
         testParseFloatWhiteSpaces("\\t ");
@@ -42,7 +45,8 @@ public class GlobalParseXTest extends TestCase {
      * Test for bug #531436 https://bugzilla.mozilla.org/show_bug.cgi?id=531436 Trailing noise
      * should be ignored (see ECMA spec 15.1.2.3)
      */
-    public void testParseFloatTrailingNoise() {
+    @Test
+    public void parseFloatTrailingNoise() {
         testParseFloat("7890", "789e1");
         testParseFloat("7890", "789E1");
         testParseFloat("7890", "789E+1");
@@ -65,11 +69,11 @@ public class GlobalParseXTest extends TestCase {
         testParseFloat("789", "789e-e++hello");
     }
 
-    private void testParseFloat(final String expected, final String value) {
+    private static void testParseFloat(final String expected, final String value) {
         assertEvaluates(expected, "String(parseFloat('" + value + "'))");
     }
 
-    private void assertEvaluates(final Object expected, final String source) {
+    private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();

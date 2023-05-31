@@ -36,7 +36,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testRegularArray() {
+    public void regularArray() {
         Scriptable a = cx.newArray(root, 10);
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
@@ -45,7 +45,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testIntArray() {
+    public void intArray() {
         ScriptableObject a = (ScriptableObject) cx.newObject(root);
         TestIntArray l = new TestIntArray(10);
         a.setExternalArrayData(l);
@@ -59,7 +59,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testIntArrayThenRemove() {
+    public void intArrayThenRemove() {
         ScriptableObject a = (ScriptableObject) cx.newObject(root);
         // Set the external array data
         TestIntArray l = new TestIntArray(10);
@@ -86,7 +86,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testNativeIntArray() {
+    public void nativeIntArray() {
         ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeInt32Array l = new NativeInt32Array(10);
         a.setExternalArrayData(l);
@@ -98,7 +98,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testNativeShortArray() {
+    public void nativeShortArray() {
         ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeInt16Array l = new NativeInt16Array(10);
         a.setExternalArrayData(l);
@@ -110,7 +110,7 @@ public class ExternalArrayTest {
     }
 
     @Test
-    public void testNativeDoubleArray() {
+    public void nativeDoubleArray() {
         ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeFloat64Array l = new NativeFloat64Array(10);
         a.setExternalArrayData(l);
@@ -124,12 +124,8 @@ public class ExternalArrayTest {
     private void runScript(String script, int opt) {
         try {
             cx.setOptimizationLevel(opt);
-            FileReader rdr = new FileReader(script);
-
-            try {
+            try (FileReader rdr = new FileReader(script)) {
                 cx.evaluateReader(root, rdr, script, 1, null);
-            } finally {
-                rdr.close();
             }
         } catch (IOException ioe) {
             assertFalse("I/O Error: " + ioe, true);

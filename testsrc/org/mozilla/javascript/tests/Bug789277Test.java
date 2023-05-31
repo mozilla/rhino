@@ -29,6 +29,7 @@ import org.mozilla.javascript.ast.IdeErrorReporter;
 @SuppressWarnings("serial")
 @RunWith(Parameterized.class)
 public class Bug789277Test {
+
     private static final String SOURCE_NAME = "<eval>";
     private static final String MISSING_SEMI = "missing ; after statement";
     private static final int SOURCE_BUFFER_LENGTH = 512; // cf. TokenStream
@@ -70,8 +71,8 @@ public class Bug789277Test {
             void add(String source) {
                 Message message = newMessage(1, line1, line1.length());
                 Message messageIde = newMessage(0, line1.length());
-                TestData data = new TestData(source, message, messageIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde);
+                add(testData);
             }
         }
 
@@ -110,8 +111,8 @@ public class Bug789277Test {
             void add(String source) {
                 Message message = newMessage(1, line1, pad.length() + line0.length());
                 Message messageIde = newMessage(pad.length(), line0.length());
-                TestData data = new TestData(source, message, messageIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde);
+                add(testData);
             }
         }
 
@@ -149,8 +150,8 @@ public class Bug789277Test {
                 Message messageIde = newMessage(0, line1.length() + sep.length() + line2.length());
                 // warnings are reported relative to the line start in ide-mode
                 Message messageIdeIde = newMessage(line1.length() + sep.length(), line2.length());
-                TestData data = new TestData(source, message, messageIde, messageIdeIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde, messageIdeIde);
+                add(testData);
             }
         }
 
@@ -207,8 +208,8 @@ public class Bug789277Test {
                         newMessage(pad.length(), line0.length() + sep.length() + line2.length());
                 // warnings are reported relative to the last line in ide-mode
                 Message messageIdeIde = newMessage(line1.length() + sep.length(), line2.length());
-                TestData data = new TestData(source, message, messageIde, messageIdeIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde, messageIdeIde);
+                add(testData);
             }
         }
 
@@ -260,15 +261,15 @@ public class Bug789277Test {
                 String source = source1 + sep + source2;
                 Message message = newMessage(1, line1, line1.length());
                 Message messageIde = newMessage(0, line1.length());
-                TestData data = new TestData(source, message, messageIde);
+                TestData testData = new TestData(source, message, messageIde);
                 // TODO: adjust reader case
                 Message messageR =
                         newMessage(
                                 1 + linebreaks(sep),
                                 space + line2,
                                 space.length() + "var ".length());
-                data.map.put(Type.ErrorReporter_Reader, messageR);
-                add(data);
+                testData.map.put(Type.ErrorReporter_Reader, messageR);
+                add(testData);
             }
         }
 
@@ -296,8 +297,8 @@ public class Bug789277Test {
             void add(String source) {
                 Message message = newMessage(1, line1, line1.length());
                 Message messageIde = newMessage(0, line1.length());
-                TestData data = new TestData(source, message, messageIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde);
+                add(testData);
             }
         }
 
@@ -323,8 +324,8 @@ public class Bug789277Test {
             void add(String source) {
                 Message message = newMessage(1, space + line1, space.length() + line1.length());
                 Message messageIde = newMessage(space.length(), line1.length());
-                TestData data = new TestData(source, message, messageIde);
-                add(data);
+                TestData testData = new TestData(source, message, messageIde);
+                add(testData);
             }
         }
 
@@ -353,11 +354,11 @@ public class Bug789277Test {
                 String source = source1 + sep + source2;
                 Message message = newMessage(lines + 1, line1, line1.length());
                 Message messageIde = newMessage(line0.length(), line1.length());
-                TestData data = new TestData(source, message, messageIde);
+                TestData testData = new TestData(source, message, messageIde);
                 // TODO: adjust reader case
                 Message messageR = newMessage(lines + 1 + linebreaks(sep), line2, "var ".length());
-                data.map.put(Type.ErrorReporter_Reader, messageR);
-                add(data);
+                testData.map.put(Type.ErrorReporter_Reader, messageR);
+                add(testData);
             }
         }
 
@@ -624,16 +625,19 @@ public class Bug789277Test {
         protected List<Message> errors = new ArrayList<Message>();
         protected List<Message> runtimeErrors = new ArrayList<Message>();
 
+        @Override
         public void warning(
                 String message, String sourceName, int line, String lineSource, int lineOffset) {
             warnings.add(new Message(message, sourceName, line, lineSource, lineOffset));
         }
 
+        @Override
         public void error(
                 String message, String sourceName, int line, String lineSource, int lineOffset) {
             errors.add(new Message(message, sourceName, line, lineSource, lineOffset));
         }
 
+        @Override
         public EvaluatorException runtimeError(
                 String message, String sourceName, int line, String lineSource, int lineOffset) {
             runtimeErrors.add(new Message(message, sourceName, line, lineSource, lineOffset));
@@ -643,10 +647,12 @@ public class Bug789277Test {
 
     private static class TestIdeErrorReporter extends TestErrorReporter
             implements IdeErrorReporter {
+        @Override
         public void warning(String message, String sourceName, int offset, int length) {
             warnings.add(new Message(message, sourceName, offset, length));
         }
 
+        @Override
         public void error(String message, String sourceName, int offset, int length) {
             errors.add(new Message(message, sourceName, offset, length));
         }

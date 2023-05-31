@@ -6,43 +6,36 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.tests.Utils;
 
 public class ES6IteratorTest {
-    private Context cx;
-    private ScriptableObject scope;
-
-    @Before
-    public void setUp() {
-        cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        scope = cx.initStandardObjects();
-    }
-
-    @After
-    public void tearDown() {
-        Context.exit();
-    }
 
     @Test
     public void valueDone() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "  var res = '';\n"
-                                + "  var arr = ['x'];\n"
-                                + "  var arrIter = arr[Symbol.iterator]();\n"
-                                + "  for (var p in arrIter.next()) {\n"
-                                + "    res = res + p + ' ';\n"
-                                + "  }\n",
-                        "test",
-                        1,
-                        null);
-        // this is the order used by all current browsers
-        assertEquals("value done ", result);
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Scriptable scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "  var res = '';\n"
+                                            + "  var arr = ['x'];\n"
+                                            + "  var arrIter = arr[Symbol.iterator]();\n"
+                                            + "  for (var p in arrIter.next()) {\n"
+                                            + "    res = res + p + ' ';\n"
+                                            + "  }\n",
+                                    "test",
+                                    1,
+                                    null);
+                    // this is the order used by all current browsers
+                    assertEquals("value done ", result);
+
+                    return null;
+                });
     }
 }

@@ -1,5 +1,7 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -8,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import junit.framework.AssertionFailedError;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
@@ -17,6 +20,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.tests.Utils;
 
 @RunWith(Parameterized.class)
 public class ComplianceTest {
@@ -59,17 +63,20 @@ public class ComplianceTest {
                 false);
     }
 
-    @org.junit.Test
-    public void testRequire() throws Throwable {
-        final Context cx = Context.enter();
-        try {
-            cx.setOptimizationLevel(-1);
-            final Scriptable scope = cx.initStandardObjects();
-            ScriptableObject.putProperty(scope, "print", new Print(scope));
-            createRequire(testDir, cx, scope).requireMain(cx, "program");
-        } finally {
-            Context.exit();
-        }
+    @Test
+    public void require() throws Throwable {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    ScriptableObject.putProperty(scope, "print", new Print(scope));
+                    try {
+                        createRequire(testDir, cx, scope).requireMain(cx, "program");
+                    } catch (Exception e) {
+                        fail(e.getMessage());
+                    }
+
+                    return null;
+                });
     }
 
     private static class Print extends ScriptableObject implements Function {
@@ -77,6 +84,7 @@ public class ComplianceTest {
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
 
+        @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             if (args.length > 1 && "fail".equals(args[1])) {
                 throw new AssertionFailedError(String.valueOf(args[0]));
@@ -84,6 +92,7 @@ public class ComplianceTest {
             return null;
         }
 
+        @Override
         public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
             throw new AssertionFailedError("Shouldn't be invoked as constructor");
         }

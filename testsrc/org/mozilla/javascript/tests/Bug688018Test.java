@@ -18,6 +18,7 @@ import org.mozilla.javascript.ast.AstRoot;
 
 /** @author André Bargull */
 public class Bug688018Test {
+
     private Context cx;
 
     @Before
@@ -44,7 +45,7 @@ public class Bug688018Test {
     }
 
     @Test
-    public void testToSource() {
+    public void toSource() {
         assertEquals("void 0;\n", toSource("void 0;"));
         assertEquals("void 1;\n", toSource("void 1;"));
         assertEquals("void 'hello';\n", toSource("void 'hello';"));

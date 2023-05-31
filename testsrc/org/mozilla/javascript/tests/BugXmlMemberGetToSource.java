@@ -29,7 +29,7 @@ public class BugXmlMemberGetToSource {
     }
 
     @Test
-    public void testXmlMemberGetToSourceDotAt() {
+    public void xmlMemberGetToSourceDotAt() {
         String script = "a.@b;";
         Parser parser = new Parser(environment);
         AstRoot root = parser.parse(script, null, 1);
@@ -38,7 +38,7 @@ public class BugXmlMemberGetToSource {
     }
 
     @Test
-    public void testXmlMemberGetToSourceDotDot() {
+    public void xmlMemberGetToSourceDotDot() {
         String script = "a..b;";
         Parser parser = new Parser(environment);
         AstRoot root = parser.parse(script, null, 1);

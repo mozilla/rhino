@@ -390,7 +390,7 @@ public class ScriptRuntime {
             if (val == null || Undefined.isUndefined(val)) return false;
             if (val instanceof CharSequence) return ((CharSequence) val).length() != 0;
             if (val instanceof BigInteger) {
-                return !((BigInteger) val).equals(BigInteger.ZERO);
+                return !BigInteger.ZERO.equals(val);
             }
             if (val instanceof Number) {
                 double d = ((Number) val).doubleValue();
@@ -1335,7 +1335,7 @@ public class ScriptRuntime {
 
     public static long toLength(Object[] args, int index) {
         double len = toInteger(args, index);
-        if (len <= +0.0) {
+        if (len <= 0.0) {
             return 0;
         }
         return (long) Math.min(len, NativeNumber.MAX_SAFE_INTEGER);
@@ -2336,8 +2336,7 @@ public class ScriptRuntime {
             } else {
                 int intId = ((Number) id).intValue();
                 if (!x.obj.has(intId, x.obj)) continue; // must have been deleted
-                x.currentId =
-                        x.enumNumbers ? (Object) (Integer.valueOf(intId)) : String.valueOf(intId);
+                x.currentId = x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
             }
             return Boolean.TRUE;
         }
@@ -2483,8 +2482,7 @@ public class ScriptRuntime {
                 throw notFunctionError(result, name);
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            Scriptable thisObj = scope;
-            storeScriptable(cx, thisObj);
+            storeScriptable(cx, scope);
             return (Callable) result;
         }
 
@@ -4073,7 +4071,7 @@ public class ScriptRuntime {
                 sourceUri = "";
             }
             int line = re.lineNumber();
-            Object args[];
+            Object[] args;
             if (line > 0) {
                 args = new Object[] {errorMsg, sourceUri, Integer.valueOf(line)};
             } else {
@@ -4171,7 +4169,7 @@ public class ScriptRuntime {
             sourceUri = "";
         }
         int line = re.lineNumber();
-        Object args[];
+        Object[] args;
         if (line > 0) {
             args = new Object[] {errorMsg, sourceUri, Integer.valueOf(line)};
         } else {

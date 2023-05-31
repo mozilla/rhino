@@ -27,20 +27,19 @@ public class TypedArrayJavaTest {
             "Uint8ClampedArray"
         };
 
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        Scriptable global = cx.initStandardObjects();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_1_8);
+            Scriptable global = cx.initStandardObjects();
 
-        for (String type : allNativeTypes) {
-            String script =
-                    "var ta = new "
-                            + type
-                            + "([1, 2]);\n"
-                            + "try { ta.subarray(); } catch(e) { '' + e }";
-            Object obj = cx.evaluateString(global, script, "", 1, null);
-            assertEquals("Error: invalid arguments", obj);
+            for (String type : allNativeTypes) {
+                String script =
+                        "var ta = new "
+                                + type
+                                + "([1, 2]);\n"
+                                + "try { ta.subarray(); } catch(e) { '' + e }";
+                Object obj = cx.evaluateString(global, script, "", 1, null);
+                assertEquals("Error: invalid arguments", obj);
+            }
         }
-
-        Context.exit();
     }
 }

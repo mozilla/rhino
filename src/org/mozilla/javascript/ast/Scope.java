@@ -73,7 +73,7 @@ public class Scope extends Jump {
      */
     public void addChildScope(Scope child) {
         if (childScopes == null) {
-            childScopes = new ArrayList<Scope>();
+            childScopes = new ArrayList<>();
         }
         childScopes.add(child);
         child.setParentScope(this);
@@ -192,7 +192,7 @@ public class Scope extends Jump {
 
     private Map<String, Symbol> ensureSymbolTable() {
         if (symbolTable == null) {
-            symbolTable = new LinkedHashMap<String, Symbol>(5);
+            symbolTable = new LinkedHashMap<>(5);
         }
         return symbolTable;
     }
@@ -204,7 +204,7 @@ public class Scope extends Jump {
      *     this method is called after the code generator begins the tree transformation.
      */
     public List<AstNode> getStatements() {
-        List<AstNode> stmts = new ArrayList<AstNode>();
+        List<AstNode> stmts = new ArrayList<>();
         Node n = getFirstChild();
         while (n != null) {
             stmts.add((AstNode) n);

@@ -30,7 +30,7 @@ public class OverloadTest {
     }
 
     @Test
-    public void testJSObjectToMap() {
+    public void jsObjectToMap() {
         assertEvaluates("map", "String(org.mozilla.javascript.tests.OverloadTest.x({}));");
         assertEvaluates(
                 "map",
@@ -38,18 +38,18 @@ public class OverloadTest {
     }
 
     @Test
-    public void testJSArrayToCollection() {
+    public void jsArrayToCollection() {
         assertEvaluates("collection", "String(org.mozilla.javascript.tests.OverloadTest.x([]));");
     }
 
     @Test
-    public void testJSFunctionToInterface() {
+    public void jsFunctionToInterface() {
         assertThrows(
                 EvaluatorException.class,
                 "String(org.mozilla.javascript.tests.OverloadTest.x(function() {}));");
     }
 
-    private void assertEvaluates(final Object expected, final String source) {
+    private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -59,7 +59,7 @@ public class OverloadTest {
                 });
     }
 
-    private void assertThrows(
+    private static void assertThrows(
             final Class<? extends Exception> exceptionClass, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {

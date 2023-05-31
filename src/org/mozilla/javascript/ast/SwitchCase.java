@@ -97,7 +97,7 @@ public class SwitchCase extends AstNode {
     public void addStatement(AstNode statement) {
         assertNotNull(statement);
         if (statements == null) {
-            statements = new ArrayList<AstNode>();
+            statements = new ArrayList<>();
         }
         int end = statement.getPosition() + statement.getLength();
         this.setLength(end - this.getPosition());

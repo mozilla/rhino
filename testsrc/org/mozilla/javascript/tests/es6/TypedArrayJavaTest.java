@@ -4,7 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tests.Utils;
 
 /** Test for TypedArrays. */
 public class TypedArrayJavaTest {
@@ -109,16 +110,18 @@ public class TypedArrayJavaTest {
             "Uint8ClampedArray"
         };
 
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        Scriptable global = cx.initStandardObjects();
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-        for (String type : allNativeTypes) {
-            script = script.replace("§§type§§", type);
-            Object obj = cx.evaluateString(global, script, "", 1, null);
-            assertEquals(expected, obj);
-        }
+                    for (String type : allNativeTypes) {
+                        String scr = script.replace("§§type§§", type);
+                        Object obj = cx.evaluateString(scope, scr, "", 1, null);
+                        assertEquals(expected, obj);
+                    }
 
-        Context.exit();
+                    return null;
+                });
     }
 }

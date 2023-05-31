@@ -142,7 +142,7 @@ public class JsonParser {
             pos += 1;
             return cx.newArray(scope, 0);
         }
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = new ArrayList<>();
         boolean needsComma = false;
         while (pos < length) {
             char c = src.charAt(pos);
