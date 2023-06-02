@@ -19,6 +19,7 @@ import org.mozilla.javascript.tests.Utils;
 
 /** Test for NativeObject. */
 public class NativeObjectTest {
+
     @Test
     public void assignPropertyGetter() {
         evaluateAndAssert(
@@ -216,6 +217,20 @@ public class NativeObjectTest {
         evaluateAndAssert(
                 script,
                 "targetProto: {\"_a\":1,\"a\":1,\"_b\":2,\"b\":2}  target: {\"_b\":26,\"_c\":5,\"c\":5}  assigned: {\"_b\":26,\"_c\":5,\"c\":5}  assigned.a: 1  assigned.b: 26  assigned.c: 5");
+    }
+
+    @Test
+    public void getOwnPropertyDescriptorSetPropertyIsAlwaysDefined() {
+        evaluateAndAssert(
+                "var obj = Object.defineProperty({}, 'prop', {\n"
+                        + "                 get: function() {}\n"
+                        + "          });\n"
+                        + "var desc = Object.getOwnPropertyDescriptor(obj, 'prop');\n"
+                        + "'' + obj.prop"
+                        + "+ ' ' + desc.get"
+                        + "+ ' ' + desc.set"
+                        + "+ ' [' + Object.getOwnPropertyNames(desc) + ']'",
+                "undefined \nfunction () {\n}\n undefined [get,set,enumerable,configurable]");
     }
 
     @Test
