@@ -80,6 +80,11 @@ public class Undefined implements Serializable {
                 }
 
                 @Override
+                public boolean has(Symbol key, Scriptable start) {
+                    return false;
+                }
+
+                @Override
                 public void put(String name, Scriptable start, Object value) {}
 
                 @Override
@@ -90,6 +95,9 @@ public class Undefined implements Serializable {
 
                 @Override
                 public void delete(int index) {}
+
+                @Override
+                public void delete(Symbol key) {}
 
                 @Override
                 public Scriptable getPrototype() {

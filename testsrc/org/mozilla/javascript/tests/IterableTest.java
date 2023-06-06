@@ -240,6 +240,11 @@ public class IterableTest {
         }
 
         @Override
+        public boolean has(Symbol key, Scriptable start) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
         public void put(String name, Scriptable start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -256,6 +261,11 @@ public class IterableTest {
 
         @Override
         public void delete(int index) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void delete(Symbol key) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

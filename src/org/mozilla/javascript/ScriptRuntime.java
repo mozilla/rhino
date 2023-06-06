@@ -287,6 +287,8 @@ public class ScriptRuntime {
             NativeWeakMap.init(scope, sealed);
             NativeWeakSet.init(scope, sealed);
             NativeBigInt.init(scope, sealed);
+
+            NativeReflect.init(scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
