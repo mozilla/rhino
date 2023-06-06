@@ -9,6 +9,7 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Symbol;
 
 /**
  * Matrix: An example host object class that implements the Scriptable interface.
@@ -94,6 +95,17 @@ public class Matrix implements Scriptable {
     }
 
     /**
+     * Defines all numeric properties by returning true.
+     *
+     * @param key the key of the property
+     * @param start the object where lookup began
+     */
+    @Override
+    public boolean has(Symbol key, Scriptable start) {
+        return true;
+    }
+
+    /**
      * Get the named property.
      *
      * <p>Handles the "dim" property and returns NOT_FOUND for all other names.
@@ -171,6 +183,14 @@ public class Matrix implements Scriptable {
      */
     @Override
     public void delete(int index) {}
+
+    /**
+     * Remove an symbol property.
+     *
+     * <p>This method shouldn't even be called since we define all properties as PERMANENT.
+     */
+    @Override
+    public void delete(Symbol key) {}
 
     /** Get prototype. */
     @Override
