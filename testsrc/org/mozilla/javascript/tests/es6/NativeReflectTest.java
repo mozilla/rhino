@@ -182,7 +182,7 @@ public class NativeReflectTest {
 
     @Test
     public void ownKeysDeleteObj() {
-        String js = "var o = { d: 42 };\n" + "delete o.d;\n" + "'' + Reflect.ownKeys({}).length";
+        String js = "var o = { d: 42 };\n" + "delete o.d;\n" + "'' + Reflect.ownKeys(o).length";
         testString("0", js);
     }
 

@@ -200,7 +200,7 @@ final class NativeReflect extends IdScriptableObject {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
-                    "Reflect.apply",
+                    "Reflect.defineProperty",
                     "3",
                     Integer.toString(args.length));
         }
