@@ -126,9 +126,6 @@ public interface Scriptable {
      */
     public boolean has(int index, Scriptable start);
 
-    /** A version of delete for properties with Symbol keys. */
-    public boolean has(Symbol key, Scriptable start);
-
     /**
      * Sets a named property in this object.
      *
@@ -230,9 +227,6 @@ public interface Scriptable {
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
      */
     public void delete(int index);
-
-    /** A version of delete for properties with Symbol keys. */
-    public void delete(Symbol key);
 
     /**
      * Get the prototype of the object.

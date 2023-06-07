@@ -2297,8 +2297,9 @@ public abstract class ScriptableObject
     public static boolean deleteProperty(Scriptable obj, Symbol key) {
         Scriptable base = getBase(obj, key);
         if (base == null) return true;
-        base.delete(key);
-        return !base.has(key, obj);
+        SymbolScriptable scriptable = ensureSymbolScriptable(base);
+        scriptable.delete(key);
+        return !scriptable.has(key, obj);
     }
 
     /**
