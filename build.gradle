@@ -7,8 +7,8 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.diffplug.spotless' version "5.12.1"
-    id 'com.github.spotbugs' version "4.7.1"
+    id 'com.diffplug.spotless' version "6.19.0"
+    id 'com.github.spotbugs' version "5.0.13"
 }
 
 tasks.withType(JavaCompile) {
