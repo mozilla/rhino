@@ -90,31 +90,41 @@ public class EcmaError extends RhinoException {
         return errorMessage;
     }
 
-    /** @deprecated Use {@link RhinoException#sourceName()} from the super class. */
+    /**
+     * @deprecated Use {@link RhinoException#sourceName()} from the super class.
+     */
     @Deprecated
     public String getSourceName() {
         return sourceName();
     }
 
-    /** @deprecated Use {@link RhinoException#lineNumber()} from the super class. */
+    /**
+     * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
+     */
     @Deprecated
     public int getLineNumber() {
         return lineNumber();
     }
 
-    /** @deprecated Use {@link RhinoException#columnNumber()} from the super class. */
+    /**
+     * @deprecated Use {@link RhinoException#columnNumber()} from the super class.
+     */
     @Deprecated
     public int getColumnNumber() {
         return columnNumber();
     }
 
-    /** @deprecated Use {@link RhinoException#lineSource()} from the super class. */
+    /**
+     * @deprecated Use {@link RhinoException#lineSource()} from the super class.
+     */
     @Deprecated
     public String getLineSource() {
         return lineSource();
     }
 
-    /** @deprecated Always returns <b>null</b>. */
+    /**
+     * @deprecated Always returns <b>null</b>.
+     */
     @Deprecated
     public Scriptable getErrorObject() {
         return null;

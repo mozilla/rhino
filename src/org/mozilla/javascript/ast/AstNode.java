@@ -124,6 +124,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
         private static final long serialVersionUID = 1L;
+
         /**
          * Sorts nodes by (relative) start position. The start positions are relative to their
          * parent, so this comparator is only meaningful for comparing siblings.
@@ -452,7 +453,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         }
     }
 
-    /** @see Kit#codeBug */
+    /**
+     * @see Kit#codeBug
+     */
     public static RuntimeException codeBug() throws RuntimeException {
         throw Kit.codeBug();
     }

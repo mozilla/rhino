@@ -21,7 +21,9 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public abstract class ShellConsole {
 
     private static final Class[] NO_ARG = {};
@@ -335,7 +337,9 @@ public abstract class ShellConsole {
 
     private static JLineShellConsoleV1 getJLineShellConsoleV1(
             ClassLoader classLoader, Class<?> readerClass, Scriptable scope, Charset cs)
-            throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+            throws NoSuchMethodException,
+                    InstantiationException,
+                    IllegalAccessException,
                     InvocationTargetException {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();
@@ -358,7 +362,9 @@ public abstract class ShellConsole {
 
     private static JLineShellConsoleV2 getJLineShellConsoleV2(
             ClassLoader classLoader, Class<?> readerClass, Scriptable scope, Charset cs)
-            throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+            throws NoSuchMethodException,
+                    InstantiationException,
+                    IllegalAccessException,
                     InvocationTargetException {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();

@@ -72,6 +72,14 @@
     <Bug pattern="EI_EXPOSE_REP2"/>
   </Match>
   <Match>
+    <!-- We do this in a few places for performance in legacy code -->
+    <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+  </Match>
+  <Match>
+    <!-- We do this in a few places for performance in legacy code -->
+    <Bug pattern="MS_EXPOSE_REP"/>
+  </Match>
+  <Match>
     <!-- We check for this in checkstyle using a different annotation -->
     <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
   </Match>
@@ -108,6 +116,21 @@
     <!-- Referenced in generated code -->
     <Class name="org.mozilla.javascript.optimizer.OptRuntime$GeneratorState"/>
     <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+  </Match>
+  <Match>
+    <!-- I don't think that this is accurate -->
+    <Class name="org.mozilla.javascript.EmbeddedSlotMap"/>
+    <Bug pattern="SA_FIELD_SELF_ASSIGNMENT"/>
+  </Match>
+  <Match>
+    <!-- I don't think that this is accurate -->
+    <Class name="org.mozilla.javascript.Parser"/>
+    <Bug pattern="SA_FIELD_SELF_ASSIGNMENT"/>
+  </Match>
+  <Match>
+    <!-- I don't think that this is accurate -->
+    <Class name="org.mozilla.javascript.v8dtoa.DiyFp"/>
+    <Bug pattern="SA_FIELD_SELF_ASSIGNMENT"/>
   </Match>
   <!-- Complex legacy stuff -->
   <!--<Match>

@@ -15,7 +15,9 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptableObject;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug714204Test {
 
     private Context cx;

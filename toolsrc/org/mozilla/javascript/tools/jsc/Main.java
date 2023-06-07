@@ -16,7 +16,9 @@ import org.mozilla.javascript.optimizer.ClassCompiler;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
-/** @author Norris Boyd */
+/**
+ * @author Norris Boyd
+ */
 public class Main {
 
     /**
@@ -193,6 +195,7 @@ public class Main {
         p(ToolErrorReporter.getMessage("msg.no.file"));
         return null;
     }
+
     /** Print a usage message. */
     private static void badUsage(String s) {
         System.err.println(

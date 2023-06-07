@@ -27,6 +27,7 @@ public interface DebugFrame {
      * @param args the array of arguments
      */
     public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args);
+
     /**
      * Called when executed code reaches new line in the source.
      *

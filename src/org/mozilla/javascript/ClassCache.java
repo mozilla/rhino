@@ -35,6 +35,7 @@ public class ClassCache implements Serializable {
     static class CacheKey {
         final Class<?> cls;
         final Object sec;
+
         /** Constructor. */
         public CacheKey(Class<?> cls, Object securityContext) {
             this.cls = cls;
@@ -131,7 +132,9 @@ public class ClassCache implements Serializable {
         cachingIsEnabled = enabled;
     }
 
-    /** @return a map from classes to associated JavaMembers objects */
+    /**
+     * @return a map from classes to associated JavaMembers objects
+     */
     Map<CacheKey, JavaMembers> getClassCacheMap() {
         if (classTable == null) {
             // Use 1 as concurrency level here and for other concurrent hash maps

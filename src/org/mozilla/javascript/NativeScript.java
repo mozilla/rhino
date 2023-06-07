@@ -28,7 +28,9 @@ class NativeScript extends BaseFunction {
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    /** @deprecated Use {@link #init(Context, Scriptable, boolean)} instead */
+    /**
+     * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
+     */
     @Deprecated
     static void init(Scriptable scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);

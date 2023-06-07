@@ -64,6 +64,7 @@ import javax.swing.tree.TreePath;
 public class JTreeTable extends JTable {
     /** */
     private static final long serialVersionUID = -2103973006456695515L;
+
     /** A subclass of JTree. */
     protected TreeTableCellRenderer tree;
 
@@ -143,6 +144,7 @@ public class JTreeTable extends JTable {
     /** A TreeCellRenderer that displays a JTree. */
     public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
         private static final long serialVersionUID = -193867880014600717L;
+
         /** Last table/tree row asked to renderer. */
         protected int visibleRow;
 
