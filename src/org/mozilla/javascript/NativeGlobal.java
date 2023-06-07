@@ -496,9 +496,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
         return false;
     }
 
-    /**
-     * @deprecated Use {@link ScriptRuntime#constructError(String,String)} instead.
-     */
+    /** @deprecated Use {@link ScriptRuntime#constructError(String,String)} instead. */
     @Deprecated
     public static EcmaError constructError(
             Context cx, String error, String message, Scriptable scope) {

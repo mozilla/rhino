@@ -142,9 +142,7 @@ public class CompilerEnvirons {
         this.generatingSource = generatingSource;
     }
 
-    /**
-     * @return true iff code will be generated with callbacks to enable instruction thresholds
-     */
+    /** @return true iff code will be generated with callbacks to enable instruction thresholds */
     public boolean isGenerateObserverCount() {
         return generateObserverCount;
     }

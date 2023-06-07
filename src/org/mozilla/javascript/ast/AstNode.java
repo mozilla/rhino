@@ -453,9 +453,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         }
     }
 
-    /**
-     * @see Kit#codeBug
-     */
+    /** @see Kit#codeBug */
     public static RuntimeException codeBug() throws RuntimeException {
         throw Kit.codeBug();
     }

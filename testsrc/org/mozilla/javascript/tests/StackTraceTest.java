@@ -13,9 +13,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
 
-/**
- * @author Marc Guillemot
- */
+/** @author Marc Guillemot */
 public class StackTraceTest {
 
     static final String LS = System.getProperty("line.separator");

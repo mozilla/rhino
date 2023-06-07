@@ -17,9 +17,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.drivers.TestUtils;
 
-/**
- * @author Norris Boyd
- */
+/** @author Norris Boyd */
 public class ObserveInstructionCountTest {
     // Custom Context to store execution time.
     static class MyContext extends Context {

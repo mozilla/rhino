@@ -16,9 +16,7 @@ import org.mozilla.javascript.optimizer.ClassCompiler;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
-/**
- * @author Norris Boyd
- */
+/** @author Norris Boyd */
 public class Main {
 
     /**

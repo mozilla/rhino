@@ -14,9 +14,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
-/**
- * @author Ronald Brill
- */
+/** @author Ronald Brill */
 public class NativeStringTest {
     private ContextFactory contextFactoryIntl402 =
             new ContextFactory() {

@@ -22,9 +22,7 @@ public abstract class Ref implements Serializable {
 
     public abstract Object get(Context cx);
 
-    /**
-     * @deprecated Use {@link #set(Context, Scriptable, Object)} instead
-     */
+    /** @deprecated Use {@link #set(Context, Scriptable, Object)} instead */
     @Deprecated
     public abstract Object set(Context cx, Object value);
 

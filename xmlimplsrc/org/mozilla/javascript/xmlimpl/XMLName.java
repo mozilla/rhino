@@ -106,9 +106,7 @@ class XMLName extends Ref {
         return rv;
     }
 
-    /**
-     * @deprecated
-     */
+    /** @deprecated */
     @Deprecated
     static XMLName formProperty(XmlNode.Namespace namespace, String localName) {
         if (localName != null && localName.equals("*")) localName = null;
@@ -151,9 +149,7 @@ class XMLName extends Ref {
         return rv;
     }
 
-    /**
-     * @deprecated
-     */
+    /** @deprecated */
     @Deprecated
     static XMLName create(XmlNode.QName qname) {
         return create(qname, false, false);
@@ -441,9 +437,7 @@ class XMLName extends Ref {
     }
 
     //    TODO    Fix whether this is an descendant XMLName at construction?
-    /**
-     * @deprecated
-     */
+    /** @deprecated */
     @Deprecated
     void setIsDescendants() {
         //        if (isDescendants) throw new IllegalStateException();
