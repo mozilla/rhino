@@ -1611,7 +1611,12 @@ class TokenStream {
                                             escapeVal = -1;
                                             break;
                                         }
+
                                         c = getTemplateLiteralChar();
+                                        if (c == EOF_CHAR) {
+                                            parser.reportError("msg.syntax");
+                                            return Token.ERROR;
+                                        }
 
                                         if (c == '}') {
                                             break;

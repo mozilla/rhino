@@ -1389,6 +1389,11 @@ public class ParserTest {
                 new String[] {"missing ( before function parameters."});
     }
 
+    @Test
+    public void oomOnInvalidInput() {
+        expectParseErrors("`\\u{8", new String[] {"syntax error"});
+    }
+
     private void expectParseErrors(String string, String[] errors) {
         parse(string, errors, null, false);
     }
