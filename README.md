@@ -45,10 +45,6 @@ JavaDoc for all the APIs:
 
 [https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
 
-More resources if you get stuck:
-
-[https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community)
-
 ## Building
 
 ### How to Build
