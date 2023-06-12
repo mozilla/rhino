@@ -35,6 +35,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.commonjs.module.Require;
@@ -566,7 +567,7 @@ public class Main {
                 if (strSrc.length() > 0 && strSrc.charAt(0) == '#') {
                     for (int i = 1; i != strSrc.length(); ++i) {
                         int c = strSrc.charAt(i);
-                        if (c == '\n' || c == '\r') {
+                        if (ScriptRuntime.isJSLineTerminator(c)) {
                             strSrc = strSrc.substring(i);
                             break;
                         }
