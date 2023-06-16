@@ -15,7 +15,7 @@ jobs:
       # Some tests require more CPU, and all can use multiple CPUs
       max-parallel: 1
       matrix:
-        java: [ '8', '11', '17' ]
+        java: [ '11', '17' ]
     name: Rhino Java ${{ matrix.java }}
     steps:
     - name: Checkout
@@ -32,10 +32,7 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'adopt'
     - if: matrix.java == '8'
-      name: Check everything with Gradle on Java 8
-      run: ./gradlew check jacocoTestReport
-    - if: matrix.java != '8'
-      name: Check everything with Gradle, modular Java
+      name: Check everything with Gradle
       run: >-
         ./gradlew check jacocoTestReport
         -Dorg.gradle.jvmargs="--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED

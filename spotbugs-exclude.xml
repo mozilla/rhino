@@ -109,6 +109,11 @@
     <Class name="org.mozilla.javascript.optimizer.OptRuntime$GeneratorState"/>
     <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
   </Match>
+  <Match>
+    <!-- Really old legacy stuff -->
+    <Class name="org.mozilla.javascript.ContextFactory$1GlobalSetterImpl"/>
+    <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+  </Match>
   <!-- Complex legacy stuff -->
   <!--<Match>
     <Class name="org.mozilla.javascript.regexp.RegExpImpl"/>

@@ -7,13 +7,13 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.diffplug.spotless' version "5.12.1"
+    id 'com.diffplug.spotless' version "5.13.0"
     id 'com.github.spotbugs' version "4.7.1"
 }
 
 tasks.withType(JavaCompile) {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
     options.encoding = "UTF-8"
     options.compilerArgs = [ "-Xlint:deprecation,unchecked" ]
 }
@@ -71,10 +71,8 @@ test {
     exclude "**/benchmarks/**"
 
     jvmArgs += '-Xss1280k'
-
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-        jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
-    }
+    jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
+    jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
 
     jacoco.excludes = ['**/testsrc_tests_ecma_3_RegExp_perlstress*']
 
@@ -439,6 +437,16 @@ spotbugs {
     effort = "less"
     reportLevel = "medium"
     excludeFilter = file("./spotbugs-exclude.xml")
+}
+
+spotbugsMain {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
 }
 
 spotless {
