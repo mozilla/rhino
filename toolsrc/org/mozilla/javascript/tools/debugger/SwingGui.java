@@ -12,7 +12,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -1865,7 +1864,7 @@ class FileHeader extends JPanel implements MouseListener {
     /** Called when a mouse button is released. */
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.getComponent() == this && (e.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
+        if (e.getComponent() == this && (e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) != 0) {
             int y = e.getY();
             Font font = fileWindow.textArea.getFont();
             FontMetrics metrics = getFontMetrics(font);
@@ -2474,14 +2473,14 @@ class MyTreeTable extends JTreeTable {
             // selection remaining the same. To avoid this, we
             // only dispatch when the modifiers are 0 (or the left mouse
             // button).
-            if (me.getModifiers() == 0
-                    || ((me.getModifiers() & (InputEvent.BUTTON1_MASK | 1024)) != 0
-                            && (me.getModifiers()
-                                            & (InputEvent.SHIFT_MASK
-                                                    | InputEvent.CTRL_MASK
-                                                    | InputEvent.ALT_MASK
-                                                    | InputEvent.BUTTON2_MASK
-                                                    | InputEvent.BUTTON3_MASK
+            if (me.getModifiersEx() == 0
+                    || ((me.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | 1024)) != 0
+                            && (me.getModifiersEx()
+                                            & (InputEvent.SHIFT_DOWN_MASK
+                                                    | InputEvent.CTRL_DOWN_MASK
+                                                    | InputEvent.ALT_DOWN_MASK
+                                                    | InputEvent.BUTTON2_DOWN_MASK
+                                                    | InputEvent.BUTTON3_DOWN_MASK
                                                     | 64
                                                     | // SHIFT_DOWN_MASK
                                                     128
@@ -2501,7 +2500,7 @@ class MyTreeTable extends JTreeTable {
                                         MyTreeTable.this.tree,
                                         me.getID(),
                                         me.getWhen(),
-                                        me.getModifiers(),
+                                        me.getModifiersEx(),
                                         me.getX() - getCellRect(row, counter, true).x,
                                         me.getY(),
                                         me.getClickCount(),
@@ -2920,7 +2919,8 @@ class Menubar extends JMenuBar implements ActionListener {
                 item.addActionListener(this);
                 fileMenu.add(item);
                 if (fileAccelerators[i] != 0) {
-                    KeyStroke k = KeyStroke.getKeyStroke(fileAccelerators[i], Event.CTRL_MASK);
+                    KeyStroke k =
+                            KeyStroke.getKeyStroke(fileAccelerators[i], InputEvent.CTRL_DOWN_MASK);
                     item.setAccelerator(k);
                 }
             }
@@ -2930,7 +2930,8 @@ class Menubar extends JMenuBar implements ActionListener {
             item.addActionListener(this);
             editMenu.add(item);
             if (editAccelerators[i] != 0) {
-                KeyStroke k = KeyStroke.getKeyStroke(editAccelerators[i], Event.CTRL_MASK);
+                KeyStroke k =
+                        KeyStroke.getKeyStroke(editAccelerators[i], InputEvent.CTRL_DOWN_MASK);
                 item.setAccelerator(k);
             }
         }

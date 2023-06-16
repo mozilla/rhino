@@ -99,7 +99,7 @@ public abstract class SecureCaller {
                                                                             + "Impl",
                                                                     secureCallerImplBytecode,
                                                                     codeSource);
-                                                    return c.newInstance();
+                                                    return c.getDeclaredConstructor().newInstance();
                                                 }
                                             });
                     classLoaderMap.put(classLoader, new SoftReference<>(caller));
