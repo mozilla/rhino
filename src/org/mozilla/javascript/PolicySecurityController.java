@@ -135,7 +135,7 @@ public class PolicySecurityController extends SecurityController {
                                                                     SecureCaller.class.getName()
                                                                             + "Impl",
                                                                     secureCallerImplBytecode);
-                                                    return c.newInstance();
+                                                    return c.getDeclaredConstructor().newInstance();
                                                 }
                                             });
                     classLoaderMap.put(classLoader, new SoftReference<>(caller));

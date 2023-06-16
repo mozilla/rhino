@@ -454,7 +454,7 @@ public class FunctionObject extends BaseFunction {
         }
         Scriptable result;
         try {
-            result = (Scriptable) member.getDeclaringClass().newInstance();
+            result = (Scriptable) member.getDeclaringClass().getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
