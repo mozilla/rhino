@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -409,16 +410,15 @@ public class Main {
         Throwable exObj;
         try {
             Class<?> cl = Class.forName("org.mozilla.javascript.tools.shell.JavaPolicySecurity");
-            securityImpl = (SecurityProxy) cl.newInstance();
+            securityImpl = (SecurityProxy) cl.getDeclaredConstructor().newInstance();
             SecurityController.initGlobal(securityImpl);
             return;
-        } catch (ClassNotFoundException ex) {
-            exObj = ex;
-        } catch (IllegalAccessException ex) {
-            exObj = ex;
-        } catch (InstantiationException ex) {
-            exObj = ex;
-        } catch (LinkageError ex) {
+        } catch (ClassNotFoundException
+                | IllegalAccessException
+                | InstantiationException
+                | LinkageError
+                | NoSuchMethodException
+                | InvocationTargetException ex) {
             exObj = ex;
         }
         throw new IllegalStateException("Can not load security support: " + exObj, exObj);
@@ -632,13 +632,13 @@ public class Main {
             if (!Script.class.isAssignableFrom(clazz)) {
                 throw Context.reportRuntimeError("msg.must.implement.Script");
             }
-            return (Script) clazz.newInstance();
-        } catch (IllegalAccessException iaex) {
-            Context.reportError(iaex.toString());
-            throw new RuntimeException(iaex);
-        } catch (InstantiationException inex) {
-            Context.reportError(inex.toString());
-            throw new RuntimeException(inex);
+            return (Script) clazz.getDeclaredConstructor().newInstance();
+        } catch (IllegalAccessException
+                | InstantiationException
+                | NoSuchMethodException
+                | InvocationTargetException ex) {
+            Context.reportError(ex.toString());
+            throw new RuntimeException(ex);
         }
     }
 

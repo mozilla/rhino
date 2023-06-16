@@ -302,12 +302,13 @@ public class Global extends ImporterTopLevel {
      * @exception InstantiationException if unable to instantiate the named class
      */
     public static void loadClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IllegalAccessException, InstantiationException {
+            throws IllegalAccessException, InstantiationException, NoSuchMethodException,
+                    InvocationTargetException {
         Class<?> clazz = getClass(args);
         if (!Script.class.isAssignableFrom(clazz)) {
             throw reportRuntimeError("msg.must.implement.Script");
         }
-        Script script = (Script) clazz.newInstance();
+        Script script = (Script) clazz.getDeclaredConstructor().newInstance();
         script.exec(cx, thisObj);
     }
 
