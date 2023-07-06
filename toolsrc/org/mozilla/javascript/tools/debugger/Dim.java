@@ -25,7 +25,6 @@ import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableObject;
@@ -227,7 +226,7 @@ public class Dim {
                     // Can be a file name
                     try {
                         if (sourceUrl.startsWith("~/")) {
-                            String home = SecurityUtilities.getSystemProperty("user.home");
+                            String home = System.getProperty("user.home");
                             if (home != null) {
                                 String pathFromHome = sourceUrl.substring(2);
                                 File f = new File(new File(home), pathFromHome);

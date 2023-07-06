@@ -192,17 +192,16 @@ public class ScriptRuntime {
                 cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 
         // define lazy-loaded properties using their class name
+        new LazilyLoadedCtor(scope, "RegExp", "org.mozilla.javascript.regexp.NativeRegExp", sealed);
         new LazilyLoadedCtor(
-                scope, "RegExp", "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
-        new LazilyLoadedCtor(
-                scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
+                scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed);
 
         if (withXml) {
             String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
-            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed);
+            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed);
+            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed);
+            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed);
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
@@ -212,68 +211,54 @@ public class ScriptRuntime {
                     scope,
                     "ArrayBuffer",
                     "org.mozilla.javascript.typedarrays.NativeArrayBuffer",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Int8Array",
                     "org.mozilla.javascript.typedarrays.NativeInt8Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Uint8Array",
                     "org.mozilla.javascript.typedarrays.NativeUint8Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Uint8ClampedArray",
                     "org.mozilla.javascript.typedarrays.NativeUint8ClampedArray",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Int16Array",
                     "org.mozilla.javascript.typedarrays.NativeInt16Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Uint16Array",
                     "org.mozilla.javascript.typedarrays.NativeUint16Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Int32Array",
                     "org.mozilla.javascript.typedarrays.NativeInt32Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Uint32Array",
                     "org.mozilla.javascript.typedarrays.NativeUint32Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Float32Array",
                     "org.mozilla.javascript.typedarrays.NativeFloat32Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
                     scope,
                     "Float64Array",
                     "org.mozilla.javascript.typedarrays.NativeFloat64Array",
-                    sealed,
-                    true);
+                    sealed);
             new LazilyLoadedCtor(
-                    scope,
-                    "DataView",
-                    "org.mozilla.javascript.typedarrays.NativeDataView",
-                    sealed,
-                    true);
+                    scope, "DataView", "org.mozilla.javascript.typedarrays.NativeDataView", sealed);
         }
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -299,17 +284,14 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
-        new LazilyLoadedCtor(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+        new LazilyLoadedCtor(s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed);
+        new LazilyLoadedCtor(s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed);
+        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed);
+        new LazilyLoadedCtor(s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed);
 
         for (String packageName : getTopPackageNames()) {
             new LazilyLoadedCtor(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed);
         }
 
         return s;

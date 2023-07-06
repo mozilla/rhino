@@ -108,7 +108,6 @@ import javax.swing.text.Segment;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.tools.debugger.treetable.JTreeTable;
 import org.mozilla.javascript.tools.debugger.treetable.TreeTableModel;
 import org.mozilla.javascript.tools.debugger.treetable.TreeTableModelAdapter;
@@ -636,7 +635,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     private String chooseFile(String title) {
         dlg.setDialogTitle(title);
         File CWD = null;
-        String dir = SecurityUtilities.getSystemProperty("user.dir");
+        String dir = System.getProperty("user.dir");
         if (dir != null) {
             CWD = new File(dir);
         }

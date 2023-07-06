@@ -10,11 +10,7 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.CodeSource;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -33,84 +29,6 @@ public abstract class SecureCaller {
     public abstract Object call(
             Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args);
 
-    /**
-     * Call the specified callable using a protection domain belonging to the specified code source.
-     */
-    static Object callSecurely(
-            final CodeSource codeSource,
-            Callable callable,
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args) {
-        final Thread thread = Thread.currentThread();
-        // Run in doPrivileged as we might be checked for "getClassLoader"
-        // runtime permission
-        final ClassLoader classLoader =
-                (ClassLoader)
-                        AccessController.doPrivileged(
-                                new PrivilegedAction<Object>() {
-                                    @Override
-                                    public Object run() {
-                                        return thread.getContextClassLoader();
-                                    }
-                                });
-        Map<ClassLoader, SoftReference<SecureCaller>> classLoaderMap;
-        synchronized (callers) {
-            classLoaderMap = callers.get(codeSource);
-            if (classLoaderMap == null) {
-                classLoaderMap = new WeakHashMap<>();
-                callers.put(codeSource, classLoaderMap);
-            }
-        }
-        SecureCaller caller;
-        synchronized (classLoaderMap) {
-            SoftReference<SecureCaller> ref = classLoaderMap.get(classLoader);
-            if (ref != null) {
-                caller = ref.get();
-            } else {
-                caller = null;
-            }
-            if (caller == null) {
-                try {
-                    // Run in doPrivileged as we'll be checked for
-                    // "createClassLoader" runtime permission
-                    caller =
-                            (SecureCaller)
-                                    AccessController.doPrivileged(
-                                            new PrivilegedExceptionAction<Object>() {
-                                                @Override
-                                                public Object run() throws Exception {
-                                                    ClassLoader effectiveClassLoader;
-                                                    Class<?> thisClass = getClass();
-                                                    if (classLoader.loadClass(thisClass.getName())
-                                                            != thisClass) {
-                                                        effectiveClassLoader =
-                                                                thisClass.getClassLoader();
-                                                    } else {
-                                                        effectiveClassLoader = classLoader;
-                                                    }
-                                                    SecureClassLoaderImpl secCl =
-                                                            new SecureClassLoaderImpl(
-                                                                    effectiveClassLoader);
-                                                    Class<?> c =
-                                                            secCl.defineAndLinkClass(
-                                                                    SecureCaller.class.getName()
-                                                                            + "Impl",
-                                                                    secureCallerImplBytecode,
-                                                                    codeSource);
-                                                    return c.getDeclaredConstructor().newInstance();
-                                                }
-                                            });
-                    classLoaderMap.put(classLoader, new SoftReference<>(caller));
-                } catch (PrivilegedActionException ex) {
-                    throw new UndeclaredThrowableException(ex.getCause());
-                }
-            }
-        }
-        return caller.call(callable, cx, scope, thisObj, args);
-    }
-
     private static class SecureClassLoaderImpl extends SecureClassLoader {
         SecureClassLoaderImpl(ClassLoader parent) {
             super(parent);
@@ -124,17 +42,6 @@ public abstract class SecureCaller {
     }
 
     private static byte[] loadBytecode() {
-        return (byte[])
-                AccessController.doPrivileged(
-                        new PrivilegedAction<Object>() {
-                            @Override
-                            public Object run() {
-                                return loadBytecodePrivileged();
-                            }
-                        });
-    }
-
-    private static byte[] loadBytecodePrivileged() {
         URL url = SecureCaller.class.getResource("SecureCallerImpl.clazz");
         try {
             try (InputStream in = url.openStream()) {
