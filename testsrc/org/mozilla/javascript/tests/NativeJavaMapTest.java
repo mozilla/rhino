@@ -140,8 +140,7 @@ public class NativeJavaMapTest {
     @Test
     public void keys() {
         Map<String, String> map = new HashMap<>();
-        NativeArray resEmpty =
-                (NativeArray) runScript("Object.keys(value)", map, Function.identity(), true);
+        NativeArray resEmpty = (NativeArray) runScript("Object.keys(value)", map, true);
         assertEquals(0, resEmpty.size());
 
         map.put("a", "a");
@@ -156,8 +155,7 @@ public class NativeJavaMapTest {
 
         Map<Integer, String> mapInt = new HashMap<>();
         mapInt.put(42, "test");
-        NativeArray resInt =
-                (NativeArray) runScript("Object.keys(value)", mapInt, Function.identity(), true);
+        NativeArray resInt = (NativeArray) runScript("Object.keys(value)", mapInt, true);
         assertTrue(resInt.contains("42")); // Object.keys always return Strings as key
     }
 
