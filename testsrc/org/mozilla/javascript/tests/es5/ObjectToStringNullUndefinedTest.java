@@ -32,7 +32,7 @@ public class ObjectToStringNullUndefinedTest {
     }
 
     @Test
-    public void testToStringNullUndefined() {
+    public void toStringNullUndefined() {
         Object result0 =
                 cx.evaluateString(
                         scope, "Object.prototype.toString.call(null)", "15.2.4.2", 1, null);

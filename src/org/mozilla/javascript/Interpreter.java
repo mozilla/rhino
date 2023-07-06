@@ -230,9 +230,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     final Scriptable top = ScriptableObject.getTopLevelScope(scope);
                     return ((Boolean)
                                     ScriptRuntime.doTopCall(
-                                            (Callable)
-                                                    (c, scope, thisObj, args) ->
-                                                            equalsInTopScope(other),
+                                            (c, scope, thisObj, args) -> equalsInTopScope(other),
                                             cx,
                                             top,
                                             top,
@@ -482,7 +480,7 @@ public final class Interpreter extends Icode implements Evaluator {
             return;
         }
 
-        byte iCode[] = idata.itsICode;
+        byte[] iCode = idata.itsICode;
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
         BigInteger[] bigInts = idata.itsBigIntTable;
@@ -928,7 +926,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     break;
                 }
             }
-            sb.append(nativeStackTrace.substring(offset, pos));
+            sb.append(nativeStackTrace, offset, pos);
             offset = pos;
 
             CallFrame frame = array[arrayIndex];
@@ -962,7 +960,7 @@ public final class Interpreter extends Icode implements Evaluator {
     @Override
     public List<String> getScriptStack(RhinoException ex) {
         ScriptStackElement[][] stack = getScriptStackElements(ex);
-        List<String> list = new ArrayList<String>(stack.length);
+        List<String> list = new ArrayList<>(stack.length);
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
         for (ScriptStackElement[] group : stack) {
             StringBuilder sb = new StringBuilder();
@@ -980,7 +978,7 @@ public final class Interpreter extends Icode implements Evaluator {
             return null;
         }
 
-        List<ScriptStackElement[]> list = new ArrayList<ScriptStackElement[]>();
+        List<ScriptStackElement[]> list = new ArrayList<>();
 
         CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
         int[] linePC = ex.interpreterLineData;
@@ -989,7 +987,7 @@ public final class Interpreter extends Icode implements Evaluator {
         while (arrayIndex != 0) {
             --arrayIndex;
             CallFrame frame = array[arrayIndex];
-            List<ScriptStackElement> group = new ArrayList<ScriptStackElement>();
+            List<ScriptStackElement> group = new ArrayList<>();
             while (frame != null) {
                 if (linePCIndex == 0) Kit.codeBug();
                 --linePCIndex;
@@ -1007,7 +1005,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 frame = frame.parentFrame;
                 group.add(new ScriptStackElement(fileName, functionName, lineNumber));
             }
-            list.add(group.toArray(new ScriptStackElement[group.size()]));
+            list.add(group.toArray(new ScriptStackElement[0]));
         }
         return list.toArray(new ScriptStackElement[list.size()][]);
     }
@@ -2128,8 +2126,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ++stackTop;
                                     stack[stackTop] =
                                             (op == Token.ENUM_NEXT)
-                                                    ? (Object) ScriptRuntime.enumNext(val, cx)
-                                                    : (Object) ScriptRuntime.enumId(val, cx);
+                                                    ? ScriptRuntime.enumNext(val, cx)
+                                                    : ScriptRuntime.enumId(val, cx);
                                     continue Loop;
                                 }
                             case Token.REF_SPECIAL:
@@ -2239,7 +2237,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     --stackTop;
                                     int i = (int) sDbl[stackTop];
                                     ((Object[]) stack[stackTop])[i] = value;
-                                    ((int[]) stack[stackTop - 1])[i] = +1;
+                                    ((int[]) stack[stackTop - 1])[i] = 1;
                                     sDbl[stackTop] = i + 1;
                                     continue Loop;
                                 }
@@ -3501,7 +3499,7 @@ public final class Interpreter extends Icode implements Evaluator {
         } else if (x == null || x == Undefined.instance) {
             return false;
         } else if (x instanceof BigInteger) {
-            return !((BigInteger) x).equals(BigInteger.ZERO);
+            return !x.equals(BigInteger.ZERO);
         } else if (x instanceof Number) {
             double d = ((Number) x).doubleValue();
             return (!Double.isNaN(d) && d != 0.0);

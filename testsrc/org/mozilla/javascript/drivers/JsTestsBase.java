@@ -54,8 +54,7 @@ public abstract class JsTestsBase {
     }
 
     public void runJsTests(File[] tests) throws IOException {
-        Context cx = threadSafeFactory.enterContext();
-        try {
+        try (Context cx = threadSafeFactory.enterContext()) {
             cx.setOptimizationLevel(this.optimizationLevel);
             Scriptable shared = cx.initStandardObjects();
             for (File f : tests) {
@@ -66,8 +65,6 @@ public abstract class JsTestsBase {
                 String session = new String(buf);
                 runJsTest(cx, shared, f.getName(), session);
             }
-        } finally {
-            Context.exit();
         }
     }
 }

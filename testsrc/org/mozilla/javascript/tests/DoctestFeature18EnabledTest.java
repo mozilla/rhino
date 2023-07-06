@@ -30,6 +30,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
         return result;
     }
 
+    @Override
     @Test
     public void runDoctest() {
         ContextFactory contextFactory =
@@ -42,14 +43,12 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
                         return super.hasFeature(cx, featureIndex);
                     }
                 };
-        Context context = contextFactory.enterContext();
-        try {
+
+        try (Context context = contextFactory.enterContext()) {
             context.setOptimizationLevel(optimizationLevel);
             Global global = new Global(context);
             int testsPassed = global.runDoctest(context, global, source, name, 1);
             assertTrue(testsPassed > 0);
-        } finally {
-            Context.exit();
         }
     }
 }

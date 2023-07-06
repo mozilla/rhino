@@ -29,7 +29,7 @@ public class Issue129Test {
     }
 
     @Test
-    public void testGetPosition() {
+    public void getPosition() {
         String script = "(a);";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);
         ParenthesizedExprVisitor visitor = new ParenthesizedExprVisitor();
@@ -41,7 +41,7 @@ public class Issue129Test {
     }
 
     @Test
-    public void testGetLength() {
+    public void getLength() {
         String script = "(a);";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);
         ParenthesizedExprVisitor visitor = new ParenthesizedExprVisitor();
@@ -53,7 +53,7 @@ public class Issue129Test {
     }
 
     @Test
-    public void testGetAbsolutePosition() {
+    public void getAbsolutePosition() {
         String script = "var a = (b).c()";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);
         ParenthesizedExprVisitor visitor = new ParenthesizedExprVisitor();
@@ -65,7 +65,7 @@ public class Issue129Test {
     }
 
     @Test
-    public void testMultiline() {
+    public void multiline() {
         String script = "var a =\n" + "b +\n" + "(c +\n" + "d);";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);
         ParenthesizedExprVisitor visitor = new ParenthesizedExprVisitor();
@@ -77,7 +77,7 @@ public class Issue129Test {
     }
 
     @Test
-    public void testNested() {
+    public void nested() {
         String script = "var a = (b * (c + d));";
         AstRoot root = parser.parse(script, SOURCE_URI, 0);
         ParenthesizedExprVisitor visitor = new ParenthesizedExprVisitor();
@@ -92,7 +92,7 @@ public class Issue129Test {
         }
     }
 
-    private String getFromSource(String source, AstNode node) {
+    private static String getFromSource(String source, AstNode node) {
         return source.substring(
                 node.getAbsolutePosition(), node.getAbsolutePosition() + node.getLength());
     }

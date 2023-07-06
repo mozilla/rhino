@@ -31,12 +31,12 @@ public class BuiltinsTest {
     }
 
     @Test
-    public void testPrintStdout() throws ScriptException {
+    public void printStdout() throws ScriptException {
         engine.eval("print('Hello, World!');");
     }
 
     @Test
-    public void testPrintWriter() throws ScriptException {
+    public void printWriter() throws ScriptException {
         StringWriter sw = new StringWriter();
         ScriptContext sc = new SimpleScriptContext();
         sc.setWriter(sw);
@@ -45,7 +45,7 @@ public class BuiltinsTest {
     }
 
     @Test
-    public void testPrintWriterGeneric() throws ScriptException {
+    public void printWriterGeneric() throws ScriptException {
         StringWriter sw = new StringWriter();
         engine.getContext().setWriter(sw);
         engine.eval(engine.getFactory().getOutputStatement("Display This!"));

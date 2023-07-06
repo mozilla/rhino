@@ -28,7 +28,7 @@ public class Issue808Test {
     }
 
     @Test
-    public void testAbsolutePositionInLabeledForLoop() {
+    public void absolutePositionInLabeledForLoop() {
         String script =
                 "function foo() {\n"
                         + "  loop1:\n"
@@ -46,7 +46,7 @@ public class Issue808Test {
     }
 
     @Test
-    public void testAbsolutePositionInLabeledWhileLoop() {
+    public void absolutePositionInLabeledWhileLoop() {
         String script =
                 "function foo() {\n"
                         + "  loop1:\n"

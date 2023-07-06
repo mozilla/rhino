@@ -35,8 +35,6 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 [![GitHub Action Status](https://github.com/mozilla/rhino/actions/workflows/gradle.yml/badge.svg)](https://github.com/mozilla/rhino/actions/workflows/gradle.yml)
 
-[![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
-
 ## Documentation
 
 Information for script builders and embedders:
@@ -46,10 +44,6 @@ Information for script builders and embedders:
 JavaDoc for all the APIs:
 
 [https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
-
-More resources if you get stuck:
-
-[https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community)
 
 ## Building
 

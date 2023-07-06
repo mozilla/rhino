@@ -17,7 +17,7 @@ import org.mozilla.javascript.NativeObject;
 public class StringSplitTest {
 
     @Test
-    public void testSplitLimitZero() {
+    public void splitLimitZero() {
         NativeObject object = new NativeObject();
 
         NativeArray result =
@@ -26,7 +26,7 @@ public class StringSplitTest {
     }
 
     @Test
-    public void testSplitLimitNegative() {
+    public void splitLimitNegative() {
         NativeObject object = new NativeObject();
 
         NativeArray result =

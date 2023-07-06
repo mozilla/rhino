@@ -35,18 +35,17 @@ public class ShellTest {
         if (!frameworkFile.exists()) {
             throw new AssertionError("Can't find test framework file " + frameworkFile);
         }
-        Context cx = Context.enter();
-        try {
+
+        try (Context cx = Context.enter()) {
             frameworkScript = cx.compileReader(new FileReader(frameworkFile), "shell.js", 1, null);
         } catch (IOException ioe) {
             throw new AssertionError("Can't read test framework file " + frameworkFile);
-        } finally {
-            Context.exit();
         }
     }
 
     public static final FileFilter DIRECTORY_FILTER =
             new FileFilter() {
+                @Override
                 public boolean accept(File pathname) {
                     return pathname.isDirectory() && !pathname.getName().equals("CVS");
                 }
@@ -54,6 +53,7 @@ public class ShellTest {
 
     public static final FileFilter TEST_FILTER =
             new FileFilter() {
+                @Override
                 public boolean accept(File pathname) {
                     return pathname.getName().endsWith(".js")
                             && !pathname.getName().equals("shell.js")
@@ -272,15 +272,18 @@ public class ShellTest {
             errors.add(new Status.JsError(string, string0, i, string1, i0));
         }
 
+        @Override
         public void warning(String string, String string0, int i, String string1, int i0) {
             original.warning(string, string0, i, string1, i0);
         }
 
+        @Override
         public EvaluatorException runtimeError(
                 String string, String string0, int i, String string1, int i0) {
             return original.runtimeError(string, string0, i, string1, i0);
         }
 
+        @Override
         public void error(String string, String string0, int i, String string1, int i0) {
             addError(string, string0, i, string1, i0);
         }
@@ -321,6 +324,7 @@ public class ShellTest {
         Thread t =
                 new Thread(
                         new Runnable() {
+                            @Override
                             public void run() {
                                 try {
                                     shellContextFactory.call(

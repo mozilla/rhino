@@ -41,7 +41,7 @@ public class NativeArrayIteratorTest {
 
     /** Test serialization of an empty object. */
     @Test
-    public void testSerialization() throws IOException, ClassNotFoundException {
+    public void serialization() throws IOException, ClassNotFoundException {
 
         NativeArrayIterator iter = new NativeArrayIterator(root, null, ARRAY_ITERATOR_TYPE.VALUES);
 

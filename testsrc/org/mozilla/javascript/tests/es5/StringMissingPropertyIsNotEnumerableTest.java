@@ -16,7 +16,7 @@ import org.mozilla.javascript.NativeObject;
 public class StringMissingPropertyIsNotEnumerableTest {
 
     @Test
-    public void testStringMissingPropertyIsNotEnumerable() {
+    public void stringMissingPropertyIsNotEnumerable() {
         NativeObject object = new NativeObject();
 
         Object result = eval("'s'.propertyIsEnumerable(0)", "obj", object);

@@ -4,7 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -16,11 +19,11 @@ import org.mozilla.javascript.Wrapper;
  *
  * @author Hannes Wallnoefer
  */
-public class Bug467396Test extends TestCase {
+public class Bug467396Test {
 
-    public void testOverloadedVarargs() {
-        Context cx = ContextFactory.getGlobal().enterContext();
-        try {
+    @Test
+    public void overloadedVarargs() {
+        try (Context cx = ContextFactory.getGlobal().enterContext()) {
             Scriptable scope = cx.initStandardObjects();
             Object result =
                     unwrap(
@@ -64,12 +67,10 @@ public class Bug467396Test extends TestCase {
             assertTrue(result instanceof Object[][]);
             assertEquals(1, ((Object[][]) result).length);
             assertEquals(1, ((Object[][]) result)[0].length);
-        } finally {
-            Context.exit();
         }
     }
 
-    private Object unwrap(Object obj) {
+    private static Object unwrap(Object obj) {
         return obj instanceof Wrapper ? ((Wrapper) obj).unwrap() : obj;
     }
 }

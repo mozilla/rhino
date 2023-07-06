@@ -17,6 +17,7 @@ import org.mozilla.javascript.ScriptableObject;
 
 /** @author André Bargull */
 public class Bug714204Test {
+
     private Context cx;
     private ScriptableObject scope;
 
@@ -33,7 +34,7 @@ public class Bug714204Test {
     }
 
     @Test
-    public void test_assign_this() {
+    public void assign_this() {
         StringBuilder sb = new StringBuilder();
         sb.append("function F() {\n");
         sb.append("  [this.x] = arguments;\n");
@@ -46,7 +47,7 @@ public class Bug714204Test {
     }
 
     @Test(expected = EvaluatorException.class)
-    public void test_var_this() {
+    public void varThis() {
         StringBuilder sb = new StringBuilder();
         sb.append("function F() {\n");
         sb.append("  var [this.x] = arguments;\n");
@@ -55,7 +56,7 @@ public class Bug714204Test {
     }
 
     @Test(expected = EvaluatorException.class)
-    public void test_let_this() {
+    public void letThis() {
         StringBuilder sb = new StringBuilder();
         sb.append("function F() {\n");
         sb.append("  let [this.x] = arguments;\n");
@@ -64,7 +65,7 @@ public class Bug714204Test {
     }
 
     @Test(expected = EvaluatorException.class)
-    public void test_const_this() {
+    public void constThis() {
         StringBuilder sb = new StringBuilder();
         sb.append("function F() {\n");
         sb.append("  const [this.x] = arguments;\n");
@@ -73,7 +74,7 @@ public class Bug714204Test {
     }
 
     @Test(expected = EvaluatorException.class)
-    public void test_args_this() {
+    public void argsThis() {
         StringBuilder sb = new StringBuilder();
         sb.append("function F([this.x]) {\n");
         sb.append("}\n");

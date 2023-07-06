@@ -35,7 +35,7 @@ public class SlotMapTest {
     }
 
     @Test
-    public void testEmpty() {
+    public void empty() {
         assertEquals(0, map.size());
         assertTrue(map.isEmpty());
         assertNull(map.query("notfound", 0));
@@ -43,7 +43,7 @@ public class SlotMapTest {
     }
 
     @Test
-    public void testCrudOneString() {
+    public void crudOneString() {
         assertNull(map.query("foo", 0));
         Slot slot = map.modify("foo", 0, 0);
         assertNotNull(slot);
@@ -62,7 +62,7 @@ public class SlotMapTest {
     }
 
     @Test
-    public void testCrudOneIndex() {
+    public void crudOneIndex() {
         assertNull(map.query(null, 11));
         Slot slot = map.modify(null, 11, 0);
         assertNotNull(slot);
@@ -83,7 +83,7 @@ public class SlotMapTest {
     private static final int NUM_INDICES = 67;
 
     @Test
-    public void testManyKeysAndIndices() {
+    public void manyKeysAndIndices() {
         for (int i = 0; i < NUM_INDICES; i++) {
             Slot newSlot = map.modify(null, i, 0);
             newSlot.value = i;

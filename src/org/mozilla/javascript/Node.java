@@ -1065,9 +1065,8 @@ public class Node implements Iterable<Node> {
                     sb.append(" [scope ");
                     appendPrintId(this, printIds, sb);
                     sb.append(": ");
-                    Iterator<String> iter = ((Scope) this).getSymbolTable().keySet().iterator();
-                    while (iter.hasNext()) {
-                        sb.append(iter.next());
+                    for (String s : ((Scope) this).getSymbolTable().keySet()) {
+                        sb.append(s);
                         sb.append(" ");
                     }
                     sb.append("]");
@@ -1125,24 +1124,23 @@ public class Node implements Iterable<Node> {
                 sb.append(" [");
                 sb.append(propToString(type));
                 sb.append(": ");
-                String value;
                 switch (type) {
                     case TARGETBLOCK_PROP: // can't add this as it recurses
-                        value = "target block property";
+                        sb.append("target block property");
                         break;
                     case LOCAL_BLOCK_PROP: // can't add this as it is dull
-                        value = "last local block";
+                        sb.append("last local block");
                         break;
                     case ISNUMBER_PROP:
                         switch (x.intValue) {
                             case BOTH:
-                                value = "both";
+                                sb.append("both");
                                 break;
                             case RIGHT:
-                                value = "right";
+                                sb.append("right");
                                 break;
                             case LEFT:
-                                value = "left";
+                                sb.append("left");
                                 break;
                             default:
                                 throw Kit.codeBug();
@@ -1151,10 +1149,10 @@ public class Node implements Iterable<Node> {
                     case SPECIALCALL_PROP:
                         switch (x.intValue) {
                             case SPECIALCALL_EVAL:
-                                value = "eval";
+                                sb.append("eval");
                                 break;
                             case SPECIALCALL_WITH:
-                                value = "with";
+                                sb.append("with");
                                 break;
                             default:
                                 // NON_SPECIALCALL should not be stored
@@ -1164,24 +1162,23 @@ public class Node implements Iterable<Node> {
                     case OBJECT_IDS_PROP:
                         {
                             Object[] a = (Object[]) x.objectValue;
-                            value = "[";
+                            sb.append("[");
                             for (int i = 0; i < a.length; i++) {
-                                value += a[i].toString();
-                                if (i + 1 < a.length) value += ", ";
+                                sb.append(a[i].toString());
+                                if (i + 1 < a.length) sb.append(", ");
                             }
-                            value += "]";
+                            sb.append("]");
                             break;
                         }
                     default:
                         Object obj = x.objectValue;
                         if (obj != null) {
-                            value = obj.toString();
+                            sb.append(obj.toString());
                         } else {
-                            value = String.valueOf(x.intValue);
+                            sb.append(String.valueOf(x.intValue));
                         }
                         break;
                 }
-                sb.append(value);
                 sb.append(']');
             }
         }

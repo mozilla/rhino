@@ -263,8 +263,8 @@ public class FunctionObject extends BaseFunction {
         }
         Method[] result = new Method[count];
         int j = 0;
-        for (int i = 0; i < methods.length; i++) {
-            if (methods[i] != null) result[j++] = methods[i];
+        for (Method method : methods) {
+            if (method != null) result[j++] = method;
         }
         return result;
     }
@@ -454,7 +454,7 @@ public class FunctionObject extends BaseFunction {
         }
         Scriptable result;
         try {
-            result = (Scriptable) member.getDeclaringClass().newInstance();
+            result = (Scriptable) member.getDeclaringClass().getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

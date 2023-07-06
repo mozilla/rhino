@@ -26,7 +26,7 @@ public class StrictTest {
     }
 
     @Test
-    public void testFunctionCtor() {
+    public void functionCtor() {
         Utils.runWithAllOptimizationLevels(
                 ctx -> {
                     cx.evaluateString(
@@ -43,7 +43,7 @@ public class StrictTest {
     }
 
     @Test
-    public void testNewFunction() {
+    public void newFunction() {
         Utils.runWithAllOptimizationLevels(
                 ctx -> {
                     cx.evaluateString(

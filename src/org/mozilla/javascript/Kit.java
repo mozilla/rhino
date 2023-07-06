@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /** Collection of utilities */
@@ -43,11 +44,13 @@ public class Kit {
 
     static Object newInstanceOrNull(Class<?> cl) {
         try {
-            return cl.newInstance();
-        } catch (SecurityException x) {
-        } catch (LinkageError ex) {
-        } catch (InstantiationException x) {
-        } catch (IllegalAccessException x) {
+            return cl.getDeclaredConstructor().newInstance();
+        } catch (SecurityException
+                | LinkageError
+                | InstantiationException
+                | IllegalAccessException
+                | NoSuchMethodException
+                | InvocationTargetException x) {
         }
         return null;
     }

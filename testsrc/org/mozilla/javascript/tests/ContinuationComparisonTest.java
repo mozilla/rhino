@@ -6,18 +6,21 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.ScriptableObject;
 
-public class ContinuationComparisonTest extends TestCase {
+public class ContinuationComparisonTest {
 
+    @Test
     public void test1() throws Exception {
         // Create two identical executions
         NativeContinuation c1 = createContinuation();
@@ -27,29 +30,30 @@ public class ContinuationComparisonTest extends TestCase {
     }
 
     private NativeContinuation createContinuation() throws Exception {
-        Context cx = Context.enter();
-        cx.setOptimizationLevel(-1); // interpreter for continuations
-        ScriptableObject global = cx.initStandardObjects();
-        final AtomicReference<NativeContinuation> captured = new AtomicReference<>();
-        ScriptableObject.putProperty(
-                global,
-                "capture",
-                (Callable)
-                        (c, scope, thisObj, args) -> {
-                            captured.set(Interpreter.captureContinuation(c));
-                            return null;
-                        });
+        try (Context cx = Context.enter()) {
+            cx.setOptimizationLevel(-1); // interpreter for continuations
+            ScriptableObject global = cx.initStandardObjects();
+            final AtomicReference<NativeContinuation> captured = new AtomicReference<>();
+            ScriptableObject.putProperty(
+                    global,
+                    "capture",
+                    (Callable)
+                            (c, scope, thisObj, args) -> {
+                                captured.set(Interpreter.captureContinuation(c));
+                                return null;
+                            });
 
-        // Evaluate program
-        try (Reader r =
-                new InputStreamReader(
-                        getClass().getResourceAsStream("ContinuationComparisonTest.js"))) {
-            cx.executeScriptWithContinuations(
-                    cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
+            // Evaluate program
+            try (Reader r =
+                    new InputStreamReader(
+                            getClass().getResourceAsStream("ContinuationComparisonTest.js"))) {
+                cx.executeScriptWithContinuations(
+                        cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
+            }
+            // Make the global standard again
+            ScriptableObject.deleteProperty(global, "capture");
+
+            return captured.get();
         }
-        // Make the global standard again
-        ScriptableObject.deleteProperty(global, "capture");
-        Context.exit();
-        return captured.get();
     }
 }

@@ -67,7 +67,7 @@ public class SecurityControllerTest {
     }
 
     @Test
-    public void testBarAccess() {
+    public void barAccess() {
         // f.create produces "SomeClass extends ArrayList<String> implements
         // SomeInterface"
         // we may access array methods, like 'size' defined by ArrayList,

@@ -4,7 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -16,7 +19,8 @@ import org.mozilla.javascript.Undefined;
  *
  * @author Norris Boyd
  */
-public class DefineFunctionPropertiesTest extends TestCase {
+public class DefineFunctionPropertiesTest {
+
     ScriptableObject global;
     static Object key = "DefineFunctionPropertiesTest";
 
@@ -24,16 +28,13 @@ public class DefineFunctionPropertiesTest extends TestCase {
      * Demonstrates how to create global functions in JavaScript from static methods defined in
      * Java.
      */
-    @Override
+    @Before
     public void setUp() {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             global = cx.initStandardObjects();
             String[] names = {"f", "g"};
             global.defineFunctionProperties(
                     names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
-        } finally {
-            Context.exit();
         }
     }
 
@@ -43,13 +44,11 @@ public class DefineFunctionPropertiesTest extends TestCase {
     }
 
     /** Simple test: call 'f' defined above */
-    public void testSimpleFunction() {
-        Context cx = Context.enter();
-        try {
+    @Test
+    public void simpleFunction() {
+        try (Context cx = Context.enter()) {
             Object result = cx.evaluateString(global, "f(7) + 1", "test source", 1, null);
             assertEquals(15.0, result);
-        } finally {
-            Context.exit();
         }
     }
 
@@ -69,14 +68,12 @@ public class DefineFunctionPropertiesTest extends TestCase {
     }
 
     /** Associate a value with the global scope and call function 'g' defined above. */
-    public void testPrivateData() {
-        Context cx = Context.enter();
-        try {
+    @Test
+    public void privateData() {
+        try (Context cx = Context.enter()) {
             global.associateValue(key, "bar");
             Object result = cx.evaluateString(global, "g('foo');", "test source", 1, null);
             assertEquals("foobar", result);
-        } finally {
-            Context.exit();
         }
     }
 }

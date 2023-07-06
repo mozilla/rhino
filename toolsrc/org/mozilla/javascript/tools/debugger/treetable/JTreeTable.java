@@ -250,7 +250,7 @@ public class JTreeTable extends JTable {
                                         tree,
                                         me.getID(),
                                         me.getWhen(),
-                                        me.getModifiers(),
+                                        me.getModifiersEx(),
                                         me.getX() - getCellRect(0, counter, true).x,
                                         me.getY(),
                                         me.getClickCount(),

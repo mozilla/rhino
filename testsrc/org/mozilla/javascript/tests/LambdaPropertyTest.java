@@ -33,7 +33,7 @@ public class LambdaPropertyTest {
     }
 
     @Test
-    public void testBasicProperty() {
+    public void basicProperty() {
         ScriptableObject testObj = (ScriptableObject) cx.newObject(global);
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 
@@ -63,7 +63,7 @@ public class LambdaPropertyTest {
     }
 
     @Test
-    public void testRedefineProperty() {
+    public void redefineProperty() {
         ScriptableObject testObj = (ScriptableObject) cx.newObject(global);
         ScriptableObject.defineProperty(global, "o", testObj, 0);
         // Define once
@@ -98,7 +98,7 @@ public class LambdaPropertyTest {
     }
 
     @Test
-    public void testRedefinePropertyNonConfigurable() {
+    public void redefinePropertyNonConfigurable() {
         ScriptableObject testObj = (ScriptableObject) cx.newObject(global);
         ScriptableObject.defineProperty(global, "o", testObj, 0);
         // Define once
@@ -131,7 +131,7 @@ public class LambdaPropertyTest {
     }
 
     @Test
-    public void testPropertyNoSetter() {
+    public void propertyNoSetter() {
         ScriptableObject testObj = (ScriptableObject) cx.newObject(global);
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 
@@ -145,7 +145,7 @@ public class LambdaPropertyTest {
     }
 
     @Test
-    public void testPropertyNoGetter() {
+    public void propertyNoGetter() {
         ScriptableObject testObj = (ScriptableObject) cx.newObject(global);
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 

@@ -18,7 +18,7 @@ public class NativeWeakMap2Test {
 
     /** Test serialization of an empty object. */
     @Test
-    public void testSerialization() throws IOException, ClassNotFoundException {
+    public void serialization() throws IOException, ClassNotFoundException {
 
         NativeWeakMap weakMap = new NativeWeakMap();
 

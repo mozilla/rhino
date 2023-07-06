@@ -108,7 +108,7 @@ public class ShellTimerTest {
 
     /** Make sure that timers can be cancelled. */
     @Test
-    public void testTimerCancellation() throws InterruptedException {
+    public void timerCancellation() throws InterruptedException {
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "let count = 0;\n"
@@ -121,7 +121,7 @@ public class ShellTimerTest {
 
     /** Make sure that timers can be nested inside other timers and so on. */
     @Test
-    public void testNestedTimers() throws InterruptedException {
+    public void nestedTimers() throws InterruptedException {
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "let count = 0;\n"

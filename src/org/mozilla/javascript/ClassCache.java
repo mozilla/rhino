@@ -189,7 +189,7 @@ public class ClassCache implements Serializable {
     synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
-                interfaceAdapterCache = new ConcurrentHashMap<Class<?>, Object>(16, 0.75f, 1);
+                interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
             }
             interfaceAdapterCache.put(cl, iadapter);
         }

@@ -30,7 +30,7 @@ public class UnhandledPromiseTest {
     }
 
     @Test
-    public void testSimpleRejection() {
+    public void simpleRejection() {
         exec("new Promise((resolve, reject) => { reject(); });");
         assertEquals(1, cx.getUnhandledPromiseTracker().enumerate().size());
         assertTrue(Undefined.isUndefined(cx.getUnhandledPromiseTracker().enumerate().get(0)));
@@ -46,7 +46,7 @@ public class UnhandledPromiseTest {
     }
 
     @Test
-    public void testSimpleRejectionHandled() {
+    public void simpleRejectionHandled() {
         scope.put("caught", scope, Boolean.FALSE);
         exec(
                 "let p = new Promise((resolve, reject) => { reject(); });\n"
@@ -65,7 +65,7 @@ public class UnhandledPromiseTest {
     }
 
     @Test
-    public void testRejectionObject() {
+    public void rejectionObject() {
         exec("new Promise((resolve, reject) => { reject('rejected'); });");
         assertEquals(1, cx.getUnhandledPromiseTracker().enumerate().size());
         assertEquals("rejected", cx.getUnhandledPromiseTracker().enumerate().get(0));
@@ -81,7 +81,7 @@ public class UnhandledPromiseTest {
     }
 
     @Test
-    public void testSimpleThrowHandled() {
+    public void simpleThrowHandled() {
         scope.put("caught", scope, Boolean.FALSE);
         exec(
                 "let p = new Promise((resolve, reject) => { throw 'threw'; });\n"
@@ -100,7 +100,7 @@ public class UnhandledPromiseTest {
     }
 
     @Test
-    public void testThrowInThen() {
+    public void throwInThen() {
         exec(
                 "new Promise((resolve, reject) => { resolve() }).then(() => { throw 'threw in then' });");
         assertEquals(1, cx.getUnhandledPromiseTracker().enumerate().size());

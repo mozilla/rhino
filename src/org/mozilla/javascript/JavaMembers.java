@@ -50,8 +50,8 @@ class JavaMembers {
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
                 throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
             }
-            this.members = new HashMap<String, Object>();
-            this.staticMembers = new HashMap<String, Object>();
+            this.members = new HashMap<>();
+            this.staticMembers = new HashMap<>();
             this.cl = cl;
             boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
             reflect(cx, scope, includeProtected, includePrivate);
@@ -193,7 +193,7 @@ class JavaMembers {
 
     Object[] getIds(boolean isStatic) {
         Map<String, Object> map = isStatic ? staticMembers : members;
-        return map.keySet().toArray(new Object[map.size()]);
+        return map.keySet().toArray(new Object[0]);
     }
 
     static String javaSignature(Class<?> type) {
@@ -317,9 +317,9 @@ class JavaMembers {
      */
     private Method[] discoverAccessibleMethods(
             Class<?> clazz, boolean includeProtected, boolean includePrivate) {
-        Map<MethodSignature, Method> map = new HashMap<MethodSignature, Method>();
+        Map<MethodSignature, Method> map = new HashMap<>();
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
-        return map.values().toArray(new Method[map.size()]);
+        return map.values().toArray(new Method[0]);
     }
 
     private void discoverAccessibleMethods(
@@ -509,7 +509,7 @@ class JavaMembers {
                     Map<String, FieldAndMethods> fmht =
                             isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
-                        fmht = new HashMap<String, FieldAndMethods>();
+                        fmht = new HashMap<>();
                         if (isStatic) {
                             staticFieldAndMethods = fmht;
                         } else {
@@ -550,7 +550,7 @@ class JavaMembers {
             boolean isStatic = (tableCursor == 0);
             Map<String, Object> ht = isStatic ? staticMembers : members;
 
-            Map<String, BeanProperty> toAdd = new HashMap<String, BeanProperty>();
+            Map<String, BeanProperty> toAdd = new HashMap<>();
 
             // Now, For each member, make "bean" properties.
             for (String name : ht.keySet()) {
@@ -668,7 +668,7 @@ class JavaMembers {
     private Field[] getAccessibleFields(boolean includeProtected, boolean includePrivate) {
         if (includePrivate || includeProtected) {
             try {
-                List<Field> fieldsList = new ArrayList<Field>();
+                List<Field> fieldsList = new ArrayList<>();
                 Class<?> currentClass = cl;
 
                 while (currentClass != null) {
@@ -687,7 +687,7 @@ class JavaMembers {
                     currentClass = currentClass.getSuperclass();
                 }
 
-                return fieldsList.toArray(new Field[fieldsList.size()]);
+                return fieldsList.toArray(new Field[0]);
             } catch (SecurityException e) {
                 // fall through to !includePrivate case
             }
@@ -777,7 +777,7 @@ class JavaMembers {
         Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
         if (ht == null) return null;
         int len = ht.size();
-        Map<String, FieldAndMethods> result = new HashMap<String, FieldAndMethods>(len);
+        Map<String, FieldAndMethods> result = new HashMap<>(len);
         for (FieldAndMethods fam : ht.values()) {
             FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
             famNew.javaObject = javaObject;

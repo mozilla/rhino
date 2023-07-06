@@ -22,7 +22,6 @@ import org.mozilla.javascript.Scriptable;
  */
 @RunWith(Parameterized.class)
 public class ToNumberConversionsTest {
-    private static final int[] OPT_LEVELS = {-1, 0, 9};
     private static final Object[][] TESTS = {
         // order: expected result, source string
         // (0) special
@@ -92,7 +91,7 @@ public class ToNumberConversionsTest {
     public static Collection<Object[]> data() {
         List<Object[]> cases = new ArrayList<>();
 
-        for (int optLevel : OPT_LEVELS) {
+        for (int optLevel : Utils.DEFAULT_OPT_LEVELS) {
             for (Object[] test : TESTS) {
                 cases.add(new Object[] {test[0], test[1], optLevel});
             }
@@ -132,27 +131,27 @@ public class ToNumberConversionsTest {
     }
 
     @Test
-    public void test_NumberConstructor() {
+    public void cumberConstructor() {
         String script = String.format("%seq(Number(\"%s\"), %s)", PRELUDE, source, expected);
         assertTrue(
                 "Number('" + source + "') doesn't produce " + expected, execute(cx, scope, script));
     }
 
     @Test
-    public void test_coercion() {
+    public void coercion() {
         String script = String.format("%seq(+(\"%s\"), %s)", PRELUDE, source, expected);
         assertTrue("+('" + source + "') doesn't produce " + expected, execute(cx, scope, script));
     }
 
     @Test
-    public void test_isNaN() {
+    public void isNaN() {
         String script = String.format("%seq(isNaN(\"%s\"), isNaN(%s))", PRELUDE, source, expected);
         assertTrue(
                 "isNaN('" + source + "') !== isNaN(" + expected + ")", execute(cx, scope, script));
     }
 
     @Test
-    public void test_isFinite() {
+    public void isFinite() {
         String script =
                 String.format("%seq(isFinite(\"%s\"), isFinite(%s))", PRELUDE, source, expected);
         assertTrue(

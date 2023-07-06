@@ -246,6 +246,10 @@ final class NativeString extends IdScriptableObject {
                 arity = 2;
                 s = "replace";
                 break;
+            case Id_at:
+                arity = 1;
+                s = "at";
+                break;
             case Id_localeCompare:
                 arity = 1;
                 s = "localeCompare";
@@ -349,7 +353,7 @@ final class NativeString extends IdScriptableObject {
                                     ScriptRuntime.toObject(
                                             cx, scope, ScriptRuntime.toCharSequence(args[0]));
                             Object[] newArgs = new Object[args.length - 1];
-                            for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
+                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
                             args = newArgs;
                         } else {
                             thisObj =
@@ -734,6 +738,21 @@ final class NativeString extends IdScriptableObject {
                         return (cnt < 0 || cnt >= str.length())
                                 ? Undefined.instance
                                 : Integer.valueOf(str.codePointAt((int) cnt));
+                    }
+                case Id_at:
+                    {
+                        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                        Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
+                        int len = str.length();
+                        int relativeIndex = (int) ScriptRuntime.toInteger(targetArg);
+
+                        int k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
+
+                        if ((k < 0) || (k >= len)) {
+                            return Undefined.instance;
+                        }
+
+                        return str.substring(k, k + 1);
                     }
 
                 case SymbolId_iterator:
@@ -1137,7 +1156,7 @@ final class NativeString extends IdScriptableObject {
         /* step 4-5 */
         long rawLength = NativeArray.getLengthProperty(cx, raw);
         if (rawLength > Integer.MAX_VALUE) {
-            throw ScriptRuntime.rangeError("raw.length > " + Integer.toString(Integer.MAX_VALUE));
+            throw ScriptRuntime.rangeError("raw.length > " + Integer.MAX_VALUE);
         }
         int literalSegments = (int) rawLength;
         if (literalSegments <= 0) return "";
@@ -1315,6 +1334,9 @@ final class NativeString extends IdScriptableObject {
             case "trimEnd":
                 id = Id_trimEnd;
                 break;
+            case "at":
+                id = Id_at;
+                break;
             default:
                 id = 0;
                 break;
@@ -1375,7 +1397,8 @@ final class NativeString extends IdScriptableObject {
             SymbolId_iterator = 48,
             Id_trimStart = 49,
             Id_trimEnd = 50,
-            MAX_PROTOTYPE_ID = Id_trimEnd;
+            Id_at = 51,
+            MAX_PROTOTYPE_ID = Id_at;
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
             ConstructorId_indexOf = -Id_indexOf,

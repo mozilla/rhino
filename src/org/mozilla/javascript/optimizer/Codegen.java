@@ -103,7 +103,7 @@ public class Codegen implements Evaluator {
 
         Script script;
         try {
-            script = (Script) cl.newInstance();
+            script = (Script) cl.getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw new RuntimeException("Unable to instantiate compiled class:" + ex.toString());
         }
@@ -195,7 +195,7 @@ public class Codegen implements Evaluator {
                         String name = ofn.fnode.getName();
                         if (name.length() != 0) {
                             if (possibleDirectCalls == null) {
-                                possibleDirectCalls = new HashMap<String, OptFunctionNode>();
+                                possibleDirectCalls = new HashMap<>();
                             }
                             possibleDirectCalls.put(name, ofn);
                         }
@@ -383,8 +383,8 @@ public class Codegen implements Evaluator {
     // appended by "_gen".
     private void generateResumeGenerator(ClassFileWriter cfw) {
         boolean hasGenerators = false;
-        for (int i = 0; i < scriptOrFnNodes.length; i++) {
-            if (isGenerator(scriptOrFnNodes[i])) hasGenerators = true;
+        for (ScriptNode scriptOrFnNode : scriptOrFnNodes) {
+            if (isGenerator(scriptOrFnNode)) hasGenerators = true;
         }
 
         // if there are no generators defined, we don't implement a

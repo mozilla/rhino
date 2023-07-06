@@ -49,7 +49,7 @@ public class Delegator implements Function, SymbolScriptable {
      */
     protected Delegator newInstance() {
         try {
-            return this.getClass().newInstance();
+            return this.getClass().getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

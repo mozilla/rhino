@@ -181,7 +181,14 @@ final class MemberBox implements Serializable {
                             Object setterThis;
                             Object[] args;
                             Object value =
-                                    originalArgs.length > 0 ? originalArgs[0] : Undefined.instance;
+                                    originalArgs.length > 0
+                                            ? FunctionObject.convertArg(
+                                                    cx,
+                                                    thisObj,
+                                                    originalArgs[0],
+                                                    FunctionObject.getTypeTag(
+                                                            nativeSetter.argTypes[0]))
+                                            : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
                                 args = new Object[] {value};
@@ -377,8 +384,7 @@ final class MemberBox implements Serializable {
             throws IOException {
         out.writeShort(parms.length);
         outer:
-        for (int i = 0; i < parms.length; i++) {
-            Class<?> parm = parms[i];
+        for (Class<?> parm : parms) {
             boolean primitive = parm.isPrimitive();
             out.writeBoolean(primitive);
             if (!primitive) {
