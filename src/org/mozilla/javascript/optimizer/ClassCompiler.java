@@ -74,7 +74,7 @@ public class ClassCompiler {
 
     /** Get the interfaces that the generated target will implement. */
     public Class<?>[] getTargetImplements() {
-        return targetImplements == null ? null : (Class[]) targetImplements.clone();
+        return targetImplements == null ? null : targetImplements.clone();
     }
 
     /**
@@ -84,7 +84,7 @@ public class ClassCompiler {
      *     extend
      */
     public void setTargetImplements(Class<?>[] implementsClasses) {
-        targetImplements = implementsClasses == null ? null : (Class[]) implementsClasses.clone();
+        targetImplements = implementsClasses == null ? null : implementsClasses.clone();
     }
 
     /**

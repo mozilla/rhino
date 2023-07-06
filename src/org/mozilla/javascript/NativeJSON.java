@@ -188,7 +188,7 @@ public final class NativeJSON extends IdScriptableObject {
     }
 
     private static String repeat(char c, int count) {
-        char chars[] = new char[count];
+        char[] chars = new char[count];
         Arrays.fill(chars, c);
         return new String(chars);
     }
@@ -210,7 +210,7 @@ public final class NativeJSON extends IdScriptableObject {
             this.propertyList = propertyList;
         }
 
-        Stack<Object> stack = new Stack<Object>();
+        Stack<Object> stack = new Stack<>();
         String indent;
         String gap;
         Callable replacer;
@@ -231,7 +231,7 @@ public final class NativeJSON extends IdScriptableObject {
         if (replacer instanceof Callable) {
             replacerFunction = (Callable) replacer;
         } else if (replacer instanceof NativeArray) {
-            LinkedHashSet<Object> propertySet = new LinkedHashSet<Object>();
+            LinkedHashSet<Object> propertySet = new LinkedHashSet<>();
             NativeArray replacerArray = (NativeArray) replacer;
             for (int i : replacerArray.getIndexIds()) {
                 Object v = replacerArray.get(i, replacerArray);
@@ -353,7 +353,7 @@ public final class NativeJSON extends IdScriptableObject {
                 unwrappedJavaValue = null;
             }
         } else if (value instanceof XMLObject) {
-            value = ((XMLObject) value).toString();
+            value = value.toString();
         }
 
         if (value == null) return "null";
@@ -452,7 +452,7 @@ public final class NativeJSON extends IdScriptableObject {
             k = value.getIds();
         }
 
-        Collection<Object> partial = new LinkedList<Object>();
+        Collection<Object> partial = new LinkedList<>();
 
         for (Object p : k) {
             Object strP = str(p, value, state);
@@ -497,7 +497,7 @@ public final class NativeJSON extends IdScriptableObject {
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;
-        Collection<Object> partial = new LinkedList<Object>();
+        Collection<Object> partial = new LinkedList<>();
 
         if (unwrapped != null) {
             Object[] elements = null;

@@ -56,14 +56,13 @@ public class WrapFactoryTest {
      * @param mapResult typeof map value
      * @param getResult typeof getter value
      */
-    private void test(
+    private static void test(
             boolean javaPrimitiveWrap,
             Object object,
             String result,
             String mapResult,
             String getResult) {
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.getWrapFactory().setJavaPrimitiveWrap(javaPrimitiveWrap);
             Scriptable scope = cx.newObject(new ImporterTopLevel(cx));
 
@@ -81,8 +80,6 @@ public class WrapFactoryTest {
             assertEquals(result, ScriptableObject.getProperty(scope, "result"));
             assertEquals(mapResult, ScriptableObject.getProperty(scope, "mapResult"));
             assertEquals(getResult, ScriptableObject.getProperty(scope, "getResult"));
-        } finally {
-            Context.exit();
         }
     }
 }

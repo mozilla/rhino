@@ -39,8 +39,7 @@ public class StackTraceExtensionV8Test {
                     }
                 };
 
-        Context cx = factory.enterContext();
-        try {
+        try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);
             cx.setOptimizationLevel(opt);
             cx.setGeneratingDebug(true);
@@ -48,32 +47,26 @@ public class StackTraceExtensionV8Test {
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
 
-            FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces-v8.js");
-
-            try {
+            try (FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces-v8.js")) {
                 cx.evaluateReader(root, rdr, "stack-traces-v8.js", 1, null);
-            } finally {
-                rdr.close();
             }
         } catch (IOException ioe) {
             assertFalse("I/O Error: " + ioe, true);
-        } finally {
-            Context.exit();
         }
     }
 
     @Test
-    public void testStackTrace0() {
+    public void stackTrace0() {
         testTraces(0);
     }
 
     @Test
-    public void testStackTrace9() {
+    public void stackTrace9() {
         testTraces(9);
     }
 
     @Test
-    public void testStackTraceInt() {
+    public void stackTraceInt() {
         testTraces(-1);
     }
 }

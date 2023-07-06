@@ -37,7 +37,7 @@ public class CollectionHashtableTest {
 
     /** Sanity test on empty table. */
     @Test
-    public void testEmpty() {
+    public void empty() {
         assertEquals(0, ht.size());
         assertNull(null, ht.getEntry("one"));
         assertFalse(ht.has("one"));
@@ -52,7 +52,7 @@ public class CollectionHashtableTest {
 
     /** Just a sanity test for the basic functionality. */
     @Test
-    public void testCRUD() {
+    public void crud() {
         ht.put("one", 1);
         assertEquals(1, ht.size());
         assertEquals(1, ht.getEntry("one").value());
@@ -69,7 +69,7 @@ public class CollectionHashtableTest {
 
     /** Basic iteration test */
     @Test
-    public void testBasicIteration() {
+    public void basicIteration() {
         ht.put("one", 1);
         ht.put("two", 2);
 
@@ -89,7 +89,7 @@ public class CollectionHashtableTest {
 
     /** Test that elements appear in insertion order. */
     @Test
-    public void testInsertionOrder() {
+    public void insertionOrder() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -106,7 +106,7 @@ public class CollectionHashtableTest {
 
     /** Test that they appear in insertion order even if they are modified. */
     @Test
-    public void testInsertionOrderModified() {
+    public void insertionOrderModified() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -124,7 +124,7 @@ public class CollectionHashtableTest {
 
     /** Test that they appear in insertion order when deleted and recreated. */
     @Test
-    public void testInsertionOrderDeleted() {
+    public void insertionOrderDeleted() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -146,7 +146,7 @@ public class CollectionHashtableTest {
      * deprecated delete method instead of deleteEntry
      */
     @Test
-    public void testInsertionOrderDeletedDeprecated() {
+    public void insertionOrderDeletedDeprecated() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -165,7 +165,7 @@ public class CollectionHashtableTest {
 
     /** Test that we can add elements while an iterator exists and see the newer elements. */
     @Test
-    public void testInsertionOrderAfterIterating() {
+    public void insertionOrderAfterIterating() {
         ht.put("a", 1);
         ht.put("e", 2);
 
@@ -183,7 +183,7 @@ public class CollectionHashtableTest {
 
     /** Test "clear" operation and iteration. */
     @Test
-    public void testInsertionOrderAfterClear() {
+    public void insertionOrderAfterClear() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -206,7 +206,7 @@ public class CollectionHashtableTest {
 
     /** Test that we can delete elements while iterating. */
     @Test
-    public void testInsertionOrderWithDelete() {
+    public void insertionOrderWithDelete() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -224,7 +224,7 @@ public class CollectionHashtableTest {
 
     /** Test that we can delete elements while iterating. */
     @Test
-    public void testInsertionOrderWithDeleteDeprecated() {
+    public void insertionOrderWithDeleteDeprecated() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -244,7 +244,7 @@ public class CollectionHashtableTest {
      * Worst-case scenario -- delete everything the "hard way" and re-create while iterator exists.
      */
     @Test
-    public void testDeleteAllWhileIterating() {
+    public void deleteAllWhileIterating() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -272,7 +272,7 @@ public class CollectionHashtableTest {
      * Worst-case scenario -- delete everything the "hard way" and re-create while iterator exists.
      */
     @Test
-    public void testDeleteAllWhileIteratingDeprecated() {
+    public void deleteAllWhileIteratingDeprecated() {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
@@ -298,13 +298,13 @@ public class CollectionHashtableTest {
 
     /** Test serialization of an empty object. */
     @Test
-    public void testEmptySerialization() throws IOException, ClassNotFoundException {
+    public void emptySerialization() throws IOException, ClassNotFoundException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bos);
-        oout.writeObject(ht);
-        oout.close();
-
+        try (ObjectOutputStream oout = new ObjectOutputStream(bos)) {
+            oout.writeObject(ht);
+            oout.close();
+        }
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
         ObjectInputStream oin = new ObjectInputStream(bis);
         Hashtable sht = (Hashtable) oin.readObject();
@@ -316,7 +316,7 @@ public class CollectionHashtableTest {
      * iteration order.
      */
     @Test
-    public void testSerialization() throws IOException, ClassNotFoundException {
+    public void serialization() throws IOException, ClassNotFoundException {
 
         ht.put("one", 1);
         ht.put("two", 2);
@@ -327,10 +327,10 @@ public class CollectionHashtableTest {
         ht.put("null", null);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bos);
-        oout.writeObject(ht);
-        oout.close();
-
+        try (ObjectOutputStream oout = new ObjectOutputStream(bos)) {
+            oout.writeObject(ht);
+            oout.close();
+        }
         ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
         ObjectInputStream oin = new ObjectInputStream(bis);
         Hashtable sht = (Hashtable) oin.readObject();

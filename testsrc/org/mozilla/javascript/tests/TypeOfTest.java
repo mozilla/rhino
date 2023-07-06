@@ -4,11 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -20,7 +20,8 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Marc Guillemot
  */
-public class TypeOfTest extends TestCase {
+public class TypeOfTest {
+
     public static class Foo extends ScriptableObject {
         private static final long serialVersionUID = -8771045033217033529L;
         private final String typeOfValue_;
@@ -41,12 +42,14 @@ public class TypeOfTest extends TestCase {
     }
 
     /** ECMA 11.4.3 says that typeof on host object is Implementation-dependent */
-    public void testCustomizeTypeOf() throws Exception {
-        testCustomizeTypeOf("object", new Foo("object"));
-        testCustomizeTypeOf("blabla", new Foo("blabla"));
+    @Test
+    public void customizeTypeOf() throws Exception {
+        doTest("object", "typeof myObj", new Foo("object"));
+        doTest("blabla", "typeof myObj", new Foo("blabla"));
     }
 
     /** ECMA 11.4.3 says that typeof on host object is Implementation-dependent */
+    @Test
     public void test0() throws Exception {
         final Function f =
                 new BaseFunction() {
@@ -56,55 +59,28 @@ public class TypeOfTest extends TestCase {
                         return _args[0].getClass().getName();
                     }
                 };
-        doTest(
-                "function",
-                context -> {
-                    final Scriptable scope = context.initStandardObjects();
-                    scope.put("myObj", scope, f);
-                    return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
-                });
-    }
-
-    private void testCustomizeTypeOf(final String expected, final Scriptable obj) {
-        doTest(
-                expected,
-                context -> {
-                    final Scriptable scope = context.initStandardObjects();
-                    scope.put("myObj", scope, obj);
-                    return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
-                });
+        doTest("function", "typeof myObj", f);
     }
 
     /** See https://bugzilla.mozilla.org/show_bug.cgi?id=453360 */
-    public void testBug453360() throws Exception {
-        doTest("object", "typeof new RegExp();");
-        doTest("object", "typeof /foo/;");
+    @Test
+    public void bug453360() throws Exception {
+        doTest("object", "typeof new RegExp();", null);
+        doTest("object", "typeof /foo/;", null);
     }
 
-    private void doTest(String expected, final String script) {
-        doTest(
-                expected,
-                context -> {
-                    final Scriptable scope = context.initStandardObjects();
-                    return context.evaluateString(scope, script, "test script", 1, null);
+    private static void doTest(String expected, final String script, final Scriptable obj) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    scope.put("myObj", scope, obj);
+
+                    String res =
+                            Context.toString(
+                                    cx.evaluateString(scope, script, "test script", 1, null));
+                    assertEquals(expected, res);
+
+                    return null;
                 });
-    }
-
-    private void doTest(final String expected, final ContextAction action) {
-        doTest(-1, expected, action);
-        doTest(0, expected, action);
-        doTest(1, expected, action);
-    }
-
-    private void doTest(
-            final int optimizationLevel, final String expected, final ContextAction action) {
-        Object o =
-                new ContextFactory()
-                        .call(
-                                context -> {
-                                    context.setOptimizationLevel(optimizationLevel);
-                                    return Context.toString(action.run(context));
-                                });
-        assertEquals(expected, o);
     }
 }

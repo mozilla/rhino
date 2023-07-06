@@ -97,7 +97,7 @@ public class TopLevel extends IdScriptableObject {
      * initStandardObjects()</code>.
      */
     public void cacheBuiltins(Scriptable scope, boolean sealed) {
-        ctors = new EnumMap<Builtins, BaseFunction>(Builtins.class);
+        ctors = new EnumMap<>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
             if (value instanceof BaseFunction) {
@@ -110,7 +110,7 @@ public class TopLevel extends IdScriptableObject {
                         (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
             }
         }
-        errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
+        errors = new EnumMap<>(NativeErrors.class);
         for (NativeErrors error : NativeErrors.values()) {
             Object value = ScriptableObject.getProperty(this, error.name());
             if (value instanceof BaseFunction) {

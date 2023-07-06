@@ -32,6 +32,12 @@ public class ConsString implements CharSequence, Serializable {
     private boolean isFlat;
 
     public ConsString(CharSequence str1, CharSequence str2) {
+        if (!(str1 instanceof String) && !(str1 instanceof ConsString)) {
+            str1 = str1.toString();
+        }
+        if (!(str2 instanceof String) && !(str2 instanceof ConsString)) {
+            str2 = str2.toString();
+        }
         left = str1;
         right = str2;
         length = left.length() + right.length();
@@ -53,7 +59,7 @@ public class ConsString implements CharSequence, Serializable {
             final char[] chars = new char[length];
             int charPos = length;
 
-            ArrayDeque<CharSequence> stack = new ArrayDeque<CharSequence>();
+            ArrayDeque<CharSequence> stack = new ArrayDeque<>();
             stack.addFirst(left);
 
             CharSequence next = right;

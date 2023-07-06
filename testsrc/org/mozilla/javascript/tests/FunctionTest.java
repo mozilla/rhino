@@ -23,7 +23,7 @@ public class FunctionTest {
      * "//".
      */
     @Test
-    public void testFunctionWithSlashSlash() {
+    public void functionWithSlashSlash() {
         assertEvaluates(true, "new Function('return true//;').call()");
     }
 
@@ -140,7 +140,7 @@ public class FunctionTest {
         assertEvaluates("f1f2f3!f4f5!f6!f7!f8f10f11f12f11f12f13", script);
     }
 
-    private void assertEvaluates(final Object expected, final String source) {
+    private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();

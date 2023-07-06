@@ -4,8 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,93 +31,93 @@ public class NativeArrayTest {
         array.put(0, array, "index");
         array.put("a", array, "normal");
 
-        assertThat(array.getIds(), is(new Object[] {0, "a"}));
+        assertArrayEquals(new Object[] {0, "a"}, array.getIds());
     }
 
     @Test
     public void deleteShouldRemoveIndexProperties() {
         array.put(0, array, "a");
         array.delete(0);
-        assertThat(array.has(0, array), is(false));
+        assertFalse(array.has(0, array));
     }
 
     @Test
     public void deleteShouldRemoveNormalProperties() {
         array.put("p", array, "a");
         array.delete("p");
-        assertThat(array.has("p", array), is(false));
+        assertFalse(array.has("p", array));
     }
 
     @Test
     public void putShouldAddIndexProperties() {
         array.put(0, array, "a");
-        assertThat(array.has(0, array), is(true));
+        assertTrue(array.has(0, array));
     }
 
     @Test
     public void putShouldAddNormalProperties() {
         array.put("p", array, "a");
-        assertThat(array.has("p", array), is(true));
+        assertTrue(array.has("p", array));
     }
 
     @Test
     public void getShouldReturnIndexProperties() {
         array.put(0, array, "a");
         array.put("p", array, "b");
-        assertThat((String) array.get(0, array), is("a"));
+        assertEquals("a", array.get(0, array));
     }
 
     @Test
     public void getShouldReturnNormalProperties() {
         array.put("p", array, "a");
-        assertThat((String) array.get("p", array), is("a"));
+        assertEquals("a", array.get("p", array));
     }
 
     @Test
     public void hasShouldBeFalseForANewArray() {
-        assertThat(new NativeArray(0).has(0, array), is(false));
+        assertFalse(new NativeArray(0).has(0, array));
     }
 
     @Test
     public void getIndexIdsShouldBeEmptyForEmptyArray() {
-        assertThat(new NativeArray(0).getIndexIds(), is(new ArrayList<Integer>()));
+        assertEquals(new ArrayList<Integer>(), new NativeArray(0).getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldBeAZeroForSimpleSingletonArray() {
         array.put(0, array, "a");
-        assertThat(array.getIndexIds(), is(Arrays.asList(0)));
+        assertEquals(Arrays.asList(0), array.getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldWorkWhenIndicesSetAsString() {
         array.put("0", array, "a");
-        assertThat(array.getIndexIds(), is(Arrays.asList(0)));
+        assertEquals(Arrays.asList(0), array.getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldNotIncludeNegativeIds() {
         array.put(-1, array, "a");
-        assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
+        assertEquals(new ArrayList<Integer>(), array.getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldIncludeIdsLessThan2ToThe32() {
         int maxIndex = (int) (1L << 31) - 1;
         array.put(maxIndex, array, "a");
-        assertThat(array.getIndexIds(), is(Arrays.asList(maxIndex)));
+        assertEquals(Arrays.asList(maxIndex), array.getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldNotIncludeIdsGreaterThanOrEqualTo2ToThe32() {
         array.put((1L << 31) + "", array, "a");
-        assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
+        assertEquals(new ArrayList<Integer>(), array.getIndexIds());
     }
 
     @Test
     public void getIndexIdsShouldNotReturnNonNumericIds() {
         array.put("x", array, "a");
-        assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
+        assertEquals(new ArrayList<Integer>(), array.getIndexIds());
     }
 
     @Test
@@ -128,15 +130,12 @@ public class NativeArrayTest {
                         + "};\n"
                         + "f();";
 
-        Context cx = Context.enter();
-        try {
+        try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             Scriptable scope = cx.initStandardObjects();
             String result = cx.evaluateString(scope, source, "source", 1, null).toString();
             Assert.assertEquals("0,1,0,1", result);
-        } finally {
-            Context.exit();
         }
     }
 }

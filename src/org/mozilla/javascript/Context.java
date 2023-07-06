@@ -1190,7 +1190,7 @@ public class Context implements Closeable {
     public final Object evaluateReader(
             Scriptable scope, Reader in, String sourceName, int lineno, Object securityDomain)
             throws IOException {
-        Script script = compileReader(scope, in, sourceName, lineno, securityDomain);
+        Script script = compileReader(in, sourceName, lineno, securityDomain);
         if (script != null) {
             return script.exec(this, scope);
         }
@@ -2095,7 +2095,7 @@ public class Context implements Closeable {
      */
     public final synchronized void putThreadLocal(Object key, Object value) {
         if (sealed) onSealedMutation();
-        if (threadLocalMap == null) threadLocalMap = new HashMap<Object, Object>();
+        if (threadLocalMap == null) threadLocalMap = new HashMap<>();
         threadLocalMap.put(key, value);
     }
 
@@ -2606,7 +2606,7 @@ public class Context implements Closeable {
      */
     public void addActivationName(String name) {
         if (sealed) onSealedMutation();
-        if (activationNames == null) activationNames = new HashSet<String>();
+        if (activationNames == null) activationNames = new HashSet<>();
         activationNames.add(name);
     }
 

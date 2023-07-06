@@ -32,6 +32,7 @@ import org.mozilla.javascript.optimizer.OptFunctionNode;
 
 /** @author André Bargull */
 public class Bug782363Test {
+
     private Context cx;
 
     @Before
@@ -114,7 +115,7 @@ public class Bug782363Test {
     }
 
     @Test
-    public void testMaxLocals() throws IOException {
+    public void maxLocals() throws IOException {
         test(339);
         try {
             test(340);

@@ -24,3 +24,7 @@ target/
 test262
 bin/
 .settings/
+
+# idea
+rhino.ipr
+rhino.iws

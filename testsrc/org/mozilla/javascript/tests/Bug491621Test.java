@@ -36,7 +36,7 @@ public class Bug491621Test {
 
     /** Tests that var declaration AST nodes is properly decompiled. */
     @Test
-    public void testVarDeclarationToSource() {
+    public void varDeclarationToSource() {
         assertSource("var x=0;x++;", "var x = 0;\nx++;\n");
         assertSource(
                 "for(var i=0;i<10;i++)x[i]=i;a++;",
@@ -57,7 +57,7 @@ public class Bug491621Test {
 
     /** Tests that let declaration AST nodes are properly decompiled. */
     @Test
-    public void testLetDeclarationToSource() {
+    public void letDeclarationToSource() {
         assertSource("let x=0;x++;", "let x = 0;\nx++;\n");
         assertSource(
                 "for(let i=0;i<10;i++)x[i]=i;a++;",
@@ -78,7 +78,7 @@ public class Bug491621Test {
 
     /** Tests that const declaration AST nodes are properly decompiled. */
     @Test
-    public void testConstDeclarationToSource() {
+    public void constDeclarationToSource() {
         assertSource("const x=0;x++;", "const x = 0;\nx++;\n");
         assertSource("const a;if(true)a=1;", "const a;\nif (true) \n  a = 1;\n");
         assertSource(
@@ -88,29 +88,29 @@ public class Bug491621Test {
     }
 
     @Test // Bug 800616
-    public void testOctLiteralToSource() {
+    public void octLiteralToSource() {
         assertSource("010;", "010;\n");
     }
 
     @Test // Bug 800616
-    public void testHexLiteralToSource() {
+    public void hexLiteralToSource() {
         assertSource("0xff;", "0xff;\n");
     }
 
     @Test // Bug 800616
-    public void testHexOctDecLiteralToSource() {
+    public void hexOctDecLiteralToSource() {
         assertSource("0xff;\n9;\n07;\n1;", "0xff;\n9;\n07;\n1;\n");
     }
 
     @Test
-    public void testHexOctLiteralPropertyNameToSource() {
+    public void hexOctLiteralPropertyNameToSource() {
         assertSource("({ 0xff: 1, 010: 2 });", "({\n  ff: 1, \n  10: 2});\n");
         assertSource(
                 "({ 0xff: 1, 010: 2 });", "({\n  0xff: 1, \n  010: 2});\n", Context.VERSION_ES6);
     }
 
     @Test
-    public void testEmptySwitchToSource() {
+    public void emptySwitchToSource() {
         assertSource("switch(1){}", "switch (1) {\n}\n");
     }
 }

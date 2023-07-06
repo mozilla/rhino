@@ -30,7 +30,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testUnterminatedRE() {
+    public void unterminatedRE() {
         String[] errors = {"unterminated regular expression literal"};
         String[] warnings = {"missing ; after statement"};
 
@@ -38,7 +38,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testMissingSemiBeforeComment() {
+    public void missingSemiBeforeComment() {
         String[] errors = {};
         String[] warnings = {"missing ; after statement", "missing ; after statement"};
 
@@ -46,7 +46,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testMissingSemiBeforeComment2() {
+    public void missingSemiBeforeComment2() {
         String[] errors = {};
         String[] warnings = {"missing ; after statement", "missing ; after statement"};
 
@@ -54,7 +54,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testMissingSemiBeforeComment3() {
+    public void missingSemiBeforeComment3() {
         String[] errors = {};
         String[] warnings = {"missing ; after statement", "missing ; after statement"};
 
@@ -62,7 +62,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testWarnTrailingComma() {
+    public void warnTrailingComma() {
         String[] errors = {};
         String[] warnings = {"Trailing comma is not legal in an ECMA-262 object initializer"};
 
@@ -70,7 +70,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testWarnTrailingArrayComma() {
+    public void warnTrailingArrayComma() {
         String[] errors = {};
         String[] warnings = {"Trailing comma is not legal in an ECMA-262 object initializer"};
 
@@ -78,21 +78,21 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testNewlineAndCommentsFunction() {
+    public void newlineAndCommentsFunction() {
         AstRoot root = parse("f('1234', // Before\n'2345' // Second arg\n);");
         assertNotNull(root.getComments());
         assertEquals(2, root.getComments().size());
     }
 
     @Test
-    public void testNewlineAndCommentsFunction2() {
+    public void newlineAndCommentsFunction2() {
         AstRoot root = parse("f('1234', // Before\n// Middle\n'2345' // Second arg\n);");
         assertNotNull(root.getComments());
         assertEquals(3, root.getComments().size());
     }
 
     @Test
-    public void testNewlineAndCommentsFunction3() {
+    public void newlineAndCommentsFunction3() {
         AstRoot root =
                 parse("f('1234', // Before\n// Middle\n// Middler\n'2345' // Second arg\n);");
         assertNotNull(root.getComments());
@@ -100,7 +100,7 @@ public class ParserIDETest {
     }
 
     @Test
-    public void testObjectLiteralComments() {
+    public void objectLiteralComments() {
         AstRoot root =
                 parse(
                         // "var o = {foo: '1234', // Before\nbar: '2345' // Second arg};\n);");

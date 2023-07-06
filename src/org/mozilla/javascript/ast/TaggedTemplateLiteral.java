@@ -36,6 +36,7 @@ public class TaggedTemplateLiteral extends AstNode {
 
     public void setTarget(AstNode target) {
         this.target = target;
+        target.setParent(this);
     }
 
     public AstNode getTemplateLiteral() {
@@ -44,6 +45,7 @@ public class TaggedTemplateLiteral extends AstNode {
 
     public void setTemplateLiteral(AstNode templateLiteral) {
         this.templateLiteral = templateLiteral;
+        templateLiteral.setParent(this);
     }
 
     @Override

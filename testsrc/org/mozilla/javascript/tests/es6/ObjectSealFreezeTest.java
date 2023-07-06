@@ -9,228 +9,290 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tests.Utils;
 
 public class ObjectSealFreezeTest {
 
-    private Context cx;
-    private ScriptableObject scope;
+    @Test
+    public void sealWriteToExistingWritableProperty() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-    @Before
-    public void setUp() {
-        cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        scope = cx.initStandardObjects();
-    }
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  var r = {};"
+                                            + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                                            + "  Object.seal(r);"
+                                            + "  r.a = 'Rhino';"
+                                            + "  return r.a;"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("Rhino", result);
 
-    @After
-    public void tearDown() {
-        Context.exit();
+                    return null;
+                });
     }
 
     @Test
-    public void testSealWriteToExistingWritableProperty() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  var r = {};"
-                                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                                + "  Object.seal(r);"
-                                + "  r.a = 'Rhino';"
-                                + "  return r.a;"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Rhino", result);
+    public void sealWriteToExistingWritablePropertyStrict() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  'use strict';"
+                                            + "  var r = {};"
+                                            + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                                            + "  Object.seal(r);"
+                                            + "  r.a='Rhino';"
+                                            + "  return r.a;"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("Rhino", result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testSealWriteToExistingWritablePropertyStrict() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  'use strict';"
-                                + "  var r = {};"
-                                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                                + "  Object.seal(r);"
-                                + "  r.a='Rhino';"
-                                + "  return r.a;"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Rhino", result);
+    public void sealWriteToExistingSymbolProperty() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  var sym = Symbol('X');"
+                                            + "  var r = {};"
+                                            + "  r[sym] = 'abc';"
+                                            + "  Object.seal(r);"
+                                            + "  r[sym] = 'Rhino';"
+                                            + "  return r[sym];"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("Rhino", result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testSealWriteToExistingSymbolProperty() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  var sym = Symbol('X');"
-                                + "  var r = {};"
-                                + "  r[sym] = 'abc';"
-                                + "  Object.seal(r);"
-                                + "  r[sym] = 'Rhino';"
-                                + "  return r[sym];"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Rhino", result);
+    public void sealWriteToExistingSymbolPropertyStrict() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  'use strict';"
+                                            + "  var sym = Symbol('X');"
+                                            + "  var r = {};"
+                                            + "  r[sym] = 'abc';"
+                                            + "  Object.seal(r);"
+                                            + "  r[sym] = 'Rhino';"
+                                            + "  return r[sym];"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("Rhino", result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testSealWriteToExistingSymbolPropertyStrict() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  'use strict';"
-                                + "  var sym = Symbol('X');"
-                                + "  var r = {};"
-                                + "  r[sym] = 'abc';"
-                                + "  Object.seal(r);"
-                                + "  r[sym] = 'Rhino';"
-                                + "  return r[sym];"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Rhino", result);
+    public void freezeWriteToExistingWritableProperty() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  var r = {};"
+                                            + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                                            + "  Object.freeze(r);"
+                                            + "  r.a = 'Rhino';"
+                                            + "  return r.a;"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("abc", result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testFreezeWriteToExistingWritableProperty() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  var r = {};"
-                                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                                + "  Object.freeze(r);"
-                                + "  r.a = 'Rhino';"
-                                + "  return r.a;"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("abc", result);
+    public void freezeWriteToExistingWritablePropertyStrict() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  'use strict';"
+                                            + "  var r = {};"
+                                            + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                                            + "  Object.freeze(r);"
+                                            + "  r.a='Rhino';"
+                                            + "  return r.a;"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals(
+                            "Cannot add properties to this object because extensible is false.",
+                            result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testFreezeWriteToExistingWritablePropertyStrict() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  'use strict';"
-                                + "  var r = {};"
-                                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                                + "  Object.freeze(r);"
-                                + "  r.a='Rhino';"
-                                + "  return r.a;"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Cannot add properties to this object because extensible is false.", result);
+    public void freezeWriteToExistingSymbolProperty() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  var sym = Symbol('X');"
+                                            + "  var r = {};"
+                                            + "  r[sym] = 'abc';"
+                                            + "  Object.freeze(r);"
+                                            + "  r[sym] = 'Rhino';"
+                                            + "  return r[sym];"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals("abc", result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testFreezeWriteToExistingSymbolProperty() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  var sym = Symbol('X');"
-                                + "  var r = {};"
-                                + "  r[sym] = 'abc';"
-                                + "  Object.freeze(r);"
-                                + "  r[sym] = 'Rhino';"
-                                + "  return r[sym];"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("abc", result);
+    public void freezeWriteToExistingSymbolPropertyStrict() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  'use strict';"
+                                            + "  var sym = Symbol('X');"
+                                            + "  var r = {};"
+                                            + "  r[sym] = 'abc';"
+                                            + "  Object.freeze(r);"
+                                            + "  r[sym] = 'Rhino';"
+                                            + "  return r[sym];"
+                                            + "};"
+                                            + "try { "
+                                            + "  foo();"
+                                            + "} catch (e) { e.message }",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals(
+                            "Cannot add properties to this object because extensible is false.",
+                            result);
+
+                    return null;
+                });
     }
 
     @Test
-    public void testFreezeWriteToExistingSymbolPropertyStrict() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  'use strict';"
-                                + "  var sym = Symbol('X');"
-                                + "  var r = {};"
-                                + "  r[sym] = 'abc';"
-                                + "  Object.freeze(r);"
-                                + "  r[sym] = 'Rhino';"
-                                + "  return r[sym];"
-                                + "};"
-                                + "try { "
-                                + "  foo();"
-                                + "} catch (e) { e.message }",
-                        "test",
-                        1,
-                        null);
-        assertEquals("Cannot add properties to this object because extensible is false.", result);
-    }
+    public void objectConstructorForNonExtensibleFunctions() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
 
-    @Test
-    public void testObjectConstructorForNonExtensibleFunctions() {
-        Object result =
-                cx.evaluateString(
-                        scope,
-                        "foo = function() {"
-                                + "  var res = '';\n"
-                                + "  var a = JSON.stringify;\n"
-                                + "  Object.preventExtensions(a);\n"
-                                + "  res += 'a.isExtensible = ' + Object.isExtensible(a);\n"
-                                + "  res += '\\n';\n"
-                                + "  var b = Object(a);\n"
-                                + "  res += typeof b;\n"
-                                + "  res += '\\n';\n"
-                                + "  res += a===b;\n"
-                                + "  res += '\\n';\n"
-                                + "  res += 'b.isExtensible = ' + Object.isExtensible(b);\n"
-                                + "  return res;\n"
-                                + "};"
-                                + "  foo();",
-                        "test",
-                        1,
-                        null);
-        assertEquals("a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false" + "", result);
+                    Object result =
+                            cx.evaluateString(
+                                    scope,
+                                    "foo = function() {"
+                                            + "  var res = '';\n"
+                                            + "  var a = JSON.stringify;\n"
+                                            + "  Object.preventExtensions(a);\n"
+                                            + "  res += 'a.isExtensible = ' + Object.isExtensible(a);\n"
+                                            + "  res += '\\n';\n"
+                                            + "  var b = Object(a);\n"
+                                            + "  res += typeof b;\n"
+                                            + "  res += '\\n';\n"
+                                            + "  res += a===b;\n"
+                                            + "  res += '\\n';\n"
+                                            + "  res += 'b.isExtensible = ' + Object.isExtensible(b);\n"
+                                            + "  return res;\n"
+                                            + "};"
+                                            + "  foo();",
+                                    "test",
+                                    1,
+                                    null);
+                    assertEquals(
+                            "a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false" + "",
+                            result);
+
+                    return null;
+                });
     }
 }

@@ -66,13 +66,13 @@ class DToA {
     private static final int Int_max = 14;
     private static final int n_bigtens = 5;
 
-    private static final double tens[] = {
+    private static final double[] tens = {
         1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
         1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
         1e20, 1e21, 1e22
     };
 
-    private static final double bigtens[] = {1e16, 1e32, 1e64, 1e128, 1e256};
+    private static final double[] bigtens = {1e16, 1e32, 1e64, 1e128, 1e256};
 
     private static int lo0bits(int y) {
         int k;
@@ -137,7 +137,7 @@ class DToA {
         return k;
     }
 
-    private static void stuffBits(byte bits[], int offset, int val) {
+    private static void stuffBits(byte[] bits, int offset, int val) {
         bits[offset] = (byte) (val >> 24);
         bits[offset + 1] = (byte) (val >> 16);
         bits[offset + 2] = (byte) (val >> 8);
@@ -148,7 +148,7 @@ class DToA {
      * Bigint and e is the returned binary exponent.  Return the number of significant
      * bits in b in bits.  d must be finite and nonzero. */
     private static BigInteger d2b(double d, int[] e, int[] bits) {
-        byte dbl_bits[];
+        byte[] dbl_bits;
         int i, k, y, z, de;
         long dBits = Double.doubleToLongBits(d);
         int d0 = (int) (dBits >>> 32);
@@ -1052,7 +1052,7 @@ class DToA {
     }
 
     /* Mapping of JSDToStrMode -> JS_dtoa mode */
-    private static final int dtoaModes[] = {
+    private static final int[] dtoaModes = {
         0, /* DTOSTR_STANDARD */ 0, /* DTOSTR_STANDARD_EXPONENTIAL, */ 3, /* DTOSTR_FIXED, */
         2, /* DTOSTR_EXPONENTIAL, */ 2
     }; /* DTOSTR_PRECISION */

@@ -34,7 +34,7 @@ class AbstractEcmaObjectOperations {
      * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty"></a>
      */
     static boolean hasOwnProperty(Context cx, Object o, Object property) {
-        ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
+        Scriptable obj = ScriptableObject.ensureScriptable(o);
         boolean result;
         if (property instanceof Symbol) {
             result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
@@ -207,7 +207,9 @@ class AbstractEcmaObjectOperations {
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
-            ((ScriptableObject) base).putImpl(p, 0, o, v, isThrow);
+            if (((ScriptableObject) base).putImpl(p, 0, o, v, isThrow)) return;
+
+            o.put(p, o, v);
         } else {
             base.put(p, o, v);
         }
@@ -223,7 +225,9 @@ class AbstractEcmaObjectOperations {
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
-            ((ScriptableObject) base).putImpl(null, p, o, v, isThrow);
+            if (((ScriptableObject) base).putImpl(null, p, o, v, isThrow)) return;
+
+            o.put(p, o, v);
         } else {
             base.put(p, o, v);
         }

@@ -137,27 +137,27 @@ public class ToNumberLegacyConversionsTest {
     }
 
     @Test
-    public void test_NumberConstructor() {
+    public void numberConstructor() {
         String script = String.format("%seq(Number(\"%s\"), %s)", PRELUDE, source, expected);
         assertTrue(
                 "Number('" + source + "') doesn't produce " + expected, execute(cx, scope, script));
     }
 
     @Test
-    public void test_coercion() {
+    public void coercion() {
         String script = String.format("%seq(+(\"%s\"), %s)", PRELUDE, source, expected);
         assertTrue("+('" + source + "') doesn't produce " + expected, execute(cx, scope, script));
     }
 
     @Test
-    public void test_isNaN() {
+    public void isNaN() {
         String script = String.format("%seq(isNaN(\"%s\"), isNaN(%s))", PRELUDE, source, expected);
         assertTrue(
                 "isNaN('" + source + "') !== isNaN(" + expected + ")", execute(cx, scope, script));
     }
 
     @Test
-    public void test_isFinite() {
+    public void isFinite() {
         String script =
                 String.format("%seq(isFinite(\"%s\"), isFinite(%s))", PRELUDE, source, expected);
         assertTrue(

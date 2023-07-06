@@ -415,7 +415,7 @@ public final class IRFactory extends Parser {
                 array.addChildToBack(transform(elem));
             } else {
                 if (skipIndexes == null) {
-                    skipIndexes = new ArrayList<Integer>();
+                    skipIndexes = new ArrayList<>();
                 }
                 skipIndexes.add(Integer.valueOf(i));
             }
@@ -483,7 +483,7 @@ public final class IRFactory extends Parser {
             pushScope((Scope) node);
         }
         try {
-            List<Node> kids = new ArrayList<Node>();
+            List<Node> kids = new ArrayList<>();
             for (Node kid : node) {
                 kids.add(transform((AstNode) kid));
             }
@@ -572,7 +572,7 @@ public final class IRFactory extends Parser {
             int declType = -1;
             AstNode iter = loop.getIterator();
             if (iter instanceof VariableDeclaration) {
-                declType = ((VariableDeclaration) iter).getType();
+                declType = iter.getType();
             }
             Node lhs = transform(iter);
             if (loop.isForOf()) {
@@ -1057,8 +1057,7 @@ public final class IRFactory extends Parser {
         List<AstNode> elems = node.getElements();
         // start with an empty string to ensure ToString() for each substitution
         Node pn = Node.newString("");
-        for (int i = 0; i < elems.size(); ++i) {
-            AstNode elem = elems.get(i);
+        for (AstNode elem : elems) {
             if (elem.getType() != Token.TEMPLATE_CHARS) {
                 decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 pn = createBinary(Token.ADD, pn, transform(elem));
@@ -1084,8 +1083,7 @@ public final class IRFactory extends Parser {
         TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
         List<AstNode> elems = templateLiteral.getElements();
         call.addChildToBack(templateLiteral);
-        for (int i = 0; i < elems.size(); ++i) {
-            AstNode elem = elems.get(i);
+        for (AstNode elem : elems) {
             if (elem.getType() != Token.TEMPLATE_CHARS) {
                 decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 call.addChildToBack(transform(elem));
@@ -1990,9 +1988,8 @@ public final class IRFactory extends Parser {
                         // Transform Delete(Name "a")
                         //  to Delete(Bind("a"), String("a"))
                         child.setType(Token.BINDNAME);
-                        Node left = child;
                         Node right = Node.newString(child.getString());
-                        n = new Node(nodeType, left, right);
+                        n = new Node(nodeType, child, right);
                     } else if (childType == Token.GETPROP || childType == Token.GETELEM) {
                         Node left = child.getFirstChild();
                         Node right = child.getLastChild();
@@ -2491,7 +2488,7 @@ public final class IRFactory extends Parser {
                 decompiler.addNumber(((NumberLiteral) node).getNumber());
                 break;
             case Token.BIGINT:
-                decompiler.addBigInt(((BigIntLiteral) node).getBigInt());
+                decompiler.addBigInt(node.getBigInt());
                 break;
             case Token.GETPROP:
                 decompilePropertyGet((PropertyGet) node);

@@ -4,10 +4,13 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 public class NativeObjectTest {
 
@@ -18,20 +21,20 @@ public class NativeObjectTest {
      */
     @Test
     public void freeze_captureStackTrace() throws Exception {
-        Context cx = Context.enter();
-        Scriptable global = cx.initStandardObjects();
-        Object result =
-                cx.evaluateString(
-                        global,
-                        "var myError = {};\n"
-                                + "Error.captureStackTrace(myError);\n"
-                                + "Object.freeze(myError);"
-                                + "myError.stack;",
-                        "",
-                        1,
-                        null);
-        Assert.assertTrue(result instanceof String);
-        Context.exit();
+        try (Context cx = Context.enter()) {
+            Scriptable global = cx.initStandardObjects();
+            Object result =
+                    cx.evaluateString(
+                            global,
+                            "var myError = {};\n"
+                                    + "Error.captureStackTrace(myError);\n"
+                                    + "Object.freeze(myError);"
+                                    + "myError.stack;",
+                            "",
+                            1,
+                            null);
+            Assert.assertTrue(result instanceof String);
+        }
     }
 
     /**
@@ -42,22 +45,22 @@ public class NativeObjectTest {
      */
     @Test
     public void getOwnPropertyDescriptor_captureStackTrace() throws Exception {
-        Context cx = Context.enter();
-        Scriptable global = cx.initStandardObjects();
-        Object result =
-                cx.evaluateString(
-                        global,
-                        "var myError = {};\n"
-                                + "Error.captureStackTrace(myError);\n"
-                                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                                + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
-                        "",
-                        1,
-                        null);
-        Assert.assertTrue(result instanceof String);
-        Assert.assertEquals(
-                "undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
-        Context.exit();
+        try (Context cx = Context.enter()) {
+            Scriptable global = cx.initStandardObjects();
+            Object result =
+                    cx.evaluateString(
+                            global,
+                            "var myError = {};\n"
+                                    + "Error.captureStackTrace(myError);\n"
+                                    + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
+                                    + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
+                            "",
+                            1,
+                            null);
+            Assert.assertTrue(result instanceof String);
+            Assert.assertEquals(
+                    "undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
+        }
     }
 
     /**
@@ -68,19 +71,39 @@ public class NativeObjectTest {
      */
     @Test
     public void getOwnPropertyDescriptorAttributes_captureStackTrace() throws Exception {
-        Context cx = Context.enter();
-        Scriptable global = cx.initStandardObjects();
-        Object result =
-                cx.evaluateString(
-                        global,
-                        "var myError = {};\n"
-                                + "Error.captureStackTrace(myError);\n"
-                                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                                + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable",
-                        "",
-                        1,
-                        null);
-        Assert.assertEquals("true true false", result);
-        Context.exit();
+        try (Context cx = Context.enter()) {
+            Scriptable global = cx.initStandardObjects();
+            Object result =
+                    cx.evaluateString(
+                            global,
+                            "var myError = {};\n"
+                                    + "Error.captureStackTrace(myError);\n"
+                                    + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
+                                    + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable",
+                            "",
+                            1,
+                            null);
+            Assert.assertEquals("true true false", result);
+        }
+    }
+
+    public static class JavaObj {
+        public String name = "test";
+    }
+
+    @Test
+    public void nativeJavaObject_hasOwnProperty() {
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
+            ScriptableObject.putProperty(scope, "javaObj", Context.javaToJS(new JavaObj(), scope));
+            Object result =
+                    cx.evaluateString(
+                            scope,
+                            "Object.prototype.hasOwnProperty.call(javaObj, \"name\");",
+                            "",
+                            1,
+                            null);
+            assertTrue((Boolean) result);
+        }
     }
 }

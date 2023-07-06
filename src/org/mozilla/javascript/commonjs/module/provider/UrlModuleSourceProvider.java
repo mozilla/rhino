@@ -156,12 +156,12 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
         }
     }
 
-    private static Reader getReader(URLConnection urlConnection) throws IOException {
+    private Reader getReader(URLConnection urlConnection) throws IOException {
         return new InputStreamReader(
                 urlConnection.getInputStream(), getCharacterEncoding(urlConnection));
     }
 
-    private static String getCharacterEncoding(URLConnection urlConnection) {
+    protected String getCharacterEncoding(URLConnection urlConnection) {
         final ParsedContentType pct = new ParsedContentType(urlConnection.getContentType());
         final String encoding = pct.getEncoding();
         if (encoding != null) {
@@ -249,7 +249,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
         private boolean isResourceChanged(URLConnection urlConnection) throws IOException {
             if (urlConnection instanceof HttpURLConnection) {
                 return ((HttpURLConnection) urlConnection).getResponseCode()
-                        == HttpURLConnection.HTTP_NOT_MODIFIED;
+                        != HttpURLConnection.HTTP_NOT_MODIFIED;
             }
             return lastModified != urlConnection.getLastModified();
         }

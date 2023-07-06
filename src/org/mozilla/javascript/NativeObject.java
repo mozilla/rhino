@@ -160,7 +160,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return f.construct(cx, scope, args);
                     }
                     if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
-                        return new NativeObject();
+                        return cx.newObject(scope);
                     }
                     return ScriptRuntime.toObject(cx, scope, args[0]);
                 }
@@ -493,10 +493,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Scriptable s = getCompatibleObject(cx, scope, arg);
                     ScriptableObject obj = ensureScriptableObject(s);
                     Object[] ids = obj.getIds(true, true);
-                    ArrayList<Object> syms = new ArrayList<Object>();
-                    for (int i = 0; i < ids.length; i++) {
-                        if (ids[i] instanceof Symbol) {
-                            syms.add(ids[i]);
+                    ArrayList<Object> syms = new ArrayList<>();
+                    for (Object o : ids) {
+                        if (o instanceof Symbol) {
+                            syms.add(o);
                         }
                     }
                     return cx.newArray(scope, syms.toArray());

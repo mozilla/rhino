@@ -5,7 +5,12 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
@@ -13,7 +18,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.drivers.TestUtils;
 
 /** @author Norris Boyd */
-public class ObserveInstructionCountTest extends TestCase {
+public class ObserveInstructionCountTest {
     // Custom Context to store execution time.
     static class MyContext extends Context {
         MyContext(ContextFactory factory) {
@@ -27,13 +32,13 @@ public class ObserveInstructionCountTest extends TestCase {
         private static final long serialVersionUID = -8018441873635071899L;
     }
 
-    @Override
-    protected void setUp() {
+    @Before
+    public void setUp() {
         TestUtils.setGlobalContextFactory(new MyFactory());
     }
 
-    @Override
-    protected void tearDown() {
+    @After
+    public void tearDown() {
         TestUtils.setGlobalContextFactory(null);
     }
 
@@ -71,45 +76,46 @@ public class ObserveInstructionCountTest extends TestCase {
         }
     }
 
-    private void baseCase(int optimizationLevel, String source) {
-        ContextFactory factory = new MyFactory();
-        Context cx = factory.enterContext();
-        cx.setOptimizationLevel(optimizationLevel);
-        assertTrue(cx instanceof MyContext);
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            cx.evaluateString(globalScope, source, "test source", 1, null);
-            fail();
-        } catch (QuotaExceeded e) {
-            // expected
-        } catch (RuntimeException e) {
-            fail(e.toString());
-        } finally {
-            Context.exit();
-        }
+    private static void baseCase(String source) {
+        Utils.runWithAllOptimizationLevels(
+                new MyFactory(),
+                cx -> {
+                    assertTrue(cx instanceof MyContext);
+                    try {
+                        Scriptable globalScope = cx.initStandardObjects();
+                        cx.evaluateString(globalScope, source, "test source", 1, null);
+                        fail();
+                    } catch (QuotaExceeded e) {
+                        // expected
+                    } catch (RuntimeException e) {
+                        fail(e.toString());
+                    }
+
+                    return null;
+                });
     }
 
-    public void testWhileTrueInGlobal() {
+    @Test
+    public void whileTrueInGlobal() {
         String source = "var i=0; while (true) i++;";
-        baseCase(-1, source); // interpreted mode
-        baseCase(1, source); // compiled mode
+        baseCase(source);
     }
 
-    public void testWhileTrueNoCounterInGlobal() {
+    @Test
+    public void twhileTrueNoCounterInGlobal() {
         String source = "while (true);";
-        baseCase(-1, source); // interpreted mode
-        baseCase(1, source); // compiled mode
+        baseCase(source);
     }
 
-    public void testWhileTrueInFunction() {
+    @Test
+    public void whileTrueInFunction() {
         String source = "var i=0; function f() { while (true) i++; } f();";
-        baseCase(-1, source); // interpreted mode
-        baseCase(1, source); // compiled mode
+        baseCase(source);
     }
 
-    public void testForever() {
+    @Test
+    public void forever() {
         String source = "for(;;);";
-        baseCase(-1, source); // interpreted mode
-        baseCase(1, source); // compiled mode
+        baseCase(source);
     }
 }

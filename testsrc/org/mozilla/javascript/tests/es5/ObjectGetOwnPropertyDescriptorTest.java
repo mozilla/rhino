@@ -11,13 +11,18 @@ import static org.junit.Assert.assertEquals;
 import static org.mozilla.javascript.tests.Evaluator.eval;
 
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.annotations.JSConstructor;
+import org.mozilla.javascript.annotations.JSGetter;
+import org.mozilla.javascript.annotations.JSSetter;
 
 public class ObjectGetOwnPropertyDescriptorTest {
 
     @Test
-    public void testContentsOfPropertyDescriptorShouldReflectAttributesOfProperty() {
+    public void contentsOfPropertyDescriptorShouldReflectAttributesOfProperty() {
         NativeObject descriptor;
         NativeObject object = new NativeObject();
         object.defineProperty("a", "1", ScriptableObject.EMPTY);
@@ -39,5 +44,49 @@ public class ObjectGetOwnPropertyDescriptorTest {
         assertEquals(false, descriptor.get("enumerable"));
         assertEquals(false, descriptor.get("writable"));
         assertEquals(false, descriptor.get("configurable"));
+    }
+
+    @Test
+    public void callPropertyDescriptorSetterWithConsString() throws Exception {
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
+            ScriptableObject.defineClass(scope, AnnotatedHostObject.class);
+
+            final String script =
+                    "var hostObj = new AnnotatedHostObject();\n"
+                            + "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), 'myProp');\n"
+                            + "var consString = 'a';\n"
+                            + "consString = consString + 'bc';\n"
+                            + "valueProperty.set.call(hostObj, consString);\n"
+                            + "var result = '' + valueProperty.get.call(hostObj);\n"
+                            + "result;\n";
+            String result = (String) cx.evaluateString(scope, script, "<testsrc>", 0, null);
+            assertEquals("abc", result);
+        }
+    }
+
+    public static class AnnotatedHostObject extends ScriptableObject {
+
+        String myProp;
+
+        public AnnotatedHostObject() {}
+
+        @Override
+        public String getClassName() {
+            return "AnnotatedHostObject";
+        }
+
+        @JSConstructor
+        public void jsConstructorMethod() {}
+
+        @JSGetter
+        public String getMyProp() {
+            return myProp;
+        }
+
+        @JSSetter
+        public void setMyProp(String prop) {
+            myProp = prop;
+        }
     }
 }

@@ -53,13 +53,12 @@ public class Require extends BaseFunction {
     private Scriptable mainExports;
 
     // Modules that completed loading; visible to all threads
-    private final Map<String, Scriptable> exportedModuleInterfaces =
-            new ConcurrentHashMap<String, Scriptable>();
+    private final Map<String, Scriptable> exportedModuleInterfaces = new ConcurrentHashMap<>();
     private final Object loadLock = new Object();
     // Modules currently being loaded on the thread. Used to resolve circular
     // dependencies while loading.
     private static final ThreadLocal<Map<String, Scriptable>> loadingModuleInterfaces =
-            new ThreadLocal<Map<String, Scriptable>>();
+            new ThreadLocal<>();
 
     /**
      * Creates a new instance of the require() function. Upon constructing it, you will either want
@@ -265,7 +264,7 @@ public class Require extends BaseFunction {
             // Are we the outermost locked invocation on this thread?
             final boolean outermostLocked = threadLoadingModules == null;
             if (outermostLocked) {
-                threadLoadingModules = new HashMap<String, Scriptable>();
+                threadLoadingModules = new HashMap<>();
                 loadingModuleInterfaces.set(threadLoadingModules);
             }
             // Must make the module exports available immediately on the

@@ -32,8 +32,22 @@ public class AccessorSlot extends Slot {
         // It sounds logical that this would be the same as the logic for a normal Slot,
         // but the spec is super pedantic about things like the order of properties here,
         // so we need special support here.
+
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-        desc.setCommonDescriptorProperties(getAttributes(), getter == null && setter == null);
+        int attr = getAttributes();
+
+        boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
+        if (es6) {
+            if (getter == null && setter == null) {
+                desc.defineProperty(
+                        "writable",
+                        (attr & ScriptableObject.READONLY) == 0,
+                        ScriptableObject.EMPTY);
+            }
+        } else {
+            desc.setCommonDescriptorProperties(attr, getter == null && setter == null);
+        }
+
         String fName = name == null ? "f" : name.toString();
         if (getter != null) {
             Function f = getter.asGetterFunction(fName, scope);
@@ -42,7 +56,19 @@ public class AccessorSlot extends Slot {
         if (setter != null) {
             Function f = setter.asSetterFunction(fName, scope);
             desc.defineProperty("set", f == null ? Undefined.instance : f, ScriptableObject.EMPTY);
+        } else if (es6) {
+            desc.defineProperty("set", Undefined.instance, ScriptableObject.EMPTY);
         }
+
+        if (es6) {
+            desc.defineProperty(
+                    "enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "configurable",
+                    (attr & ScriptableObject.PERMANENT) == 0,
+                    ScriptableObject.EMPTY);
+        }
+
         return desc;
     }
 

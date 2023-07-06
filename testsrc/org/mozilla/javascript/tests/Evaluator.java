@@ -21,8 +21,7 @@ public class Evaluator {
     }
 
     public static Object eval(String source, Map<String, Scriptable> bindings) {
-        Context cx = ContextFactory.getGlobal().enterContext();
-        try {
+        try (Context cx = ContextFactory.getGlobal().enterContext()) {
             Scriptable scope = cx.initStandardObjects();
             if (bindings != null) {
                 for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
@@ -32,8 +31,6 @@ public class Evaluator {
                 }
             }
             return cx.evaluateString(scope, source, "source", 1, null);
-        } finally {
-            Context.exit();
         }
     }
 }

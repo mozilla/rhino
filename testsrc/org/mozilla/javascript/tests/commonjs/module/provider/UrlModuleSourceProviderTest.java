@@ -4,8 +4,11 @@
 
 package org.mozilla.javascript.tests.commonjs.module.provider;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -21,7 +24,7 @@ public class UrlModuleSourceProviderTest {
     private static final UrlConnectionExpiryCalculator ALWAYS_CHECK_EXPIRED = urlConnection -> 0;
 
     @Test
-    public void testModuleNotModified() throws Exception {
+    public void moduleNotModified() throws Exception {
         // given
         final Path filePath = Files.createTempFile("test", ".js");
         final ModuleSource result;
@@ -43,7 +46,7 @@ public class UrlModuleSourceProviderTest {
     }
 
     @Test
-    public void testModuleModified() throws Exception {
+    public void moduleModified() throws Exception {
         // given
         final Path filePath = Files.createTempFile("test", ".js");
         final ModuleSource result;
@@ -65,6 +68,15 @@ public class UrlModuleSourceProviderTest {
         // then
         Assert.assertNotNull(result);
         Assert.assertNotEquals("Modified", ModuleSourceProvider.NOT_MODIFIED, result);
+    }
+
+    @Test
+    public void getCharacterEncodingCanBeModifiedInSubclass() throws NoSuchMethodException {
+        Method method =
+                UrlModuleSourceProvider.class.getDeclaredMethod(
+                        "getCharacterEncoding", new Class[] {URLConnection.class});
+        int mods = method.getModifiers();
+        Assert.assertTrue(Modifier.isPublic(mods) || Modifier.isProtected(mods));
     }
 
     private static URI getModuleURI(final Path filePath) throws URISyntaxException {

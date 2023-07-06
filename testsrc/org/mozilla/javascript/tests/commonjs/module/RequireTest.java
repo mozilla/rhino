@@ -1,11 +1,14 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -17,35 +20,40 @@ import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
  * @author Attila Szegedi
  * @version $Id: RequireTest.java,v 1.1 2011/04/07 22:24:37 hannes%helma.at Exp $
  */
-public class RequireTest extends TestCase {
-    public void testSandboxed() throws Exception {
-        final Context cx = createContext();
-        final Require require = getSandboxedRequire(cx);
-        require.requireMain(cx, "testSandboxed");
-        // Also, test idempotent double-require of same main:
-        require.requireMain(cx, "testSandboxed");
-        // Also, test failed require of different main:
-        try {
-            require.requireMain(cx, "blah");
-            fail();
-        } catch (IllegalStateException e) {
-            // Expected, success
+public class RequireTest {
+
+    @Test
+    public void sandboxed() throws Exception {
+        try (Context cx = createContext()) {
+            final Require require = getSandboxedRequire(cx);
+            require.requireMain(cx, "testSandboxed");
+            // Also, test idempotent double-require of same main:
+            require.requireMain(cx, "testSandboxed");
+            // Also, test failed require of different main:
+            try {
+                require.requireMain(cx, "blah");
+                fail();
+            } catch (IllegalStateException e) {
+                // Expected, success
+            }
         }
     }
 
-    private Context createContext() {
+    private static Context createContext() {
         final Context cx = Context.enter();
         cx.setOptimizationLevel(-1);
         return cx;
     }
 
-    public void testNonSandboxed() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
-        ScriptableObject.putProperty(scope, "moduleUri", jsFile);
-        require.requireMain(cx, "testNonSandboxed");
+    @Test
+    public void nonSandboxed() throws Exception {
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
+            ScriptableObject.putProperty(scope, "moduleUri", jsFile);
+            require.requireMain(cx, "testNonSandboxed");
+        }
     }
 
     public static class CustomGlobal extends ScriptableObject {
@@ -59,66 +67,73 @@ public class RequireTest extends TestCase {
         }
     }
 
-    public void testCustomGlobal() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        ScriptableObject.defineClass(scope, CustomGlobal.class);
+    @Test
+    public void customGlobal() throws Exception {
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            ScriptableObject.defineClass(scope, CustomGlobal.class);
 
-        final Scriptable global = cx.newObject(scope, "CustomGlobal", null);
+            final Scriptable global = cx.newObject(scope, "CustomGlobal", null);
 
-        global.getPrototype().setPrototype(scope);
-        global.setParentScope(null);
+            global.getPrototype().setPrototype(scope);
+            global.setParentScope(null);
 
-        final Require require =
-                new Require(
-                        cx,
-                        global,
-                        new StrongCachingModuleScriptProvider(
-                                new UrlModuleSourceProvider(
-                                        Collections.singleton(getDirectory()), null)),
-                        null,
-                        null,
-                        true);
+            final Require require =
+                    new Require(
+                            cx,
+                            global,
+                            new StrongCachingModuleScriptProvider(
+                                    new UrlModuleSourceProvider(
+                                            Collections.singleton(getDirectory()), null)),
+                            null,
+                            null,
+                            true);
 
-        require.install(global);
+            require.install(global);
 
-        try {
-            cx.evaluateReader(
-                    global, getReader("testCustomGlobal.js"), "testCustomGlobal.js", 1, null);
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-            throw ex;
+            try {
+                cx.evaluateReader(
+                        global, getReader("testCustomGlobal.js"), "testCustomGlobal.js", 1, null);
+            } catch (Exception ex) {
+                System.err.println(ex.getMessage());
+                throw ex;
+            }
         }
     }
 
-    public void testVariousUsageErrors() throws Exception {
+    @Test
+    public void variousUsageErrors() throws Exception {
         testWithSandboxedRequire("testNoArgsRequire");
     }
 
-    public void testRelativeId() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        require.install(scope);
-        cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
+    @Test
+    public void relativeId() throws Exception {
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            require.install(scope);
+            cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
+        }
     }
 
-    public void testSetMainForAlreadyLoadedModule() throws Exception {
-        final Context cx = createContext();
-        final Scriptable scope = cx.initStandardObjects();
-        final Require require = getSandboxedRequire(cx, scope, false);
-        require.install(scope);
-        cx.evaluateReader(
-                scope,
-                getReader("testSetMainForAlreadyLoadedModule.js"),
-                "testSetMainForAlreadyLoadedModule.js",
-                1,
-                null);
-        try {
-            require.requireMain(cx, "assert");
-            fail();
-        } catch (IllegalStateException e) {
-            assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
+    @Test
+    public void setMainForAlreadyLoadedModule() throws Exception {
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            require.install(scope);
+            cx.evaluateReader(
+                    scope,
+                    getReader("testSetMainForAlreadyLoadedModule.js"),
+                    "testSetMainForAlreadyLoadedModule.js",
+                    1,
+                    null);
+            try {
+                require.requireMain(cx, "assert");
+                fail();
+            } catch (IllegalStateException e) {
+                assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
+            }
         }
     }
 
@@ -127,8 +142,9 @@ public class RequireTest extends TestCase {
     }
 
     private void testWithSandboxedRequire(String moduleId) throws Exception {
-        final Context cx = createContext();
-        getSandboxedRequire(cx).requireMain(cx, moduleId);
+        try (Context cx = createContext()) {
+            getSandboxedRequire(cx).requireMain(cx, moduleId);
+        }
     }
 
     private Require getSandboxedRequire(final Context cx) throws URISyntaxException {

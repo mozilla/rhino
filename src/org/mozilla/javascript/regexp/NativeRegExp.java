@@ -122,7 +122,7 @@ public class NativeRegExp extends IdScriptableObject {
         // RegExp.prototype.constructor is the builtin RegExp constructor."
         proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
 
-        ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
+        ScriptRuntime.setFunctionProtoAndParent(ctor, cx, scope);
 
         ctor.setImmunePrototypeProperty(proto);
 
@@ -252,7 +252,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        int indexp[] = {(int) d};
+        int[] indexp = {(int) d};
         Object rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
         if (globalOrSticky) {
             if (rval == null || rval == Undefined.instance) {
@@ -1074,7 +1074,7 @@ public class NativeRegExp extends IdScriptableObject {
                     int max = -1;
                     int leftCurl = state.cp;
 
-                    /* For Perl etc. compatibility, if quntifier does not match
+                    /* For Perl etc. compatibility, if quantifier does not match
                      * \{\d+(,\d*)?\} exactly back off from it
                      * being a quantifier, and chew it up as a literal
                      * atom next time instead.
@@ -1091,9 +1091,12 @@ public class NativeRegExp extends IdScriptableObject {
                                     max = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.max");
                                     c = src[state.cp];
                                     if (min > max) {
-                                        reportError(
-                                                "msg.max.lt.min", String.valueOf(src[state.cp]));
-                                        return false;
+                                        String msg =
+                                                ScriptRuntime.getMessageById(
+                                                        "msg.max.lt.min",
+                                                        Integer.valueOf(max),
+                                                        Integer.valueOf(min));
+                                        throw ScriptRuntime.constructError("SyntaxError", msg);
                                     }
                                 }
                             } else {
@@ -1846,7 +1849,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static boolean executeREBytecode(REGlobalData gData, String input, int end) {
         int pc = 0;
-        byte program[] = gData.regexp.program;
+        byte[] program = gData.regexp.program;
         int continuationOp = REOP_END;
         int continuationPc = 0;
         boolean result = false;
@@ -2381,7 +2384,7 @@ public class NativeRegExp extends IdScriptableObject {
      * indexp is assumed to be an array of length 1
      */
     Object executeRegExp(
-            Context cx, Scriptable scope, RegExpImpl res, String str, int indexp[], int matchType) {
+            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
 
         int start = indexp[0];
@@ -2862,7 +2865,7 @@ class CompilerState {
     }
 
     Context cx;
-    char cpbegin[];
+    char[] cpbegin;
     int cpend;
     int cp;
     int flags;

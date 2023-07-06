@@ -4,7 +4,6 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -14,10 +13,11 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Marc Guillemot
  */
-public class DeletePropertyTest extends TestCase {
-    /** delete should not delete anything in the prototype chain. */
+public class DeletePropertyTest {
+
     @Test
-    public void testDeletePropInPrototype() throws Exception {
+    /** delete should not delete anything in the prototype chain. */
+    public void deletePropInPrototype() throws Exception {
         final String script =
                 "Array.prototype.foo = function() {};\n"
                         + "Array.prototype[1] = function() {};\n"
