@@ -2864,6 +2864,7 @@ public class ScriptRuntime {
         if (value instanceof BigInteger) return "bigint";
         if (value instanceof Number) return "number";
         if (value instanceof Boolean) return "boolean";
+        if (isSymbol(value)) return "symbol";
         throw errorWithClassName("msg.invalid.type", value);
     }
 
