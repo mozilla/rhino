@@ -48,7 +48,9 @@ public class BuiltinsTest {
 
     @Test
     public void printStdout() throws ScriptException {
+        // this was a broken test
         engine.eval("print('Hello, World!');");
+        // this has been hard work https://github.com/mozilla/rhino/issues/1356
         Assert.assertEquals( "Hello, World!\n", bos.toString() );
     }
 
