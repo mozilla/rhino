@@ -2,18 +2,27 @@ package org.mozilla.javascript.tests.scriptengine;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.*;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
 public class BuiltinsTest {
+
+    static ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    static PrintStream original = System.out;
+    static PrintStream modified = new PrintStream(bos,false);
+    static {
+        // because script engine gets loaded before... hence
+        System.setOut(modified);
+    }
 
     private static ScriptEngineManager manager;
 
@@ -25,6 +34,13 @@ public class BuiltinsTest {
         manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
     }
 
+    @AfterClass
+    public static void revert() throws Exception{
+        System.setOut(original);
+        modified.close();
+        bos.close();
+    }
+
     @Before
     public void setup() {
         engine = manager.getEngineByName("rhino");
@@ -33,6 +49,7 @@ public class BuiltinsTest {
     @Test
     public void printStdout() throws ScriptException {
         engine.eval("print('Hello, World!');");
+        Assert.assertEquals( "Hello, World!\n", bos.toString() );
     }
 
     @Test
