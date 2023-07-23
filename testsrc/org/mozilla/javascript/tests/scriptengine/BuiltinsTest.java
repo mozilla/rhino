@@ -10,7 +10,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
-
 import org.junit.*;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
@@ -35,13 +34,13 @@ public class BuiltinsTest {
     public void printStdout() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PrintStream original = System.out;
-        PrintStream modified = new PrintStream(bos,false);
+        PrintStream modified = new PrintStream(bos, false);
         System.setOut(modified);
         // Now Get A SimpleContext
         ScriptContext sc = new SimpleScriptContext();
         try {
             // this was a broken test
-            engine.eval("print('Hello, World!');", sc );
+            engine.eval("print('Hello, World!');", sc);
             // this has been hard work https://github.com/mozilla/rhino/issues/1356
             Assert.assertEquals("Hello, World!\n", bos.toString());
         } finally {
