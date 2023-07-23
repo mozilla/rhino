@@ -16,14 +16,6 @@ import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
 public class BuiltinsTest {
 
-    static ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    static PrintStream original = System.out;
-    static PrintStream modified = new PrintStream(bos,false);
-    static {
-        // because script engine gets loaded before... hence
-        System.setOut(modified);
-    }
-
     private static ScriptEngineManager manager;
 
     private ScriptEngine engine;
@@ -34,24 +26,30 @@ public class BuiltinsTest {
         manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
     }
 
-    @AfterClass
-    public static void revert() throws Exception{
-        System.setOut(original);
-        modified.close();
-        bos.close();
-    }
-
     @Before
     public void setup() {
         engine = manager.getEngineByName("rhino");
     }
 
     @Test
-    public void printStdout() throws ScriptException {
-        // this was a broken test
-        engine.eval("print('Hello, World!');");
-        // this has been hard work https://github.com/mozilla/rhino/issues/1356
-        Assert.assertEquals( "Hello, World!\n", bos.toString() );
+    public void printStdout() throws Exception {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        PrintStream original = System.out;
+        PrintStream modified = new PrintStream(bos,false);
+        System.setOut(modified);
+        // Now Get A SimpleContext
+        ScriptContext sc = new SimpleScriptContext();
+        try {
+            // this was a broken test
+            engine.eval("print('Hello, World!');", sc );
+            // this has been hard work https://github.com/mozilla/rhino/issues/1356
+            Assert.assertEquals("Hello, World!\n", bos.toString());
+        } finally {
+            // revert the sys out
+            System.setOut(original);
+            modified.close();
+            bos.close();
+        }
     }
 
     @Test
