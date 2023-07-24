@@ -31,7 +31,12 @@ public class BuiltinsTest {
     }
 
     @Test
-    public void printStdout() throws Exception {
+    public void printStdout() throws ScriptException {
+        engine.eval("print('Hello, World!');");
+    }
+
+    @Test
+    public void printStdoutAndCheckItPrints() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PrintStream original = System.out;
         PrintStream modified = new PrintStream(bos, false);
