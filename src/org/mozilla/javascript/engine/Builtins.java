@@ -48,6 +48,8 @@ public class Builtins {
             self.stdout.write(ScriptRuntime.toString(arg));
         }
         self.stdout.write('\n');
+        // ref bug https://github.com/mozilla/rhino/issues/1356
+        self.stdout.flush();
     }
 
     private static Builtins getSelf(Scriptable scope) {
