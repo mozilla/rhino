@@ -15,7 +15,7 @@ jobs:
       # Some tests require more CPU, and all can use multiple CPUs
       max-parallel: 1
       matrix:
-        java: [ '8', '11', '17' ]
+        java: [ '11', '17' ]
     name: Rhino Java ${{ matrix.java }}
     steps:
     - name: Checkout
@@ -31,21 +31,12 @@ jobs:
       with:
         java-version: ${{ matrix.java }}
         distribution: 'adopt'
-    - if: matrix.java == '8'
-      name: Check everything with Gradle on Java 8
-      run: ./gradlew check jacocoTestReport
-    - if: matrix.java != '8'
-      name: Check everything with Gradle, modular Java
+    - name: Check everything with Gradle
       run: >-
-        ./gradlew check jacocoTestReport
-        -Dorg.gradle.jvmargs="--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
-        --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
-        --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
-        --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
-        --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+        ./gradlew check
     - name: Upload results
       uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: reports
-        path: buildGradle/reports
+        path: build/reports
 

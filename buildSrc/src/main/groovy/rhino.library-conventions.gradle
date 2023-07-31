@@ -1,0 +1,37 @@
+plugins {
+    id 'rhino.java-conventions'
+    id 'com.github.spotbugs'
+}
+
+version = project.version
+
+tasks.named('compileJava') {
+    options.javaModuleVersion = provider { version }
+}
+
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes (
+            "Implementation-Version": project.version,
+            "Implementation-Title":  "Mozilla Rhino",
+            "Implementation-Vendor": "Mozilla Foundation",
+            "Implementation-URL": "http://github.com/mozilla/rhino",
+        )
+    }
+}
+
+spotbugs {
+    effort = "less"
+    reportLevel = "medium"
+    excludeFilter = file("${projectDir}/../spotbugs-exclude.xml")
+}
+
+spotbugsMain {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
