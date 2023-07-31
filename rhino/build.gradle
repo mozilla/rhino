@@ -1,0 +1,14 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'application'
+}
+
+application {
+    mainClass = 'org.mozilla.javascript.tools.shell.Main'
+}
+
+dependencies {
+    implementation project(':runtime')
+    implementation project(':tools')
+    implementation project(':xml')
+}

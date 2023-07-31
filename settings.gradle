@@ -1,0 +1,2 @@
+rootProject.name = 'rhino'
+include 'engine', 'examples', 'rhino', 'runtime', 'tests', 'tools', 'xml'

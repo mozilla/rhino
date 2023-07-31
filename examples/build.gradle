@@ -1,0 +1,9 @@
+plugins {
+    id 'rhino.java-conventions'
+}
+
+dependencies {
+    implementation project(':runtime')
+    implementation project(':tools')
+    implementation project(':xml')
+}

@@ -1,0 +1,35 @@
+plugins {
+    id 'java-library'
+    id 'com.diffplug.spotless'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.yaml:snakeyaml:1.28"
+    testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+compileJava {
+    options.compilerArgs = ['-Xlint:deprecation,unchecked']
+}
+
+test {
+    useJUnit()
+}
+
+spotless {
+    java {
+        // Newer versions of GoogleJavaFormat seem to require JDK 15+
+        googleJavaFormat('1.10.0').aosp()
+    }
+}

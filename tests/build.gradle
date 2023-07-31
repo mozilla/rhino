@@ -1,0 +1,38 @@
+plugins {
+    id 'rhino.java-conventions'
+}
+
+dependencies {
+    implementation project(':engine')
+    implementation project(':examples')
+    implementation project(':runtime')
+    implementation project(':tools')
+    implementation project(':xml')
+}
+
+test {
+    testLogging.showStandardStreams = true
+    maxHeapSize = "1g"
+    // Many tests do not clean up contexts properly. This makes the tests much
+    // more resilient at the expense of performance.
+    forkEvery = 1
+    maxParallelForks = 64
+    systemProperty 'mozilla.js.tests', 'testsrc/tests'
+    systemProperty 'mozilla.js.tests.timeout', 60000
+    // Required for JWT GUI tests
+    jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
+    // Required for some reflection tests
+    jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
+
+    // Set to reduce number of tests by only running at one opt level
+    if (System.getProperty('quick') != null) {
+        systemProperty 'TEST_OPTLEVEL', -1
+    } else if (System.getProperty('optLevel')) {
+        systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
+    }
+
+    systemProperty 'test262properties', System.getProperty('test262properties')
+    if (System.getProperty('updateTest262properties') != null) {
+        systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    }
+}

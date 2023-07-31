@@ -1,0 +1,7 @@
+plugins {
+    id 'rhino.library-conventions'
+}
+
+dependencies {
+    implementation project(':runtime')
+}

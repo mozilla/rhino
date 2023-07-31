@@ -1,0 +1,20 @@
+plugins {
+    id 'rhino.java-conventions'
+    id 'com.github.spotbugs'
+}
+
+spotbugs {
+    effort = "less"
+    reportLevel = "medium"
+    excludeFilter = file("${projectDir}/../spotbugs-exclude.xml")
+}
+
+spotbugsMain {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}

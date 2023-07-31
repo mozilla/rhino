@@ -28,3 +28,6 @@ bin/
 # idea
 rhino.ipr
 rhino.iws
+
+# VSCode
+.vscode

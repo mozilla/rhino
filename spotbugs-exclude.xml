@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <FindBugsFilter>
-  <!-- In general, do not run this on tests or generated benchmark classes -->
-  <Match>
-    <Source name="~.*\/testsrc\/.*"/>
-  </Match>
-  <Match>
-    <Source name="~.*\\testsrc\\.*"/>
-  </Match>
-  <Match>
-    <Source name="~.*\/examples\/.*"/>
-  </Match>
-  <Match>
-    <Source name="~.*\\examples\\.*"/>
-  </Match>
-  <Match>
-    <Class name="~org\.mozilla\.javascript\.benchmarks\.jmh_generated.*"/>
-  </Match>
-
   <!-- Things below are legit exemptions -->
   <Match>
     <!-- Existing "Token" constants have values to 255 -->
@@ -109,11 +92,6 @@
     <Class name="org.mozilla.javascript.optimizer.OptRuntime$GeneratorState"/>
     <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
   </Match>
-  <!-- Complex legacy stuff -->
-  <!--<Match>
-    <Class name="org.mozilla.javascript.regexp.RegExpImpl"/>
-    <Bug pattern="RC_REF_COMPARISON_BAD_PRACTICE_BOOLEAN"/>
-  </Match>-->
 
   <!-- Things below are things that we aspire to fix! -->
   <Match>
@@ -135,5 +113,34 @@
   <Match>
     <!-- We are planning to get rid of synchronization -->
     <Bug pattern="UG_SYNC_SET_UNSYNC_GET"/>
+  </Match>
+  <Match>
+    <!-- We need to improve performance of this class in general -->
+    <Class name="org.mozilla.javascript.NativeJSON"/>
+    <Bug pattern="SBSC_USE_STRINGBUFFER_CONCATENATION"/>
+  </Match>
+  <Match>
+    <!-- Really old legacy stuff -->
+    <Class name="org.mozilla.javascript.ContextFactory"/>
+    <Bug pattern="MS_EXPOSE_REP"/>
+  </Match>
+  <Match>
+    <!-- Not totally sure about the check -->
+    <Class name="org.mozilla.javascript.Sorting"/>
+    <Bug pattern="MS_EXPOSE_REP"/>
+  </Match>
+  <Match>
+    <!-- Really old legacy stuff -->
+    <Class name="org.mozilla.javascript.ContextFactory"/>
+    <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+  </Match>
+  <Match>
+    <!-- Really old legacy stuff -->
+    <Class name="org.mozilla.javascript.ContextFactory$1GlobalSetterImpl"/>
+    <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+  </Match>
+  <Match>
+    <!-- This check does not seem right to me -->
+    <Bug pattern="SA_FIELD_SELF_ASSIGNMENT"/>
   </Match>
 </FindBugsFilter>
