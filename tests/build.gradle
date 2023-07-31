@@ -23,6 +23,7 @@ test {
     jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
     // Required for some reflection tests
     jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
+    jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
 
     // Set to reduce number of tests by only running at one opt level
     if (System.getProperty('quick') != null) {

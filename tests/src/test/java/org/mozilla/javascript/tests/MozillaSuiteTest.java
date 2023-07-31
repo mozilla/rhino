@@ -96,9 +96,11 @@ public class MozillaSuiteTest {
             files[i] = new File(testDir, tests[i]);
         }
         if (files.length == 0) {
-            throw new IOException("No Mozilla Suite tests found in " + testDir + ". Check mozilla.js.tests property");
+            throw new IOException(
+                    "No Mozilla Suite tests found in "
+                            + testDir
+                            + ". Check mozilla.js.tests property");
         }
-        System.out.println("Found " + files.length + " Mozilla suite tests.");
         return files;
     }
 
