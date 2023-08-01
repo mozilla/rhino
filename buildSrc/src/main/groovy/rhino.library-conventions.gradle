@@ -3,6 +3,23 @@ plugins {
     id 'com.github.spotbugs'
 }
 
+version = project.version
+
+tasks.named('compileJava') {
+    options.javaModuleVersion = provider { version }
+}
+
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes (
+            "Implementation-Version": project.version,
+            "Implementation-Title":  "Mozilla Rhino",
+            "Implementation-Vendor": "Mozilla Foundation",
+            "Implementation-URL": "http://github.com/mozilla/rhino",
+        )
+    }
+}
+
 spotbugs {
     effort = "less"
     reportLevel = "medium"

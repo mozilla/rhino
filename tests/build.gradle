@@ -3,11 +3,11 @@ plugins {
 }
 
 dependencies {
-    implementation project(':engine')
+    implementation project(':rhino-engine')
     implementation project(':examples')
-    implementation project(':runtime')
-    implementation project(':tools')
-    implementation project(':xml')
+    implementation project(':rhino-runtime')
+    implementation project(':rhino-tools')
+    implementation project(':rhino-xml')
 }
 
 test {
