@@ -518,6 +518,31 @@ public class NativeConsoleTest {
         assertPrintMsg(js, "[1234]");
     }
 
+    @Test
+    public void printError() {
+        String js =
+                "try {\n"
+                        + "  JSON.parse('{\"abc');\n"
+                        + "} catch (e) {\n"
+                        + "  console.log(e);\n"
+                        + "}";
+        assertPrintMsg(js, "SyntaxError: Unterminated string literal\n\tat source:2\r\n");
+    }
+
+    @Test
+    public void printErrorProperty() {
+        String js =
+                "try {\n"
+                        + "  JSON.parse('{\"abc');\n"
+                        + "} catch (e) {\n"
+                        + "  var obj = { msg: 'Something is wrong', err: e };\n"
+                        + "  console.log(obj);\n"
+                        + "}";
+        assertPrintMsg(
+                js,
+                "{\"msg\":\"Something is wrong\",\"err\":{\"fileName\":\"source\",\"lineNumber\":2}}");
+    }
+
     private static void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
