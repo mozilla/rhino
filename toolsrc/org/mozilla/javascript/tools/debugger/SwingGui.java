@@ -1864,7 +1864,7 @@ class FileHeader extends JPanel implements MouseListener {
     /** Called when a mouse button is released. */
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.getComponent() == this && (e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) != 0) {
+        if (e.getComponent() == this && e.getButton() == MouseEvent.BUTTON1) {
             int y = e.getY();
             Font font = fileWindow.textArea.getFont();
             FontMetrics metrics = getFontMetrics(font);
