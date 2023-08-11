@@ -2473,25 +2473,7 @@ class MyTreeTable extends JTreeTable {
             // selection remaining the same. To avoid this, we
             // only dispatch when the modifiers are 0 (or the left mouse
             // button).
-            if (me.getModifiersEx() == 0
-                    || ((me.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | 1024)) != 0
-                            && (me.getModifiersEx()
-                                            & (InputEvent.SHIFT_DOWN_MASK
-                                                    | InputEvent.CTRL_DOWN_MASK
-                                                    | InputEvent.ALT_DOWN_MASK
-                                                    | InputEvent.BUTTON2_DOWN_MASK
-                                                    | InputEvent.BUTTON3_DOWN_MASK
-                                                    | 64
-                                                    | // SHIFT_DOWN_MASK
-                                                    128
-                                                    | // CTRL_DOWN_MASK
-                                                    512
-                                                    | // ALT_DOWN_MASK
-                                                    2048
-                                                    | // BUTTON2_DOWN_MASK
-                                                    4096 // BUTTON3_DOWN_MASK
-                                            ))
-                                    == 0)) {
+            if (me.getButton() == MouseEvent.BUTTON1 && me.getModifiersEx() == 0) {
                 int row = rowAtPoint(me.getPoint());
                 for (int counter = getColumnCount() - 1; counter >= 0; counter--) {
                     if (TreeTableModel.class == getColumnClass(counter)) {
@@ -2504,7 +2486,8 @@ class MyTreeTable extends JTreeTable {
                                         me.getX() - getCellRect(row, counter, true).x,
                                         me.getY(),
                                         me.getClickCount(),
-                                        me.isPopupTrigger());
+                                        me.isPopupTrigger(),
+                                        me.getButton());
                         MyTreeTable.this.tree.dispatchEvent(newME);
                         break;
                     }
