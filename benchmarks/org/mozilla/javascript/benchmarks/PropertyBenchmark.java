@@ -16,6 +16,7 @@ public class PropertyBenchmark {
         Scriptable scope;
 
         Function create;
+        Function createFieldByField;
         Function getName;
         Function check;
 
@@ -33,6 +34,8 @@ public class PropertyBenchmark {
                 cx.evaluateReader(scope, rdr, "property-benchmarks.js", 1, null);
             }
             create = (Function) ScriptableObject.getProperty(scope, "createObject");
+            createFieldByField =
+                    (Function) ScriptableObject.getProperty(scope, "createObjectFieldByField");
             getName = (Function) ScriptableObject.getProperty(scope, "getName");
             check = (Function) ScriptableObject.getProperty(scope, "check");
 
@@ -48,6 +51,20 @@ public class PropertyBenchmark {
     @Benchmark
     public Object createObject(PropertyBenchmark.PropertyState state) {
         Object obj = state.create.call(state.cx, state.scope, null, new Object[] {"testing"});
+        String name =
+                ScriptRuntime.toString(
+                        state.getName.call(state.cx, state.scope, null, new Object[] {obj}));
+        if (!"testing".equals(name)) {
+            throw new AssertionError("Expected testing");
+        }
+        return name;
+    }
+
+    @Benchmark
+    public Object createObjectFieldByField(PropertyBenchmark.PropertyState state) {
+        Object obj =
+                state.createFieldByField.call(
+                        state.cx, state.scope, null, new Object[] {"testing"});
         String name =
                 ScriptRuntime.toString(
                         state.getName.call(state.cx, state.scope, null, new Object[] {obj}));

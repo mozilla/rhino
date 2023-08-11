@@ -9,6 +9,15 @@ function createObject(name) {
   }
 }
 
+function createObjectFieldByField(name) {
+  let o = {};
+  o.name = name;
+  o.foo = 1;
+  o.bar = 2;
+  o.baz = 3;
+  return o;
+}
+
 function getName(o) {
   return o.name;
 }
