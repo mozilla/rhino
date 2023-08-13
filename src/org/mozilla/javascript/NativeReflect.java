@@ -192,6 +192,11 @@ final class NativeReflect extends IdScriptableObject {
         if (args.length < 2) {
             return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         }
+
+        if (args.length > 2 && !(args[2] instanceof Function)) {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
+        }
+
         Object[] callArgs = ScriptRuntime.getApplyArguments(cx, args[1]);
         return ctor.construct(cx, scope, callArgs);
     }
@@ -205,11 +210,11 @@ final class NativeReflect extends IdScriptableObject {
                     Integer.toString(args.length));
         }
 
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
         ScriptableObject desc = ScriptableObject.ensureScriptableObject(args[2]);
 
         try {
-            obj.defineOwnProperty(cx, args[1], desc);
+            target.defineOwnProperty(cx, args[1], desc);
             return true;
         } catch (EcmaError e) {
             return false;
@@ -217,84 +222,84 @@ final class NativeReflect extends IdScriptableObject {
     }
 
     private static boolean js_deleteProperty(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                return ScriptableObject.deleteProperty(obj, (Symbol) args[1]);
+                return ScriptableObject.deleteProperty(target, (Symbol) args[1]);
             }
 
-            return ScriptableObject.deleteProperty(obj, ScriptRuntime.toString(args[1]));
+            return ScriptableObject.deleteProperty(target, ScriptRuntime.toString(args[1]));
         }
         return false;
     }
 
     private static Object js_get(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                Object prop = ScriptableObject.getProperty(obj, (Symbol) args[1]);
+                Object prop = ScriptableObject.getProperty(target, (Symbol) args[1]);
                 return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
             }
             if (args[1] instanceof Double) {
-                Object prop = ScriptableObject.getProperty(obj, ScriptRuntime.toIndex(args[1]));
+                Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toIndex(args[1]));
                 return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
             }
 
-            Object prop = ScriptableObject.getProperty(obj, ScriptRuntime.toString(args[1]));
+            Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toString(args[1]));
             return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
         }
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
     private static Scriptable js_getOwnPropertyDescriptor(Context cx, Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, args[1]);
+                ScriptableObject desc = target.getOwnPropertyDescriptor(cx, args[1]);
                 return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc;
             }
 
             ScriptableObject desc =
-                    obj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
+                    target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
             return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc;
         }
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
     private static Scriptable js_getPrototypeOf(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
-        return obj.getPrototype();
+        return target.getPrototype();
     }
 
     private static boolean js_has(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                return ScriptableObject.hasProperty(obj, (Symbol) args[1]);
+                return ScriptableObject.hasProperty(target, (Symbol) args[1]);
             }
 
-            return ScriptableObject.hasProperty(obj, ScriptRuntime.toString(args[1]));
+            return ScriptableObject.hasProperty(target, ScriptRuntime.toString(args[1]));
         }
         return false;
     }
 
     private static boolean js_isExtensible(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
-        return obj.isExtensible();
+        ScriptableObject target = checkTarget(args);
+        return target.isExtensible();
     }
 
     private static Scriptable js_ownKeys(Context cx, Scriptable scope, Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
         final List<Object> symbols = new ArrayList<>();
 
-        for (Object o : obj.getIds(true, true)) {
+        for (Object o : target.getIds(true, true)) {
             if (o instanceof Symbol) {
                 symbols.add(o);
             } else {
@@ -310,26 +315,26 @@ final class NativeReflect extends IdScriptableObject {
     }
 
     private static boolean js_preventExtensions(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
-        obj.preventExtensions();
+        target.preventExtensions();
         return true;
     }
 
     private static boolean js_set(Object[] args) {
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                obj.put((Symbol) args[1], obj, args[2]);
+                target.put((Symbol) args[1], target, args[2]);
                 return true;
             }
             if (args[1] instanceof Double) {
-                obj.put(ScriptRuntime.toIndex(args[1]), obj, args[2]);
+                target.put(ScriptRuntime.toIndex(args[1]), target, args[2]);
                 return true;
             }
 
-            obj.put(ScriptRuntime.toString(args[1]), obj, args[2]);
+            target.put(ScriptRuntime.toString(args[1]), target, args[2]);
             return true;
         }
         return false;
@@ -344,18 +349,18 @@ final class NativeReflect extends IdScriptableObject {
                     Integer.toString(args.length));
         }
 
-        ScriptableObject obj = checkTarget(args);
+        ScriptableObject target = checkTarget(args);
 
-        if (obj.getPrototype() == args[1]) {
+        if (target.getPrototype() == args[1]) {
             return true;
         }
 
-        if (!obj.isExtensible()) {
+        if (!target.isExtensible()) {
             return false;
         }
 
         if (args[1] == null) {
-            obj.setPrototype(null);
+            target.setPrototype(null);
             return true;
         }
 
@@ -364,20 +369,20 @@ final class NativeReflect extends IdScriptableObject {
         }
 
         ScriptableObject proto = ScriptableObject.ensureScriptableObject(args[1]);
-        if (obj.getPrototype() == proto) {
+        if (target.getPrototype() == proto) {
             return true;
         }
 
         // avoid cycles
         Scriptable p = proto;
         while (p != null) {
-            if (obj == p) {
+            if (target == p) {
                 return false;
             }
             p = p.getPrototype();
         }
 
-        obj.setPrototype(proto);
+        target.setPrototype(proto);
         return true;
     }
 

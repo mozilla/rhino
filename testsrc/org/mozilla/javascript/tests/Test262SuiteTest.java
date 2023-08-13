@@ -90,7 +90,6 @@ public class Test262SuiteTest {
                     Arrays.asList(
                             "Atomics",
                             "IsHTMLDDA",
-                            "Proxy",
                             "SharedArrayBuffer",
                             "Symbol.species",
                             "async-functions",

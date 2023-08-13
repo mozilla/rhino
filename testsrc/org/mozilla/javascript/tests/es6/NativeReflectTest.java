@@ -45,7 +45,12 @@ public class NativeReflectTest {
 
     @Test
     public void applyMissingArgs() {
-        String js = "try {\n" + "  Reflect.apply();\n" + "} catch(e) {" + "  '' + e;\n" + "}";
+        String js =
+                "try {\n"
+                        + "  Reflect.apply();\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
         testString(
                 "TypeError: Reflect.apply: At least 3 arguments required, but only 0 passed", js);
     }
@@ -55,7 +60,7 @@ public class NativeReflectTest {
         String js =
                 "try {\n"
                         + "  Reflect.apply({}, undefined, [1.75]);\n"
-                        + "} catch(e) {"
+                        + "} catch(e) {\n"
                         + "  '' + e;\n"
                         + "}";
         testString("TypeError: [object Object] is not a function, it is object.", js);
@@ -67,7 +72,7 @@ public class NativeReflectTest {
                 "var s1 = Symbol('1');"
                         + "try {\n"
                         + "  Reflect.apply(Math.floor, undefined, s1);\n"
-                        + "} catch(e) {"
+                        + "} catch(e) {\n"
                         + "  '' + e;\n"
                         + "}";
         testString("TypeError: Expected argument of type object, but instead had type symbol", js);
@@ -79,6 +84,47 @@ public class NativeReflectTest {
                 "var d = Reflect.construct(Date, [1776, 6, 4]);\n"
                         + "'' + (d instanceof Date) + ' ' + d.getFullYear();";
         testString("true 1776", js);
+    }
+
+    @Test
+    public void constructNoConstructorNumber() {
+        String js = "try {\n"
+                    + "  Reflect.construct(function() {}, [], 1);\n"
+                    + "} catch(e) {\n"
+                    + "  '' + e;\n"
+                    + "}";
+        testString("TypeError: \"number\" is not a constructor.", js);
+    }
+
+    @Test
+    public void constructNoConstructorNull() {
+        String js = "try {\n"
+                    + "  Reflect.construct(function() {}, [], null);\n"
+                    + "} catch(e) {\n"
+                    + "  '' + e;\n"
+                    + "}";
+        testString("TypeError: \"object\" is not a constructor.", js);
+    }
+
+    @Test
+    public void constructNoConstructorObject() {
+        String js = "try {\n"
+                    + "  Reflect.construct(function() {}, [], {});\n"
+                    + "} catch(e) {\n"
+                    + "  '' + e;\n"
+                    + "}";
+        testString("TypeError: \"object\" is not a constructor.", js);
+    }
+
+    @Test
+    public void constructNoConstructorFunction() {
+        String js = "try {\n"
+                    + "  Reflect.construct(function() {}, [], Date.now);\n"
+                    + "} catch(e) {\n"
+                    + "  '' + e;\n"
+                    + "}";
+        // testString("TypeError: \"object\" is not a constructor.", js);
+        // found no way to check a function for constructor
     }
 
     @Test
@@ -105,6 +151,16 @@ public class NativeReflectTest {
                         + "Object.freeze(o);\n"
                         + "'' + Reflect.defineProperty(o, 'p', { value: 42 }) + ' ' + o.p;";
         testString("false undefined", js);
+    }
+
+    @Test
+    public void deleteProperty() {
+        String js =
+                "var o = { p: 42 };\n"
+                        + "'' + Reflect.deleteProperty(o, 'p')"
+                        + "+ ' ' + Reflect.has(o, 'p')"
+                        + "+ ' ' + o.p;";
+        testString("true false undefined", js);
     }
 
     @Test

@@ -288,6 +288,7 @@ public class ScriptRuntime {
             NativeWeakSet.init(scope, sealed);
             NativeBigInt.init(scope, sealed);
 
+            NativeProxy.init(scope, sealed);
             NativeReflect.init(scope, sealed);
         }
 
