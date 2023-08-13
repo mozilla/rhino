@@ -1,0 +1,631 @@
+package org.mozilla.javascript.tests.es6;
+
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.tests.Utils;
+
+public class NativeProxyTest {
+
+    @Test
+    public void testToString() {
+        testString("function Proxy() { [native code for Proxy.Proxy, arity=2] }\n", "Proxy.toString()");
+
+        testString("[object Object]", "Object.prototype.toString.call(new Proxy({}, {}))");
+        testString("[object Array]", "Object.prototype.toString.call(new Proxy([], {}))");
+        testString("[object Array]", "Object.prototype.toString.call(new Proxy(new Proxy([], {}), {}))");
+    }
+
+    @Test
+    public void testToStringRevoke() {
+        String js = "var rev = Proxy.revocable(%s, {});\n"
+                + "rev.revoke();\n"
+                + "try {"
+                + "  Object.prototype.toString.call(%s);\n"
+                + "} catch(e) {"
+                + "  '' + e;"
+                + "}";
+
+        testString("TypeError: Illegal operation attempted on a revoked proxy", String.format(js, "{}", "rev.proxy"));
+        testString("TypeError: Illegal operation attempted on a revoked proxy", String.format(js, "[]", "rev.proxy"));
+    }
+
+    @Test
+    public void prototype() {
+        testString("false", "'' + Object.hasOwnProperty.call(Proxy, 'prototype')");
+
+        testString("2", "'' + Proxy.length");
+
+    }
+
+    @Test
+    public void ctorMissingArgs() {
+        testString("TypeError: Proxy.ctor: At least 2 arguments required, but only 0 passed", "try { new Proxy() } catch(e) { '' + e }");
+        testString("TypeError: Proxy.ctor: At least 2 arguments required, but only 1 passed", "try { new Proxy({}) } catch(e) { '' + e }");
+
+        testString("TypeError: Cannot convert undefined to an object.", "try { new Proxy(undefined, {}) } catch(e) { '' + e }");
+        testString("TypeError: Cannot convert null to an object.", "try { new Proxy(null, {}) } catch(e) { '' + e }");
+    }
+
+    @Test
+    public void ctorAsFunction() {
+        testString("TypeError: \"Constructor Proxy\" may only be invoked from a \"new\" expression.", "try { Proxy() } catch(e) { '' + e }");
+    }
+
+//
+//    @Test
+//    public void applyWithoutHandler() {
+//        String js = "function sum(a, b) { return a + b; }\n"
+//                + "var proxy1 = new Proxy(sum, {});\n"
+//                + "proxy1(1, 2)";
+//        testDouble(3.0, js);
+//    }
+//
+//    @Test
+//    public void applyDetails() {
+//        String js =
+//                "var o = {};\n"
+//                        + "var count = 0;\n"
+//                        + "var results, args;\n"
+//                        + "function fn() {\n"
+//                        + "  count++;\n"
+//                        + "  results = {\n"
+//                        + "    thisArg: this,\n"
+//                        + "    args: arguments\n"
+//                        + "  };\n"
+//                        + "}\n"
+//                        + "Reflect.apply(fn, o, ['arg1', 2, , null]);\n"
+//                        + "'' + count "
+//                        + "+ ' ' + (results.thisArg === o)"
+//                        + "+ ' ' + results.args.length"
+//                        + "+ ' ' + results.args[0]"
+//                        + "+ ' ' + results.args[1]"
+//                        + "+ ' ' + results.args[2]"
+//                        + "+ ' ' + results.args[3]";
+//        testString("1 true 4 arg1 2 undefined null", js);
+//    }
+//
+//    @Test
+//    public void applyMissingArgs() {
+//        String js =
+//                "try {\n"
+//                        + "  Reflect.apply();\n"
+//                        + "} catch(e) {\n"
+//                        + "  '' + e;\n"
+//                        + "}";
+//        testString(
+//                "TypeError: Reflect.apply: At least 3 arguments required, but only 0 passed", js);
+//    }
+//
+//    @Test
+//    public void applyTargetNotFunction() {
+//        String js =
+//                "try {\n"
+//                        + "  Reflect.apply({}, undefined, [1.75]);\n"
+//                        + "} catch(e) {\n"
+//                        + "  '' + e;\n"
+//                        + "}";
+//        testString("TypeError: [object Object] is not a function, it is object.", js);
+//    }
+//
+//    @Test
+//    public void applyArgumentsListNotFunction() {
+//        String js =
+//                "var s1 = Symbol('1');"
+//                        + "try {\n"
+//                        + "  Reflect.apply(Math.floor, undefined, s1);\n"
+//                        + "} catch(e) {\n"
+//                        + "  '' + e;\n"
+//                        + "}";
+//        testString("TypeError: Expected argument of type object, but instead had type symbol", js);
+//    }
+//
+//    @Test
+//    public void construct() {
+//        String js =
+//                "var d = Reflect.construct(Date, [1776, 6, 4]);\n"
+//                        + "'' + (d instanceof Date) + ' ' + d.getFullYear();";
+//        testString("true 1776", js);
+//    }
+//
+//    @Test
+//    public void constructNoConstructorNumber() {
+//        String js = "try {\n"
+//                    + "  Reflect.construct(function() {}, [], 1);\n"
+//                    + "} catch(e) {\n"
+//                    + "  '' + e;\n"
+//                    + "}";
+//        testString("TypeError: \"number\" is not a constructor.", js);
+//    }
+//
+//    @Test
+//    public void constructNoConstructorNull() {
+//        String js = "try {\n"
+//                    + "  Reflect.construct(function() {}, [], null);\n"
+//                    + "} catch(e) {\n"
+//                    + "  '' + e;\n"
+//                    + "}";
+//        testString("TypeError: \"object\" is not a constructor.", js);
+//    }
+//
+//    @Test
+//    public void constructNoConstructorObject() {
+//        String js = "try {\n"
+//                    + "  Reflect.construct(function() {}, [], {});\n"
+//                    + "} catch(e) {\n"
+//                    + "  '' + e;\n"
+//                    + "}";
+//        testString("TypeError: \"object\" is not a constructor.", js);
+//    }
+//
+//    @Test
+//    public void constructNoConstructorFunction() {
+//        String js = "try {\n"
+//                    + "  Reflect.construct(function() {}, [], Date.now);\n"
+//                    + "} catch(e) {\n"
+//                    + "  '' + e;\n"
+//                    + "}";
+//        // testString("TypeError: \"object\" is not a constructor.", js);
+//        // found no way to check a function for constructor
+//    }
+
+    @Test
+    public void defineProperty() {
+        String js =
+                "var o = {};\n"
+                        + "var res = '';\n"
+                        + "var handler = {\n"
+                        + "         defineProperty(target, key, desc) {\n"
+                        + "           res = res + target + ' ' + key + ' '\n"
+                        + "                 + desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable;\n"
+                        + "           return true;\n"
+                        + "         }\n"
+                        + "       };\n"
+                        + "var proxy1 = new Proxy(o, handler);\n"
+                        + "Object.defineProperty(proxy1, 'p', { value: 42, writable: false });\n"
+                        + "res;";
+        testString("[object Object] p false undefined undefined", js);
+    }
+
+    @Test
+    public void definePropertyWithoutHandler() {
+        String js =
+                "var o = {};\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "proxy1.p = 42;\n"
+                        + "'' + o.p;";
+        testString("42", js);
+    }
+
+    @Test
+    public void definePropertyFreezedWithoutHandler() {
+        String js =
+                "var o = {};\n"
+                        + "Object.freeze(o);\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "try {\n"
+                        + "  Object.defineProperty(proxy1, 'p', { value: 42, writable: false });\n"
+                        + "  '' + o.p;\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;"
+                        + "}\n";
+        testString("TypeError: Cannot add properties to this object because extensible is false.", js);
+    }
+
+    @Test
+    public void definePropertyHandlerNotFunction() {
+        String js =
+                "var o = {};\n"
+                        + "var proxy1 = new Proxy(o, { defineProperty: 7 });\n"
+                        + "try {\n"
+                        + "  Object.defineProperty(proxy1, 'p', { value: 42, writable: false });\n"
+                        + "  '' + o.p;\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;"
+                        + "}\n";
+        testString("TypeError: defineProperty is not a function, it is number.", js);
+    }
+
+    @Test
+    public void definePropertyHandlerNull() {
+        String js =
+                "var o = {};\n"
+                        + "var proxy1 = new Proxy(o, { defineProperty: null });\n"
+                        + "try {\n"
+                        + "  Object.defineProperty(proxy1, 'p', { value: 42, writable: false });\n"
+                        + "  '' + o.p;\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;"
+                        + "}\n";
+        testString("42", js);
+    }
+
+    @Test
+    public void definePropertyHandlerUndefined() {
+        String js =
+                "var o = {};\n"
+                        + "var proxy1 = new Proxy(o, { defineProperty: undefined });\n"
+                        + "try {\n"
+                        + "  Object.defineProperty(proxy1, 'p', { value: 42, writable: false });\n"
+                        + "  '' + o.p;\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;"
+                        + "}\n";
+        testString("42", js);
+    }
+
+    @Test
+    public void deletePropertyWithoutHandler() {
+        String js =
+                "var o = { p: 42 };\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "delete proxy1.p;\n"
+                        + "'' + o.p;";
+        testString("undefined", js);
+    }
+
+    @Test
+    public void getOwnPropertyDescriptor() {
+        String js =
+                "var o1 = {};\n"
+                        + "var fn = function() {};\n"
+                        + "Object.defineProperty(o1, 'p', {\n"
+                        + "  get: fn,\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var proxy1 = new Proxy(o1, {\n"
+                        + "                     getOwnPropertyDescriptor(target, prop) {\n"
+                        + "                         return { configurable: true, enumerable: true, value: 7 };\n"
+                        + "                     }});\n"
+                        + "var result = Object.getOwnPropertyDescriptor(proxy1, 'p');\n"
+                        + "'' + o1.p + ' ' + result.value \n"
+                        + "+ ' [' + Object.getOwnPropertyNames(result) + ']' "
+                        + "+ ' ' + result.enumerable "
+                        + "+ ' ' + result.configurable "
+                        + "+ ' ' + result.writable "
+                        + "+ ' ' + (result.get === fn) "
+                        + "+ ' ' + (result.set === undefined)";
+        testString("undefined 7 [value,writable,enumerable,configurable] true true false false true", js);
+    }
+
+    @Test
+    public void getOwnPropertyDescriptorWithoutHandler() {
+        String js =
+                "var o1 = {};\n"
+                        + "var fn = function() {};\n"
+                        + "Object.defineProperty(o1, 'p', {\n"
+                        + "  get: fn,\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var proxy1 = new Proxy(o1, {});\n"
+                        + "var result = Object.getOwnPropertyDescriptor(proxy1, 'p');\n"
+                        + "'[' + Object.getOwnPropertyNames(result) + ']'"
+                        + "+ ' ' + result.enumerable"
+                        + "+ ' ' + result.configurable"
+                        + "+ ' ' + (result.get === fn)"
+                        + "+ ' ' + (result.set === undefined)";
+        testString("[get,set,enumerable,configurable] false true true true", js);
+    }
+
+    @Test
+    public void isExtensible() {
+        String js =
+                "var o = {};\n"
+                        + "var res = '';\n"
+                        + "var handler = {\n"
+                        + "         isExtensible(target) {\n"
+                        + "           res += ' a ' + (target == o);\n"
+                        + "         },\n"
+                        + "         preventExtensions(target) {\n"
+                        + "           res += ' o ' + (target == o);\n"
+                        + "         }\n"
+                        + "       };\n"
+                        + "var proxy1 = new Proxy(o, handler);\n"
+                        + "var x = Object.isExtensible(proxy1);\n"
+                        + "res += ' ' + x;\n"
+                        + "x = Object.preventExtensions(proxy1);\n"
+                        + "res += ' ' + x;\n"
+                        + "x = Object.isExtensible(proxy1);\n"
+                        + "res += ' ' + x;\n"
+
+                        + "var o2 = Object.seal({});\n"
+                        + "var proxy2 = new Proxy(o2, handler);\n"
+                        + "x = Object.isExtensible(proxy2);\n"
+                        + "res += ' ' + x;\n";
+        testString(" a true true o true [object Object] a true false a false false", js);
+    }
+
+    @Test
+    public void isExtensibleWithoutHandler() {
+        String js =
+                "var o1 = {};\n"
+                        + "var proxy1 = new Proxy(o1, {});\n"
+                        + "var result = '' + Object.isExtensible(o1) + '-' + Object.isExtensible(proxy1);\n"
+                        + "Object.preventExtensions(proxy1);\n"
+                        + "result += ' ' + Object.isExtensible(o1) + '-' + Object.isExtensible(proxy1);\n"
+
+                        + "var o2 = Object.seal({});\n"
+                        + "var proxy2 = new Proxy(o2, {});\n"
+                        + "result += ' ' + Object.isExtensible(o2) + '-' + Object.isExtensible(proxy2);\n";
+
+        testString("true-true false-false false-false", js);
+    }
+
+    @Test
+    public void ownKeys() {
+        String js = "var o = { d: 42 };\n"
+                        + "var res = '';\n"
+                        + "var handler = {\n"
+                        + "         ownKeys(target) {\n"
+                        + "           res += (target == o);\n"
+                        + "           return Reflect.ownKeys(target);"
+                        + "         }\n"
+                        + "       };\n"
+                        + "var proxy1 = new Proxy(o, handler);\n"
+                        + "var x = Object.keys(proxy1);\n"
+                        + "res += ' ' + x;\n";
+        testString("true d", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandler() {
+        String js =
+                "var o1 = {\n"
+                        + "  p1: 42,\n"
+                        + "  p2: 'one'\n"
+                        + "};\n"
+                        + "var a1 = [];\n"
+                        + "var proxy1 = new Proxy(o1, {});\n"
+                        + "var proxy2 = new Proxy(a1, {});\n"
+                        + "'' + Object.keys(proxy1)"
+                        + "+ ' ' + Object.keys(proxy2)";
+        testString("p1,p2 ", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandler2() {
+        String js =
+                "let s1 = Symbol.for('foo');\n"
+                        + "let s2 = Symbol.for('bar');\n"
+                        + "var o1 = {\n"
+                        + "  s1: 0,\n"
+                        + "  'str': 0,\n"
+                        + "  773: 0,\n"
+                        + "  '55': 0,\n"
+                        + "  0: 0,\n"
+                        + "  '-1': 0,\n"
+                        + "  8: 0,\n"
+                        + "  '6': 8,\n"
+                        + "  s2: 0,\n"
+                        + "  'str2': 0\n"
+                        + "};\n"
+                        + "var a1 = [];\n"
+                        + "var proxy1 = new Proxy(o1, {});\n"
+                        + "'' + Object.keys(proxy1)";
+        // FF: 0,6,8,55,773,s1,str,-1,s2,str2
+        testString("-1,0,6,8,55,773,s1,str,s2,str2", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandlerEmptyObj() {
+        String js = "var proxy1 = new Proxy({}, {});\n"
+                        + "'' + Object.keys(proxy1).length";
+        testString("0", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandlerDeleteObj() {
+        String js = "var o = { d: 42 };\n"
+                        + "delete o.d;\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "'' + Object.keys(proxy1).length";
+        testString("0", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandlerEmptyArray() {
+        String js = "var proxy1 = new Proxy([], {});\n"
+                        + "'' + Object.keys(proxy1)";
+        testString("", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandlerArray() {
+        String js = "var proxy1 = new Proxy([, , 2], {});\n"
+                        + "'' + Object.keys(proxy1)";
+        testString("2", js);
+    }
+
+    @Test
+    public void ownKeysWithoutHandlerNotEnumerable() {
+        String js =
+                "var o = {};\n"
+                        + "Object.defineProperty(o, 'p1', { value: 42, enumerable: false });\n"
+                        + "Object.defineProperty(o, 'p2', { get: function() {}, enumerable: false });\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "'' + Object.keys(proxy1)";
+        testString("", js);
+    }
+
+    @Test
+    public void hasWithoutHandler() {
+        String js =
+                "var o1 = { p: 42 }\n"
+                        + "var proxy1 = new Proxy(o1, {});\n"
+                        + "'' + ('p' in proxy1)"
+                        + "+ ' ' + ('p2' in proxy1)"
+                        + "+ ' ' + ('toString' in proxy1)";
+        testString("true false true", js);
+    }
+
+    @Test
+    public void hasSymbolWithoutHandler() {
+        String js =
+                "var s1 = Symbol('1');\n"
+                        + "var s2 = Symbol('1');\n"
+                        + "var o = {};\n"
+                        + "o[s1] = 42;\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "'' + (s1 in proxy1)"
+                        + "+ ' ' + (2 in proxy1)";
+        testString("true false", js);
+    }
+
+//    @Test
+//    public void getOwnPropertyDescriptorSymbol() {
+//        String js =
+//                "var s = Symbol('sym');\n"
+//                        + "var o = {};\n"
+//                        + "o[s] = 42;\n"
+//                        + "var result = Reflect.getOwnPropertyDescriptor(o, s);\n"
+//                        + "'' + result.value"
+//                        + "+ ' ' + result.enumerable"
+//                        + "+ ' ' + result.configurable"
+//                        + "+ ' ' + result.writable";
+//        testString("42 true true true", js);
+//    }
+//
+//    @Test
+//    public void getOwnPropertyDescriptorUndefinedProperty() {
+//        String js =
+//                "var o = Object.create({p: 1});\n"
+//                        + "var result = Reflect.getOwnPropertyDescriptor(o, 'p');\n"
+//                        + "'' + (result === undefined)";
+//        testString("true", js);
+//    }
+
+    @Test
+    public void getPropertyByIntWithoutHandler() {
+        String js = "var a = ['zero', 'one'];"
+                        + "var proxy1 = new Proxy(a, {});\n"
+                        + "proxy1[1];";
+        testString("one", js);
+    }
+
+      @Test
+      public void getProperty() {
+          String js =
+                  ""
+                  + "var o = {};\n"
+                          + "o.p1 = 'value 1';\n"
+                          + "var proxy1 = new Proxy(o, { get: function(t, prop) {\n"
+                          + "                   return t[prop] + '!';\n"
+                          + "               }});\n"
+                          + "var result = ''\n;"
+                          + "result += proxy1.p1;\n"
+                          + "Object.defineProperty(o, 'p3', { get: function() { return 'foo'; } });\n"
+                          + "result += ', ' + proxy1.p3;\n"
+                          + "var o2 = Object.create({ p: 42 });\n"
+                          + "var proxy2 = new Proxy(o2, {});\n"
+                          + "result += ', ' + proxy2.p;\n"
+                          + "result += ', ' + proxy2.u;\n";
+
+        testString("value 1!, foo!, 42, undefined", js);
+    }
+
+    @Test
+    public void getPropertyWithoutHandler() {
+        String js =
+                "var o = {};\n"
+                        + "o.p1 = 'value 1';\n"
+                        + "var proxy1 = new Proxy(o, {});\n"
+                        + "var result = ''\n;"
+                        + "result += proxy1.p1;\n"
+                        + "Object.defineProperty(o, 'p2', { get: undefined });\n"
+                        + "result += ', ' + proxy1.p2;\n"
+                        + "Object.defineProperty(o, 'p3', { get: function() { return 'foo'; } });\n"
+                        + "result += ', ' + proxy1.p3;\n"
+                        + "var o2 = Object.create({ p: 42 });\n"
+                        + "var proxy2 = new Proxy(o2, {});\n"
+                        + "result += ', ' + proxy2.p;\n"
+                        + "result += ', ' + proxy2.u;\n";
+
+        testString("value 1, undefined, foo, 42, undefined", js);
+    }
+
+    @Test
+    public void setPrototypeOfWithoutHandler() {
+        String js =
+                "var o1 = {};\n"
+                        + "var result = '';\n"
+                        + "result += Reflect.setPrototypeOf(o1, Object.prototype);\n"
+                        + "result += ' ' + Reflect.setPrototypeOf(o1, null);\n"
+                        + "var o2 = {};\n"
+                        + "result += ' ' + Reflect.setPrototypeOf(Object.freeze(o2), null);\n";
+        testString("true true false", js);
+    }
+
+    @Test
+    public void setPrototypeOfCycleWithoutHandler() {
+        String js = "var o1 = {};\n" + "'' + Reflect.setPrototypeOf(o1, o1);\n";
+        testString("false", js);
+    }
+
+    @Test
+    public void setPrototypeOfCycleComplexWithoutHandler() {
+        String js =
+                "var o1 = {};\n"
+                        + "var o2 = {};\n"
+                        + "var o3 = {};\n"
+                        + "'' + Reflect.setPrototypeOf(o1, o2)"
+                        + "+ ' ' + Reflect.setPrototypeOf(o2, o3)"
+                        + "+ ' ' + Reflect.setPrototypeOf(o3, o1)";
+        testString("true true false", js);
+    }
+
+    @Test
+    public void setPrototypeOfSameWithoutHandler() {
+        String js =
+                "var o1 = {};\n"
+                        + "Object.preventExtensions(o1);\n"
+                        + "var o2 = Object.create(null);\n"
+                        + "Object.preventExtensions(o2);\n"
+                        + "var proto = {};\n"
+                        + "var o3 = Object.create(proto);\n"
+                        + "Object.preventExtensions(o3);\n"
+                        + "'' + Reflect.setPrototypeOf(o1, Object.prototype)"
+                        + "+ ' ' + Reflect.setPrototypeOf(o2, null)"
+                        + "+ ' ' + Reflect.setPrototypeOf(o3, proto)";
+        testString("true true true", js);
+    }
+
+    @Test
+    public void typeof() {
+        testString("object", "typeof new Proxy({}, {})");
+        testString("function", "typeof new Proxy(function() {}, {})");
+    }
+
+    @Test
+    public void typeofRevocable() {
+        testString("object", "var rev = Proxy.revocable({}, {}); rev.revoke(); typeof rev.proxy");
+        testString("function", "var rev = Proxy.revocable(function() {}, {}); rev.revoke(); typeof rev.proxy");
+    }
+
+    private static void testString(String expected, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Scriptable scope = cx.initStandardObjects();
+
+                    Object result = cx.evaluateString(scope, js, "test", 1, null);
+                    assertEquals(expected, result);
+
+                    return null;
+                });
+    }
+
+    private static void testDouble(double expected, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Scriptable scope = cx.initStandardObjects();
+
+                    Object result = cx.evaluateString(scope, js, "test", 1, null);
+                    assertEquals(expected, ((Double) result).doubleValue(), 0.00001);
+
+                    return null;
+                });
+    }
+}
