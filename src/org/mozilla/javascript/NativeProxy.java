@@ -11,7 +11,7 @@ package org.mozilla.javascript;
  *
  * @author Ronald Brill
  */
-final class NativeProxy extends IdScriptableObject {
+final class NativeProxy extends IdScriptableObject implements Callable {
     private static final long serialVersionUID = 6676871870513494844L;
 
     private static final Object PROXY_TAG = "Proxy";
@@ -364,6 +364,20 @@ final class NativeProxy extends IdScriptableObject {
         }
 
         target.preventExtensions();
+    }
+
+    @Override
+    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        assertNotRevoked();
+
+        Scriptable argumentsList = cx.newArray(scope, args);
+
+        Callable trap = getTrap(TRAP_APPLY);
+        if (trap != null) {
+            return callTrap(trap, new Object[] {target, thisObj, argumentsList});
+        }
+
+        return ScriptRuntime.applyOrCall(true, cx, scope, target, new Object[] {thisObj, argumentsList});
     }
 
     @Override
