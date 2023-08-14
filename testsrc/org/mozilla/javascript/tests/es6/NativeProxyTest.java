@@ -54,74 +54,98 @@ public class NativeProxyTest {
         testString("TypeError: \"Constructor Proxy\" may only be invoked from a \"new\" expression.", "try { Proxy() } catch(e) { '' + e }");
     }
 
-//
-//    @Test
-//    public void applyWithoutHandler() {
-//        String js = "function sum(a, b) { return a + b; }\n"
-//                + "var proxy1 = new Proxy(sum, {});\n"
-//                + "proxy1(1, 2)";
-//        testDouble(3.0, js);
-//    }
-//
-//    @Test
-//    public void applyDetails() {
-//        String js =
-//                "var o = {};\n"
-//                        + "var count = 0;\n"
-//                        + "var results, args;\n"
-//                        + "function fn() {\n"
-//                        + "  count++;\n"
-//                        + "  results = {\n"
-//                        + "    thisArg: this,\n"
-//                        + "    args: arguments\n"
-//                        + "  };\n"
-//                        + "}\n"
-//                        + "Reflect.apply(fn, o, ['arg1', 2, , null]);\n"
-//                        + "'' + count "
-//                        + "+ ' ' + (results.thisArg === o)"
-//                        + "+ ' ' + results.args.length"
-//                        + "+ ' ' + results.args[0]"
-//                        + "+ ' ' + results.args[1]"
-//                        + "+ ' ' + results.args[2]"
-//                        + "+ ' ' + results.args[3]";
-//        testString("1 true 4 arg1 2 undefined null", js);
-//    }
-//
-//    @Test
-//    public void applyMissingArgs() {
-//        String js =
-//                "try {\n"
-//                        + "  Reflect.apply();\n"
-//                        + "} catch(e) {\n"
-//                        + "  '' + e;\n"
-//                        + "}";
-//        testString(
-//                "TypeError: Reflect.apply: At least 3 arguments required, but only 0 passed", js);
-//    }
-//
-//    @Test
-//    public void applyTargetNotFunction() {
-//        String js =
-//                "try {\n"
-//                        + "  Reflect.apply({}, undefined, [1.75]);\n"
-//                        + "} catch(e) {\n"
-//                        + "  '' + e;\n"
-//                        + "}";
-//        testString("TypeError: [object Object] is not a function, it is object.", js);
-//    }
-//
-//    @Test
-//    public void applyArgumentsListNotFunction() {
-//        String js =
-//                "var s1 = Symbol('1');"
-//                        + "try {\n"
-//                        + "  Reflect.apply(Math.floor, undefined, s1);\n"
-//                        + "} catch(e) {\n"
-//                        + "  '' + e;\n"
-//                        + "}";
-//        testString("TypeError: Expected argument of type object, but instead had type symbol", js);
-//    }
-//
+    @Test
+    public void apply() {
+        String js =
+                "function sum(a, b) {\n"
+                        + "  return a + b;\n"
+                        + "}\n"
+
+                        + "var res = '';\n"
+                        + "var handler = {\n"
+                        + "  apply: function (target, thisArg, argumentsList) {\n"
+                        + "    res += ' ' + `Calculate sum: ${argumentsList}`;\n"
+                        + "    return target(argumentsList[0], argumentsList[1]) * 7;\n"
+                        + "  },\n"
+                        + "};\n"
+
+                        + "var proxy1 = new Proxy(sum, handler);\n"
+                        + "var x = ' ' + proxy1(1, 2);\n"
+                        + "res + x";
+
+        testString(" Calculate sum: 1,2 21", js);
+    }
+
+    @Test
+    public void applyParameters() {
+        String js =
+                "var _target, _args, _handler, _context;\n"
+                        + "var target = function() {\n"
+                        + "  throw new Error('target should not be called');\n"
+                        + "};\n"
+                        + "var handler = {\n"
+                        + "  apply: function(t, c, args) {\n"
+                        + "    _handler = this;\n"
+                        + "    _target = t;\n"
+                        + "    _context = c;\n"
+                        + "    _args = args;\n"
+                        + "  }\n"
+                        + "};\n"
+
+                        + "var p = new Proxy(target, handler);\n"
+                        + "var context = {};\n"
+
+                        + "p.call(context, 1, 4);\n"
+
+                        + "'' + (_handler === handler)\n"
+                        + "+ ' ' + (_target === target)"
+                        + "+ ' ' + (_context === context)"
+                        + "+ ' ' + _args.length + ' ' + _args[0] + ' ' + _args[1]";
+
+        testString("true true true 2 1 4", js);
+    }
+
+    @Test
+    public void applyTrapIsNull() {
+        String js =
+                "var calls = 0;\n"
+                        + "var _context;\n"
+
+                        + "var target = new Proxy(function() {}, {\n"
+                        + "  apply: function(_target, context, args) {\n"
+                        + "    calls++;\n"
+                        + "    _context = context;\n"
+                        + "    return args[0] + args[1];\n"
+                        + "  }\n"
+                        + "})\n"
+
+                        + "var p = new Proxy(target, {\n"
+                        + "  apply: null\n"
+                        + "});\n"
+
+                        + "var context = {};\n"
+                        + "var res = p.call(context, 1, 2);\n"
+
+                        + "'' + calls\n"
+                        + "+ ' ' + (_context === context)"
+                        + "+ ' ' + res";
+
+        testString("1 true 3", js);
+    }
+
+    @Test
+    public void applyWithoutHandler() {
+        String js =
+                "function sum(a, b) {\n"
+                        + "  return a + b;\n"
+                        + "}\n"
+
+                        + "var proxy1 = new Proxy(sum, {});\n"
+                        + "proxy1(1, 2);";
+
+        testDouble(3.0, js);
+    }
+
 //    @Test
 //    public void construct() {
 //        String js =
