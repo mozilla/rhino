@@ -192,7 +192,7 @@ final class NativeProxy extends IdScriptableObject implements Callable {
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
-            return callTrap(trap, new Object[] {target, name});
+            return callTrap(trap, new Object[] {target, name, this});
         }
 
         return ScriptRuntime.getObjectProp(target, name, Context.getContext());
@@ -204,7 +204,7 @@ final class NativeProxy extends IdScriptableObject implements Callable {
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
-            return callTrap(trap, new Object[] {target, index});
+            return callTrap(trap, new Object[] {target, index, this});
         }
         return ScriptRuntime.getObjectIndex(target, index, Context.getContext());
     }
@@ -215,7 +215,7 @@ final class NativeProxy extends IdScriptableObject implements Callable {
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
-            return callTrap(trap, new Object[] {target, key});
+            return callTrap(trap, new Object[] {target, key, this});
         }
 
         if (start == this) {
@@ -367,6 +367,23 @@ final class NativeProxy extends IdScriptableObject implements Callable {
     }
 
     @Override
+    public String getTypeOf() {
+        return typeOf;
+    }
+
+    @Override
+    public Scriptable getPrototype() {
+        assertNotRevoked();
+
+        Callable trap = getTrap(TRAP_GET_PROTOTYPE_OF);
+        if (trap != null) {
+            return (ScriptableObject) callTrap(trap, new Object[] {target});
+        }
+
+        return target.getPrototype();
+    }
+
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         assertNotRevoked();
 
@@ -378,11 +395,6 @@ final class NativeProxy extends IdScriptableObject implements Callable {
         }
 
         return ScriptRuntime.applyOrCall(true, cx, scope, target, new Object[] {thisObj, argumentsList});
-    }
-
-    @Override
-    public String getTypeOf() {
-        return typeOf;
     }
 
     private NativeProxy js_constructor(Context cx, Scriptable scope, Object[] args) {
