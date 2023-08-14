@@ -1145,7 +1145,7 @@ public class NativeArray extends IdScriptableObject implements List {
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
         if (cx.getLanguageVersion() >= Context.VERSION_ES6
-            && (callbackArg instanceof NativeRegExp)) {
+                && (callbackArg instanceof NativeRegExp)) {
             // Previously, it was allowed to pass RegExp instance as a callback (it implements
             // Function)
             // But according to ES2015 21.2.6 Properties of RegExp Instances:
@@ -2066,7 +2066,8 @@ public class NativeArray extends IdScriptableObject implements List {
         return result;
     }
 
-    private static Object js_flat_map(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_flat_map(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
 
