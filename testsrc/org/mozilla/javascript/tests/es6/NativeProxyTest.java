@@ -530,9 +530,7 @@ public class NativeProxyTest {
 
       @Test
       public void getProperty() {
-          String js =
-                  ""
-                  + "var o = {};\n"
+          String js = "var o = {};\n"
                           + "o.p1 = 'value 1';\n"
                           + "var proxy1 = new Proxy(o, { get: function(t, prop) {\n"
                           + "                   return t[prop] + '!';\n"
@@ -547,6 +545,39 @@ public class NativeProxyTest {
                           + "result += ', ' + proxy2.u;\n";
 
         testString("value 1!, foo!, 42, undefined", js);
+    }
+
+      @Test
+      public void getPropertyParameters() {
+          String js = "var _target, _handler, _prop, _receiver;\n"
+                          + "var target = {\n"
+                          + "  attr: 1\n"
+                          + "};\n"
+
+                          + "var handler = {\n"
+                          + "  get: function(t, prop, receiver) {\n"
+                          + "    _handler = this;\n"
+                          + "    _target = t;\n"
+                          + "    _prop = prop;\n"
+                          + "    _receiver = receiver;\n"
+                          + "  }\n"
+                          + "};\n"
+
+                          + "var p = new Proxy(target, handler);\r\n"
+
+                          + "p.attr;\n"
+
+                          + "var res = '' + (_handler === handler)\n"
+                          + "+ ' ' + (_target === target)"
+                          + "+ ' ' + (_prop == 'attr')"
+                          + "+ ' ' + (_receiver === p);"
+
+                          + "_prop = null;\n"
+                          + "p['attr'];\n"
+
+                          + "res + ' ' + (_prop == 'attr')";
+
+        testString("true true true true true", js);
     }
 
     @Test
@@ -625,6 +656,13 @@ public class NativeProxyTest {
     public void typeofRevocable() {
         testString("object", "var rev = Proxy.revocable({}, {}); rev.revoke(); typeof rev.proxy");
         testString("function", "var rev = Proxy.revocable(function() {}, {}); rev.revoke(); typeof rev.proxy");
+    }
+
+    @Test
+    public void revocableGetPrototypeOf() {
+        testString("TypeError: Illegal operation attempted on a revoked proxy",
+                "var rev = Proxy.revocable({}, {}); rev.revoke(); "
+                + "try { Object.getPrototypeOf(rev.proxy); } catch(e) { '' + e }");
     }
 
     private static void testString(String expected, String js) {
