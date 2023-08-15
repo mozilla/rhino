@@ -11,7 +11,7 @@ public class NativeProxyTest {
 
     @Test
     public void testToString() {
-        testString("function Proxy() { [native code for Proxy.Proxy, arity=2] }\n", "Proxy.toString()");
+        testString("function Proxy() {\n\t[native code, arity=2]\n}\n", "Proxy.toString()");
 
         testString("[object Object]", "Object.prototype.toString.call(new Proxy({}, {}))");
         testString("[object Array]", "Object.prototype.toString.call(new Proxy([], {}))");
@@ -51,7 +51,35 @@ public class NativeProxyTest {
 
     @Test
     public void ctorAsFunction() {
-        testString("TypeError: \"Constructor Proxy\" may only be invoked from a \"new\" expression.", "try { Proxy() } catch(e) { '' + e }");
+        testString("TypeError: The constructor for Proxy may not be invoked as a function", "try { Proxy() } catch(e) { '' + e }");
+    }
+
+    @Test
+    public void construct() {
+        String js =
+                "var _target, _handler, _args, _P;\n"
+
+                        + "function Target() {}\n"
+
+                        + "var handler = {\n"
+                        + "  construct: function(t, args, newTarget) {\n"
+                        + "    _handler = this;\n"
+                        + "    _target = t;\n"
+                        + "    _args = args;\n"
+                        + "    _P = newTarget;\n"
+                        + "    return new t(args[0], args[1]);\n"
+                        + "  }\n"
+                        + "};\n"
+
+                        + "var P = new Proxy(Target, handler);\n"
+
+                        + "new P(1, 4);\n"
+                        + "'' + (_handler === handler)\n"
+                        + "+ ' ' + (_target === Target)"
+                        + "+ ' ' + (_P === P)"
+                        + "+ ' ' + _args.length + ' ' + _args[0] + ' ' + _args[1]";
+
+        testString("true true true 2 1 4", js);
     }
 
     @Test
@@ -601,6 +629,18 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void getPrototypeOfNull() {
+        String js =
+                "var plainObjectTarget = new Proxy(Object.create(null), {});\n"
+                + "var plainObjectProxy = new Proxy(plainObjectTarget, {\n"
+                + "  getPrototypeOf: null,\n"
+                + "});\n"
+                + "'' + Object.getPrototypeOf(plainObjectProxy);\n";
+        testString("null", js);
+    }
+
+
+    @Test
     public void setPrototypeOfWithoutHandler() {
         String js =
                 "var o1 = {};\n"
@@ -656,6 +696,13 @@ public class NativeProxyTest {
     public void typeofRevocable() {
         testString("object", "var rev = Proxy.revocable({}, {}); rev.revoke(); typeof rev.proxy");
         testString("function", "var rev = Proxy.revocable(function() {}, {}); rev.revoke(); typeof rev.proxy");
+
+        String js = "var revocableTarget = Proxy.revocable(function() {}, {});\n"
+                    + "revocableTarget.revoke();\n"
+
+                    + "var revocable = Proxy.revocable(revocableTarget.proxy, {});\n"
+                    + "'' + typeof revocable.proxy;\n";
+        testString("function", js);
     }
 
     @Test
