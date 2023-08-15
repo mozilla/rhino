@@ -61,6 +61,10 @@ public class LambdaConstructor extends LambdaFunction {
         this.flags = flags;
     }
 
+    protected Constructable getTargetConstructor() {
+        return targetConstructor;
+    }
+
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {

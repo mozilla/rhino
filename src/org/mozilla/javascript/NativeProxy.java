@@ -11,10 +11,10 @@ package org.mozilla.javascript;
  *
  * @author Ronald Brill
  */
-final class NativeProxy extends IdScriptableObject implements Callable {
+final class NativeProxy extends ScriptableObject implements Callable, Constructable {
     private static final long serialVersionUID = 6676871870513494844L;
 
-    private static final Object PROXY_TAG = "Proxy";
+    private static final String PROXY_TAG = "Proxy";
 
     private static final String TRAP_GET_PROTOTYPE_OF = "getPrototypeOf";
     private static final String TRAP_SET_PROTOTYPE_OF = "setPrototypeOf";
@@ -30,7 +30,6 @@ final class NativeProxy extends IdScriptableObject implements Callable {
     private static final String TRAP_APPLY = "apply";
     private static final String TRAP_CONSTRUCT = "construct";
 
-    private final boolean isCtor;
     private ScriptableObject target;
     private Scriptable handler;
     private final String typeOf;
@@ -54,16 +53,40 @@ final class NativeProxy extends IdScriptableObject implements Callable {
         }
     }
 
-    static void init(Scriptable scope, boolean sealed) {
-        NativeProxy constructor = new NativeProxy(null, null, true);
-        IdFunctionObject ctor = constructor.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
-        ctor.setPrototypeProperty(null);
+
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        PROXY_TAG,
+                        2,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        NativeProxy::constructor) {
+
+            @Override
+            public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+                NativeProxy obj = (NativeProxy) getTargetConstructor().construct(cx, scope, args);
+                // avoid getting trapped
+                obj.setPrototypeDirect(getClassPrototype());
+                obj.setParentScope(scope);
+                return obj;
+            }
+        };
+        // constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        constructor.setPrototypeProperty(null);
+
+        constructor.defineConstructorMethod(
+                scope, "revocable", 2, NativeProxy::revocable, DONTENUM, DONTENUM | READONLY);
+
+        ScriptableObject.defineProperty(scope, PROXY_TAG, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
-    private NativeProxy(ScriptableObject target, Scriptable handler, boolean isCtor) {
+    private NativeProxy(ScriptableObject target, Scriptable handler) {
         this.target = target;
         this.handler = handler;
-        this.isCtor = isCtor;
 
         if (target == null || !(target instanceof Callable)) {
             typeOf = super.getTypeOf();
@@ -75,52 +98,24 @@ final class NativeProxy extends IdScriptableObject implements Callable {
 
     @Override
     public String getClassName() {
-        if (isCtor) {
-            return "Proxy";
-        }
-
         assertNotRevoked();
         return target.getClassName();
     }
 
     @Override
-    protected void initPrototypeId(int id) {
-        if (id <= MAX_PROTOTYPE_ID) {
-            String name;
-            int arity;
-            switch (id) {
-                case Id_constructor:
-                    arity = 2;
-                    name = "constructor";
-                    break;
+    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+        assertNotRevoked();
 
-                default:
-                    throw new IllegalStateException(String.valueOf(id));
+        Callable trap = getTrap(TRAP_CONSTRUCT);
+        if (trap != null) {
+            Object result = callTrap(trap, new Object[] {target, args, this});
+            if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
+                throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
             }
-            initPrototypeMethod(PROXY_TAG, id, name, arity);
-        }
-    }
-
-    @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(PROXY_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
+            return (ScriptableObject) result;
         }
 
-        int methodId = f.methodId();
-        switch (methodId) {
-            case Id_constructor:
-                if (thisObj != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                    throw ScriptRuntime.typeErrorById("msg.only.from.new", getClassName());
-                }
-                return js_constructor(cx, scope, args);
-
-            case ConstructorId_revocable:
-                return js_revocable(cx, scope, args);
-
-            default:
-                throw new IllegalStateException(String.valueOf(methodId));
-        }
+        return ((Constructable) target).construct(cx, scope, args);
     }
 
     @Override
@@ -161,10 +156,6 @@ final class NativeProxy extends IdScriptableObject implements Callable {
 
     @Override
     public Object[] getIds() {
-        if (isCtor) {
-            return super.getIds();
-        }
-
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_OWN_KEYS);
@@ -383,6 +374,23 @@ final class NativeProxy extends IdScriptableObject implements Callable {
         return target.getPrototype();
     }
 
+    private void setPrototypeDirect(Scriptable prototype) {
+        super.setPrototype(prototype);
+    }
+
+    @Override
+    public void setPrototype(Scriptable prototype) {
+        assertNotRevoked();
+
+        Callable trap = getTrap(TRAP_SET_PROTOTYPE_OF);
+        if (trap != null) {
+            callTrap(trap, new Object[] {target, prototype});
+            return;
+        }
+
+        target.setPrototype(prototype);
+    }
+
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         assertNotRevoked();
@@ -397,7 +405,7 @@ final class NativeProxy extends IdScriptableObject implements Callable {
         return ScriptRuntime.applyOrCall(true, cx, scope, target, new Object[] {thisObj, argumentsList});
     }
 
-    private NativeProxy js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -411,14 +419,18 @@ final class NativeProxy extends IdScriptableObject implements Callable {
         s = ScriptRuntime.toObject(cx, scope, args[1]);
         ScriptableObject hndlr = ensureScriptableObject(s);
 
-        NativeProxy proxy = new NativeProxy(trgt, hndlr, false);
-        proxy.setPrototype(ScriptableObject.getClassPrototype(scope, proxy.getClassName()));
+        NativeProxy proxy = new NativeProxy(trgt, hndlr);
+        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(scope, PROXY_TAG));
         proxy.setParentScope(scope);
         return proxy;
     }
 
-    private NativeObject js_revocable(Context cx, Scriptable scope, Object[] args) {
-        NativeProxy proxy = js_constructor(cx, scope, args);
+    // Proxy.revocable
+    private static Object revocable(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+        NativeProxy proxy = constructor(cx, scope, args);
 
         NativeObject revocable = (NativeObject) cx.newObject(scope);
 
@@ -447,33 +459,8 @@ final class NativeProxy extends IdScriptableObject implements Callable {
     }
 
     private void assertNotRevoked() {
-        if (!isCtor && target == null) {
+        if (target == null) {
             throw ScriptRuntime.typeError("Illegal operation attempted on a revoked proxy");
         }
     }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor) {
-        addIdFunctionProperty(ctor, PROXY_TAG, ConstructorId_revocable, "revocable", 2);
-        super.fillConstructorProperties(ctor);
-    }
-
-    private static final int ConstructorId_revocable = -1,
-            Id_constructor = 1,
-            MAX_PROTOTYPE_ID = Id_constructor;
 }

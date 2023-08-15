@@ -287,7 +287,7 @@ public class ScriptRuntime {
             NativeWeakSet.init(scope, sealed);
             NativeBigInt.init(scope, sealed);
 
-            NativeProxy.init(scope, sealed);
+            NativeProxy.init(cx, scope, sealed);
             NativeReflect.init(scope, sealed);
         }
 
@@ -2683,10 +2683,10 @@ public class ScriptRuntime {
      * <p>See ECMA 11.2.2
      */
     public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-        if (!(fun instanceof Function)) {
+        if (!(fun instanceof Constructable)) {
             throw notFunctionError(fun);
         }
-        Function function = (Function) fun;
+        Constructable function = (Constructable) fun;
         return function.construct(cx, scope, args);
     }
 
