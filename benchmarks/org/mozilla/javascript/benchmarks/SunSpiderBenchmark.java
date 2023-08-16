@@ -11,6 +11,10 @@ import org.openjdk.jmh.annotations.*;
 public class SunSpiderBenchmark {
     private static final String TEST_BASE = "testsrc/benchmarks/sunspider-1.0/";
 
+    private static final int WARMUP_RUNS = 3;
+    private static final int MEASUREMENT_RUNS = 3;
+    private static final int DURATION_SECONDS = 5;
+
     abstract static class AbstractState {
         Context cx;
         Scriptable scope;
@@ -53,8 +57,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object threeDCube(ThreeDCubeState state) {
             return state.run();
         }
@@ -68,8 +75,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object threeDMorph(ThreeDMorphState state) {
             return state.run();
         }
@@ -83,8 +93,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object threeDRayTrace(ThreeDRayState state) {
             return state.run();
         }
@@ -98,8 +111,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object accessBinaryTrees(AccessBinaryTreesState state) {
             return state.run();
         }
@@ -113,8 +129,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object accessFannkuch(AccessFannkuchState state) {
             return state.run();
         }
@@ -128,8 +147,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object accessNBody(AccessNBodyState state) {
             return state.run();
         }
@@ -143,8 +165,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object accessNsieve(AccessFannAccessNsieveState state) {
             return state.run();
         }
@@ -158,8 +183,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object bitops3BitBitsInByte(Bitops3BitState state) {
             return state.run();
         }
@@ -173,8 +201,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object bitopsBitsInByte(BitopsBitsState state) {
             return state.run();
         }
@@ -188,8 +219,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object bitopsBitwiseAnd(BitopsAndState state) {
             return state.run();
         }
@@ -203,8 +237,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object bitopsNsieveBits(BitopsNsieveState state) {
             return state.run();
         }
@@ -218,8 +255,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object controlflowRecursive(RecursiveState state) {
             return state.run();
         }
@@ -233,8 +273,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object cryptoAes(CryptoAesState state) {
             return state.run();
         }
@@ -248,8 +291,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object cryptoMd5(CryptoMd5State state) {
             return state.run();
         }
@@ -263,8 +309,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object cryptoSha1(CryptoShaState state) {
             return state.run();
         }
@@ -278,8 +327,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object dateFormatToFte(DateFormatToFteState state) {
             return state.run();
         }
@@ -293,8 +345,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object dateFormatXparb(DateFormatXparbState state) {
             return state.run();
         }
@@ -308,8 +363,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object mathCordic(MathCordicState state) {
             return state.run();
         }
@@ -323,8 +381,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object mathPartialSums(MathPartialState state) {
             return state.run();
         }
@@ -338,8 +399,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object mathSpectralNorm(MathSpectralNormState state) {
             return state.run();
         }
@@ -353,8 +417,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object regexpDna(RegexpState state) {
             return state.run();
         }
@@ -368,8 +435,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object stringBase64(StringBase64State state) {
             return state.run();
         }
@@ -383,8 +453,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object stringFasta(StringFastaState state) {
             return state.run();
         }
@@ -398,8 +471,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object stringTagcloud(StringTagcloudState state) {
             return state.run();
         }
@@ -413,8 +489,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object stringUnpackCode(StringUnpackState state) {
             return state.run();
         }
@@ -428,8 +507,11 @@ public class SunSpiderBenchmark {
 
         @Benchmark
         @OutputTimeUnit(TimeUnit.MILLISECONDS)
-        @Warmup(iterations = 2, time = 2, timeUnit = TimeUnit.SECONDS)
-        @Measurement(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+        @Warmup(iterations = WARMUP_RUNS, time = DURATION_SECONDS, timeUnit = TimeUnit.SECONDS)
+        @Measurement(
+                iterations = MEASUREMENT_RUNS,
+                time = DURATION_SECONDS,
+                timeUnit = TimeUnit.SECONDS)
         public Object stringValidateInput(StringValidateState state) {
             return state.run();
         }
