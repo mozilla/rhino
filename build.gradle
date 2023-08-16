@@ -443,7 +443,7 @@ spotbugs {
 
 spotless {
     java {
-        googleJavaFormat().aosp()
+        googleJavaFormat('1.11.0').aosp()
     }
 }
 
