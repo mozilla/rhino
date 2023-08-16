@@ -158,9 +158,7 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
 
-    /**
-     * @deprecated In previous releases, this name was given to FEATURE_PARENT_PROTO_PROPERTIES.
-     */
+    /** @deprecated In previous releases, this name was given to FEATURE_PARENT_PROTO_PROPERTIES. */
     @Deprecated public static final int FEATURE_PARENT_PROTO_PROPRTIES = 5;
 
     /**
@@ -949,36 +947,28 @@ public class Context implements Closeable {
         return reportRuntimeError(msg);
     }
 
-    /**
-     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
-     */
+    /** @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead */
     @Deprecated
     static EvaluatorException reportRuntimeError0(String messageId) {
         String msg = ScriptRuntime.getMessageById(messageId);
         return reportRuntimeError(msg);
     }
 
-    /**
-     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
-     */
+    /** @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead */
     @Deprecated
     static EvaluatorException reportRuntimeError1(String messageId, Object arg1) {
         String msg = ScriptRuntime.getMessageById(messageId, arg1);
         return reportRuntimeError(msg);
     }
 
-    /**
-     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
-     */
+    /** @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead */
     @Deprecated
     static EvaluatorException reportRuntimeError2(String messageId, Object arg1, Object arg2) {
         String msg = ScriptRuntime.getMessageById(messageId, arg1, arg2);
         return reportRuntimeError(msg);
     }
 
-    /**
-     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
-     */
+    /** @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead */
     @Deprecated
     static EvaluatorException reportRuntimeError3(
             String messageId, Object arg1, Object arg2, Object arg3) {
@@ -986,9 +976,7 @@ public class Context implements Closeable {
         return reportRuntimeError(msg);
     }
 
-    /**
-     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
-     */
+    /** @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead */
     @Deprecated
     static EvaluatorException reportRuntimeError4(
             String messageId, Object arg1, Object arg2, Object arg3, Object arg4) {

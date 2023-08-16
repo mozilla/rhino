@@ -22,9 +22,7 @@ public class TypedArrayJavaTest {
         allTypes(script, "1,2");
     }
 
-    /**
-     * @throws Exception if test failed
-     */
+    /** @throws Exception if test failed */
     @Test
     public void subarrayFromSubarray() throws Exception {
         subarrayFromSubarray(0, 7, 0, 6, "1,2,3,4,5,6,7 - 1,2,3,4,5,6");

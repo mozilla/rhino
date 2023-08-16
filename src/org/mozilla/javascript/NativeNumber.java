@@ -16,9 +16,7 @@ package org.mozilla.javascript;
 final class NativeNumber extends IdScriptableObject {
     private static final long serialVersionUID = 3504516769741512101L;
 
-    /**
-     * @see https://www.ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer
-     */
+    /** @see https://www.ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer */
     public static final double MAX_SAFE_INTEGER = 9007199254740991.0; // Math.pow(2, 53) - 1
 
     private static final Object NUMBER_TAG = "Number";

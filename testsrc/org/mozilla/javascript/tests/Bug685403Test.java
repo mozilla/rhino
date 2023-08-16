@@ -17,9 +17,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- * @author André Bargull
- */
+/** @author André Bargull */
 public class Bug685403Test {
 
     private Context cx;

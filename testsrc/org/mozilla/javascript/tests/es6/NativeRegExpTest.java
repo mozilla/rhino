@@ -15,9 +15,7 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
-/**
- * @author Ronald Brill
- */
+/** @author Ronald Brill */
 public class NativeRegExpTest {
 
     @Test

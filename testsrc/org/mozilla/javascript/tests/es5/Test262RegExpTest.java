@@ -15,9 +15,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- * @author André Bargull
- */
+/** @author André Bargull */
 public class Test262RegExpTest {
     private Context cx;
     private ScriptableObject scope;

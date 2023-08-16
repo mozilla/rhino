@@ -13,9 +13,7 @@ import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- * @author hatanaka
- */
+/** @author hatanaka */
 public class WrapFactoryTest {
     /** javascript code */
     private static String script =

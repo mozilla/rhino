@@ -90,24 +90,18 @@ public class JavaScriptException extends RhinoException {
         }
     }
 
-    /**
-     * @return the value wrapped by this exception
-     */
+    /** @return the value wrapped by this exception */
     public Object getValue() {
         return value;
     }
 
-    /**
-     * @deprecated Use {@link RhinoException#sourceName()} from the super class.
-     */
+    /** @deprecated Use {@link RhinoException#sourceName()} from the super class. */
     @Deprecated
     public String getSourceName() {
         return sourceName();
     }
 
-    /**
-     * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
-     */
+    /** @deprecated Use {@link RhinoException#lineNumber()} from the super class. */
     @Deprecated
     public int getLineNumber() {
         return lineNumber();

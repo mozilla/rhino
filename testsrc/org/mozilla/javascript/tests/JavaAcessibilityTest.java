@@ -18,9 +18,7 @@ import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
-/**
- * @author donnamalayeri
- */
+/** @author donnamalayeri */
 public class JavaAcessibilityTest {
 
     protected final Global global = new Global();

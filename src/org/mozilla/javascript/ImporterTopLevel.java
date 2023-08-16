@@ -138,9 +138,7 @@ public class ImporterTopLevel extends TopLevel {
         return null;
     }
 
-    /**
-     * @deprecated Kept only for compatibility.
-     */
+    /** @deprecated Kept only for compatibility. */
     @Deprecated
     public void importPackage(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         js_importPackage(this, args);

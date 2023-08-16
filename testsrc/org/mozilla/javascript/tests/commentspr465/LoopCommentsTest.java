@@ -12,9 +12,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.WhileLoop;
 import org.mozilla.javascript.ast.WithStatement;
 
-/**
- * @author ravik @@since 08/08/18 2:31 PM
- */
+/** @author ravik @@since 08/08/18 2:31 PM */
 public class LoopCommentsTest {
 
     @Test

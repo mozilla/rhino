@@ -53,9 +53,7 @@ public class ContinuationPending extends RuntimeException {
         this.continuationState = continuation;
     }
 
-    /**
-     * @return internal continuation state
-     */
+    /** @return internal continuation state */
     NativeContinuation getContinuationState() {
         return continuationState;
     }
@@ -70,9 +68,7 @@ public class ContinuationPending extends RuntimeException {
         this.applicationState = applicationState;
     }
 
-    /**
-     * @return arbitrary application state
-     */
+    /** @return arbitrary application state */
     public Object getApplicationState() {
         return applicationState;
     }

@@ -22,17 +22,13 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class WriteReadOnlyPropertyTest {
 
-    /**
-     * @throws Exception if the test fails
-     */
+    /** @throws Exception if the test fails */
     @Test
     public void writeReadOnly_accepted() throws Exception {
         testWriteReadOnly(true);
     }
 
-    /**
-     * @throws Exception if the test fails
-     */
+    /** @throws Exception if the test fails */
     @Test
     public void writeReadOnly_throws() throws Exception {
         try {

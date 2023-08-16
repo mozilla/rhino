@@ -148,9 +148,7 @@ public class WrapFactory {
         return javaPrimitiveWrap;
     }
 
-    /**
-     * @see #isJavaPrimitiveWrap()
-     */
+    /** @see #isJavaPrimitiveWrap() */
     public final void setJavaPrimitiveWrap(boolean value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.isSealed()) {

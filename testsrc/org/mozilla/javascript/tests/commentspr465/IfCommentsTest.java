@@ -9,9 +9,7 @@ import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.IfStatement;
 
-/**
- * @author ravik @@since 08/08/18 12:01 PM
- */
+/** @author ravik @@since 08/08/18 12:01 PM */
 public class IfCommentsTest {
 
     @Test
