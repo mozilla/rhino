@@ -21,7 +21,9 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public abstract class ShellConsole {
 
     private static final Class[] NO_ARG = {};

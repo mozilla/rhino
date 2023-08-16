@@ -442,7 +442,9 @@ public class Test262SuiteTest {
     private final Test262Case testCase;
     private final boolean markedAsFailing;
 
-    /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
+    /**
+     * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
+     */
     public static class $262 {
         private ScriptableObject scope;
 

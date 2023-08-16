@@ -14,7 +14,9 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug783797Test {
 
     private interface Action {

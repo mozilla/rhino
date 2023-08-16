@@ -1192,7 +1192,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    /** @param scope the scope that should be used to resolve primitive prototype */
+    /**
+     * @param scope the scope that should be used to resolve primitive prototype
+     */
     public static Scriptable toObjectOrNull(Context cx, Object obj, Scriptable scope) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
@@ -1202,7 +1204,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    /** @deprecated Use {@link #toObject(Scriptable, Object)} instead. */
+    /**
+     * @deprecated Use {@link #toObject(Scriptable, Object)} instead.
+     */
     @Deprecated
     public static Scriptable toObject(Scriptable scope, Object val, Class<?> staticClass) {
         if (val instanceof Scriptable) {
@@ -1266,14 +1270,18 @@ public class ScriptRuntime {
         throw errorWithClassName("msg.invalid.type", val);
     }
 
-    /** @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead. */
+    /**
+     * @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead.
+     */
     @Deprecated
     public static Scriptable toObject(
             Context cx, Scriptable scope, Object val, Class<?> staticClass) {
         return toObject(cx, scope, val);
     }
 
-    /** @deprecated The method is only present for compatibility. */
+    /**
+     * @deprecated The method is only present for compatibility.
+     */
     @Deprecated
     public static Object call(
             Context cx, Object fun, Object thisArg, Object[] args, Scriptable scope) {
@@ -1686,7 +1694,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #getObjectPropNoWarn(Object, String, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #getObjectPropNoWarn(Object, String, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Object getObjectPropNoWarn(Object obj, String property, Context cx) {
         return getObjectPropNoWarn(obj, property, cx, getTopCallScope(cx));
@@ -1876,7 +1886,9 @@ public class ScriptRuntime {
         return ref.get(cx);
     }
 
-    /** @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Object refSet(Ref ref, Object value, Context cx) {
         return refSet(ref, value, cx, getTopCallScope(cx));
@@ -1894,7 +1906,9 @@ public class ScriptRuntime {
         return s.equals("__proto__") || s.equals("__parent__");
     }
 
-    /** @deprecated Use {@link #specialRef(Object, String, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #specialRef(Object, String, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Ref specialRef(Object obj, String specialProperty, Context cx) {
         return specialRef(obj, specialProperty, cx, getTopCallScope(cx));
@@ -1904,7 +1918,9 @@ public class ScriptRuntime {
         return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
     }
 
-    /** @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead */
+    /**
+     * @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead
+     */
     @Deprecated
     public static Object delete(Object obj, Object id, Context cx) {
         return delete(obj, id, cx, false);
@@ -2229,7 +2245,9 @@ public class ScriptRuntime {
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
     public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
-    /** @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object enumInit(Object value, Context cx, int enumType) {
         return enumInit(value, cx, getTopCallScope(cx), enumType);
@@ -2295,7 +2313,9 @@ public class ScriptRuntime {
         ((IdEnumeration) enumObj).enumNumbers = enumNumbers;
     }
 
-    /** @deprecated since 1.7.15. Use {@link #enumNext(Context, Object)} instead */
+    /**
+     * @deprecated since 1.7.15. Use {@link #enumNext(Context, Object)} instead
+     */
     @Deprecated
     public static Boolean enumNext(Object enumObj) {
         return enumNext(enumObj, Context.getContext());
@@ -2773,7 +2793,9 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    /** @return true if the passed in Scriptable looks like an array */
+    /**
+     * @return true if the passed in Scriptable looks like an array
+     */
     private static boolean isArrayLike(Scriptable obj) {
         return obj != null
                 && (obj instanceof NativeArray
@@ -3168,7 +3190,9 @@ public class ScriptRuntime {
         return doScriptableIncrDecr(target, id, scopeChain, value, incrDecrMask);
     }
 
-    /** @deprecated Use {@link #propIncrDecr(Object, String, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #propIncrDecr(Object, String, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object propIncrDecr(Object obj, String id, Context cx, int incrDecrMask) {
         return propIncrDecr(obj, id, cx, getTopCallScope(cx), incrDecrMask);
@@ -3235,7 +3259,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object elemIncrDecr(Object obj, Object index, Context cx, int incrDecrMask) {
         return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
@@ -3275,7 +3301,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object refIncrDecr(Ref ref, Context cx, int incrDecrMask) {
         return refIncrDecr(ref, cx, getTopCallScope(cx), incrDecrMask);
@@ -4472,34 +4500,44 @@ public class ScriptRuntime {
         }
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage0(String messageId) {
         return getMessage(messageId, null);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage1(String messageId, Object arg1) {
         Object[] arguments = {arg1};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage2(String messageId, Object arg1, Object arg2) {
         Object[] arguments = {arg1, arg2};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage3(String messageId, Object arg1, Object arg2, Object arg3) {
         Object[] arguments = {arg1, arg2, arg3};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage4(
             String messageId, Object arg1, Object arg2, Object arg3, Object arg4) {
@@ -4527,7 +4565,9 @@ public class ScriptRuntime {
 
     public static final MessageProvider messageProvider = new DefaultMessageProvider();
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage(String messageId, Object[] arguments) {
         return messageProvider.getMessage(messageId, arguments);
@@ -4613,28 +4653,36 @@ public class ScriptRuntime {
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError0(String messageId) {
         String msg = getMessage0(messageId);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError1(String messageId, Object arg1) {
         String msg = getMessage1(messageId, arg1);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError2(String messageId, Object arg1, Object arg2) {
         String msg = getMessage2(messageId, arg1, arg2);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError3(String messageId, String arg1, String arg2, String arg3) {
         String msg = getMessage3(messageId, arg1, arg2, arg3);

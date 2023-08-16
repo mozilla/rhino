@@ -671,7 +671,9 @@ class XmlNode implements Serializable {
             return rv;
         }
 
-        /** @deprecated */
+        /**
+         * @deprecated
+         */
         @Deprecated
         static QName create(String uri, String localName, String prefix) {
             return create(Namespace.create(prefix, uri), localName);

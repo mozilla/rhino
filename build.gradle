@@ -7,7 +7,7 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.diffplug.spotless' version "5.17.1"
+    id 'com.diffplug.spotless' version "6.13.0"
     id 'com.github.spotbugs' version "4.7.1"
 }
 
@@ -443,7 +443,7 @@ spotbugs {
 
 spotless {
     java {
-        googleJavaFormat('1.11.0').aosp()
+        googleJavaFormat().aosp()
     }
 }
 

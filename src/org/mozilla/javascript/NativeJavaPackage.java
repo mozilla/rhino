@@ -30,13 +30,17 @@ public class NativeJavaPackage extends ScriptableObject {
         this.classLoader = classLoader;
     }
 
-    /** @deprecated NativeJavaPackage is an internal class, do not use it directly. */
+    /**
+     * @deprecated NativeJavaPackage is an internal class, do not use it directly.
+     */
     @Deprecated
     public NativeJavaPackage(String packageName, ClassLoader classLoader) {
         this(false, packageName, classLoader);
     }
 
-    /** @deprecated NativeJavaPackage is an internal class, do not use it directly. */
+    /**
+     * @deprecated NativeJavaPackage is an internal class, do not use it directly.
+     */
     @Deprecated
     public NativeJavaPackage(String packageName) {
         this(false, packageName, Context.getCurrentContext().getApplicationClassLoader());
