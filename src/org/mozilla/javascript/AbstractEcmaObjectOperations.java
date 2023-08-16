@@ -1,5 +1,9 @@
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Abstract Object Operations as defined by EcmaScript
  *
@@ -231,5 +235,47 @@ class AbstractEcmaObjectOperations {
         } else {
             base.put(p, o, v);
         }
+    }
+
+    /**
+     * CreateListFromArrayLike ( obj [ , elementTypes ] )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-createlistfromarraylike
+     */
+    static List<Object> createListFromArrayLike(Context cx, Scriptable o, String[] elementTypes) {
+        if (elementTypes == null ) {
+            elementTypes = new String[] {"Undefined", "Null", "Boolean", "String", "Symbol", "Number", "BigInt", "Scriptable"};
+        }
+
+        ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
+        if (obj instanceof NativeArray) {
+            return Arrays.asList(((NativeArray) obj).toArray());
+        }
+
+        long len = lengthOfArrayLike(cx, obj);
+        List<Object> list = new ArrayList<>();
+        long index = 0;
+        while (index < len) {
+            String indexName = ScriptRuntime.toString(index);
+            Object next = ScriptableObject.getProperty(obj, (int) index);
+            // ToDo use provided types
+            if (next instanceof NativeString
+                    || ScriptRuntime.isSymbol(next)) {
+                list.add(next);
+            }
+            index++;
+        }
+        return list;
+    }
+
+    /**
+     * LengthOfArrayLike ( obj )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-lengthofarraylike
+     */
+    static long lengthOfArrayLike(Context cx, Scriptable o) {
+        Object value = ScriptableObject.getProperty(o, "length");
+        long len = ScriptRuntime.toLength(new Object[] {value}, 0);
+        return len;
     }
 }
