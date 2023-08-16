@@ -14,20 +14,34 @@ import java.util.List;
  *
  * @author Ronald Brill
  */
-final class NativeReflect extends IdScriptableObject {
+final class NativeReflect extends ScriptableObject {
     private static final long serialVersionUID = 2920773905356325445L;
 
-    private static final Object REFLECT_TAG = "Reflect";
+    private static final String REFLECT_TAG = "Reflect";
 
-    static void init(Scriptable scope, boolean sealed) {
-        NativeReflect obj = new NativeReflect();
-        obj.activatePrototypeMap(LAST_METHOD_ID);
-        obj.setPrototype(getObjectPrototype(scope));
-        obj.setParentScope(scope);
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
+        NativeReflect reflect = new NativeReflect();
+        reflect.setPrototype(getObjectPrototype(scope));
+        reflect.setParentScope(scope);
         if (sealed) {
-            obj.sealObject();
+            reflect.sealObject();
         }
-        ScriptableObject.defineProperty(scope, "Reflect", obj, ScriptableObject.DONTENUM);
+
+        reflect.defineProperty(scope, "apply", 3, NativeReflect::apply, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "construct", 2, NativeReflect::construct, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "defineProperty", 3, NativeReflect::defineProperty, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "deleteProperty", 2, NativeReflect::deleteProperty, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "get", 2, NativeReflect::get, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "getOwnPropertyDescriptor", 2, NativeReflect::getOwnPropertyDescriptor, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "getPrototypeOf", 1, NativeReflect::getPrototypeOf, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "has", 2, NativeReflect::has, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "isExtensible", 1, NativeReflect::isExtensible, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "ownKeys", 1, NativeReflect::ownKeys, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "preventExtensions", 1, NativeReflect::preventExtensions, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "set", 3, NativeReflect::set, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(scope, "setPrototypeOf", 2, NativeReflect::setPrototypeOf, DONTENUM, DONTENUM | READONLY);
+
+        ScriptableObject.defineProperty(scope, REFLECT_TAG, reflect, DONTENUM);
     }
 
     private NativeReflect() {}
@@ -37,120 +51,27 @@ final class NativeReflect extends IdScriptableObject {
         return "Reflect";
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        if (id <= LAST_METHOD_ID) {
-            String name;
-            int arity;
-            switch (id) {
-                case Id_toSource:
-                    arity = 0;
-                    name = "toSource";
-                    break;
-                case Id_apply:
-                    arity = 3;
-                    name = "apply";
-                    break;
-                case Id_construct:
-                    arity = 2;
-                    name = "construct";
-                    break;
-                case Id_defineProperty:
-                    arity = 3;
-                    name = "defineProperty";
-                    break;
-                case Id_deleteProperty:
-                    arity = 2;
-                    name = "deleteProperty";
-                    break;
-                case Id_get:
-                    arity = 2;
-                    name = "get";
-                    break;
-                case Id_getOwnPropertyDescriptor:
-                    arity = 2;
-                    name = "getOwnPropertyDescriptor";
-                    break;
-                case Id_getPrototypeOf:
-                    arity = 1;
-                    name = "getPrototypeOf";
-                    break;
-                case Id_has:
-                    arity = 2;
-                    name = "has";
-                    break;
-                case Id_isExtensible:
-                    arity = 1;
-                    name = "isExtensible";
-                    break;
-                case Id_ownKeys:
-                    arity = 1;
-                    name = "ownKeys";
-                    break;
-                case Id_preventExtensions:
-                    arity = 1;
-                    name = "preventExtensions";
-                    break;
-                case Id_set:
-                    arity = 3;
-                    name = "set";
-                    break;
-                case Id_setPrototypeOf:
-                    arity = 2;
-                    name = "setPrototypeOf";
-                    break;
-                default:
-                    throw new IllegalStateException(String.valueOf(id));
-            }
-            initPrototypeMethod(REFLECT_TAG, id, name, arity);
+    private static NativeReflect constructor(Context cx, Scriptable scope, Object[] args) {
+        if (args.length < 2) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.method.missing.parameter",
+                    "Proxy.ctor",
+                    "2",
+                    Integer.toString(args.length));
         }
+        Scriptable s = ScriptRuntime.toObject(cx, scope, args[0]);
+        ScriptableObject trgt = ensureScriptableObject(s);
+
+        s = ScriptRuntime.toObject(cx, scope, args[1]);
+        ScriptableObject hndlr = ensureScriptableObject(s);
+
+        NativeReflect reflect = new NativeReflect();
+        reflect.setPrototype(ScriptableObject.getClassPrototype(scope, REFLECT_TAG));
+        reflect.setParentScope(scope);
+        return reflect;
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(REFLECT_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-
-        int methodId = f.methodId();
-        switch (methodId) {
-            case Id_toSource:
-                return "Reflect";
-
-            case Id_apply:
-                return js_apply(cx, scope, args);
-            case Id_construct:
-                return js_construct(cx, scope, args);
-            case Id_defineProperty:
-                return js_defineProperty(cx, args);
-            case Id_deleteProperty:
-                return js_deleteProperty(args);
-            case Id_get:
-                return js_get(args);
-            case Id_getOwnPropertyDescriptor:
-                return js_getOwnPropertyDescriptor(cx, args);
-            case Id_getPrototypeOf:
-                return js_getPrototypeOf(args);
-            case Id_has:
-                return js_has(args);
-            case Id_isExtensible:
-                return js_isExtensible(args);
-            case Id_ownKeys:
-                return js_ownKeys(cx, scope, args);
-            case Id_preventExtensions:
-                return js_preventExtensions(args);
-            case Id_set:
-                return js_set(args);
-            case Id_setPrototypeOf:
-                return js_setPrototypeOf(args);
-
-            default:
-                throw new IllegalStateException(String.valueOf(methodId));
-        }
-    }
-
-    private static Object js_apply(Context cx, Scriptable scope, Object[] args) {
+    private static Object apply(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -161,7 +82,6 @@ final class NativeReflect extends IdScriptableObject {
 
         Scriptable callable = ScriptableObject.ensureScriptable(args[0]);
 
-        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
         if (args[1] instanceof Scriptable) {
             thisObj = (Scriptable) args[1];
         }
@@ -175,7 +95,7 @@ final class NativeReflect extends IdScriptableObject {
                 true, cx, scope, callable, new Object[] {thisObj, argumentsList});
     }
 
-    private static Scriptable js_construct(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable construct(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -201,7 +121,7 @@ final class NativeReflect extends IdScriptableObject {
         return ctor.construct(cx, scope, callArgs);
     }
 
-    private static boolean js_defineProperty(Context cx, Object[] args) {
+    private static Object defineProperty(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -221,20 +141,20 @@ final class NativeReflect extends IdScriptableObject {
         }
     }
 
-    private static boolean js_deleteProperty(Object[] args) {
+    private static Object deleteProperty(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
                 return ScriptableObject.deleteProperty(target, (Symbol) args[1]);
             }
-
             return ScriptableObject.deleteProperty(target, ScriptRuntime.toString(args[1]));
         }
+
         return false;
     }
 
-    private static Object js_get(Object[] args) {
+    private static Object get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -253,7 +173,7 @@ final class NativeReflect extends IdScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
-    private static Scriptable js_getOwnPropertyDescriptor(Context cx, Object[] args) {
+    private static Scriptable getOwnPropertyDescriptor(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -269,13 +189,13 @@ final class NativeReflect extends IdScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
-    private static Scriptable js_getPrototypeOf(Object[] args) {
+    private static Scriptable getPrototypeOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         return target.getPrototype();
     }
 
-    private static boolean js_has(Object[] args) {
+    private static Object has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -288,12 +208,12 @@ final class NativeReflect extends IdScriptableObject {
         return false;
     }
 
-    private static boolean js_isExtensible(Object[] args) {
+    private static Object isExtensible(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
         return target.isExtensible();
     }
 
-    private static Scriptable js_ownKeys(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable ownKeys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
@@ -314,14 +234,14 @@ final class NativeReflect extends IdScriptableObject {
         return cx.newArray(scope, keys);
     }
 
-    private static boolean js_preventExtensions(Object[] args) {
+    private static Object preventExtensions(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         target.preventExtensions();
         return true;
     }
 
-    private static boolean js_set(Object[] args) {
+    private static Object set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -340,7 +260,7 @@ final class NativeReflect extends IdScriptableObject {
         return false;
     }
 
-    private static boolean js_setPrototypeOf(Object[] args) {
+    private static Object setPrototypeOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -399,73 +319,15 @@ final class NativeReflect extends IdScriptableObject {
         return ScriptableObject.ensureScriptableObject(args[0]);
     }
 
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "apply":
-                id = Id_apply;
-                break;
-            case "construct":
-                id = Id_construct;
-                break;
-            case "defineProperty":
-                id = Id_defineProperty;
-                break;
-            case "deleteProperty":
-                id = Id_deleteProperty;
-                break;
-            case "get":
-                id = Id_get;
-                break;
-            case "getOwnPropertyDescriptor":
-                id = Id_getOwnPropertyDescriptor;
-                break;
-            case "getPrototypeOf":
-                id = Id_getPrototypeOf;
-                break;
-            case "has":
-                id = Id_has;
-                break;
-            case "isExtensible":
-                id = Id_isExtensible;
-                break;
-            case "ownKeys":
-                id = Id_ownKeys;
-                break;
-            case "preventExtensions":
-                id = Id_preventExtensions;
-                break;
-            case "set":
-                id = Id_set;
-                break;
-            case "setPrototypeOf":
-                id = Id_setPrototypeOf;
-                break;
-
-            default:
-                id = 0;
-                break;
-        }
-        return id;
+    private void defineProperty(
+            Scriptable scope,
+            String name,
+            int length,
+            Callable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        defineProperty(name, f, attributes);
     }
-
-    private static final int Id_toSource = 1,
-            Id_apply = 2,
-            Id_construct = 3,
-            Id_defineProperty = 4,
-            Id_deleteProperty = 5,
-            Id_get = 6,
-            Id_getOwnPropertyDescriptor = 7,
-            Id_getPrototypeOf = 8,
-            Id_has = 9,
-            Id_isExtensible = 10,
-            Id_ownKeys = 11,
-            Id_preventExtensions = 12,
-            Id_set = 13,
-            Id_setPrototypeOf = 14,
-            LAST_METHOD_ID = Id_setPrototypeOf;
 }

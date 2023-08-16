@@ -289,7 +289,7 @@ public class ScriptRuntime {
             NativeBigInt.init(scope, sealed);
 
             NativeProxy.init(cx, scope, sealed);
-            NativeReflect.init(scope, sealed);
+            NativeReflect.init(cx, scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
@@ -2814,7 +2814,7 @@ public class ScriptRuntime {
     }
 
     /** @return true if the passed in Scriptable looks like an array */
-    private static boolean isArrayLike(Scriptable obj) {
+    public static boolean isArrayLike(Scriptable obj) {
         return obj != null
                 && (obj instanceof NativeArray
                         || obj instanceof Arguments
