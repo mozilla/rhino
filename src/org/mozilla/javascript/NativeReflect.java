@@ -23,25 +23,70 @@ final class NativeReflect extends ScriptableObject {
         NativeReflect reflect = new NativeReflect();
         reflect.setPrototype(getObjectPrototype(scope));
         reflect.setParentScope(scope);
+
+        reflect.defineProperty(
+                scope, "apply", 3, NativeReflect::apply, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope, "construct", 2, NativeReflect::construct, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "defineProperty",
+                3,
+                NativeReflect::defineProperty,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "deleteProperty",
+                2,
+                NativeReflect::deleteProperty,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(scope, "get", 2, NativeReflect::get, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "getOwnPropertyDescriptor",
+                2,
+                NativeReflect::getOwnPropertyDescriptor,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "getPrototypeOf",
+                1,
+                NativeReflect::getPrototypeOf,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(scope, "has", 2, NativeReflect::has, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "isExtensible",
+                1,
+                NativeReflect::isExtensible,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope, "ownKeys", 1, NativeReflect::ownKeys, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "preventExtensions",
+                1,
+                NativeReflect::preventExtensions,
+                DONTENUM,
+                DONTENUM | READONLY);
+        reflect.defineProperty(scope, "set", 3, NativeReflect::set, DONTENUM, DONTENUM | READONLY);
+        reflect.defineProperty(
+                scope,
+                "setPrototypeOf",
+                2,
+                NativeReflect::setPrototypeOf,
+                DONTENUM,
+                DONTENUM | READONLY);
+
+        ScriptableObject.defineProperty(scope, REFLECT_TAG, reflect, DONTENUM);
         if (sealed) {
             reflect.sealObject();
         }
-
-        reflect.defineProperty(scope, "apply", 3, NativeReflect::apply, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "construct", 2, NativeReflect::construct, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "defineProperty", 3, NativeReflect::defineProperty, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "deleteProperty", 2, NativeReflect::deleteProperty, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "get", 2, NativeReflect::get, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "getOwnPropertyDescriptor", 2, NativeReflect::getOwnPropertyDescriptor, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "getPrototypeOf", 1, NativeReflect::getPrototypeOf, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "has", 2, NativeReflect::has, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "isExtensible", 1, NativeReflect::isExtensible, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "ownKeys", 1, NativeReflect::ownKeys, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "preventExtensions", 1, NativeReflect::preventExtensions, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "set", 3, NativeReflect::set, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(scope, "setPrototypeOf", 2, NativeReflect::setPrototypeOf, DONTENUM, DONTENUM | READONLY);
-
-        ScriptableObject.defineProperty(scope, REFLECT_TAG, reflect, DONTENUM);
     }
 
     private NativeReflect() {}
@@ -95,7 +140,8 @@ final class NativeReflect extends ScriptableObject {
                 true, cx, scope, callable, new Object[] {thisObj, argumentsList});
     }
 
-    private static Scriptable construct(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable construct(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -104,11 +150,11 @@ final class NativeReflect extends ScriptableObject {
                     Integer.toString(args.length));
         }
 
-        if (!(args[0] instanceof Function)) {
+        if (!(args[0] instanceof Constructable)) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[0]));
         }
 
-        Function ctor = (Function) args[0];
+        Constructable ctor = (Constructable) args[0];
         if (args.length < 2) {
             return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         }
@@ -121,7 +167,8 @@ final class NativeReflect extends ScriptableObject {
         return ctor.construct(cx, scope, callArgs);
     }
 
-    private static Object defineProperty(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object defineProperty(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -141,7 +188,8 @@ final class NativeReflect extends ScriptableObject {
         }
     }
 
-    private static Object deleteProperty(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object deleteProperty(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -173,7 +221,8 @@ final class NativeReflect extends ScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
-    private static Scriptable getOwnPropertyDescriptor(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable getOwnPropertyDescriptor(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -189,7 +238,8 @@ final class NativeReflect extends ScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
-    private static Scriptable getPrototypeOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable getPrototypeOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         return target.getPrototype();
@@ -208,12 +258,14 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
-    private static Object isExtensible(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object isExtensible(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
         return target.isExtensible();
     }
 
-    private static Scriptable ownKeys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable ownKeys(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
@@ -234,7 +286,8 @@ final class NativeReflect extends ScriptableObject {
         return cx.newArray(scope, keys);
     }
 
-    private static Object preventExtensions(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object preventExtensions(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         target.preventExtensions();
@@ -260,7 +313,8 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
-    private static Object setPrototypeOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object setPrototypeOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",

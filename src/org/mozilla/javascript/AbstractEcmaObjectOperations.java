@@ -3,6 +3,7 @@ package org.mozilla.javascript;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Abstract Object Operations as defined by EcmaScript
@@ -242,27 +243,29 @@ class AbstractEcmaObjectOperations {
      *
      * <p>https://262.ecma-international.org/12.0/#sec-createlistfromarraylike
      */
-    static List<Object> createListFromArrayLike(Context cx, Scriptable o, String[] elementTypes) {
-        if (elementTypes == null ) {
-            elementTypes = new String[] {"Undefined", "Null", "Boolean", "String", "Symbol", "Number", "BigInt", "Scriptable"};
-        }
-
+    static List<Object> createListFromArrayLike(
+            Context cx, Scriptable o, Predicate<Object> elementTypesPredicate, String msg) {
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
         if (obj instanceof NativeArray) {
-            return Arrays.asList(((NativeArray) obj).toArray());
+            Object[] arr = ((NativeArray) obj).toArray();
+            for (Object next : arr) {
+                if (!elementTypesPredicate.test(next)) {
+                    throw ScriptRuntime.typeError(msg);
+                }
+            }
+            return Arrays.asList(arr);
         }
 
         long len = lengthOfArrayLike(cx, obj);
         List<Object> list = new ArrayList<>();
         long index = 0;
         while (index < len) {
-            String indexName = ScriptRuntime.toString(index);
+            // String indexName = ScriptRuntime.toString(index);
             Object next = ScriptableObject.getProperty(obj, (int) index);
-            // ToDo use provided types
-            if (next instanceof NativeString
-                    || ScriptRuntime.isSymbol(next)) {
-                list.add(next);
+            if (!elementTypesPredicate.test(next)) {
+                throw ScriptRuntime.typeError(msg);
             }
+            list.add(next);
             index++;
         }
         return list;

@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -41,13 +41,12 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     private static final class Revoker implements Callable {
         private NativeProxy revocableProxy = null;
 
-        public Revoker(NativeProxy proxy){
+        public Revoker(NativeProxy proxy) {
             revocableProxy = proxy;
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                Object[] args) {
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handler = null;
                 revocableProxy.target = null;
@@ -56,7 +55,6 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return Undefined.instance;
         }
     }
-
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
@@ -67,15 +65,16 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         LambdaConstructor.CONSTRUCTOR_NEW,
                         NativeProxy::constructor) {
 
-            @Override
-            public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-                NativeProxy obj = (NativeProxy) getTargetConstructor().construct(cx, scope, args);
-                // avoid getting trapped
-                obj.setPrototypeDirect(getClassPrototype());
-                obj.setParentScope(scope);
-                return obj;
-            }
-        };
+                    @Override
+                    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+                        NativeProxy obj =
+                                (NativeProxy) getTargetConstructor().construct(cx, scope, args);
+                        // avoid getting trapped
+                        obj.setPrototypeDirect(getClassPrototype());
+                        obj.setParentScope(scope);
+                        return obj;
+                    }
+                };
         constructor.setPrototypeProperty(null);
 
         constructor.defineConstructorMethod(
@@ -93,8 +92,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         if (target == null || !(target instanceof Callable)) {
             typeOf = super.getTypeOf();
-        }
-        else {
+        } else {
             typeOf = target.getTypeOf();
         }
     }
@@ -105,8 +103,26 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         return target.getClassName();
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget
+     */
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+        /*
+         * 1. Let handler be O.[[ProxyHandler]].
+         * 2. If handler is null, throw a TypeError exception.
+         * 3. Assert: Type(handler) is Object.
+         * 4. Let target be O.[[ProxyTarget]].
+         * 5. Assert: IsConstructor(target) is true.
+         * 6. Let trap be ? GetMethod(handler, "construct").
+         * 7. If trap is undefined, then
+         *     a. Return ? Construct(target, argumentsList, newTarget).
+         * 8. Let argArray be ! CreateArrayFromList(argumentsList).
+         * 9. Let newObj be ? Call(trap, handler, « target, argArray, newTarget »).
+         * 10. If Type(newObj) is not Object, throw a TypeError exception.
+         * 11. Return newObj.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_CONSTRUCT);
@@ -123,39 +139,44 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
     /**
      * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
-     * 1. Assert: IsPropertyKey(P) is true.
-     * 2. Let handler be O.[[ProxyHandler]].
-     * 3. If handler is null, throw a TypeError exception.
-     * 4. Assert: Type(handler) is Object.
-     * 5. Let target be O.[[ProxyTarget]].
-     * 6. Let trap be ? GetMethod(handler, "has").
-     * 7. If trap is undefined, then
-     *     a. Return ? target.[[HasProperty]](P).
-     * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
-     * 9. If booleanTrapResult is false, then
-     *     a. Let targetDesc be ? target.[[GetOwnProperty]](P).
-     *     b. If targetDesc is not undefined, then
-     *         i. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
-     *         ii. Let extensibleTarget be ? IsExtensible(target).
-     *         iii. If extensibleTarget is false, throw a TypeError exception.
-     * 10. Return booleanTrapResult.
      */
     @Override
     public boolean has(String name, Scriptable start) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "has").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[HasProperty]](P).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
+         * 9. If booleanTrapResult is false, then
+         *      a. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         *     b. If targetDesc is not undefined, then
+         *         i. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         *         ii. Let extensibleTarget be ? IsExtensible(target).
+         *         iii. If extensibleTarget is false, throw a TypeError exception.
+         * 10. Return booleanTrapResult.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
 
-            boolean booleanTrapResult = ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name}));
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name}));
             if (!booleanTrapResult) {
-                ScriptableObject targetDesc = target.getOwnPropertyDescriptor(Context.getCurrentContext(), name);
+                ScriptableObject targetDesc =
+                        target.getOwnPropertyDescriptor(Context.getContext(), name);
                 if (targetDesc != null) {
-                    if (Boolean.FALSE.equals(targetDesc.get("configurable"))) {
-                            throw ScriptRuntime.typeError("proxy can't report an existing own property '\"attr\"' as non-existent on a non-extensible object");
-                    }
-                    if (!target.isExtensible()) {
-                        throw ScriptRuntime.typeError("proxy can't report an existing own property '\"attr\"' as non-existent on a non-extensible object");
+                    if (Boolean.FALSE.equals(targetDesc.get("configurable"))
+                            || !target.isExtensible()) {
+                        throw ScriptRuntime.typeError(
+                                "proxy can't report an existing own property '"
+                                        + name
+                                        + "' as non-existent on a non-extensible object");
                     }
                 }
             }
@@ -165,93 +186,165 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         return ScriptableObject.hasProperty(target, name);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
+     */
     @Override
     public boolean has(int index, Scriptable start) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "has").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[HasProperty]](P).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
+         * 9. If booleanTrapResult is false, then
+         *     a. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         *     b. If targetDesc is not undefined, then
+         *         i. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         *         ii. Let extensibleTarget be ? IsExtensible(target).
+         *         iii. If extensibleTarget is false, throw a TypeError exception.
+         * 10. Return booleanTrapResult.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
-            return (boolean) callTrap(trap, new Object[] {target, index});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, index}));
+            if (!booleanTrapResult) {
+                ScriptableObject targetDesc =
+                        target.getOwnPropertyDescriptor(Context.getContext(), index);
+                if (targetDesc != null) {
+                    if (Boolean.FALSE.equals(targetDesc.get("configurable"))
+                            || !target.isExtensible()) {
+                        throw ScriptRuntime.typeError(
+                                "proxy can't check an existing property ' + name + ' existance on an not configurable or not extensible object");
+                    }
+                }
+            }
+
+            return booleanTrapResult;
         }
 
         return ScriptableObject.hasProperty(target, index);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
+     */
     @Override
     public boolean has(Symbol key, Scriptable start) {
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
-            return (boolean) callTrap(trap, new Object[] {target, key});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key}));
+            if (!booleanTrapResult) {
+                ScriptableObject targetDesc =
+                        target.getOwnPropertyDescriptor(Context.getContext(), key);
+                if (targetDesc != null) {
+                    if (Boolean.FALSE.equals(targetDesc.get("configurable"))
+                            || !target.isExtensible()) {
+                        throw ScriptRuntime.typeError(
+                                "proxy can't check an existing property ' + name + ' existance on an not configurable or not extensible object");
+                    }
+                }
+            }
+
+            return booleanTrapResult;
         }
 
         return ScriptableObject.hasProperty(target, key);
     }
 
     /**
-     * see https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
-     *
-     * 1. Let handler be O.[[ProxyHandler]].
-     * 2. If handler is null, throw a TypeError exception.
-     * 3. Assert: Type(handler) is Object.
-     * 4. Let target be O.[[ProxyTarget]].
-     * 5. Let trap be ? GetMethod(handler, "ownKeys").
-     * 6. If trap is undefined, then
-     *    a. Return ? target.[[OwnPropertyKeys]]().
-     * 7. Let trapResultArray be ? Call(trap, handler, « target »).
-     * 8. Let trapResult be ? CreateListFromArrayLike(trapResultArray, « String, Symbol »).
-     * 9. If trapResult contains any duplicate entries, throw a TypeError exception.
-     * 10. Let extensibleTarget be ? IsExtensible(target).
-     * 11. Let targetKeys be ? target.[[OwnPropertyKeys]]().
-     * 12. Assert: targetKeys is a List whose elements are only String and Symbol values.
-     * 13. Assert: targetKeys contains no duplicate entries.
-     * 14. Let targetConfigurableKeys be a new empty List.
-     * 15. Let targetNonconfigurableKeys be a new empty List.
-     * 16. For each element key of targetKeys, do
-     *     a. Let desc be ? target.[[GetOwnProperty]](key).
-     *     b. If desc is not undefined and desc.[[Configurable]] is false, then
-     *         i. i. Append key as an element of targetNonconfigurableKeys.
-     *     c. Else,
-               i. i. Append key as an element of targetConfigurableKeys.
-     * 17. If extensibleTarget is true and targetNonconfigurableKeys is empty, then
-     *     a. Return trapResult.
-     * 18. Let uncheckedResultKeys be a List whose elements are the elements of trapResult.
-     * 19. For each element key of targetNonconfigurableKeys, do
-     *     a. a. If key is not an element of uncheckedResultKeys, throw a TypeError exception.
-     *     b. Remove key from uncheckedResultKeys.
-     * 20. If extensibleTarget is true, return trapResult.
-     * 21. For each element key of targetConfigurableKeys, do
-     *     a. a. If key is not an element of uncheckedResultKeys, throw a TypeError exception.
-     *     b. Remove key from uncheckedResultKeys.
-     * 22. If uncheckedResultKeys is not empty, throw a TypeError exception.
-     * 23. Return trapResult.
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
      */
     @Override
-    public Object[] getIds() {
+    Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
+        /*
+        * 1. Let handler be O.[[ProxyHandler]].
+        * 2. If handler is null, throw a TypeError exception.
+        * 3. Assert: Type(handler) is Object.
+        * 4. Let target be O.[[ProxyTarget]].
+        * 5. Let trap be ? GetMethod(handler, "ownKeys").
+        * 6. If trap is undefined, then
+        *    a. Return ? target.[[OwnPropertyKeys]]().
+        * 7. Let trapResultArray be ? Call(trap, handler, « target »).
+        * 8. Let trapResult be ? CreateListFromArrayLike(trapResultArray, « String, Symbol »).
+        * 9. If trapResult contains any duplicate entries, throw a TypeError exception.
+        * 10. Let extensibleTarget be ? IsExtensible(target).
+        * 11. Let targetKeys be ? target.[[OwnPropertyKeys]]().
+        * 12. Assert: targetKeys is a List whose elements are only String and Symbol values.
+        * 13. Assert: targetKeys contains no duplicate entries.
+        * 14. Let targetConfigurableKeys be a new empty List.
+        * 15. Let targetNonconfigurableKeys be a new empty List.
+        * 16. For each element key of targetKeys, do
+        *     a. Let desc be ? target.[[GetOwnProperty]](key).
+        *     b. If desc is not undefined and desc.[[Configurable]] is false, then
+        *         i. i. Append key as an element of targetNonconfigurableKeys.
+        *     c. Else,
+                  i. i. Append key as an element of targetConfigurableKeys.
+        * 17. If extensibleTarget is true and targetNonconfigurableKeys is empty, then
+        *     a. Return trapResult.
+        * 18. Let uncheckedResultKeys be a List whose elements are the elements of trapResult.
+        * 19. For each element key of targetNonconfigurableKeys, do
+        *     a. a. If key is not an element of uncheckedResultKeys, throw a TypeError exception.
+        *     b. Remove key from uncheckedResultKeys.
+        * 20. If extensibleTarget is true, return trapResult.
+        * 21. For each element key of targetConfigurableKeys, do
+        *     a. a. If key is not an element of uncheckedResultKeys, throw a TypeError exception.
+        *     b. Remove key from uncheckedResultKeys.
+        * 22. If uncheckedResultKeys is not empty, throw a TypeError exception.
+        * 23. Return trapResult.
+        */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_OWN_KEYS);
         if (trap != null) {
             Object res = callTrap(trap, new Object[] {target});
-            if (!(res instanceof Scriptable) || !ScriptRuntime.isArrayLike((Scriptable)res)) {
-                throw ScriptRuntime.typeError("ToDo");
+            if (!(res instanceof Scriptable)) {
+                throw ScriptRuntime.typeError("ownKeys trap must be an object");
+            }
+            if (!ScriptRuntime.isArrayLike((Scriptable) res)) {
+                throw ScriptRuntime.typeError("ownKeys trap must be an array like object");
             }
 
-            Context cx = Context.getCurrentContext();
-            List<Object> trapResult = AbstractEcmaObjectOperations.createListFromArrayLike(cx, (Scriptable) res, new String[] {"String", "Symbol"});
+            Context cx = Context.getContext();
+
+            List<Object> trapResult =
+                    AbstractEcmaObjectOperations.createListFromArrayLike(
+                            cx,
+                            (Scriptable) res,
+                            (o) ->
+                                    o instanceof CharSequence
+                                            || o instanceof NativeString
+                                            || ScriptRuntime.isSymbol(o),
+                            "proxy [[OwnPropertyKeys]] must return an array with only string and symbol elements");
 
             boolean extensibleTarget = target.isExtensible();
-            Object[] targetKeys = target.getIds();
+            Object[] targetKeys = target.getIds(getNonEnumerable, getSymbols);
+
+            HashSet<Object> uncheckedResultKeys = new HashSet<Object>(trapResult);
+            if (uncheckedResultKeys.size() != trapResult.size()) {
+                throw ScriptRuntime.typeError("ownKeys trap result must not contain duplicates");
+            }
 
             ArrayList<Object> targetConfigurableKeys = new ArrayList<>();
             ArrayList<Object> targetNonconfigurableKeys = new ArrayList<>();
             for (Object targetKey : targetKeys) {
                 ScriptableObject desc = target.getOwnPropertyDescriptor(cx, targetKey);
-                if (desc != null&& Boolean.FALSE.equals(desc.get("configurable"))) {
+                if (desc != null && Boolean.FALSE.equals(desc.get("configurable"))) {
                     targetNonconfigurableKeys.add(targetKey);
-                }
-                else {
+                } else {
                     targetConfigurableKeys.add(targetKey);
                 }
             }
@@ -260,11 +353,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                 return trapResult.toArray();
             }
 
-            // ToDo Set?
-            List<Object> uncheckedResultKeys = Arrays.asList(trapResult);
             for (Object key : targetNonconfigurableKeys) {
                 if (!uncheckedResultKeys.contains(key)) {
-                    throw ScriptRuntime.typeError("ToDo");
+                    throw ScriptRuntime.typeError(
+                            "proxy can't skip a non-configurable property " + key);
                 }
                 uncheckedResultKeys.remove(key);
             }
@@ -274,26 +366,20 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
             for (Object key : targetConfigurableKeys) {
                 if (!uncheckedResultKeys.contains(key)) {
-                    throw ScriptRuntime.typeError("ToDo");
+                    throw ScriptRuntime.typeError(
+                            "proxy can't skip a configurable property " + key);
                 }
                 uncheckedResultKeys.remove(key);
             }
 
             if (uncheckedResultKeys.size() > 0) {
-                throw ScriptRuntime.typeError("ToDo");
+                throw ScriptRuntime.typeError("proxy can't skip properties");
             }
 
             return trapResult.toArray();
         }
 
-        return target.getIds();
-    }
-
-    @Override
-    public Object[] getAllIds() {
-        assertNotRevoked();
-
-        return target.getAllIds();
+        return target.getIds(getNonEnumerable, getSymbols);
     }
 
     @Override
@@ -378,55 +464,207 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         symbolScriptableTarget.put(key, start, value);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     */
     @Override
     public void delete(String name) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "deleteProperty").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[Delete]](P).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
+         * 9. If booleanTrapResult is false, return false.
+         * 10. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         * 11. If targetDesc is undefined, return true.
+         * 12. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         * 13. Let extensibleTarget be ? IsExtensible(target).
+         * 14. If extensibleTarget is false, throw a TypeError exception.
+         * 15. Return true.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
-            callTrap(trap, new Object[] {target, name});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name}));
+            if (!booleanTrapResult) {
+                return; // false
+            }
+
+            ScriptableObject targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), name);
+            if (targetDesc == null) {
+                return; // true
+            }
+            if (Boolean.FALSE.equals(targetDesc.get("configurable")) || !target.isExtensible()) {
+                throw ScriptRuntime.typeError(
+                        "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
+            }
+
+            return; // true
         }
 
         target.delete(name);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     */
     @Override
     public void delete(int index) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "deleteProperty").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[Delete]](P).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
+         * 9. If booleanTrapResult is false, return false.
+         * 10. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         * 11. If targetDesc is undefined, return true.
+         * 12. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         * 13. Let extensibleTarget be ? IsExtensible(target).
+         * 14. If extensibleTarget is false, throw a TypeError exception.
+         * 15. Return true.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
-            callTrap(trap, new Object[] {target, index});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, index}));
+            if (!booleanTrapResult) {
+                return; // false
+            }
+
+            ScriptableObject targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), index);
+            if (targetDesc == null) {
+                return; // true
+            }
+            if (Boolean.FALSE.equals(targetDesc.get("configurable")) || !target.isExtensible()) {
+                throw ScriptRuntime.typeError(
+                        "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
+            }
+
+            return; // true
         }
 
         target.delete(index);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     */
     @Override
     public void delete(Symbol key) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "deleteProperty").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[Delete]](P).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P »)).
+         * 9. If booleanTrapResult is false, return false.
+         * 10. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         * 11. If targetDesc is undefined, return true.
+         * 12. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         * 13. Let extensibleTarget be ? IsExtensible(target).
+         * 14. If extensibleTarget is false, throw a TypeError exception.
+         * 15. Return true.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
-            callTrap(trap, new Object[] {target, key});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key}));
+            if (!booleanTrapResult) {
+                return; // false
+            }
+
+            ScriptableObject targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), key);
+            if (targetDesc == null) {
+                return; // true
+            }
+            if (Boolean.FALSE.equals(targetDesc.get("configurable")) || !target.isExtensible()) {
+                throw ScriptRuntime.typeError(
+                        "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
+            }
+
+            return; // true
         }
 
         SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
         symbolScriptableTarget.delete(key);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getownproperty-p
+     */
     @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "getOwnPropertyDescriptor").
+         * 7. If trap is undefined, then
+         *    a. Return ? target.[[GetOwnProperty]](P).
+         * 8. Let trapResultObj be ? Call(trap, handler, « target, P »).
+         * 9. If Type(trapResultObj) is neither Object nor Undefined, throw a TypeError exception.
+         * 10. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         * 11. If trapResultObj is undefined, then
+         *     a. If targetDesc is undefined, return undefined.
+         *     b. If targetDesc.[[Configurable]] is false, throw a TypeError exception.
+         *     c. Let extensibleTarget be ? IsExtensible(target).
+         *     d. If extensibleTarget is false, throw a TypeError exception.
+         *     e. Return undefined.
+         * 12. Let extensibleTarget be ? IsExtensible(target).
+         * 13. Let resultDesc be ? ToPropertyDescriptor(trapResultObj).
+         * 14. Call CompletePropertyDescriptor(resultDesc).
+         * 15. Let valid be IsCompatiblePropertyDescriptor(extensibleTarget, resultDesc, targetDesc).
+         * 16. If valid is false, throw a TypeError exception.
+         * 17. If resultDesc.[[Configurable]] is false, then
+         *     a. If targetDesc is undefined or targetDesc.[[Configurable]] is true, then
+         *         i. Throw a TypeError exception.
+         *     b. If resultDesc has a [[Writable]] field and resultDesc.[[Writable]] is false, then
+         *         i. If targetDesc.[[Writable]] is true, throw a TypeError exception.
+         * 18. Return resultDesc.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_GET_OWN_PROPERTY_DESCRIPTOR);
         if (trap != null) {
-            ScriptableObject proxiedDescriptor = (ScriptableObject) callTrap(trap, new Object[] {target, id});
+            ScriptableObject proxiedDescriptor =
+                    (ScriptableObject) callTrap(trap, new Object[] {target, id});
             if (proxiedDescriptor != null) {
                 Object value = ScriptableObject.getProperty(proxiedDescriptor, "value");
-                int attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, proxiedDescriptor);
+                int attributes =
+                        applyDescriptorToAttributeBitset(
+                                DONTENUM | READONLY | PERMANENT, proxiedDescriptor);
 
-                ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, attributes);
+                ScriptableObject desc =
+                        ScriptableObject.buildDataDescriptor(target, value, attributes);
                 return desc;
             }
             // TODO
@@ -440,8 +678,39 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         return target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(id));
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-defineownproperty-p-desc
+     */
     @Override
     public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+        /*
+         * 1. Assert: IsPropertyKey(P) is true.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "defineProperty").
+         * 7. If trap is undefined, then
+         *    a. Return ? target.[[DefineOwnProperty]](P, Desc).
+         * 8. Let descObj be FromPropertyDescriptor(Desc).
+         * 9. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, P, descObj »)).
+         * 10. If booleanTrapResult is false, return false.
+         * 11. Let targetDesc be ? target.[[GetOwnProperty]](P).
+         * 12. Let extensibleTarget be ? IsExtensible(target).
+         * 13. If Desc has a [[Configurable]] field and if Desc.[[Configurable]] is false, then
+         *     a. Let settingConfigFalse be true.
+         * 14. Else, let settingConfigFalse be false.
+         * 15. If targetDesc is undefined, then
+         *     a. If extensibleTarget is false, throw a TypeError exception.
+         *     b. If settingConfigFalse is true, throw a TypeError exception.
+         * 16. Else,
+         *     a. If IsCompatiblePropertyDescriptor(extensibleTarget, Desc, targetDesc) is false, throw a TypeError exception.
+         *     b. If settingConfigFalse is true and targetDesc.[[Configurable]] is true, throw a TypeError exception.
+         *     c. If IsDataDescriptor(targetDesc) is true, targetDesc.[[Configurable]] is false, and targetDesc.[[Writable]] is true, then
+         *         i. If Desc has a [[Writable]] field and Desc.[[Writable]] is false, throw a TypeError exception.
+         * 17. Return true.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_DEFINE_PROPERTY);
@@ -453,21 +722,24 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-isextensible
-     * 1. Let handler be O.[[ProxyHandler]].
-     * 2. If handler is null, throw a TypeError exception.
-     * 3. Assert: Type(handler) is Object.
-     * 4. Let target be O.[[ProxyTarget]].
-     * 5. Let trap be ? GetMethod(handler, "isExtensible").
-     * 6. If trap is undefined, then
-     *     a. a. Return ? IsExtensible(target).
-     * 7. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target »)).
-     * 8. Let targetResult be ? IsExtensible(target).
-     * 9. If SameValue(booleanTrapResult, targetResult) is false, throw a TypeError exception.
-     * 10. Return booleanTrapResult.
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-isextensible
      */
     @Override
     public boolean isExtensible() {
+        /*
+         * 1. Let handler be O.[[ProxyHandler]].
+         * 2. If handler is null, throw a TypeError exception.
+         * 3. Assert: Type(handler) is Object.
+         * 4. Let target be O.[[ProxyTarget]].
+         * 5. Let trap be ? GetMethod(handler, "isExtensible").
+         * 6. If trap is undefined, then
+         *     a. a. Return ? IsExtensible(target).
+         * 7. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target »)).
+         * 8. Let targetResult be ? IsExtensible(target).
+         * 9. If SameValue(booleanTrapResult, targetResult) is false, throw a TypeError exception.
+         * 10. Return booleanTrapResult.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_IS_EXTENSIBLE);
@@ -479,28 +751,32 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         boolean targetResult = target.isExtensible();
 
         if (booleanTrapResult != targetResult) {
-            throw ScriptRuntime.typeError("IsExtensible trap has to return the same value as the target");
+            throw ScriptRuntime.typeError(
+                    "IsExtensible trap has to return the same value as the target");
         }
         return booleanTrapResult;
     }
 
     /**
-     * see https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-preventextensions
-     * 1. Let handler be O.[[ProxyHandler]].
-     * 2. If handler is null, throw a TypeError exception.
-     * 3. Assert: Type(handler) is Object.
-     * 4. Let target be O.[[ProxyTarget]].
-     * 5. Let trap be ? GetMethod(handler, "preventExtensions").
-     * 6. If trap is undefined, then
-     *     a. Return ? target.[[PreventExtensions]]().
-     * 7. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target »)).
-     * 8. If booleanTrapResult is true, then
-     *     a. Let extensibleTarget be ? IsExtensible(target).
-     *     b. If extensibleTarget is true, throw a TypeError exception.
-     * 9. Return booleanTrapResult.
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-preventextensions
      */
     @Override
     public void preventExtensions() {
+        /*
+         * 1. Let handler be O.[[ProxyHandler]].
+         * 2. If handler is null, throw a TypeError exception.
+         * 3. Assert: Type(handler) is Object.
+         * 4. Let target be O.[[ProxyTarget]].
+         * 5. Let trap be ? GetMethod(handler, "preventExtensions").
+         * 6. If trap is undefined, then
+         *     a. Return ? target.[[PreventExtensions]]().
+         * 7. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target »)).
+         * 8. If booleanTrapResult is true, then
+         *     a. Let extensibleTarget be ? IsExtensible(target).
+         *     b. If extensibleTarget is true, throw a TypeError exception.
+         * 9. Return booleanTrapResult.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_PREVENT_EXTENSIONS);
@@ -519,13 +795,46 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         return typeOf;
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getprototypeof
+     */
     @Override
     public Scriptable getPrototype() {
+        /*
+         * 1. Let handler be O.[[ProxyHandler]].
+         * 2. If handler is null, throw a TypeError exception.
+         * 3. Assert: Type(handler) is Object.
+         * 4. Let target be O.[[ProxyTarget]].
+         * 5. Let trap be ? GetMethod(handler, "getPrototypeOf").
+         * 6. If trap is undefined, then
+         *     a. Return ? target.[[GetPrototypeOf]]().
+         * 7. Let handlerProto be ? Call(trap, handler, « target »).
+         * 8. If Type(handlerProto) is neither Object nor Null, throw a TypeError exception.
+         * 9. Let extensibleTarget be ? IsExtensible(target).
+         * 10. If extensibleTarget is true, return handlerProto.
+         * 11. Let targetProto be ? target.[[GetPrototypeOf]]().
+         * 12. If SameValue(handlerProto, targetProto) is false, throw a TypeError exception.
+         * 13. Return handlerProto.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_GET_PROTOTYPE_OF);
         if (trap != null) {
-            return (ScriptableObject) callTrap(trap, new Object[] {target});
+            Object handlerProto = callTrap(trap, new Object[] {target});
+
+            Scriptable handlerProtoScriptable = Undefined.SCRIPTABLE_UNDEFINED;
+            if (!Undefined.isUndefined(handlerProto)) {
+                handlerProtoScriptable = ensureScriptable(handlerProto);
+            }
+            if (target.isExtensible()) {
+                return handlerProtoScriptable;
+            }
+            if (handlerProto != target.getPrototype()) {
+                throw ScriptRuntime.typeError(
+                        "getPrototypeOf trap has to return the original prototype");
+            }
+            return handlerProtoScriptable;
         }
 
         return target.getPrototype();
@@ -535,21 +844,65 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         super.setPrototype(prototype);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-setprototypeof-v
+     */
     @Override
     public void setPrototype(Scriptable prototype) {
+        /*
+         * 1. Assert: Either Type(V) is Object or Type(V) is Null.
+         * 2. Let handler be O.[[ProxyHandler]].
+         * 3. If handler is null, throw a TypeError exception.
+         * 4. Assert: Type(handler) is Object.
+         * 5. Let target be O.[[ProxyTarget]].
+         * 6. Let trap be ? GetMethod(handler, "setPrototypeOf").
+         * 7. If trap is undefined, then
+         *     a. Return ? target.[[SetPrototypeOf]](V).
+         * 8. Let booleanTrapResult be ! ToBoolean(? Call(trap, handler, « target, V »)).
+         * 9. If booleanTrapResult is false, return false.
+         * 10. Let extensibleTarget be ? IsExtensible(target).
+         * 11. If extensibleTarget is true, return true.
+         * 12. Let targetProto be ? target.[[SetPrototypeOf]]().
+         * 13. If SameValue(V, targetProto) is false, throw a TypeError exception.
+         * 14. Return true.
+         */
         assertNotRevoked();
 
         Callable trap = getTrap(TRAP_SET_PROTOTYPE_OF);
         if (trap != null) {
-            callTrap(trap, new Object[] {target, prototype});
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, prototype}));
+            if (!booleanTrapResult) {
+                return; // false
+            }
+            if (target.isExtensible()) {
+                return; // true
+            }
+
             return;
         }
 
         target.setPrototype(prototype);
     }
 
+    /**
+     * see
+     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist
+     */
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        /*
+         * 1. Let handler be O.[[ProxyHandler]].
+         * 2. If handler is null, throw a TypeError exception.
+         * 3. Assert: Type(handler) is Object.
+         * 4. Let target be O.[[ProxyTarget]].
+         * 5. Let trap be ? GetMethod(handler, "apply").
+         * 6. If trap is undefined, then
+         *     a. Return ? Call(target, thisArgument, argumentsList).
+         * 7. Let argArray be ! CreateArrayFromList(argumentsList).
+         * 8. Return ? Call(trap, handler, « target, thisArgument, argArray »).
+         */
         assertNotRevoked();
 
         Scriptable argumentsList = cx.newArray(scope, args);
@@ -559,7 +912,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return callTrap(trap, new Object[] {target, thisObj, argumentsList});
         }
 
-        return ScriptRuntime.applyOrCall(true, cx, scope, target, new Object[] {thisObj, argumentsList});
+        return ScriptRuntime.applyOrCall(
+                true, cx, scope, target, new Object[] {thisObj, argumentsList});
     }
 
     private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
@@ -570,11 +924,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                     "2",
                     Integer.toString(args.length));
         }
-        Scriptable s = ScriptRuntime.toObject(cx, scope, args[0]);
-        ScriptableObject trgt = ensureScriptableObject(s);
+        ScriptableObject trgt = ensureScriptableObject(args[0]);
 
-        s = ScriptRuntime.toObject(cx, scope, args[1]);
-        ScriptableObject hndlr = ensureScriptableObject(s);
+        ScriptableObject hndlr = ensureScriptableObject(args[1]);
 
         NativeProxy proxy = new NativeProxy(trgt, hndlr);
         proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(scope, PROXY_TAG));
@@ -583,7 +935,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     // Proxy.revocable
-    private static Object revocable(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object revocable(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
@@ -592,7 +945,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         NativeObject revocable = (NativeObject) cx.newObject(scope);
 
         revocable.put("proxy", revocable, proxy);
-        revocable.put("revoke", revocable, new LambdaFunction(scope, "revoke", 0, new Revoker(proxy)));
+        revocable.put("revoke", revocable, new LambdaFunction(scope, "", 0, new Revoker(proxy)));
         return revocable;
     }
 
@@ -612,7 +965,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     private Object callTrap(Callable trap, Object[] args) {
-        return trap.call(Context.getCurrentContext(), handler, handler, args);
+        return trap.call(Context.getContext(), handler, handler, args);
     }
 
     private void assertNotRevoked() {
