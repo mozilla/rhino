@@ -45,12 +45,7 @@ public class NativeReflectTest {
 
     @Test
     public void applyMissingArgs() {
-        String js =
-                "try {\n"
-                        + "  Reflect.apply();\n"
-                        + "} catch(e) {\n"
-                        + "  '' + e;\n"
-                        + "}";
+        String js = "try {\n" + "  Reflect.apply();\n" + "} catch(e) {\n" + "  '' + e;\n" + "}";
         testString(
                 "TypeError: Reflect.apply: At least 3 arguments required, but only 0 passed", js);
     }
@@ -88,41 +83,45 @@ public class NativeReflectTest {
 
     @Test
     public void constructNoConstructorNumber() {
-        String js = "try {\n"
-                    + "  Reflect.construct(function() {}, [], 1);\n"
-                    + "} catch(e) {\n"
-                    + "  '' + e;\n"
-                    + "}";
+        String js =
+                "try {\n"
+                        + "  Reflect.construct(function() {}, [], 1);\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
         testString("TypeError: \"number\" is not a constructor.", js);
     }
 
     @Test
     public void constructNoConstructorNull() {
-        String js = "try {\n"
-                    + "  Reflect.construct(function() {}, [], null);\n"
-                    + "} catch(e) {\n"
-                    + "  '' + e;\n"
-                    + "}";
+        String js =
+                "try {\n"
+                        + "  Reflect.construct(function() {}, [], null);\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
         testString("TypeError: \"object\" is not a constructor.", js);
     }
 
     @Test
     public void constructNoConstructorObject() {
-        String js = "try {\n"
-                    + "  Reflect.construct(function() {}, [], {});\n"
-                    + "} catch(e) {\n"
-                    + "  '' + e;\n"
-                    + "}";
+        String js =
+                "try {\n"
+                        + "  Reflect.construct(function() {}, [], {});\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
         testString("TypeError: \"object\" is not a constructor.", js);
     }
 
     @Test
     public void constructNoConstructorFunction() {
-        String js = "try {\n"
-                    + "  Reflect.construct(function() {}, [], Date.now);\n"
-                    + "} catch(e) {\n"
-                    + "  '' + e;\n"
-                    + "}";
+        String js =
+                "try {\n"
+                        + "  Reflect.construct(function() {}, [], Date.now);\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
         // testString("TypeError: \"object\" is not a constructor.", js);
         // found no way to check a function for constructor
     }
