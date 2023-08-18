@@ -917,9 +917,15 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
         if (desc == null) {
             if (id instanceof String) {
-                desc = getBuiltInDescriptor((String) id);
-            } else if (ScriptRuntime.isSymbol(id)) {
-                desc = getBuiltInDescriptor(((NativeSymbol) id).getKey());
+                return getBuiltInDescriptor((String) id);
+            }
+
+            if (ScriptRuntime.isSymbol(id)) {
+                if (id instanceof SymbolKey) {
+                    return getBuiltInDescriptor((SymbolKey) id);
+                }
+
+                return getBuiltInDescriptor(((NativeSymbol) id).getKey());
             }
         }
         return desc;
