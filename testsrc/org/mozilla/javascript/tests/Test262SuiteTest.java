@@ -88,7 +88,6 @@ public class Test262SuiteTest {
     static final Set<String> UNSUPPORTED_FEATURES =
             new HashSet<>(
                     Arrays.asList(
-                            "Array.prototype.flatMap",
                             "Atomics",
                             "IsHTMLDDA",
                             "Proxy",
