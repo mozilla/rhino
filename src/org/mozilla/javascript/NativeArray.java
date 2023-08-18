@@ -299,7 +299,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 0;
                 s = "flat";
                 break;
-            case Id_flat_map:
+            case Id_flatMap:
                 arity = 1;
                 s = "flatMap";
                 break;
@@ -445,8 +445,8 @@ public class NativeArray extends IdScriptableObject implements List {
                 case Id_flat:
                     return js_flat(cx, scope, thisObj, args);
 
-                case Id_flat_map:
-                    return js_flat_map(cx, scope, thisObj, args);
+                case Id_flatMap:
+                    return js_flatMap(cx, scope, thisObj, args);
 
                 case Id_every:
                 case Id_filter:
@@ -2066,7 +2066,7 @@ public class NativeArray extends IdScriptableObject implements List {
         return result;
     }
 
-    private static Object js_flat_map(
+    private static Object js_flatMap(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
@@ -2678,7 +2678,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 id = Id_flat;
                 break;
             case "flatMap":
-                id = Id_flat_map;
+                id = Id_flatMap;
                 break;
             default:
                 id = 0;
@@ -2720,7 +2720,7 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_copyWithin = 31,
             Id_at = 32,
             Id_flat = 33,
-            Id_flat_map = 34,
+            Id_flatMap = 34,
             SymbolId_iterator = 35,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
