@@ -655,19 +655,47 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_GET_OWN_PROPERTY_DESCRIPTOR);
         if (trap != null) {
-            ScriptableObject proxiedDescriptor =
-                    (ScriptableObject) callTrap(trap, new Object[] {target, id});
-            if (proxiedDescriptor != null) {
-                Object value = ScriptableObject.getProperty(proxiedDescriptor, "value");
+            Object trapResultObj = callTrap(trap, new Object[] {target, id});
+            if (!Undefined.isUndefined(trapResultObj)
+                    && !(trapResultObj instanceof Scriptable
+                            && !ScriptRuntime.isSymbol(trapResultObj))) {
+                throw ScriptRuntime.typeError(
+                        "getOwnPropertyDescriptor trap has to return undefined or an object");
+            }
+
+            ScriptableObject targetDesc;
+            if (ScriptRuntime.isSymbol(id)) {
+                targetDesc = target.getOwnPropertyDescriptor(cx, id);
+            } else {
+                targetDesc = target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(id));
+            }
+
+            if (Undefined.isUndefined(trapResultObj)) {
+                if (Undefined.isUndefined(targetDesc)) {
+                    return null;
+                }
+
+                if (Boolean.FALSE.equals(targetDesc.get("configurable"))
+                        || !target.isExtensible()) {
+                    throw ScriptRuntime.typeError(
+                            "proxy can't report an existing own property '"
+                                    + id
+                                    + "' as non-existent on a non-extensible object");
+                }
+                return null;
+            }
+
+            Scriptable trapResult = (Scriptable) trapResultObj;
+            if (trapResultObj != null) {
+                Object value = ScriptableObject.getProperty(trapResult, "value");
                 int attributes =
                         applyDescriptorToAttributeBitset(
-                                DONTENUM | READONLY | PERMANENT, proxiedDescriptor);
+                                DONTENUM | READONLY | PERMANENT, trapResult);
 
                 ScriptableObject desc =
                         ScriptableObject.buildDataDescriptor(target, value, attributes);
                 return desc;
             }
-            // TODO
             return null;
         }
 

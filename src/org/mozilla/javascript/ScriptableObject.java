@@ -1779,7 +1779,7 @@ public abstract class ScriptableObject
         return ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
+    protected int applyDescriptorToAttributeBitset(int attributes, Scriptable desc) {
         Object enumerable = getProperty(desc, "enumerable");
         if (enumerable != NOT_FOUND) {
             attributes =
