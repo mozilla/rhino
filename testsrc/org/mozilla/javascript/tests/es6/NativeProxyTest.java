@@ -299,6 +299,19 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void getOwnPropertyDescriptorResultUndefined() {
+        String js =
+                "var target = {attr: 1};\n"
+                        + "var p = new Proxy(target, {\n"
+                        + "            getOwnPropertyDescriptor: function(t, prop) {\n"
+                        + "              return;\n"
+                        + "            }\n"
+                        + "          });\n"
+                        + "'' + Object.getOwnPropertyDescriptor(p, 'attr');";
+        testString("undefined", js);
+    }
+
+    @Test
     public void getOwnPropertyDescriptorWithoutHandler() {
         String js =
                 "var o1 = {};\n"
