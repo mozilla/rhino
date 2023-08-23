@@ -576,6 +576,25 @@ class TokenStream {
         return id & 0xff;
     }
 
+    private static boolean isValidIdentifierName(String str) {
+        int i = 0;
+        for (int c : str.codePoints().toArray()) {
+            if (i++ == 0) {
+                if (c != '$' && c != '_' && !Character.isUnicodeIdentifierStart(c)) {
+                    return false;
+                }
+            } else {
+                if (c != '$'
+                        && c != '\u200c'
+                        && c != '\u200d'
+                        && !Character.isUnicodeIdentifierPart(c)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     final String getSourceString() {
         return sourceString;
     }
@@ -779,6 +798,14 @@ class TokenStream {
                     // we convert the last character back to unicode
                     str = convertLastCharToHex(str);
                 }
+
+                if (containsEscape
+                        && parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                        && !isValidIdentifierName(str)) {
+                    parser.reportError("msg.invalid.escape");
+                    return Token.ERROR;
+                }
+
                 this.string = (String) allStrings.intern(str);
                 return Token.NAME;
             }
