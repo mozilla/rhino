@@ -848,8 +848,16 @@ public class NativeArray extends IdScriptableObject implements List {
         final Scriptable result =
                 callConstructorOrCreateArray(cx, scope, thisObj, args.length, true);
 
-        for (int i = 0; i < args.length; i++) {
-            defineElem(cx, result, i, args[i]);
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && result instanceof ScriptableObject) {
+            ScriptableObject desc = ScriptableObject.buildDataDescriptor(result, null, EMPTY);
+            for (int i = 0; i < args.length; i++) {
+                desc.put("value", desc, args[i]);
+                ((ScriptableObject) result).defineOwnProperty(cx, i, desc);
+            }
+        } else {
+            for (int i = 0; i < args.length; i++) {
+                defineElem(cx, result, i, args[i]);
+            }
         }
         setLengthProperty(cx, result, args.length);
 
