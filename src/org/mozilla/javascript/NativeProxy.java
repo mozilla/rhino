@@ -585,6 +585,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (trap != null) {
             ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             callTrap(trap, new Object[] {target, name, desc});
+
+            return;
         }
 
         ScriptableObject.putProperty(target, name, value);
@@ -620,6 +622,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (trap != null) {
             ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             callTrap(trap, new Object[] {target, index, desc});
+
+            return;
         }
 
         ScriptableObject.putProperty(target, index, value);
@@ -655,6 +659,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (trap != null) {
             ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             callTrap(trap, new Object[] {target, key, desc});
+
+            return;
         }
 
         if (start == this) {
@@ -943,7 +949,46 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_DEFINE_PROPERTY);
         if (trap != null) {
-            callTrap(trap, new Object[] {target, id, desc});
+            boolean booleanTrapResult = ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, id, desc}));
+            if (!booleanTrapResult) {
+                return;
+            }
+
+            ScriptableObject targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), id);
+            boolean extensibleTarget = target.isExtensible();
+
+            boolean settingConfigFalse = Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "configurable"))
+                                                && Boolean.FALSE.equals(desc.get("configurable"));
+
+            if (targetDesc == null) {
+                if (!extensibleTarget || settingConfigFalse) {
+                    throw ScriptRuntime.typeError(
+                            "proxy can't define an incompatible property descriptor");
+                }
+            }
+            else {
+                if(!AbstractEcmaObjectOperations.isCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
+                    throw ScriptRuntime.typeError(
+                            "proxy can't define an incompatible property descriptor");
+                }
+
+                if (settingConfigFalse && Boolean.TRUE.equals(targetDesc.get("configurable"))) {
+                    throw ScriptRuntime.typeError(
+                            "proxy can't define an incompatible property descriptor");
+                }
+
+                if (ScriptableObject.isDataDescriptor(targetDesc)
+                        && Boolean.FALSE.equals(targetDesc.get("configurable"))
+                        && Boolean.TRUE.equals(targetDesc.get("writable"))) {
+                    if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "writable"))
+                            && Boolean.FALSE.equals(desc.get("writable"))) {
+                        throw ScriptRuntime.typeError(
+                                "proxy can't define an incompatible property descriptor");
+                    }
+                }
+            }
+            return;
         }
 
         target.defineOwnProperty(cx, id, desc);
