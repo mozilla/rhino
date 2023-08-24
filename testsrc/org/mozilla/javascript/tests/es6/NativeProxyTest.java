@@ -195,6 +195,94 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void definePropertyTrapReturnsFalse() {
+        String js =
+                "var target = {};\n"
+                    + "var p = new Proxy(target, {\n"
+                    + "  defineProperty: function(t, prop, desc) {\n"
+                    + "    return 0;\n"
+                    + "  }\n"
+                    + "});\n"
+
+                    + "'' + Reflect.defineProperty(p, 'attr', {})"
+                    + "+ ' ' + Object.getOwnPropertyDescriptor(target, 'attr')";
+        testString("false undefined", js);
+    }
+
+    @Test
+    public void definePropertyDescNotConfigurableAndTargetPropertyDescriptorConfigurableAndTrapResultIsTrue() {
+        String js =
+                "var target = {};\n"
+                        + "var p = new Proxy(target, {\n"
+                        + "  defineProperty: function(t, prop, desc) {\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Object.defineProperty(target, \"foo\", {\n"
+                        + "  value: 1,\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "try {\n"
+                        + "  Object.defineProperty(p, \"foo\", {\n"
+                        + "    value: 1,\n"
+                        + "    configurable: false\n"
+                        + "  });\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}\n";
+        testString("TypeError: proxy can't define an incompatible property descriptor", js);
+    }
+
+    @Test
+    public void definePropertyDescAndTargetPropertyDescriptorNotCompatibleAndTrapResultIsTrue() {
+        String js =
+                "var target = {};\n"
+                        + "var p = new Proxy(target, {\n"
+                        + "  defineProperty: function(t, prop, desc) {\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Object.defineProperty(target, \"foo\", {\n"
+                        + "  value: 1\n"
+                        + "});\n"
+
+                        + "try {\n"
+                        + "  Object.defineProperty(p, \"foo\", {\n"
+                        + "    value: 2\n"
+                        + "  });\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}\n";
+        testString("TypeError: proxy can't define an incompatible property descriptor", js);
+    }
+
+    @Test
+    public void definePropertyDescAndTargetPropertyDescriptorNotCompatibleAndTrapResultIsTrue2() {
+        String js =
+                "var target = Object.create(null);\n"
+                        + "var p = new Proxy(target, {\n"
+                        + "  defineProperty: function() {\r\n"
+                        + "    return true;\r\n"
+                        + "  }\n"
+                        + "});\n"
+
+                        + "Object.defineProperty(target, 'prop', {\n"
+                        + "  value: 1,\n"
+                        + "  configurable: false\n"
+                        + "});\n"
+
+                        + "try {\n"
+                        + "  Object.defineProperty(p, 'prop', {\n"
+                        + "    value: 1,\n"
+                        + "    configurable: true\n"
+                        + "  });\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}\n";
+        testString("TypeError: proxy can't define an incompatible property descriptor", js);
+    }
+
+    @Test
     public void definePropertyWithoutHandler() {
         String js =
                 "var o = {};\n"
