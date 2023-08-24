@@ -27,8 +27,8 @@ public class NativeProxyTest {
                         + "rev.revoke();\n"
                         + "try {"
                         + "  Object.prototype.toString.call(%s);\n"
-                        + "} catch(e) {"
-                        + "  '' + e;"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
                         + "}";
 
         testString(

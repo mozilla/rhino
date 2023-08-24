@@ -2249,6 +2249,9 @@ public class NativeArray extends IdScriptableObject implements List {
         if (!(o instanceof Scriptable)) {
             return false;
         }
+        if (o instanceof NativeProxy) {
+            return js_isArray(((NativeProxy)o).getTargetThrowIfRevoked());
+        }
         return "Array".equals(((Scriptable) o).getClassName());
     }
 

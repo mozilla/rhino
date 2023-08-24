@@ -3645,6 +3645,10 @@ public class ScriptRuntime {
             if (y instanceof Boolean) {
                 return x.equals(y);
             }
+        } else if (x instanceof SymbolKey) {
+            return x.equals(y);
+        } else if (y instanceof SymbolKey) {
+            return y.equals(x);
         } else if (x instanceof Scriptable) {
             if (x instanceof Wrapper && y instanceof Wrapper) {
                 return ((Wrapper) x).unwrap() == ((Wrapper) y).unwrap();
