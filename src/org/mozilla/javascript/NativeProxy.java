@@ -35,8 +35,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     private static final String TRAP_APPLY = "apply";
     private static final String TRAP_CONSTRUCT = "construct";
 
-    private ScriptableObject target;
-    private Scriptable handler;
+    private ScriptableObject targetObj;
+    private Scriptable handlerObj;
     private final String typeOf;
 
     private static final class Revoker implements Callable {
@@ -49,8 +49,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             if (revocableProxy != null) {
-                revocableProxy.handler = null;
-                revocableProxy.target = null;
+                revocableProxy.handlerObj = null;
+                revocableProxy.targetObj = null;
                 revocableProxy = null;
             }
             return Undefined.instance;
@@ -88,8 +88,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     private NativeProxy(ScriptableObject target, Scriptable handler) {
-        this.target = target;
-        this.handler = handler;
+        this.targetObj = target;
+        this.handlerObj = handler;
 
         if (target == null || !(target instanceof Callable)) {
             typeOf = super.getTypeOf();
@@ -100,7 +100,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
     @Override
     public String getClassName() {
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
         return target.getClassName();
     }
 
@@ -124,7 +124,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 10. If Type(newObj) is not Object, throw a TypeError exception.
          * 11. Return newObj.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_CONSTRUCT);
         if (trap != null) {
@@ -161,7 +161,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         iii. If extensibleTarget is false, throw a TypeError exception.
          * 10. Return booleanTrapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
@@ -211,7 +211,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         iii. If extensibleTarget is false, throw a TypeError exception.
          * 10. Return booleanTrapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
@@ -241,7 +241,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      */
     @Override
     public boolean has(Symbol key, Scriptable start) {
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
         if (trap != null) {
@@ -307,7 +307,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         * 22. If uncheckedResultKeys is not empty, throw a TypeError exception.
         * 23. Return trapResult.
         */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_OWN_KEYS);
         if (trap != null) {
@@ -407,7 +407,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If trapResult is not undefined, throw a TypeError exception.
          * 11. Return trapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
@@ -463,7 +463,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If trapResult is not undefined, throw a TypeError exception.
          * 11. Return trapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
@@ -519,7 +519,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If trapResult is not undefined, throw a TypeError exception.
          * 11. Return trapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
@@ -579,7 +579,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If targetDesc.[[Set]] is undefined, throw a TypeError exception.
          * 12. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
@@ -614,7 +614,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If targetDesc.[[Set]] is undefined, throw a TypeError exception.
          * 12. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
@@ -649,7 +649,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If targetDesc.[[Set]] is undefined, throw a TypeError exception.
          * 12. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
@@ -688,7 +688,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 14. If extensibleTarget is false, throw a TypeError exception.
          * 15. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
@@ -738,7 +738,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 14. If extensibleTarget is false, throw a TypeError exception.
          * 15. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
@@ -788,7 +788,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 14. If extensibleTarget is false, throw a TypeError exception.
          * 15. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_DELETE_PROPERTY);
         if (trap != null) {
@@ -851,7 +851,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If targetDesc.[[Writable]] is true, throw a TypeError exception.
          * 18. Return resultDesc.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_GET_OWN_PROPERTY_DESCRIPTOR);
         if (trap != null) {
@@ -939,7 +939,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *         i. If Desc has a [[Writable]] field and Desc.[[Writable]] is false, throw a TypeError exception.
          * 17. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_DEFINE_PROPERTY);
         if (trap != null) {
@@ -968,7 +968,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 9. If SameValue(booleanTrapResult, targetResult) is false, throw a TypeError exception.
          * 10. Return booleanTrapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_IS_EXTENSIBLE);
         if (trap == null) {
@@ -1005,7 +1005,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          *     b. If extensibleTarget is true, throw a TypeError exception.
          * 9. Return booleanTrapResult.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_PREVENT_EXTENSIONS);
         if (trap == null) {
@@ -1045,7 +1045,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 12. If SameValue(handlerProto, targetProto) is false, throw a TypeError exception.
          * 13. Return handlerProto.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_GET_PROTOTYPE_OF);
         if (trap != null) {
@@ -1101,7 +1101,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 13. If SameValue(V, targetProto) is false, throw a TypeError exception.
          * 14. Return true.
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_SET_PROTOTYPE_OF);
         if (trap != null) {
@@ -1137,7 +1137,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
          * 7. Let argArray be ! CreateArrayFromList(argumentsList).
          * 8. Return ? Call(trap, handler, « target, thisArgument, argArray »).
          */
-        assertNotRevoked();
+        ScriptableObject target = getTargetThrowIfRevoked();
 
         Scriptable argumentsList = cx.newArray(scope, args);
 
@@ -1184,7 +1184,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     private Callable getTrap(String trapName) {
-        Object handlerProp = ScriptableObject.getProperty(handler, trapName);
+        Object handlerProp = ScriptableObject.getProperty(handlerObj, trapName);
         if (Scriptable.NOT_FOUND == handlerProp) {
             return null;
         }
@@ -1199,12 +1199,13 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     private Object callTrap(Callable trap, Object[] args) {
-        return trap.call(Context.getContext(), handler, handler, args);
+        return trap.call(Context.getContext(), handlerObj, handlerObj, args);
     }
 
-    private void assertNotRevoked() {
-        if (target == null) {
+    ScriptableObject getTargetThrowIfRevoked() {
+        if (targetObj == null) {
             throw ScriptRuntime.typeError("Illegal operation attempted on a revoked proxy");
         }
+        return targetObj;
     }
 }
