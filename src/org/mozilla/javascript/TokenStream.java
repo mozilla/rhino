@@ -977,38 +977,17 @@ class TokenStream {
                                 int escapeStart = stringBufferTop;
                                 addToString('u');
                                 escapeVal = 0;
-                                if (matchChar('{')) {
-                                    for (; ; ) {
-                                        c = getChar();
-
-                                        if (c == '}') {
-                                            addToString(c);
-                                            break;
+                                for (int i = 0; i != 4; ++i) {
+                                    c = getChar();
+                                    escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                    if (escapeVal < 0) {
+                                        if (parser.compilerEnv.getLanguageVersion()
+                                                >= Context.VERSION_ES6) {
+                                            parser.reportError("msg.invalid.escape");
                                         }
-                                        escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                        if (escapeVal < 0) {
-                                            break;
-                                        }
-                                        addToString(c);
-                                    }
-
-                                    if (escapeVal < 0 || escapeVal > 0x10FFFF) {
-                                        parser.reportError("msg.invalid.escape");
                                         continue strLoop;
                                     }
-                                } else {
-                                    for (int i = 0; i != 4; ++i) {
-                                        c = getChar();
-                                        escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                        if (escapeVal < 0) {
-                                            if (parser.compilerEnv.getLanguageVersion()
-                                                    >= Context.VERSION_ES6) {
-                                                parser.reportError("msg.invalid.escape");
-                                            }
-                                            continue strLoop;
-                                        }
-                                        addToString(c);
-                                    }
+                                    addToString(c);
                                 }
                                 // prepare for replace of stored 'u' sequence
                                 // by escape value
