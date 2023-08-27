@@ -722,8 +722,7 @@ class TokenStream {
                 ungetChar(c);
 
                 String str = getStringFromBuffer();
-                if (!containsEscape
-                        || parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                if (!containsEscape) {
                     // OPT we shouldn't have to make a string (object!) to
                     // check if it's a keyword.
 
