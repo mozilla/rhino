@@ -86,12 +86,10 @@ public class NativeReflectTest {
         String js =
                 "var o = {};\n"
                         + "var internPrototype;\n"
-
                         + "function fn() {\n"
                         + "  this.o = o;\n"
                         + "  internPrototype = Object.getPrototypeOf(this);\n"
                         + "}\n"
-
                         + "var result = Reflect.construct(fn, [], Array);\n"
                         + "'' + (Object.getPrototypeOf(result) === Array.prototype)"
                         + " + ' ' + (internPrototype === Array.prototype)"

@@ -140,9 +140,7 @@ final class NativeReflect extends ScriptableObject {
                 true, cx, scope, callable, new Object[] {thisObj, argumentsList});
     }
 
-    /**
-     * see https://262.ecma-international.org/12.0/#sec-reflect.construct
-     */
+    /** see https://262.ecma-international.org/12.0/#sec-reflect.construct */
     private static Scriptable construct(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         /*
