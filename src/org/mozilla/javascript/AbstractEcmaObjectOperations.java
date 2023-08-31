@@ -288,28 +288,39 @@ class AbstractEcmaObjectOperations {
      *
      * <p>https://262.ecma-international.org/12.0/#sec-iscompatiblepropertydescriptor
      */
-    static boolean isCompatiblePropertyDescriptor(boolean extensible, ScriptableObject desc, ScriptableObject current) {
-        return validateAndApplyPropertyDescriptor(Undefined.SCRIPTABLE_UNDEFINED, Undefined.SCRIPTABLE_UNDEFINED, extensible, desc, current);
+    static boolean isCompatiblePropertyDescriptor(
+            boolean extensible, ScriptableObject desc, ScriptableObject current) {
+        return validateAndApplyPropertyDescriptor(
+                Undefined.SCRIPTABLE_UNDEFINED,
+                Undefined.SCRIPTABLE_UNDEFINED,
+                extensible,
+                desc,
+                current);
     }
 
     /**
-     *  ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
+     * ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
      *
      * <p>https://262.ecma-international.org/12.0/#sec-validateandapplypropertydescriptor
      */
-    static boolean validateAndApplyPropertyDescriptor(Scriptable o, Scriptable p, boolean extensible, ScriptableObject desc, ScriptableObject current) {
+    static boolean validateAndApplyPropertyDescriptor(
+            Scriptable o,
+            Scriptable p,
+            boolean extensible,
+            ScriptableObject desc,
+            ScriptableObject current) {
         if (Undefined.isUndefined(current)) {
             if (!extensible) {
                 return false;
             }
 
-            if (ScriptableObject.isGenericDescriptor(desc) || ScriptableObject.isDataDescriptor(desc)) {
+            if (ScriptableObject.isGenericDescriptor(desc)
+                    || ScriptableObject.isDataDescriptor(desc)) {
                 /*
                 i. i. If O is not undefined, create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attribute values are described by Desc.
                   If the value of an attribute field of Desc is absent, the attribute of the newly created property is set to its default value.
                  */
-            }
-            else {
+            } else {
                 /*
                 ii. ii. If O is not undefined, create an own accessor property named P of object O whose [[Get]], [[Set]], [[Enumerable]], and [[Configurable]] attribute values are described by Desc. If the value of an attribute field of Desc is absent, the attribute of the newly created property is set to its default value.
                  */
@@ -336,22 +347,29 @@ class AbstractEcmaObjectOperations {
         // if (!ScriptableObject.isGenericDescriptor(desc)) {
         if (ScriptableObject.isGenericDescriptor(desc)) {
             return true;
-        }
-        else if (!Objects.equals(ScriptableObject.isGenericDescriptor(current), ScriptableObject.isGenericDescriptor(desc))) {
+        } else if (!Objects.equals(
+                ScriptableObject.isGenericDescriptor(current),
+                ScriptableObject.isGenericDescriptor(desc))) {
             if (Boolean.FALSE.equals(current.get("configurable"))) {
                 return false;
             }
             if (ScriptableObject.isDataDescriptor(current)) {
                 if (Boolean.FALSE.equals(current.get("configurable"))) {
-                    // i. i. If O is not undefined, convert the property named P of object O from a data property to an accessor property. Preserve the existing values of the converted property's [[Configurable]] and [[Enumerable]] attributes and set the rest of the property's attributes to their default values.
-                }
-                else {
-                    // i. i. If O is not undefined, convert the property named P of object O from an accessor property to a data property. Preserve the existing values of the converted property's [[Configurable]] and [[Enumerable]] attributes and set the rest of the property's attributes to their default values.
+                    // i. i. If O is not undefined, convert the property named P of object O from a
+                    // data property to an accessor property. Preserve the existing values of the
+                    // converted property's [[Configurable]] and [[Enumerable]] attributes and set
+                    // the rest of the property's attributes to their default values.
+                } else {
+                    // i. i. If O is not undefined, convert the property named P of object O from an
+                    // accessor property to a data property. Preserve the existing values of the
+                    // converted property's [[Configurable]] and [[Enumerable]] attributes and set
+                    // the rest of the property's attributes to their default values.
                 }
             }
-        }
-        else if (ScriptableObject.isDataDescriptor(current) && ScriptableObject.isDataDescriptor(desc)) {
-            if (Boolean.FALSE.equals(current.get("configurable")) && Boolean.FALSE.equals(current.get("writable"))) {
+        } else if (ScriptableObject.isDataDescriptor(current)
+                && ScriptableObject.isDataDescriptor(desc)) {
+            if (Boolean.FALSE.equals(current.get("configurable"))
+                    && Boolean.FALSE.equals(current.get("writable"))) {
                 if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "writable"))
                         && Boolean.TRUE.equals(desc.get("writable"))) {
                     return false;
@@ -362,8 +380,7 @@ class AbstractEcmaObjectOperations {
                 }
                 return true;
             }
-        }
-        else {
+        } else {
             if (Boolean.FALSE.equals(current.get("configurable"))) {
                 if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "set"))
                         && !Objects.equals(desc.get("set"), current.get("set"))) {

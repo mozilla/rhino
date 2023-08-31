@@ -949,26 +949,27 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_DEFINE_PROPERTY);
         if (trap != null) {
-            boolean booleanTrapResult = ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, id, desc}));
+            boolean booleanTrapResult =
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, id, desc}));
             if (!booleanTrapResult) {
                 return;
             }
 
-            ScriptableObject targetDesc =
-                    target.getOwnPropertyDescriptor(Context.getContext(), id);
+            ScriptableObject targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), id);
             boolean extensibleTarget = target.isExtensible();
 
-            boolean settingConfigFalse = Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "configurable"))
-                                                && Boolean.FALSE.equals(desc.get("configurable"));
+            boolean settingConfigFalse =
+                    Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "configurable"))
+                            && Boolean.FALSE.equals(desc.get("configurable"));
 
             if (targetDesc == null) {
                 if (!extensibleTarget || settingConfigFalse) {
                     throw ScriptRuntime.typeError(
                             "proxy can't define an incompatible property descriptor");
                 }
-            }
-            else {
-                if(!AbstractEcmaObjectOperations.isCompatiblePropertyDescriptor(extensibleTarget, desc, targetDesc)) {
+            } else {
+                if (!AbstractEcmaObjectOperations.isCompatiblePropertyDescriptor(
+                        extensibleTarget, desc, targetDesc)) {
                     throw ScriptRuntime.typeError(
                             "proxy can't define an incompatible property descriptor");
                 }

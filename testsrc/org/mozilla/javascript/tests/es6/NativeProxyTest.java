@@ -198,19 +198,19 @@ public class NativeProxyTest {
     public void definePropertyTrapReturnsFalse() {
         String js =
                 "var target = {};\n"
-                    + "var p = new Proxy(target, {\n"
-                    + "  defineProperty: function(t, prop, desc) {\n"
-                    + "    return 0;\n"
-                    + "  }\n"
-                    + "});\n"
-
-                    + "'' + Reflect.defineProperty(p, 'attr', {})"
-                    + "+ ' ' + Object.getOwnPropertyDescriptor(target, 'attr')";
+                        + "var p = new Proxy(target, {\n"
+                        + "  defineProperty: function(t, prop, desc) {\n"
+                        + "    return 0;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "'' + Reflect.defineProperty(p, 'attr', {})"
+                        + "+ ' ' + Object.getOwnPropertyDescriptor(target, 'attr')";
         testString("false undefined", js);
     }
 
     @Test
-    public void definePropertyDescNotConfigurableAndTargetPropertyDescriptorConfigurableAndTrapResultIsTrue() {
+    public void
+            definePropertyDescNotConfigurableAndTargetPropertyDescriptorConfigurableAndTrapResultIsTrue() {
         String js =
                 "var target = {};\n"
                         + "var p = new Proxy(target, {\n"
@@ -245,7 +245,6 @@ public class NativeProxyTest {
                         + "Object.defineProperty(target, \"foo\", {\n"
                         + "  value: 1\n"
                         + "});\n"
-
                         + "try {\n"
                         + "  Object.defineProperty(p, \"foo\", {\n"
                         + "    value: 2\n"
@@ -265,12 +264,10 @@ public class NativeProxyTest {
                         + "    return true;\r\n"
                         + "  }\n"
                         + "});\n"
-
                         + "Object.defineProperty(target, 'prop', {\n"
                         + "  value: 1,\n"
                         + "  configurable: false\n"
                         + "});\n"
-
                         + "try {\n"
                         + "  Object.defineProperty(p, 'prop', {\n"
                         + "    value: 1,\n"
