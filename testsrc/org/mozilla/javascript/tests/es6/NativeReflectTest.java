@@ -82,6 +82,24 @@ public class NativeReflectTest {
     }
 
     @Test
+    public void constructNewTarget() {
+        String js =
+                "var o = {};\n"
+                        + "var internPrototype;\n"
+
+                        + "function fn() {\n"
+                        + "  this.o = o;\n"
+                        + "  internPrototype = Object.getPrototypeOf(this);\n"
+                        + "}\n"
+
+                        + "var result = Reflect.construct(fn, [], Array);\n"
+                        + "'' + (Object.getPrototypeOf(result) === Array.prototype)"
+                        + " + ' ' + (internPrototype === Array.prototype)"
+                        + " + ' ' + (result.o === o)";
+        testString("true true true", js);
+    }
+
+    @Test
     public void constructNoConstructorNumber() {
         String js =
                 "try {\n"

@@ -140,8 +140,18 @@ final class NativeReflect extends ScriptableObject {
                 true, cx, scope, callable, new Object[] {thisObj, argumentsList});
     }
 
+    /**
+     * see https://262.ecma-international.org/12.0/#sec-reflect.construct
+     */
     private static Scriptable construct(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        /*
+         * 1. If IsConstructor(target) is false, throw a TypeError exception.
+         * 2. If newTarget is not present, set newTarget to target.
+         * 3. Else if IsConstructor(newTarget) is false, throw a TypeError exception.
+         * 4. Let args be ? CreateListFromArrayLike(argumentsList).
+         * 5. Return ? Construct(target, args, newTarget).
+         */
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -159,12 +169,51 @@ final class NativeReflect extends ScriptableObject {
             return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         }
 
-        if (args.length > 2 && !(args[2] instanceof Function)) {
+        if (args.length > 2 && !(args[2] instanceof Constructable)) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
         }
 
         Object[] callArgs = ScriptRuntime.getApplyArguments(cx, args[1]);
-        return ctor.construct(cx, scope, callArgs);
+
+        Object newTargetPrototype = null;
+        if (args.length > 2) {
+            Scriptable newTarget = ScriptableObject.ensureScriptable(args[2]);
+
+            if (newTarget instanceof BaseFunction) {
+                newTargetPrototype = ((BaseFunction) newTarget).getPrototypeProperty();
+            } else {
+                newTargetPrototype = newTarget.get("prototype", newTarget);
+            }
+
+            if (!(newTargetPrototype instanceof Scriptable)
+                    || ScriptRuntime.isSymbol(newTargetPrototype)
+                    || Undefined.isUndefined(newTargetPrototype)) {
+                newTargetPrototype = null;
+            }
+        }
+
+        // hack to set the right prototype before calling the ctor
+        if (ctor instanceof BaseFunction && newTargetPrototype != null) {
+            BaseFunction ctorBaseFunction = (BaseFunction) ctor;
+            Scriptable result = ctorBaseFunction.createObject(cx, scope);
+            if (result != null) {
+                result.setPrototype((Scriptable) newTargetPrototype);
+
+                Object val = ctorBaseFunction.call(cx, scope, result, args);
+                if (val instanceof Scriptable) {
+                    return (Scriptable) val;
+                }
+
+                return result;
+            }
+        }
+
+        Scriptable newScriptable = ctor.construct(cx, scope, callArgs);
+        if (newTargetPrototype != null) {
+            newScriptable.setPrototype((Scriptable) newTargetPrototype);
+        }
+
+        return newScriptable;
     }
 
     private static Object defineProperty(
