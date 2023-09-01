@@ -917,7 +917,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-defineownproperty-p-desc
      */
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -952,7 +952,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, id, desc}));
             if (!booleanTrapResult) {
-                return;
+                return false;
             }
 
             ScriptableObject targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), id);
@@ -989,10 +989,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                     }
                 }
             }
-            return;
+            return true;
         }
 
-        target.defineOwnProperty(cx, id, desc);
+        return target.defineOwnProperty(cx, id, desc);
     }
 
     /**

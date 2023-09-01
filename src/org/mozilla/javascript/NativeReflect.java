@@ -208,8 +208,7 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject desc = ScriptableObject.ensureScriptableObject(args[2]);
 
         try {
-            target.defineOwnProperty(cx, args[1], desc);
-            return true;
+            return target.defineOwnProperty(cx, args[1], desc);
         } catch (EcmaError e) {
             return false;
         }
