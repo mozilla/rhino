@@ -96,26 +96,6 @@ final class NativeReflect extends ScriptableObject {
         return "Reflect";
     }
 
-    private static NativeReflect constructor(Context cx, Scriptable scope, Object[] args) {
-        if (args.length < 2) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.method.missing.parameter",
-                    "Proxy.ctor",
-                    "2",
-                    Integer.toString(args.length));
-        }
-        Scriptable s = ScriptRuntime.toObject(cx, scope, args[0]);
-        ScriptableObject trgt = ensureScriptableObject(s);
-
-        s = ScriptRuntime.toObject(cx, scope, args[1]);
-        ScriptableObject hndlr = ensureScriptableObject(s);
-
-        NativeReflect reflect = new NativeReflect();
-        reflect.setPrototype(ScriptableObject.getClassPrototype(scope, REFLECT_TAG));
-        reflect.setParentScope(scope);
-        return reflect;
-    }
-
     private static Object apply(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
