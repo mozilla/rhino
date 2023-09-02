@@ -667,6 +667,42 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void getTrapIsNullTargetIsProxy() {
+        String js =
+                "var stringTarget = new Proxy(new String('str'), {});\n"
+                        + "var stringProxy = new Proxy(stringTarget, {\n"
+                        + "  get: null,\n"
+                        + "});\n"
+                        + "'' + stringProxy.length"
+                        + " + ' ' + stringProxy[0]"
+                        + " + ' ' + stringProxy[4];";
+        testString("3 s undefined", js);
+    }
+
+    @Test
+    public void getTrapIsNullTargetIsProxy2() {
+        String js =
+                "var sym = Symbol();\n"
+                        + "var target = new Proxy({}, {\n"
+                        + "  get: function(_target, key) {\n"
+                        + "    switch (key) {\n"
+                        + "      case sym: return 1;\n"
+                        + "      case \"10\": return 2;\n"
+                        + "      case \"foo\": return 3;\n"
+                        + "    }\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: null,\n"
+                        + "});\n"
+                        + "'' + proxy[sym]"
+                        + " + ' ' + proxy[10]"
+                        + " + ' ' + Object.create(proxy).foo"
+                        + " + ' ' + proxy.bar;";
+        testString("1 2 3 undefined", js);
+    }
+
+    @Test
     public void getPropertyByIntWithoutHandler() {
         String js = "var a = ['zero', 'one'];" + "var proxy1 = new Proxy(a, {});\n" + "proxy1[1];";
         testString("one", js);
