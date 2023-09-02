@@ -467,7 +467,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_GET);
         if (trap != null) {
-            Object trapResult = callTrap(trap, new Object[] {target, index, this});
+            Object trapResult =
+                    callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), this});
 
             ScriptableObject targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
