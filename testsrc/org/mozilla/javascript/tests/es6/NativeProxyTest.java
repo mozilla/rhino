@@ -452,6 +452,30 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void preventExtensionsTrapReturnsNoBoolean() {
+        String js =
+                "var target = {};\n"
+                        + "var p = new Proxy({}, {\n"
+                        + "  preventExtensions: function(t) {\n"
+                        + "    return 0;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var res = '' + Reflect.preventExtensions(p);\n"
+                        + "Object.preventExtensions(target);\n"
+                        + "res += ' ' + Reflect.preventExtensions(p);\n";
+        testString("false false", js);
+    }
+
+    @Test
+    public void preventExtensionsTrapIsUndefined() {
+        String js =
+                "var target = {};\n"
+                        + "var p = new Proxy(target, {});\n"
+                        + "'' + Reflect.preventExtensions(p);";
+        testString("true", js);
+    }
+
+    @Test
     public void ownKeys() {
         String js =
                 "var o = { d: 42 };\n"

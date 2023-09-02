@@ -130,8 +130,9 @@ class AbstractEcmaObjectOperations {
         */
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
 
-        // TODO check .preventExtensions() return value once implemented and act accordingly to spec
-        obj.preventExtensions();
+        if (!obj.preventExtensions()) {
+            return false;
+        }
 
         for (Object key : obj.getIds(true, true)) {
             ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, key);
