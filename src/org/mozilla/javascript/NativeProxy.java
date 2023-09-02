@@ -1022,9 +1022,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         }
 
         boolean booleanTrapResult = ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target}));
-        boolean targetResult = target.isExtensible();
-
-        if (booleanTrapResult != targetResult) {
+        if (booleanTrapResult != target.isExtensible()) {
             throw ScriptRuntime.typeError(
                     "IsExtensible trap has to return the same value as the target");
         }
@@ -1036,7 +1034,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-preventextensions
      */
     @Override
-    public void preventExtensions() {
+    public boolean preventExtensions() {
         /*
          * 1. Let handler be O.[[ProxyHandler]].
          * 2. If handler is null, throw a TypeError exception.
@@ -1055,13 +1053,14 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_PREVENT_EXTENSIONS);
         if (trap == null) {
-            target.preventExtensions();
-            return;
+            return target.preventExtensions();
         }
-        callTrap(trap, new Object[] {target});
-        if (target.isExtensible()) {
-            throw ScriptRuntime.typeError("target is not extensible");
+        boolean booleanTrapResult = ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target}));
+        if (booleanTrapResult && target.isExtensible()) {
+            throw ScriptRuntime.typeError("target is extensible but trap returned true");
         }
+
+        return booleanTrapResult;
     }
 
     @Override

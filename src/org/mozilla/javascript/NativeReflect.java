@@ -316,8 +316,7 @@ final class NativeReflect extends ScriptableObject {
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
-        target.preventExtensions();
-        return true;
+        return target.preventExtensions();
     }
 
     private static Object set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
