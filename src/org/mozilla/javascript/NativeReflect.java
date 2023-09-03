@@ -83,6 +83,8 @@ final class NativeReflect extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
 
+        reflect.defineProperty(SymbolKey.TO_STRING_TAG, REFLECT_TAG, DONTENUM | READONLY);
+
         ScriptableObject.defineProperty(scope, REFLECT_TAG, reflect, DONTENUM);
         if (sealed) {
             reflect.sealObject();
