@@ -989,16 +989,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public int hashCode() {
-        return javaObject == null ? 0 : javaObject.hashCode();
+    public boolean equals(Object obj) {
+        return obj != null
+                && obj.getClass().equals(getClass())
+                && Objects.equals(((NativeJavaObject) obj).javaObject, javaObject);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof NativeJavaObject) {
-            return Objects.equals(((NativeJavaObject) obj).javaObject, javaObject);
-        } else {
-            return false;
-        }
+    public int hashCode() {
+        return javaObject == null ? 0 : javaObject.hashCode();
     }
 }
