@@ -17,6 +17,7 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
@@ -984,6 +985,20 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 adapter_writeAdapterObject = null;
                 adapter_readAdapterObject = null;
             }
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return javaObject == null ? 0 : javaObject.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof NativeJavaObject) {
+            return Objects.equals(((NativeJavaObject) obj).javaObject, javaObject);
+        } else {
+            return false;
         }
     }
 }
