@@ -17,6 +17,29 @@ public class NativeReflectTest {
     @Test
     public void apply() {
         testDouble(1.0, "Reflect.apply(Math.floor, undefined, [1.75])");
+        testString(
+                "hello",
+                "Reflect.apply(String.fromCharCode, undefined, [104, 101, 108, 108, 111])");
+        testInt(4, "Reflect.apply(RegExp.prototype.exec, /ab/, ['confabulation']).index");
+        testString("i", "Reflect.apply(''.charAt, 'ponies', [3])");
+    }
+
+    @Test
+    public void applyString() {
+        testString("foo", "Reflect.apply(String.prototype.toString, 'foo', [])");
+        testString("oo", "Reflect.apply(String.prototype.substring, 'foo', [1])");
+    }
+
+    @Test
+    public void applyNumber() {
+        testString("1.234567e+3", "Reflect.apply(Number.prototype.toExponential, 1234.567, [])");
+        testString("1.23e+3", "Reflect.apply(Number.prototype.toExponential, 1234.567, [2])");
+    }
+
+    @Test
+    public void applyBoolean() {
+        testString("true", "Reflect.apply(Boolean.prototype.toString, true, [])");
+        testString("false", "Reflect.apply(Boolean.prototype.toString, false, [])");
     }
 
     @Test
@@ -421,6 +444,19 @@ public class NativeReflectTest {
 
                     Object result = cx.evaluateString(scope, js, "test", 1, null);
                     assertEquals(expected, ((Double) result).doubleValue(), 0.00001);
+
+                    return null;
+                });
+    }
+
+    private static void testInt(int expected, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Scriptable scope = cx.initStandardObjects();
+
+                    Object result = cx.evaluateString(scope, js, "test", 1, null);
+                    assertEquals(expected, ((Integer) result).intValue());
 
                     return null;
                 });
