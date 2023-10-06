@@ -531,26 +531,22 @@ function TestTypedArraysWithIllegalIndices() {
   assertEquals(10, a["-1e2"]);
   assertEquals(undefined, a[-1e2]);
 
-  /* Rhino: Seems to think that "-0" is a real index. Not going to change that here.
   a["-0"] = 256;
   var s2 = "     -0";
   a[s2] = 255;
   assertEquals(undefined, a["-0"]);
   assertEquals(255, a[s2]);
   assertEquals(0, a[-0]);
-  */
 
   /* Chromium bug: 424619
    * a[-Infinity] = 50;
    * assertEquals(undefined, a[-Infinity]);
    */
-   /* Rhino: Seems to think that 1.5 is a real index. Not going to change that here.
   a[1.5] = 10;
   assertEquals(undefined, a[1.5]);
   var nan = Math.sqrt(-1);
   a[nan] = 5;
   assertEquals(5, a[nan]);
-  */
 
   var x = 0;
   var y = -0;
@@ -584,26 +580,22 @@ function TestTypedArraysWithIllegalIndicesStrict() {
   assertEquals(10, a["-1e2"]);
   assertEquals(undefined, a[-1e2]);
 
-  /* Rhino: Seems to think that "-0" is a real index. Not going to change that here.
-  a["-0"] = 256;
+   a["-0"] = 256;
   var s2 = "     -0";
   a[s2] = 255;
   assertEquals(undefined, a["-0"]);
   assertEquals(255, a[s2]);
   assertEquals(0, a[-0]);
-  */
 
   /* Chromium bug: 424619
    * a[-Infinity] = 50;
    * assertEquals(undefined, a[-Infinity]);
    */
-   /* Rhino: Seems to think that 1.5 is a real index. Not going to change that here.
   a[1.5] = 10;
   assertEquals(undefined, a[1.5]);
   var nan = Math.sqrt(-1);
   a[nan] = 5;
   assertEquals(5, a[nan]);
-  */
 
   var x = 0;
   var y = -0;
