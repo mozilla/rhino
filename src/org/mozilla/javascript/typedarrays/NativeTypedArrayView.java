@@ -112,7 +112,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @Override
     public void delete(String name) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
-        if (num.isEmpty()) {
+        if (!num.isPresent()) {
             // No delete for indexed elements, so only delete if "name" is not a number
             super.delete(name);
         }
