@@ -7,7 +7,7 @@ load("testsrc/assert.js");
 res = "";
 
 function logElement(value, key) {
-    res += "set[" + key + "] (" + this + ") "; 
+    res += "set[" + key + "] (" + this + ") ";
 }
 
 (function TestForEach() {
@@ -79,6 +79,13 @@ function logElement(value, key) {
     mySet.delete(key)
     assertEquals(1, mySet.size);
   }
+})();
+
+(function TestSetAddJavaEnums() {
+  var mySet = new Set();
+  mySet.add(java.nio.file.AccessMode.READ);
+  mySet.add(java.nio.file.AccessMode.READ);
+  assertEquals(1, mySet.size);
 })();
 
 "success";
