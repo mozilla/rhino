@@ -192,4 +192,14 @@ public class NativeJavaList extends NativeJavaObject {
     private boolean isWithValidIndex(int index) {
         return index >= 0 && index < list.size();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

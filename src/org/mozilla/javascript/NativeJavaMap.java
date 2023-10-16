@@ -171,6 +171,16 @@ public class NativeJavaMap extends NativeJavaObject {
         return super.getIds();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
     private static Callable symbol_iterator =
             (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaMap)) {

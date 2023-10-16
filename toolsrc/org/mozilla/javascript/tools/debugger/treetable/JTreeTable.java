@@ -254,7 +254,8 @@ public class JTreeTable extends JTable {
                                         me.getX() - getCellRect(0, counter, true).x,
                                         me.getY(),
                                         me.getClickCount(),
-                                        me.isPopupTrigger());
+                                        me.isPopupTrigger(),
+                                        me.getButton());
                         tree.dispatchEvent(newME);
                         break;
                     }

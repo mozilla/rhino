@@ -67,7 +67,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
         this.symbolData = null;
     }
 
-    private NativeSymbol(SymbolKey key) {
+    NativeSymbol(SymbolKey key) {
         this.key = key;
         this.symbolData = this;
     }

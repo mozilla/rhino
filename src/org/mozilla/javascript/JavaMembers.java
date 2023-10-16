@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.SourceVersion;
 
 /**
  * @author Mike Shaver
@@ -34,8 +33,7 @@ import javax.lang.model.SourceVersion;
  */
 class JavaMembers {
 
-    private static final boolean STRICT_REFLECTIVE_ACCESS =
-            SourceVersion.latestSupported().ordinal() > 8;
+    private static final boolean STRICT_REFLECTIVE_ACCESS = isModularJava();
 
     private static final Permission allPermission = new AllPermission();
 
@@ -57,6 +55,19 @@ class JavaMembers {
             reflect(cx, scope, includeProtected, includePrivate);
         } finally {
             Context.exit();
+        }
+    }
+
+    /**
+     * This method returns true if we are on a "modular" version of Java (Java 11 or up). It does
+     * not use the SourceVersion class because this is not present on Android.
+     */
+    private static boolean isModularJava() {
+        try {
+            Class.class.getMethod("getModule");
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
         }
     }
 

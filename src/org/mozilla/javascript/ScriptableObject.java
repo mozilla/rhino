@@ -1334,6 +1334,19 @@ public abstract class ScriptableObject
         so.defineProperty(propertyName, value, attributes);
     }
 
+    /** Utility method to add lambda properties to arbitrary Scriptable object. */
+    protected void defineProperty(
+            Scriptable scope,
+            String name,
+            int length,
+            Callable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        defineProperty(name, f, attributes);
+    }
+
     /**
      * Utility method to add properties to arbitrary Scriptable object. If destination is instance
      * of ScriptableObject, calls defineProperty there, otherwise calls put in destination ignoring

@@ -299,6 +299,10 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 0;
                 s = "flat";
                 break;
+            case Id_flatMap:
+                arity = 1;
+                s = "flatMap";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -440,6 +444,9 @@ public class NativeArray extends IdScriptableObject implements List {
 
                 case Id_flat:
                     return js_flat(cx, scope, thisObj, args);
+
+                case Id_flatMap:
+                    return js_flatMap(cx, scope, thisObj, args);
 
                 case Id_every:
                 case Id_filter:
@@ -841,8 +848,16 @@ public class NativeArray extends IdScriptableObject implements List {
         final Scriptable result =
                 callConstructorOrCreateArray(cx, scope, thisObj, args.length, true);
 
-        for (int i = 0; i < args.length; i++) {
-            defineElem(cx, result, i, args[i]);
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && result instanceof ScriptableObject) {
+            ScriptableObject desc = ScriptableObject.buildDataDescriptor(result, null, EMPTY);
+            for (int i = 0; i < args.length; i++) {
+                desc.put("value", desc, args[i]);
+                ((ScriptableObject) result).defineOwnProperty(cx, i, desc);
+            }
+        } else {
+            for (int i = 0; i < args.length; i++) {
+                defineElem(cx, result, i, args[i]);
+            }
         }
         setLengthProperty(cx, result, args.length);
 
@@ -1131,6 +1146,27 @@ public class NativeArray extends IdScriptableObject implements List {
             else result.append(']');
         }
         return result.toString();
+    }
+
+    private static Function getCallbackArg(Context cx, Object callbackArg) {
+        if (!(callbackArg instanceof Function)) {
+            throw ScriptRuntime.notFunctionError(callbackArg);
+        }
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6
+                && (callbackArg instanceof NativeRegExp)) {
+            // Previously, it was allowed to pass RegExp instance as a callback (it implements
+            // Function)
+            // But according to ES2015 21.2.6 Properties of RegExp Instances:
+            // > RegExp instances are ordinary objects that inherit properties from the RegExp
+            // prototype object.
+            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
+            // [[OriginalFlags]].
+            // so, no [[Call]] for RegExp-s
+            throw ScriptRuntime.notFunctionError(callbackArg);
+        }
+
+        Function f = (Function) callbackArg;
+        return f;
     }
 
     /** See ECMA 15.4.4.3 */
@@ -1607,6 +1643,10 @@ public class NativeArray extends IdScriptableObject implements List {
         long srclen = getLengthProperty(cx, arg);
         long newlen = srclen + offset;
 
+        if (newlen > NativeNumber.MAX_SAFE_INTEGER) {
+            throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", newlen);
+        }
+
         // First, optimize for a pair of native, dense arrays
         if ((newlen <= Integer.MAX_VALUE) && (result instanceof NativeArray)) {
             final NativeArray denseResult = (NativeArray) result;
@@ -2034,6 +2074,47 @@ public class NativeArray extends IdScriptableObject implements List {
         return result;
     }
 
+    private static Object js_flatMap(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
+
+        Function f = getCallbackArg(cx, callbackArg);
+        Scriptable parent = ScriptableObject.getTopLevelScope(f);
+        Scriptable thisArg;
+        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
+            thisArg = parent;
+        } else {
+            thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
+        }
+
+        long length = getLengthProperty(cx, o);
+
+        Scriptable result;
+        result = cx.newArray(scope, 0);
+        long j = 0;
+        for (long i = 0; i < length; i++) {
+            Object elem = getRawElem(o, i);
+            if (elem == Scriptable.NOT_FOUND) {
+                continue;
+            }
+            Object[] innerArgs = new Object[] {elem, Long.valueOf(i), o};
+            Object mapCall = f.call(cx, parent, thisArg, innerArgs);
+            if (js_isArray(mapCall)) {
+                Scriptable arr = (Scriptable) mapCall;
+                long arrLength = getLengthProperty(cx, arr);
+                for (long k = 0; k < arrLength; k++) {
+                    Object temp = getRawElem(arr, k);
+                    defineElemOrThrow(cx, result, j++, temp);
+                }
+            } else {
+                defineElemOrThrow(cx, result, j++, mapCall);
+            }
+        }
+        setLengthProperty(cx, result, j);
+        return result;
+    }
+
     /** Implements the methods "every", "filter", "forEach", "map", and "some". */
     private static Object iterativeMethod(
             Context cx,
@@ -2059,23 +2140,8 @@ public class NativeArray extends IdScriptableObject implements List {
         }
 
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
-        if (callbackArg == null || !(callbackArg instanceof Function)) {
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                && (callbackArg instanceof NativeRegExp)) {
-            // Previously, it was allowed to pass RegExp instance as a callback (it implements
-            // Function)
-            // But according to ES2015 21.2.6 Properties of RegExp Instances:
-            // > RegExp instances are ordinary objects that inherit properties from the RegExp
-            // prototype object.
-            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
-            // [[OriginalFlags]].
-            // so, no [[Call]] for RegExp-s
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
 
-        Function f = (Function) callbackArg;
+        Function f = getCallbackArg(cx, callbackArg);
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         Scriptable thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
@@ -2619,6 +2685,9 @@ public class NativeArray extends IdScriptableObject implements List {
             case "flat":
                 id = Id_flat;
                 break;
+            case "flatMap":
+                id = Id_flatMap;
+                break;
             default:
                 id = 0;
                 break;
@@ -2659,7 +2728,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_copyWithin = 31,
             Id_at = 32,
             Id_flat = 33,
-            SymbolId_iterator = 34,
+            Id_flatMap = 34,
+            SymbolId_iterator = 35,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,

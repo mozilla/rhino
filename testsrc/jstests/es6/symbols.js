@@ -242,9 +242,8 @@ function TestCall() {
     assertTrue(symbols[i].getThisProto() === Symbol.prototype)
   }
 }
-// Rhino not sure what's up! TestCall()
+TestCall()
 
-/* Rhino no collections
 
 function TestCollections() {
   var set = new Set
@@ -269,7 +268,6 @@ function TestCollections() {
 }
 TestCollections()
 
-*/
 
 function TestKeySet(obj) {
   //assertTrue(%HasFastProperties(obj))
@@ -356,7 +354,6 @@ function TestKeyDelete(obj) {
 }
 
 
-/* Rhino no Map
 var objs = [{}, [], Object.create({}), Object(1), new Map, function(){}]
 
 for (var i in objs) {
@@ -371,7 +368,7 @@ for (var i in objs) {
   TestKeyDescriptor(obj)
   TestKeyDelete(obj)
 }
-*/
+
 
 function TestDefineProperties() {
   var properties = {}
@@ -567,7 +564,7 @@ function TestStringify(expected, input) {
                JSON.stringify(input, (key, value) => value, "="));
 }
 
-// Rhino TestStringify(undefined, Symbol("a"));
+TestStringify(undefined, Symbol("a"));
 TestStringify('[{}]', [Object(Symbol())]);
 var symbol_wrapper = Object(Symbol("a"))
 TestStringify('{}', symbol_wrapper);

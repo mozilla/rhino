@@ -19,7 +19,7 @@ jobs:
     name: Rhino Java ${{ matrix.java }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         # Need all history or spotless check will fail
         fetch-depth: 0
@@ -27,7 +27,7 @@ jobs:
       # We don't actually want all the history for this part
       run: git submodule update --init --single-branch
     - name: Set up Java
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         java-version: ${{ matrix.java }}
         distribution: 'adopt'
@@ -44,7 +44,7 @@ jobs:
         --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
         --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
     - name: Upload results
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: reports
         path: buildGradle/reports
