@@ -576,6 +576,25 @@ class TokenStream {
         return id & 0xff;
     }
 
+    private static boolean isValidIdentifierName(String str) {
+        int i = 0;
+        for (int c : str.codePoints().toArray()) {
+            if (i++ == 0) {
+                if (c != '$' && c != '_' && !Character.isUnicodeIdentifierStart(c)) {
+                    return false;
+                }
+            } else {
+                if (c != '$'
+                        && c != '\u200c'
+                        && c != '\u200d'
+                        && !Character.isUnicodeIdentifierPart(c)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     final String getSourceString() {
         return sourceString;
     }
@@ -684,12 +703,32 @@ class TokenStream {
                         // escape sequence in an identifier, we can report
                         // an error here.
                         int escapeVal = 0;
-                        for (int i = 0; i != 4; ++i) {
-                            c = getChar();
-                            escapeVal = Kit.xDigitToInt(c, escapeVal);
-                            // Next check takes care about c < 0 and bad escape
-                            if (escapeVal < 0) {
+                        if (matchTemplateLiteralChar('{')) {
+                            for (; ; ) {
+                                c = getTemplateLiteralChar();
+
+                                if (c == '}') {
+                                    break;
+                                }
+                                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                if (escapeVal < 0) {
+                                    break;
+                                }
+                            }
+
+                            if (escapeVal < 0 || escapeVal > 0x10FFFF) {
+                                parser.reportError("msg.invalid.escape");
                                 break;
+                            }
+                        } else {
+                            for (int i = 0; i != 4; ++i) {
+                                c = getChar();
+                                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                // Next check takes care about c < 0 and bad escape
+                                if (escapeVal < 0) {
+                                    parser.reportError("msg.invalid.escape");
+                                    break;
+                                }
                             }
                         }
                         if (escapeVal < 0) {
@@ -722,7 +761,8 @@ class TokenStream {
                 ungetChar(c);
 
                 String str = getStringFromBuffer();
-                if (!containsEscape) {
+                if (!containsEscape
+                        || parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                     // OPT we shouldn't have to make a string (object!) to
                     // check if it's a keyword.
 
@@ -758,6 +798,14 @@ class TokenStream {
                     // we convert the last character back to unicode
                     str = convertLastCharToHex(str);
                 }
+
+                if (containsEscape
+                        && parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                        && !isValidIdentifierName(str)) {
+                    parser.reportError("msg.invalid.escape");
+                    return Token.ERROR;
+                }
+
                 this.string = (String) allStrings.intern(str);
                 return Token.NAME;
             }
@@ -976,13 +1024,38 @@ class TokenStream {
                                 int escapeStart = stringBufferTop;
                                 addToString('u');
                                 escapeVal = 0;
-                                for (int i = 0; i != 4; ++i) {
-                                    c = getChar();
-                                    escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                    if (escapeVal < 0) {
+                                if (matchChar('{')) {
+                                    for (; ; ) {
+                                        c = getChar();
+
+                                        if (c == '}') {
+                                            addToString(c);
+                                            break;
+                                        }
+                                        escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                        if (escapeVal < 0) {
+                                            break;
+                                        }
+                                        addToString(c);
+                                    }
+
+                                    if (escapeVal < 0 || escapeVal > 0x10FFFF) {
+                                        parser.reportError("msg.invalid.escape");
                                         continue strLoop;
                                     }
-                                    addToString(c);
+                                } else {
+                                    for (int i = 0; i != 4; ++i) {
+                                        c = getChar();
+                                        escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                        if (escapeVal < 0) {
+                                            if (parser.compilerEnv.getLanguageVersion()
+                                                    >= Context.VERSION_ES6) {
+                                                parser.reportError("msg.invalid.escape");
+                                            }
+                                            continue strLoop;
+                                        }
+                                        addToString(c);
+                                    }
                                 }
                                 // prepare for replace of stored 'u' sequence
                                 // by escape value

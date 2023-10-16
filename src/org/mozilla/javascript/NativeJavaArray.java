@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Array;
+import java.util.Objects;
 
 /**
  * This class reflects Java arrays into the JavaScript environment.
@@ -141,6 +142,17 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
             prototype = ScriptableObject.getArrayPrototype(this.getParentScope());
         }
         return prototype;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (obj instanceof NativeJavaArray)
+                && Objects.equals(((NativeJavaArray) obj).array, array);
+    }
+
+    @Override
+    public int hashCode() {
+        return array == null ? 0 : array.hashCode();
     }
 
     Object array;

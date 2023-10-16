@@ -18,6 +18,7 @@ import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
@@ -516,6 +517,32 @@ public class NativeConsoleTest {
     public void printConsString() {
         String js = "var msg = '['; msg += '%s'; msg += ']'; console.log(msg, 1234)";
         assertPrintMsg(js, "[1234]");
+    }
+
+    @Test
+    public void printError() {
+        String lf = SecurityUtilities.getSystemProperty("line.separator");
+        String js =
+                "try {\n"
+                        + "  JSON.parse('{\"abc');\n"
+                        + "} catch (e) {\n"
+                        + "  console.log(e);\n"
+                        + "}";
+        assertPrintMsg(js, "SyntaxError: Unterminated string literal\n\tat source:2" + lf);
+    }
+
+    @Test
+    public void printErrorProperty() {
+        String js =
+                "try {\n"
+                        + "  JSON.parse('{\"abc');\n"
+                        + "} catch (e) {\n"
+                        + "  var obj = { msg: 'Something is wrong', err: e };\n"
+                        + "  console.log(obj);\n"
+                        + "}";
+        assertPrintMsg(
+                js,
+                "{\"msg\":\"Something is wrong\",\"err\":{\"fileName\":\"source\",\"lineNumber\":2}}");
     }
 
     private static void assertFormat(Object[] args, String expected) {
