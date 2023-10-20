@@ -169,7 +169,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
             case Id_arity:
                 return arityPropertyAttributes >= 0 ? getArity() : NOT_FOUND;
             case Id_name:
-                return namePropertyAttributes >= 0 ? (nameValue != null ? nameValue : getFunctionName()) : NOT_FOUND;
+                return namePropertyAttributes >= 0
+                        ? (nameValue != null ? nameValue : getFunctionName())
+                        : NOT_FOUND;
             case Id_prototype:
                 return getPrototypeProperty();
             case Id_arguments:

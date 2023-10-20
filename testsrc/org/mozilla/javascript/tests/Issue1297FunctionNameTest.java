@@ -7,28 +7,24 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-/**
- * Test that we can redefine a function's name.
- */
+/** Test that we can redefine a function's name. */
 public class Issue1297FunctionNameTest {
-	private static final String source = "'use strict';" +
-			"function X() {};\n" +
-			"Object.defineProperty(X, 'name', {value: 'y', configurable: true, writable: true});" +
-			"X.name";
+    private static final String source =
+            "'use strict';"
+                    + "function X() {};\n"
+                    + "Object.defineProperty(X, 'name', {value: 'y', configurable: true, writable: true});"
+                    + "X.name";
 
-	@Test
-	public void canSetFunctionName() {
-		Utils.runWithAllOptimizationLevels(
-				cx -> {
-					Scriptable scope = cx.initStandardObjects(null);
-					Object result = cx.evaluateString(scope,
-							source,
-							"test", 1, null);
-					assertEquals("y", result);
-					return null;
-				});
-	}
+    @Test
+    public void canSetFunctionName() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects(null);
+                    Object result = cx.evaluateString(scope, source, "test", 1, null);
+                    assertEquals("y", result);
+                    return null;
+                });
+    }
 }
