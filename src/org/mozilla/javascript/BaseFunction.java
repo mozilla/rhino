@@ -169,7 +169,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
             case Id_arity:
                 return arityPropertyAttributes >= 0 ? getArity() : NOT_FOUND;
             case Id_name:
-                return namePropertyAttributes >= 0 ? getFunctionName() : NOT_FOUND;
+                return namePropertyAttributes >= 0 ? (nameValue != null ? nameValue : getFunctionName()) : NOT_FOUND;
             case Id_prototype:
                 return getPrototypeProperty();
             case Id_arguments:
@@ -200,6 +200,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
             case Id_name:
                 if (value == NOT_FOUND) {
                     namePropertyAttributes = -1;
+                    nameValue = null;
+                } else {
+                    nameValue = ScriptRuntime.toString(value);
                 }
                 return;
             case Id_arity:
@@ -650,6 +653,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;
+    private String nameValue = null;
     private boolean isGeneratorFunction = false;
 
     // For function object instances, attributes are
@@ -658,6 +662,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
     private int prototypePropertyAttributes = PERMANENT | DONTENUM;
     private int argumentsAttributes = PERMANENT | DONTENUM;
     private int arityPropertyAttributes = PERMANENT | READONLY | DONTENUM;
-    private int namePropertyAttributes = PERMANENT | READONLY | DONTENUM;
+    private int namePropertyAttributes = READONLY | DONTENUM;
     private int lengthPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 }
