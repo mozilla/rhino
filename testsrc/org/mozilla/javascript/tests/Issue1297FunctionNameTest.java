@@ -20,25 +20,15 @@ public class Issue1297FunctionNameTest {
 			"X.name";
 
 	@Test
-	public void canSetFunctionNameInCompiledClasses() {
-		try (Context cx = Context.enter()) {
-			Scriptable scope = cx.initStandardObjects(null);
-			Object result = cx.evaluateString(scope,
-					source,
-					"test", 1, null);
-			assertEquals("y", result);
-		}
-	}
-
-	@Test
-	public void canSetFunctionNameInInterpreter() {
-		try (Context cx = Context.enter()) {
-			cx.setOptimizationLevel(-1);
-			Scriptable scope = cx.initStandardObjects(null);
-			Object result = cx.evaluateString(scope,
-					source,
-					"test", 1, null);
-			assertEquals("y", result);
-		}
+	public void canSetFunctionName() {
+		Utils.runWithAllOptimizationLevels(
+				cx -> {
+					Scriptable scope = cx.initStandardObjects(null);
+					Object result = cx.evaluateString(scope,
+							source,
+							"test", 1, null);
+					assertEquals("y", result);
+					return null;
+				});
 	}
 }
