@@ -100,7 +100,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
         throw ScriptRuntime.typeErrorById("msg.instanceof.bad.prototype", getFunctionName());
     }
 
-    private static final int Id_length = 1,
+    protected static final int Id_length = 1,
             Id_arity = 2,
             Id_name = 3,
             Id_prototype = 4,
@@ -203,8 +203,10 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 if (value == NOT_FOUND) {
                     namePropertyAttributes = -1;
                     nameValue = null;
-                } else {
+                } else if (value instanceof CharSequence) {
                     nameValue = ScriptRuntime.toString(value);
+                } else {
+                    nameValue = "";
                 }
                 return;
             case Id_arity:
