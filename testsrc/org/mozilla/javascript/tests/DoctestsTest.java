@@ -64,7 +64,7 @@ public class DoctestsTest {
         return new String(buf);
     }
 
-    @Parameters(name = "{0}")
+    @Parameters(name = "{0} opt:{2}")
     public static Collection<Object[]> doctestValues() throws IOException {
         File[] doctests = getDoctestFiles();
         List<Object[]> result = new ArrayList<Object[]>();
