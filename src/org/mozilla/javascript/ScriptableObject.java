@@ -763,6 +763,9 @@ public abstract class ScriptableObject
      */
     @Override
     public Object getDefaultValue(Class<?> typeHint) {
+        if (typeHint == ScriptRuntime.BooleanClass) {
+            return Boolean.TRUE;
+        }
         return getDefaultValue(this, typeHint);
     }
 
