@@ -1476,6 +1476,10 @@ public class ScriptRuntime {
      * Return -1L if str is not an index, or the index value as lower 32 bits of the result. Note
      * that the result needs to be cast to an int in order to produce the actual index, which may be
      * negative.
+     *
+     * <p>Note that this method on its own does not actually produce an index that is useful for an
+     * actual Object or Array, because it may be larger than Integer.MAX_VALUE. Most callers should
+     * instead call toStringOrIndex, which calls this under the covers.
      */
     public static long indexFromString(String str) {
         // The length of the decimal string representation of

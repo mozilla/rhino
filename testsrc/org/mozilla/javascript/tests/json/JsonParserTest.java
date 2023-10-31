@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.tests.json;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
@@ -119,7 +120,6 @@ public class JsonParserTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void shouldParseHeterogeneousJsonArray() throws Exception {
         NativeArray actual = (NativeArray) parser.parseValue("[ \"hello\" , 3, null, [false] ]");
         assertEquals("hello", actual.get(0, actual));
@@ -138,16 +138,35 @@ public class JsonParserTest {
     }
 
     @Test
-    @SuppressWarnings({"serial", "unchecked"})
     public void shouldParseJsonObject() throws Exception {
         String json =
                 "{" + "\"bool\" : false, " + "\"str\"  : \"xyz\", " + "\"obj\"  : {\"a\":1} " + "}";
         NativeObject actual = (NativeObject) parser.parseValue(json);
         assertEquals(false, actual.get("bool", actual));
         assertEquals("xyz", actual.get("str", actual));
+        assertArrayEquals(
+                "Property ordering should match",
+                new Object[] {"bool", "str", "obj"},
+                actual.getIds());
 
         NativeObject innerObj = (NativeObject) actual.get("obj", actual);
         assertEquals(1, innerObj.get("a", innerObj));
+    }
+
+    @Test
+    public void testECMAKeyOrdering() throws Exception {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            String json =
+                    "{\"foo\": \"a\", \"bar\": \"b\", \"1\": \"c\", \"-1\": \"d\", \"x\": \"e\"}";
+            NativeObject actual = (NativeObject) parser.parseValue(json);
+            // Ensure that modern ECMAScript property ordering works, which depends on
+            // valid index values being treated as numbers and not as strings.
+            assertArrayEquals(
+                    "Property ordering should match",
+                    new Object[] {1, "foo", "bar", "-1", "x"},
+                    actual.getIds());
+        }
     }
 
     @Test(expected = ParseException.class)

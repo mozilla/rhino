@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -118,13 +119,12 @@ public class JsonParser {
                     consume(':');
                     value = readValue();
 
-                    long index = ScriptRuntime.indexFromString(id);
-                    if (index < 0) {
-                        object.put(id, object, value);
+                    StringIdOrIndex indexObj = ScriptRuntime.toStringIdOrIndex(id);
+                    if (indexObj.getStringId() == null) {
+                        object.put(indexObj.getIndex(), object, value);
                     } else {
-                        object.put((int) index, object, value);
+                        object.put(indexObj.getStringId(), object, value);
                     }
-
                     needsComma = true;
                     break;
                 default:
