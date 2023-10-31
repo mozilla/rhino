@@ -96,9 +96,6 @@ test {
     }
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
-    // Many tests do not clean up contexts properly. This makes the tests much
-    // more resilient at the expense of performance.
-    forkEvery = 1
     maxParallelForks = 64
 }
 
