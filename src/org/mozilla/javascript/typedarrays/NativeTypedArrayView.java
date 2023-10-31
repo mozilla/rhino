@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Optional;
 import java.util.RandomAccess;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
@@ -46,11 +47,28 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         length = len;
     }
 
-    // Array properties implementation
+    // Array properties implementation.
+    // Typed array objects are "Integer-indexed exotic objects" in the ECMAScript spec.
+    // Integer properties, and string properties that can be converted to integer indices,
+    // behave differently than in other types of JavaScript objects, in that they are
+    // silently ignored (and always valued as "undefined") when they are out of bounds.
 
     @Override
     public Object get(int index, Scriptable start) {
         return js_get(index);
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
+        if (num.isPresent()) {
+            // Now we had a valid number, so no matter what we try to return an array element
+            int ix = toIndex(num.get());
+            if (ix >= 0) {
+                return js_get(ix);
+            }
+        }
+        return super.get(name, start);
     }
 
     @Override
@@ -59,12 +77,46 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
+    public boolean has(String name, Scriptable start) {
+        Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
+        if (num.isPresent()) {
+            int ix = toIndex(num.get());
+            if (ix >= 0) {
+                return !checkIndex(ix);
+            }
+        }
+        return super.has(name, start);
+    }
+
+    @Override
     public void put(int index, Scriptable start, Object val) {
         js_set(index, val);
     }
 
     @Override
+    public void put(String name, Scriptable start, Object val) {
+        Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
+        if (num.isPresent()) {
+            int ix = toIndex(num.get());
+            if (ix >= 0) {
+                js_set(ix, val);
+            }
+        } else {
+            super.put(name, start, val);
+        }
+    }
+
+    @Override
     public void delete(int index) {}
+
+    @Override
+    public void delete(String name) {
+        Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
+        if (!num.isPresent()) {
+            // No delete for indexed elements, so only delete if "name" is not a number
+            super.delete(name);
+        }
+    }
 
     @Override
     public Object[] getIds() {
@@ -73,6 +125,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             ret[i] = Integer.valueOf(i);
         }
         return ret;
+    }
+
+    /**
+     * To aid in parsing: Return a positive (or zero) integer if the double is a valid array index,
+     * and -1 if not.
+     */
+    private static int toIndex(double num) {
+        int ix = (int) num;
+        if (ix == num && ix >= 0) {
+            return ix;
+        }
+        return -1;
     }
 
     // Actual functions
