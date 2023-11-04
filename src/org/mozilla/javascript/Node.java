@@ -63,7 +63,8 @@ public class Node implements Iterable<Node> {
             SHORTHAND_PROPERTY_NAME = 26,
             ARROW_FUNCTION_PROP = 27,
             TEMPLATE_LITERAL_PROP = 28,
-            LAST_PROP = 28;
+            TRAILING_COMMA = 29,
+            LAST_PROP = 29;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -429,6 +430,8 @@ public class Node implements Iterable<Node> {
                     return "expression_closure_prop";
                 case TEMPLATE_LITERAL_PROP:
                     return "template_literal";
+                case TRAILING_COMMA:
+                    return "trailing comma";
 
                 default:
                     Kit.codeBug();

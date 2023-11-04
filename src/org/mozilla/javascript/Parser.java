@@ -821,7 +821,7 @@ public class Parser {
                     fnNode.addParam(makeErrorNode());
                 }
             }
-        } while (matchToken(Token.COMMA, true));
+        } while (matchToken(Token.COMMA, true) && peekToken() != Token.RP);
 
         if (destructuring != null) {
             Node destructuringNode = new Node(Token.COMMA);
@@ -2288,6 +2288,10 @@ public class Parser {
     }
 
     private AstNode expr() throws IOException {
+        return expr(false);
+    }
+
+    private AstNode expr(boolean allowTrailingComma) throws IOException {
         AstNode pn = assignExpr();
         int pos = pn.getPosition();
         while (matchToken(Token.COMMA, true)) {
@@ -2295,6 +2299,10 @@ public class Parser {
             if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "", pos, nodeEnd(pn) - pos);
             if (peekToken() == Token.YIELD) reportError("msg.yield.parenthesized");
+            if (peekToken() == Token.RP && allowTrailingComma) {
+                pn.putIntProp(Node.TRAILING_COMMA, 1);
+                return pn;
+            }
             pn = new InfixExpression(Token.COMMA, pn, assignExpr(), opPos);
         }
         return pn;
@@ -3160,11 +3168,17 @@ public class Parser {
             Comment jsdocNode = getAndResetJsDoc();
             int lineno = ts.lineno;
             int begin = ts.tokenBeg;
-            AstNode e = (peekToken() == Token.RP ? new EmptyExpression(begin) : expr());
+            AstNode e = (peekToken() == Token.RP ? new EmptyExpression(begin) : expr(true));
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
             }
             mustMatchToken(Token.RP, "msg.no.paren", true);
+
+            if (e.getIntProp(Node.TRAILING_COMMA, 0) == 1 && peekToken() != Token.ARROW) {
+                reportError("msg.syntax");
+                return makeErrorNode();
+            }
+
             if (e.getType() == Token.EMPTY && peekToken() != Token.ARROW) {
                 reportError("msg.syntax");
                 return makeErrorNode();
