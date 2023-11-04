@@ -1115,6 +1115,13 @@ class TokenStream {
                 String str = getStringFromBuffer();
                 this.string = (String) allStrings.intern(str);
                 return Token.STRING;
+            } else if (c == '#'
+                    && cursor == 1
+                    && peekChar() == '!'
+                    && !this.parser.calledByCompileFunction) {
+                // #! hashbang: only on the first line of a Script, no leading whitespace
+                skipLine();
+                return Token.COMMENT;
             }
 
             switch (c) {
