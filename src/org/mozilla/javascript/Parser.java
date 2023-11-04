@@ -888,11 +888,13 @@ public class Parser {
             syntheticType = FunctionNode.FUNCTION_EXPRESSION;
         }
 
-        if (syntheticType != FunctionNode.FUNCTION_EXPRESSION
-                && name != null
-                && name.length() > 0) {
-            // Function statements define a symbol in the enclosing scope
-            defineSymbol(Token.FUNCTION, name.getIdentifier());
+        if (syntheticType != FunctionNode.FUNCTION_EXPRESSION) {
+            if (name != null && name.length() > 0) {
+                // Function statements define a symbol in the enclosing scope
+                defineSymbol(Token.FUNCTION, name.getIdentifier());
+            } else {
+                reportError("msg.fn.missing.name");
+            }
         }
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
