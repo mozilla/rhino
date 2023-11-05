@@ -1115,7 +1115,9 @@ class TokenStream {
                 String str = getStringFromBuffer();
                 this.string = (String) allStrings.intern(str);
                 return Token.STRING;
-            } else if (c == '#'
+            }
+
+            if (c == '#'
                     && cursor == 1
                     && peekChar() == '!'
                     && !this.parser.calledByCompileFunction) {
