@@ -786,6 +786,10 @@ public class Parser {
         Set<String> paramNames = new HashSet<>();
         do {
             int tt = peekToken();
+            if (tt == Token.RP) {
+                fnNode.putIntProp(Node.TRAILING_COMMA, 1);
+                break;
+            }
             if (tt == Token.LB || tt == Token.LC) {
                 AstNode expr = destructuringPrimaryExpr();
                 markDestructuring(expr);
@@ -821,7 +825,7 @@ public class Parser {
                     fnNode.addParam(makeErrorNode());
                 }
             }
-        } while (matchToken(Token.COMMA, true) && peekToken() != Token.RP);
+        } while (matchToken(Token.COMMA, true));
 
         if (destructuring != null) {
             Node destructuringNode = new Node(Token.COMMA);
@@ -969,6 +973,9 @@ public class Parser {
         try {
             if (params instanceof ParenthesizedExpression) {
                 fnNode.setParens(0, params.getLength());
+                if (params.getIntProp(Node.TRAILING_COMMA, 0) == 1) {
+                    fnNode.putIntProp(Node.TRAILING_COMMA, 1);
+                }
                 AstNode p = ((ParenthesizedExpression) params).getExpression();
                 if (!(p instanceof EmptyExpression)) {
                     arrowFunctionParams(fnNode, p, destructuring, paramNames);
@@ -2295,7 +2302,7 @@ public class Parser {
             if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "", pos, nodeEnd(pn) - pos);
             if (peekToken() == Token.YIELD) reportError("msg.yield.parenthesized");
-            if (peekToken() == Token.RP && allowTrailingComma) {
+            if (allowTrailingComma && peekToken() == Token.RP) {
                 pn.putIntProp(Node.TRAILING_COMMA, 1);
                 return pn;
             }
@@ -3170,16 +3177,14 @@ public class Parser {
             }
             mustMatchToken(Token.RP, "msg.no.paren", true);
 
-            if (e.getIntProp(Node.TRAILING_COMMA, 0) == 1 && peekToken() != Token.ARROW) {
+            int length = ts.tokenEnd - begin;
+
+            boolean hasTrailingComma = e.getIntProp(Node.TRAILING_COMMA, 0) == 1;
+            if ((hasTrailingComma || e.getType() == Token.EMPTY) && peekToken() != Token.ARROW) {
                 reportError("msg.syntax");
                 return makeErrorNode();
             }
 
-            if (e.getType() == Token.EMPTY && peekToken() != Token.ARROW) {
-                reportError("msg.syntax");
-                return makeErrorNode();
-            }
-            int length = ts.tokenEnd - begin;
             ParenthesizedExpression pn = new ParenthesizedExpression(begin, length, e);
             pn.setLineno(lineno);
             if (jsdocNode == null) {
@@ -3187,6 +3192,9 @@ public class Parser {
             }
             if (jsdocNode != null) {
                 pn.setJsDocNode(jsdocNode);
+            }
+            if (hasTrailingComma) {
+                pn.putIntProp(Node.TRAILING_COMMA, 1);
             }
             return pn;
         } finally {
