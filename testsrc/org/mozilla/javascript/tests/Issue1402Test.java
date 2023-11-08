@@ -38,7 +38,7 @@ public class Issue1402Test {
     public void emptyArraysCoerceToFalseInLegacyMode() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_0);
+                    cx.setLanguageVersion(Context.VERSION_1_2);
 
                     Scriptable scope = cx.initStandardObjects(null);
                     Object result = cx.evaluateString(scope, "!![]", "test", 1, null);
@@ -48,7 +48,7 @@ public class Issue1402Test {
     }
 
     @Test
-    public void emptyArraysCoerceToFalseInNormalVersions() {
+    public void emptyArraysCoerceToTrueInNormalVersions() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_1_3); // And any above

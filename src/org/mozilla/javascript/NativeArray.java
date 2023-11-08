@@ -666,7 +666,8 @@ public class NativeArray extends IdScriptableObject implements List {
             if (cx.getLanguageVersion() == Context.VERSION_1_2) return Long.valueOf(length);
         }
         if (hint == ScriptRuntime.BooleanClass) {
-            if (!Context.getContext().isVersionECMA1() && length == 0) return Boolean.FALSE;
+            Context cx = Context.getContext();
+            if (cx.getLanguageVersion() == Context.VERSION_1_2) return length != 0;
         }
         return super.getDefaultValue(hint);
     }
