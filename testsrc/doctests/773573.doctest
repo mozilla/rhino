@@ -7,7 +7,7 @@ js> version(180)
 js> try {
   > (function({a}) { return a }).foo()
   > } catch (e) {
-  > e.message.indexOf("function ({a}) {...}") != -1;
+  > e.message.indexOf("function({a}) {...}") != -1;
   > }
 true
 

@@ -110,7 +110,19 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
         sb.append(makeIndent(depth));
         sb.append("{");
         if (elements != null) {
-            printList(elements, sb);
+            int i = 0;
+            sb.append("\n");
+            for (AstNode element : elements) {
+                sb.append(element.toSource(depth));
+                if (sb.charAt(sb.length() - 1) == '\n') {
+                    sb.deleteCharAt(sb.length() - 1);
+                }
+                if (i < elements.size() - 1) {
+                    sb.append(",");
+                }
+                sb.append("\n");
+                i++;
+            }
         }
         sb.append("}");
         return sb.toString();

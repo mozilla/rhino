@@ -24,7 +24,7 @@ function test()
   var f;
 
   f = (function (){if((baz&&false&&foo)===(bletch||true||bar));});
-  expect = 'function (){if((baz&&false&&foo)===(bletch||true||bar)){}}';
+  expect = 'function (){if((baz&&false&&foo)===(bletch||true||bar));}';
   actual = f + '';
 
   compareSource(expect, actual, summary);

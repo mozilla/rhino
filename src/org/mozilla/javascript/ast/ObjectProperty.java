@@ -89,10 +89,17 @@ public class ObjectProperty extends InfixExpression {
         return isGetterMethod() || isSetterMethod() || isNormalMethod();
     }
 
+    public void setIsShorthand(boolean shorthand) {
+        this.shorthand = shorthand;
+    }
+
+    public boolean isShorthand() {
+        return shorthand;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n");
         sb.append(makeIndent(depth + 1));
         if (isGetterMethod()) {
             sb.append("get ");
@@ -100,10 +107,15 @@ public class ObjectProperty extends InfixExpression {
             sb.append("set ");
         }
         sb.append(left.toSource(getType() == Token.COLON ? 0 : depth));
-        if (type == Token.COLON) {
-            sb.append(": ");
+
+        if (!shorthand) {
+            if (type == Token.COLON) {
+                sb.append(": ");
+            }
+            sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
         }
-        sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
         return sb.toString();
     }
+
+    private boolean shorthand;
 }

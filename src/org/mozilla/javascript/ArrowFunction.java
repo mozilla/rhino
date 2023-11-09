@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.EnumSet;
+
 /** The class for Arrow Function Definitions EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2 */
 public class ArrowFunction extends BaseFunction {
 
@@ -42,7 +44,8 @@ public class ArrowFunction extends BaseFunction {
 
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-        throw ScriptRuntime.typeErrorById("msg.not.ctor", decompile(0, 0));
+        throw ScriptRuntime.typeErrorById(
+                "msg.not.ctor", decompile(0, EnumSet.noneOf(DecompilerFlag.class)));
     }
 
     @Override
@@ -67,7 +70,7 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, int flags) {
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         if (targetFunction instanceof BaseFunction) {
             return ((BaseFunction) targetFunction).decompile(indent, flags);
         }

@@ -22,7 +22,7 @@ function test()
   printStatus (summary);
  
   expect = 'function () { x = {1:1};}';
-  actual = ''+function (){x={1:1}}
+  actual = ''+function (){x={1:1};}
 
   compareSource(expect, actual, summary);
 

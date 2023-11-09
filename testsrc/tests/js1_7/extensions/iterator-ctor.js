@@ -73,7 +73,7 @@ reportCompare('[-1, -2]',
 reportCompare(false, flag, 'uneval(iteratorToArray(Iterator(obji))) flag');
 
 flag = -1;
-reportCompare('[["__iterator__", (function (b) {flag = b;yield -1;yield -2;})], ["a", 1], ["b", 2]]',
+reportCompare('[["__iterator__", function (b) { flag = b; yield -1; yield -2; }], ["a", 1], ["b", 2]]',
               uneval(iteratorToArray(new Iterator(obji))),
               'uneval(iteratorToArray(new Iterator(obji)))');
 reportCompare(-1, flag, 'uneval(iteratorToArray(new Iterator(obji))) flag');
@@ -85,7 +85,7 @@ reportCompare('[-1, -2]',
 reportCompare(false, flag, 'uneval(iteratorToArray(Iterator(obji,false))) flag');
 
 flag = -1;
-reportCompare('[["__iterator__", (function (b) {flag = b;yield -1;yield -2;})], ["a", 1], ["b", 2]]',
+reportCompare('[["__iterator__", function (b) { flag = b; yield -1; yield -2; }], ["a", 1], ["b", 2]]',
               uneval(iteratorToArray(new Iterator(obji,false))),
               'uneval(iteratorToArray(new Iterator(obji,false)))');
 reportCompare(-1, flag, 'uneval(iteratorToArray(new Iterator(obji,false))) flag');

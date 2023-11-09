@@ -22,11 +22,10 @@ function test()
   printStatus (summary);
 
   var f = function () {return "\t"};
-  expect = 'function () {return "\\t";}';
+  expect = 'function () {return "\\t"}';
   actual = f + '';
   compareSource(expect, actual, summary + ': toString');
 
-  expect = '(' + expect + ')';
   actual = uneval(f);
   compareSource(expect, actual, summary + ': uneval');
 

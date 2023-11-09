@@ -123,6 +123,7 @@ public class Parser {
     private boolean parseFinished; // set when finished to prevent reuse
 
     private TokenStream ts;
+    CurrentPositionReporter currentPos;
     private int currentFlaggedToken = Token.EOF;
     private int currentToken;
     private int syntaxErrorCount;
@@ -156,7 +157,7 @@ public class Parser {
     private boolean defaultUseStrictDirective;
 
     // Exception to unwind
-    private static class ParserException extends RuntimeException {
+    public static class ParserException extends RuntimeException {
         private static final long serialVersionUID = 5882582646773765630L;
     }
 
@@ -178,12 +179,7 @@ public class Parser {
 
     // Add a strict warning on the last matched token.
     void addStrictWarning(String messageId, String messageArg) {
-        int beg = -1, end = -1;
-        if (ts != null) {
-            beg = ts.tokenBeg;
-            end = ts.tokenEnd - ts.tokenBeg;
-        }
-        addStrictWarning(messageId, messageArg, beg, end);
+        addStrictWarning(messageId, messageArg, currentPos.getPosition(), currentPos.getLength());
     }
 
     void addStrictWarning(String messageId, String messageArg, int position, int length) {
@@ -191,12 +187,7 @@ public class Parser {
     }
 
     void addWarning(String messageId, String messageArg) {
-        int beg = -1, end = -1;
-        if (ts != null) {
-            beg = ts.tokenBeg;
-            end = ts.tokenEnd - ts.tokenBeg;
-        }
-        addWarning(messageId, messageArg, beg, end);
+        addWarning(messageId, messageArg, currentPos.getPosition(), currentPos.getLength());
     }
 
     void addWarning(String messageId, int position, int length) {
@@ -209,19 +200,18 @@ public class Parser {
             addError(messageId, messageArg, position, length);
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
-        } else if (ts != null) {
-            errorReporter.warning(message, sourceURI, ts.getLineno(), ts.getLine(), ts.getOffset());
         } else {
-            errorReporter.warning(message, sourceURI, 1, "", 1);
+            errorReporter.warning(
+                    message,
+                    sourceURI,
+                    currentPos.getLineno(),
+                    currentPos.getLine(),
+                    currentPos.getOffset());
         }
     }
 
     void addError(String messageId) {
-        if (ts == null) {
-            addError(messageId, 0, 0);
-        } else {
-            addError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
-        }
+        addError(messageId, currentPos.getPosition(), currentPos.getLength());
     }
 
     void addError(String messageId, int position, int length) {
@@ -229,11 +219,7 @@ public class Parser {
     }
 
     void addError(String messageId, String messageArg) {
-        if (ts == null) {
-            addError(messageId, messageArg, 0, 0);
-        } else {
-            addError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
-        }
+        addError(messageId, messageArg, currentPos.getPosition(), currentPos.getLength());
     }
 
     void addError(String messageId, int c) {
@@ -247,14 +233,12 @@ public class Parser {
         if (errorCollector != null) {
             errorCollector.error(message, sourceURI, position, length);
         } else {
-            int lineno = 1, offset = 1;
-            String line = "";
-            if (ts != null) { // happens in some regression tests
-                lineno = ts.getLineno();
-                line = ts.getLine();
-                offset = ts.getOffset();
-            }
-            errorReporter.error(message, sourceURI, lineno, line, offset);
+            errorReporter.error(
+                    message,
+                    sourceURI,
+                    currentPos.getLineno(),
+                    currentPos.getLine(),
+                    currentPos.getOffset());
         }
     }
 
@@ -321,11 +305,7 @@ public class Parser {
     }
 
     void reportError(String messageId, String messageArg) {
-        if (ts == null) { // happens in some regression tests
-            reportError(messageId, messageArg, 1, 1);
-        } else {
-            reportError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
-        }
+        reportError(messageId, messageArg, currentPos.getPosition(), currentPos.getLength());
     }
 
     void reportError(String messageId, int position, int length) {
@@ -556,7 +536,7 @@ public class Parser {
         if (compilerEnv.isIdeMode()) {
             this.sourceChars = sourceString.toCharArray();
         }
-        this.ts = new TokenStream(this, null, sourceString, lineno);
+        currentPos = ts = new TokenStream(this, null, sourceString, lineno);
         try {
             return parse();
         } catch (IOException iox) {
@@ -582,7 +562,7 @@ public class Parser {
         }
         try {
             this.sourceURI = sourceURI;
-            ts = new TokenStream(this, sourceReader, null, lineno);
+            currentPos = ts = new TokenStream(this, sourceReader, null, lineno);
             return parse();
         } finally {
             parseFinished = true;
@@ -651,12 +631,7 @@ public class Parser {
             inUseStrictDirective = savedStrictMode;
         }
 
-        if (this.syntaxErrorCount != 0) {
-            String msg = String.valueOf(this.syntaxErrorCount);
-            msg = lookupMessage("msg.got.syntax.errors", msg);
-            if (!compilerEnv.isIdeMode())
-                throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
-        }
+        reportErrorsIfExists(baseLineno);
 
         // add comments to root in lexical order
         if (scannedComments != null) {
@@ -713,6 +688,7 @@ public class Parser {
                     n.putProp(Node.ARROW_FUNCTION_PROP, Boolean.TRUE);
                 }
                 pn.addStatement(n);
+                pn.setLength(n.getLength());
             } else {
                 bodyLoop:
                 for (; ; ) {
@@ -749,6 +725,9 @@ public class Parser {
                     }
                     pn.addStatement(n);
                 }
+                int end = ts.tokenEnd;
+                if (mustMatchToken(Token.RC, "msg.no.brace.after.body", true)) end = ts.tokenEnd;
+                pn.setLength(end - pos);
             }
         } catch (ParserException e) {
             // Ignore it
@@ -757,11 +736,7 @@ public class Parser {
             inUseStrictDirective = savedStrictMode;
         }
 
-        int end = ts.tokenEnd;
         getAndResetJsDoc();
-        if (!isExpressionClosure && mustMatchToken(Token.RC, "msg.no.brace.after.body", true))
-            end = ts.tokenEnd;
-        pn.setLength(end - pos);
         return pn;
     }
 
@@ -907,9 +882,11 @@ public class Parser {
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody(type, fnNode));
-            fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
-            fnNode.setLength(ts.tokenEnd - functionSourceStart);
+            AstNode body = parseFunctionBody(type, fnNode);
+            fnNode.setBody(body);
+            int end = functionSourceStart + body.getPosition() + body.getLength();
+            fnNode.setRawSourceBounds(functionSourceStart, end);
+            fnNode.setLength(end - functionSourceStart);
 
             if (compilerEnv.isStrictMode() && !fnNode.getBody().hasConsistentReturnUsage()) {
                 String msg =
@@ -989,9 +966,11 @@ public class Parser {
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
             }
 
-            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
-            fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
-            fnNode.setLength(ts.tokenEnd - functionSourceStart);
+            AstNode body = parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode);
+            fnNode.setBody(body);
+            int end = functionSourceStart + body.getPosition() + body.getLength();
+            fnNode.setRawSourceBounds(functionSourceStart, end);
+            fnNode.setLength(end - functionSourceStart);
         } finally {
             savedVars.restore();
         }
@@ -3622,7 +3601,7 @@ public class Parser {
             }
             AstNode nn = new Name(property.getPosition(), property.getString());
             ObjectProperty pn = new ObjectProperty();
-            pn.putProp(Node.SHORTHAND_PROPERTY_NAME, Boolean.TRUE);
+            pn.setIsShorthand(true);
             pn.setLeftAndRight(property, nn);
             return pn;
         }
@@ -4262,5 +4241,26 @@ public class Parser {
 
     public boolean inUseStrictDirective() {
         return inUseStrictDirective;
+    }
+
+    public void reportErrorsIfExists(int baseLineno) {
+        if (this.syntaxErrorCount != 0) {
+            String msg = String.valueOf(this.syntaxErrorCount);
+            msg = lookupMessage("msg.got.syntax.errors", msg);
+            if (!compilerEnv.isIdeMode())
+                throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
+        }
+    }
+
+    public interface CurrentPositionReporter {
+        public int getPosition();
+
+        public int getLength();
+
+        public int getLineno();
+
+        public String getLine();
+
+        public int getOffset();
     }
 }

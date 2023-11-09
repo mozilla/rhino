@@ -287,7 +287,7 @@ final class EqualObjectGraphs {
 
     private static boolean equalInterpretedFunctions(
             final InterpretedFunction f1, final InterpretedFunction f2) {
-        return Objects.equals(f1.getEncodedSource(), f2.getEncodedSource());
+        return Objects.equals(f1.getRawSource(), f2.getRawSource());
     }
 
     // Sort IDs deterministically

@@ -20,7 +20,10 @@ function a(){
 }
 
 actual = a.toSource();
-expect = 'function a() {var x = <a><b><c>value c</c></b></a>;return x..c;}';
+expect = 'function a(){\n\
+  var x=<a><b><c>value c</c></b></a>;\n\
+  return x..c;\n\
+}';
 actual = actual.replace(/[\n ]+/mg, ' ');
 expect = expect.replace(/[\n ]+/mg, ' ');
 

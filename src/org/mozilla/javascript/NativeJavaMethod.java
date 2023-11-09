@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -86,9 +87,9 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, int flags) {
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
-        boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
+        boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {
             sb.append("function ");
             sb.append(getFunctionName());

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.EnumSet;
+
 /**
  * The JavaScript Script object.
  *
@@ -68,7 +70,7 @@ class NativeScript extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, int flags) {
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         if (script instanceof NativeFunction) {
             return ((NativeFunction) script).decompile(indent, flags);
         }

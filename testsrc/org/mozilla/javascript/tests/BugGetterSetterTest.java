@@ -26,11 +26,10 @@ public class BugGetterSetterTest {
     public void nodeReplacementInWhileLoopWithBrackets() throws IOException {
         String script =
                 "var o = {\n"
-                        + "  _x: 123, \n"
+                        + "  _x: 123,\n"
                         + "  get x() {\n"
                         + "    return this._x;\n"
-                        + "  }\n"
-                        + ", \n"
+                        + "  },\n"
                         + "  set x(value) {\n"
                         + "    this._x = value;\n"
                         + "  }\n"

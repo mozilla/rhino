@@ -15,11 +15,11 @@ function assertException(exception, fn) {
 
 var f = a => a * a;
 assertEq(f(2), 4);
-assertEq(f.toString(), '\na => a * a\n');
+assertEq(f.toString(), 'a => a * a');
 
 var f = (a) => a * a;
 assertEq(f(2), 4);
-assertEq(f.toString(), '\n(a) => a * a\n');
+assertEq(f.toString(), '(a) => a * a');
 
 var f = (a, b) => a * b;
 assertEq(f(2, 3), 6);
@@ -51,7 +51,7 @@ var f = a => {
   return a * a;
 };
 assertEq(f(10), 100);
-assertEq(f.toString(), '\na => {\n    return a * a;\n}\n');
+assertEq(f.toString(), 'a => {\n  return a * a;\n}');
 
 var f = a => {
   a * a;
