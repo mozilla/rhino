@@ -116,7 +116,6 @@ public class Test262SuiteTest {
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
                             "tail-call-optimization",
-                            "hashbang",
                             "u180e"));
 
     static {

@@ -1117,6 +1117,15 @@ class TokenStream {
                 return Token.STRING;
             }
 
+            if (c == '#'
+                    && cursor == 1
+                    && peekChar() == '!'
+                    && !this.parser.calledByCompileFunction) {
+                // #! hashbang: only on the first line of a Script, no leading whitespace
+                skipLine();
+                return Token.COMMENT;
+            }
+
             switch (c) {
                 case ';':
                     return Token.SEMI;
