@@ -554,8 +554,7 @@ public class NativeProxyTest {
                         + "var a1 = [];\n"
                         + "var proxy1 = new Proxy(o1, {});\n"
                         + "'' + Object.keys(proxy1)";
-        // FF: 0,6,8,55,773,s1,str,-1,s2,str2
-        testString("-1,0,6,8,55,773,s1,str,s2,str2", js);
+        testString("0,6,8,55,773,s1,str,-1,s2,str2", js);
     }
 
     @Test

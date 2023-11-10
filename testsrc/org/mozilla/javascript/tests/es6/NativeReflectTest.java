@@ -264,8 +264,7 @@ public class NativeReflectTest {
                         + "};\n"
                         + "var a1 = [];\n"
                         + "'' + Reflect.ownKeys(o1)";
-        // FF: 0,6,8,55,773,s1,str,-1,s2,str2
-        testString("-1,0,6,8,55,773,s1,str,s2,str2", js);
+        testString("0,6,8,55,773,s1,str,-1,s2,str2", js);
     }
 
     @Test
