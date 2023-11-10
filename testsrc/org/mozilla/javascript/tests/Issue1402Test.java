@@ -35,27 +35,33 @@ public class Issue1402Test {
     }
 
     @Test
-    public void emptyArraysCoerceToFalseInLegacyMode() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_2);
+    public void emptyArraysCoerceToFalseInV10() {
+        assertEmptyArrayCoercesTo(Context.VERSION_1_0, false);
+    }
 
-                    Scriptable scope = cx.initStandardObjects(null);
-                    Object result = cx.evaluateString(scope, "!![]", "test", 1, null);
-                    assertEquals(false, result);
-                    return null;
-                });
+    @Test
+    public void emptyArraysCoerceToFalseInV11() {
+        assertEmptyArrayCoercesTo(Context.VERSION_1_1, false);
+    }
+
+    @Test
+    public void emptyArraysCoerceToTrueInV12() {
+        assertEmptyArrayCoercesTo(Context.VERSION_1_2, true);
     }
 
     @Test
     public void emptyArraysCoerceToTrueInNormalVersions() {
+        assertEmptyArrayCoercesTo(Context.VERSION_1_3, true);
+    }
+
+    private static void assertEmptyArrayCoercesTo(int version, boolean expected) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_3); // And any above
+                    cx.setLanguageVersion(version);
 
                     Scriptable scope = cx.initStandardObjects(null);
                     Object result = cx.evaluateString(scope, "!![]", "test", 1, null);
-                    assertEquals(true, result);
+                    assertEquals(expected, result);
                     return null;
                 });
     }
