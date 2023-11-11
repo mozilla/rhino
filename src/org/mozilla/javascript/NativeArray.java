@@ -347,7 +347,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 case ConstructorId_reduce:
                 case ConstructorId_reduceRight:
                 case ConstructorId_toReversed:
-                {
+                    {
                         // this is a small trick; we will handle all the ConstructorId_xxx calls
                         // the same way the object calls are processed
                         // so we adjust the args, inverting the id and
@@ -2261,15 +2261,14 @@ public class NativeArray extends IdScriptableObject implements List {
         return "Array".equals(((Scriptable) o).getClassName());
     }
 
-    private static Scriptable js_toReversed(
-            Context cx, Scriptable scope, Scriptable thisObj) {
+    private static Scriptable js_toReversed(Context cx, Scriptable scope, Scriptable thisObj) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = (getLengthProperty(cx, o) > Integer.MAX_VALUE) ? 0 : getLengthProperty(cx, o);
+        long len = getLengthProperty(cx, o);
 
-        Scriptable result = cx.newArray(scope, (int)len);
-        for(long k = len-1; k >= 0; k--){
+        Scriptable result = cx.newArray(scope, (int) len);
+        for (long k = len - 1; k >= 0; k--) {
             Object temp1 = getRawElem(o, k);
-            defineElemOrThrow(cx, result, len-k-1, temp1);
+            defineElemOrThrow(cx, result, len - k - 1, temp1);
         }
         return result;
     }
@@ -2753,9 +2752,9 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 32,
             Id_flat = 33,
             Id_flatMap = 34,
-            Id_toReversed =36,
+            Id_toReversed = 36,
             SymbolId_iterator = 37,
-            MAX_PROTOTYPE_ID = SymbolId_iterator;
+            MAX_PROTOTYPE_ID = Id_toReversed;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
             ConstructorId_sort = -Id_sort,
