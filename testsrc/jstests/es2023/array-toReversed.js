@@ -12,6 +12,14 @@ const array2 = ["321","abc", "def","fgh"];
 assertArrayEquals(["fgh", "def","abc","321"], array2.toReversed());
 assertFalse(arrayEquals(array2,array2.toReversed()));
 
+const array3 = ["321","", "","o"];
+assertArrayEquals(["o", "","","321"], array3.toReversed());
+assertFalse(arrayEquals(array3,array3.toReversed()));
+
+const array4 = ["1",,,"d"];
+assertArrayEquals(["d",,,"1"], array4.toReversed());
+assertFalse(arrayEquals(array4,array4.toReversed()));
+
 function arrayEquals(a, b) {
     return Array.isArray(a) &&
         Array.isArray(b) &&
