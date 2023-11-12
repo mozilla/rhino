@@ -59,6 +59,9 @@ sourceSets {
 
 dependencies {
     testImplementation "junit:junit:4.13.2"
+    testImplementation("com.tngtech.archunit:archunit-junit4:1.2.0") {
+        exclude group: 'junit'
+    }
     testImplementation "org.yaml:snakeyaml:1.28"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     jmhImplementation project
