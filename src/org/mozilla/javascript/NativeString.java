@@ -12,9 +12,7 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.util.Locale;
-
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the String native object.

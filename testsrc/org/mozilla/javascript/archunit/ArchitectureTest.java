@@ -8,13 +8,12 @@ package org.mozilla.javascript.archunit;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-import org.junit.runner.RunWith;
-
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchUnitRunner;
 import com.tngtech.archunit.lang.ArchRule;
+import org.junit.runner.RunWith;
 
 /**
  * Architecture tests.
@@ -22,16 +21,20 @@ import com.tngtech.archunit.lang.ArchRule;
  * @author Ronald Brill
  */
 @RunWith(ArchUnitRunner.class)
-@AnalyzeClasses(packages = "org.mozilla.javascript", importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(
+        packages = "org.mozilla.javascript",
+        importOptions = ImportOption.DoNotIncludeTests.class)
 public class ArchitectureTest {
 
-    /**
-     * Use only the RegExpProxy.
-     */
+    /** Use only the RegExpProxy. */
     @ArchTest
-    public static final ArchRule corejsPackageRule = noClasses()
-        .that()
-            .resideOutsideOfPackage("org.mozilla.javascript.regexp..")
-            .and().doNotHaveFullyQualifiedName("org.mozilla.javascript.RegExpProxy")
-        .should().dependOnClassesThat().resideInAnyPackage("org.mozilla.javascript.regexp..");
+    public static final ArchRule corejsPackageRule =
+            noClasses()
+                    .that()
+                    .resideOutsideOfPackage("org.mozilla.javascript.regexp..")
+                    .and()
+                    .doNotHaveFullyQualifiedName("org.mozilla.javascript.RegExpProxy")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage("org.mozilla.javascript.regexp..");
 }
