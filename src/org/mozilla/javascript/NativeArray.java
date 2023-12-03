@@ -482,6 +482,14 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     @Override
+    public void setPrototype(Scriptable p) {
+        super.setPrototype(p);
+        if (!(p instanceof NativeArray)) {
+            setDenseOnly(false);
+        }
+    }
+
+    @Override
     public Object get(int index, Scriptable start) {
         if (!denseOnly && isGetterOrSetter(null, index, false)) return super.get(index, start);
         if (dense != null && 0 <= index && index < dense.length) return dense[index];
