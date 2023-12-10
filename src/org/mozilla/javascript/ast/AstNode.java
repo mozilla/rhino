@@ -125,7 +125,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.VOID, "void");
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i <= MAX_INDENT; i++) {
+        INDENTATIONS[0] = sb.toString();
+        for (int i = 1; i <= MAX_INDENT; i++) {
             sb.append("  ");
             INDENTATIONS[i] = sb.toString();
         }
@@ -308,7 +309,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * @param indent the number of indentation steps
      */
     public String makeIndent(int indent) {
-        return INDENTATIONS[Math.min(MAX_INDENT, indent)];
+        indent = Math.min(MAX_INDENT, Math.max(0, indent));
+        return INDENTATIONS[indent];
     }
 
     /** Returns a short, descriptive name for the node, such as "ArrayComprehension". */
