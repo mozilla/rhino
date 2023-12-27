@@ -181,7 +181,7 @@ final class NativeReflect extends ScriptableObject {
             if (result != null) {
                 result.setPrototype((Scriptable) newTargetPrototype);
 
-                Object val = ctorBaseFunction.call(cx, scope, result, args);
+                Object val = ctorBaseFunction.call(cx, scope, result, callArgs);
                 if (val instanceof Scriptable) {
                     return (Scriptable) val;
                 }
@@ -325,21 +325,35 @@ final class NativeReflect extends ScriptableObject {
 
     private static Object set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
-
-        if (args.length > 1) {
-            if (ScriptRuntime.isSymbol(args[1])) {
-                target.put((Symbol) args[1], target, args[2]);
-                return true;
-            }
-            if (args[1] instanceof Double) {
-                target.put(ScriptRuntime.toIndex(args[1]), target, args[2]);
-                return true;
-            }
-
-            target.put(ScriptRuntime.toString(args[1]), target, args[2]);
+        if (args.length < 2) {
             return true;
         }
-        return false;
+
+        ScriptableObject receiver = args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
+        if (receiver != target) {
+            ScriptableObject descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
+            if (descriptor != null) {
+                Object setter = descriptor.get("set");
+                if (setter != null && setter != NOT_FOUND) {
+                    ((Function) setter).call(cx, scope, receiver, new Object[] {args[2]});
+                    return true;
+                }
+
+                if (descriptor.get("configurable") == Boolean.FALSE) {
+                    return false;
+                }
+            }
+        }
+
+        if (ScriptRuntime.isSymbol(args[1])) {
+            receiver.put((Symbol) args[1], receiver, args[2]);
+        } else if (args[1] instanceof Double) {
+            receiver.put(ScriptRuntime.toIndex(args[1]), receiver, args[2]);
+        } else {
+            receiver.put(ScriptRuntime.toString(args[1]), receiver, args[2]);
+        }
+
+        return true;
     }
 
     private static Object setPrototypeOf(
