@@ -185,7 +185,33 @@ final class NativeMath extends ScriptableObject {
         if (n == 0) {
             return Double32;
         }
-        return Double.valueOf(31 - Math.floor(Math.log(n >>> 0) * LOG2E));
+
+        int place = 0;
+        if ((n & 0xFFFF0000) != 0) {
+            place += 16;
+            n >>>= 16;
+        }
+        if ((n & 0xFF00) != 0) {
+            place += 8;
+            n >>>= 8;
+        }
+        if ((n & 0xF0) != 0) {
+            place += 4;
+            n >>>= 4;
+        }
+        if ((n & 0b1100) != 0) {
+            place += 2;
+            n >>>= 2;
+        }
+        if ((n & 0b10) != 0) {
+            place += 1;
+            n >>>= 1;
+        }
+        if ((n & 0b1) != 0) {
+            place += 1;
+        }
+
+        return Double.valueOf(32 - place);
     }
 
     private static Object cos(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
