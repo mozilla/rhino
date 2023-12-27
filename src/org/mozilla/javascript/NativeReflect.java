@@ -340,7 +340,7 @@ final class NativeReflect extends ScriptableObject {
                     return true;
                 }
 
-                if (descriptor.get("configurable") == Boolean.FALSE) {
+                if (Boolean.FALSE.equals(descriptor.get("configurable"))) {
                     return false;
                 }
             }
