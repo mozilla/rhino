@@ -2752,9 +2752,9 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 32,
             Id_flat = 33,
             Id_flatMap = 34,
-            Id_toReversed = 36,
-            SymbolId_iterator = 37,
-            MAX_PROTOTYPE_ID = Id_toReversed;
+            Id_toReversed = 35,
+            SymbolId_iterator = 36,
+            MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
             ConstructorId_sort = -Id_sort,
