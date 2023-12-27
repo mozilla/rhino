@@ -329,7 +329,8 @@ final class NativeReflect extends ScriptableObject {
             return true;
         }
 
-        ScriptableObject receiver = args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
+        ScriptableObject receiver =
+                args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
         if (receiver != target) {
             ScriptableObject descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
             if (descriptor != null) {
