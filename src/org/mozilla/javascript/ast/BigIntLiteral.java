@@ -71,7 +71,7 @@ public class BigIntLiteral extends AstNode {
 
     @Override
     public String toSource(int depth) {
-        return makeIndent(depth) + (bigInt == null ? "<null>" : bigInt.toString());
+        return makeIndent(depth) + (bigInt == null ? "<null>" : bigInt.toString() + "n");
     }
 
     /** Visits this node. There are no children to visit. */
