@@ -166,6 +166,44 @@ public class NativeReflectTest {
     }
 
     @Test
+    public void constructorArgs() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo(a, b) {\n"
+                        + "  res += 'foo - ';\n"
+                        + "  for (let i = 0; i < arguments.length; i++) {\n"
+                        + "    res += arguments[i] + ' ';\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "Reflect.construct(foo, [1, 2]);\n"
+                        + "res;";
+
+        testString("foo - 1 2 ", script);
+    }
+
+    @Test
+    public void constructorArgsWithTarget() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo(a, b) {\n"
+                        + "  res += 'foo - ';\n"
+                        + "  for (let i = 0; i < arguments.length; i++) {\n"
+                        + "    res += arguments[i] + ' ';\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "function bar(a, b) {\n"
+                        + "  res += 'bar - ';\n"
+                        + "  for (let i = 0; i < arguments.length; i++) {\n"
+                        + "    res += arguments[i] + ' ';\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "Reflect.construct(foo, [6, 7, 8], bar);\n"
+                        + "res;";
+
+        testString("foo - 6 7 8 ", script);
+    }
+
+    @Test
     public void defineProperty() {
         String js =
                 "var o = {};\n" + "'' + Reflect.defineProperty(o, 'p', { value: 42 }) + ' ' + o.p;";
