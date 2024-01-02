@@ -496,6 +496,15 @@ public class NativeJavaMethod extends BaseFunction {
                 break;
             }
         }
+        if (totalPreference == PREFERENCE_EQUAL && vararg1 != vararg2) {
+            // It could happen that we have found two methods, that may fit
+            // In this case, we will take the no-vararg one, if possible
+            if (vararg1) {
+                totalPreference = PREFERENCE_SECOND_ARG;
+            } else {
+                totalPreference = PREFERENCE_FIRST_ARG;
+            }
+        }
         return totalPreference;
     }
 
