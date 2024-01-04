@@ -328,6 +328,26 @@ public class NativeRegExpTest {
         test("0-undefined-true-false-undefined", script);
     }
 
+    /** @throws Exception if an error occurs */
+    @Test
+    public void objectToString() throws Exception {
+        test("/undefined/undefined", "RegExp.prototype.toString.call({})");
+        test("/Foo/undefined", "RegExp.prototype.toString.call({source: 'Foo'})");
+        test("/undefined/gy", "RegExp.prototype.toString.call({flags: 'gy'})");
+        test("/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g'})");
+        test("/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g', sticky: true})");
+
+        test(
+                "TypeError: Method \"toString\" called on incompatible object",
+                "try { RegExp.prototype.toString.call(''); } catch (e) { ('' + e).substr(0, 58) }");
+        test(
+                "TypeError: Method \"toString\" called on incompatible object",
+                "try { RegExp.prototype.toString.call(undefined); } catch (e) { ('' + e).substr(0, 58) }");
+        test(
+                "TypeError: Method \"toString\" called on incompatible object",
+                "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
+    }
+
     private static void test(final String expected, final String script) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
