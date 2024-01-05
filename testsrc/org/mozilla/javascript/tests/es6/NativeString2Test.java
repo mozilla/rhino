@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
@@ -392,6 +393,78 @@ public class NativeString2Test {
                                 result);
                     }
 
+                    return null;
+                });
+    }
+
+    @Test
+    public void stringReplace() {
+        assertEvaluates("xyz", "''.replace('', 'xyz')");
+        assertEvaluates("1", "'121'.replace('21', '')");
+        assertEvaluates("xyz121", "'121'.replace('', 'xyz')");
+        assertEvaluates("a$c21", "'121'.replace('1', 'a$c')");
+        assertEvaluates("a121", "'121'.replace('1', 'a$&')");
+        assertEvaluates("a$c21", "'121'.replace('1', 'a$$c')");
+        assertEvaluates("abaabe", "'abcde'.replace('cd', 'a$`')");
+        assertEvaluates("a21", "'121'.replace('1', 'a$`')");
+        assertEvaluates("abaee", "'abcde'.replace('cd', \"a$'\")");
+        assertEvaluates("aba", "'abcd'.replace('cd', \"a$'\")");
+        assertEvaluates("aba$0", "'abcd'.replace('cd', 'a$0')");
+        assertEvaluates("aba$1", "'abcd'.replace('cd', 'a$1')");
+        assertEvaluates(
+                "abCD",
+                "'abcd'.replace('cd', function (matched) { return matched.toUpperCase() })");
+        assertEvaluates("", "'123456'.replace(/\\d+/, '')");
+        assertEvaluates(
+                "123ABCD321abcd",
+                "'123abcd321abcd'.replace(/[a-z]+/, function (matched) { return matched.toUpperCase() })");
+    }
+
+    @Test
+    public void stringReplaceAll() {
+        assertEvaluates("xyz", "''.replaceAll('', 'xyz')");
+        assertEvaluates("1", "'12121'.replaceAll('21', '')");
+        assertEvaluates("xyz1xyz2xyz1xyz", "'121'.replaceAll('', 'xyz')");
+        assertEvaluates("a$c2a$c", "'121'.replaceAll('1', 'a$c')");
+        assertEvaluates("a12a1", "'121'.replaceAll('1', 'a$&')");
+        assertEvaluates("a$c2a$c", "'121'.replaceAll('1', 'a$$c')");
+        assertEvaluates("aaadaaabcda", "'abcdabc'.replaceAll('bc', 'a$`')");
+        assertEvaluates("a2a12", "'121'.replaceAll('1', 'a$`')");
+        assertEvaluates("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        assertEvaluates("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        assertEvaluates("aa$0daa$0", "'abcdabc'.replaceAll('bc', 'a$0')");
+        assertEvaluates("aa$1daa$1", "'abcdabc'.replaceAll('bc', 'a$1')");
+        assertEvaluates("", "'123456'.replaceAll(/\\d+/g, '')");
+        assertEvaluates("123456", "'123456'.replaceAll(undefined, '')");
+        assertEvaluates("afoobarb", "'afoob'.replaceAll(/(foo)/g, '$1bar')");
+        assertEvaluates("foobarb", "'foob'.replaceAll(/(foo)/gy, '$1bar')");
+        assertEvaluates("hllo", "'hello'.replaceAll(/(h)e/gy, '$1')");
+        assertEvaluates("$1llo", "'hello'.replaceAll(/he/g, '$1')");
+        assertEvaluates(
+                "I$want$these$periods$to$be$$s",
+                "'I.want.these.periods.to.be.$s'.replaceAll(/\\./g, '$')");
+        assertEvaluates("food bar", "'foo bar'.replaceAll(/foo/g, '$&d')");
+        assertEvaluates("foo foo ", "'foo bar'.replaceAll(/bar/g, '$`')");
+        assertEvaluates(" bar bar", "'foo bar'.replaceAll(/foo/g, '$\\'')");
+        assertEvaluates("$' bar", "'foo bar'.replaceAll(/foo/g, '$$\\'')");
+        assertEvaluates("ad$0db", "'afoob'.replaceAll(/(foo)/g, 'd$0d')");
+        assertEvaluates("ad$0db", "'afkxxxkob'.replace(/(f)k(.*)k(o)/g, 'd$0d')");
+        assertEvaluates("ad$0dbd$0dc", "'afoobfuoc'.replaceAll(/(f.o)/g, 'd$0d')");
+        assertEvaluates(
+                "123FOOBAR321BARFOO123",
+                "'123foobar321barfoo123'.replace(/[a-z]+/g, function (matched) { return matched.toUpperCase() })");
+
+        assertEvaluates(
+                "TypeError: replaceAll must be called with a global RegExp",
+                "try { 'hello'.replaceAll(/he/i, 'x'); } catch (e) { '' + e }");
+    }
+
+    private static void assertEvaluates(final Object expected, final String source) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    assertEquals(expected, rep);
                     return null;
                 });
     }
