@@ -8,12 +8,10 @@
 package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
 /** Test for handling const variables. */
@@ -21,380 +19,200 @@ public class NativeString2Test {
 
     @Test
     public void getOwnPropertyDescriptorWithIndex() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "  var res = 'hello'.hasOwnProperty('0');"
-                                            + "  res += ';';"
-                                            + "  desc = Object.getOwnPropertyDescriptor('hello', '0');"
-                                            + "  res += desc.value;"
-                                            + "  res += ';';"
-                                            + "  res += desc.writable;"
-                                            + "  res += ';';"
-                                            + "  res += desc.enumerable;"
-                                            + "  res += ';';"
-                                            + "  res += desc.configurable;"
-                                            + "  res += ';';"
-                                            + "  res;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("true;h;false;true;false;", result);
-
-                    return null;
-                });
+        String js =
+                "  var res = 'hello'.hasOwnProperty('0');"
+                        + "  res += ';';"
+                        + "  desc = Object.getOwnPropertyDescriptor('hello', '0');"
+                        + "  res += desc.value;"
+                        + "  res += ';';"
+                        + "  res += desc.writable;"
+                        + "  res += ';';"
+                        + "  res += desc.enumerable;"
+                        + "  res += ';';"
+                        + "  res += desc.configurable;"
+                        + "  res += ';';"
+                        + "  res;";
+        assertEvaluatesES6("true;h;false;true;false;", js);
     }
 
     @Test
     public void normalizeNoParam() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, "'123'.normalize()", "test", 1, null);
-                    assertEquals("123", result);
-
-                    return null;
-                });
+        assertEvaluates("123", "'123'.normalize()");
     }
 
     @Test
     public void normalizeNoUndefined() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(scope, "'123'.normalize(undefined)", "test", 1, null);
-                    assertEquals("123", result);
-
-                    return null;
-                });
+        assertEvaluates("123", "'123'.normalize(undefined)");
     }
 
     @Test
     public void normalizeNoNull() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "try { "
-                                            + "  '123'.normalize(null);"
-                                            + "} catch (e) { e.message }",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals(
-                            "The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.",
-                            result);
-
-                    return null;
-                });
+        String js = "try { " + "  '123'.normalize(null);" + "} catch (e) { e.message }";
+        assertEvaluates(
+                "The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.", js);
     }
 
     @Test
     public void replaceReplacementAsString() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(scope, "'123'.replace('2', /x/);", "test", 1, null);
-                    assertEquals("1/x/3", result);
-
-                    return null;
-                });
+        assertEvaluates("1null3", "'123'.replace('2', /x/);");
+        assertEvaluatesES6("1/x/3", "'123'.replace('2', /x/);");
     }
 
     @Test
     public void indexOfEmpty() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(scope, "'1234'.indexOf('', 0);", "test", 1, null);
-                    assertEquals(0, result);
-
-                    result = cx.evaluateString(scope, "'1234'.indexOf('', 1);", "test", 1, null);
-                    assertEquals(1, result);
-
-                    result = cx.evaluateString(scope, "'1234'.indexOf('', 4);", "test", 1, null);
-                    assertEquals(4, result);
-
-                    result = cx.evaluateString(scope, "'1234'.indexOf('', 5);", "test", 1, null);
-                    assertEquals(4, result);
-
-                    result = cx.evaluateString(scope, "'1234'.indexOf('', 42);", "test", 1, null);
-                    assertEquals(4, result);
-
-                    return null;
-                });
+        assertEvaluates(0, "'1234'.indexOf('', 0);");
+        assertEvaluates(1, "'1234'.indexOf('', 1);");
+        assertEvaluates(4, "'1234'.indexOf('', 4);");
+        assertEvaluates(4, "'1234'.indexOf('', 5);");
+        assertEvaluates(4, "'1234'.indexOf('', 42);");
     }
 
     @Test
     public void includesEmpty() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+        assertEvaluates(true, "'1234'.includes('');");
+        assertEvaluates(true, "'1234'.includes('', 0);");
+        assertEvaluates(true, "'1234'.includes('', 1);");
+        assertEvaluates(true, "'1234'.includes('', 4);");
+        assertEvaluates(true, "'1234'.includes('', 5);");
+        assertEvaluates(true, "'1234'.includes('', 42);");
+    }
 
-                    Boolean result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('');", "test", 1, null);
-                    assertTrue(result);
+    @Test
+    public void includesRegExpMatch() {
+        String js =
+                "var regExp = /./;\n"
+                        + "var res = '';\n"
+                        + "try {\n"
+                        + "  res += '/./'.includes(regExp);\n"
+                        + "} catch (e) {\n"
+                        + "  res += e;\n"
+                        + "}\n"
+                        + "regExp[Symbol.match] = false;\n"
+                        + "res += ' # ' + '/./'.includes(regExp);\n"
+                        + "res;";
 
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('', 0);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('', 1);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('', 4);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('', 5);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.includes('', 42);", "test", 1, null);
-                    assertTrue(result);
-
-                    return null;
-                });
+        assertEvaluatesES6(
+                "TypeError: First argument to String.prototype.includes must not be a regular expression # true",
+                js);
     }
 
     @Test
     public void startsWithEmpty() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+        assertEvaluates(true, "'1234'.startsWith('');");
+        assertEvaluates(true, "'1234'.startsWith('', 0);");
+        assertEvaluates(true, "'1234'.startsWith('', 1);");
+        assertEvaluates(true, "'1234'.startsWith('', 4);");
+        assertEvaluates(true, "'1234'.startsWith('', 5);");
+        assertEvaluates(true, "'1234'.startsWith('', 42);");
+    }
 
-                    Boolean result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('');", "test", 1, null);
-                    assertTrue(result);
+    @Test
+    public void startsWithRegExpMatch() {
+        String js =
+                "var regExp = /./;\n"
+                        + "var res = '';\n"
+                        + "try {\n"
+                        + "  res += '/./'.startsWith(regExp);\n"
+                        + "} catch (e) {\n"
+                        + "  res += e;\n"
+                        + "}\n"
+                        + "regExp[Symbol.match] = false;\n"
+                        + "res += ' # ' + '/./'.includes(regExp);\n"
+                        + "res;";
 
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('', 0);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('', 1);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('', 4);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('', 5);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.startsWith('', 42);", "test", 1, null);
-                    assertTrue(result);
-
-                    return null;
-                });
+        assertEvaluatesES6(
+                "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
+                js);
     }
 
     @Test
     public void endsWithEmpty() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+        assertEvaluates(true, "'1234'.endsWith('');");
+        assertEvaluates(true, "'1234'.endsWith('', 0);");
+        assertEvaluates(true, "'1234'.endsWith('', 1);");
+        assertEvaluates(true, "'1234'.endsWith('', 4);");
+        assertEvaluates(true, "'1234'.endsWith('', 5);");
+        assertEvaluates(true, "'1234'.endsWith('', 42);");
+    }
 
-                    Boolean result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('');", "test", 1, null);
-                    assertTrue(result);
+    @Test
+    public void endsWithRegExpMatch() {
+        String js =
+                "var regExp = /./;\n"
+                        + "var res = '';\n"
+                        + "try {\n"
+                        + "  res += '/./'.startsWith(regExp);\n"
+                        + "} catch (e) {\n"
+                        + "  res += e;\n"
+                        + "}\n"
+                        + "regExp[Symbol.match] = false;\n"
+                        + "res += ' # ' + '/./'.includes(regExp);\n"
+                        + "res;";
 
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('', 0);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('', 1);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('', 4);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('', 5);", "test", 1, null);
-                    assertTrue(result);
-
-                    result =
-                            (Boolean)
-                                    cx.evaluateString(
-                                            scope, "'1234'.endsWith('', 42);", "test", 1, null);
-                    assertTrue(result);
-
-                    return null;
-                });
+        assertEvaluatesES6(
+                "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
+                js);
     }
 
     @Test
     public void tagify() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, "'tester'.big()", "test", 1, null);
-                    assertEquals("<big>tester</big>", result);
-
-                    result = cx.evaluateString(scope, "'\"tester\"'.big()", "test", 1, null);
-                    assertEquals("<big>\"tester\"</big>", result);
-
-                    result = cx.evaluateString(scope, "'\"tester\"'.big()", "test", 1, null);
-                    assertEquals("<big>\"tester\"</big>", result);
-
-                    result = cx.evaluateString(scope, "'tester'.fontsize()", "test", 1, null);
-                    assertEquals("<font size=\"undefined\">tester</font>", result);
-
-                    result = cx.evaluateString(scope, "'tester'.fontsize(null)", "test", 1, null);
-                    assertEquals("<font size=\"null\">tester</font>", result);
-
-                    result =
-                            cx.evaluateString(
-                                    scope, "'tester'.fontsize(undefined)", "test", 1, null);
-                    assertEquals("<font size=\"undefined\">tester</font>", result);
-
-                    result = cx.evaluateString(scope, "'tester'.fontsize(123)", "test", 1, null);
-                    assertEquals("<font size=\"123\">tester</font>", result);
-
-                    result =
-                            cx.evaluateString(
-                                    scope, "'tester'.fontsize('\"123\"')", "test", 1, null);
-                    assertEquals("<font size=\"&quot;123&quot;\">tester</font>", result);
-
-                    return null;
-                });
+        assertEvaluates("<big>tester</big>", "'tester'.big()");
+        assertEvaluates("<big>\"tester\"</big>", "'\"tester\"'.big()");
+        assertEvaluates("<font size=\"undefined\">tester</font>", "'tester'.fontsize()");
+        assertEvaluates("<font size=\"null\">tester</font>", "'tester'.fontsize(null)");
+        assertEvaluates("<font size=\"undefined\">tester</font>", "'tester'.fontsize(undefined)");
+        assertEvaluates("<font size=\"123\">tester</font>", "'tester'.fontsize(123)");
+        assertEvaluates(
+                "<font size=\"&quot;123&quot;\">tester</font>", "'tester'.fontsize('\"123\"')");
     }
 
     @Test
     public void tagifyPrototypeNull() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+        for (String call :
+                new String[] {
+                    "big",
+                    "blink",
+                    "bold",
+                    "fixed",
+                    "fontcolor",
+                    "fontsize",
+                    "italics",
+                    "link",
+                    "small",
+                    "strike",
+                    "sub",
+                    "sup"
+                }) {
+            String js = "try { String.prototype." + call + ".call(null);} catch (e) { e.message }";
+            String expected = "String.prototype." + call + " method called on null or undefined";
 
-                    for (String call :
-                            new String[] {
-                                "big",
-                                "blink",
-                                "bold",
-                                "fixed",
-                                "fontcolor",
-                                "fontsize",
-                                "italics",
-                                "link",
-                                "small",
-                                "strike",
-                                "sub",
-                                "sup"
-                            }) {
-                        String code =
-                                "try { String.prototype."
-                                        + call
-                                        + ".call(null);} catch (e) { e.message }";
-                        Object result = cx.evaluateString(scope, code, "test", 1, null);
-                        assertEquals(
-                                "String.prototype." + call + " method called on null or undefined",
-                                result);
-                    }
-
-                    return null;
-                });
+            assertEvaluatesES6(expected, js);
+        }
     }
 
     @Test
     public void tagifyPrototypeUndefined() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+        for (String call :
+                new String[] {
+                    "big",
+                    "blink",
+                    "bold",
+                    "fixed",
+                    "fontcolor",
+                    "fontsize",
+                    "italics",
+                    "link",
+                    "small",
+                    "strike",
+                    "sub",
+                    "sup"
+                }) {
+            String js =
+                    "try { String.prototype." + call + ".call(undefined);} catch (e) { e.message }";
+            String expected = "String.prototype." + call + " method called on null or undefined";
 
-                    for (String call :
-                            new String[] {
-                                "big",
-                                "blink",
-                                "bold",
-                                "fixed",
-                                "fontcolor",
-                                "fontsize",
-                                "italics",
-                                "link",
-                                "small",
-                                "strike",
-                                "sub",
-                                "sup"
-                            }) {
-                        String code =
-                                "try { String.prototype."
-                                        + call
-                                        + ".call(undefined);} catch (e) { e.message }";
-                        Object result = cx.evaluateString(scope, code, "test", 1, null);
-                        assertEquals(
-                                "String.prototype." + call + " method called on null or undefined",
-                                result);
-                    }
-
-                    return null;
-                });
+            assertEvaluatesES6(expected, js);
+        }
     }
 
     @Test
@@ -462,6 +280,17 @@ public class NativeString2Test {
     private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    assertEquals(expected, rep);
+                    return null;
+                });
+    }
+
+    private static void assertEvaluatesES6(final Object expected, final String source) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();
                     final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
                     assertEquals(expected, rep);
