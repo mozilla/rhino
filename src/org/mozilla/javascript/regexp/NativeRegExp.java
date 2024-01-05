@@ -2743,6 +2743,8 @@ public class NativeRegExp extends IdScriptableObject {
 
                     return "/" + source + "/" + flags;
                 }
+                return realThis(thisObj, f).toString();
+
             case Id_toSource:
                 return realThis(thisObj, f).toString();
 
