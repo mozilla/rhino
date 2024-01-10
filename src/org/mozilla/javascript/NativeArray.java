@@ -159,11 +159,6 @@ public class NativeArray extends IdScriptableObject implements List {
 
     @Override
     protected void initPrototypeId(int id) {
-        if (id == SymbolId_iterator) {
-            initPrototypeMethod(ARRAY_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
-            return;
-        }
-
         String s, fnName = null;
         int arity;
         switch (id) {
@@ -471,7 +466,6 @@ public class NativeArray extends IdScriptableObject implements List {
                             scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
 
                 case Id_values:
-                case SymbolId_iterator:
                     thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
                     return new NativeArrayIterator(
                             scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
@@ -493,6 +487,42 @@ public class NativeArray extends IdScriptableObject implements List {
         if (!denseOnly && isGetterOrSetter(null, index, false)) return super.has(index, start);
         if (dense != null && 0 <= index && index < dense.length) return dense[index] != NOT_FOUND;
         return super.has(index, start);
+    }
+
+    @Override
+    public boolean has(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return super.has("values", start);
+        }
+
+        return super.has(key, start);
+    }
+
+    @Override
+    public Object get(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return super.get("values", start);
+        }
+
+        return super.get(key, start);
+    }
+
+    @Override
+    public void put(Symbol key, Scriptable start, Object value) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            super.put("values", start, value);
+        }
+
+        super.put(key, start, value);
+    }
+
+    @Override
+    public void delete(Symbol key) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            super.delete("values");
+        }
+
+        super.delete(key);
     }
 
     private static long toArrayIndex(Object id) {
@@ -2519,7 +2549,10 @@ public class NativeArray extends IdScriptableObject implements List {
     @Override
     protected int findPrototypeId(Symbol k) {
         if (SymbolKey.ITERATOR.equals(k)) {
-            return SymbolId_iterator;
+            // "Symbol.iterator" property of the prototype has the "same value"
+            // as the "values" property. We implement this by returning the
+            // ID of "values" when the iterator symbol is accessed.
+            return Id_values;
         }
         return 0;
     }
@@ -2729,8 +2762,7 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 32,
             Id_flat = 33,
             Id_flatMap = 34,
-            SymbolId_iterator = 35,
-            MAX_PROTOTYPE_ID = SymbolId_iterator;
+            MAX_PROTOTYPE_ID = Id_flatMap;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
             ConstructorId_sort = -Id_sort,

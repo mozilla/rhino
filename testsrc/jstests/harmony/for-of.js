@@ -132,7 +132,7 @@ assertThrows('for each (n of [1,2]) {}', SyntaxError);
 
 assertThrows('[n*n for each (n of [1,2])]', SyntaxError);
 
-assertEquals('[Symbol.iterator]', Array.prototype[Symbol.iterator].name);
+assertEquals('values', Array.prototype[Symbol.iterator].name);
 assertEquals('[Symbol.iterator]', String.prototype[Symbol.iterator].name);
 
 // should have `value` and `done` property.
