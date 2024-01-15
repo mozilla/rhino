@@ -55,6 +55,8 @@ assertEquals(Math.imul(0xffffffff, 5), -5);
 assertEquals(Math.imul(0xfffffffe, 5), -10);
 
 assertEqualsDelta(Math.atanh(1/2), 0.549306144334059, 0.0000000000001);
+assertEqualsDelta(Math.atanh(0.01), 0.010000333353334763, 0.0000000000001);
+assertEqualsDelta(Math.atanh(-0.2), -0.2027325540540822, 0.0000000000001);
 assertEquals(Math.atanh(0), 0);
 assertEquals(Math.atanh(-0), -0);
 assertEquals(Math.atanh(1), Infinity);
@@ -67,6 +69,7 @@ assertEquals(Math.atanh(), NaN);
 
 assertEqualsDelta(Math.asinh(1), 0.8813735870195429, 0.0000000000001);
 assertEqualsDelta(Math.asinh(-1/2), -0.48121182505960336, 0.0000000000001);
+assertEqualsDelta(Math.asinh(0.01), 0.009999833340832886, 0.0000000000001);
 assertEquals(Math.asinh(0), 0);
 assertEquals(Math.asinh(-0), -0);
 assertEquals(Math.asinh(Infinity), Infinity);
@@ -78,6 +81,7 @@ assertEquals(Math.asinh(), NaN);
 assertEquals(Math.acosh(1), 0);
 assertEquals(Math.acosh(-1), NaN);
 assertEqualsDelta(Math.acosh(2), 1.3169578969248166, 0.0000000000001);
+assertEqualsDelta(Math.acosh(5), 2.2924316695611777, 0.0000000000001);
 assertEquals(Math.acosh(0), NaN);
 assertEquals(Math.acosh(-0), NaN);
 assertEquals(Math.acosh(Infinity), Infinity);
