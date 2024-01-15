@@ -153,7 +153,7 @@ final class NativeMath extends ScriptableObject {
                 }
                 return ScriptRuntime.negativeZeroObj;
             }
-            return Double.valueOf(0.5 * Math.log((x + 1.0) / (1.0 - x)));
+            return Double.valueOf(0.5 * Math.log((1.0 + x) / (1.0 - x)));
         }
         return ScriptRuntime.NaNobj;
     }
