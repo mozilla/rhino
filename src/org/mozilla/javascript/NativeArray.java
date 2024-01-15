@@ -154,6 +154,7 @@ public class NativeArray extends IdScriptableObject implements List {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_toReversed, "toReversed", 0);
         super.fillConstructorProperties(ctor);
     }
 
@@ -303,6 +304,10 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 1;
                 s = "flatMap";
                 break;
+            case Id_toReversed:
+                arity = 0;
+                s = "toReversed";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -341,6 +346,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 case ConstructorId_findIndex:
                 case ConstructorId_reduce:
                 case ConstructorId_reduceRight:
+                case ConstructorId_toReversed:
                     {
                         // this is a small trick; we will handle all the ConstructorId_xxx calls
                         // the same way the object calls are processed
@@ -447,6 +453,9 @@ public class NativeArray extends IdScriptableObject implements List {
 
                 case Id_flatMap:
                     return js_flatMap(cx, scope, thisObj, args);
+
+                case Id_toReversed:
+                    return js_toReversed(cx, scope, thisObj);
 
                 case Id_every:
                 case Id_filter:
@@ -2260,6 +2269,17 @@ public class NativeArray extends IdScriptableObject implements List {
         return "Array".equals(((Scriptable) o).getClassName());
     }
 
+    private static Scriptable js_toReversed(Context cx, Scriptable scope, Scriptable thisObj) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = getLengthProperty(cx, o);
+
+        Scriptable result = cx.newArray(scope, (int) len);
+        for (long k = len - 1; k >= 0; k--) {
+            Object temp1 = getRawElem(o, k);
+            defineElemOrThrow(cx, result, len - k - 1, temp1);
+        }
+        return result;
+    }
     // methods to implement java.util.List
 
     @Override
@@ -2696,6 +2716,9 @@ public class NativeArray extends IdScriptableObject implements List {
             case "flatMap":
                 id = Id_flatMap;
                 break;
+            case "toReversed":
+                id = Id_toReversed;
+                break;
             default:
                 id = 0;
                 break;
@@ -2737,7 +2760,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 32,
             Id_flat = 33,
             Id_flatMap = 34,
-            SymbolId_iterator = 35,
+            Id_toReversed = 35,
+            SymbolId_iterator = 36,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
@@ -2760,6 +2784,7 @@ public class NativeArray extends IdScriptableObject implements List {
             ConstructorId_findIndex = -Id_findIndex,
             ConstructorId_reduce = -Id_reduce,
             ConstructorId_reduceRight = -Id_reduceRight,
+            ConstructorId_toReversed = -Id_toReversed,
             ConstructorId_isArray = -26,
             ConstructorId_of = -27,
             ConstructorId_from = -28;
