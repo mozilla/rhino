@@ -71,6 +71,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     protected AstNode inlineComment;
     private static Map<Integer, String> operatorNames = new HashMap<>();
 
+    private static final int MAX_INDENT = 42;
+    private static final String[] INDENTATIONS = new String[MAX_INDENT + 1];
+
     static {
         operatorNames.put(Token.IN, "in");
         operatorNames.put(Token.TYPEOF, "typeof");
@@ -120,6 +123,13 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_BITXOR, "^=");
         operatorNames.put(Token.ASSIGN_EXP, "**=");
         operatorNames.put(Token.VOID, "void");
+
+        StringBuilder sb = new StringBuilder();
+        INDENTATIONS[0] = sb.toString();
+        for (int i = 1; i <= MAX_INDENT; i++) {
+            sb.append("  ");
+            INDENTATIONS[i] = sb.toString();
+        }
     }
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
@@ -299,11 +309,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * @param indent the number of indentation steps
      */
     public String makeIndent(int indent) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < indent; i++) {
-            sb.append("  ");
-        }
-        return sb.toString();
+        indent = Math.min(MAX_INDENT, Math.max(0, indent));
+        return INDENTATIONS[indent];
     }
 
     /** Returns a short, descriptive name for the node, such as "ArrayComprehension". */
