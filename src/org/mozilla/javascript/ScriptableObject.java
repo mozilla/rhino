@@ -1566,9 +1566,9 @@ public abstract class ScriptableObject
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
-        defineOwnProperty(cx, id, desc, true);
+        return defineOwnProperty(cx, id, desc, true);
     }
 
     /**
@@ -1581,7 +1581,7 @@ public abstract class ScriptableObject
      * @param desc the new property descriptor, as described in 8.6.1
      * @param checkValid whether to perform validity checks
      */
-    protected void defineOwnProperty(
+    protected boolean defineOwnProperty(
             Context cx, Object id, ScriptableObject desc, boolean checkValid) {
 
         Object key = null;
@@ -1650,6 +1650,8 @@ public abstract class ScriptableObject
             }
             slot.setAttributes(attributes);
         }
+
+        return true;
     }
 
     /**
@@ -1779,7 +1781,7 @@ public abstract class ScriptableObject
         return ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
+    protected int applyDescriptorToAttributeBitset(int attributes, Scriptable desc) {
         Object enumerable = getProperty(desc, "enumerable");
         if (enumerable != NOT_FOUND) {
             attributes =
@@ -1833,7 +1835,7 @@ public abstract class ScriptableObject
      * @param desc a property descriptor
      * @return true if this is a generic descriptor.
      */
-    protected boolean isGenericDescriptor(ScriptableObject desc) {
+    protected static boolean isGenericDescriptor(ScriptableObject desc) {
         return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
@@ -1964,8 +1966,9 @@ public abstract class ScriptableObject
         return isExtensible;
     }
 
-    public void preventExtensions() {
+    public boolean preventExtensions() {
         isExtensible = false;
+        return true;
     }
 
     /**
@@ -2291,6 +2294,15 @@ public abstract class ScriptableObject
         if (base == null) return true;
         base.delete(index);
         return !base.has(index, obj);
+    }
+
+    /** A version of deleteProperty for properties with Symbol keys. */
+    public static boolean deleteProperty(Scriptable obj, Symbol key) {
+        Scriptable base = getBase(obj, key);
+        if (base == null) return true;
+        SymbolScriptable scriptable = ensureSymbolScriptable(base);
+        scriptable.delete(key);
+        return !scriptable.has(key, obj);
     }
 
     /**
