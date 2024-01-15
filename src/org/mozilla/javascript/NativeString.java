@@ -13,7 +13,6 @@ import java.text.Collator;
 import java.text.Normalizer;
 import java.util.Locale;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the String native object.
@@ -462,11 +461,16 @@ final class NativeString extends IdScriptableObject {
                 case Id_endsWith:
                     String thisString =
                             ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    if (args.length > 0 && args[0] instanceof NativeRegExp) {
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.first.arg.not.regexp",
-                                String.class.getSimpleName(),
-                                f.getFunctionName());
+                    if (args.length > 0) {
+                        RegExpProxy reProxy = ScriptRuntime.getRegExpProxy(cx);
+                        if (reProxy != null
+                                && args[0] instanceof Scriptable
+                                && reProxy.isRegExp((Scriptable) args[0])) {
+                            throw ScriptRuntime.typeErrorById(
+                                    "msg.first.arg.not.regexp",
+                                    String.class.getSimpleName(),
+                                    f.getFunctionName());
+                        }
                     }
 
                     int idx = js_indexOf(id, thisString, args);
