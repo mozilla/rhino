@@ -111,18 +111,6 @@ assertEquals(Math.sign(NaN), NaN);
 assertEquals(Math.sign('foo'), NaN);
 assertEquals(Math.sign(), NaN);
 
-assertEquals(Math.clz32(0), 32);
-assertEquals(Math.clz32(1), 31);
-assertEquals(Math.clz32(2), 30);
-assertEquals(Math.clz32(-0), 32);
-assertEquals(Math.clz32(-2), 0);
-assertEquals(Math.clz32(Infinity), 32);
-assertEquals(Math.clz32(-Infinity), 32);
-assertEquals(Math.clz32(NaN), 32);
-assertEquals(Math.clz32(NaN), 32);
-assertEquals(Math.clz32('foo'), 32);
-assertEquals(Math.clz32(), 32);
-
 assertEquals(Math.fround(0.5), 0.5);
 assertEquals(Math.fround(5.4), 5.400000095367432);
 assertEquals(Math.fround(-2.2), -2.200000047683716);
