@@ -5,11 +5,20 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class NativeRegExpTest {
 
@@ -47,6 +56,21 @@ public class NativeRegExpTest {
     @Test
     public void ignoreCase() throws Exception {
         testEvaluate("i-false-true-false-false", "/foo/i;");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void interruptLongRunningRegExpEvaluation() throws Exception {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> future = executorService.submit(() -> test("false", "/(.*){1,32000}[bc]/.test(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\");"));
+            assertThrows(TimeoutException.class, () -> future.get(1, TimeUnit.SECONDS));
+            executorService.shutdownNow();
+            assertTrue(executorService.awaitTermination(30, TimeUnit.SECONDS));
+        }
+        finally {
+            executorService.shutdown();
+        }
     }
 
     /** @throws Exception if an error occurs */

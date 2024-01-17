@@ -1878,6 +1878,9 @@ public class NativeRegExp extends IdScriptableObject {
 
         for (; ; ) {
 
+            if (Thread.currentThread().isInterrupted()) {
+                throw new RuntimeException("Received interrupt while executing regexp");
+            }
             if (reopIsSimple(op)) {
                 int match = simpleMatch(gData, input, op, program, pc, end, true);
                 result = match >= 0;
