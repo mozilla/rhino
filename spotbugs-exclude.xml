@@ -30,6 +30,10 @@
     <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
   </Match>
   <Match>
+    <!-- Ignore security-manager relevant bugs  -->
+    <Bug pattern="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED" />
+  </Match>
+  <Match>
     <!-- A bigger task to take this on across the codebase -->
     <Bug pattern="DM_DEFAULT_ENCODING" />
   </Match>

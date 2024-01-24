@@ -903,7 +903,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
         String tag = "org.mozilla.javascript.Interpreter.interpretLoop";
         StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
-        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+        String lineSeparator = System.getProperty("line.separator");
 
         CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
         int[] linePC = ex.interpreterLineData;
@@ -961,7 +961,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public List<String> getScriptStack(RhinoException ex) {
         ScriptStackElement[][] stack = getScriptStackElements(ex);
         List<String> list = new ArrayList<>(stack.length);
-        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+        String lineSeparator = System.getProperty("line.separator");
         for (ScriptStackElement[] group : stack) {
             StringBuilder sb = new StringBuilder();
             for (ScriptStackElement elem : group) {
