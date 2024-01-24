@@ -54,4 +54,70 @@ assertEquals(Math.imul(-2, -2), 4);
 assertEquals(Math.imul(0xffffffff, 5), -5);
 assertEquals(Math.imul(0xfffffffe, 5), -10);
 
+assertEqualsDelta(Math.atanh(1/2), 0.549306144334059, 0.0000000000001);
+assertEqualsDelta(Math.atanh(0.01), 0.010000333353334763, 0.0000000000001);
+assertEqualsDelta(Math.atanh(-0.2), -0.2027325540540822, 0.0000000000001);
+assertEquals(Math.atanh(0), 0);
+assertEquals(Math.atanh(-0), -0);
+assertEquals(Math.atanh(1), Infinity);
+assertEquals(Math.atanh(-1), -Infinity);
+assertEquals(Math.atanh(Infinity), NaN);
+assertEquals(Math.atanh(-Infinity), NaN);
+assertEquals(Math.atanh(NaN), NaN);
+assertEquals(Math.atanh('foo'), NaN);
+assertEquals(Math.atanh(), NaN);
+
+assertEqualsDelta(Math.asinh(1), 0.8813735870195429, 0.0000000000001);
+assertEqualsDelta(Math.asinh(-1/2), -0.48121182505960336, 0.0000000000001);
+assertEqualsDelta(Math.asinh(0.01), 0.009999833340832886, 0.0000000000001);
+assertEquals(Math.asinh(0), 0);
+assertEquals(Math.asinh(-0), -0);
+assertEquals(Math.asinh(Infinity), Infinity);
+assertEquals(Math.asinh(-Infinity), -Infinity);
+assertEquals(Math.asinh(NaN), NaN);
+assertEquals(Math.asinh('foo'), NaN);
+assertEquals(Math.asinh(), NaN);
+
+assertEquals(Math.acosh(1), 0);
+assertEquals(Math.acosh(-1), NaN);
+assertEqualsDelta(Math.acosh(2), 1.3169578969248166, 0.0000000000001);
+assertEqualsDelta(Math.acosh(5), 2.2924316695611777, 0.0000000000001);
+assertEquals(Math.acosh(0), NaN);
+assertEquals(Math.acosh(-0), NaN);
+assertEquals(Math.acosh(Infinity), Infinity);
+assertEquals(Math.acosh(-Infinity), NaN);
+assertEquals(Math.acosh(NaN), NaN);
+assertEquals(Math.acosh('foo'), NaN);
+assertEquals(Math.acosh(), NaN);
+
+assertEquals(Math.log2(1), 0);
+assertEquals(Math.log2(2), 1);
+assertEqualsDelta(Math.log2(3), 1.584962500721156, 0.0000000000001);
+assertEquals(Math.log2(0), -Infinity);
+assertEquals(Math.log2(-0), -Infinity);
+assertEquals(Math.log2(-2), NaN);
+assertEquals(Math.log2(NaN), NaN);
+assertEquals(Math.log2('foo'), NaN);
+assertEquals(Math.log2(), NaN);
+
+assertEquals(Math.sign(1), 1);
+assertEquals(Math.sign(2), 1);
+assertEquals(Math.sign(-3), -1);
+assertEquals(Math.sign(0), 0);
+assertEquals(Math.sign(-0), -0);
+assertEquals(Math.sign(Infinity), 1);
+assertEquals(Math.sign(-Infinity), -1);
+assertEquals(Math.sign(NaN), NaN);
+assertEquals(Math.sign('foo'), NaN);
+assertEquals(Math.sign(), NaN);
+
+assertEquals(Math.fround(0.5), 0.5);
+assertEquals(Math.fround(5.4), 5.400000095367432);
+assertEquals(Math.fround(-2.2), -2.200000047683716);
+assertEquals(Math.fround(Infinity), Infinity);
+assertEquals(Math.fround(-Infinity), -Infinity);
+assertEquals(Math.fround(NaN), NaN);
+assertEquals(Math.fround('x'), NaN);
+assertEquals(Math.fround(), NaN);
+
 "success";
