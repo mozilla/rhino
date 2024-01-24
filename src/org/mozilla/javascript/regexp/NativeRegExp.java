@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -37,7 +38,8 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int JSREG_GLOB = 0x1; // 'g' flag: global
     public static final int JSREG_FOLD = 0x2; // 'i' flag: fold
     public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
-    public static final int JSREG_STICKY = 0x8; // 'y' flag: sticky
+    public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
+    public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
 
     // type of match to perform
     public static final int TEST = 0;
@@ -196,6 +198,7 @@ public class NativeRegExp extends IdScriptableObject {
         if ((re.flags & JSREG_GLOB) != 0) buf.append('g');
         if ((re.flags & JSREG_FOLD) != 0) buf.append('i');
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
+        if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
         if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
     }
 
@@ -278,6 +281,8 @@ public class NativeRegExp extends IdScriptableObject {
                     f = JSREG_FOLD;
                 } else if (c == 'm') {
                     f = JSREG_MULTILINE;
+                } else if (c == 's') {
+                    f = JSREG_DOTALL;
                 } else if (c == 'y') {
                     f = JSREG_STICKY;
                 } else {
@@ -1709,7 +1714,9 @@ public class NativeRegExp extends IdScriptableObject {
                                 ^ ((gData.cp < end) && isWord(input.charAt(gData.cp))));
                 break;
             case REOP_DOT:
-                if (gData.cp != end && !isLineTerm(input.charAt(gData.cp))) {
+                if (gData.cp != end
+                        && ((gData.regexp.flags & JSREG_DOTALL) != 0
+                                || !isLineTerm(input.charAt(gData.cp)))) {
                     result = true;
                     gData.cp++;
                 }
@@ -2521,8 +2528,9 @@ public class NativeRegExp extends IdScriptableObject {
             Id_global = 4,
             Id_ignoreCase = 5,
             Id_multiline = 6,
-            Id_sticky = 7,
-            MAX_INSTANCE_ID = 7;
+            Id_dotAll = 7,
+            Id_sticky = 8,
+            MAX_INSTANCE_ID = 8;
 
     @Override
     protected int getMaxInstanceId() {
@@ -2551,6 +2559,9 @@ public class NativeRegExp extends IdScriptableObject {
             case "multiline":
                 id = Id_multiline;
                 break;
+            case "dotAll":
+                id = Id_dotAll;
+                break;
             case "sticky":
                 id = Id_sticky;
                 break;
@@ -2571,6 +2582,7 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_global:
             case Id_ignoreCase:
             case Id_multiline:
+            case Id_dotAll:
             case Id_sticky:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
@@ -2595,6 +2607,8 @@ public class NativeRegExp extends IdScriptableObject {
                 return "ignoreCase";
             case Id_multiline:
                 return "multiline";
+            case Id_dotAll:
+                return "dotAll";
             case Id_sticky:
                 return "sticky";
         }
@@ -2620,6 +2634,8 @@ public class NativeRegExp extends IdScriptableObject {
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
             case Id_multiline:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
+            case Id_dotAll:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_DOTALL) != 0);
             case Id_sticky:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
         }
@@ -2644,6 +2660,7 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_global:
             case Id_ignoreCase:
             case Id_multiline:
+            case Id_dotAll:
             case Id_sticky:
                 return;
         }
@@ -2716,6 +2733,18 @@ public class NativeRegExp extends IdScriptableObject {
                 return realThis(thisObj, f).compile(cx, scope, args);
 
             case Id_toString:
+                // thisObj != scope is a strange hack but i had no better idea for the moment
+                if (thisObj != scope && thisObj instanceof NativeObject) {
+                    Object sourceObj = thisObj.get("source", thisObj);
+                    String source =
+                            sourceObj.equals(NOT_FOUND) ? "undefined" : escapeRegExp(sourceObj);
+                    Object flagsObj = thisObj.get("flags", thisObj);
+                    String flags = flagsObj.equals(NOT_FOUND) ? "undefined" : flagsObj.toString();
+
+                    return "/" + source + "/" + flags;
+                }
+                return realThis(thisObj, f).toString();
+
             case Id_toSource:
                 return realThis(thisObj, f).toString();
 

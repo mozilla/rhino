@@ -1496,8 +1496,8 @@ class TokenStream {
             if (matchChar('g')) addToString('g');
             else if (matchChar('i')) addToString('i');
             else if (matchChar('m')) addToString('m');
-            else if (matchChar('y')) // FireFox 3
-            addToString('y');
+            else if (matchChar('s')) addToString('s');
+            else if (matchChar('y')) addToString('y');
             else break;
         }
         tokenEnd = start + stringBufferTop + 2; // include slashes

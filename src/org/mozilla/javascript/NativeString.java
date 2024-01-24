@@ -98,6 +98,7 @@ final class NativeString extends IdScriptableObject {
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_match, "match", 2);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_search, "search", 2);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replace, "replace", 2);
+        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replaceAll, "replaceAll", 2);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_localeCompare, "localeCompare", 2);
         addIdFunctionProperty(
                 ctor, STRING_TAG, ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
@@ -246,6 +247,10 @@ final class NativeString extends IdScriptableObject {
                 arity = 2;
                 s = "replace";
                 break;
+            case Id_replaceAll:
+                arity = 2;
+                s = "replaceAll";
+                break;
             case Id_at:
                 arity = 1;
                 s = "at";
@@ -345,6 +350,7 @@ final class NativeString extends IdScriptableObject {
                 case ConstructorId_match:
                 case ConstructorId_search:
                 case ConstructorId_replace:
+                case ConstructorId_replaceAll:
                 case ConstructorId_localeCompare:
                 case ConstructorId_toLocaleLowerCase:
                     {
@@ -463,10 +469,15 @@ final class NativeString extends IdScriptableObject {
                     String thisString =
                             ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.first.arg.not.regexp",
-                                String.class.getSimpleName(),
-                                f.getFunctionName());
+                        if (ScriptableObject.isTrue(
+                                ScriptableObject.getProperty(
+                                        ScriptableObject.ensureScriptable(args[0]),
+                                        SymbolKey.MATCH))) {
+                            throw ScriptRuntime.typeErrorById(
+                                    "msg.first.arg.not.regexp",
+                                    String.class.getSimpleName(),
+                                    f.getFunctionName());
+                        }
                     }
 
                     int idx = js_indexOf(id, thisString, args);
@@ -599,14 +610,17 @@ final class NativeString extends IdScriptableObject {
                 case Id_match:
                 case Id_search:
                 case Id_replace:
+                case Id_replaceAll:
                     {
                         int actionType;
                         if (id == Id_match) {
                             actionType = RegExpProxy.RA_MATCH;
                         } else if (id == Id_search) {
                             actionType = RegExpProxy.RA_SEARCH;
-                        } else {
+                        } else if (id == Id_replace) {
                             actionType = RegExpProxy.RA_REPLACE;
+                        } else {
+                            actionType = RegExpProxy.RA_REPLACE_ALL;
                         }
 
                         requireObjectCoercible(cx, thisObj, f);
@@ -1286,6 +1300,9 @@ final class NativeString extends IdScriptableObject {
             case "replace":
                 id = Id_replace;
                 break;
+            case "replaceAll":
+                id = Id_replaceAll;
+                break;
             case "localeCompare":
                 id = Id_localeCompare;
                 break;
@@ -1380,24 +1397,25 @@ final class NativeString extends IdScriptableObject {
             Id_match = 31,
             Id_search = 32,
             Id_replace = 33,
-            Id_localeCompare = 34,
-            Id_toLocaleLowerCase = 35,
-            Id_toLocaleUpperCase = 36,
-            Id_trim = 37,
-            Id_trimLeft = 38,
-            Id_trimRight = 39,
-            Id_includes = 40,
-            Id_startsWith = 41,
-            Id_endsWith = 42,
-            Id_normalize = 43,
-            Id_repeat = 44,
-            Id_codePointAt = 45,
-            Id_padStart = 46,
-            Id_padEnd = 47,
-            SymbolId_iterator = 48,
-            Id_trimStart = 49,
-            Id_trimEnd = 50,
-            Id_at = 51,
+            Id_replaceAll = 34,
+            Id_localeCompare = 35,
+            Id_toLocaleLowerCase = 36,
+            Id_toLocaleUpperCase = 37,
+            Id_trim = 38,
+            Id_trimLeft = 39,
+            Id_trimRight = 40,
+            Id_includes = 41,
+            Id_startsWith = 42,
+            Id_endsWith = 43,
+            Id_normalize = 44,
+            Id_repeat = 45,
+            Id_codePointAt = 46,
+            Id_padStart = 47,
+            Id_padEnd = 48,
+            SymbolId_iterator = 49,
+            Id_trimStart = 50,
+            Id_trimEnd = 51,
+            Id_at = 52,
             MAX_PROTOTYPE_ID = Id_at;
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
@@ -1414,6 +1432,7 @@ final class NativeString extends IdScriptableObject {
             ConstructorId_match = -Id_match,
             ConstructorId_search = -Id_search,
             ConstructorId_replace = -Id_replace,
+            ConstructorId_replaceAll = -Id_replaceAll,
             ConstructorId_localeCompare = -Id_localeCompare,
             ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 

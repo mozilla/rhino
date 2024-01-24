@@ -66,6 +66,7 @@ public class RegExpImpl implements RegExpProxy {
                 }
 
             case RA_REPLACE:
+            case RA_REPLACE_ALL:
                 {
                     boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
 
@@ -78,6 +79,11 @@ public class RegExpImpl implements RegExpProxy {
                     String search = null;
                     if (useRE) {
                         re = createRegExp(cx, scope, args, 2, true);
+                        if (RA_REPLACE_ALL == actionType
+                                && (re.getFlags() & NativeRegExp.JSREG_GLOB) == 0) {
+                            throw ScriptRuntime.typeError(
+                                    "replaceAll must be called with a global RegExp");
+                        }
                     } else {
                         Object arg0 = args.length < 1 ? Undefined.instance : args[0];
                         search = ScriptRuntime.toString(arg0);
@@ -102,32 +108,54 @@ public class RegExpImpl implements RegExpProxy {
 
                     Object val;
                     if (useRE) {
-                        val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+                        Object result = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+                        if (data.charBuf == null) {
+                            if (data.global || result == null || !Boolean.TRUE.equals(result)) {
+                                /* Didn't match even once. */
+                                return data.str;
+                            }
+                            SubString lc = this.leftContext;
+                            replace_glob(data, cx, scope, this, lc.index, lc.length);
+                        }
                     } else {
-                        String str = data.str;
-                        int index = str.indexOf(search);
-                        if (index >= 0) {
-                            int slen = search.length();
+                        final String str = data.str;
+                        final int strLen = str.length(), searchLen = search.length();
+                        int index = -1, lastIndex = 0;
+                        for (; ; ) {
+                            if (search.isEmpty()) {
+                                if (index == -1) {
+                                    index = 0;
+                                } else {
+                                    index = (lastIndex < strLen) ? lastIndex + 1 : -1;
+                                }
+                            } else {
+                                index = str.indexOf(search, lastIndex);
+                            }
+
+                            if (index == -1) {
+                                if (data.charBuf == null) {
+                                    return str;
+                                }
+                                break;
+                            }
+
                             this.parens = null;
                             this.lastParen = null;
                             this.leftContext = new SubString(str, 0, index);
-                            this.lastMatch = new SubString(str, index, slen);
+                            this.lastMatch = new SubString(str, index, searchLen);
                             this.rightContext =
-                                    new SubString(str, index + slen, str.length() - index - slen);
-                            val = Boolean.TRUE;
-                        } else {
-                            val = Boolean.FALSE;
+                                    new SubString(
+                                            str, index + searchLen, strLen - index - searchLen);
+
+                            replace_glob(data, cx, scope, this, lastIndex, index - lastIndex);
+                            lastIndex = index + searchLen;
+
+                            if (actionType != RA_REPLACE_ALL) {
+                                break;
+                            }
                         }
                     }
 
-                    if (data.charBuf == null) {
-                        if (data.global || val == null || !val.equals(Boolean.TRUE)) {
-                            /* Didn't match even once. */
-                            return data.str;
-                        }
-                        SubString lc = this.leftContext;
-                        replace_glob(data, cx, scope, this, lc.index, lc.length);
-                    }
                     SubString rc = this.rightContext;
                     data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
                     return data.charBuf.toString();
@@ -192,7 +220,7 @@ public class RegExpImpl implements RegExpProxy {
                 if (data.mode == RA_MATCH) {
                     match_glob(data, cx, scope, count, reImpl);
                 } else {
-                    if (data.mode != RA_REPLACE) Kit.codeBug();
+                    if (data.mode != RA_REPLACE && data.mode != RA_REPLACE_ALL) Kit.codeBug();
                     SubString lastMatch = reImpl.lastMatch;
                     int leftIndex = data.leftIndex;
                     int leftlen = lastMatch.index - leftIndex;
