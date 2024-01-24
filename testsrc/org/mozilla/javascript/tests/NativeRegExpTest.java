@@ -8,17 +8,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 public class NativeRegExpTest {
 
@@ -63,12 +61,16 @@ public class NativeRegExpTest {
     public void interruptLongRunningRegExpEvaluation() throws Exception {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            Future<?> future = executorService.submit(() -> test("false", "/(.*){1,32000}[bc]/.test(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\");"));
+            Future<?> future =
+                    executorService.submit(
+                            () ->
+                                    test(
+                                            "false",
+                                            "/(.*){1,32000}[bc]/.test(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\");"));
             assertThrows(TimeoutException.class, () -> future.get(1, TimeUnit.SECONDS));
             executorService.shutdownNow();
             assertTrue(executorService.awaitTermination(30, TimeUnit.SECONDS));
-        }
-        finally {
+        } finally {
             executorService.shutdown();
         }
     }
