@@ -59,7 +59,7 @@ public class NativePromise extends ScriptableObject {
                         "get [Symbol.species]",
                         0,
                         (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                constructor));
+                                thisObj));
         constructor.defineOwnProperty(cx, SymbolKey.SPECIES, speciesDescriptor, false);
 
         constructor.definePrototypeMethod(
