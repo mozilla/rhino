@@ -17,4 +17,9 @@ var a = Array.from(Array(2));
 assertTrue(0 in a);
 assertEquals(a.map(_ => 'a'), ['a', 'a']);
 
+(function TestSymbolSpecies() {
+	var symbolSpeciesValue = Array[Symbol.species];
+	assertEquals(Array, symbolSpeciesValue);
+})();
+
 "success";

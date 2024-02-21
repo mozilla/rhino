@@ -998,6 +998,11 @@ function assertAsyncDone(iteration) {
   assertEquals(1, callCount);
 })();
 
-assertAsyncDone()
+assertAsyncDone();
+
+(function TestSymbolSpecies() {
+  var symbolSpeciesValue = Promise[Symbol.species];
+  assertEquals(Promise, symbolSpeciesValue);
+})();
 
 'success';

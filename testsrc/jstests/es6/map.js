@@ -130,4 +130,9 @@ function logElement(value, key, m) {
   }
 })();
 
+(function TestSymbolSpecies() {
+  var symbolSpeciesValue = Map[Symbol.species];
+  assertEquals(Map, symbolSpeciesValue);
+})();
+
 "success";
