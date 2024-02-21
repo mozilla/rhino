@@ -88,4 +88,9 @@ function logElement(value, key) {
   assertEquals(1, mySet.size);
 })();
 
+(function TestSymbolSpecies() {
+  var symbolSpeciesValue = Set[Symbol.species];
+  assertEquals(Set, symbolSpeciesValue);
+})();
+
 "success";
