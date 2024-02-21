@@ -27,24 +27,8 @@ public class NativeSet extends IdScriptableObject {
         desc.put("get", desc, obj.get(GETSIZE, obj));
         obj.defineOwnProperty(cx, "size", desc);
 
-        // TODO: this code is about the same as for Promise, except for a bug fix -
-        //  here I return "thisObj" and not "constructor". I've made the fix after
-        //  checking the test262 :)
-        //  Need to check what the spec says for Promise and, I hope, unify them
-        //  And then to update also Array, Map, and whatever else is required (see spec)
-        ScriptableObject speciesDescriptor = (ScriptableObject) cx.newObject(scope);
-        ScriptableObject.putProperty(speciesDescriptor, "enumerable", false);
-        ScriptableObject.putProperty(speciesDescriptor, "configurable", true);
-        ScriptableObject.putProperty(
-                speciesDescriptor,
-                "get",
-                new LambdaFunction(
-                        scope,
-                        "get [Symbol.species]",
-                        0,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                thisObj));
-        constructor.defineOwnProperty(cx, SymbolKey.SPECIES, speciesDescriptor, false);
+        // TODO And then to update also Array, Map, and whatever else is required (see spec)
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
         if (sealed) {
             obj.sealObject();
