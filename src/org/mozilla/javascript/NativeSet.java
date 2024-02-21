@@ -27,7 +27,6 @@ public class NativeSet extends IdScriptableObject {
         desc.put("get", desc, obj.get(GETSIZE, obj));
         obj.defineOwnProperty(cx, "size", desc);
 
-        // TODO And then to update also Array, Map, and whatever else is required (see spec)
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
         if (sealed) {

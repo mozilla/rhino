@@ -13,6 +13,7 @@ import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
@@ -134,6 +135,8 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
+
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, ctor);
     }
 
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
