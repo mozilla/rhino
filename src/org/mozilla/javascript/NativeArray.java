@@ -46,9 +46,10 @@ public class NativeArray extends IdScriptableObject implements List {
     private static final Object ARRAY_TAG = "Array";
     private static final Long NEGATIVE_ONE = Long.valueOf(-1);
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeArray obj = new NativeArray(0);
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        IdFunctionObject constructor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
     }
 
     static int getMaximumInitialCapacity() {
