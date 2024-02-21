@@ -96,7 +96,6 @@ public class Test262SuiteTest {
                             "Reflect.set",
                             "Reflect.setPrototypeOf",
                             "SharedArrayBuffer",
-                            "Symbol.species",
                             "async-functions",
                             "async-iteration",
                             "class",
