@@ -240,11 +240,8 @@ public class Main {
                 byte[] bytes = (byte[]) compiled[j + 1];
                 try {
                     File outfile = getOutputFile(targetTopDir, className);
-                    FileOutputStream os = new FileOutputStream(outfile);
-                    try {
+                    try (FileOutputStream os = new FileOutputStream(outfile)) {
                         os.write(bytes);
-                    } finally {
-                        os.close();
                     }
                 } catch (IOException ioe) {
                     addFormatedError(ioe.toString());

@@ -1034,14 +1034,12 @@ public class Global extends ImporterTopLevel {
                 is = new FileInputStream(f);
             }
 
-            Reader r;
-            if (charCoding == null) {
-                r = new InputStreamReader(is);
-            } else {
-                r = new InputStreamReader(is, charCoding);
+            try (Reader r =
+                    new InputStreamReader(
+                            is,
+                            charCoding == null ? Charset.defaultCharset().name() : charCoding)) {
+                return readReader(r, chunkLength);
             }
-            return readReader(r, chunkLength);
-
         } finally {
             if (is != null) is.close();
         }
