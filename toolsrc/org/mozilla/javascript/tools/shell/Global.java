@@ -353,9 +353,10 @@ public class Global extends ImporterTopLevel {
         String filename = Context.toString(args[0]);
         try (FileInputStream fis = new FileInputStream(filename)) {
             Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
-            ObjectInputStream in = new ScriptableInputStream(fis, scope);
-            Object deserialized = in.readObject();
-            return Context.toObject(deserialized, scope);
+            try (ObjectInputStream in = new ScriptableInputStream(fis, scope)) {
+                Object deserialized = in.readObject();
+                return Context.toObject(deserialized, scope);
+            }
         }
     }
 
