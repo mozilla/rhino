@@ -133,14 +133,17 @@ class XmlProcessor implements Serializable {
             throw ScriptRuntime.constructError("TypeError", e.getMessage(), e.getLineNumber() - 1);
         }
 
+        @Override
         public void error(SAXParseException e) {
             throwError(e);
         }
 
+        @Override
         public void fatalError(SAXParseException e) {
             throwError(e);
         }
 
+        @Override
         public void warning(SAXParseException e) {
             Context.reportWarning(e.getMessage());
         }

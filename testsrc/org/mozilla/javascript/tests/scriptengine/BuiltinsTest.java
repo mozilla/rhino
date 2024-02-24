@@ -37,22 +37,24 @@ public class BuiltinsTest {
 
     @Test
     public void printStdoutAndCheckItPrints() throws Exception {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        PrintStream original = System.out;
-        PrintStream modified = new PrintStream(bos, false);
-        System.setOut(modified);
-        // Now Get A SimpleContext
-        ScriptContext sc = new SimpleScriptContext();
-        try {
-            // this was a broken test
-            engine.eval("print('Hello, World!');", sc);
-            // this has been hard work https://github.com/mozilla/rhino/issues/1356
-            Assert.assertEquals("Hello, World!\n", bos.toString());
-        } finally {
-            // revert the sys out
-            System.setOut(original);
-            modified.close();
-            bos.close();
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            PrintStream original = System.out;
+            try (PrintStream modified = new PrintStream(bos, false)) {
+                System.setOut(modified);
+                try {
+                    // Now Get A SimpleContext
+                    ScriptContext sc = new SimpleScriptContext();
+
+                    // this was a broken test
+                    engine.eval("print('Hello, World!');", sc);
+
+                    // this has been hard work https://github.com/mozilla/rhino/issues/1356
+                    Assert.assertEquals("Hello, World!\n", bos.toString());
+                } finally {
+                    // revert the sys out
+                    System.setOut(original);
+                }
+            }
         }
     }
 

@@ -307,6 +307,7 @@ public class Main {
         // ContextAction
 
         /** Exit action. */
+        @Override
         public void run() {
             if (type != EXIT_ACTION) Kit.codeBug();
             System.exit(0);
@@ -315,6 +316,7 @@ public class Main {
         // ScopeProvider
 
         /** Returns the scope for script evaluations. */
+        @Override
         public Scriptable getScope() {
             if (type != SCOPE_PROVIDER) Kit.codeBug();
             if (scope == null) Kit.codeBug();

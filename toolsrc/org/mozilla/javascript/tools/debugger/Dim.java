@@ -805,6 +805,7 @@ public class Dim {
         // ContextAction
 
         /** Performs the action given by {@link #type}. */
+        @Override
         public Object run(Context cx) {
             switch (type) {
                 case IPROXY_COMPILE_SCRIPT:
@@ -863,6 +864,7 @@ public class Dim {
         // ContextFactory.Listener
 
         /** Called when a Context is created. */
+        @Override
         public void contextCreated(Context cx) {
             if (type != IPROXY_LISTEN) Kit.codeBug();
             ContextData contextData = new ContextData();
@@ -873,6 +875,7 @@ public class Dim {
         }
 
         /** Called when a Context is destroyed. */
+        @Override
         public void contextReleased(Context cx) {
             if (type != IPROXY_LISTEN) Kit.codeBug();
         }
@@ -880,6 +883,7 @@ public class Dim {
         // Debugger
 
         /** Returns a StackFrame for the given function or script. */
+        @Override
         public DebugFrame getFrame(Context cx, DebuggableScript fnOrScript) {
             if (type != IPROXY_DEBUG) Kit.codeBug();
 
@@ -892,6 +896,7 @@ public class Dim {
         }
 
         /** Called when compilation is finished. */
+        @Override
         public void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source) {
             if (type != IPROXY_DEBUG) Kit.codeBug();
 
@@ -984,6 +989,7 @@ public class Dim {
         }
 
         /** Called when the stack frame is entered. */
+        @Override
         public void onEnter(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             contextData.pushFrame(this);
             this.scope = scope;
@@ -994,6 +1000,7 @@ public class Dim {
         }
 
         /** Called when the current position has changed. */
+        @Override
         public void onLineChange(Context cx, int lineno) {
             this.lineNumber = lineno;
 
@@ -1013,11 +1020,13 @@ public class Dim {
         }
 
         /** Called when an exception has been thrown. */
+        @Override
         public void onExceptionThrown(Context cx, Throwable exception) {
             dim.handleExceptionThrown(cx, exception, this);
         }
 
         /** Called when the stack frame has been left. */
+        @Override
         public void onExit(Context cx, boolean byThrow, Object resultOrException) {
             if (dim.breakOnReturn && !byThrow) {
                 dim.handleBreakpointHit(this, cx);
@@ -1026,6 +1035,7 @@ public class Dim {
         }
 
         /** Called when a 'debugger' statement is executed. */
+        @Override
         public void onDebuggerStatement(Context cx) {
             dim.handleBreakpointHit(this, cx);
         }

@@ -144,6 +144,7 @@ public class JSConsole extends JFrame implements ActionListener {
         Main.main(args);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         String plaf_name = null;

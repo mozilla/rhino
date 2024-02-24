@@ -77,6 +77,7 @@ public class NativeJavaList extends NativeJavaObject {
         return super.has(index, start);
     }
 
+    @Override
     public void delete(int index) {
         if (isWithValidIndex(index)) {
             list.set(index, null);
