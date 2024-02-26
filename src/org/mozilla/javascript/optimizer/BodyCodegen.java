@@ -322,18 +322,34 @@ class BodyCodegen {
             int parmCount = scriptOrFn.getParamCount();
             if (parmCount > 0 && !inDirectCallFunction) {
                 // Set up args array
-                // check length of arguments, pad if need be
-                cfw.addALoad(argsLocal);
-                cfw.add(ByteCode.ARRAYLENGTH);
-                cfw.addPush(parmCount);
-                int label = cfw.acquireLabel();
-                cfw.add(ByteCode.IF_ICMPGE, label);
-                cfw.addALoad(argsLocal);
-                cfw.addPush(parmCount);
-                addScriptRuntimeInvoke(
-                        "padArguments", "([Ljava/lang/Object;I" + ")[Ljava/lang/Object;");
-                cfw.addAStore(argsLocal);
-                cfw.markLabel(label);
+                if (scriptOrFn.hasRestParameter()) {
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    cfw.addALoad(argsLocal);
+                    cfw.addPush(parmCount);
+                    addScriptRuntimeInvoke(
+                            "padAndRestArguments",
+                            "("
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "[Ljava/lang/Object;"
+                                    + "I"
+                                    + ")[Ljava/lang/Object;");
+                    cfw.addAStore(argsLocal);
+                } else {
+                    // check length of arguments, pad if need be
+                    cfw.addALoad(argsLocal);
+                    cfw.add(ByteCode.ARRAYLENGTH);
+                    cfw.addPush(parmCount);
+                    int label = cfw.acquireLabel();
+                    cfw.add(ByteCode.IF_ICMPGE, label);
+                    cfw.addALoad(argsLocal);
+                    cfw.addPush(parmCount);
+                    addScriptRuntimeInvoke(
+                            "padArguments", "([Ljava/lang/Object;I)[Ljava/lang/Object;");
+                    cfw.addAStore(argsLocal);
+                    cfw.markLabel(label);
+                }
             }
 
             int paramCount = fnCurrent.fnode.getParamCount();

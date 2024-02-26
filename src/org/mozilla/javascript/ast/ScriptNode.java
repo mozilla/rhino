@@ -251,6 +251,10 @@ public class ScriptNode extends Scope {
         return isConsts;
     }
 
+    public boolean hasRestParameter() {
+        return false;
+    }
+
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();
         if (symbol.getDeclType() == Token.LP) {

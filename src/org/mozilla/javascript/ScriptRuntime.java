@@ -876,6 +876,33 @@ public class ScriptRuntime {
         return result;
     }
 
+    /**
+     * Helper function for builtin objects that use the varargs form. ECMA function formal arguments
+     * are undefined if not supplied; this function pads the argument array out to the expected
+     * length, if necessary. Also the rest parameter array construction is done here.
+     */
+    public static Object[] padAndRestArguments(
+            Context cx, Scriptable scope, Object[] args, int argCount) {
+        Object[] result = new Object[argCount];
+        int paramCount = argCount - 1;
+        if (args.length < paramCount) {
+            System.arraycopy(args, 0, result, 0, args.length);
+            Arrays.fill(result, args.length, paramCount, Undefined.instance);
+        } else {
+            System.arraycopy(args, 0, result, 0, paramCount);
+        }
+
+        Object[] restValues;
+        if (args.length > paramCount) {
+            restValues = new Object[args.length - paramCount];
+            System.arraycopy(args, paramCount, restValues, 0, restValues.length);
+        } else {
+            restValues = ScriptRuntime.emptyArgs;
+        }
+        result[paramCount] = cx.newArray(scope, restValues);
+        return result;
+    }
+
     public static String escapeString(String s) {
         return escapeString(s, '"');
     }
