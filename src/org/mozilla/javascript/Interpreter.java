@@ -137,11 +137,21 @@ public final class Interpreter extends Icode implements Evaluator {
                     if (idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
                         scope =
                                 ScriptRuntime.createArrowFunctionActivation(
-                                        fnOrScript, scope, args, idata.isStrict);
+                                        fnOrScript,
+                                        cx,
+                                        scope,
+                                        args,
+                                        idata.isStrict,
+                                        idata.argsHasRest);
                     } else {
                         scope =
                                 ScriptRuntime.createFunctionActivation(
-                                        fnOrScript, scope, args, idata.isStrict);
+                                        fnOrScript,
+                                        cx,
+                                        scope,
+                                        args,
+                                        idata.isStrict,
+                                        idata.argsHasRest);
                     }
                 }
             } else {

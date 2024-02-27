@@ -115,14 +115,18 @@ class BodyCodegen {
 
         // generators are forced to have an activation record
         cfw.addALoad(funObjLocal);
+        cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.isInStrictMode());
+        cfw.addPush(scriptOrFn.hasRestParameter());
         addScriptRuntimeInvoke(
                 "createFunctionActivation",
                 "(Lorg/mozilla/javascript/NativeFunction;"
+                        + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "[Ljava/lang/Object;"
+                        + "Z"
                         + "Z"
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(variableObjectLocal);
@@ -415,16 +419,20 @@ class BodyCodegen {
         if (fnCurrent != null) {
             debugVariableName = "activation";
             cfw.addALoad(funObjLocal);
+            cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(argsLocal);
+            cfw.addPush(scriptOrFn.isInStrictMode());
+            cfw.addPush(scriptOrFn.hasRestParameter());
             String methodName =
                     isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
-            cfw.addPush(scriptOrFn.isInStrictMode());
             addScriptRuntimeInvoke(
                     methodName,
                     "(Lorg/mozilla/javascript/NativeFunction;"
+                            + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "[Ljava/lang/Object;"
+                            + "Z"
                             + "Z"
                             + ")Lorg/mozilla/javascript/Scriptable;");
             cfw.addAStore(variableObjectLocal);
