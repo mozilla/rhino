@@ -9,6 +9,7 @@ package org.mozilla.javascript.typedarrays;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
@@ -39,7 +40,8 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeFloat64Array a = new NativeFloat64Array();
-        a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        IdFunctionObject constructor = a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
     }
 
     @Override
