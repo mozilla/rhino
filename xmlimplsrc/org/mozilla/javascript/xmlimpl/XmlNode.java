@@ -312,6 +312,7 @@ class XmlNode implements Serializable {
     static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
         private static final long serialVersionUID = 4666895518900769588L;
 
+        @Override
         public void handle(short operation, String key, Object data, Node src, Node dest) {}
     }
 

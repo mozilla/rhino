@@ -39,10 +39,12 @@ public class JavaPolicySecurity extends SecurityProxy {
             this.domain = domain;
         }
 
+        @Override
         public Class<?> defineClass(String name, byte[] data) {
             return super.defineClass(name, data, 0, data.length, domain);
         }
 
+        @Override
         public void linkClass(Class<?> cl) {
             resolveClass(cl);
         }
@@ -85,10 +87,12 @@ public class JavaPolicySecurity extends SecurityProxy {
         @Override
         public Enumeration<Permission> elements() {
             return new Enumeration<Permission>() {
+                @Override
                 public boolean hasMoreElements() {
                     return false;
                 }
 
+                @Override
                 public Permission nextElement() {
                     return null;
                 }
@@ -123,6 +127,7 @@ public class JavaPolicySecurity extends SecurityProxy {
             final Context cx, final Scriptable scope, final String filename) {
         AccessController.doPrivileged(
                 new PrivilegedAction<Object>() {
+                    @Override
                     public Object run() {
                         URL url = getUrlObj(filename);
                         ProtectionDomain staticDomain = getUrlDomain(url);
@@ -172,6 +177,7 @@ public class JavaPolicySecurity extends SecurityProxy {
         final ProtectionDomain domain = (ProtectionDomain) securityDomain;
         return AccessController.doPrivileged(
                 new PrivilegedAction<Loader>() {
+                    @Override
                     public Loader run() {
                         return new Loader(parentLoader, domain);
                     }
@@ -220,6 +226,7 @@ public class JavaPolicySecurity extends SecurityProxy {
 
         PrivilegedAction<Object> action =
                 new PrivilegedAction<Object>() {
+                    @Override
                     public Object run() {
                         return callable.call(cx, scope, thisObj, args);
                     }

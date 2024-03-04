@@ -92,18 +92,21 @@ public class ToolErrorReporter implements ErrorReporter {
         return msg;
     }
 
+    @Override
     public void warning(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         if (!reportWarnings) return;
         reportErrorMessage(message, sourceName, line, lineSource, lineOffset, true);
     }
 
+    @Override
     public void error(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         hasReportedErrorFlag = true;
         reportErrorMessage(message, sourceName, line, lineSource, lineOffset, false);
     }
 
+    @Override
     public EvaluatorException runtimeError(
             String message, String sourceName, int line, String lineSource, int lineOffset) {
         return new EvaluatorException(message, sourceName, line, lineSource, lineOffset);

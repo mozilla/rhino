@@ -30,6 +30,7 @@ class ConsoleWrite implements Runnable {
         this.str = str;
     }
 
+    @Override
     public void run() {
         textArea.write(str);
     }
@@ -149,6 +150,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         console1.flush();
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         if (code == KeyEvent.VK_BACK_SPACE || code == KeyEvent.VK_LEFT) {
@@ -213,6 +215,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         }
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {
         int keyChar = e.getKeyChar();
         if (keyChar == 0x8 /* KeyEvent.VK_BACK_SPACE */) {
@@ -224,6 +227,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         }
     }
 
+    @Override
     public synchronized void keyReleased(KeyEvent e) {}
 
     public synchronized void write(String str) {
@@ -233,6 +237,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         select(outputMark, outputMark);
     }
 
+    @Override
     public synchronized void insertUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
@@ -241,6 +246,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         }
     }
 
+    @Override
     public synchronized void removeUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
@@ -260,6 +266,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         select(outputMark, outputMark);
     }
 
+    @Override
     public synchronized void changedUpdate(DocumentEvent e) {}
 
     public InputStream getIn() {

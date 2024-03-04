@@ -273,6 +273,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         map.clear();
     }
 
+    @Override
     public Iterator<Entry> iterator() {
         return new Iter(first);
     }

@@ -59,6 +59,7 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class AnnotatedClassState extends AbstractClassState {
 
+        @Override
         @Setup(Level.Trial)
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -122,6 +123,7 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class IdClassState extends AbstractClassState {
 
+        @Override
         @Setup(Level.Trial)
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -314,6 +316,7 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class DumbLambdaState extends AbstractClassState {
 
+        @Override
         @Setup(Level.Trial)
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
