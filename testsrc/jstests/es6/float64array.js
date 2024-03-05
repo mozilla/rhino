@@ -5,8 +5,16 @@
 load("testsrc/assert.js");
 
 (function TestSymbolSpecies() {
-	var symbolSpeciesValue = Float64Array[Symbol.species];
-	assertEquals(Float64Array, symbolSpeciesValue);
+  var symbolSpeciesValue = Float64Array[Symbol.species];
+  assertEquals(Float64Array, symbolSpeciesValue);
+})();
+
+(function TestSymbolToString() {
+  var a = new Float64Array(4);
+  assertEquals('Float64Array', a[Symbol.toStringTag]);
+  assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
+  assertEquals(false, Float64Array.hasOwnProperty(Symbol.toStringTag));
+  assertEquals(false, Float64Array.prototype.hasOwnProperty(Symbol.toStringTag));
 })();
 
 "success";
