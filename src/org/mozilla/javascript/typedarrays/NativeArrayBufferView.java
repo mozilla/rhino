@@ -140,10 +140,7 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
         return super.get(key, start);
     }
 
-    private static final int
-            Id_buffer = 1,
-            Id_byteOffset = 2,
-            Id_byteLength = 3;
+    private static final int Id_buffer = 1, Id_byteOffset = 2, Id_byteLength = 3;
 
     // to be visible by subclasses
     protected static final int MAX_INSTANCE_ID = Id_byteLength;
