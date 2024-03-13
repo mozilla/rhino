@@ -42,4 +42,9 @@ assertTrue(f.__proto__ === undefined);
 assertTrue({ __proto__ : [] } instanceof Array);
 assertFalse({ __proto__(){} } instanceof Function)
 
+// __proto__ on Symbol
+var x = Symbol();
+var y = { foo: "bar" }
+assertEquals({ foo: "bar" }, x.__proto__ = y);
+
 "success";

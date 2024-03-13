@@ -114,10 +114,15 @@ class SpecialRef extends Ref {
                             }
 
                             final String typeOfValue = ScriptRuntime.typeof(value);
+                            if (NativeSymbol.TYPE_NAME.equals(typeOfTarget)) {
+                                return value;
+                            }
+
                             if ((value != null && !"object".equals(typeOfValue))
                                     || !"object".equals(typeOfTarget)) {
                                 return Undefined.instance;
                             }
+
                             target.setPrototype(obj);
                         } else {
                             target.setPrototype(obj);
