@@ -2450,11 +2450,15 @@ public final class IRFactory {
             decompiler.addToken(Token.LP);
         }
         List<AstNode> params = fn.getParams();
-        for (int i = 0; i < params.size(); i++) {
-            decompile(params.get(i));
-            if (i < params.size() - 1) {
+        int last = params.size() - 1;
+        for (int i = 0; i <= last; i++) {
+            if (i > 0) {
                 decompiler.addToken(Token.COMMA);
             }
+            if (fn.hasRestParameter() && i == last) {
+                decompiler.addToken(Token.DOTDOTDOT);
+            }
+            decompile(params.get(i));
         }
         if (!noParen) {
             decompiler.addToken(Token.RP);

@@ -80,6 +80,7 @@ public class FunctionNode extends ScriptNode {
     private Form functionForm = Form.FUNCTION;
     private int lp = -1;
     private int rp = -1;
+    private boolean hasRestParameter;
 
     // codegen variables
     private int functionType;
@@ -282,6 +283,15 @@ public class FunctionNode extends ScriptNode {
     public void setIsES6Generator() {
         isES6Generator = true;
         isGenerator = true;
+    }
+
+    @Override
+    public boolean hasRestParameter() {
+        return hasRestParameter;
+    }
+
+    public void setHasRestParameter(boolean hasRestParameter) {
+        this.hasRestParameter = hasRestParameter;
     }
 
     public void addResumptionPoint(Node target) {

@@ -28,10 +28,12 @@ public final class NativeCall extends IdScriptableObject {
 
     NativeCall(
             NativeFunction function,
+            Context cx,
             Scriptable scope,
             Object[] args,
             boolean isArrow,
-            boolean isStrict) {
+            boolean isStrict,
+            boolean argsHasRest) {
         this.function = function;
 
         setParentScope(scope);
@@ -44,10 +46,30 @@ public final class NativeCall extends IdScriptableObject {
         int paramAndVarCount = function.getParamAndVarCount();
         int paramCount = function.getParamCount();
         if (paramAndVarCount != 0) {
-            for (int i = 0; i < paramCount; ++i) {
-                String name = function.getParamOrVarName(i);
-                Object val = i < args.length ? args[i] : Undefined.instance;
-                defineProperty(name, val, PERMANENT);
+            if (argsHasRest) {
+                Object[] vals;
+                if (args.length >= paramCount) {
+                    vals = new Object[args.length - paramCount];
+                    System.arraycopy(args, paramCount, vals, 0, args.length - paramCount);
+                } else {
+                    vals = ScriptRuntime.emptyArgs;
+                }
+
+                for (int i = 0; i < paramCount; ++i) {
+                    String name = function.getParamOrVarName(i);
+                    Object val = i < args.length ? args[i] : Undefined.instance;
+                    defineProperty(name, val, PERMANENT);
+                }
+                defineProperty(
+                        function.getParamOrVarName(paramCount),
+                        cx.newArray(scope, vals),
+                        PERMANENT);
+            } else {
+                for (int i = 0; i < paramCount; ++i) {
+                    String name = function.getParamOrVarName(i);
+                    Object val = i < args.length ? args[i] : Undefined.instance;
+                    defineProperty(name, val, PERMANENT);
+                }
             }
         }
 
