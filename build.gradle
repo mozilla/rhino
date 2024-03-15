@@ -201,6 +201,11 @@ task engineJar(type: Jar) {
                 "Implementation-Vendor": "Mozilla Foundation",
                 "Implementation-URL": "http://www.mozilla.org/rhino",
                 "Automatic-Module-Name": "org.mozilla.rhino.engine"
+                "Bundle-ManifestVersion": "2",
+                "Bundle-SymbolicName": "org.mozilla.rhino.engine",
+                "Bundle-Version": project.version.replaceAll("-.*", ""),
+                "Export-Package": "org.mozilla.javascript.engine",
+                "Import-Package": "javax.script,org.mozilla.javascript"
         )
     }
 }
