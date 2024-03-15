@@ -6,12 +6,45 @@
 
 package org.mozilla.javascript;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 
-/** @author Attila Szegedi */
-public class SecurityUtilities {
+/**
+ * SecurityUtilities will delegate method calls to {@link SecurityBridge}.
+ *
+ * <p>This class will check first for a class <code>org.mozilla.javascript.SecurityBridge_custom
+ * </code> and then it will use <code>org.mozilla.javascript.SecurityBridge_SecurityManager</code>
+ * or <code>org.mozilla.javascript.SecurityBridge_NoOp</code>, depending if <code>
+ * java.lang.SecurityManager</code> is present or not.
+ *
+ * @author Attila Szegedi
+ * @author Roland Praml, FOCONIS AG
+ */
+public abstract class SecurityUtilities {
+    static final SecurityBridge bridge = makeBridge();
+
+    private static SecurityBridge makeBridge() {
+
+        String[] classNames = {
+            "org.mozilla.javascript.SecurityBridge_custom",
+            // Check, if SecurityManager class exists
+            // TODO: Shoud we check JDK version here?
+            Kit.classOrNull("java.lang.SecurityManager") != null
+                    ? "org.mozilla.javascript.SecurityBridge_SecurityManager"
+                    : "org.mozilla.javascript.SecurityBridge_NoOp",
+        };
+        for (int i = 0; i != classNames.length; ++i) {
+            String className = classNames[i];
+            Class<?> cl = Kit.classOrNull(className);
+            if (cl != null) {
+                SecurityBridge bridge = (SecurityBridge) Kit.newInstanceOrNull(cl);
+                if (bridge != null) {
+                    return bridge;
+                }
+            }
+        }
+        throw new IllegalStateException("Failed to create SecurityBridge instance");
+    }
+
     /**
      * Retrieves a system property within a privileged block. Use it only when the property is used
      * from within Rhino code and is not passed out of it.
@@ -20,23 +53,11 @@ public class SecurityUtilities {
      * @return the value of the system property
      */
     public static String getSystemProperty(final String name) {
-        return AccessController.doPrivileged(
-                new PrivilegedAction<String>() {
-                    @Override
-                    public String run() {
-                        return System.getProperty(name);
-                    }
-                });
+        return bridge.getSystemProperty(name);
     }
 
     public static ProtectionDomain getProtectionDomain(final Class<?> clazz) {
-        return AccessController.doPrivileged(
-                new PrivilegedAction<ProtectionDomain>() {
-                    @Override
-                    public ProtectionDomain run() {
-                        return clazz.getProtectionDomain();
-                    }
-                });
+        return bridge.getProtectionDomain(clazz);
     }
 
     /**
@@ -47,19 +68,28 @@ public class SecurityUtilities {
      * @return The protection of the top-most script in the current stack, or null
      */
     public static ProtectionDomain getScriptProtectionDomain() {
-        final SecurityManager securityManager = System.getSecurityManager();
-        if (securityManager instanceof RhinoSecurityManager) {
-            return AccessController.doPrivileged(
-                    new PrivilegedAction<ProtectionDomain>() {
-                        @Override
-                        public ProtectionDomain run() {
-                            Class<?> c =
-                                    ((RhinoSecurityManager) securityManager)
-                                            .getCurrentScriptClass();
-                            return c == null ? null : c.getProtectionDomain();
-                        }
-                    });
-        }
-        return null;
+        return bridge.getScriptProtectionDomain();
+    }
+
+    /**
+     * Returns an object that reflects the current security context. This can be used as cache key,
+     * in JavaMembers method scan. so that each context has exactly that methods in cache that are
+     * accessible.
+     *
+     * @return a securityObject (e.g. AccessControlContext) or null, if no security restriction is
+     *     present or security manager is active.
+     */
+    public static Object getSecurityContext() {
+        return bridge.getSecurityContext();
+    }
+
+    /**
+     * Static helper method not to break existing API.
+     *
+     * @deprecated See {@link RhinoSecurityManager}
+     */
+    @Deprecated
+    public static Class<?> getCurrentScriptClass(RhinoSecurityManager sm) {
+        return sm.getCurrentScriptClass();
     }
 }

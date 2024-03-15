@@ -10,7 +10,11 @@ package org.mozilla.javascript;
  * domain of the script that triggered the current action. It is required for JavaAdapters to have
  * the same <code>ProtectionDomain</code> as the script code that created them. Embeddings that
  * implement their own SecurityManager can use this as base class.
+ *
+ * @deprecated This class is only useful in conjunction with {@link SecurityManager}, which is
+ *     deprecated since JDK17 and subject to removal in a future release
  */
+@Deprecated
 public class RhinoSecurityManager extends SecurityManager {
 
     /**

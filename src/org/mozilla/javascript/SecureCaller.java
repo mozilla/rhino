@@ -19,7 +19,12 @@ import java.security.SecureClassLoader;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/** @author Attila Szegedi */
+/**
+ * @author Attila Szegedi
+ * @deprecated This class depends on {@link AccessController}, which is deprecated since JDK17 and
+ *     subject to removal in a future release
+ */
+@Deprecated
 public abstract class SecureCaller {
     private static final byte[] secureCallerImplBytecode = loadBytecode();
 
