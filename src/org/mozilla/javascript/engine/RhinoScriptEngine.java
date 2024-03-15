@@ -23,6 +23,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -201,6 +202,8 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
                 for (int i = 0; i < args.length; i++) {
                     args[i] = Context.javaToJS(args[i], scope);
                 }
+            } else {
+                args = ScriptRuntime.emptyArgs;
             }
 
             Object ret = func.call(cx, scope, localThis, args);
