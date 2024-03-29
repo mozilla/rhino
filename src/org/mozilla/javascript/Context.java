@@ -493,7 +493,12 @@ public class Context implements Closeable {
 
     @Override
     public void close() {
-        exit();
+        if (enterCount < 1) Kit.codeBug();
+        if (--enterCount == 0) {
+            Object helper = VMBridge.instance.getThreadContextHelper();
+            VMBridge.instance.setContext(helper, null);
+            factory.onContextReleased(this);
+        }
     }
 
     /**
@@ -539,11 +544,8 @@ public class Context implements Closeable {
 
     /** The method implements {@link ContextFactory#call(ContextAction)} logic. */
     static <T> T call(ContextFactory factory, ContextAction<T> action) {
-        Context cx = enter(null, factory);
-        try {
+        try (Context cx = enter(null, factory)) {
             return action.run(cx);
-        } finally {
-            exit();
         }
     }
 
