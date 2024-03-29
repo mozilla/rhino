@@ -36,17 +36,17 @@ public class Bug448816Test {
         reference.put("c", new HashMap<Object, Object>());
         reference.put(Integer.valueOf(1), Integer.valueOf(42));
         // get a js object as map
-        Context context = Context.enter();
-        ScriptableObject scope = context.initStandardObjects();
-        map =
-                (Map<Object, Object>)
-                        context.evaluateString(
-                                scope,
-                                "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
-                                "testsrc",
-                                1,
-                                null);
-        Context.exit();
+        try (Context context = Context.enter()) {
+            ScriptableObject scope = context.initStandardObjects();
+            map =
+                    (Map<Object, Object>)
+                            context.evaluateString(
+                                    scope,
+                                    "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
+                                    "testsrc",
+                                    1,
+                                    null);
+        }
     }
 
     @Test

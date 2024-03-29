@@ -88,8 +88,7 @@ public class DynamicScopeTest {
     public void standardMethodObjectCreate() {
         ContextFactory contextFactory = new DynamicScopeContextFactory();
 
-        final Context cx = contextFactory.enterContext();
-        try {
+        try (Context cx = contextFactory.enterContext()) {
 
             // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property
             // of a sealed object: iterator.
@@ -122,9 +121,6 @@ public class DynamicScopeTest {
             assertSame(subScope.getPrototype(), someScope);
             assertSame(someObj.getParentScope(), someScope);
             assertSame(subObj.getParentScope(), subScope);
-
-        } finally {
-            Context.exit();
         }
     }
 }
