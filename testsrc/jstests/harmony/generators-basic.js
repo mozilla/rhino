@@ -162,4 +162,8 @@ r = g.next();
 assertEquals(undefined, r.value);
 assertTrue(r.done);
 
+// toString returns the correct value
+
+assertEquals("\nfunction* gen() {\n    for (var i = 0; i < 3; i++) {\n        yield i;\n    }\n}\n", gen.toString());
+
 "success";

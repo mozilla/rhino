@@ -615,7 +615,7 @@ public final class IRFactory {
 
     private Node transformFunction(FunctionNode fn) {
         int functionType = fn.getFunctionType();
-        int start = decompiler.markFunctionStart(functionType);
+        int start = decompiler.markFunctionStart(functionType, fn.isES6Generator());
         Node mexpr = decompileFunctionHeader(fn);
         int index = parser.currentScriptOrFn.addFunction(fn);
 
