@@ -585,9 +585,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
-            ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             boolean booleanTrapResult =
-                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name, desc}));
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name, value}));
             if (!booleanTrapResult) {
                 return; // false
             }
@@ -643,12 +642,11 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
-            ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(
                             callTrap(
                                     trap,
-                                    new Object[] {target, ScriptRuntime.toString(index), desc}));
+                                    new Object[] {target, ScriptRuntime.toString(index), value}));
             if (!booleanTrapResult) {
                 return; // false
             }
@@ -704,9 +702,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         Callable trap = getTrap(TRAP_SET);
         if (trap != null) {
-            ScriptableObject desc = ScriptableObject.buildDataDescriptor(target, value, EMPTY);
             boolean booleanTrapResult =
-                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key, desc}));
+                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key, value}));
             if (!booleanTrapResult) {
                 return; // false
             }

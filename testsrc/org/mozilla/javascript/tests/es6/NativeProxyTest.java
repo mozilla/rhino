@@ -702,6 +702,23 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void setTrap() {
+        String js =
+                "var res = '';\n"
+                        + "var proxy = new Proxy({}, {\n"
+                        + "  set(obj, prop, value) {\n"
+                        + "    res += value + ' ' + (value instanceof Array);\n"
+                        + "    obj[prop] = value;\n"
+                        + "    return true;\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "proxy.foo = [1, 2, 3];\n"
+                        + "res";
+
+        testString("1,2,3 true", js);
+    }
+
+    @Test
     public void getPropertyByIntWithoutHandler() {
         String js = "var a = ['zero', 'one'];" + "var proxy1 = new Proxy(a, {});\n" + "proxy1[1];";
         testString("one", js);
