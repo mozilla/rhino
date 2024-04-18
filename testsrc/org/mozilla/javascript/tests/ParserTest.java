@@ -1201,6 +1201,24 @@ public class ParserTest {
     }
 
     @Test
+    public void testParseUnicodeMultibyteCharacter() {
+        AstRoot root = parse("\uD842\uDFB7");
+        AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
+        assertEquals("𠮷", first.getString());
+    }
+
+    @Test
+    public void testParseUnicodeIdentifierPartWhichIsNotJavaIdentifierPart() {
+        // On the JDK 11 I'm using, Character.isUnicodeIdentifierPart(U+9FEB) returns true
+        // but Character.isJavaIdentifierPart(U+9FEB) returns false. On a JDK 17 results
+        // seem to vary, but I think it's enough to verify that TokenStream uses
+        // the unicode methods and not the java methods.
+        AstRoot root = parse("a\u9FEB");
+        AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
+        assertEquals("a鿫", first.getString());
+    }
+
+    @Test
     public void parseUnicodeReservedKeywords1() {
         AstRoot root = parse("\\u0069\\u0066");
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
