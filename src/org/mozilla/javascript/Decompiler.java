@@ -74,6 +74,8 @@ public class Decompiler {
         return savedOffset;
     }
 
+    /** @deprecated use {@link #markFunctionStart(int, boolean)} instead */
+    @Deprecated
     int markFunctionStart(int functionType) {
         return markFunctionStart(functionType, false);
     }

@@ -687,7 +687,7 @@ public final class IRFactory {
         fn.setRequiresActivation();
 
         int functionType = fn.getFunctionType();
-        int start = decompiler.markFunctionStart(functionType);
+        int start = decompiler.markFunctionStart(functionType, false);
         Node mexpr = decompileFunctionHeader(fn);
         int index = parser.currentScriptOrFn.addFunction(fn);
 
