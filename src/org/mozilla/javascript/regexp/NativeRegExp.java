@@ -1857,7 +1857,8 @@ public class NativeRegExp extends IdScriptableObject {
         return -1;
     }
 
-    private static boolean executeREBytecode(REGlobalData gData, String input, int end) {
+    private static boolean executeREBytecode(
+            Context cx, REGlobalData gData, String input, int end) {
         int pc = 0;
         byte[] program = gData.regexp.program;
         int continuationOp = REOP_END;
@@ -1887,6 +1888,7 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         for (; ; ) {
+            ScriptRuntime.addInstructionCount(cx, 5);
 
             if (reopIsSimple(op)) {
                 int match = simpleMatch(gData, input, op, program, pc, end, true);
@@ -2316,6 +2318,7 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private static boolean matchRegExp(
+            Context cx,
             REGlobalData gData,
             RECompiled re,
             String input,
@@ -2369,7 +2372,7 @@ public class NativeRegExp extends IdScriptableObject {
             for (int j = 0; j < re.parenCount; j++) {
                 gData.parens[j] = -1L;
             }
-            boolean result = executeREBytecode(gData, input, end);
+            boolean result = executeREBytecode(cx, gData, input, end);
 
             gData.backTrackStackTop = null;
             gData.stateStackTop = null;
@@ -2403,7 +2406,7 @@ public class NativeRegExp extends IdScriptableObject {
         //
         // Call the recursive matcher to do the real work.
         //
-        boolean matches = matchRegExp(gData, re, str, start, end, res.multiline);
+        boolean matches = matchRegExp(cx, gData, re, str, start, end, res.multiline);
         if (!matches) {
             if (matchType != PREFIX) return null;
             return Undefined.instance;

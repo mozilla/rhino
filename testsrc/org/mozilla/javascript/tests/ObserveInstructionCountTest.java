@@ -118,4 +118,11 @@ public class ObserveInstructionCountTest {
         String source = "for(;;);";
         baseCase(source);
     }
+
+    @Test
+    public void longRunningRegExp() {
+        String source =
+                "/(.*){1,32000}[bc]/.test(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\");";
+        baseCase(source);
+    }
 }
