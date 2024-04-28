@@ -1152,6 +1152,10 @@ class TokenStream {
                     return Token.COLON;
                 case '.':
                     if (matchChar('.')) {
+                        if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_1_8
+                                && matchChar('.')) {
+                            return Token.DOTDOTDOT;
+                        }
                         return Token.DOTDOT;
                     } else if (matchChar('(')) {
                         return Token.DOTQUERY;

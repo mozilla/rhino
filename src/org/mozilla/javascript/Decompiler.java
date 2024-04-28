@@ -792,6 +792,10 @@ public class Decompiler {
                     i = printSourceString(source, i + 1, false, result);
                     continue;
 
+                case Token.DOTDOTDOT:
+                    result.append("...");
+                    break;
+
                 default:
                     // If we don't know how to decompile it, raise an exception.
                     throw new RuntimeException("Token: " + Token.name(source.charAt(i)));

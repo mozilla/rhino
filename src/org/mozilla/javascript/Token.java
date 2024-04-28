@@ -225,7 +225,8 @@ public class Token {
             TEMPLATE_CHARS = 171, // template literal - literal section
             TEMPLATE_LITERAL_SUBST = 172, // template literal - substitution
             TAGGED_TEMPLATE_LITERAL = 173, // template literal - tagged/handler
-            LAST_TOKEN = 173;
+            DOTDOTDOT = 174, // spread/rest ...
+            LAST_TOKEN = 174;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
