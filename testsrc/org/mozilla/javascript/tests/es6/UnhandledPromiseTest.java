@@ -65,6 +65,46 @@ public class UnhandledPromiseTest {
     }
 
     @Test
+    public void rejectionHandledAfterThen() {
+        scope.put("caught", scope, Boolean.FALSE);
+        exec(
+                "new Promise((resolve, reject) => { reject(); })."
+                        + "then(() => {})."
+                        + "catch((e) => { caught = true; });\n");
+        assertTrue(cx.getUnhandledPromiseTracker().enumerate().isEmpty());
+        AtomicBoolean handled = new AtomicBoolean();
+        // We should actually never see anything in the tracker here
+        cx.getUnhandledPromiseTracker()
+                .process(
+                        (Object o) -> {
+                            assertFalse(handled.get());
+                            handled.set(true);
+                        });
+        assertFalse(handled.get());
+        assertTrue(Context.toBoolean(scope.get("caught", scope)));
+    }
+
+    @Test
+    public void thenRejectsButCatchHandles() {
+        scope.put("caught", scope, Boolean.FALSE);
+        exec(
+                "new Promise((resolve, reject) => { resolve(); })."
+                        + "then((e) => { return Promise.reject(); })."
+                        + "catch((e) => { caught = true; });\n");
+        assertTrue(cx.getUnhandledPromiseTracker().enumerate().isEmpty());
+        AtomicBoolean handled = new AtomicBoolean();
+        // We should actually never see anything in the tracker here
+        cx.getUnhandledPromiseTracker()
+                .process(
+                        (Object o) -> {
+                            assertFalse(handled.get());
+                            handled.set(true);
+                        });
+        assertFalse(handled.get());
+        assertTrue(Context.toBoolean(scope.get("caught", scope)));
+    }
+
+    @Test
     public void rejectionObject() {
         exec("new Promise((resolve, reject) => { reject('rejected'); });");
         assertEquals(1, cx.getUnhandledPromiseTracker().enumerate().size());
@@ -111,6 +151,22 @@ public class UnhandledPromiseTest {
                             assertFalse(handled.get());
                             handled.set(true);
                             assertEquals("threw in then", o);
+                        });
+        assertTrue(handled.get());
+    }
+
+    @Test
+    public void thenReturnsRejectedPromise() {
+        exec(
+                "new Promise((resolve, reject) => { resolve() }).then(() => { return Promise.reject('rejected'); });");
+        assertEquals(1, cx.getUnhandledPromiseTracker().enumerate().size());
+        AtomicBoolean handled = new AtomicBoolean();
+        cx.getUnhandledPromiseTracker()
+                .process(
+                        (Object o) -> {
+                            assertFalse(handled.get());
+                            handled.set(true);
+                            assertEquals("rejected", o);
                         });
         assertTrue(handled.get());
     }
