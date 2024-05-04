@@ -10,7 +10,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Releases
 
-The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
+The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_15_Release">Rhino 1.7.15</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
 
 <details><summary>Releases</summary>
 <table>
