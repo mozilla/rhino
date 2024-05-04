@@ -193,6 +193,7 @@ public class Main {
         p(ToolErrorReporter.getMessage("msg.no.file"));
         return null;
     }
+
     /** Print a usage message. */
     private static void badUsage(String s) {
         System.err.println(

@@ -132,6 +132,7 @@ class Namespace extends IdScriptableObject {
         }
         return instanceIdInfo(attr, super.getMaxInstanceId() + id);
     }
+
     // #/string_id_map#
 
     @Override
@@ -192,6 +193,7 @@ class Namespace extends IdScriptableObject {
         // #/generated#
         return id;
     }
+
     // #/string_id_map#
 
     @Override

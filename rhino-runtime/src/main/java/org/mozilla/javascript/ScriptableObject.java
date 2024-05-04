@@ -100,6 +100,7 @@ public abstract class ScriptableObject
     public static final int UNINITIALIZED_CONST = 0x08;
 
     public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+
     /** The prototype of this object. */
     private Scriptable prototypeObject;
 

@@ -76,6 +76,7 @@ public class ScriptRuntime {
             this.noSuchMethodMethod = noSuchMethodMethod;
             this.methodName = methodName;
         }
+
         /**
          * Perform the call.
          *
@@ -94,6 +95,7 @@ public class ScriptRuntime {
             return noSuchMethodMethod.call(cx, scope, thisObj, nestedArgs);
         }
     }
+
     /*
      * There's such a huge space (and some time) waste for the Foo.class
      * syntax: the compiler sticks in a test of a static field in the
@@ -2536,6 +2538,7 @@ public class ScriptRuntime {
         }
         return true;
     }
+
     /**
      * Prepare for calling name(...): return function corresponding to name and make current top
      * scope available as ScriptRuntime.lastStoredScriptable() for consumption as thisObj. The

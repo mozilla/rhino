@@ -17,8 +17,17 @@ test {
     // more resilient at the expense of performance.
     forkEvery = 1
     maxParallelForks = 64
+
+    // Properties required for the legacy Mozilla tests. Tests will fail unless
+    // the time zone and other properties are set as shown below
+    systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
+    systemProperty 'user.language', 'en'
+    systemProperty 'user.country', 'US'
+    systemProperty 'user.timezone', 'America/Los_Angeles'
+    systemProperty 'file.encoding', 'UTF-8'
+
     // Required for JWT GUI tests
     jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
     // Required for some reflection tests

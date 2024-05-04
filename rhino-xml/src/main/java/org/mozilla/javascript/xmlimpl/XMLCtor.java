@@ -19,6 +19,7 @@ class XMLCtor extends IdFunctionObject {
     private static final Object XMLCTOR_TAG = "XMLCtor";
 
     private XmlProcessor options;
+
     //    private XMLLibImpl lib;
 
     XMLCtor(XML xml, Object tag, int id, int arity) {
@@ -225,6 +226,7 @@ class XMLCtor extends IdFunctionObject {
         // #/generated#
         return id;
     }
+
     // #/string_id_map#
 
     @Override

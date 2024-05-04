@@ -46,26 +46,53 @@ JavaDoc for all the APIs:
 
 [https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
 
+## Code Structure
+
+Rhino 1.7.15 and before were primarily used in a single JAR called "rhino.jar".
+
+Newer releases now organize the code using Java modules. There are four primary modules:
+
+* **rhino-runtime**: The primary codebase necessary and sufficient to run JavaScript code. Required by everything that uses Rhino.
+* **rhino-tools**: Contains the shell, debugger, and the "Global" object, which many tests and other Rhino-based tools sometimes use. Note that adding Global gives Rhino the ability to print to stdout, open files, and do other things that may be considered dangerous in a shared environment.
+* **rhino-xml**: Adds the implementation of the E4X XML standard. Only required if you are using that.
+* **rhino-engine**: Adds the Rhino implementation of the standard Java *ScriptEngine* interface. Some projects use this to be able to switch between script execution engines, but for anything even moderately complex it is almost always easier and always more flexible to use Rhino's API directly.
+
+The release contains the following other modules, which are used while building and 
+testing but which are not published to Maven Central:
+
+* **rhino**: This creates an "all-in-one" JAR that includes *rhino-runtime*, *rhino-tools*, and *rhino-xml*. This is what's used if you want to run Rhino using "java jar".
+* **tests**: The tests that depend on all of Rhino and also the external tests, including the Mozilla legacy test scripts and the test262 tests.
+* **benchmarks**: Runs benchmarks using JMH.
+* **examples**: Surprisingly, this contains example code.
+
 ## Building
+
+### Requirements
+
+Rhino requires Java 11 to build. It will (currently) build with Java versions up to at least 
+Java 21. However, not all tools work with Java 11, such as "spotless", so Java 11 is required for
+regular developers.
 
 ### How to Build
 
-Rhino builds with `Gradle`. Here are some useful tasks:
-```
-./gradlew jar
-```
-Build and create `Rhino` jar in the `buildGradle/libs` directory.
-```
-git submodule init
-git submodule update
-./gradlew test
-```
-Build and run all the tests, including the official [ECMAScript Test Suite](https://github.com/tc39/test262).
-See [Running tests](testsrc/README.md) for more detailed info about running tests.
-```
-./gradlew testBenchmark
-```
-Build and run benchmark tests.
+For normal development, you can build the code, run the static checks, and run all the tests like this:
+
+    git submodule init
+    git submodule update
+    ./gradlew check
+
+To just run the Rhino shell, you can do this from the top-level directory:
+
+    ./gradlew run -q --console=plain
+
+Alternately, you can build an all-in-one JAR and run that:
+
+    ./gradlew shadowJar
+    java -jar rhino/build/libs/rhino-1.7.16-SNAPSHOT.jar
+
+You can also run the benchmarks:
+
+    ./gradlew jmh
 
 ## Releasing and publishing new version
 
@@ -86,29 +113,18 @@ mavenReleaseRepo=
 5. Increase version and add `-SNAPSHOT` to it in `gradle.properties` in project root folder.
 6. Push `gradle.properties` to `GitHub`
 
-## Running
-
-Rhino can run as a stand-alone interpreter from the command line:
-```
-java -jar buildGradle/libs/rhino-1.7.12.jar -debug -version 200
-Rhino 1.7.9 2018 03 15
-js> print('Hello, World!');
-Hello, World!
-js>
-```
-There is also a "rhino" package for many Linux distributions as well as Homebrew for the Mac.
-
-You can also embed it, as most people do. See below for more docs.
-
 ### Java 16 and later
 
 If you are using a modular JDK that disallows the reflective access to
-non-public fields (16 and later), you may need to configure the JVM with the
+non-public fields (16 and later), you *may* need to configure the JVM with the
 [`--add-opens`](https://docs.oracle.com/en/java/javase/17/migrate/migrating-jdk-8-later-jdk-releases.html#GUID-12F945EB-71D6-46AF-8C3D-D354FD0B1781)
 option to authorize the packages that your scripts shall use, for example:
 ```
 --add-opens java.desktop/javax.swing.table=ALL-UNNAMED
 ```
+
+This is not necessary just to build Rhino -- it may be necessary when embedding it
+depending on what your project does.
 
 ## Issues
 
@@ -143,22 +159,12 @@ hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
 
-> **Warning:** If you build with Java 16 or later, you need to apply a
-> workaround for a "spotless" issue. Otherwise, the task will be disabled
-> and your PR may fail.
-> 
-> The following must be added to your `gradle.properties`.
-> ```
-> org.gradle.jvmargs=--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
->  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
->  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
->  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
->  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
-> ```
-> For more details, see https://github.com/diffplug/spotless/issues/834#issuecomment-819118761
+Currently, you must be building on Java 11 for Spotless to run. We recommend that you
+have that ready. (We have not been able to figure out a version of Spotless and the 
+Google formatting plugin that it uses that works on many Java versions.)
 
 ## More Help
 
-The Google group is the best place to go with questions:
+GitHub is the best place to go with questions. For example, we use "GitHub discussions":
 
-[https://groups.google.com/forum/#!forum/mozilla-rhino](https://groups.google.com/forum/#!forum/mozilla-rhino)
+[https://github.com/mozilla/rhino/discussions](https://github.com/mozilla/rhino/discussions)

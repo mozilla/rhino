@@ -15,20 +15,29 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.tools.shell.Global;
 
 public class JavaIterableTest {
 
-    protected final Global global = new Global();
+    private Context cx;
+    private Scriptable global;
 
-    public JavaIterableTest() {
-        global.init(ContextFactory.getGlobal());
+    @Before
+    public void init() {
+        cx = Context.enter();
+        global = cx.initStandardObjects();
+    }
+
+    @After
+    public void cleanup() {
+        Context.exit();
     }
 
     @Test

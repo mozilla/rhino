@@ -239,6 +239,7 @@ abstract class XMLObjectImpl extends XMLObject {
         Context cx = Context.getCurrentContext();
         return hasXMLProperty(lib.toXMLNameFromString(cx, name));
     }
+
     /** Implementation of ECMAScript [[Get]] */
     @Override
     public final Object get(Context cx, Object id) {
@@ -261,6 +262,7 @@ abstract class XMLObjectImpl extends XMLObject {
         Context cx = Context.getCurrentContext();
         return getXMLProperty(lib.toXMLNameFromString(cx, name));
     }
+
     /** Implementation of ECMAScript [[Put]] */
     @Override
     public final void put(Context cx, Object id, Object value) {
@@ -280,6 +282,7 @@ abstract class XMLObjectImpl extends XMLObject {
         Context cx = Context.getCurrentContext();
         putXMLProperty(lib.toXMLNameFromString(cx, name), value);
     }
+
     /** Implementation of ECMAScript [[Delete]]. */
     @Override
     public final boolean delete(Context cx, Object id) {
@@ -650,6 +653,7 @@ abstract class XMLObjectImpl extends XMLObject {
         // #/generated#
         return id;
     }
+
     // #/string_id_map#
 
     @Override

@@ -2278,6 +2278,11 @@ public class Context implements Closeable {
         this.generateObserverCount = generateObserverCount;
     }
 
+    /** Determine if observer counts should be generated. */
+    public boolean isGenerateObserverCount() {
+        return this.generateObserverCount;
+    }
+
     /**
      * Allow application to monitor counter of executed script instructions in Context subclasses.
      * Run-time calls this when instruction counting is enabled and the counter reaches limit set by
@@ -2711,7 +2716,7 @@ public class Context implements Closeable {
     Scriptable scratchScriptable;
 
     // Generate an observer count on compiled code
-    public boolean generateObserverCount = false;
+    boolean generateObserverCount = false;
 
     boolean isTopLevelStrict;
 }

@@ -162,6 +162,7 @@ final class QName extends IdScriptableObject {
         }
         return instanceIdInfo(attr, super.getMaxInstanceId() + id);
     }
+
     // #/string_id_map#
 
     @Override
@@ -221,6 +222,7 @@ final class QName extends IdScriptableObject {
         // #/generated#
         return id;
     }
+
     // #/string_id_map#
 
     @Override

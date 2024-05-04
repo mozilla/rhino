@@ -39,6 +39,10 @@
         <property name="basedir" value="${basedir}"/>
     -->
 
+    <module name="BeforeExecutionExclusionFileFilter">
+      <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
     <!-- <property name="fileExtensions" value="java, properties, xml"/> -->
 
     <!-- Checks that a package-info.java file exists for each package.     -->
@@ -106,7 +110,9 @@
 
         <!-- Checks for imports                              -->
         <!-- See http://checkstyle.sf.net/config_import.html -->
-        <module name="AvoidStarImport"/>
+        <module name="AvoidStarImport">
+          <property name="excludes" value="org.junit,org.junit.Assert"/>
+        </module>
         <module name="IllegalImport"/>
         <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
