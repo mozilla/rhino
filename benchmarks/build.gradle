@@ -1,0 +1,21 @@
+plugins {
+    id 'rhino.java-conventions'
+    id "me.champeau.jmh" version "0.7.2"
+}
+
+dependencies {
+    implementation project(':rhino-runtime')
+    implementation project(':rhino-tools')
+}
+
+jmh {
+    // use this to include only some
+    //includes = ['V8']
+    benchmarkMode = ['avgt']
+    fork = 1
+    timeUnit = 'us'
+    iterations = 5
+    timeOnIteration = '5s'
+    warmupIterations = 5
+    warmup = '5s'
+}

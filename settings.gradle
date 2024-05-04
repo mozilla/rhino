@@ -1,2 +1,2 @@
 rootProject.name = 'rhino'
-include 'rhino-engine', 'rhino-runtime', 'rhino-tools', 'rhino-xml', 'examples', 'rhino', 'tests'
+include 'rhino-engine', 'rhino-runtime', 'rhino-tools', 'rhino-xml', 'examples', 'rhino', 'tests', 'benchmarks'
