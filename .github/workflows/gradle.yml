@@ -15,7 +15,7 @@ jobs:
       # Some tests require more CPU, and all can use multiple CPUs
       max-parallel: 1
       matrix:
-        java: [ '11', '17' ]
+        java: [ '11', '17', '21' ]
     name: Rhino Java ${{ matrix.java }}
     steps:
     - name: Checkout

@@ -11,7 +11,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.tools.shell.Global;
 
 /** This is a set of tests for parsing and using BigInts. */
 public class BigIntTest {
@@ -24,7 +23,7 @@ public class BigIntTest {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.getWrapFactory().setJavaPrimitiveWrap(false);
-        global = new Global(cx);
+        global = cx.initStandardObjects();
     }
 
     @After

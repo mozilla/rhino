@@ -26,8 +26,10 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
 
     /** Many view objects can share the same backing array */
     protected final NativeArrayBuffer arrayBuffer;
+
     /** The offset, in bytes, from the start of the backing array */
     protected final int offset;
+
     /** The length, in bytes, of the portion of the backing array that we use */
     protected final int byteLength;
 

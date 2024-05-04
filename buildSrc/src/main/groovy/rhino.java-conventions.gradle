@@ -9,18 +9,14 @@ repositories {
 
 dependencies {
     testImplementation "junit:junit:4.13.2"
-    testImplementation "org.yaml:snakeyaml:1.28"
+    testImplementation "org.yaml:snakeyaml:1.33"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
-
 compileJava {
-    options.compilerArgs = ['-Xlint:deprecation,unchecked']
+    options.compilerArgs = [
+        '-Xlint:deprecation,unchecked'
+    ]
 }
 
 test {
@@ -28,8 +24,14 @@ test {
 }
 
 spotless {
-    java {
-        // Newer versions of GoogleJavaFormat seem to require JDK 15+
-        googleJavaFormat('1.10.0').aosp()
+    // There is no version of googleJavaFormat that works for Java 11 and 17,
+    // and different versions format differently. For now, only run spotless on Java 11.
+    // This will have to be changed when Java 11 support is removed.
+    if (JavaVersion.current() == JavaVersion.VERSION_11) {
+        java {
+            googleJavaFormat('1.10.0').aosp()
+        }
+    } else {
+        System.out.println("Not running Spotless: Java language version is " + JavaVersion.current())
     }
 }

@@ -64,7 +64,7 @@ public class InvocableTest {
 
     @Test
     public void invokeMethodTest() throws Exception {
-        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+        try (FileReader reader = new FileReader("../tests/testsrc/assert.js")) {
             engine.eval(reader);
             engine.eval(
                     "function FooObj() { this.x = 0; }\n"
@@ -85,7 +85,7 @@ public class InvocableTest {
 
     @Test
     public void interfaceFunctionTest() throws Exception {
-        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+        try (FileReader reader = new FileReader("../tests/testsrc/assert.js")) {
             engine.eval(reader);
 
             engine.eval(
@@ -103,7 +103,7 @@ public class InvocableTest {
 
     @Test
     public void interfaceMethodTest() throws Exception {
-        try (FileReader reader = new FileReader("testsrc/assert.js")) {
+        try (FileReader reader = new FileReader("../tests/testsrc/assert.js")) {
             engine.eval(reader);
 
             Object foo =

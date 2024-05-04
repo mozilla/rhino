@@ -5,3 +5,31 @@ plugins {
 dependencies {
     implementation project(':rhino-runtime')
 }
+
+publishing {
+    publications {
+        rhinoengine(MavenPublication) {
+            from components.java
+            artifacts = [jar, sourceJar, javadocJar]
+            pom {
+                description = "Rhino ScriptEngine implementation"
+                url = "https://mozilla.github.io/rhino/"
+                licenses {
+                    license {
+                        name = "Mozilla Public License, Version 2.0"
+                        url = "http://www.mozilla.org/MPL/2.0/index.txt"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git@github.com:mozilla/rhino.git"
+                    developerConnection = "scm:git:git@github.com:mozilla/rhino.git"
+                    url = "git@github.com:mozilla/rhino.git"
+                }
+                organization {
+                    name = "The Mozilla Foundation"
+                    url = "http://www.mozilla.org"
+                }
+            }
+        }
+    }
+}

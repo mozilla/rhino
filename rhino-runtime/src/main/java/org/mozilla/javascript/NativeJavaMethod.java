@@ -447,6 +447,7 @@ public class NativeJavaMethod extends BaseFunction {
 
     private static final int PREFERENCE_FIRST_ARG = 1;
     private static final int PREFERENCE_SECOND_ARG = 2;
+
     /** No clear "easy" conversion */
     private static final int PREFERENCE_AMBIGUOUS = 3;
 

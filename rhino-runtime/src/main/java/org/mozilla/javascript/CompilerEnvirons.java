@@ -41,7 +41,7 @@ public class CompilerEnvirons {
         activationNames = cx.activationNames;
 
         // Observer code generation in compiled code :
-        generateObserverCount = cx.generateObserverCount;
+        generateObserverCount = cx.isGenerateObserverCount();
     }
 
     public final ErrorReporter getErrorReporter() {

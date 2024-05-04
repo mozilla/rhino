@@ -24,8 +24,10 @@ public class LambdaConstructor extends LambdaFunction {
 
     /** If this flag is set, the constructor may be invoked as an ordinary function */
     public static final int CONSTRUCTOR_FUNCTION = 1;
+
     /** If this flag is set, the constructor may be invoked using "new" */
     public static final int CONSTRUCTOR_NEW = 1 << 1;
+
     /** By default, the constructor may be invoked either way */
     public static final int CONSTRUCTOR_DEFAULT = CONSTRUCTOR_FUNCTION | CONSTRUCTOR_NEW;
 

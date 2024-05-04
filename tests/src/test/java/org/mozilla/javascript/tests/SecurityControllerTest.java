@@ -32,6 +32,7 @@ public class SecurityControllerTest {
 
     /** Sets up the security manager and loads the "grant-all-java.policy". */
     static void setupSecurityManager() {}
+
     /** Setup the security */
     @BeforeClass
     public static void setup() throws Exception {

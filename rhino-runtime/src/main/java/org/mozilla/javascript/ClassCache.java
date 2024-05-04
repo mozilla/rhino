@@ -35,6 +35,7 @@ public class ClassCache implements Serializable {
     static class CacheKey {
         final Class<?> cls;
         final Object sec;
+
         /** Constructor. */
         public CacheKey(Class<?> cls, Object securityContext) {
             this.cls = cls;

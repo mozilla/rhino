@@ -13,7 +13,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.tools.shell.Global;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * Unit tests to check forEach loops.
@@ -72,8 +72,7 @@ public class ForEachForOfTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Global scope = new Global();
-                    scope.init(cx);
+                    final Scriptable scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -90,8 +89,7 @@ public class ForEachForOfTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Global scope = new Global();
-                    scope.init(cx);
+                    final Scriptable scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -108,8 +106,7 @@ public class ForEachForOfTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Global scope = new Global();
-                    scope.init(cx);
+                    final Scriptable scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -127,8 +124,7 @@ public class ForEachForOfTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Global scope = new Global();
-                    scope.init(cx);
+                    final Scriptable scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
