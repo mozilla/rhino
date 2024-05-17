@@ -19,10 +19,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -1978,21 +1980,40 @@ public abstract class ScriptableObject
      * @since 1.4R3
      */
     public void sealObject() {
-        if (!isSealed) {
-            final long stamp = slotMap.readLock();
+        // We cannot initialize LazyLoadedCtor while holding the read lock, since they will mutate
+        // the current object (case in point: NativeJavaTopPackage), which in turn would cause the
+        // code
+        // to try to acquire a write lock while holding the read lock... and deadlock.
+        // We do this in a loop because an initialization could add _other_ stuff to initialize.
+
+        List<Slot> toInitialize = new ArrayList<>();
+        while (!isSealed) {
+            for (Slot slot : toInitialize) {
+                // Need to check the type again, because initializing one slot _could_ have
+                // initialized another one
+                Object value = slot.value;
+                if (value instanceof LazilyLoadedCtor) {
+                    LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
+                    try {
+                        initializer.init();
+                    } finally {
+                        slot.value = initializer.getValue();
+                    }
+                }
+            }
+            toInitialize.clear();
+
+            long stamp = slotMap.readLock();
             try {
                 for (Slot slot : slotMap) {
                     Object value = slot.value;
                     if (value instanceof LazilyLoadedCtor) {
-                        LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
-                        try {
-                            initializer.init();
-                        } finally {
-                            slot.value = initializer.getValue();
-                        }
+                        toInitialize.add(slot);
                     }
                 }
-                isSealed = true;
+                if (toInitialize.isEmpty()) {
+                    isSealed = true;
+                }
             } finally {
                 slotMap.unlockRead(stamp);
             }
