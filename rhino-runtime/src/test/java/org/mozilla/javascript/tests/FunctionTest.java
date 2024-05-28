@@ -96,6 +96,31 @@ public class FunctionTest {
     }
 
     @Test
+    public void functionDefaultArgsBasic() throws Exception {
+        final String script = "function foo(a = 2) {" + "   return a;" + "}";
+        assertIntEvaluates(32, script + "\nfoo(32)");
+        assertIntEvaluates(2, script + "\nfoo()");
+        assertIntEvaluates(2, script + "\nfoo(undefined)");
+    }
+
+    @Test
+    public void functionDefaultArgsMulti() throws Exception {
+        final String script = "function foo(a = 2, b = 23) {" + "   return a + b;" + "}";
+        assertIntEvaluates(55, script + "\nfoo(32)");
+        assertIntEvaluates(25, script + "\nfoo()");
+        assertIntEvaluates(34, script + "\nfoo(32, 2)");
+        assertIntEvaluates(34, script + "\nfoo(undefined, undefined)");
+    }
+
+    @Test
+    public void functionDefaultArgsUsage() throws Exception {
+        final String script = "function foo(a = 2, b = a * 2) {" + "   return a + b;" + "}";
+        assertIntEvaluates(96, script + "\nfoo(32)");
+        assertIntEvaluates(6, script + "\nfoo()");
+        assertIntEvaluates(34, script + "\nfoo(32, 2)");
+    }
+
+    @Test
     public void functioNamesExceptionsStrict() throws Exception {
         final String script =
                 ""
@@ -146,6 +171,18 @@ public class FunctionTest {
                     final Scriptable scope = cx.initStandardObjects();
                     final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
                     assertEquals(expected, rep);
+                    return null;
+                });
+    }
+
+    private static void assertIntEvaluates(final Object expected, final String source) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    if (rep instanceof Double)
+                        assertEquals((int) expected, ((Double) rep).intValue());
+                    else assertEquals(expected, rep);
                     return null;
                 });
     }
