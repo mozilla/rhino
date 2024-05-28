@@ -849,6 +849,29 @@ public class Parser {
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
                     }
+                    if (matchToken(Token.ASSIGN, true)) {
+                        /* TODO: Same for arrowFunctionParams below. Refactor into a helper. */
+                        AstNode rhs = assignExpr();
+                        Object[] existing = fnNode.getDefaultParams();
+                        Object[] current;
+                        int current_size = 0;
+                        if (existing == null) {
+                            existing = new Object[2];
+                            fnNode.setDefaultParams(existing);
+                            current = existing;
+                        } else {
+                            current =
+                                    new Object
+                                            [existing.length
+                                                    + 2]; /* TODO: A more flexible structure? */
+                            System.arraycopy(existing, 0, current, 0, existing.length);
+                            current_size = existing.length;
+                            existing = null;
+                        }
+                        current[current_size] = paramName;
+                        current[current.length - 1] = rhs;
+                        fnNode.setDefaultParams(current);
+                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
@@ -1047,7 +1070,8 @@ public class Parser {
             FunctionNode fnNode,
             AstNode params,
             Map<String, Node> destructuring,
-            Set<String> paramNames) {
+            Set<String> paramNames)
+            throws IOException {
         if (params instanceof ArrayLiteral || params instanceof ObjectLiteral) {
             markDestructuring(params);
             fnNode.addParam(params);

@@ -645,6 +645,32 @@ public final class IRFactory {
                 decompiler.addToken(Token.EOL);
             }
 
+            /* Process default parameters */
+            if (fn.getDefaultParams() != null) {
+                Object[] defaultParams = fn.getDefaultParams();
+                for (int i = defaultParams.length - 1; i > 0; ) {
+                    AstNode rhs = (AstNode) defaultParams[i];
+                    String name = (String) defaultParams[i - 1];
+                    /* TODO: default params - error handling */
+                    body.addChildToFront(
+                            createIf(
+                                    createBinary(
+                                            Token.SHEQ,
+                                            new Name(fn.getPosition(), name),
+                                            new Name(fn.getPosition(), "undefined")),
+                                    new Node(
+                                            Token.EXPR_VOID,
+                                            createAssignment(
+                                                    Token.ASSIGN,
+                                                    new Name(fn.getPosition(), name),
+                                                    transform(rhs)),
+                                            body.getLineno()),
+                                    null,
+                                    body.getLineno()));
+                    i -= 2;
+                }
+            }
+
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
             }
