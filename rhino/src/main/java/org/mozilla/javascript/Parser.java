@@ -849,8 +849,8 @@ public class Parser {
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
                     }
-                    if (matchToken(Token.ASSIGN, true)) {
-                        /* TODO: Same for arrowFunctionParams below. Refactor into a helper. */
+                    if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                            && matchToken(Token.ASSIGN, true)) {
                         AstNode rhs = assignExpr();
                         Object[] existing = fnNode.getDefaultParams();
                         Object[] current;
@@ -1094,6 +1094,38 @@ public class Parser {
                 }
                 if (paramNames.contains(paramName)) addError("msg.dup.param.strict", paramName);
                 paramNames.add(paramName);
+            }
+        } else if (params instanceof Assignment
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+            AstNode rhs = ((Assignment) params).getRight();
+            AstNode lhs = ((Assignment) params).getLeft();
+            String paramName;
+
+            /* copy default values for use in IR */
+            if (lhs instanceof Name) {
+                paramName = ((Name) lhs).getIdentifier();
+                Object[] existing = fnNode.getDefaultParams();
+                Object[] current;
+                int current_size = 0;
+                if (existing == null) {
+                    existing = new Object[2];
+                    fnNode.setDefaultParams(existing);
+                    current = existing;
+                } else {
+                    current =
+                            new Object[existing.length + 2]; /* TODO: A more flexible structure? */
+                    System.arraycopy(existing, 0, current, 0, existing.length);
+                    current_size = existing.length;
+                    existing = null;
+                }
+                current[current_size] = paramName;
+                current[current.length - 1] = rhs;
+                fnNode.setDefaultParams(current);
+                arrowFunctionParams(fnNode, lhs, destructuring, paramNames);
+            } else {
+                reportError("msg.no.parm", params.getPosition(), params.getLength());
+                fnNode.addParam(makeErrorNode());
+                return;
             }
         } else {
             reportError("msg.no.parm", params.getPosition(), params.getLength());
