@@ -22,7 +22,13 @@ import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.JavaPolicySecurity;
 
-/** Perform some tests when we have a securityController in place. */
+/**
+ * Perform some tests when we have a securityController in place.
+ *
+ * @deprecated This class is only useful in conjunction with {@link SecurityManager}, which is
+ *     deprecated since JDK17 and subject to removal in a future release
+ */
+@Deprecated
 public class SecurityControllerTest {
 
     private static ProtectionDomain UNTRUSTED_JAVASCRIPT;
