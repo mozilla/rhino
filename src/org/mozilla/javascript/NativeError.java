@@ -201,7 +201,7 @@ final class NativeError extends IdScriptableObject {
         stack = value;
         return value;
     }
-
+    
     public void setStackDelegated(Object value) {
         stackProvider = null;
         stack = value;
@@ -284,26 +284,33 @@ final class NativeError extends IdScriptableObject {
         return sb.toString();
     }
 
+    private static int s_captureStackTraceRecursion = 0;
     private static void js_captureStackTrace(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+      
+      if (s_captureStackTraceRecursion > 10) {
+        throw new IllegalStateException("Too much recursion when capturing stack trace");
+      }
+      s_captureStackTraceRecursion++;
+      try {
         ScriptableObject obj = (ScriptableObject) ScriptRuntime.toObject(cx, scope, args[0]);
         Function func = null;
         if (args.length > 1) {
             func = (Function) ScriptRuntime.toObjectOrNull(cx, args[1], scope);
         }
 
-        // Create a new error that will have the correct prototype so we can re-use "getStackTrace"
-        NativeError err = (NativeError) cx.newObject(thisObj, "Error");
-        // Wire it up so that it will have an actual exception with a stack trace
-        err.setStackProvider(new EvaluatorException("[object Object]"));
-
         // Figure out if they passed a function used to hide part of the stack
+        String hideFunction = null;
         if (func != null) {
             Object funcName = func.get("name", func);
             if ((funcName != null) && !Undefined.isUndefined(funcName)) {
-                err.associateValue(STACK_HIDE_KEY, Context.toString(funcName));
+                hideFunction = Context.toString(funcName);
             }
         }
+
+        RhinoException stackProvider = new EvaluatorException("[object Object]");
+        ScriptStackElement[] stackTrace = stackProvider.getScriptStack(DEFAULT_STACK_LIMIT, hideFunction);
+        Object value = RhinoException.formatStackTrace(stackTrace, stackProvider.details());
 
         // from https://v8.dev/docs/stack-trace-api
         // Error.captureStackTrace(error, constructorOpt)
@@ -311,7 +318,10 @@ final class NativeError extends IdScriptableObject {
         // at the time captureStackTrace was called. Stack traces collected through
         // Error.captureStackTrace are immediately collected, formatted,
         // and attached to the given error object.
-        obj.defineProperty(STACK_TAG, err.get(STACK_TAG), ScriptableObject.DONTENUM);
+        obj.defineProperty(STACK_TAG, value, ScriptableObject.DONTENUM);
+      }finally {
+        s_captureStackTraceRecursion--;
+      }
     }
 
     @Override
