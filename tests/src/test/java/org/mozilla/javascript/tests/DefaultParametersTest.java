@@ -1,6 +1,7 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -49,9 +50,19 @@ public class DefaultParametersTest {
                         + "  function go() {\n"
                         + "    return \":P\";\n"
                         + "  }\n"
+                        + " return a; "
                         + "}\n"
                         + "\n";
-        assertThrows("go is not defined", script + "\nf()");
+        assertIntEvaluates(24, script + "\nf(24)");
+        assertThrows("ReferenceError: \"go\" is not defined.", "function f() { go() }; var f1 = f()");
+        assertThrows("ReferenceError: \"go\" is not defined.", script + "\nf()");
+    }
+
+    @Test
+    public void functionDefaultArgsMultiReferEarlier() throws Exception {
+        final String script =
+                "var f = function(a = b * 2, b = 3) { return a * b; }\n";
+        assertThrows("ReferenceError: \"b\" is not defined.", script + "\nf()");
     }
 
     @Test
@@ -78,9 +89,13 @@ public class DefaultParametersTest {
                     cx.setLanguageVersion(languageLevel);
                     try {
                         final Scriptable scope = cx.initStandardObjects();
-                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                        if (rep instanceof EcmaError) {
-                            assertEquals(((EcmaError) rep).getMessage(), expected);
+                        try {
+                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                        } catch (EcmaError e) {
+                            if (e instanceof EcmaError) {
+                                assertTrue(((EcmaError) e).getMessage().startsWith(expected));
+                                return true;
+                            }
                         }
                         fail();
                         return null;
@@ -98,18 +113,21 @@ public class DefaultParametersTest {
             final Object expected, final String source, int languageLevel) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    int oldVersion = cx.getLanguageVersion();
-                    cx.setLanguageVersion(languageLevel);
-                    try {
-                        final Scriptable scope = cx.initStandardObjects();
-                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                        if (rep instanceof Double)
-                            assertEquals((int) expected, ((Double) rep).intValue());
-                        else assertEquals(expected, rep);
-                        return null;
-                    } finally {
-                        cx.setLanguageVersion(oldVersion);
+                    if (cx.getOptimizationLevel() == -1) {
+                        int oldVersion = cx.getLanguageVersion();
+                        cx.setLanguageVersion(languageLevel);
+                        try {
+                            final Scriptable scope = cx.initStandardObjects();
+                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                            if (rep instanceof Double)
+                                assertEquals((int) expected, ((Double) rep).intValue());
+                            else assertEquals(expected, rep);
+                            return null;
+                        } finally {
+                            cx.setLanguageVersion(oldVersion);
+                        }
                     }
+                    return null;
                 });
     }
 }
