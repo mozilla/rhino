@@ -10,6 +10,9 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
 
+/*
+   Many of these are taken from examples at developer.mozilla.org
+*/
 public class DefaultParametersTest {
     @Test
     public void functionDefaultArgsBasic() throws Exception {
@@ -69,6 +72,63 @@ public class DefaultParametersTest {
     }
 
     @Test
+    public void functionConstructor() throws Exception {
+        final String script = "const f = new Function('a=2', 'b=a', 'return a + b');";
+        assertIntEvaluates(4, script + "f()");
+        assertIntEvaluates(6, script + "f(3)");
+        assertIntEvaluates(16, script + "f(3, 13)");
+    }
+
+    @Test
+    @Ignore("destructuring-not-supported")
+    public void destructuringAssigmentDefaultArray() throws Exception {
+        final String script = "function f([x = 1, y = 2] = []) {\n" + "  return x + y;\n" + "}\n";
+        assertIntEvaluates(3, script + "f()");
+        assertIntEvaluates(3, script + "f([])");
+        assertIntEvaluates(4, script + "f([2])");
+        assertIntEvaluates(5, script + "f([2, 3])");
+    }
+
+    @Test
+    @Ignore("destructuring-not-supported")
+    public void destructuringAssigmentDefaultObject() throws Exception {
+        final String script =
+                "function f({ z = 3 } = {}) {\n"
+                        + "  return z;\n"
+                        + "}\n"
+                        + "\n"
+                        + "f();\n"
+                        + "f({});\n"
+                        + "f({ z: 2 });";
+        assertIntEvaluates(3, script + "f()");
+        assertIntEvaluates(3, script + "f({})");
+        assertIntEvaluates(2, script + "f({z: 2})");
+    }
+
+    @Test
+    @Ignore("argument-object-should-not-be-mutated")
+    public void defaultParametersWithArgumentsObject() throws Exception {
+        final String script =
+                "function f(a = 55) {\n"
+                        + "  arguments[0] = 99; // updating arguments[0] does not also update a\n"
+                        + "  return a;\n"
+                        + "}\n"
+                        + "\n"
+                        + "function g(a = 55) {\n"
+                        + "  a = 99; // updating a does not also update arguments[0]\n"
+                        + "  return arguments[0];\n"
+                        + "}\n"
+                        + "\n"
+                        + "// An untracked default parameter\n"
+                        + "function h(a = 55) {\n"
+                        + "  return arguments.length;\n"
+                        + "}\n";
+        assertIntEvaluates(10, script + "f(10)");
+        assertIntEvaluates(99, script + "g(10)");
+        assertIntEvaluates(0, script + "h()");
+    }
+
+    @Test
     public void functionDefaultArgsArray() throws Exception {
         final String script =
                 "function append(value, array = []) {\n"
@@ -78,6 +138,18 @@ public class DefaultParametersTest {
                         + "\n";
         assertIntEvaluates(1, script + "append(1)[0]");
         assertIntEvaluates(2, script + "append(2)[0]");
+    }
+
+    @Test
+    public void functionDefaultArgsObject() throws Exception {
+        final String script =
+                "function append(key, value, obj = {}) {\n"
+                        + "  obj[key]=value;\n"
+                        + "  return obj;\n"
+                        + "}\n"
+                        + "\n";
+        assertIntEvaluates(1, script + "append('a', 1)['a']");
+        assertIntEvaluates(2, script + "append('a', 2)['a']");
     }
 
     private static void assertThrows(final String expected, final String source) {
