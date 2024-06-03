@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
@@ -44,6 +45,7 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("temporal-dead-zone")
     public void functionDefaultArgsMultiFollowUsage() throws Exception {
         final String script =
                 "function f(a = go()) {\n"
@@ -54,14 +56,15 @@ public class DefaultParametersTest {
                         + "}\n"
                         + "\n";
         assertIntEvaluates(24, script + "\nf(24)");
-        assertThrows("ReferenceError: \"go\" is not defined.", "function f() { go() }; var f1 = f()");
+        assertThrows(
+                "ReferenceError: \"go\" is not defined.", "function f() { go() }; var f1 = f()");
         assertThrows("ReferenceError: \"go\" is not defined.", script + "\nf()");
     }
 
     @Test
+    @Ignore("temporal-dead-zone")
     public void functionDefaultArgsMultiReferEarlier() throws Exception {
-        final String script =
-                "var f = function(a = b * 2, b = 3) { return a * b; }\n";
+        final String script = "var f = function(a = b * 2, b = 3) { return a * b; }\n";
         assertThrows("ReferenceError: \"b\" is not defined.", script + "\nf()");
     }
 

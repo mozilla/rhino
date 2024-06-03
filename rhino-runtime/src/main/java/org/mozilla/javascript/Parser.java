@@ -738,6 +738,9 @@ public class Parser {
                                 if (directive == null) {
                                     inDirectivePrologue = false;
                                 } else if (directive.equals("use strict")) {
+                                    if (fnNode.getDefaultParams() != null) {
+                                        reportError("msg.default.args.use.strict");
+                                    }
                                     inUseStrictDirective = true;
                                     fnNode.setInStrictMode(true);
                                     if (!savedStrictMode) {

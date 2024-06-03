@@ -103,7 +103,6 @@ public class Test262SuiteTest {
                             "class-fields-public",
                             "computed-property-names",
                             "default-arg",
-                            "default-parameters",
                             "new.target",
                             "object-rest",
                             "regexp-dotall",
