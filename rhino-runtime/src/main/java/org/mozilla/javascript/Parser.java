@@ -862,10 +862,7 @@ public class Parser {
                             fnNode.setDefaultParams(existing);
                             current = existing;
                         } else {
-                            current =
-                                    new Object
-                                            [existing.length
-                                                    + 2]; /* TODO: A more flexible structure? */
+                            current = new Object[existing.length + 2];
                             System.arraycopy(existing, 0, current, 0, existing.length);
                             current_size = existing.length;
                             existing = null;
@@ -1114,11 +1111,9 @@ public class Parser {
                     fnNode.setDefaultParams(existing);
                     current = existing;
                 } else {
-                    current =
-                            new Object[existing.length + 2]; /* TODO: A more flexible structure? */
+                    current = new Object[existing.length + 2];
                     System.arraycopy(existing, 0, current, 0, existing.length);
                     current_size = existing.length;
-                    existing = null;
                 }
                 current[current_size] = paramName;
                 current[current.length - 1] = rhs;
@@ -1127,7 +1122,6 @@ public class Parser {
             } else {
                 reportError("msg.no.parm", params.getPosition(), params.getLength());
                 fnNode.addParam(makeErrorNode());
-                return;
             }
         } else {
             reportError("msg.no.parm", params.getPosition(), params.getLength());
