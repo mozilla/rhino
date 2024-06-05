@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
 /*
    Many of these are taken from examples at developer.mozilla.org
@@ -106,7 +107,6 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("argument-object-should-not-be-mutated")
     public void defaultParametersWithArgumentsObject() throws Exception {
         final String script =
                 "function f(a = 55) {\n"
@@ -124,8 +124,11 @@ public class DefaultParametersTest {
                         + "  return arguments.length;\n"
                         + "}\n";
         assertIntEvaluates(10, script + "f(10)");
-        assertIntEvaluates(99, script + "g(10)");
+        assertIntEvaluates(55, script + "f()");
+        assertIntEvaluates(10, script + "g(10)");
+        assertEvaluates(Undefined.instance, script + "g()");
         assertIntEvaluates(0, script + "h()");
+        assertIntEvaluates(1, script + "h(10)");
     }
 
     @Test
@@ -184,25 +187,29 @@ public class DefaultParametersTest {
         assertIntEvaluatesWithLanguageLevel(expected, source, Context.VERSION_ES6);
     }
 
+    private static void assertEvaluates(final Object expected, final String source) {
+        assertIntEvaluatesWithLanguageLevel(expected, source, Context.VERSION_ES6);
+    }
+
     private static void assertIntEvaluatesWithLanguageLevel(
             final Object expected, final String source, int languageLevel) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    if (cx.getOptimizationLevel() == -1) {
-                        int oldVersion = cx.getLanguageVersion();
-                        cx.setLanguageVersion(languageLevel);
-                        try {
-                            final Scriptable scope = cx.initStandardObjects();
-                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                            if (rep instanceof Double)
-                                assertEquals((int) expected, ((Double) rep).intValue());
-                            else assertEquals(expected, rep);
-                            return null;
-                        } finally {
-                            cx.setLanguageVersion(oldVersion);
-                        }
+                    //                    if (cx.getOptimizationLevel() == 0) {
+                    int oldVersion = cx.getLanguageVersion();
+                    cx.setLanguageVersion(languageLevel);
+                    try {
+                        final Scriptable scope = cx.initStandardObjects();
+                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                        if (rep instanceof Double)
+                            assertEquals((int) expected, ((Double) rep).intValue());
+                        else assertEquals(expected, rep);
+                        return null;
+                    } finally {
+                        cx.setLanguageVersion(oldVersion);
                     }
-                    return null;
+                    //                    }
+                    //                    return null;
                 });
     }
 }

@@ -82,6 +82,7 @@ public class FunctionNode extends ScriptNode {
     private int rp = -1;
     private boolean hasRestParameter;
 
+    @Override
     public Object[] getDefaultParams() {
         return defaultParams;
     }
