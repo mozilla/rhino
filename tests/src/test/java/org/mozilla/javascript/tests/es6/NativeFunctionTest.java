@@ -14,96 +14,48 @@ public class NativeFunctionTest {
 
     @Test
     public void functionPrototypeLength() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'length');\n"
-                                            + "var res = 'configurable: ' + desc.configurable;\n"
-                                            + "res += '  enumerable: ' + desc.enumerable;\n"
-                                            + "res += '  writable: ' + desc.writable;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("configurable: true  enumerable: false  writable: false", result);
-
-                    return null;
-                });
+        final String code =
+                "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'length');\n"
+                        + "var res = 'configurable: ' + desc.configurable;\n"
+                        + "res += '  enumerable: ' + desc.enumerable;\n"
+                        + "res += '  writable: ' + desc.writable;";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "configurable: true  enumerable: false  writable: false", code);
     }
 
     @Test
     public void functionPrototypeName() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'name');\n"
-                                            + "var res = 'configurable: ' + desc.configurable;\n"
-                                            + "res += '  enumerable: ' + desc.enumerable;\n"
-                                            + "res += '  writable: ' + desc.writable;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("configurable: true  enumerable: false  writable: false", result);
-
-                    return null;
-                });
+        final String code =
+                "var desc=Object.getOwnPropertyDescriptor(Function.prototype, 'name');\n"
+                        + "var res = 'configurable: ' + desc.configurable;\n"
+                        + "res += '  enumerable: ' + desc.enumerable;\n"
+                        + "res += '  writable: ' + desc.writable;";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "configurable: true  enumerable: false  writable: false", code);
     }
 
     @Test
     public void functionLength() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "var f=function(){};\n"
-                                            + "var desc=Object.getOwnPropertyDescriptor(f, 'length');\n"
-                                            + "var res = 'configurable: ' + desc.configurable;\n"
-                                            + "res += '  enumerable: ' + desc.enumerable;\n"
-                                            + "res += '  writable: ' + desc.writable;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("configurable: true  enumerable: false  writable: false", result);
-
-                    return null;
-                });
+        final String code =
+                "var f=function(){};\n"
+                        + "var desc=Object.getOwnPropertyDescriptor(f, 'length');\n"
+                        + "var res = 'configurable: ' + desc.configurable;\n"
+                        + "res += '  enumerable: ' + desc.enumerable;\n"
+                        + "res += '  writable: ' + desc.writable;";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "configurable: true  enumerable: false  writable: false", code);
     }
 
     @Test
     public void functionName() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "var f=function(){};\n"
-                                            + "var desc=Object.getOwnPropertyDescriptor(f, 'name');\n"
-                                            + "var res = 'configurable: ' + desc.configurable;\n"
-                                            + "res += '  enumerable: ' + desc.enumerable;\n"
-                                            + "res += '  writable: ' + desc.writable;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("configurable: true  enumerable: false  writable: false", result);
-
-                    return null;
-                });
+        final String code =
+                "var f=function(){};\n"
+                        + "var desc=Object.getOwnPropertyDescriptor(f, 'name');\n"
+                        + "var res = 'configurable: ' + desc.configurable;\n"
+                        + "res += '  enumerable: ' + desc.enumerable;\n"
+                        + "res += '  writable: ' + desc.writable;";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "configurable: true  enumerable: false  writable: false", code);
     }
 
     @Test

@@ -386,14 +386,7 @@ public class NativeObjectTest {
     private static void evaluateAndAssert(final String script, final Object expected) {
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        ScriptableObject scope = cx.initStandardObjects();
-                        Object result = cx.evaluateString(scope, prefix + script, "test", 1, null);
-                        assertEquals(expected, result);
-                        return null;
-                    });
+            Utils.assertWithAllOptimizationLevelsES6(expected, prefix + script);
         }
     }
 
