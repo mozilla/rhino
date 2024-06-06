@@ -17,39 +17,19 @@ public class Symbol3Test {
 
     @Test
     public void scriptRuntimeTypeofSymbolKey() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String code =
-                            "function foo() {"
-                                    + "  var sym = Object.getOwnPropertySymbols(arguments);"
-                                    + "  return '' + sym.length + ' ' + typeof sym[0];"
-                                    + "}"
-                                    + "foo()";
-                    String result = (String) cx.evaluateString(scope, code, "test", 1, null);
-                    assertEquals("1 symbol", result);
-
-                    return null;
-                });
+        final String code =
+                "function foo() {"
+                        + "  var sym = Object.getOwnPropertySymbols(arguments);"
+                        + "  return '' + sym.length + ' ' + typeof sym[0];"
+                        + "}"
+                        + "foo()";
+        Utils.assertWithAllOptimizationLevelsES6("1 symbol", code);
     }
 
     @Test
     public void scriptRuntimeTypeofSymbol() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String result =
-                            (String)
-                                    cx.evaluateString(
-                                            scope, "typeof Symbol.toStringTag", "test", 1, null);
-                    assertEquals("symbol", result);
-
-                    return null;
-                });
+        final String code = "typeof Symbol.toStringTag";
+        Utils.assertWithAllOptimizationLevelsES6("symbol", code);
     }
 
     @Test

@@ -4,11 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
 /** Tests for NativeArray support. */
@@ -18,28 +14,28 @@ public class NativeArray3Test {
     public void iteratorPrototype() {
         String code = "Array.prototype.values === [][Symbol.iterator]";
 
-        test(true, code);
+        Utils.assertWithAllOptimizationLevelsES6(true, code);
     }
 
     @Test
     public void iteratorInstances() {
         String code = "[1, 2][Symbol.iterator] === [][Symbol.iterator]";
 
-        test(true, code);
+        Utils.assertWithAllOptimizationLevelsES6(true, code);
     }
 
     @Test
     public void iteratorPrototypeName() {
         String code = "Array.prototype.values.name;";
 
-        test("values", code);
+        Utils.assertWithAllOptimizationLevelsES6("values", code);
     }
 
     @Test
     public void iteratorInstanceName() {
         String code = "[][Symbol.iterator].name;";
 
-        test("values", code);
+        Utils.assertWithAllOptimizationLevelsES6("values", code);
     }
 
     @Test
@@ -56,19 +52,6 @@ public class NativeArray3Test {
                         + "res += arr[Symbol.iterator].toString().includes('return i;');\n"
                         + "res;";
 
-        test("false - true - false", code);
-    }
-
-    private static void test(Object expected, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, js, "test", 1, null);
-                    assertEquals(expected, result);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevelsES6("false - true - false", code);
     }
 }
