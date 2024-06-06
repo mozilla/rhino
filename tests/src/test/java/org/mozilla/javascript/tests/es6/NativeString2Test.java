@@ -7,10 +7,7 @@
  */
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
 /** Test for handling const variables. */
@@ -36,44 +33,44 @@ public class NativeString2Test {
 
     @Test
     public void normalizeNoParam() {
-        assertEvaluates("123", "'123'.normalize()");
+        Utils.assertWithAllOptimizationLevels("123", "'123'.normalize()");
     }
 
     @Test
     public void normalizeNoUndefined() {
-        assertEvaluates("123", "'123'.normalize(undefined)");
+        Utils.assertWithAllOptimizationLevels("123", "'123'.normalize(undefined)");
     }
 
     @Test
     public void normalizeNoNull() {
         String js = "try { " + "  '123'.normalize(null);" + "} catch (e) { e.message }";
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels(
                 "The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.", js);
     }
 
     @Test
     public void replaceReplacementAsString() {
-        assertEvaluates("1null3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllOptimizationLevels("1null3", "'123'.replace('2', /x/);");
         Utils.assertWithAllOptimizationLevelsES6("1/x/3", "'123'.replace('2', /x/);");
     }
 
     @Test
     public void indexOfEmpty() {
-        assertEvaluates(0, "'1234'.indexOf('', 0);");
-        assertEvaluates(1, "'1234'.indexOf('', 1);");
-        assertEvaluates(4, "'1234'.indexOf('', 4);");
-        assertEvaluates(4, "'1234'.indexOf('', 5);");
-        assertEvaluates(4, "'1234'.indexOf('', 42);");
+        Utils.assertWithAllOptimizationLevels(0, "'1234'.indexOf('', 0);");
+        Utils.assertWithAllOptimizationLevels(1, "'1234'.indexOf('', 1);");
+        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 4);");
+        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 5);");
+        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 42);");
     }
 
     @Test
     public void includesEmpty() {
-        assertEvaluates(true, "'1234'.includes('');");
-        assertEvaluates(true, "'1234'.includes('', 0);");
-        assertEvaluates(true, "'1234'.includes('', 1);");
-        assertEvaluates(true, "'1234'.includes('', 4);");
-        assertEvaluates(true, "'1234'.includes('', 5);");
-        assertEvaluates(true, "'1234'.includes('', 42);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('');");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 0);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 1);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 4);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 5);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 42);");
     }
 
     @Test
@@ -97,12 +94,12 @@ public class NativeString2Test {
 
     @Test
     public void startsWithEmpty() {
-        assertEvaluates(true, "'1234'.startsWith('');");
-        assertEvaluates(true, "'1234'.startsWith('', 0);");
-        assertEvaluates(true, "'1234'.startsWith('', 1);");
-        assertEvaluates(true, "'1234'.startsWith('', 4);");
-        assertEvaluates(true, "'1234'.startsWith('', 5);");
-        assertEvaluates(true, "'1234'.startsWith('', 42);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('');");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 0);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 1);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 4);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 5);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 42);");
     }
 
     @Test
@@ -126,12 +123,12 @@ public class NativeString2Test {
 
     @Test
     public void endsWithEmpty() {
-        assertEvaluates(true, "'1234'.endsWith('');");
-        assertEvaluates(true, "'1234'.endsWith('', 0);");
-        assertEvaluates(true, "'1234'.endsWith('', 1);");
-        assertEvaluates(true, "'1234'.endsWith('', 4);");
-        assertEvaluates(true, "'1234'.endsWith('', 5);");
-        assertEvaluates(true, "'1234'.endsWith('', 42);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('');");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 0);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 1);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 4);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 5);");
+        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 42);");
     }
 
     @Test
@@ -155,13 +152,17 @@ public class NativeString2Test {
 
     @Test
     public void tagify() {
-        assertEvaluates("<big>tester</big>", "'tester'.big()");
-        assertEvaluates("<big>\"tester\"</big>", "'\"tester\"'.big()");
-        assertEvaluates("<font size=\"undefined\">tester</font>", "'tester'.fontsize()");
-        assertEvaluates("<font size=\"null\">tester</font>", "'tester'.fontsize(null)");
-        assertEvaluates("<font size=\"undefined\">tester</font>", "'tester'.fontsize(undefined)");
-        assertEvaluates("<font size=\"123\">tester</font>", "'tester'.fontsize(123)");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels("<big>tester</big>", "'tester'.big()");
+        Utils.assertWithAllOptimizationLevels("<big>\"tester\"</big>", "'\"tester\"'.big()");
+        Utils.assertWithAllOptimizationLevels(
+                "<font size=\"undefined\">tester</font>", "'tester'.fontsize()");
+        Utils.assertWithAllOptimizationLevels(
+                "<font size=\"null\">tester</font>", "'tester'.fontsize(null)");
+        Utils.assertWithAllOptimizationLevels(
+                "<font size=\"undefined\">tester</font>", "'tester'.fontsize(undefined)");
+        Utils.assertWithAllOptimizationLevels(
+                "<font size=\"123\">tester</font>", "'tester'.fontsize(123)");
+        Utils.assertWithAllOptimizationLevels(
                 "<font size=\"&quot;123&quot;\">tester</font>", "'tester'.fontsize('\"123\"')");
     }
 
@@ -216,73 +217,65 @@ public class NativeString2Test {
 
     @Test
     public void stringReplace() {
-        assertEvaluates("xyz", "''.replace('', 'xyz')");
-        assertEvaluates("1", "'121'.replace('21', '')");
-        assertEvaluates("xyz121", "'121'.replace('', 'xyz')");
-        assertEvaluates("a$c21", "'121'.replace('1', 'a$c')");
-        assertEvaluates("a121", "'121'.replace('1', 'a$&')");
-        assertEvaluates("a$c21", "'121'.replace('1', 'a$$c')");
-        assertEvaluates("abaabe", "'abcde'.replace('cd', 'a$`')");
-        assertEvaluates("a21", "'121'.replace('1', 'a$`')");
-        assertEvaluates("abaee", "'abcde'.replace('cd', \"a$'\")");
-        assertEvaluates("aba", "'abcd'.replace('cd', \"a$'\")");
-        assertEvaluates("aba$0", "'abcd'.replace('cd', 'a$0')");
-        assertEvaluates("aba$1", "'abcd'.replace('cd', 'a$1')");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels("xyz", "''.replace('', 'xyz')");
+        Utils.assertWithAllOptimizationLevels("1", "'121'.replace('21', '')");
+        Utils.assertWithAllOptimizationLevels("xyz121", "'121'.replace('', 'xyz')");
+        Utils.assertWithAllOptimizationLevels("a$c21", "'121'.replace('1', 'a$c')");
+        Utils.assertWithAllOptimizationLevels("a121", "'121'.replace('1', 'a$&')");
+        Utils.assertWithAllOptimizationLevels("a$c21", "'121'.replace('1', 'a$$c')");
+        Utils.assertWithAllOptimizationLevels("abaabe", "'abcde'.replace('cd', 'a$`')");
+        Utils.assertWithAllOptimizationLevels("a21", "'121'.replace('1', 'a$`')");
+        Utils.assertWithAllOptimizationLevels("abaee", "'abcde'.replace('cd', \"a$'\")");
+        Utils.assertWithAllOptimizationLevels("aba", "'abcd'.replace('cd', \"a$'\")");
+        Utils.assertWithAllOptimizationLevels("aba$0", "'abcd'.replace('cd', 'a$0')");
+        Utils.assertWithAllOptimizationLevels("aba$1", "'abcd'.replace('cd', 'a$1')");
+        Utils.assertWithAllOptimizationLevels(
                 "abCD",
                 "'abcd'.replace('cd', function (matched) { return matched.toUpperCase() })");
-        assertEvaluates("", "'123456'.replace(/\\d+/, '')");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels("", "'123456'.replace(/\\d+/, '')");
+        Utils.assertWithAllOptimizationLevels(
                 "123ABCD321abcd",
                 "'123abcd321abcd'.replace(/[a-z]+/, function (matched) { return matched.toUpperCase() })");
     }
 
     @Test
     public void stringReplaceAll() {
-        assertEvaluates("xyz", "''.replaceAll('', 'xyz')");
-        assertEvaluates("1", "'12121'.replaceAll('21', '')");
-        assertEvaluates("xyz1xyz2xyz1xyz", "'121'.replaceAll('', 'xyz')");
-        assertEvaluates("a$c2a$c", "'121'.replaceAll('1', 'a$c')");
-        assertEvaluates("a12a1", "'121'.replaceAll('1', 'a$&')");
-        assertEvaluates("a$c2a$c", "'121'.replaceAll('1', 'a$$c')");
-        assertEvaluates("aaadaaabcda", "'abcdabc'.replaceAll('bc', 'a$`')");
-        assertEvaluates("a2a12", "'121'.replaceAll('1', 'a$`')");
-        assertEvaluates("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
-        assertEvaluates("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
-        assertEvaluates("aa$0daa$0", "'abcdabc'.replaceAll('bc', 'a$0')");
-        assertEvaluates("aa$1daa$1", "'abcdabc'.replaceAll('bc', 'a$1')");
-        assertEvaluates("", "'123456'.replaceAll(/\\d+/g, '')");
-        assertEvaluates("123456", "'123456'.replaceAll(undefined, '')");
-        assertEvaluates("afoobarb", "'afoob'.replaceAll(/(foo)/g, '$1bar')");
-        assertEvaluates("foobarb", "'foob'.replaceAll(/(foo)/gy, '$1bar')");
-        assertEvaluates("hllo", "'hello'.replaceAll(/(h)e/gy, '$1')");
-        assertEvaluates("$1llo", "'hello'.replaceAll(/he/g, '$1')");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels("xyz", "''.replaceAll('', 'xyz')");
+        Utils.assertWithAllOptimizationLevels("1", "'12121'.replaceAll('21', '')");
+        Utils.assertWithAllOptimizationLevels("xyz1xyz2xyz1xyz", "'121'.replaceAll('', 'xyz')");
+        Utils.assertWithAllOptimizationLevels("a$c2a$c", "'121'.replaceAll('1', 'a$c')");
+        Utils.assertWithAllOptimizationLevels("a12a1", "'121'.replaceAll('1', 'a$&')");
+        Utils.assertWithAllOptimizationLevels("a$c2a$c", "'121'.replaceAll('1', 'a$$c')");
+        Utils.assertWithAllOptimizationLevels("aaadaaabcda", "'abcdabc'.replaceAll('bc', 'a$`')");
+        Utils.assertWithAllOptimizationLevels("a2a12", "'121'.replaceAll('1', 'a$`')");
+        Utils.assertWithAllOptimizationLevels("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        Utils.assertWithAllOptimizationLevels("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        Utils.assertWithAllOptimizationLevels("aa$0daa$0", "'abcdabc'.replaceAll('bc', 'a$0')");
+        Utils.assertWithAllOptimizationLevels("aa$1daa$1", "'abcdabc'.replaceAll('bc', 'a$1')");
+        Utils.assertWithAllOptimizationLevels("", "'123456'.replaceAll(/\\d+/g, '')");
+        Utils.assertWithAllOptimizationLevels("123456", "'123456'.replaceAll(undefined, '')");
+        Utils.assertWithAllOptimizationLevels("afoobarb", "'afoob'.replaceAll(/(foo)/g, '$1bar')");
+        Utils.assertWithAllOptimizationLevels("foobarb", "'foob'.replaceAll(/(foo)/gy, '$1bar')");
+        Utils.assertWithAllOptimizationLevels("hllo", "'hello'.replaceAll(/(h)e/gy, '$1')");
+        Utils.assertWithAllOptimizationLevels("$1llo", "'hello'.replaceAll(/he/g, '$1')");
+        Utils.assertWithAllOptimizationLevels(
                 "I$want$these$periods$to$be$$s",
                 "'I.want.these.periods.to.be.$s'.replaceAll(/\\./g, '$')");
-        assertEvaluates("food bar", "'foo bar'.replaceAll(/foo/g, '$&d')");
-        assertEvaluates("foo foo ", "'foo bar'.replaceAll(/bar/g, '$`')");
-        assertEvaluates(" bar bar", "'foo bar'.replaceAll(/foo/g, '$\\'')");
-        assertEvaluates("$' bar", "'foo bar'.replaceAll(/foo/g, '$$\\'')");
-        assertEvaluates("ad$0db", "'afoob'.replaceAll(/(foo)/g, 'd$0d')");
-        assertEvaluates("ad$0db", "'afkxxxkob'.replace(/(f)k(.*)k(o)/g, 'd$0d')");
-        assertEvaluates("ad$0dbd$0dc", "'afoobfuoc'.replaceAll(/(f.o)/g, 'd$0d')");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels("food bar", "'foo bar'.replaceAll(/foo/g, '$&d')");
+        Utils.assertWithAllOptimizationLevels("foo foo ", "'foo bar'.replaceAll(/bar/g, '$`')");
+        Utils.assertWithAllOptimizationLevels(" bar bar", "'foo bar'.replaceAll(/foo/g, '$\\'')");
+        Utils.assertWithAllOptimizationLevels("$' bar", "'foo bar'.replaceAll(/foo/g, '$$\\'')");
+        Utils.assertWithAllOptimizationLevels("ad$0db", "'afoob'.replaceAll(/(foo)/g, 'd$0d')");
+        Utils.assertWithAllOptimizationLevels(
+                "ad$0db", "'afkxxxkob'.replace(/(f)k(.*)k(o)/g, 'd$0d')");
+        Utils.assertWithAllOptimizationLevels(
+                "ad$0dbd$0dc", "'afoobfuoc'.replaceAll(/(f.o)/g, 'd$0d')");
+        Utils.assertWithAllOptimizationLevels(
                 "123FOOBAR321BARFOO123",
                 "'123foobar321barfoo123'.replace(/[a-z]+/g, function (matched) { return matched.toUpperCase() })");
 
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels(
                 "TypeError: replaceAll must be called with a global RegExp",
                 "try { 'hello'.replaceAll(/he/i, 'x'); } catch (e) { '' + e }");
-    }
-
-    private static void assertEvaluates(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                    assertEquals(expected, rep);
-                    return null;
-                });
     }
 }
