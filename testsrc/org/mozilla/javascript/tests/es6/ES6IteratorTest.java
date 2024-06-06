@@ -4,38 +4,21 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
 public class ES6IteratorTest {
 
     @Test
     public void valueDone() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+        String code =
+                "  var res = '';\n"
+                        + "  var arr = ['x'];\n"
+                        + "  var arrIter = arr[Symbol.iterator]();\n"
+                        + "  for (var p in arrIter.next()) {\n"
+                        + "    res = res + p + ' ';\n"
+                        + "  }\n";
 
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "  var res = '';\n"
-                                            + "  var arr = ['x'];\n"
-                                            + "  var arrIter = arr[Symbol.iterator]();\n"
-                                            + "  for (var p in arrIter.next()) {\n"
-                                            + "    res = res + p + ' ';\n"
-                                            + "  }\n",
-                                    "test",
-                                    1,
-                                    null);
-                    // this is the order used by all current browsers
-                    assertEquals("value done ", result);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevelsES6("value done ", code);
     }
 }

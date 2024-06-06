@@ -4,10 +4,15 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * Misc utilities to make test code easier.
@@ -76,5 +81,46 @@ public class Utils {
             return new int[] {Integer.parseInt(overriddenLevel)};
         }
         return DEFAULT_OPT_LEVELS;
+    }
+
+    public static void assertWithAllOptimizationLevels(final Object expected, final String script) {
+        runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+
+                    assertEquals(expected, res);
+                    return null;
+                });
+    }
+
+    public static void assertWithAllOptimizationLevelsES6(
+            final Object expected, final String script) {
+        runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+
+                    assertEquals(expected, res);
+                    return null;
+                });
+    }
+
+    public static void assertEvaluatorExceptionES6(String expectedMessage, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    try {
+                        cx.evaluateString(scope, js, "test", 1, null);
+                        fail("EvaluatorException expected");
+                    } catch (EvaluatorException e) {
+                        assertEquals(expectedMessage, e.getMessage());
+                    }
+
+                    return null;
+                });
     }
 }

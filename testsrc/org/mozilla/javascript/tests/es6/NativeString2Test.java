@@ -10,7 +10,6 @@ package org.mozilla.javascript.tests.es6;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
@@ -32,7 +31,7 @@ public class NativeString2Test {
                         + "  res += desc.configurable;"
                         + "  res += ';';"
                         + "  res;";
-        assertEvaluatesES6("true;h;false;true;false;", js);
+        Utils.assertWithAllOptimizationLevelsES6("true;h;false;true;false;", js);
     }
 
     @Test
@@ -55,7 +54,7 @@ public class NativeString2Test {
     @Test
     public void replaceReplacementAsString() {
         assertEvaluates("1null3", "'123'.replace('2', /x/);");
-        assertEvaluatesES6("1/x/3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllOptimizationLevelsES6("1/x/3", "'123'.replace('2', /x/);");
     }
 
     @Test
@@ -91,7 +90,7 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        assertEvaluatesES6(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: First argument to String.prototype.includes must not be a regular expression # true",
                 js);
     }
@@ -120,7 +119,7 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        assertEvaluatesES6(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
                 js);
     }
@@ -149,7 +148,7 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        assertEvaluatesES6(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
                 js);
     }
@@ -186,7 +185,7 @@ public class NativeString2Test {
             String js = "try { String.prototype." + call + ".call(null);} catch (e) { e.message }";
             String expected = "String.prototype." + call + " method called on null or undefined";
 
-            assertEvaluatesES6(expected, js);
+            Utils.assertWithAllOptimizationLevelsES6(expected, js);
         }
     }
 
@@ -211,7 +210,7 @@ public class NativeString2Test {
                     "try { String.prototype." + call + ".call(undefined);} catch (e) { e.message }";
             String expected = "String.prototype." + call + " method called on null or undefined";
 
-            assertEvaluatesES6(expected, js);
+            Utils.assertWithAllOptimizationLevelsES6(expected, js);
         }
     }
 
@@ -280,17 +279,6 @@ public class NativeString2Test {
     private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                    assertEquals(expected, rep);
-                    return null;
-                });
-    }
-
-    private static void assertEvaluatesES6(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();
                     final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
                     assertEquals(expected, rep);

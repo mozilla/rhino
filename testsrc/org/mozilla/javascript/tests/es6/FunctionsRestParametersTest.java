@@ -4,15 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
 /**
@@ -22,21 +14,6 @@ import org.mozilla.javascript.tests.Utils;
  */
 public class FunctionsRestParametersTest {
 
-    private Context cx;
-    private ScriptableObject scope;
-
-    @Before
-    public void setUp() {
-        cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        scope = cx.initStandardObjects();
-    }
-
-    @After
-    public void tearDown() {
-        Context.exit();
-    }
-
     @Test
     public void oneRestArg() {
         String code =
@@ -45,7 +22,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        test("1,abc,2,##", code);
+        Utils.assertWithAllOptimizationLevelsES6("1,abc,2,##", code);
     }
 
     @Test
@@ -58,7 +35,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1, 'abc', 2, '##').toString();\n";
 
-        test("1,abc,2,##", code);
+        Utils.assertWithAllOptimizationLevelsES6("1,abc,2,##", code);
     }
 
     @Test
@@ -70,7 +47,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest();\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        test("true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("true-0", code);
     }
 
     @Test
@@ -84,7 +61,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest();\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        test("true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("true-0", code);
     }
 
     @Test
@@ -96,7 +73,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest('xy');\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        test("true-1", code);
+        Utils.assertWithAllOptimizationLevelsES6("true-1", code);
     }
 
     @Test
@@ -110,7 +87,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest('xy');\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        test("true-1", code);
+        Utils.assertWithAllOptimizationLevelsES6("true-1", code);
     }
 
     @Test
@@ -121,7 +98,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        test("abc,2,##", code);
+        Utils.assertWithAllOptimizationLevelsES6("abc,2,##", code);
     }
 
     @Test
@@ -134,7 +111,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        test("abc,2,##", code);
+        Utils.assertWithAllOptimizationLevelsES6("abc,2,##", code);
     }
 
     @Test
@@ -145,7 +122,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest();\n";
 
-        test("undefined - true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("undefined - true-0", code);
     }
 
     @Test
@@ -158,7 +135,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest();\n";
 
-        test("undefined - true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("undefined - true-0", code);
     }
 
     @Test
@@ -169,7 +146,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest('77');";
 
-        test("77 - true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("77 - true-0", code);
     }
 
     @Test
@@ -182,7 +159,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest('77');";
 
-        test("77 - true-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("77 - true-0", code);
     }
 
     @Test
@@ -193,7 +170,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "'' + rest('77') + '-' + rest(1, 2, 3, 4);\n";
 
-        test("1-4", code);
+        Utils.assertWithAllOptimizationLevelsES6("1-4", code);
     }
 
     @Test
@@ -206,7 +183,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "'' + rest('77') + '-' + rest(1, 2, 3, 4);\n";
 
-        test("1-4", code);
+        Utils.assertWithAllOptimizationLevelsES6("1-4", code);
     }
 
     @Test
@@ -217,7 +194,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1,2) + '-' + rest(1) + '-' + rest();\n";
 
-        test("2-1-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("2-1-0", code);
     }
 
     @Test
@@ -230,7 +207,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1,2) + '-' + rest(1) + '-' + rest();\n";
 
-        test("2-1-0", code);
+        Utils.assertWithAllOptimizationLevelsES6("2-1-0", code);
     }
 
     @Test
@@ -240,7 +217,7 @@ public class FunctionsRestParametersTest {
                         + "function foo2(arg, ...restArgs) {}\n"
                         + "foo1.length + '-' + foo2.length;\n";
 
-        test("0-1", code);
+        Utils.assertWithAllOptimizationLevelsES6("0-1", code);
     }
 
     @Test
@@ -251,7 +228,8 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest.toString();\n";
 
-        test("\nfunction rest(...restArgs) {\n    return restArgs.length;\n}\n", code);
+        Utils.assertWithAllOptimizationLevelsES6(
+                "\nfunction rest(...restArgs) {\n    return restArgs.length;\n}\n", code);
     }
 
     @Test
@@ -262,57 +240,28 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest.toString();\n";
 
-        test("\nfunction rest(arg, ...restArgs) {\n    return restArgs.length;\n}\n", code);
+        Utils.assertWithAllOptimizationLevelsES6(
+                "\nfunction rest(arg, ...restArgs) {\n    return restArgs.length;\n}\n", code);
     }
 
     @Test
     public void trailingComma() {
         String code = "function rest(...restArgs,) {\n" + "  return restArgs;\n" + "}\n";
 
-        assertEvaluatorException("parameter after rest parameter (test#1)", code);
+        Utils.assertEvaluatorExceptionES6("parameter after rest parameter (test#1)", code);
     }
 
     @Test
     public void twoRestParams() {
         String code = "function rest(...rest1, ...rest2) {\n" + "  return restArgs;\n" + "}\n";
 
-        assertEvaluatorException("parameter after rest parameter (test#1)", code);
+        Utils.assertEvaluatorExceptionES6("parameter after rest parameter (test#1)", code);
     }
 
     @Test
     public void paramAfterRestParam() {
         String code = "function rest(...rest1, param) {\n" + "  return restArgs;\n" + "}\n";
 
-        assertEvaluatorException("parameter after rest parameter (test#1)", code);
-    }
-
-    private static void test(Object expected, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, js, "test", 1, null);
-                    assertEquals(expected, result);
-
-                    return null;
-                });
-    }
-
-    private static void assertEvaluatorException(String expected, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    try {
-                        cx.evaluateString(scope, js, "test", 1, null);
-                        fail("EvaluatorException expected");
-                    } catch (EvaluatorException e) {
-                        assertEquals(expected, e.getMessage());
-                    }
-
-                    return null;
-                });
+        Utils.assertEvaluatorExceptionES6("parameter after rest parameter (test#1)", code);
     }
 }

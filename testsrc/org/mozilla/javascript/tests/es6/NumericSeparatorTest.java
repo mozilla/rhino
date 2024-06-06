@@ -18,16 +18,7 @@ public class NumericSeparatorTest {
     /** Special Tokenizer test for numeric constant at end. */
     @Test
     public void numericAtEndOneDigit() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, "1", "test", 1, null);
-                    assertEquals(1.0, result);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevelsES6(1.0, "1");
     }
 
     /** Special Tokenizer test for numeric constant at end. */
