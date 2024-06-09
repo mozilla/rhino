@@ -77,4 +77,10 @@ public class Utils {
         }
         return DEFAULT_OPT_LEVELS;
     }
+
+    public static boolean isJavaVersionAtLeast(int desiredVersion) {
+        String[] v = System.getProperty("java.version").split("\\.");
+        int version = Integer.parseInt(v[0]);
+        return version >= desiredVersion;
+    }
 }
