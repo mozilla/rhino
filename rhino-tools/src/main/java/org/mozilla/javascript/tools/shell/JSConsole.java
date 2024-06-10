@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.Locale;
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -66,7 +67,7 @@ public class JSConsole extends JFrame implements ActionListener {
                         String name = f.getName();
                         int i = name.lastIndexOf('.');
                         if (i > 0 && i < name.length() - 1) {
-                            String ext = name.substring(i + 1).toLowerCase();
+                            String ext = name.substring(i + 1).toLowerCase(Locale.ROOT);
                             if (ext.equals("js")) {
                                 return true;
                             }

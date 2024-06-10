@@ -2389,10 +2389,12 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return buf.toString();
     }
 
+    @Override
     public int getPosition() {
         return tokenBeg;
     }
 
+    @Override
     public int getLength() {
         return tokenEnd - tokenBeg;
     }

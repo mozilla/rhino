@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ScriptRuntime;
@@ -115,7 +116,7 @@ class XMLCtor extends IdFunctionObject {
                     id = Id_ignoreProcessingInstructions;
                     break L;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#
@@ -220,7 +221,7 @@ class XMLCtor extends IdFunctionObject {
                 X = "defaultSettings";
                 id = Id_defaultSettings;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#

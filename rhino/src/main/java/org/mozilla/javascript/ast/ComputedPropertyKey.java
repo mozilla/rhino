@@ -39,11 +39,7 @@ public class ComputedPropertyKey extends AstNode {
 
     @Override
     public String toSource(int depth) {
-        return new StringBuilder(makeIndent(depth))
-                .append('[')
-                .append(expression.toSource(depth))
-                .append(']')
-                .toString();
+        return makeIndent(depth) + '[' + expression.toSource(depth) + ']';
     }
 
     /** Visits this node, then the expression. */

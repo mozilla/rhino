@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Kit;
@@ -647,7 +648,7 @@ abstract class XMLObjectImpl extends XMLObject {
                     id = Id_processingInstructions;
                     break L;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#

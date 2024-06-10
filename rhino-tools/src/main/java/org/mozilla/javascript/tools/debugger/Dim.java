@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,10 +79,10 @@ public class Dim {
     /**
      * Synchronization object used to allow script evaluations to happen when a thread is resumed.
      */
-    private Object monitor = new Object();
+    private final Object monitor = new Object();
 
     /** Synchronization object used to wait for valid {@link #interruptedContextData}. */
-    private Object eventThreadMonitor = new Object();
+    private final Object eventThreadMonitor = new Object();
 
     /** The action to perform to end the interruption loop. */
     private volatile int returnValue = -1;
@@ -258,7 +259,7 @@ public class Dim {
             }
 
             try {
-                source = Kit.readReader(new InputStreamReader(is));
+                source = Kit.readReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             } finally {
                 is.close();
             }
@@ -1130,6 +1131,9 @@ public class Dim {
         /** Array indicating whether a breakpoint is set on the line. */
         private boolean[] breakpoints;
 
+        /** Lock for same */
+        private final Object breakpointsLock = new Object();
+
         /** Array of FunctionSource objects for the functions in the script. */
         private FunctionSource[] functionSources;
 
@@ -1260,7 +1264,7 @@ public class Dim {
                 throw new IllegalArgumentException(String.valueOf(line));
             }
             boolean changed;
-            synchronized (breakpoints) {
+            synchronized (breakpointsLock) {
                 if (breakpoints[line] != value) {
                     breakpoints[line] = value;
                     changed = true;
@@ -1273,7 +1277,7 @@ public class Dim {
 
         /** Removes all breakpoints from the script. */
         public void removeAllBreakpoints() {
-            synchronized (breakpoints) {
+            synchronized (breakpointsLock) {
                 for (int line = 0; line != breakpoints.length; ++line) {
                     breakpoints[line] = false;
                 }

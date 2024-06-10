@@ -84,8 +84,8 @@ final class NativeBoolean extends IdScriptableObject {
                 //
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
                 b =
-                        args[0] instanceof ScriptableObject
-                                        && ((ScriptableObject) args[0]).avoidObjectDetection()
+                        ((args[0] instanceof ScriptableObject)
+                                        && ((ScriptableObject) args[0]).avoidObjectDetection())
                                 ? false
                                 : ScriptRuntime.toBoolean(args[0]);
             }

@@ -833,6 +833,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         return (long) d;
     }
 
+    @SuppressWarnings("DoNotCallSuggester")
     static void reportConversionError(Object value, Class<?> type) {
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
@@ -989,6 +990,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
+    @SuppressWarnings("EqualsGetClass")
     public boolean equals(Object obj) {
         return obj != null
                 && obj.getClass().equals(getClass())

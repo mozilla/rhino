@@ -7,6 +7,7 @@ package org.mozilla.javascript.engine;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import javax.script.ScriptContext;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -30,7 +31,7 @@ public class Builtins {
 
     void register(Context cx, ScriptableObject scope, ScriptContext sc) {
         if (sc.getWriter() == null) {
-            stdout = new OutputStreamWriter(System.out);
+            stdout = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
         } else {
             stdout = sc.getWriter();
         }

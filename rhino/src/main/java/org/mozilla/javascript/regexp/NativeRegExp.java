@@ -1408,7 +1408,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (c >= cs.length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
-        cs.bits[byteIndex] |= 1 << (c & 0x7);
+        cs.bits[byteIndex] |= (byte) (1 << (c & 0x7));
     }
 
     /* Add a character range, c1 to c2 (inclusive) to the RECharSet */
@@ -1422,15 +1422,15 @@ public class NativeRegExp extends IdScriptableObject {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
 
-        c1 &= 0x7;
-        c2 &= 0x7;
+        c1 = (char) (c1 & 0x7);
+        c2 = (char) (c2 & 0x7);
 
         if (byteIndex1 == byteIndex2) {
-            cs.bits[byteIndex1] |= ((0xFF) >> (7 - (c2 - c1))) << c1;
+            cs.bits[byteIndex1] |= (byte) (((0xFF) >> (7 - (c2 - c1))) << c1);
         } else {
-            cs.bits[byteIndex1] |= 0xFF << c1;
+            cs.bits[byteIndex1] |= (byte) (0xFF << c1);
             for (i = byteIndex1 + 1; i < byteIndex2; i++) cs.bits[i] = (byte) 0xFF;
-            cs.bits[byteIndex2] |= (0xFF) >> (7 - c2);
+            cs.bits[byteIndex2] |= (byte) ((0xFF) >> (7 - c2));
         }
     }
 

@@ -633,6 +633,7 @@ public class Context implements Closeable {
         this.sealKey = null;
     }
 
+    @SuppressWarnings("DoNotCallSuggester")
     static void onSealedMutation() {
         throw new IllegalStateException();
     }

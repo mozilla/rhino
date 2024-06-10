@@ -143,11 +143,10 @@ public class Timers {
 
         @Override
         public boolean equals(Object obj) {
-            try {
-                return expiration == ((Timeout) obj).expiration;
-            } catch (ClassCastException cce) {
+            if (!(obj instanceof Timeout)) {
                 return false;
             }
+            return expiration == ((Timeout) obj).expiration;
         }
 
         @Override

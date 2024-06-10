@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Kit;
@@ -243,7 +244,7 @@ public abstract class ShellConsole {
 
         SimpleShellConsole(InputStream in, PrintStream ps, Charset cs) {
             this.in = in;
-            this.out = new PrintWriter(ps);
+            this.out = new PrintWriter(ps, false, StandardCharsets.UTF_8);
             this.reader = new BufferedReader(new InputStreamReader(in, cs));
         }
 

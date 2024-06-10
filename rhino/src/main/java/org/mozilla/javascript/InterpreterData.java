@@ -170,4 +170,9 @@ final class InterpreterData implements Serializable, DebuggableScript {
         }
         return h;
     }
+
+    @Override
+    public String toString() {
+        return itsSourceFile + ':' + itsName;
+    }
 }

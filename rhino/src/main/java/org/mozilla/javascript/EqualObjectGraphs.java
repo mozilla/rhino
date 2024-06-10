@@ -55,9 +55,9 @@ final class EqualObjectGraphs {
     // Object pairs already known to be equal. Used to short-circuit repeated traversals of objects
     // reachable through
     // different paths as well as to detect structural inequality.
-    private final Map<Object, Object> knownEquals = new IdentityHashMap<>();
+    private final IdentityHashMap<Object, Object> knownEquals = new IdentityHashMap<>();
     // Currently compared objects; used to avoid infinite recursion over cyclic object graphs.
-    private final Map<Object, Object> currentlyCompared = new IdentityHashMap<>();
+    private final IdentityHashMap<Object, Object> currentlyCompared = new IdentityHashMap<>();
 
     static <T> T withThreadLocal(java.util.function.Function<EqualObjectGraphs, T> action) {
         final EqualObjectGraphs currEq = instance.get();

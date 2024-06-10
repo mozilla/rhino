@@ -100,6 +100,7 @@ public class JavaPolicySecurity extends SecurityProxy {
         }
 
         @Override
+        @SuppressWarnings("ObjectToString")
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(getClass().getName());

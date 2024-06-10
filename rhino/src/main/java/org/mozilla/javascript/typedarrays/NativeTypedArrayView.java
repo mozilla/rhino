@@ -683,20 +683,19 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (o == null) {
             return false;
         }
-        try {
-            NativeTypedArrayView<T> v = (NativeTypedArrayView<T>) o;
-            if (length != v.length) {
-                return false;
-            }
-            for (int i = 0; i < length; i++) {
-                if (!js_get(i).equals(v.js_get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (ClassCastException cce) {
+        if (!(o instanceof NativeTypedArrayView)) {
             return false;
         }
+        NativeTypedArrayView<T> v = (NativeTypedArrayView<T>) o;
+        if (length != v.length) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            if (!js_get(i).equals(v.js_get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

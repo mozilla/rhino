@@ -1,13 +1,14 @@
 plugins {
     id 'rhino.java-conventions'
-    id 'com.github.spotbugs'
     id 'maven-publish'
     id 'checkstyle'
     id 'jacoco'
+    id 'net.ltgt.errorprone'
 }
 
-import com.github.spotbugs.snom.Confidence
-import com.github.spotbugs.snom.Effort
+dependencies {
+    errorprone "com.google.errorprone:error_prone_core:2.28.0"
+}
 
 version = project.version
 
@@ -26,20 +27,30 @@ tasks.withType(Jar).configureEach {
     }
 }
 
-spotbugs {
-    effort = Effort.valueOf('LESS')
-    reportLevel = Confidence.valueOf('MEDIUM')
-    excludeFilter = file("${projectDir}/../config/spotbugs/spotbugs-exclude.xml")
-}
-
-spotbugsMain {
-    reports {
-        html {
-            required = true
-            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-            stylesheet = 'fancy-hist.xsl'
-        }
-    }
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable(
+        // JavaDoc stuff
+        "AlmostJavadoc",
+        "EmptyBlockTag",
+        "EscapedEntity",
+        "MissingSummary",
+        "InvalidBlockTag",
+        "InvalidLink",
+        "InvalidParam",
+        "NotJavadoc",
+        "UnicodeEscape",
+        // Great ideas for when minimum version is more than Java 11
+        "PatternMatchingInstanceof",
+        // Stuff that we just love to do but should do less of eventually
+        "EmptyCatch",
+        "LabelledBreakTarget",
+        "JavaUtilDate",
+        // Less important for now, more stylistic than bug
+        "InlineMeSuggester",
+        "NonApiType",
+        "UnnecessaryParentheses",
+        "UnusedVariable")
+    options.errorprone.excludedPaths = '.+/src/test/java/.+'
 }
 
 jacocoTestReport {

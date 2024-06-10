@@ -315,6 +315,7 @@ public final class Interpreter extends Icode implements Evaluator {
             }
         }
 
+        @SuppressWarnings("ReferenceEquality")
         private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
             // Iterative instead of recursive, as interpreter stack depth can
             // be larger than JVM stack depth.
@@ -388,7 +389,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
                 // Now walk parents in parallel until a shared frame is found
                 // or until the root is reached.
-                while (chain1 != chain2 && chain1 != null) {
+                while (!Objects.equals(chain1, chain2) && chain1 != null) {
                     chain1 = chain1.parentFrame;
                     chain2 = chain2.parentFrame;
                 }
@@ -1781,8 +1782,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     // condition are formulated so that they short-circuit the loop
                                     // if the function is already an interpreted function, which
                                     // should be the majority of cases.
-                                    for (boolean notInt = !(fun instanceof InterpretedFunction);
-                                            notInt; ) {
+                                    for (; ; ) {
                                         if (fun instanceof ArrowFunction) {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
@@ -2702,7 +2702,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 if (frame == null) {
                     break;
                 }
-                if (cjump != null && cjump.branchFrame == frame) {
+                if (cjump != null && Objects.equals(cjump.branchFrame, frame)) {
                     // Continuation branch point was hit,
                     // restart the state loop to reenter continuation
                     indexReg = -1;
@@ -3228,7 +3228,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Clear throwable to indicate that exceptions are OK
             throwable = null;
 
-            if (cjump.branchFrame != frame) Kit.codeBug();
+            if (!Objects.equals(cjump.branchFrame, frame)) Kit.codeBug();
 
             // Check that we have at least one frozen frame
             // in the case of detached continuation restoration:
