@@ -3,6 +3,7 @@ plugins {
     id 'com.github.spotbugs'
     id 'maven-publish'
     id 'checkstyle'
+    id 'jacoco'
 }
 
 import com.github.spotbugs.snom.Confidence
@@ -38,6 +39,14 @@ spotbugsMain {
             outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
             stylesheet = 'fancy-hist.xsl'
         }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
     }
 }
 

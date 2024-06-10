@@ -1,5 +1,7 @@
 plugins {
     id 'rhino.java-conventions'
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
 }
 
 dependencies {
@@ -44,5 +46,13 @@ test {
     systemProperty 'test262properties', System.getProperty('test262properties')
     if (System.getProperty('updateTest262properties') != null) {
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
     }
 }

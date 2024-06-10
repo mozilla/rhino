@@ -94,6 +94,21 @@ You can also run the benchmarks:
 
     ./gradlew jmh
 
+### Code Coverage
+
+The "Jacoco" coverage is enabled by default for the main published modules as well as the special 
+"tests" module. Coverage is generated for each of the main projects separately and available by
+running
+
+    ./gradlew jacocoTestReport
+
+To see an aggregated coverage report for everything, which is probably what you want, run
+
+    ./gradlew testCodeCoverageReport
+
+The result is in:
+    ./tests/build/reports/jacoco/testCodeCoverageReport/html
+
 ## Releasing and publishing new version
 
 1. Ensure all tests are passing
