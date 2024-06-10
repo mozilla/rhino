@@ -25,6 +25,7 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 class DToA {
 
@@ -298,7 +299,7 @@ class DToA {
             BigInteger[] divResult = b.divideAndRemainder(s);
             b = divResult[1];
             digit = (char) (divResult[0].intValue());
-            if (mlo == mhi) mlo = mhi = mlo.multiply(bigBase);
+            if (Objects.equals(mlo, mhi)) mlo = mhi = mlo.multiply(bigBase);
             else {
                 mlo = mlo.multiply(bigBase);
                 mhi = mhi.multiply(bigBase);
@@ -514,7 +515,7 @@ class DToA {
                             : ((long) word1(d)) << (32 - i);
             //            d2 = x;
             //            word0(d2) -= 31*Exp_msk1; /* adjust exponent */
-            d2 = setWord0(x, word0(x) - 31 * Exp_msk1);
+            d2 = setWord0((double) x, word0((double) x) - 31 * Exp_msk1);
             i -= (Bias + (P - 1) - 1) + 1;
             denorm = true;
         }
@@ -988,7 +989,7 @@ class DToA {
                 buf.append(dig);
                 if (i == ilim) break;
                 b = b.multiply(BigInteger.valueOf(10));
-                if (mlo == mhi) mlo = mhi = mhi.multiply(BigInteger.valueOf(10));
+                if (Objects.equals(mlo, mhi)) mlo = mhi = mhi.multiply(BigInteger.valueOf(10));
                 else {
                     mlo = mlo.multiply(BigInteger.valueOf(10));
                     mhi = mhi.multiply(BigInteger.valueOf(10));

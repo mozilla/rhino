@@ -8,6 +8,7 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.mozilla.javascript.Token;
 
 /**
@@ -112,7 +113,7 @@ public class VariableDeclaration extends AstNode {
     }
 
     private String declTypeName() {
-        return Token.typeToName(type).toLowerCase();
+        return Token.typeToName(type).toLowerCase(Locale.ROOT);
     }
 
     @Override

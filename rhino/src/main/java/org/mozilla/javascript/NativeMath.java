@@ -250,8 +250,8 @@ final class NativeMath extends ScriptableObject {
     private static Object fround(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         // Rely on Java to truncate down to a "float" here"
-        x = (float) x;
-        return ScriptRuntime.wrapNumber(x);
+        float fx = (float) x;
+        return ScriptRuntime.wrapNumber(fx);
     }
 
     // Based on code from

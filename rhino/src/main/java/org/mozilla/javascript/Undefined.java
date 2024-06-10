@@ -37,7 +37,7 @@ public class Undefined implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        return isUndefined(obj) || super.equals(obj);
+        return isUndefined(obj) || obj == this;
     }
 
     @Override
@@ -132,7 +132,7 @@ public class Undefined implements Serializable {
 
                 @Override
                 public boolean equals(Object obj) {
-                    return isUndefined(obj) || super.equals(obj);
+                    return isUndefined(obj) || (obj == this);
                 }
 
                 @Override

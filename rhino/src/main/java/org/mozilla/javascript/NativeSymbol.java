@@ -254,6 +254,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
         return ret;
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private Object js_keyFor(Context cx, Scriptable scope, Object[] args) {
         Object s = (args.length > 0 ? args[0] : Undefined.instance);
         if (!(s instanceof NativeSymbol)) {
@@ -315,6 +316,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
      * object is still used. Account for that here: an "Object" that was created from a Symbol has a
      * different value of the slot.
      */
+    @SuppressWarnings("ReferenceEquality")
     public boolean isSymbol() {
         return (symbolData == this);
     }

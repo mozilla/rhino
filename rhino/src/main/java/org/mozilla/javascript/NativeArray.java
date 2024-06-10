@@ -115,7 +115,7 @@ public class NativeArray extends IdScriptableObject implements List {
     @Override
     protected Object getInstanceIdValue(int id) {
         if (id == Id_length) {
-            return ScriptRuntime.wrapNumber(length);
+            return ScriptRuntime.wrapNumber((double) length);
         }
         return super.getInstanceIdValue(id);
     }
@@ -1027,7 +1027,7 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     private static Object setLengthProperty(Context cx, Scriptable target, long length) {
-        Object len = ScriptRuntime.wrapNumber(length);
+        Object len = ScriptRuntime.wrapNumber((double) length);
         ScriptableObject.putProperty(target, "length", len);
         return len;
     }
@@ -1377,7 +1377,7 @@ public class NativeArray extends IdScriptableObject implements List {
                     na.dense[(int) na.length++] = arg;
                     na.modCount++;
                 }
-                return ScriptRuntime.wrapNumber(na.length);
+                return ScriptRuntime.wrapNumber((double) na.length);
             }
         }
         long length = getLengthProperty(cx, o);
@@ -1488,7 +1488,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 System.arraycopy(args, 0, na.dense, 0, args.length);
                 na.length += args.length;
                 na.modCount++;
-                return ScriptRuntime.wrapNumber(na.length);
+                return ScriptRuntime.wrapNumber((double) na.length);
             }
         }
         long length = getLengthProperty(cx, o);
@@ -2236,7 +2236,8 @@ public class NativeArray extends IdScriptableObject implements List {
                     if (ScriptRuntime.toBoolean(result)) return elem;
                     break;
                 case Id_findIndex:
-                    if (ScriptRuntime.toBoolean(result)) return ScriptRuntime.wrapNumber(i);
+                    if (ScriptRuntime.toBoolean(result))
+                        return ScriptRuntime.wrapNumber((double) i);
                     break;
             }
         }
@@ -2541,17 +2542,17 @@ public class NativeArray extends IdScriptableObject implements List {
                     "fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
 
         return new AbstractList() {
-            private int modCount = NativeArray.this.modCount;
+            private int mc = NativeArray.this.modCount;
 
             @Override
             public Object get(int index) {
-                checkModCount(modCount);
+                checkModCount(mc);
                 return NativeArray.this.get(index + fromIndex);
             }
 
             @Override
             public int size() {
-                checkModCount(modCount);
+                checkModCount(mc);
                 return toIndex - fromIndex;
             }
         };

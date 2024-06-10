@@ -582,7 +582,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
     private static void generateCtor(
             ClassFileWriter cfw, String adapterName, String superName, Constructor<?> superCtor) {
-        short locals = 3; // this + factory + delegee
+        int locals = 3; // this + factory + delegee
         Class<?>[] parameters = superCtor.getParameterTypes();
 
         // Note that we swapped arguments in app-facing constructors to avoid
@@ -611,7 +611,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
             // Invoke base class constructor
             cfw.add(ByteCode.ALOAD_0); // this
-            short paramOffset = 3;
+            int paramOffset = 3;
             for (Class<?> parameter : parameters) {
                 paramOffset += generatePushParam(cfw, paramOffset, parameter);
             }

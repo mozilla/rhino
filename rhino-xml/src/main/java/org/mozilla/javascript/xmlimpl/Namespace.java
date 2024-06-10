@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
@@ -58,14 +59,13 @@ class Namespace extends IdScriptableObject {
         return toString();
     }
 
-    private boolean equals(Namespace n) {
-        return uri().equals(n.uri());
-    }
-
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Namespace)) return false;
-        return equals((Namespace) obj);
+    public boolean equals(Object o) {
+        if (!(o instanceof Namespace)) {
+            return false;
+        }
+        Namespace n = (Namespace) o;
+        return uri().equals(n.uri());
     }
 
     @Override
@@ -114,7 +114,7 @@ class Namespace extends IdScriptableObject {
                 X = "prefix";
                 id = Id_prefix;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#
@@ -187,7 +187,7 @@ class Namespace extends IdScriptableObject {
                 X = "constructor";
                 id = Id_constructor;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#

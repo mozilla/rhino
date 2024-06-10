@@ -142,8 +142,8 @@ public class InfixExpression extends AstNode {
                 return right != null && right.hasSideEffects();
             case Token.AND:
             case Token.OR:
-                return left != null && left.hasSideEffects()
-                        || (right != null && right.hasSideEffects());
+                return ((left != null) && left.hasSideEffects())
+                        || ((right != null) && right.hasSideEffects());
             default:
                 return super.hasSideEffects();
         }

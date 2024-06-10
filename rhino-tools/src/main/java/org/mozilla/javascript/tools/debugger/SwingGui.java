@@ -21,7 +21,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.MenuComponent;
-import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -41,6 +40,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -48,6 +49,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,6 +57,7 @@ import java.util.Comparator;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -318,7 +321,7 @@ public class SwingGui extends JFrame implements GuiCallback {
                         String n = f.getName();
                         int i = n.lastIndexOf('.');
                         if (i > 0 && i < n.length() - 1) {
-                            String ext = n.substring(i + 1).toLowerCase();
+                            String ext = n.substring(i + 1).toLowerCase(Locale.ROOT);
                             if (ext.equals("js")) {
                                 return true;
                             }
@@ -716,7 +719,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     private String readFile(String fileName) {
         String text;
         try {
-            try (Reader r = new FileReader(fileName)) {
+            try (Reader r = new FileReader(fileName, StandardCharsets.UTF_8)) {
                 text = Kit.readReader(r);
             }
         } catch (IOException ex) {
@@ -834,9 +837,6 @@ public class SwingGui extends JFrame implements GuiCallback {
             console.show();
             desk.getDesktopManager().activateFrame(console);
             console.consoleTextArea.requestFocus();
-        } else if (cmd.equals("Cut")) {
-        } else if (cmd.equals("Copy")) {
-        } else if (cmd.equals("Paste")) {
         } else if (cmd.equals("Go to function...")) {
             FindFunction dlg = new FindFunction(this, "Go to function", "Function");
             dlg.showDialog(this);
@@ -1010,6 +1010,7 @@ class EvalTextArea extends JTextArea implements KeyListener, DocumentListener {
     }
 
     /** Called when Enter is pressed. */
+    @SuppressWarnings("CatchAndPrintStackTrace")
     private synchronized void returnPressed() {
         Document doc = getDocument();
         int len = doc.getLength();
@@ -1335,26 +1336,27 @@ class FileTextArea extends JTextArea
         if (pos >= 0) {
             try {
                 int line = getLineOfOffset(pos);
-                Rectangle rect = modelToView(pos);
+                Rectangle2D rect = modelToView2D(pos);
                 if (rect == null) {
                     select(pos, pos);
                 } else {
                     try {
-                        Rectangle nrect = modelToView(getLineStartOffset(line + 1));
+                        Rectangle2D nrect = modelToView2D(getLineStartOffset(line + 1));
                         if (nrect != null) {
                             rect = nrect;
                         }
                     } catch (Exception exc) {
                     }
                     JViewport vp = (JViewport) getParent();
-                    Rectangle viewRect = vp.getViewRect();
-                    if (viewRect.y + viewRect.height > rect.y) {
+                    Rectangle2D viewRect = vp.getViewRect();
+                    if (viewRect.getY() + viewRect.getHeight() > rect.getY()) {
                         // need to scroll up
                         select(pos, pos);
                     } else {
                         // need to scroll down
-                        rect.y += (viewRect.height - rect.height) / 2;
-                        scrollRectToVisible(rect);
+                        double newY = rect.getY() + ((viewRect.getHeight() - rect.getHeight()) / 2);
+                        rect.setRect(rect.getX(), newY, rect.getWidth(), rect.getHeight());
+                        scrollRectToVisible(rect.getBounds());
                         select(pos, pos);
                     }
                 }
@@ -1421,7 +1423,7 @@ class FileTextArea extends JTextArea
     /** Performs an action. */
     @Override
     public void actionPerformed(ActionEvent e) {
-        int pos = viewToModel(new Point(popup.x, popup.y));
+        int pos = viewToModel2D(new Point2D.Double(popup.x, popup.y));
         popup.setVisible(false);
         String cmd = e.getActionCommand();
         int line = -1;
@@ -1511,7 +1513,7 @@ class MoreWindows extends JDialog implements ActionListener {
         // model.fireIntervalAdded(model, 0, data.length);
         setButton.setEnabled(true);
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        list.addMouseListener(new MouseHandler());
+        list.addMouseListener(new MWMouseHandler());
         JScrollPane listScroller = new JScrollPane(list);
         listScroller.setPreferredSize(new Dimension(320, 240));
         // XXX: Must do the following, too, or else the scroller thinks
@@ -1585,7 +1587,7 @@ class MoreWindows extends JDialog implements ActionListener {
     }
 
     /** MouseListener implementation for {@link #list}. */
-    private class MouseHandler extends MouseAdapter {
+    private class MWMouseHandler extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
@@ -1640,7 +1642,7 @@ class FindFunction extends JDialog implements ActionListener {
 
         setButton.setEnabled(a.length > 0);
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        list.addMouseListener(new MouseHandler());
+        list.addMouseListener(new FFMouseHandler());
         JScrollPane listScroller = new JScrollPane(list);
         listScroller.setPreferredSize(new Dimension(320, 240));
         listScroller.setMinimumSize(new Dimension(250, 80));
@@ -1725,7 +1727,7 @@ class FindFunction extends JDialog implements ActionListener {
     }
 
     /** MouseListener implementation for {@link #list}. */
-    class MouseHandler extends MouseAdapter {
+    class FFMouseHandler extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {

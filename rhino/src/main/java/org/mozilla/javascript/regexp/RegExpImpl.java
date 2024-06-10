@@ -557,7 +557,7 @@ public class RegExpImpl implements RegExpProxy {
                 return result;
             }
             if (limit > target.length()) {
-                limit = 1 + target.length();
+                limit = 1L + target.length();
             }
         }
 

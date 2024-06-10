@@ -153,13 +153,13 @@ final class NativeBigInt extends IdScriptableObject {
                             if (mod == 0) {
                                 newBytes[0] = newBytes[1] < 0 ? (byte) -1 : 0;
                             } else if ((newBytes[0] & (1 << (mod - 1))) != 0) {
-                                newBytes[0] |= -1 << mod;
+                                newBytes[0] = (byte) (newBytes[0] | (-1 << mod));
                             } else {
-                                newBytes[0] &= (1 << mod) - 1;
+                                newBytes[0] = (byte) (newBytes[0] & ((1 << mod) - 1));
                             }
                             break;
                         case ConstructorId_asUintN:
-                            newBytes[0] &= (1 << mod) - 1;
+                            newBytes[0] = (byte) (newBytes[0] & ((1 << mod) - 1));
                             break;
                     }
                     return new BigInteger(newBytes);

@@ -593,7 +593,7 @@ public class ScriptRuntime {
                     case ZEROS_AFTER_54:
                         // x1.1 -> x1 + 1 (round up)
                         // x0.1 -> x0 (round down)
-                        if (bit54 & bit53) sum += 1.0;
+                        if (bit54 && bit53) sum += 1.0;
                         sum *= factor;
                         break;
                     case MIXED_AFTER_54:
@@ -3868,7 +3868,7 @@ public class ScriptRuntime {
         }
     }
 
-    private static <T> boolean compareTo(double d1, double d2, int op) {
+    private static boolean compareTo(double d1, double d2, int op) {
         switch (op) {
             case Token.GE:
                 return d1 >= d2;
@@ -3950,12 +3950,9 @@ public class ScriptRuntime {
             // Cleanup cached references
             cx.cachedXMLLib = null;
             cx.isTopLevelStrict = previousTopLevelStrict;
-
-            if (cx.currentActivationCall != null) {
-                // Function should always call exitActivationFunction
-                // if it creates activation record
-                throw new IllegalStateException();
-            }
+            // Function should always call exitActivationFunction
+            // if it creates activation record
+            assert (cx.currentActivationCall == null);
         }
         return result;
     }

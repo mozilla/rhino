@@ -72,11 +72,10 @@ public class StringLiteral extends AstNode {
 
     @Override
     public String toSource(int depth) {
-        return new StringBuilder(makeIndent(depth))
-                .append(quoteChar)
-                .append(ScriptRuntime.escapeString(value, quoteChar))
-                .append(quoteChar)
-                .toString();
+        return makeIndent(depth)
+                + quoteChar
+                + ScriptRuntime.escapeString(value, quoteChar)
+                + quoteChar;
     }
 
     /** Visits this node. There are no children to visit. */

@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 
@@ -744,7 +745,7 @@ public class NativeObject extends IdScriptableObject implements Map {
     @Override
     public boolean containsValue(Object value) {
         for (Object obj : values()) {
-            if (value == obj || value != null && value.equals(obj)) {
+            if (Objects.equals(value, obj)) {
                 return true;
             }
         }

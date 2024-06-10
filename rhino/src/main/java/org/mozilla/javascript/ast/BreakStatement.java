@@ -17,7 +17,7 @@ import org.mozilla.javascript.Token;
 public class BreakStatement extends Jump {
 
     private Name breakLabel;
-    private AstNode target;
+    private AstNode targetNode;
 
     {
         type = Token.BREAK;
@@ -63,7 +63,7 @@ public class BreakStatement extends Jump {
      * @return the break target. Only {@code null} if the source code has an error in it.
      */
     public AstNode getBreakTarget() {
-        return target;
+        return targetNode;
     }
 
     /**
@@ -74,7 +74,7 @@ public class BreakStatement extends Jump {
      */
     public void setBreakTarget(Jump target) {
         assertNotNull(target);
-        this.target = target;
+        this.targetNode = target;
         setJumpStatement(target);
     }
 

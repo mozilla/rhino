@@ -56,6 +56,7 @@ class JavaMembers_jdk11 extends JavaMembers {
 
         // Obtain the module
         Method getmodule;
+        @SuppressWarnings("GetClassOnClass")
         Class<?> cl = clazz.getClass();
         try {
             getmodule = cl.getMethod("getModule");

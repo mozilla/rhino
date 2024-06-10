@@ -270,8 +270,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
         private Object ensureId(int id) {
             Object[] array = valueArray;
-            if (array == null) {
-                synchronized (this) {
+            synchronized (this) {
+                if (array == null) {
                     array = valueArray;
                     if (array == null) {
                         array = new Object[maxId * SLOT_SPAN];

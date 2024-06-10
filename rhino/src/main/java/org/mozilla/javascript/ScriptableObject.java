@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -1268,7 +1269,7 @@ public abstract class ScriptableObject
                     propName = methodName.substring(3);
                     if (Character.isUpperCase(propName.charAt(0))) {
                         if (propName.length() == 1) {
-                            propName = propName.toLowerCase();
+                            propName = propName.toLowerCase(Locale.ROOT);
                         } else if (!Character.isUpperCase(propName.charAt(1))) {
                             propName =
                                     Character.toLowerCase(propName.charAt(0))
