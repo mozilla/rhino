@@ -928,6 +928,8 @@ public class Parser {
                 && (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
             // ES6 generator function
             return function(type, true);
+        } else if (matchToken(Token.ASSIGN, true)) {
+            AstNode rhs = assignExpr(); // TODO(satish)
         } else {
             if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                 // Note that memberExpr can not start with '(' like
@@ -2405,13 +2407,6 @@ public class Parser {
             tt = peekToken();
         }
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
-            if (inDestructuringAssignment) {
-                // default values inside destructuring assignments,
-                // like 'var [a = 10] = b' or 'var {a: b = 10} = c',
-                // are not supported
-                reportError("msg.destruct.default.vals");
-            }
-
             consumeToken();
 
             // Pull out JSDoc info and reset it before recursing.
@@ -3145,7 +3140,7 @@ public class Parser {
     private AstNode destructuringPrimaryExpr() throws IOException, ParserException {
         try {
             inDestructuringAssignment = true;
-            return primaryExpr();
+            return assignExpr();
         } finally {
             inDestructuringAssignment = false;
         }
@@ -3599,7 +3594,41 @@ public class Parser {
                 // many tokens.)
                 int peeked = peekToken();
                 if (peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC) {
-                    if (peeked == Token.LP) {
+                    if (peeked == Token.ASSIGN) {
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            FunctionNode fnNode = (FunctionNode) currentScriptOrFn;
+                            Object[] existing = fnNode.getDefaultParams();
+                            Object[] current;
+                            int current_size = 0;
+                            if (existing == null) {
+                                existing = new Object[2];
+                                fnNode.setDefaultParams(existing);
+                                current = existing;
+                            } else {
+                                current = new Object[existing.length + 2];
+                                System.arraycopy(existing, 0, current, 0, existing.length);
+                                current_size = existing.length;
+                                existing = null;
+                            }
+
+                            if (matchToken(Token.ASSIGN, true)) {
+                                AstNode valueNode = assignExpr();
+
+                                current[current_size] = propertyName;
+                                current[current.length - 1] = valueNode;
+                                fnNode.setDefaultParams(current);
+
+                                fnNode.addChildToBack(
+                                        new Node(Token.SETNAME, createName(Token.BINDNAME, propertyName, null), valueNode));
+// TODO(satish):
+//                                defineSymbol(Token.SETNAME, propertyName, true);
+//                                List<String> destructuringNames =
+//                                        (List<String>) fnNode.getProp(Node.DESTRUCTURING_NAMES);
+//                                destructuringNames.add(propertyName);
+                                continue;
+                            }
+                        }
+                    } else if (peeked == Token.LP) {
                         entryKind = METHOD_ENTRY;
                     } else if (pname.getType() == Token.NAME) {
                         if ("get".equals(propertyName)) {
@@ -4134,6 +4163,40 @@ public class Parser {
                 }
                 comma.addChildToBack(simpleAssignment(left, createName(tempName)));
                 break;
+            case Token.ASSIGN:
+                if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    FunctionNode fnNode = (FunctionNode) currentScriptOrFn;
+                    Object[] existing = fnNode.getDefaultParams();
+                    Object[] current;
+                    int current_size = 0;
+                    if (existing == null) {
+                        existing = new Object[2];
+                        fnNode.setDefaultParams(existing);
+                        current = existing;
+                    } else {
+                        current = new Object[existing.length + 2];
+                        System.arraycopy(existing, 0, current, 0, existing.length);
+                        current_size = existing.length;
+                        existing = null;
+                    }
+                    AstNode paramNode = ((Assignment) left).getLeft();
+                    AstNode valueNode = ((Assignment) left).getRight();
+
+                    current[current_size] = tempName;
+                    current[current.length - 1] = valueNode;
+                    fnNode.setDefaultParams(current);
+
+                    comma.addChildToBack( // TODO(satish): what should be the op?
+                            new Node(Token.SETNAME, createName(Token.BINDNAME, tempName, null), valueNode));
+                    if (variableType != -1) {
+                        defineSymbol(variableType, tempName, true);
+                        destructuringNames.add(tempName);
+                    }
+                    createDestructuringAssignment(variableType, paramNode, createName(currentScriptOrFn.getNextTempName()));
+                } else { // TODO(satish): appropriate error?
+                    reportError("msg.bad.assign.left");
+                }
+                break;
             default:
                 reportError("msg.bad.assign.left");
         }
@@ -4167,6 +4230,35 @@ public class Parser {
                 if (variableType != -1) {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
+                }
+            } else if (n.getType() == Token.ASSIGN
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                FunctionNode fnNode = (FunctionNode) currentScriptOrFn;
+                Object[] existing = fnNode.getDefaultParams();
+                Object[] current;
+                int current_size = 0;
+                if (existing == null) {
+                    existing = new Object[2];
+                    fnNode.setDefaultParams(existing);
+                    current = existing;
+                } else {
+                    current = new Object[existing.length + 2];
+                    System.arraycopy(existing, 0, current, 0, existing.length);
+                    current_size = existing.length;
+                    existing = null;
+                }
+                AstNode paramNode = ((Assignment) n).getLeft();
+                AstNode valueNode = ((Assignment) n).getRight();
+
+                current[current_size] = paramNode.getString();
+                current[current.length - 1] = valueNode;
+                fnNode.setDefaultParams(current);
+
+                parent.addChildToBack(
+                        new Node(setOp, createName(Token.BINDNAME, paramNode.getString(), null), rightElem));
+                if (variableType != -1) {
+                    defineSymbol(variableType, paramNode.getString(), true);
+                    destructuringNames.add(paramNode.getString());
                 }
             } else {
                 parent.addChildToBack(
@@ -4222,6 +4314,35 @@ public class Parser {
                 if (variableType != -1) {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
+                }
+            } else if (value.getType() == Token.ASSIGN
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                FunctionNode fnNode = (FunctionNode) currentScriptOrFn;
+                Object[] existing = fnNode.getDefaultParams();
+                Object[] current;
+                int current_size = 0;
+                if (existing == null) {
+                    existing = new Object[2];
+                    fnNode.setDefaultParams(existing);
+                    current = existing;
+                } else {
+                    current = new Object[existing.length + 2];
+                    System.arraycopy(existing, 0, current, 0, existing.length);
+                    current_size = existing.length;
+                    existing = null;
+                }
+                AstNode paramNode = ((Assignment) value).getLeft();
+                AstNode valueNode = ((Assignment) value).getRight();
+
+                current[current_size] = paramNode.getString();
+                current[current.length - 1] = valueNode;
+                fnNode.setDefaultParams(current);
+
+                parent.addChildToBack(
+                        new Node(setOp, createName(Token.BINDNAME, paramNode.getString(), null), rightElem));
+                if (variableType != -1) {
+                    defineSymbol(variableType, paramNode.getString(), true);
+                    destructuringNames.add(paramNode.getString());
                 }
             } else {
                 parent.addChildToBack(
