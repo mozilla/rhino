@@ -2531,6 +2531,10 @@ public final class IRFactory {
             case Token.THIS:
                 decompiler.addToken(node.getType());
                 break;
+            case Token.ASSIGN:
+                decompile(((Assignment)node).getLeft());
+                decompile(((Assignment)node).getRight());
+                break;
             default:
                 Kit.codeBug("unexpected token: " + Token.typeToName(node.getType()));
         }
