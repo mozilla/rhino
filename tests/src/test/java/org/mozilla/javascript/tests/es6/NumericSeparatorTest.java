@@ -65,19 +65,6 @@ public class NumericSeparatorTest {
     /** Special Tokenizer test for numeric separator constant at end. */
     @Test
     public void numericSeparatorAtEnd() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    try {
-                        cx.evaluateString(scope, "1_", "test", 1, null);
-                        Assert.fail("EvaluatorException expected");
-                    } catch (EvaluatorException e) {
-                        // expected
-                    }
-
-                    return null;
-                });
+        Utils.assertEvaluatorExceptionES6("number format error (test#1)", "1_");
     }
 }
