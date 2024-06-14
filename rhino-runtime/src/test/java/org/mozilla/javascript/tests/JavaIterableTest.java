@@ -15,8 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
@@ -25,20 +23,6 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 
 public class JavaIterableTest {
-
-    private Context cx;
-    private Scriptable global;
-
-    @Before
-    public void init() {
-        cx = Context.enter();
-        global = cx.initStandardObjects();
-    }
-
-    @After
-    public void cleanup() {
-        Context.exit();
-    }
 
     @Test
     public void map() {
@@ -151,11 +135,7 @@ public class JavaIterableTest {
         Object o = new Object();
         String script = "for (var e of value) ;";
 
-        assertThrows(
-                EcmaError.class,
-                () -> {
-                    runScript(script, o);
-                });
+        assertThrows(EcmaError.class, () -> runScript(script, o));
     }
 
     private Object runScript(String scriptSourceText, Object value) {
@@ -163,6 +143,7 @@ public class JavaIterableTest {
                 .call(
                         context -> {
                             context.setLanguageVersion(Context.VERSION_ES6);
+                            Scriptable global = context.initStandardObjects();
                             Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return context.evaluateString(scope, scriptSourceText, "", 1, null);
