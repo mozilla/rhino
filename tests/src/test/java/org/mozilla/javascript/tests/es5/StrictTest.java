@@ -1,9 +1,6 @@
 package org.mozilla.javascript.tests.es5;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tests.Utils;
 
 /**
@@ -14,21 +11,23 @@ public class StrictTest {
 
     @Test
     public void functionCtor() {
-        final String script = "(function() {"
-                + "'use strict';"
-                + "Function('with(this) {  }')();"
-                + "})();"
-                + "'done'";
+        final String script =
+                "(function() {"
+                        + "'use strict';"
+                        + "Function('with(this) {  }')();"
+                        + "})();"
+                        + "'done'";
         Utils.assertWithAllOptimizationLevels("done", script);
     }
 
     @Test
     public void newFunction() {
-        final String script = "(function() {"
-                + "'use strict';"
-                + "new Function('with(this) {  }')();"
-                + "})();" +
-                "'done'";
+        final String script =
+                "(function() {"
+                        + "'use strict';"
+                        + "new Function('with(this) {  }')();"
+                        + "})();"
+                        + "'done'";
         Utils.assertWithAllOptimizationLevels("done", script);
     }
 }
