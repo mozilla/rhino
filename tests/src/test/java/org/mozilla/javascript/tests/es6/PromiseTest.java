@@ -19,52 +19,24 @@ public class PromiseTest {
 
     @Test
     public void ctorCallableThis() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects(new TopLevel(), false);
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "  var r = '';"
-                                            + "  var p = new Promise(function(resolve, reject) {\n"
-                                            + "      r += this;\n"
-                                            + "    });\n"
-                                            + "  r += ' done';\n"
-                                            + "  r;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("[object global] done", result);
-
-                    return null;
-                });
+        final String script = "  var r = '';"
+                + "  var p = new Promise(function(resolve, reject) {\n"
+                + "      r += this;\n"
+                + "    });\n"
+                + "  r += ' done';\n"
+                + "  r;";
+        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("[object global] done", script);
     }
 
     @Test
     public void ctorCallableThisStrict() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "'use strict';"
-                                            + "  var r = '';"
-                                            + "  var p = new Promise(function(resolve, reject) {\n"
-                                            + "      r += this === undefined;\n"
-                                            + "    });\n"
-                                            + "  r += ' done';\n"
-                                            + "  r;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("true done", result);
-
-                    return null;
-                });
+        final String script = "'use strict';"
+                + "  var r = '';"
+                + "  var p = new Promise(function(resolve, reject) {\n"
+                + "      r += this === undefined;\n"
+                + "    });\n"
+                + "  r += ' done';\n"
+                + "  r;";
+        Utils.assertWithAllOptimizationLevelsES6("true done", script);
     }
 }
