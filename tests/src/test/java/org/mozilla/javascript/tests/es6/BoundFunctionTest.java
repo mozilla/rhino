@@ -7,32 +7,15 @@
  */
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
 public class BoundFunctionTest {
 
     @Test
     public void ctorCallableThis() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+        String code = "function foo() {};\n" + " foo.bind({}).name;";
 
-                    Object result =
-                            cx.evaluateString(
-                                    scope,
-                                    "  function foo() {};\n" + " foo.bind({}).name;",
-                                    "test",
-                                    1,
-                                    null);
-                    assertEquals("bound foo", result);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevelsES6("bound foo", code);
     }
 }
