@@ -396,4 +396,33 @@ public class NativeObjectTest {
                     });
         }
     }
+
+    /** @throws Exception if the test fails */
+    @Test
+    public void definePropertyUsingConsString() throws Exception {
+        final String script =
+                "  'use strict';\n"
+                        + "  var log = '';\n"
+                        + "  var f = function () {};\n"
+                        + "  var a1='proto';\n"
+                        + "  var p = a1 + 'type';\n"
+                        + "  log = log + 'before: ' + f.prototype;\n"
+                        + "  Object.defineProperty(f, p, {});\n"
+                        + "  log = log + ' / after: ' + f.prototype;\n"
+                        + "  var p = new f();\n"
+                        + "  log = log + ' / ' + (p instanceof f);";
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    Scriptable realm = cx.initStandardObjects();
+                    scope.put("realm", scope, realm);
+
+                    Object result = cx.evaluateString(scope, script, "test", 1, null);
+                    assertEquals("before: [object Object] / after: [object Object] / true", result);
+                    return null;
+                });
+    }
 }

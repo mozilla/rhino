@@ -854,8 +854,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     @Override
     protected void defineOwnProperty(
             Context cx, Object key, ScriptableObject desc, boolean checkValid) {
-        if (key instanceof String) {
-            String name = (String) key;
+        if (key instanceof CharSequence) {
+            String name = key.toString();
             int info = findInstanceIdInfo(name);
             if (info != 0) {
                 int id = (info & 0xFFFF);
