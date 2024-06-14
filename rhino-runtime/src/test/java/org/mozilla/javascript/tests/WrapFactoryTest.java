@@ -15,11 +15,6 @@ import org.mozilla.javascript.ScriptableObject;
 
 /** @author hatanaka */
 public class WrapFactoryTest {
-    /** javascript code */
-    private static String script =
-            "var result = typeof test;" //
-                    + "var mapResult = typeof map.get('test');" //
-                    + "var getResult = typeof object.get();";
 
     /** for your reference default setting (javaPrimitiveWrap = true) */
     @Test
@@ -72,6 +67,11 @@ public class WrapFactoryTest {
             ScriptableObject.putProperty(scope, "map", map);
             ScriptableObject.putProperty(scope, "object", Optional.of(object));
             ScriptableObject.putProperty(scope, "test", object);
+
+            final String script =
+                    "var result = typeof test;" //
+                            + "var mapResult = typeof map.get('test');" //
+                            + "var getResult = typeof object.get();";
 
             // execute script
             cx.evaluateString(scope, script, "", 1, null);
