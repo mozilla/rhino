@@ -6,10 +6,8 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 

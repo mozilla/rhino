@@ -7,160 +7,168 @@
  */
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
 public class ObjectSealFreezeTest {
 
     @Test
     public void sealWriteToExistingWritableProperty() {
-        final String script = "foo = function() {"
-                + "  var r = {};"
-                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                + "  Object.seal(r);"
-                + "  r.a = 'Rhino';"
-                + "  return r.a;"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  var r = {};"
+                        + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                        + "  Object.seal(r);"
+                        + "  r.a = 'Rhino';"
+                        + "  return r.a;"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
     }
 
     @Test
     public void sealWriteToExistingWritablePropertyStrict() {
-        final String script = "foo = function() {"
-                + "  'use strict';"
-                + "  var r = {};"
-                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                + "  Object.seal(r);"
-                + "  r.a='Rhino';"
-                + "  return r.a;"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  'use strict';"
+                        + "  var r = {};"
+                        + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                        + "  Object.seal(r);"
+                        + "  r.a='Rhino';"
+                        + "  return r.a;"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
     }
 
     @Test
     public void sealWriteToExistingSymbolProperty() {
-        final String script = "foo = function() {"
-                + "  var sym = Symbol('X');"
-                + "  var r = {};"
-                + "  r[sym] = 'abc';"
-                + "  Object.seal(r);"
-                + "  r[sym] = 'Rhino';"
-                + "  return r[sym];"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  var sym = Symbol('X');"
+                        + "  var r = {};"
+                        + "  r[sym] = 'abc';"
+                        + "  Object.seal(r);"
+                        + "  r[sym] = 'Rhino';"
+                        + "  return r[sym];"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
     }
 
     @Test
     public void sealWriteToExistingSymbolPropertyStrict() {
-        final String script = "foo = function() {"
-                + "  'use strict';"
-                + "  var sym = Symbol('X');"
-                + "  var r = {};"
-                + "  r[sym] = 'abc';"
-                + "  Object.seal(r);"
-                + "  r[sym] = 'Rhino';"
-                + "  return r[sym];"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  'use strict';"
+                        + "  var sym = Symbol('X');"
+                        + "  var r = {};"
+                        + "  r[sym] = 'abc';"
+                        + "  Object.seal(r);"
+                        + "  r[sym] = 'Rhino';"
+                        + "  return r[sym];"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
     }
 
     @Test
     public void freezeWriteToExistingWritableProperty() {
-        final String script = "foo = function() {"
-                + "  var r = {};"
-                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                + "  Object.freeze(r);"
-                + "  r.a = 'Rhino';"
-                + "  return r.a;"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  var r = {};"
+                        + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                        + "  Object.freeze(r);"
+                        + "  r.a = 'Rhino';"
+                        + "  return r.a;"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("abc", script);
     }
 
     @Test
     public void freezeWriteToExistingWritablePropertyStrict() {
-        final String script = "foo = function() {"
-                + "  'use strict';"
-                + "  var r = {};"
-                + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
-                + "  Object.freeze(r);"
-                + "  r.a='Rhino';"
-                + "  return r.a;"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Cannot add properties to this object because extensible is false.", script);
+        final String script =
+                "foo = function() {"
+                        + "  'use strict';"
+                        + "  var r = {};"
+                        + "  Object.defineProperties(r, { a: { writable: true, value: 'abc' } });"
+                        + "  Object.freeze(r);"
+                        + "  r.a='Rhino';"
+                        + "  return r.a;"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "Cannot add properties to this object because extensible is false.", script);
     }
 
     @Test
     public void freezeWriteToExistingSymbolProperty() {
-        final String script = "foo = function() {"
-                + "  var sym = Symbol('X');"
-                + "  var r = {};"
-                + "  r[sym] = 'abc';"
-                + "  Object.freeze(r);"
-                + "  r[sym] = 'Rhino';"
-                + "  return r[sym];"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
+        final String script =
+                "foo = function() {"
+                        + "  var sym = Symbol('X');"
+                        + "  var r = {};"
+                        + "  r[sym] = 'abc';"
+                        + "  Object.freeze(r);"
+                        + "  r[sym] = 'Rhino';"
+                        + "  return r[sym];"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
         Utils.assertWithAllOptimizationLevelsES6("abc", script);
     }
 
     @Test
     public void freezeWriteToExistingSymbolPropertyStrict() {
-        final String script = "foo = function() {"
-                + "  'use strict';"
-                + "  var sym = Symbol('X');"
-                + "  var r = {};"
-                + "  r[sym] = 'abc';"
-                + "  Object.freeze(r);"
-                + "  r[sym] = 'Rhino';"
-                + "  return r[sym];"
-                + "};"
-                + "try { "
-                + "  foo();"
-                + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Cannot add properties to this object because extensible is false.", script);
+        final String script =
+                "foo = function() {"
+                        + "  'use strict';"
+                        + "  var sym = Symbol('X');"
+                        + "  var r = {};"
+                        + "  r[sym] = 'abc';"
+                        + "  Object.freeze(r);"
+                        + "  r[sym] = 'Rhino';"
+                        + "  return r[sym];"
+                        + "};"
+                        + "try { "
+                        + "  foo();"
+                        + "} catch (e) { e.message }";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "Cannot add properties to this object because extensible is false.", script);
     }
 
     @Test
     public void objectConstructorForNonExtensibleFunctions() {
-        final String script = "foo = function() {"
-                + "  var res = '';\n"
-                + "  var a = JSON.stringify;\n"
-                + "  Object.preventExtensions(a);\n"
-                + "  res += 'a.isExtensible = ' + Object.isExtensible(a);\n"
-                + "  res += '\\n';\n"
-                + "  var b = Object(a);\n"
-                + "  res += typeof b;\n"
-                + "  res += '\\n';\n"
-                + "  res += a===b;\n"
-                + "  res += '\\n';\n"
-                + "  res += 'b.isExtensible = ' + Object.isExtensible(b);\n"
-                + "  return res;\n"
-                + "};"
-                + "  foo();";
-        Utils.assertWithAllOptimizationLevelsES6("a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false", script);
+        final String script =
+                "foo = function() {"
+                        + "  var res = '';\n"
+                        + "  var a = JSON.stringify;\n"
+                        + "  Object.preventExtensions(a);\n"
+                        + "  res += 'a.isExtensible = ' + Object.isExtensible(a);\n"
+                        + "  res += '\\n';\n"
+                        + "  var b = Object(a);\n"
+                        + "  res += typeof b;\n"
+                        + "  res += '\\n';\n"
+                        + "  res += a===b;\n"
+                        + "  res += '\\n';\n"
+                        + "  res += 'b.isExtensible = ' + Object.isExtensible(b);\n"
+                        + "  return res;\n"
+                        + "};"
+                        + "  foo();";
+        Utils.assertWithAllOptimizationLevelsES6(
+                "a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false", script);
     }
 }
