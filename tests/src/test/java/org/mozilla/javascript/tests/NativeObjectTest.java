@@ -6,7 +6,6 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -21,20 +20,12 @@ public class NativeObjectTest {
      */
     @Test
     public void freeze_captureStackTrace() throws Exception {
-        try (Context cx = Context.enter()) {
-            Scriptable global = cx.initStandardObjects();
-            Object result =
-                    cx.evaluateString(
-                            global,
-                            "var myError = {};\n"
-                                    + "Error.captureStackTrace(myError);\n"
-                                    + "Object.freeze(myError);"
-                                    + "myError.stack;",
-                            "",
-                            1,
-                            null);
-            Assert.assertTrue(result instanceof String);
-        }
+        final String script =
+                "var myError = {};\n"
+                        + "Error.captureStackTrace(myError);\n"
+                        + "Object.freeze(myError);\n"
+                        + "myError.stack.trim();";
+        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("at test.js:1", script);
     }
 
     /**
@@ -45,22 +36,14 @@ public class NativeObjectTest {
      */
     @Test
     public void getOwnPropertyDescriptor_captureStackTrace() throws Exception {
-        try (Context cx = Context.enter()) {
-            Scriptable global = cx.initStandardObjects();
-            Object result =
-                    cx.evaluateString(
-                            global,
-                            "var myError = {};\n"
-                                    + "Error.captureStackTrace(myError);\n"
-                                    + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                                    + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
-                            "",
-                            1,
-                            null);
-            Assert.assertTrue(result instanceof String);
-            Assert.assertEquals(
-                    "undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
-        }
+        final String script =
+                "var myError = {};\n"
+                        + "Error.captureStackTrace(myError);\n"
+                        + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');\n"
+                        + "var res = '' + desc.get + '-' + desc.set + '-' + desc.value;\n"
+                        + "res = res.replace(/(\\n|\\r)/gm, '');";
+        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6(
+                "undefined-undefined-\tat test.js:1", script);
     }
 
     /**
@@ -71,20 +54,12 @@ public class NativeObjectTest {
      */
     @Test
     public void getOwnPropertyDescriptorAttributes_captureStackTrace() throws Exception {
-        try (Context cx = Context.enter()) {
-            Scriptable global = cx.initStandardObjects();
-            Object result =
-                    cx.evaluateString(
-                            global,
-                            "var myError = {};\n"
-                                    + "Error.captureStackTrace(myError);\n"
-                                    + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                                    + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable",
-                            "",
-                            1,
-                            null);
-            Assert.assertEquals("true true false", result);
-        }
+        final String script =
+                "var myError = {};\n"
+                        + "Error.captureStackTrace(myError);\n"
+                        + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');\n"
+                        + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable";
+        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("true true false", script);
     }
 
     public static class JavaObj {
