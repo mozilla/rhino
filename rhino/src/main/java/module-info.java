@@ -1,4 +1,4 @@
-module org.mozilla.rhino.runtime {
+module org.mozilla.rhino {
     exports org.mozilla.classfile;
     exports org.mozilla.javascript;
     exports org.mozilla.javascript.annotations;

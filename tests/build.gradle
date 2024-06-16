@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation project(':rhino-engine')
     implementation project(':examples')
-    implementation project(':rhino-runtime')
+    implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
 }
@@ -46,6 +46,11 @@ test {
     systemProperty 'test262properties', System.getProperty('test262properties')
     if (System.getProperty('updateTest262properties') != null) {
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    }
+
+    jacoco {
+        // These particular tests produce Jacoco exceptions because of their size
+        excludes = ['**perlstress**']
     }
 }
 

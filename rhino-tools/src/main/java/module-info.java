@@ -1,5 +1,5 @@
 module org.mozilla.rhino.tools {
-    requires org.mozilla.rhino.runtime;
+    requires org.mozilla.rhino;
     requires java.desktop;
 
     exports org.mozilla.javascript.tools.debugger;
