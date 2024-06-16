@@ -82,6 +82,17 @@ public class FunctionNode extends ScriptNode {
     private int rp = -1;
     private boolean hasRestParameter;
 
+    @Override
+    public Object[] getDefaultParams() {
+        return defaultParams;
+    }
+
+    public void setDefaultParams(Object[] defaultParams) {
+        this.defaultParams = defaultParams;
+    }
+
+    Object[] defaultParams;
+
     // codegen variables
     private int functionType;
     private boolean needsActivation;

@@ -255,6 +255,10 @@ public class ScriptNode extends Scope {
         return false;
     }
 
+    public Object[] getDefaultParams() {
+        return null;
+    }
+
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();
         if (symbol.getDeclType() == Token.LP) {

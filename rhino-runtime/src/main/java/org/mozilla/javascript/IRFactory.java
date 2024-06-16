@@ -641,6 +641,34 @@ public final class IRFactory {
                 decompiler.addToken(Token.EOL);
             }
 
+            /* Process default parameters */
+            if (fn.getDefaultParams() != null) {
+                Object[] defaultParams = fn.getDefaultParams();
+                for (int i = defaultParams.length - 1; i > 0; ) {
+                    if (defaultParams[i] instanceof AstNode
+                            && defaultParams[i - 1] instanceof String) {
+                        AstNode rhs = (AstNode) defaultParams[i];
+                        String name = (String) defaultParams[i - 1];
+                        body.addChildToFront(
+                                createIf(
+                                        createBinary(
+                                                Token.SHEQ,
+                                                new Name(fn.getPosition(), name),
+                                                new Name(fn.getPosition(), "undefined")),
+                                        new Node(
+                                                Token.EXPR_VOID,
+                                                createAssignment(
+                                                        Token.ASSIGN,
+                                                        new Name(fn.getPosition(), name),
+                                                        transform(rhs)),
+                                                body.getLineno()),
+                                        null,
+                                        body.getLineno()));
+                        i -= 2;
+                    }
+                }
+            }
+
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
             }
@@ -2502,6 +2530,10 @@ public final class IRFactory {
                 break;
             case Token.THIS:
                 decompiler.addToken(node.getType());
+                break;
+            case Token.ASSIGN:
+                decompile(((Assignment)node).getLeft());
+                decompile(((Assignment)node).getRight());
                 break;
             default:
                 Kit.codeBug("unexpected token: " + Token.typeToName(node.getType()));
