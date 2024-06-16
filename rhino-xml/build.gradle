@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(':rhino-runtime')
+    implementation project(':rhino')
 }
 
 publishing {

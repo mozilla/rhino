@@ -1,39 +1,15 @@
 plugins {
     id 'rhino.library-conventions'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'application'
 }
 
-application {
-    mainClass = 'org.mozilla.javascript.tools.shell.Main'
-}
-
-run {
-    standardInput = System.in
-}
-
-dependencies {
-    implementation project(':rhino-runtime')
-    implementation project(':rhino-tools')
-    implementation project(':rhino-xml')
-}
-
-shadowJar {
-    // Ensure that the "jar" from this step is the shadowed one that we want to 
-    // publish in Maven.
-    archiveClassifier.set('')
-    manifest {
-      inheritFrom(project.tasks.jar.manifest)
-    }
-}
 
 publishing {
     publications {
         rhino(MavenPublication) {
             from components.java
-            artifacts = [jar]
+            artifacts = [jar, sourceJar, javadocJar]
             pom {
-                description = "Rhino JavaScript all-in-one JAR, not for use with modular Java projects"
+                description = "Rhino JavaScript runtime jar, excludes XML, tools ScriptEngine wrapper"
                 url = "https://mozilla.github.io/rhino/"
                 licenses {
                     license {
