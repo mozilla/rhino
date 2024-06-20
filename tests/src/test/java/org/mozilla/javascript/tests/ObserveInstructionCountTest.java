@@ -5,42 +5,39 @@
 /** */
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.drivers.TestUtils;
 
 /** @author Norris Boyd */
 public class ObserveInstructionCountTest {
-    // Custom Context to store execution time.
+
     static class MyContext extends Context {
         MyContext(ContextFactory factory) {
             super(factory);
         }
 
-        int quota;
+        private int quota;
+        private boolean observed;
+
+        @Override
+        protected void observeInstructionCount(int instructionCount) {
+            super.observeInstructionCount(instructionCount);
+            observed = true;
+        }
+
+        public boolean wasObserved() {
+            return observed;
+        }
     }
 
-    static class QuotaExceeded extends RuntimeException {
-        private static final long serialVersionUID = -8018441873635071899L;
-    }
-
-    @Before
-    public void setUp() {
-        TestUtils.setGlobalContextFactory(new MyFactory());
-    }
-
-    @After
-    public void tearDown() {
-        TestUtils.setGlobalContextFactory(null);
-    }
+    static class QuotaExceededException extends RuntimeException {}
 
     static class MyFactory extends ContextFactory {
 
@@ -59,7 +56,7 @@ public class ObserveInstructionCountTest {
             MyContext mcx = (MyContext) cx;
             mcx.quota -= instructionCount;
             if (mcx.quota <= 0) {
-                throw new QuotaExceeded();
+                throw new QuotaExceededException();
             }
         }
 
@@ -85,7 +82,7 @@ public class ObserveInstructionCountTest {
                         Scriptable globalScope = cx.initStandardObjects();
                         cx.evaluateString(globalScope, source, "test source", 1, null);
                         fail();
-                    } catch (QuotaExceeded e) {
+                    } catch (QuotaExceededException e) {
                         // expected
                     } catch (RuntimeException e) {
                         fail(e.toString());
@@ -102,7 +99,7 @@ public class ObserveInstructionCountTest {
     }
 
     @Test
-    public void twhileTrueNoCounterInGlobal() {
+    public void whileTrueNoCounterInGlobal() {
         String source = "while (true);";
         baseCase(source);
     }
@@ -124,5 +121,31 @@ public class ObserveInstructionCountTest {
         String source =
                 "/(.*){1,32000}[bc]/.test(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\");";
         baseCase(source);
+    }
+
+    /** see https://github.com/mozilla/rhino/issues/1497 */
+    @Test
+    public void regExpObserved() {
+        Utils.runWithAllOptimizationLevels(
+                new ContextFactory() {
+                    @Override
+                    protected Context makeContext() {
+                        return new MyContext(this);
+                    }
+                },
+                cx -> {
+                    assertTrue(cx instanceof MyContext);
+                    cx.setInstructionObserverThreshold(0);
+                    try {
+                        Scriptable globalScope = cx.initStandardObjects();
+                        cx.evaluateString(
+                                globalScope, "/(.*)ab/.test(\"1234\");", "test source", 1, null);
+                        assertFalse(((MyContext) cx).wasObserved());
+                    } catch (RuntimeException e) {
+                        fail(e.toString());
+                    }
+
+                    return null;
+                });
     }
 }

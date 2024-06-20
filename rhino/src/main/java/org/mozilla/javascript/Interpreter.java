@@ -1140,7 +1140,7 @@ public final class Interpreter extends Icode implements Evaluator {
         final Object DBL_MRK = DOUBLE_MARK;
         final Object undefined = Undefined.instance;
 
-        final boolean instructionCounting = (cx.instructionThreshold != 0);
+        final boolean instructionCounting = cx.instructionThreshold != 0;
         // arbitrary number to add to instructionCount when calling
         // other functions
         final int INVOCATION_COST = 100;
