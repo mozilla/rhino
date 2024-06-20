@@ -1879,8 +1879,11 @@ public class NativeRegExp extends IdScriptableObject {
             if (!anchor) return false;
         }
 
+        final boolean instructionCounting = cx.getInstructionObserverThreshold() != 0;
         for (; ; ) {
-            ScriptRuntime.addInstructionCount(cx, 5);
+            if (instructionCounting) {
+                ScriptRuntime.addInstructionCount(cx, 5);
+            }
 
             if (reopIsSimple(op)) {
                 int match = simpleMatch(gData, input, op, program, pc, end, true);
