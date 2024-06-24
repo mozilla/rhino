@@ -175,58 +175,59 @@ public class Token {
             VOID = 130, // void keyword
             RESERVED = 131, // reserved keywords
             EMPTY = 132,
+            COMPUTED_PROPERTY = 133, // computed property in object initializer [x]
 
             /* types used for the parse tree - these never get returned
              * by the scanner.
              */
 
-            BLOCK = 133, // statement block
-            LABEL = 134, // label
-            TARGET = 135,
-            LOOP = 136,
-            EXPR_VOID = 137, // expression statement in functions
-            EXPR_RESULT = 138, // expression statement in scripts
-            JSR = 139,
-            SCRIPT = 140, // top-level node for entire script
-            TYPEOFNAME = 141, // for typeof(simple-name)
-            USE_STACK = 142,
-            SETPROP_OP = 143, // x.y op= something
-            SETELEM_OP = 144, // x[y] op= something
-            LOCAL_BLOCK = 145,
-            SET_REF_OP = 146, // *reference op= something
+            BLOCK = 134, // statement block
+            LABEL = 135, // label
+            TARGET = 136,
+            LOOP = 137,
+            EXPR_VOID = 138, // expression statement in functions
+            EXPR_RESULT = 139, // expression statement in scripts
+            JSR = 140,
+            SCRIPT = 141, // top-level node for entire script
+            TYPEOFNAME = 142, // for typeof(simple-name)
+            USE_STACK = 143,
+            SETPROP_OP = 144, // x.y op= something
+            SETELEM_OP = 145, // x[y] op= something
+            LOCAL_BLOCK = 146,
+            SET_REF_OP = 147, // *reference op= something
 
             // For XML support:
-            DOTDOT = 147, // member operator (..)
-            COLONCOLON = 148, // namespace::name
-            XML = 149, // XML type
-            DOTQUERY = 150, // .() -- e.g., x.emps.emp.(name == "terry")
-            XMLATTR = 151, // @
-            XMLEND = 152,
+            DOTDOT = 148, // member operator (..)
+            COLONCOLON = 149, // namespace::name
+            XML = 150, // XML type
+            DOTQUERY = 151, // .() -- e.g., x.emps.emp.(name == "terry")
+            XMLATTR = 152, // @
+            XMLEND = 153,
 
             // Optimizer-only-tokens
-            TO_OBJECT = 153,
-            TO_DOUBLE = 154,
-            GET = 155, // JS 1.5 get pseudo keyword
-            SET = 156, // JS 1.5 set pseudo keyword
-            LET = 157, // JS 1.7 let pseudo keyword
-            CONST = 158,
-            SETCONST = 159,
-            SETCONSTVAR = 160,
-            ARRAYCOMP = 161, // array comprehension
-            LETEXPR = 162,
-            WITHEXPR = 163,
-            DEBUGGER = 164,
-            COMMENT = 165,
-            GENEXPR = 166,
-            METHOD = 167, // ES6 MethodDefinition
-            ARROW = 168, // ES6 ArrowFunction
-            YIELD_STAR = 169, // ES6 "yield *", a specialization of yield
-            TEMPLATE_LITERAL = 170, // template literal
-            TEMPLATE_CHARS = 171, // template literal - literal section
-            TEMPLATE_LITERAL_SUBST = 172, // template literal - substitution
-            TAGGED_TEMPLATE_LITERAL = 173, // template literal - tagged/handler
-            DOTDOTDOT = 174, // spread/rest ...
-            LAST_TOKEN = 174;
+            TO_OBJECT = 154,
+            TO_DOUBLE = 155,
+            GET = 156, // JS 1.5 get pseudo keyword
+            SET = 157, // JS 1.5 set pseudo keyword
+            LET = 158, // JS 1.7 let pseudo keyword
+            CONST = 159,
+            SETCONST = 160,
+            SETCONSTVAR = 161,
+            ARRAYCOMP = 162, // array comprehension
+            LETEXPR = 163,
+            WITHEXPR = 164,
+            DEBUGGER = 165,
+            COMMENT = 166,
+            GENEXPR = 167,
+            METHOD = 168, // ES6 MethodDefinition
+            ARROW = 169, // ES6 ArrowFunction
+            YIELD_STAR = 170, // ES6 "yield *", a specialization of yield
+            TEMPLATE_LITERAL = 171, // template literal
+            TEMPLATE_CHARS = 172, // template literal - literal section
+            TEMPLATE_LITERAL_SUBST = 173, // template literal - substitution
+            TAGGED_TEMPLATE_LITERAL = 174, // template literal - tagged/handler
+            DOTDOTDOT = 175, // spread/rest ...
+            LAST_TOKEN = 175;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in

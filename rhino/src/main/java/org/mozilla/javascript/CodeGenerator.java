@@ -7,7 +7,9 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -1143,6 +1145,7 @@ class CodeGenerator extends Icode {
         int type = node.getType();
         int count;
         Object[] propertyIds = null;
+        Object[] computedPropertyIds = null;
         if (type == Token.ARRAYLIT) {
             count = 0;
             for (Node n = child; n != null; n = n.getNext()) {
@@ -1150,6 +1153,7 @@ class CodeGenerator extends Icode {
             }
         } else if (type == Token.OBJECTLIT) {
             propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+            computedPropertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
             count = propertyIds == null ? 0 : propertyIds.length;
         } else {
             throw badTree(node);
@@ -1185,8 +1189,30 @@ class CodeGenerator extends Icode {
             }
         } else {
             int index = literalIds.size();
+            addIndexOp(Icode_LITERAL_KEYS, index);
+            addUint8(
+                    computedPropertyIds != null
+                                    && Arrays.stream(computedPropertyIds).anyMatch(Objects::nonNull)
+                            ? 1
+                            : 0);
+            stackChange(1);
+
+            int computedPropertiesStackChange = 0;
+            for (int i = 0; computedPropertyIds != null && i < computedPropertyIds.length; i++) {
+                Object computedPropertyId = computedPropertyIds[i];
+                if (computedPropertyId != null) {
+                    // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+                    Node computedPropertyNode = (Node) computedPropertyId;
+                    visitExpression(computedPropertyNode.first, 0);
+                    addIndexOp(Icode_LITERAL_KEY_SET, i);
+                    ++computedPropertiesStackChange;
+                }
+            }
+
             literalIds.add(propertyIds);
-            addIndexOp(Token.OBJECTLIT, index);
+            addToken(Token.OBJECTLIT);
+
+            stackChange(-1 - computedPropertiesStackChange);
         }
         stackChange(-1);
     }

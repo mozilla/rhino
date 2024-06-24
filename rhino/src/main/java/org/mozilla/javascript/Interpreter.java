@@ -838,6 +838,10 @@ public final class Interpreter extends Icode implements Evaluator {
             case Icode_LINE:
                 // line number
                 return 1 + 2;
+
+            case Icode_LITERAL_KEYS:
+                // make a copy or not flag
+                return 1 + 1;
         }
         if (!validBytecode(bytecode)) throw Kit.codeBug();
         return 1;
@@ -2268,28 +2272,60 @@ public final class Interpreter extends Icode implements Evaluator {
                                     sDbl[stackTop] = i + 1;
                                     continue Loop;
                                 }
+                            case Icode_LITERAL_KEYS:
+                                {
+                                    Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
+                                    ++stackTop;
+                                    boolean copyArray = iCode[frame.pc] != 0;
+                                    ++frame.pc;
+                                    if (copyArray) {
+                                        stack[stackTop] = Arrays.copyOf(ids, ids.length);
+                                    } else {
+                                        stack[stackTop] = ids;
+                                    }
+                                    continue Loop;
+                                }
+
+                            case Icode_LITERAL_KEY_SET:
+                                {
+                                    Object key = stack[stackTop];
+                                    if (key == DBL_MRK)
+                                        key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    --stackTop;
+                                    Object[] ids = (Object[]) stack[stackTop];
+                                    ids[indexReg] = key;
+                                    continue Loop;
+                                }
+
+                            case Token.OBJECTLIT:
+                                {
+                                    Object[] ids = (Object[]) stack[stackTop];
+                                    --stackTop;
+                                    Object[] data = (Object[]) stack[stackTop];
+                                    --stackTop;
+                                    int[] getterSetters = (int[]) stack[stackTop];
+                                    Object val =
+                                            ScriptRuntime.newObjectLiteral(
+                                                    ids, data, getterSetters, cx, frame.scope);
+                                    stack[stackTop] = val;
+                                    continue Loop;
+                                }
                             case Token.ARRAYLIT:
                             case Icode_SPARE_ARRAYLIT:
-                            case Token.OBJECTLIT:
                                 {
                                     Object[] data = (Object[]) stack[stackTop];
                                     --stackTop;
                                     int[] getterSetters = (int[]) stack[stackTop];
                                     Object val;
-                                    if (op == Token.OBJECTLIT) {
-                                        Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
-                                        val =
-                                                ScriptRuntime.newObjectLiteral(
-                                                        ids, data, getterSetters, cx, frame.scope);
-                                    } else {
-                                        int[] skipIndexces = null;
-                                        if (op == Icode_SPARE_ARRAYLIT) {
-                                            skipIndexces = (int[]) frame.idata.literalIds[indexReg];
-                                        }
-                                        val =
-                                                ScriptRuntime.newArrayLiteral(
-                                                        data, skipIndexces, cx, frame.scope);
+
+                                    int[] skipIndexces = null;
+                                    if (op == Icode_SPARE_ARRAYLIT) {
+                                        skipIndexces = (int[]) frame.idata.literalIds[indexReg];
                                     }
+                                    val =
+                                            ScriptRuntime.newArrayLiteral(
+                                                    data, skipIndexces, cx, frame.scope);
+
                                     stack[stackTop] = val;
                                     continue Loop;
                                 }
