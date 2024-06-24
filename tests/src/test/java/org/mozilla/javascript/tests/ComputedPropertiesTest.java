@@ -42,17 +42,16 @@ public class ComputedPropertiesTest {
     }
 
     private static void assertObjectWithMixedPropertiesWorks(Context cx) {
-        String script =
-                "\n"
-                        + "function f(x) { return x; }\n"
-                        + "\n"
-                        + "var o = {\n"
-                        + "  a: 1,\n"
-                        + "  0: 2,\n"
-                        + "  [1]: 3\n,"
-                        + "  [f('b')]: 4\n"
-                        + "};\n"
-                        + "o.a + o[0] + o['1'] + o.b";
+        String script = "\n" +
+                "function f(x) { return x; }\n" +
+                "\n" +
+                "var o = {\n" +
+                "  a: 1,\n" +
+                "  0: 2,\n" +
+                "  [1]: 3\n," +
+                "  [f('b')]: 4\n" +
+                "};\n" +
+                "o.a + o[0] + o['1'] + o.b";
 
         ScriptableObject scope = cx.initStandardObjects();
         Object value = cx.evaluateString(scope, script, "test", 1, null);
@@ -79,23 +78,104 @@ public class ComputedPropertiesTest {
     }
 
     private static void assertCanCoerceFunctionWithComputedPropertiesToString(Context cx) {
-        String script =
-                "\n"
-                        + "function f(x) {\n"
-                        + "  var o = {\n"
-                        + "    1: true,\n"
-                        + "    [2]: false,\n"
-                        + "    [g(x)]: 3\n"
-                        + "  };\n"
-                        + "}\n"
-                        + "f.toString()";
+        String script = "\n" +
+                "function f(x) {\n" +
+                "  var o = {\n" +
+                "    1: true,\n" +
+                "    [2]: false,\n" +
+                "    [g(x)]: 3\n" +
+                "  };\n" +
+                "}\n" +
+                "f.toString()";
 
         ScriptableObject scope = cx.initStandardObjects();
         Object value = cx.evaluateString(scope, script, "test", 1, null);
         assertTrue(value instanceof String);
-        assertEquals(
-                "\nfunction f(x) {\n" + "    var o = {1: true, [2]: false, [g(x)]: 3};\n" + "}\n",
-                value);
+        assertEquals("\nfunction f(x) {\n" +
+                "    var o = {1: true, [2]: false, [g(x)]: 3};\n" +
+                "}\n", value);
+    }
+
+    @Test
+    public void computedPropertiesWithSideEffectsWorkInInterpretedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(-1);
+            assertComputedPropertiesWithSideEffectsWork(cx);
+        }
+    }
+
+    @Test
+    public void computedPropertiesWithSideEffectsWorkInCompiledMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(0);
+            assertComputedPropertiesWithSideEffectsWork(cx);
+        }
+    }
+
+    @Test
+    public void computedPropertiesWithSideEffectsWorkInOptimizedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(9);
+            assertComputedPropertiesWithSideEffectsWork(cx);
+        }
+    }
+
+    private static void assertComputedPropertiesWithSideEffectsWork(Context cx) {
+        String script = "'use strict';\n" +
+                "var x = 0;\n" +
+                "var o = {\n" +
+                "  [++x]: 'x',\n" +
+                "  a: ++x,\n" +
+                "  [++x]: 'y'\n" +
+                "};\n" +
+                "o[1] + o.a + o[3]";
+
+        ScriptableObject scope = cx.initStandardObjects();
+        Object value = cx.evaluateString(scope, script, "test", 1, null);
+        assertEquals("x2y", value);
+    }
+
+    @Test
+    public void computedPropertyNameForGetterSetterWorkInInterpretedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(-1);
+            assertComputedPropertyNameForGetterSetterWorks(cx);
+        }
+    }
+
+    @Test
+    public void computedPropertyNameForGetterSetterWorkInCompiled() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(0);
+            assertComputedPropertyNameForGetterSetterWorks(cx);
+        }
+    }
+
+    @Test
+    public void computedPropertyNameForGetterSetterWorkInOptimizedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(9);
+            assertComputedPropertyNameForGetterSetterWorks(cx);
+        }
+    }
+
+    private static void assertComputedPropertyNameForGetterSetterWorks(Context cx) {
+        String script = "\n" +
+                "var o = {\n" +
+                " get ['x' + 1]() { return 42; }\n" +
+                "};\n" +
+                "o.x1";
+
+        ScriptableObject scope = cx.initStandardObjects();
+        Object value = cx.evaluateString(scope, script, "test", 1, null);
+        assertTrue(value instanceof Number);
+        assertEquals(42, ((Number) value).intValue());
     }
 
     @Test
@@ -104,10 +184,8 @@ public class ComputedPropertiesTest {
 
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            EvaluatorException ex =
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.compileString(script, "test", 1, null));
+            EvaluatorException ex = assertThrows(EvaluatorException.class, () ->
+                    cx.compileString(script, "test", 1, null));
             assertEquals("invalid property id (test#1)", ex.getMessage());
         }
     }
@@ -118,10 +196,8 @@ public class ComputedPropertiesTest {
 
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_1_8);
-            EvaluatorException ex =
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.compileString(script, "test", 1, null));
+            EvaluatorException ex = assertThrows(EvaluatorException.class, () ->
+                    cx.compileString(script, "test", 1, null));
             assertEquals("invalid property id (test#1)", ex.getMessage());
         }
     }
