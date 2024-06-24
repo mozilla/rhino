@@ -23,6 +23,7 @@ public class WrapFactoryTest {
         test(true, Boolean.FALSE, "boolean", "object", "object");
         test(true, Integer.valueOf(1), "number", "object", "object");
         test(true, Long.valueOf(2L), "number", "object", "object");
+        test(true, Byte.valueOf((byte) 5), "number", "object", "object");
         test(true, new BigInteger("3"), "bigint", "object", "object");
         test(true, new BigDecimal("4.0"), "number", "object", "object");
     }
@@ -34,6 +35,7 @@ public class WrapFactoryTest {
         test(false, Boolean.FALSE, "boolean", "boolean", "boolean");
         test(false, Integer.valueOf(1), "number", "number", "number");
         test(false, Long.valueOf(2L), "number", "number", "number");
+        test(false, Byte.valueOf((byte) 5), "number", "number", "number");
 
         test(false, new BigInteger("30"), "bigint", "bigint", "bigint");
 
