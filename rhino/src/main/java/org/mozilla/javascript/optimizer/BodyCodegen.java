@@ -2084,17 +2084,25 @@ class BodyCodegen {
     }
 
     /** load array with property ids */
-    private void addLoadPropertyIds(Object[] properties, int count) {
+    private void addLoadPropertyIds(
+            Object[] properties, Object[] computedProperties, int count, Node node) {
         addNewObjectArray(count);
         for (int i = 0; i != count; ++i) {
             cfw.add(ByteCode.DUP);
             cfw.addPush(i);
-            Object id = properties[i];
-            if (id instanceof String) {
-                cfw.addPush((String) id);
+            Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
+            if (computedPropertyId != null) {
+                // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+                Node computedPropertyNode = (Node) computedPropertyId;
+                generateExpression(computedPropertyNode.getFirstChild(), node);
             } else {
-                cfw.addPush(((Integer) id).intValue());
-                addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
+                Object id = properties[i];
+                if (id instanceof String) {
+                    cfw.addPush((String) id);
+                } else {
+                    cfw.addPush(((Integer) id).intValue());
+                    addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
+                }
             }
             cfw.add(ByteCode.AASTORE);
         }
@@ -2141,6 +2149,7 @@ class BodyCodegen {
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        Object[] computedProperties = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
         int count = properties == null ? 0 : properties.length;
 
         // If code budget is tight swap out literals into separate method
@@ -2176,11 +2185,11 @@ class BodyCodegen {
             // TODO: this is actually only necessary if the yield operation is
             // a child of this object or its children (bug 757410)
             addLoadPropertyValues(node, child, count);
-            addLoadPropertyIds(properties, count);
+            addLoadPropertyIds(properties, computedProperties, count, node);
             // swap property-values and property-ids arrays
             cfw.add(ByteCode.SWAP);
         } else {
-            addLoadPropertyIds(properties, count);
+            addLoadPropertyIds(properties, computedProperties, count, node);
             addLoadPropertyValues(node, child, count);
         }
 
