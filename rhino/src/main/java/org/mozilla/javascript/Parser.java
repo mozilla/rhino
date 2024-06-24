@@ -3576,7 +3576,7 @@ public class Parser {
                 }
             }
 
-            if (this.inUseStrictDirective && propertyName != null) {
+            if (this.inUseStrictDirective && propertyName != null && !(pname instanceof ComputedPropertyKey)) {
                 switch (entryKind) {
                     case PROP_ENTRY:
                     case METHOD_ENTRY:

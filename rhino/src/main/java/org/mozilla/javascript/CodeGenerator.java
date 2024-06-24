@@ -1143,76 +1143,88 @@ class CodeGenerator extends Icode {
 
     private void visitLiteral(Node node, Node child) {
         int type = node.getType();
-        int count;
-        Object[] propertyIds = null;
-        Object[] computedPropertyIds = null;
         if (type == Token.ARRAYLIT) {
-            count = 0;
-            for (Node n = child; n != null; n = n.getNext()) {
-                ++count;
-            }
+            visitArrayLiteral(node, child);
         } else if (type == Token.OBJECTLIT) {
-            propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-            computedPropertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
-            count = propertyIds == null ? 0 : propertyIds.length;
+            visitObjectLiteral(node, child);
         } else {
             throw badTree(node);
+        }
+    }
+
+    private void visitObjectLiteral(Node node, Node child) {
+	    Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+	    Object[] computedPropertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
+	    int count = propertyIds == null ? 0 : propertyIds.length;
+        boolean hasAnyComputedProperty = computedPropertyIds != null && Arrays.stream(computedPropertyIds).anyMatch(Objects::nonNull);
+
+        int nextLiteralIndex = literalIds.size();
+        literalIds.add(propertyIds);
+        
+        addIndexOp(Icode_LITERAL_KEYS, nextLiteralIndex);
+        addUint8(hasAnyComputedProperty ? 1 : 0);
+        addIndexOp(Icode_LITERAL_NEW, count);
+        stackChange(3);
+        
+        int i = 0;
+        while (child != null) {
+            // Computed key
+            Object computedPropertyId = computedPropertyIds == null ? null : computedPropertyIds[i];
+            if (computedPropertyId != null) {
+                // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+                Node computedPropertyNode = (Node) computedPropertyId;
+                visitExpression(computedPropertyNode.first, 0);
+                addIndexOp(Icode_LITERAL_KEY_SET, i);
+                stackChange(-1);
+            }
+
+            // Value
+            visitLiteralValue(child);
+            child = child.getNext();
+            i++;
+        }
+        
+        addToken(Token.OBJECTLIT);
+
+        stackChange(-2);
+    }
+
+    private void visitArrayLiteral(Node node, Node child) {
+        int count = 0;
+        for (Node n = child; n != null; n = n.getNext()) {
+            ++count;
         }
         addIndexOp(Icode_LITERAL_NEW, count);
         stackChange(2);
         while (child != null) {
-            int childType = child.getType();
-            if (childType == Token.GET) {
-                visitExpression(child.getFirstChild(), 0);
-                addIcode(Icode_LITERAL_GETTER);
-            } else if (childType == Token.SET) {
-                visitExpression(child.getFirstChild(), 0);
-                addIcode(Icode_LITERAL_SETTER);
-            } else if (childType == Token.METHOD) {
-                visitExpression(child.getFirstChild(), 0);
-                addIcode(Icode_LITERAL_SET);
-            } else {
-                visitExpression(child, 0);
-                addIcode(Icode_LITERAL_SET);
-            }
-            stackChange(-1);
+            visitLiteralValue(child);
             child = child.getNext();
         }
-        if (type == Token.ARRAYLIT) {
-            int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
-            if (skipIndexes == null) {
-                addToken(Token.ARRAYLIT);
-            } else {
-                int index = literalIds.size();
-                literalIds.add(skipIndexes);
-                addIndexOp(Icode_SPARE_ARRAYLIT, index);
-            }
+        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+        if (skipIndexes == null) {
+            addToken(Token.ARRAYLIT);
         } else {
             int index = literalIds.size();
-            addIndexOp(Icode_LITERAL_KEYS, index);
-            addUint8(
-                    computedPropertyIds != null
-                                    && Arrays.stream(computedPropertyIds).anyMatch(Objects::nonNull)
-                            ? 1
-                            : 0);
-            stackChange(1);
+            literalIds.add(skipIndexes);
+            addIndexOp(Icode_SPARE_ARRAYLIT, index);
+        }
+        stackChange(-1);
+    }
 
-            int computedPropertiesStackChange = 0;
-            for (int i = 0; computedPropertyIds != null && i < computedPropertyIds.length; i++) {
-                Object computedPropertyId = computedPropertyIds[i];
-                if (computedPropertyId != null) {
-                    // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
-                    Node computedPropertyNode = (Node) computedPropertyId;
-                    visitExpression(computedPropertyNode.first, 0);
-                    addIndexOp(Icode_LITERAL_KEY_SET, i);
-                    ++computedPropertiesStackChange;
-                }
-            }
-
-            literalIds.add(propertyIds);
-            addToken(Token.OBJECTLIT);
-
-            stackChange(-1 - computedPropertiesStackChange);
+    private void visitLiteralValue(Node child) {
+        int childType = child.getType();
+        if (childType == Token.GET) {
+            visitExpression(child.getFirstChild(), 0);
+            addIcode(Icode_LITERAL_GETTER);
+        } else if (childType == Token.SET) {
+            visitExpression(child.getFirstChild(), 0);
+            addIcode(Icode_LITERAL_SETTER);
+        } else if (childType == Token.METHOD) {
+            visitExpression(child.getFirstChild(), 0);
+            addIcode(Icode_LITERAL_SET);
+        } else {
+            visitExpression(child, 0);
+            addIcode(Icode_LITERAL_SET);
         }
         stackChange(-1);
     }

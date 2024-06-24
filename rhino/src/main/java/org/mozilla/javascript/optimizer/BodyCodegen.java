@@ -2083,66 +2083,56 @@ class BodyCodegen {
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
-    /** load array with property ids */
-    private void addLoadPropertyIds(
-            Object[] properties, Object[] computedProperties, int count, Node node) {
-        addNewObjectArray(count);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
-            if (computedPropertyId != null) {
-                // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
-                Node computedPropertyNode = (Node) computedPropertyId;
-                generateExpression(computedPropertyNode.getFirstChild(), node);
-            } else {
-                Object id = properties[i];
-                if (id instanceof String) {
-                    cfw.addPush((String) id);
-                } else {
-                    cfw.addPush(((Integer) id).intValue());
-                    addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
-                }
-            }
-            cfw.add(ByteCode.AASTORE);
+    /** load two arrays with property ids and values */
+    private void addLoadProperty(Node node, Node child,
+            Object[] properties, Object[] computedProperties, int count) {
+        if (count == 0) {
+            addNewObjectArray(0);
+            addNewObjectArray(0);
+            return;
+        }
+       
+        addNewObjectArray(count);   // Stack: [values_array]
+        addNewObjectArray(count);   // Stack: [values_array, keys_array]
+        
+        for (int i = 0 ; i < count; ++i) {
+            cfw.add(ByteCode.DUP2);                                         // Stack: [values_array, keys_array, values_array, keys_array]
+            cfw.addLoadConstant(i);                                         // Stack: [values_array, keys_array, values_array, keys_array, i]
+            addLoadPropertyId(node, properties, computedProperties, i);     // Stack: [values_array, keys_array, values_array, keys_array, i, Ki]
+            cfw.add(ByteCode.AASTORE);                                      // Stack: [values_array, keys_array, values_array]
+            
+            cfw.addLoadConstant(i);                                         // Stack: [values_array, keys_array, values_array, i]
+            addLoadPropertyValue(node, child);                              // Stack: [values_array, keys_array, values_array, i, Vi]
+            cfw.add(ByteCode.AASTORE);                                      // Stack: [values_array, keys_array]
+            
+            child = child.getNext();
+        }
+
+        cfw.add(ByteCode.SWAP); // Caller expect to have [keys_array, values_array]
+    }
+
+    private void addLoadPropertyValue(Node node, Node child) {
+        int childType = child.getType();
+        if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
+            generateExpression(child.getFirstChild(), node);
+        } else {
+            generateExpression(child, node);
         }
     }
 
-    /** load array with property values */
-    private void addLoadPropertyValues(Node node, Node child, int count) {
-        if (isGenerator) {
-            // see bug 757410 for an explanation why we need to split this
-            for (int i = 0; i != count; ++i) {
-                int childType = child.getType();
-                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
-                    generateExpression(child.getFirstChild(), node);
-                } else {
-                    generateExpression(child, node);
-                }
-                child = child.getNext();
-            }
-            addNewObjectArray(count);
-            for (int i = 0; i != count; ++i) {
-                cfw.add(ByteCode.DUP_X1);
-                cfw.add(ByteCode.SWAP);
-                cfw.addPush(count - i - 1);
-                cfw.add(ByteCode.SWAP);
-                cfw.add(ByteCode.AASTORE);
-            }
+    private void addLoadPropertyId(Node node, Object[] properties, Object[] computedProperties, int i) {
+        Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
+        if (computedPropertyId != null) {
+            // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+            Node computedPropertyNode = (Node) computedPropertyId;
+            generateExpression(computedPropertyNode.getFirstChild(), node);
         } else {
-            addNewObjectArray(count);
-            Node child2 = child;
-            for (int i = 0; i != count; ++i) {
-                cfw.add(ByteCode.DUP);
-                cfw.addPush(i);
-                int childType = child2.getType();
-                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
-                    generateExpression(child2.getFirstChild(), node);
-                } else {
-                    generateExpression(child2, node);
-                }
-                cfw.add(ByteCode.AASTORE);
-                child2 = child2.getNext();
+            Object id = properties[i];
+            if (id instanceof String) {
+                cfw.addPush((String) id);
+            } else {
+                cfw.addPush(((Integer) id).intValue());
+                addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
             }
         }
     }
@@ -2180,18 +2170,8 @@ class BodyCodegen {
                             + ")Lorg/mozilla/javascript/Scriptable;");
             return;
         }
-
-        if (isGenerator) {
-            // TODO: this is actually only necessary if the yield operation is
-            // a child of this object or its children (bug 757410)
-            addLoadPropertyValues(node, child, count);
-            addLoadPropertyIds(properties, computedProperties, count, node);
-            // swap property-values and property-ids arrays
-            cfw.add(ByteCode.SWAP);
-        } else {
-            addLoadPropertyIds(properties, computedProperties, count, node);
-            addLoadPropertyValues(node, child, count);
-        }
+        
+        addLoadProperty(node, child, properties, computedProperties, count);
 
         // check if object literal actually has any getters or setters
         boolean hasGetterSetters = false;
