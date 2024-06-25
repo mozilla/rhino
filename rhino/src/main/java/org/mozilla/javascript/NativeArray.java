@@ -1349,8 +1349,16 @@ public class NativeArray extends IdScriptableObject implements List {
             working[i] = getRawElem(o, i);
         }
 
-        // 'Arrays.sort' is guaranteed to be stable.
-        Arrays.sort(working, comparator);
+        // Java's 'Arrays.sort' is guaranteed to be stable so we can use it; however,
+        // if the comparator is not consistent, it throws an IllegalArgumentException.
+        // In case where the comparator is not consistent, the ECMAScript specification states
+        // that sort order is implementation-defined, so we can just return the original array.
+        try {
+            Arrays.sort(working, comparator);
+        }
+        catch (IllegalArgumentException e) {
+            return o;
+        }
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
