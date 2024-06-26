@@ -575,7 +575,13 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Token.REGEXP:
                     out.println(tname + " " + idata.itsRegExpLiterals[indexReg]);
                     break;
-                case Token.OBJECTLIT:
+                case Icode_LITERAL_KEYS:
+                    {
+                        boolean copyArray = iCode[pc++] != 0;
+                        Object[] keys = (Object[]) idata.literalIds[indexReg];
+                        out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
+                        break;
+                    }
                 case Icode_SPARE_ARRAYLIT:
                     out.println(tname + " " + idata.literalIds[indexReg]);
                     break;
