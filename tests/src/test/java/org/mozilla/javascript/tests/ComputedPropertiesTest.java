@@ -179,6 +179,49 @@ public class ComputedPropertiesTest {
     }
 
     @Test
+    public void yieldWorksForPropertyValuesInInterpretedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(-1);
+            assertYieldWorksForPropertyValues(cx);
+        }
+    }
+
+    @Test
+    public void yieldWorksForPropertyValuesInCompiledMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(0);
+            assertYieldWorksForPropertyValues(cx);
+        }
+    }
+
+    @Test
+    public void yieldWorksForPropertyValuesInOptimizedMode() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(9);
+            assertYieldWorksForPropertyValues(cx);
+        }
+    }
+
+    private static void assertYieldWorksForPropertyValues(Context cx) {
+        String script =
+                "\n"
+                        + "function *gen() {\n"
+                        + " ({x: yield 1});\n"
+                        + "}\n"
+                        + "var g = gen()\n"
+                        + "var res1 = g.next();\n"
+                        + "var res2 = g.next();\n"
+                        + "res1.value === 1 && !res1.done && res2.done\n";
+
+        ScriptableObject scope = cx.initStandardObjects();
+        Object value = cx.evaluateString(scope, script, "test", 1, null);
+        assertEquals(Boolean.TRUE, value);
+    }
+
+    @Test
     public void cannotParseInvalidUnclosedBracket() {
         String script = "o = { [3 : 2 }";
 
