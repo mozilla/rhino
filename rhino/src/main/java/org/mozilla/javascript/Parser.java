@@ -3645,7 +3645,6 @@ public class Parser {
                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                     int pos = ts.tokenBeg;
                     int lineno = ts.lineno;
-                    int col = ts.tokenBeg;
                     nextToken();
                     AstNode expr = assignExpr();
                     if (peekToken() != Token.RB) {
