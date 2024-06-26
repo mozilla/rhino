@@ -2301,8 +2301,9 @@ public final class Interpreter extends Icode implements Evaluator {
                                     Object[] data = (Object[]) stack[stackTop];
                                     --stackTop;
                                     int[] getterSetters = (int[]) stack[stackTop];
-    --stackTop;
-                                    Object[] ids = (Object[]) stack[stackTop];                                Object val =
+                                    --stackTop;
+                                    Object[] ids = (Object[]) stack[stackTop];
+                                    Object val =
                                             ScriptRuntime.newObjectLiteral(
                                                     ids, data, getterSetters, cx, frame.scope);
                                     stack[stackTop] = val;
