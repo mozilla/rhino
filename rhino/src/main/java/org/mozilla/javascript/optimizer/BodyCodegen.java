@@ -2091,24 +2091,70 @@ class BodyCodegen {
             addNewObjectArray(0);
             return;
         }
-       
-        addNewObjectArray(count);   // Stack: [values_array]
-        addNewObjectArray(count);   // Stack: [values_array, keys_array]
-        
-        for (int i = 0 ; i < count; ++i) {
-            cfw.add(ByteCode.DUP2);                                         // Stack: [values_array, keys_array, values_array, keys_array]
-            cfw.addLoadConstant(i);                                         // Stack: [values_array, keys_array, values_array, keys_array, i]
-            addLoadPropertyId(node, properties, computedProperties, i);     // Stack: [values_array, keys_array, values_array, keys_array, i, Ki]
-            cfw.add(ByteCode.AASTORE);                                      // Stack: [values_array, keys_array, values_array]
-            
-            cfw.addLoadConstant(i);                                         // Stack: [values_array, keys_array, values_array, i]
-            addLoadPropertyValue(node, child);                              // Stack: [values_array, keys_array, values_array, i, Vi]
-            cfw.add(ByteCode.AASTORE);                                      // Stack: [values_array, keys_array]
-            
-            child = child.getNext();
-        }
 
-        cfw.add(ByteCode.SWAP); // Caller expect to have [keys_array, values_array]
+        if (isGenerator) {
+            // More inefficient code (uses a lot of stack size), but necessary for bug 757410.
+            // First push all keys and values, interleaved. Then pop them onto two arrays.
+            // The code could be implemented without two additional locals, but it would be a mess
+            // of dup2_x2, swap, and pop... this looks a bit cleaner.
+
+            for (int i = 0; i < count; ++i) {
+                addLoadPropertyId(node, properties, computedProperties, i);
+                addLoadPropertyValue(node, child);
+                child = child.getNext();
+            }
+
+            short keysArrayLocal = firstFreeLocal;
+            ++firstFreeLocal;
+            ++localsMax;
+            short valuesArrayLocal = firstFreeLocal;
+            ++firstFreeLocal;
+            ++localsMax;
+            addNewObjectArray(count);
+            cfw.addAStore(keysArrayLocal);
+            addNewObjectArray(count);
+            cfw.addAStore(valuesArrayLocal);
+
+            // Notice that i goes in reverse, since the stack is LIFO :)
+            for (int i = count - 1; i >= 0; --i) {
+
+                // Stack: [k0, v0, ..., ki, vi]
+                cfw.addALoad(valuesArrayLocal); // Stack: [k0, v0, ..., ki, vi, values_array]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values_array, vi]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., ki, values_array, vi, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values_array, i, vi]
+                cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ..., ki]
+
+                cfw.addALoad(keysArrayLocal); // Stack: [k0, v0, ..., ki, keys_array]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys_array, ki]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., keys_array, ki, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys_array, ki, i]
+                cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ...]
+            }
+
+            cfw.addALoad(keysArrayLocal);
+            cfw.addALoad(valuesArrayLocal);
+        } else {
+            // Simpler bytecode in the normal case (no generator, and thus no "yield" in the middle)
+
+            addNewObjectArray(count); // Stack: [values_array]
+            addNewObjectArray(count); // Stack: [values_array, keys_array]
+
+            for (int i = 0; i < count; ++i) {
+                cfw.add(ByteCode.DUP2); // Stack: [values_array, keys_array, values_array, keys_array]
+                cfw.addLoadConstant(i); // Stack: [values_array, keys_array, values_array, keys_array, i]
+                addLoadPropertyId(node, properties, computedProperties, i); // Stack: [values_array, keys_array, values_array, keys_array, i, Ki]
+                cfw.add(ByteCode.AASTORE); // Stack: [values_array, keys_array, values_array]
+
+                cfw.addLoadConstant(i); // Stack: [values_array, keys_array, values_array, i]
+                addLoadPropertyValue(node, child); // Stack: [values_array, keys_array, values_array, i, Vi]
+                cfw.add(ByteCode.AASTORE); // Stack: [values_array, keys_array]
+
+                child = child.getNext();
+            }
+
+            cfw.add(ByteCode.SWAP); // Caller expect to have [keys_array, values_array]
+        }
     }
 
     private void addLoadPropertyValue(Node node, Node child) {
