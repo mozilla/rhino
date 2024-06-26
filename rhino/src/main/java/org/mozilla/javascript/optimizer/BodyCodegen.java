@@ -2084,8 +2084,8 @@ class BodyCodegen {
     }
 
     /** load two arrays with property ids and values */
-    private void addLoadProperty(Node node, Node child,
-            Object[] properties, Object[] computedProperties, int count) {
+    private void addLoadProperty(
+            Node node, Node child, Object[] properties, Object[] computedProperties, int count) {
         if (count == 0) {
             addNewObjectArray(0);
             addNewObjectArray(0);
@@ -2119,16 +2119,16 @@ class BodyCodegen {
             for (int i = count - 1; i >= 0; --i) {
 
                 // Stack: [k0, v0, ..., ki, vi]
-                cfw.addALoad(valuesArrayLocal); // Stack: [k0, v0, ..., ki, vi, values_array]
-                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values_array, vi]
-                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., ki, values_array, vi, i]
-                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values_array, i, vi]
+                cfw.addALoad(valuesArrayLocal); // Stack: [k0, v0, ..., ki, vi, values]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values, vi]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., ki, values, vi, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values, i, vi]
                 cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ..., ki]
 
-                cfw.addALoad(keysArrayLocal); // Stack: [k0, v0, ..., ki, keys_array]
-                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys_array, ki]
-                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., keys_array, ki, i]
-                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys_array, ki, i]
+                cfw.addALoad(keysArrayLocal); // Stack: [k0, v0, ..., ki, keys]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys, ki]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., keys, ki, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys, ki, i]
                 cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ...]
             }
 
@@ -2137,23 +2137,27 @@ class BodyCodegen {
         } else {
             // Simpler bytecode in the normal case (no generator, and thus no "yield" in the middle)
 
-            addNewObjectArray(count); // Stack: [values_array]
-            addNewObjectArray(count); // Stack: [values_array, keys_array]
+            addNewObjectArray(count); // Stack: [values]
+            addNewObjectArray(count); // Stack: [values, keys]
 
             for (int i = 0; i < count; ++i) {
-                cfw.add(ByteCode.DUP2); // Stack: [values_array, keys_array, values_array, keys_array]
-                cfw.addLoadConstant(i); // Stack: [values_array, keys_array, values_array, keys_array, i]
-                addLoadPropertyId(node, properties, computedProperties, i); // Stack: [values_array, keys_array, values_array, keys_array, i, Ki]
-                cfw.add(ByteCode.AASTORE); // Stack: [values_array, keys_array, values_array]
+                cfw.add(ByteCode.DUP2); // Stack: [values, keys, values, keys]
+                cfw.addLoadConstant(i); // Stack: [values, keys, values, keys, i]
+                addLoadPropertyId(
+                        node,
+                        properties,
+                        computedProperties,
+                        i); // Stack: [values, keys, values, keys, i, Ki]
+                cfw.add(ByteCode.AASTORE); // Stack: [values, keys, values]
 
-                cfw.addLoadConstant(i); // Stack: [values_array, keys_array, values_array, i]
-                addLoadPropertyValue(node, child); // Stack: [values_array, keys_array, values_array, i, Vi]
-                cfw.add(ByteCode.AASTORE); // Stack: [values_array, keys_array]
+                cfw.addLoadConstant(i); // Stack: [values, keys, values, i]
+                addLoadPropertyValue(node, child); // Stack: [values, keys, values, i, Vi]
+                cfw.add(ByteCode.AASTORE); // Stack: [values, keys]
 
                 child = child.getNext();
             }
 
-            cfw.add(ByteCode.SWAP); // Caller expect to have [keys_array, values_array]
+            cfw.add(ByteCode.SWAP); // Caller expect to have [keys, values]
         }
     }
 
@@ -2166,7 +2170,8 @@ class BodyCodegen {
         }
     }
 
-    private void addLoadPropertyId(Node node, Object[] properties, Object[] computedProperties, int i) {
+    private void addLoadPropertyId(
+            Node node, Object[] properties, Object[] computedProperties, int i) {
         Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
         if (computedPropertyId != null) {
             // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
@@ -2216,7 +2221,7 @@ class BodyCodegen {
                             + ")Lorg/mozilla/javascript/Scriptable;");
             return;
         }
-        
+
         addLoadProperty(node, child, properties, computedProperties, count);
 
         // check if object literal actually has any getters or setters

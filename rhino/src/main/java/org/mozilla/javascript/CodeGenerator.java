@@ -1153,19 +1153,21 @@ class CodeGenerator extends Icode {
     }
 
     private void visitObjectLiteral(Node node, Node child) {
-	    Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-	    Object[] computedPropertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
-	    int count = propertyIds == null ? 0 : propertyIds.length;
-        boolean hasAnyComputedProperty = computedPropertyIds != null && Arrays.stream(computedPropertyIds).anyMatch(Objects::nonNull);
+        Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        Object[] computedPropertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
+        int count = propertyIds == null ? 0 : propertyIds.length;
+        boolean hasAnyComputedProperty =
+                computedPropertyIds != null
+                        && Arrays.stream(computedPropertyIds).anyMatch(Objects::nonNull);
 
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
-        
+
         addIndexOp(Icode_LITERAL_KEYS, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
         addIndexOp(Icode_LITERAL_NEW, count);
         stackChange(3);
-        
+
         int i = 0;
         while (child != null) {
             // Computed key
@@ -1183,7 +1185,7 @@ class CodeGenerator extends Icode {
             child = child.getNext();
             i++;
         }
-        
+
         addToken(Token.OBJECTLIT);
 
         stackChange(-2);
