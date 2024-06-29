@@ -52,14 +52,7 @@ public class BoundFunction extends BaseFunction {
 
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs) {
-        Scriptable callThis = boundThis;
-        if (callThis == null && ScriptRuntime.hasTopCall(cx)) {
-            callThis = ScriptRuntime.getTopCallScope(cx);
-        }
-        if (callThis == null) {
-            callThis = getTopLevelScope(scope);
-        }
-        return targetFunction.call(cx, scope, callThis, concat(boundArgs, extraArgs));
+        return targetFunction.call(cx, scope, getCallThis(cx, scope), concat(boundArgs, extraArgs));
     }
 
     @Override
@@ -96,6 +89,25 @@ public class BoundFunction extends BaseFunction {
         System.arraycopy(first, 0, args, 0, first.length);
         System.arraycopy(second, 0, args, first.length, second.length);
         return args;
+    }
+
+    Callable getTargetFunction() {
+        return targetFunction;
+    }
+
+    Object[] getBoundArgs() {
+        return boundArgs;
+    }
+
+    Scriptable getCallThis(Context cx, Scriptable scope) {
+        Scriptable callThis = boundThis;
+        if (callThis == null && ScriptRuntime.hasTopCall(cx)) {
+            callThis = ScriptRuntime.getTopCallScope(cx);
+        }
+        if (callThis == null) {
+            callThis = getTopLevelScope(scope);
+        }
+        return callThis;
     }
 
     static boolean equalObjectGraphs(BoundFunction f1, BoundFunction f2, EqualObjectGraphs eq) {
