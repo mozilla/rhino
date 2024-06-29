@@ -2806,22 +2806,7 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = null;
-        if (L != 0) {
-            if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
-                callThis = toObjectOrNull(cx, args[0], scope);
-            } else {
-                callThis =
-                        args[0] == Undefined.instance
-                                ? Undefined.SCRIPTABLE_UNDEFINED
-                                : toObjectOrNull(cx, args[0], scope);
-            }
-        }
-        if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
-            callThis =
-                    getTopCallScope(
-                            cx); // This covers the case of args[0] == (null|undefined) as well.
-        }
+        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L);
 
         Object[] callArgs;
         if (isApply) {
@@ -2838,6 +2823,25 @@ public class ScriptRuntime {
         }
 
         return function.call(cx, scope, callThis, callArgs);
+    }
+
+    static Scriptable getApplyOrCallThis(Context cx, Scriptable scope, Object arg0, int l) {
+        Scriptable callThis;
+        if (l != 0) {
+            callThis =
+                    arg0 == Undefined.instance
+                                    && !cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)
+                            ? Undefined.SCRIPTABLE_UNDEFINED
+                            : toObjectOrNull(cx, arg0, scope);
+        } else {
+            callThis = null;
+        }
+        if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+            callThis =
+                    getTopCallScope(
+                            cx); // This covers the case of args[0] == (null|undefined) as well.
+        }
+        return callThis;
     }
 
     /** @return true if the passed in Scriptable looks like an array */
