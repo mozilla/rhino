@@ -70,4 +70,8 @@ public class LambdaFunction extends BaseFunction {
     public String getFunctionName() {
         return name;
     }
+
+    Callable getTarget() {
+        return target;
+    }
 }
