@@ -7,9 +7,17 @@ updates:
     directory: "/"
     # Allow dependabot to run on GitHub Actions
     open-pull-requests-limit: 1
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "12:00"
 
   # Maintain Gradle Dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     # Allow Dependabot to run on code
     open-pull-requests-limit: 1
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "12:00"
