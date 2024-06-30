@@ -1,6 +1,6 @@
 module org.mozilla.rhino.engine {
     exports org.mozilla.javascript.engine;
 
-    requires org.mozilla.rhino;
-    requires java.scripting;
+    requires transitive org.mozilla.rhino;
+    requires transitive java.scripting;
 }

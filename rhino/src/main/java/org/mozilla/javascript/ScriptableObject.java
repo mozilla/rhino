@@ -305,6 +305,7 @@ public abstract class ScriptableObject
      * @param start the object whose property is being set
      * @param value value to set the property to
      */
+    @SuppressWarnings("resource")
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (externalData != null) {
