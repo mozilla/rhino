@@ -42,6 +42,7 @@ public class NativeObject extends IdScriptableObject implements Map {
         return ScriptRuntime.defaultObjectToString(this);
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor) {
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf, "getPrototypeOf", 1);
