@@ -36,8 +36,7 @@ public class ArrowFunction extends BaseFunction {
 
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
-        return targetFunction.call(cx, scope, callThis, args);
+        return targetFunction.call(cx, scope, getCallThis(cx), args);
     }
 
     @Override
@@ -72,6 +71,14 @@ public class ArrowFunction extends BaseFunction {
             return ((BaseFunction) targetFunction).decompile(indent, flags);
         }
         return super.decompile(indent, flags);
+    }
+
+    Scriptable getCallThis(Context cx) {
+        return boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
+    }
+
+    Callable getTargetFunction() {
+        return targetFunction;
     }
 
     static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
