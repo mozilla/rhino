@@ -4518,23 +4518,23 @@ public class ScriptRuntime {
                     int index = ((Integer) id).intValue();
                     object.put(index, object, value);
                 } else {
-                    String stringId = ScriptRuntime.toString(id);
-                    if (isSpecialProperty(stringId)) {
-                        Ref ref = specialRef(object, stringId, cx, scope);
+                    StringIdOrIndex s = toStringIdOrIndex(id);
+                    if (s.stringId == null) {
+                        object.put(s.index, object, value);
+                    } else if (isSpecialProperty(s.stringId)) {
+                        Ref ref = specialRef(object, s.stringId, cx, scope);
                         ref.set(cx, scope, value);
                     } else {
-                        object.put(stringId, object, value);
+                        object.put(s.stringId, object, value);
                     }
                 }
             } else {
                 ScriptableObject so = (ScriptableObject) object;
                 Callable getterOrSetter = (Callable) value;
                 boolean isSetter = getterSetter == 1;
-                // XXX: Do we have to handle Symbol here.
-                // This will be required, when conputedprops are supported.
-                String key = id instanceof String ? (String) id : null;
-                int index = key == null ? ((Integer) id).intValue() : 0;
-                so.setGetterOrSetter(key, index, getterOrSetter, isSetter);
+                Integer index = id instanceof Integer ? (Integer) id : null;
+                String key = index == null ? ScriptRuntime.toString(id) : null;
+                so.setGetterOrSetter(key, index == null ? 0 : index, getterOrSetter, isSetter);
             }
         }
         return object;

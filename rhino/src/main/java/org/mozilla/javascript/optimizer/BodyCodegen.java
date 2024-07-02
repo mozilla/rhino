@@ -2083,12 +2083,101 @@ class BodyCodegen {
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
-    /** load array with property ids */
-    private void addLoadPropertyIds(Object[] properties, int count) {
-        addNewObjectArray(count);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
+    /** load two arrays with property ids and values */
+    private void addLoadProperty(
+            Node node, Node child, Object[] properties, Object[] computedProperties, int count) {
+        if (count == 0) {
+            addNewObjectArray(0);
+            addNewObjectArray(0);
+            return;
+        }
+
+        if (isGenerator) {
+            // More inefficient code (uses a lot of stack size), but necessary for bug 757410.
+            // First push all keys and values, interleaved. Then pop them onto two arrays.
+            // The code could be implemented without two additional locals, but it would be a mess
+            // of dup2_x2, swap, and pop... this looks a bit cleaner.
+
+            for (int i = 0; i < count; ++i) {
+                addLoadPropertyId(node, properties, computedProperties, i);
+                addLoadPropertyValue(node, child);
+                child = child.getNext();
+            }
+
+            short keysArrayLocal = firstFreeLocal;
+            ++firstFreeLocal;
+            ++localsMax;
+            short valuesArrayLocal = firstFreeLocal;
+            ++firstFreeLocal;
+            ++localsMax;
+            addNewObjectArray(count);
+            cfw.addAStore(keysArrayLocal);
+            addNewObjectArray(count);
+            cfw.addAStore(valuesArrayLocal);
+
+            // Notice that i goes in reverse, since the stack is LIFO :)
+            for (int i = count - 1; i >= 0; --i) {
+
+                // Stack: [k0, v0, ..., ki, vi]
+                cfw.addALoad(valuesArrayLocal); // Stack: [k0, v0, ..., ki, vi, values]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values, vi]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., ki, values, vi, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., ki, values, i, vi]
+                cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ..., ki]
+
+                cfw.addALoad(keysArrayLocal); // Stack: [k0, v0, ..., ki, keys]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys, ki]
+                cfw.addLoadConstant(i); // Stack: [k0, v0, ..., keys, ki, i]
+                cfw.add(ByteCode.SWAP); // Stack: [k0, v0, ..., keys, ki, i]
+                cfw.add(ByteCode.AASTORE); // Stack: [k0, v0, ...]
+            }
+
+            cfw.addALoad(keysArrayLocal);
+            cfw.addALoad(valuesArrayLocal);
+        } else {
+            // Simpler bytecode in the normal case (no generator, and thus no "yield" in the middle)
+
+            addNewObjectArray(count); // Stack: [values]
+            addNewObjectArray(count); // Stack: [values, keys]
+
+            for (int i = 0; i < count; ++i) {
+                cfw.add(ByteCode.DUP2); // Stack: [values, keys, values, keys]
+                cfw.addLoadConstant(i); // Stack: [values, keys, values, keys, i]
+                addLoadPropertyId(
+                        node,
+                        properties,
+                        computedProperties,
+                        i); // Stack: [values, keys, values, keys, i, Ki]
+                cfw.add(ByteCode.AASTORE); // Stack: [values, keys, values]
+
+                cfw.addLoadConstant(i); // Stack: [values, keys, values, i]
+                addLoadPropertyValue(node, child); // Stack: [values, keys, values, i, Vi]
+                cfw.add(ByteCode.AASTORE); // Stack: [values, keys]
+
+                child = child.getNext();
+            }
+
+            cfw.add(ByteCode.SWAP); // Caller expect to have [keys, values]
+        }
+    }
+
+    private void addLoadPropertyValue(Node node, Node child) {
+        int childType = child.getType();
+        if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
+            generateExpression(child.getFirstChild(), node);
+        } else {
+            generateExpression(child, node);
+        }
+    }
+
+    private void addLoadPropertyId(
+            Node node, Object[] properties, Object[] computedProperties, int i) {
+        Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
+        if (computedPropertyId != null) {
+            // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+            Node computedPropertyNode = (Node) computedPropertyId;
+            generateExpression(computedPropertyNode.getFirstChild(), node);
+        } else {
             Object id = properties[i];
             if (id instanceof String) {
                 cfw.addPush((String) id);
@@ -2096,51 +2185,12 @@ class BodyCodegen {
                 cfw.addPush(((Integer) id).intValue());
                 addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
             }
-            cfw.add(ByteCode.AASTORE);
-        }
-    }
-
-    /** load array with property values */
-    private void addLoadPropertyValues(Node node, Node child, int count) {
-        if (isGenerator) {
-            // see bug 757410 for an explanation why we need to split this
-            for (int i = 0; i != count; ++i) {
-                int childType = child.getType();
-                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
-                    generateExpression(child.getFirstChild(), node);
-                } else {
-                    generateExpression(child, node);
-                }
-                child = child.getNext();
-            }
-            addNewObjectArray(count);
-            for (int i = 0; i != count; ++i) {
-                cfw.add(ByteCode.DUP_X1);
-                cfw.add(ByteCode.SWAP);
-                cfw.addPush(count - i - 1);
-                cfw.add(ByteCode.SWAP);
-                cfw.add(ByteCode.AASTORE);
-            }
-        } else {
-            addNewObjectArray(count);
-            Node child2 = child;
-            for (int i = 0; i != count; ++i) {
-                cfw.add(ByteCode.DUP);
-                cfw.addPush(i);
-                int childType = child2.getType();
-                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
-                    generateExpression(child2.getFirstChild(), node);
-                } else {
-                    generateExpression(child2, node);
-                }
-                cfw.add(ByteCode.AASTORE);
-                child2 = child2.getNext();
-            }
         }
     }
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        Object[] computedProperties = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
         int count = properties == null ? 0 : properties.length;
 
         // If code budget is tight swap out literals into separate method
@@ -2172,17 +2222,7 @@ class BodyCodegen {
             return;
         }
 
-        if (isGenerator) {
-            // TODO: this is actually only necessary if the yield operation is
-            // a child of this object or its children (bug 757410)
-            addLoadPropertyValues(node, child, count);
-            addLoadPropertyIds(properties, count);
-            // swap property-values and property-ids arrays
-            cfw.add(ByteCode.SWAP);
-        } else {
-            addLoadPropertyIds(properties, count);
-            addLoadPropertyValues(node, child, count);
-        }
+        addLoadProperty(node, child, properties, computedProperties, count);
 
         // check if object literal actually has any getters or setters
         boolean hasGetterSetters = false;
