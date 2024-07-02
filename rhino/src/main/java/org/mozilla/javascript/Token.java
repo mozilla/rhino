@@ -510,6 +510,8 @@ public class Token {
                 return "RESERVED";
             case EMPTY:
                 return "EMPTY";
+            case COMPUTED_PROPERTY:
+                return "COMPUTED_PROPERTY";
             case BLOCK:
                 return "BLOCK";
             case LABEL:
