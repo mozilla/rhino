@@ -246,4 +246,30 @@ public class ComputedPropertiesTest {
             assertEquals("invalid property id (test#1)", ex.getMessage());
         }
     }
+
+    @Test
+    public void unsupportedInDestructuringInFunctionArguments() {
+        String script = "function({ [a]: b }) {};";
+        assertComputedPropertiesAreUnsupportedInDestructuring(
+                script, "Unsupported computed property in destructuring. (test#1)");
+    }
+
+    @Test
+    public void unsupportedInDestructuringInVariableDeclaration() {
+        String script = "var { [a]: b } = {};";
+        assertComputedPropertiesAreUnsupportedInDestructuring(
+                script, "Unsupported computed property in destructuring.");
+    }
+
+    private void assertComputedPropertiesAreUnsupportedInDestructuring(
+            String script, String message) {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            EvaluatorException ex =
+                    assertThrows(
+                            EvaluatorException.class,
+                            () -> cx.compileString(script, "test", 1, null));
+            assertEquals(message, ex.getMessage());
+        }
+    }
 }

@@ -4154,6 +4154,9 @@ public class Parser {
             } else if (id instanceof NumberLiteral) {
                 Node s = createNumber((int) ((NumberLiteral) id).getNumber());
                 rightElem = new Node(Token.GETELEM, createName(tempName), s);
+            } else if (id instanceof ComputedPropertyKey) {
+                reportError("msg.bad.computed.property.in.destruct");
+                return false;
             } else {
                 throw codeBug();
             }

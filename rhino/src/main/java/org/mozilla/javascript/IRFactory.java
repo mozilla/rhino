@@ -2524,6 +2524,9 @@ public final class IRFactory {
             case Token.THIS:
                 decompiler.addToken(node.getType());
                 break;
+            case Token.COMPUTED_PROPERTY:
+                parser.reportError("msg.bad.computed.property.in.destruct");
+                break;
             default:
                 Kit.codeBug("unexpected token: " + Token.typeToName(node.getType()));
         }
