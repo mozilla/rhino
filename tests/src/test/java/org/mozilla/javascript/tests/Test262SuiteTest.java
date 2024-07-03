@@ -30,15 +30,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
@@ -54,7 +55,7 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
-@RunWith(Parameterized.class)
+@Execution(ExecutionMode.CONCURRENT)
 public class Test262SuiteTest {
 
     /**
@@ -80,7 +81,7 @@ public class Test262SuiteTest {
     private static final boolean statsEnabled;
     private static final boolean includeUnsupported;
 
-    static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
+    static Map<String, Script> HARNESS_SCRIPT_CACHE = new ConcurrentHashMap<>();
     static Map<Test262Case, TestResultTracker> RESULT_TRACKERS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
@@ -167,17 +168,13 @@ public class Test262SuiteTest {
         return optLevel;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
-        for (int optLevel : OPT_LEVELS) {
-            HARNESS_SCRIPT_CACHE.put(optLevel, new HashMap<>());
-        }
-
         CTX_FACTORY.setLanguageVersion(Context.VERSION_ES6);
         TestUtils.setGlobalContextFactory(CTX_FACTORY);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
 
@@ -431,12 +428,6 @@ public class Test262SuiteTest {
             Pattern.compile(
                     "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
-    private final String testFilePath;
-    private final int optLevel;
-    private final boolean useStrict;
-    private final Test262Case testCase;
-    private final boolean markedAsFailing;
-
     /** @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions */
     public static class $262 {
         private ScriptableObject scope;
@@ -492,42 +483,34 @@ public class Test262SuiteTest {
         }
     }
 
-    public Test262SuiteTest(
-            String testFilePath,
-            int optLevel,
-            boolean useStrict,
-            Test262Case testCase,
-            boolean markedAsFailing) {
-        this.testFilePath = testFilePath;
-        this.optLevel = optLevel;
-        this.useStrict = useStrict;
-        this.testCase = testCase;
-        this.markedAsFailing = markedAsFailing;
-    }
-
-    private Scriptable buildScope(Context cx) throws IOException {
+    private Scriptable buildScope(Context cx, Test262Case testCase, int optLevel)
+            throws IOException {
         ScriptableObject scope = cx.initSafeStandardObjects();
 
         for (String harnessFile : testCase.harnessFiles) {
-            if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
-                String harnessPath = testHarnessDir + harnessFile;
-                try (Reader reader = new FileReader(harnessPath)) {
-                    String script = Kit.readReader(reader);
+            String harnessKey = harnessFile + '-' + optLevel;
+            Script harnessScript =
+                    HARNESS_SCRIPT_CACHE.computeIfAbsent(
+                            harnessKey,
+                            k -> {
+                                String harnessPath = testHarnessDir + harnessFile;
+                                try (Reader reader = new FileReader(harnessPath)) {
+                                    String script = Kit.readReader(reader);
 
-                    // fix for missing features in Rhino
-                    if ("compareArray.js".equalsIgnoreCase(harnessFile)) {
-                        script =
-                                script.replace(
-                                        "assert.compareArray = function(actual, expected, message = '')",
-                                        "assert.compareArray = function(actual, expected, message)");
-                    }
-
-                    HARNESS_SCRIPT_CACHE
-                            .get(optLevel)
-                            .put(harnessFile, cx.compileString(script, harnessPath, 1, null));
-                }
-            }
-            HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
+                                    // fix for missing features in Rhino
+                                    if ("compareArray.js".equalsIgnoreCase(harnessFile)) {
+                                        script =
+                                                script.replace(
+                                                        "assert.compareArray = function(actual, expected, message = '')",
+                                                        "assert.compareArray = function(actual, expected, message)");
+                                    }
+                                    return cx.compileString(script, harnessPath, 1, null);
+                                } catch (IOException ioe) {
+                                    throw new RuntimeException(
+                                            "Error reading test file " + harnessPath, ioe);
+                                }
+                            });
+            harnessScript.exec(cx, scope);
         }
 
         $262.install(scope);
@@ -549,8 +532,14 @@ public class Test262SuiteTest {
         return exceptionName;
     }
 
-    @Test
-    public void test262Case() {
+    @ParameterizedTest
+    @MethodSource("test262SuiteValues")
+    public void test262Case(
+            String testFilePath,
+            int optLevel,
+            boolean useStrict,
+            Test262Case testCase,
+            boolean markedAsFailing) {
         try (Context cx = Context.enter()) {
             cx.setOptimizationLevel(optLevel);
             cx.setGeneratingDebug(true);
@@ -559,7 +548,7 @@ public class Test262SuiteTest {
             try {
                 Scriptable scope;
                 try {
-                    scope = buildScope(cx);
+                    scope = buildScope(cx, testCase, optLevel);
                 } catch (Exception ex) {
                     throw new RuntimeException(
                             "Failed to build a scope with the harness files.", ex);
@@ -586,9 +575,11 @@ public class Test262SuiteTest {
                                     testCase.hasEarlyError ? "early" : "runtime"));
                 }
 
-                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
-                if (tracker != null) {
-                    tracker.passes(optLevel, useStrict);
+                synchronized (RESULT_TRACKERS) {
+                    TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                    if (tracker != null) {
+                        tracker.passes(optLevel, useStrict);
+                    }
                 }
             } catch (RhinoException ex) {
                 if (!testCase.isNegative()) {
@@ -616,9 +607,11 @@ public class Test262SuiteTest {
                     throw aex;
                 }
 
-                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
-                if (tracker != null) {
-                    tracker.passes(optLevel, useStrict);
+                synchronized (RESULT_TRACKERS) {
+                    TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                    if (tracker != null) {
+                        tracker.passes(optLevel, useStrict);
+                    }
                 }
             } catch (Exception ex) {
                 // enable line below to print out stacktraces of unexpected exceptions
@@ -788,7 +781,6 @@ public class Test262SuiteTest {
         }
     }
 
-    @Parameters(name = "js={0}, opt={1}, strict={2}")
     public static Collection<Object[]> test262SuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<>();
         File skipDir = null;

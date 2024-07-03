@@ -8,7 +8,10 @@ repositories {
 }
 
 dependencies {
+    testImplementation platform("org.junit:junit-bom:5.10.3")
+    testImplementation "org.junit.jupiter:junit-jupiter"
     testImplementation "junit:junit:4.13.2"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine"
     testImplementation "org.yaml:snakeyaml:1.33"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
 }
@@ -20,7 +23,7 @@ compileJava {
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
 }
 
 spotless {
