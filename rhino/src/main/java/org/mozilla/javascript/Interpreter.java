@@ -1774,23 +1774,21 @@ public final class Interpreter extends Icode implements Evaluator {
                                         calleeScope =
                                                 ScriptableObject.getTopLevelScope(frame.scope);
                                     }
-                                    // Iteratively peel known function types that can be reduced:
-                                    // arrows, lambdas, bound functions, call/apply, and
-                                    // no-such-method-handler in order to make a best-effort to keep
-                                    // them in this interpreter loop so continuations keep working.
-                                    // The loop initializer and condition are formulated so that
-                                    // they short-circuit the loop if the function is already an
-                                    // interpreted function, which should be the majority of cases.
+                                    // Iteratively reduce known function types: arrows, lambdas,
+                                    // bound functions, call/apply, and no-such-method-handler in
+                                    // order to make a best-effort to keep them in this interpreter
+                                    // loop so continuations keep working. The loop initializer and
+                                    // condition are formulated so that they short-circuit the loop
+                                    // if the function is already an interpreted function, which
+                                    // should be the majority of cases.
                                     for (boolean notInt = !(fun instanceof InterpretedFunction);
                                             notInt; ) {
                                         if (fun instanceof ArrowFunction) {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
-                                            continue;
                                         } else if (fun instanceof LambdaFunction) {
                                             fun = ((LambdaFunction) fun).getTarget();
-                                            continue;
                                         } else if (fun instanceof BoundFunction) {
                                             BoundFunction bfun = (BoundFunction) fun;
                                             fun = bfun.getTargetFunction();
@@ -1818,7 +1816,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                         boundArgs, 0, stack, stackTop + 2, blen);
                                                 indexReg += blen;
                                             }
-                                            continue;
                                         } else if (fun instanceof IdFunctionObject) {
                                             IdFunctionObject ifun = (IdFunctionObject) fun;
                                             // Bug 405654 -- make the best effort to keep
@@ -1878,7 +1875,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                                         indexReg--;
                                                     }
                                                 }
-                                                continue;
+                                            } else {
+                                                // Some other IdFunctionObject we don't know how to
+                                                // reduce.
+                                                break;
                                             }
                                         } else if (fun instanceof NoSuchMethodShim) {
                                             NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;
@@ -1895,15 +1895,13 @@ public final class Interpreter extends Icode implements Evaluator {
                                             stack[stackTop + 3] =
                                                     cx.newArray(calleeScope, elements);
                                             indexReg = 2;
-                                            continue;
                                         } else if (fun == null) {
                                             throw ScriptRuntime.notFunctionError(null, null);
+                                        } else {
+                                            // Current function is something that we can't reduce
+                                            // further.
+                                            break;
                                         }
-
-                                        // We reached here without any of the continue statements
-                                        // triggering. Current function is something that we can't
-                                        // peel back further.
-                                        break;
                                     }
 
                                     if (fun instanceof InterpretedFunction) {
