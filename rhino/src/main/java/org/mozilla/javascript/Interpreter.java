@@ -1778,55 +1778,12 @@ public final class Interpreter extends Icode implements Evaluator {
                                     // arrows, lambdas, bound functions, call/apply, and
                                     // no-such-method-handler in order to make a best-effort to keep
                                     // them in this interpreter loop so continuations keep working.
-                                    for (; ; ) {
-                                        // When an interpreted function is encountered, install it
-                                        // as the current function.
-                                        if (fun instanceof InterpretedFunction) {
-                                            InterpretedFunction ifun = (InterpretedFunction) fun;
-                                            if (frame.fnOrScript.securityDomain
-                                                    == ifun.securityDomain) {
-                                                CallFrame callParentFrame = frame;
-                                                if (op == Icode_TAIL_CALL) {
-                                                    // In principle tail call can re-use the current
-                                                    // frame and its stack arrays but it is hard to
-                                                    // do properly. Any exceptions that can legally
-                                                    // happen during frame re-initialization
-                                                    // including StackOverflowException during
-                                                    // innocent looking System.arraycopy may leave
-                                                    // the current frame data corrupted leading to
-                                                    // undefined behaviour in the catch code below
-                                                    // that unwinds JS stack on exceptions. Then
-                                                    // there is issue about frame release end
-                                                    // exceptions there. To avoid frame allocation a
-                                                    // released frame can be cached for re-use which
-                                                    // would also benefit non-tail calls but it is
-                                                    // not clear that this caching would gain in
-                                                    // performance due to potentially bad
-                                                    // interaction with GC.
-                                                    callParentFrame = frame.parentFrame;
-                                                    // Release the current frame. See Bug #344501 to
-                                                    // see why it is being done here.
-                                                    exitFrame(cx, frame, null);
-                                                }
-                                                CallFrame calleeFrame =
-                                                        initFrame(
-                                                                cx,
-                                                                calleeScope,
-                                                                funThisObj,
-                                                                stack,
-                                                                sDbl,
-                                                                stackTop + 2,
-                                                                indexReg,
-                                                                ifun,
-                                                                callParentFrame);
-                                                if (op != Icode_TAIL_CALL) {
-                                                    frame.savedStackTop = stackTop;
-                                                    frame.savedCallOp = op;
-                                                }
-                                                frame = calleeFrame;
-                                                continue StateLoop;
-                                            }
-                                        } else if (fun instanceof ArrowFunction) {
+                                    // The loop initializer and condition are formulated so that
+                                    // they short-circuit the loop if the function is already an
+                                    // interpreted function, which should be the majority of cases.
+                                    for (boolean notInt = !(fun instanceof InterpretedFunction);
+                                            notInt; ) {
+                                        if (fun instanceof ArrowFunction) {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
@@ -1864,13 +1821,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                             continue;
                                         } else if (fun instanceof IdFunctionObject) {
                                             IdFunctionObject ifun = (IdFunctionObject) fun;
-                                            if (NativeContinuation.isContinuationConstructor(
-                                                    ifun)) {
-                                                frame.stack[stackTop] =
-                                                        captureContinuation(
-                                                                cx, frame.parentFrame, false);
-                                                continue Loop;
-                                            }
                                             // Bug 405654 -- make the best effort to keep
                                             // Function.apply and Function.call within this
                                             // interpreter loop invocation
@@ -1952,9 +1902,57 @@ public final class Interpreter extends Icode implements Evaluator {
 
                                         // We reached here without any of the continue statements
                                         // triggering. Current function is something that we can't
-                                        // peel back further, just continue after the loop with an
-                                        // ordinary call.
+                                        // peel back further.
                                         break;
+                                    }
+
+                                    if (fun instanceof InterpretedFunction) {
+                                        InterpretedFunction ifun = (InterpretedFunction) fun;
+                                        if (frame.fnOrScript.securityDomain
+                                                == ifun.securityDomain) {
+                                            CallFrame callParentFrame = frame;
+                                            if (op == Icode_TAIL_CALL) {
+                                                // In principle tail call can re-use the current
+                                                // frame and its stack arrays but it is hard to
+                                                // do properly. Any exceptions that can legally
+                                                // happen during frame re-initialization including
+                                                // StackOverflowException during innocent looking
+                                                // System.arraycopy may leave the current frame
+                                                // data corrupted leading to undefined behaviour
+                                                // in the catch code bellow that unwinds JS stack
+                                                // on exceptions. Then there is issue about frame
+                                                // release
+                                                // end exceptions there.
+                                                // To avoid frame allocation a released frame
+                                                // can be cached for re-use which would also benefit
+                                                // non-tail calls but it is not clear that this
+                                                // caching
+                                                // would gain in performance due to potentially
+                                                // bad interaction with GC.
+                                                callParentFrame = frame.parentFrame;
+                                                // Release the current frame. See Bug #344501 to see
+                                                // why
+                                                // it is being done here.
+                                                exitFrame(cx, frame, null);
+                                            }
+                                            CallFrame calleeFrame =
+                                                    initFrame(
+                                                            cx,
+                                                            calleeScope,
+                                                            funThisObj,
+                                                            stack,
+                                                            sDbl,
+                                                            stackTop + 2,
+                                                            indexReg,
+                                                            ifun,
+                                                            callParentFrame);
+                                            if (op != Icode_TAIL_CALL) {
+                                                frame.savedStackTop = stackTop;
+                                                frame.savedCallOp = op;
+                                            }
+                                            frame = calleeFrame;
+                                            continue StateLoop;
+                                        }
                                     }
 
                                     if (fun instanceof NativeContinuation) {
@@ -1976,6 +1974,16 @@ public final class Interpreter extends Icode implements Evaluator {
                                         // Start the real unwind job
                                         throwable = cjump;
                                         break withoutExceptions;
+                                    }
+
+                                    if (fun instanceof IdFunctionObject) {
+                                        IdFunctionObject ifun = (IdFunctionObject) fun;
+                                        if (NativeContinuation.isContinuationConstructor(ifun)) {
+                                            frame.stack[stackTop] =
+                                                    captureContinuation(
+                                                            cx, frame.parentFrame, false);
+                                            continue Loop;
+                                        }
                                     }
 
                                     cx.lastInterpreterFrame = frame;
