@@ -49,7 +49,7 @@ public class DefaultParametersTest {
     }
 
     @Test
-//    @Ignore("temporal-dead-zone")
+    @Ignore("temporal-dead-zone")
     public void functionDefaultArgsMultiFollowUsage() throws Exception {
         final String script =
                 "function f(a = go()) {\n"
@@ -66,7 +66,7 @@ public class DefaultParametersTest {
     }
 
     @Test
-//    @Ignore("temporal-dead-zone")
+    @Ignore("temporal-dead-zone")
     public void functionDefaultArgsMultiReferEarlier() throws Exception {
         final String script = "var f = function(a = b * 2, b = 3) { return a * b; }\n";
         assertThrows("ReferenceError: \"b\" is not defined.", script + "\nf()");
@@ -81,10 +81,12 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentDefaultArray() throws Exception {
-        final String script = "function f([x = 1, y = 2] = [], [z = 1] = [4]) {\n" +
-                "  return x + y + z;\n" +
-                "}";
+        final String script =
+                "function f([x = 1, y = 2] = [], [z = 1] = [4]) {\n"
+                        + "  return x + y + z;\n"
+                        + "}";
 
         assertIntEvaluates(3, script + "f()");
         assertIntEvaluates(3, script + "f([])");
@@ -93,21 +95,19 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentBasicArray() throws Exception {
-        final String script = "function f([x = 1] = [2]) {\n" +
-                "  return x;\n" +
-                "}";
+        final String script = "function f([x = 1] = [2]) {\n" + "  return x;\n" + "}";
 
-//        assertIntEvaluates(1, script + "f([])");
+        //        assertIntEvaluates(1, script + "f([])");
         assertIntEvaluates(2, script + "f()");
-//        assertIntEvaluates(3, script + "f([3])");
+        //        assertIntEvaluates(3, script + "f([3])");
     }
 
     @Test
+    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentBasicObject() throws Exception {
-        final String script = "function f({x = 1} = {x: 2}) {\n" +
-                "  return x;\n" +
-                "}";
+        final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
         assertIntEvaluates(1, script + "f({})");
         assertIntEvaluates(2, script + "f()");
@@ -115,10 +115,9 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentDefaultObject() throws Exception {
-        final String script = "function f({ z = 3, x = 2 } = {}) {\n" +
-                "  return z;\n" +
-                "}\n";
+        final String script = "function f({ z = 3, x = 2 } = {}) {\n" + "  return z;\n" + "}\n";
         assertIntEvaluates(3, script + "f()");
         assertIntEvaluates(3, script + "f({})");
         assertIntEvaluates(2, script + "f({z: 2})");

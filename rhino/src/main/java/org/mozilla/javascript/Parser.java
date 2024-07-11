@@ -3619,12 +3619,18 @@ public class Parser {
                                 fnNode.setDefaultParams(current);
 
                                 fnNode.addChildToBack(
-                                        new Node(Token.SETNAME, createName(Token.BINDNAME, propertyName, null), valueNode));
-// TODO(satish):
-//                                defineSymbol(Token.SETNAME, propertyName, true);
-//                                List<String> destructuringNames =
-//                                        (List<String>) fnNode.getProp(Node.DESTRUCTURING_NAMES);
-//                                destructuringNames.add(propertyName);
+                                        new Node(
+                                                Token.SETNAME,
+                                                createName(Token.BINDNAME, propertyName, null),
+                                                valueNode));
+                                // TODO(satish):
+                                //                                defineSymbol(Token.SETNAME,
+                                // propertyName, true);
+                                //                                List<String> destructuringNames =
+                                //                                        (List<String>)
+                                // fnNode.getProp(Node.DESTRUCTURING_NAMES);
+                                //
+                                // destructuringNames.add(propertyName);
                                 continue;
                             }
                         }
@@ -4187,12 +4193,18 @@ public class Parser {
                     fnNode.setDefaultParams(current);
 
                     comma.addChildToBack( // TODO(satish): what should be the op?
-                            new Node(Token.SETNAME, createName(Token.BINDNAME, tempName, null), valueNode));
+                            new Node(
+                                    Token.SETNAME,
+                                    createName(Token.BINDNAME, tempName, null),
+                                    valueNode));
                     if (variableType != -1) {
                         defineSymbol(variableType, tempName, true);
                         destructuringNames.add(tempName);
                     }
-                    createDestructuringAssignment(variableType, paramNode, createName(currentScriptOrFn.getNextTempName()));
+                    createDestructuringAssignment(
+                            variableType,
+                            paramNode,
+                            createName(currentScriptOrFn.getNextTempName()));
                 } else { // TODO(satish): appropriate error?
                     reportError("msg.bad.assign.left");
                 }
@@ -4255,7 +4267,10 @@ public class Parser {
                 fnNode.setDefaultParams(current);
 
                 parent.addChildToBack(
-                        new Node(setOp, createName(Token.BINDNAME, paramNode.getString(), null), rightElem));
+                        new Node(
+                                setOp,
+                                createName(Token.BINDNAME, paramNode.getString(), null),
+                                rightElem));
                 if (variableType != -1) {
                     defineSymbol(variableType, paramNode.getString(), true);
                     destructuringNames.add(paramNode.getString());
@@ -4339,7 +4354,10 @@ public class Parser {
                 fnNode.setDefaultParams(current);
 
                 parent.addChildToBack(
-                        new Node(setOp, createName(Token.BINDNAME, paramNode.getString(), null), rightElem));
+                        new Node(
+                                setOp,
+                                createName(Token.BINDNAME, paramNode.getString(), null),
+                                rightElem));
                 if (variableType != -1) {
                     defineSymbol(variableType, paramNode.getString(), true);
                     destructuringNames.add(paramNode.getString());
