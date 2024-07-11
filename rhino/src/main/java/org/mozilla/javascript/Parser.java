@@ -873,47 +873,48 @@ public class Parser {
     }
 
     private FunctionNode function(int type) throws IOException {
-        return function(type, false);
-    }
-
-    private FunctionNode function(int type, boolean isGenerator) throws IOException {
+        boolean isGenerator = false;
         int syntheticType = type;
         int baseLineno = ts.lineno; // line number where source starts
         int functionSourceStart = ts.tokenBeg; // start of "function" kwd
         Name name = null;
         AstNode memberExprNode = null;
 
-        if (matchToken(Token.NAME, true)) {
-            name = createNameNode(true, Token.NAME);
-            if (inUseStrictDirective) {
-                String id = name.getIdentifier();
-                if ("eval".equals(id) || "arguments".equals(id)) {
-                    reportError("msg.bad.id.strict", id);
+        do {
+            if (matchToken(Token.NAME, true)) {
+                name = createNameNode(true, Token.NAME);
+                if (inUseStrictDirective) {
+                    String id = name.getIdentifier();
+                    if ("eval".equals(id) || "arguments".equals(id)) {
+                        reportError("msg.bad.id.strict", id);
+                    }
                 }
-            }
-            if (!matchToken(Token.LP, true)) {
+                if (!matchToken(Token.LP, true)) {
+                    if (compilerEnv.isAllowMemberExprAsFunctionName()) {
+                        AstNode memberExprHead = name;
+                        name = null;
+                        memberExprNode = memberExprTail(false, memberExprHead);
+                    }
+                    mustMatchToken(Token.LP, "msg.no.paren.parms", true);
+                }
+            } else if (matchToken(Token.LP, true)) {
+                // Anonymous function:  leave name as null
+            } else if (matchToken(Token.MUL, true)
+                    && (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
+                // ES6 generator function
+                isGenerator = true;
+                continue;
+            } else {
                 if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-                    AstNode memberExprHead = name;
-                    name = null;
-                    memberExprNode = memberExprTail(false, memberExprHead);
+                    // Note that memberExpr can not start with '(' like
+                    // in function (1+2).toString(), because 'function (' already
+                    // processed as anonymous function
+                    memberExprNode = memberExpr(false);
                 }
                 mustMatchToken(Token.LP, "msg.no.paren.parms", true);
             }
-        } else if (matchToken(Token.LP, true)) {
-            // Anonymous function:  leave name as null
-        } else if (matchToken(Token.MUL, true)
-                && (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
-            // ES6 generator function
-            return function(type, true);
-        } else {
-            if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-                // Note that memberExpr can not start with '(' like
-                // in function (1+2).toString(), because 'function (' already
-                // processed as anonymous function
-                memberExprNode = memberExpr(false);
-            }
-            mustMatchToken(Token.LP, "msg.no.paren.parms", true);
-        }
+            break;
+        } while (isGenerator);
         int lpPos = currentToken == Token.LP ? ts.tokenBeg : -1;
 
         if (memberExprNode != null) {
