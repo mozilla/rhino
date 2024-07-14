@@ -157,7 +157,7 @@ public class Parser {
     private boolean defaultUseStrictDirective;
 
     // Exception to unwind
-    private static class ParserException extends RuntimeException {
+    public static class ParserException extends RuntimeException {
         private static final long serialVersionUID = 5882582646773765630L;
     }
 
@@ -652,12 +652,7 @@ public class Parser {
             inUseStrictDirective = savedStrictMode;
         }
 
-        if (this.syntaxErrorCount != 0) {
-            String msg = String.valueOf(this.syntaxErrorCount);
-            msg = lookupMessage("msg.got.syntax.errors", msg);
-            if (!compilerEnv.isIdeMode())
-                throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
-        }
+        reportErrorsIfExists(baseLineno);
 
         // add comments to root in lexical order
         if (scannedComments != null) {
@@ -4333,5 +4328,14 @@ public class Parser {
 
     public boolean inUseStrictDirective() {
         return inUseStrictDirective;
+    }
+
+    public void reportErrorsIfExists(int baseLineno) {
+        if (this.syntaxErrorCount != 0) {
+            String msg = String.valueOf(this.syntaxErrorCount);
+            msg = lookupMessage("msg.got.syntax.errors", msg);
+            if (!compilerEnv.isIdeMode())
+                throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
+        }
     }
 }

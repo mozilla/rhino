@@ -116,7 +116,14 @@ public final class IRFactory {
             System.out.println("IRFactory.transformTree");
             System.out.println(root.debugPrint());
         }
-        ScriptNode script = (ScriptNode) transform(root);
+
+        ScriptNode script = null;
+        try {
+            script = (ScriptNode) transform(root);
+        } catch (Parser.ParserException e) {
+            parser.reportErrorsIfExists(root.getLineno());
+            return null;
+        }
 
         int sourceEndOffset = decompiler.getCurrentOffset();
         script.setEncodedSourceBounds(sourceStartOffset, sourceEndOffset);
