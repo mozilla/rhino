@@ -212,21 +212,18 @@ public class DefaultParametersTest {
             final Object expected, final String source, int languageLevel) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    if (cx.getOptimizationLevel() == -1) {
-                        int oldVersion = cx.getLanguageVersion();
-                        cx.setLanguageVersion(languageLevel);
-                        try {
-                            final Scriptable scope = cx.initStandardObjects();
-                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                            if (rep instanceof Double)
-                                assertEquals((int) expected, ((Double) rep).intValue());
-                            else assertEquals(expected, rep);
-                            return null;
-                        } finally {
-                            cx.setLanguageVersion(oldVersion);
-                        }
+                    int oldVersion = cx.getLanguageVersion();
+                    cx.setLanguageVersion(languageLevel);
+                    try {
+                        final Scriptable scope = cx.initStandardObjects();
+                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                        if (rep instanceof Double)
+                            assertEquals((int) expected, ((Double) rep).intValue());
+                        else assertEquals(expected, rep);
+                        return null;
+                    } finally {
+                        cx.setLanguageVersion(oldVersion);
                     }
-                    return null;
                 });
     }
 }
