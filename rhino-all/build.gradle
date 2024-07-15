@@ -27,6 +27,14 @@ shadowJar {
     }
 }
 
+startScripts {
+    dependsOn 'shadowJar'
+}
+
+startShadowScripts {
+    dependsOn 'jar'
+}
+
 publishing {
     publications {
         rhinoall(MavenPublication) {
