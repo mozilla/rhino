@@ -657,13 +657,13 @@ public final class IRFactory {
                                 createIf(
                                         createBinary(
                                                 Token.SHEQ,
-                                                new Name(fn.getPosition(), name),
-                                                new Name(fn.getPosition(), "undefined")),
+                                                parser.createName(name),
+                                                parser.createName("undefined")),
                                         new Node(
                                                 Token.EXPR_VOID,
                                                 createAssignment(
                                                         Token.ASSIGN,
-                                                        new Name(fn.getPosition(), name),
+                                                        parser.createName(name),
                                                         transform(rhs)),
                                                 body.getLineno()),
                                         null,
