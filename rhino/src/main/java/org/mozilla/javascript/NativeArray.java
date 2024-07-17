@@ -6,9 +6,8 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
+import static org.mozilla.javascript.ArrayLikeAbstractOperations.getRawElem;
 
-import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
-import org.mozilla.javascript.regexp.NativeRegExp;
+import org.mozilla.javascript.ArrayLikeAbstractOperations.IterativeOperation;
+import org.mozilla.javascript.ArrayLikeAbstractOperations.ReduceOperation;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -445,16 +445,34 @@ public class NativeArray extends IdScriptableObject implements List {
                     return js_flatMap(cx, scope, thisObj, args);
 
                 case Id_every:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.EVERY, scope, thisObj, args);
+
                 case Id_filter:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.FILTER, scope, thisObj, args);
                 case Id_forEach:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.FOR_EACH, scope, thisObj, args);
                 case Id_map:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.MAP, scope, thisObj, args);
+
                 case Id_some:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.SOME, scope, thisObj, args);
                 case Id_find:
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.FIND, scope, thisObj, args);
                 case Id_findIndex:
-                    return iterativeMethod(cx, f, scope, thisObj, args);
+                    return ArrayLikeAbstractOperations.iterativeMethod(
+                            cx, f, IterativeOperation.FIND_INDEX, scope, thisObj, args);
                 case Id_reduce:
+                    return ArrayLikeAbstractOperations.reduceMethod(
+                            cx, ReduceOperation.REDUCE, scope, thisObj, args);
                 case Id_reduceRight:
-                    return reduceMethod(cx, id, scope, thisObj, args);
+                    return ArrayLikeAbstractOperations.reduceMethod(
+                            cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
 
                 case Id_keys:
                     thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -860,7 +878,7 @@ public class NativeArray extends IdScriptableObject implements List {
                                             thisArg,
                                             new Object[] {temp, Long.valueOf(k)});
                         }
-                        defineElem(cx, result, k, temp);
+                        ArrayLikeAbstractOperations.defineElem(cx, result, k, temp);
                         k++;
                     }
                 }
@@ -876,7 +894,7 @@ public class NativeArray extends IdScriptableObject implements List {
             if (mapping) {
                 temp = mapFn.call(cx, scope, thisArg, new Object[] {temp, Long.valueOf(k)});
             }
-            defineElem(cx, result, k, temp);
+            ArrayLikeAbstractOperations.defineElem(cx, result, k, temp);
         }
 
         setLengthProperty(cx, result, length);
@@ -895,7 +913,7 @@ public class NativeArray extends IdScriptableObject implements List {
             }
         } else {
             for (int i = 0; i < args.length; i++) {
-                defineElem(cx, result, i, args[i]);
+                ArrayLikeAbstractOperations.defineElem(cx, result, i, args[i]);
             }
         }
         setLengthProperty(cx, result, args.length);
@@ -1051,28 +1069,11 @@ public class NativeArray extends IdScriptableObject implements List {
         return (elem != Scriptable.NOT_FOUND ? elem : Undefined.instance);
     }
 
-    // same as getElem, but without converting NOT_FOUND to undefined
-    private static Object getRawElem(Scriptable target, long index) {
-        if (index > Integer.MAX_VALUE) {
-            return ScriptableObject.getProperty(target, Long.toString(index));
-        }
-        return ScriptableObject.getProperty(target, (int) index);
-    }
-
-    private static void defineElem(Context cx, Scriptable target, long index, Object value) {
-        if (index > Integer.MAX_VALUE) {
-            String id = Long.toString(index);
-            target.put(id, target, value);
-        } else {
-            target.put((int) index, target, value);
-        }
-    }
-
     private static void defineElemOrThrow(Context cx, Scriptable target, long index, Object value) {
         if (index > NativeNumber.MAX_SAFE_INTEGER) {
             throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", String.valueOf(index));
         } else {
-            defineElem(cx, target, index, value);
+            ArrayLikeAbstractOperations.defineElem(cx, target, index, value);
         }
     }
 
@@ -1187,27 +1188,6 @@ public class NativeArray extends IdScriptableObject implements List {
         return result.toString();
     }
 
-    private static Function getCallbackArg(Context cx, Object callbackArg) {
-        if (!(callbackArg instanceof Function)) {
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                && (callbackArg instanceof NativeRegExp)) {
-            // Previously, it was allowed to pass RegExp instance as a callback (it implements
-            // Function)
-            // But according to ES2015 21.2.6 Properties of RegExp Instances:
-            // > RegExp instances are ordinary objects that inherit properties from the RegExp
-            // prototype object.
-            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
-            // [[OriginalFlags]].
-            // so, no [[Call]] for RegExp-s
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
-
-        Function f = (Function) callbackArg;
-        return f;
-    }
-
     /** See ECMA 15.4.4.3 */
     private static String js_join(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -1308,33 +1288,8 @@ public class NativeArray extends IdScriptableObject implements List {
             final Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        final Comparator<Object> comparator;
-        if (args.length > 0 && Undefined.instance != args[0]) {
-            final Callable jsCompareFunction = ScriptRuntime.getValueFunctionAndThis(args[0], cx);
-            final Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
-            final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
-            comparator =
-                    new ElementComparator(
-                            new Comparator<Object>() {
-                                @Override
-                                public int compare(final Object x, final Object y) {
-                                    // This comparator is invoked only for non-undefined objects
-                                    cmpBuf[0] = x;
-                                    cmpBuf[1] = y;
-                                    Object ret = jsCompareFunction.call(cx, scope, funThis, cmpBuf);
-                                    double d = ScriptRuntime.toNumber(ret);
-                                    int cmp = Double.compare(d, 0);
-                                    if (cmp < 0) {
-                                        return -1;
-                                    } else if (cmp > 0) {
-                                        return +1;
-                                    }
-                                    return 0;
-                                }
-                            });
-        } else {
-            comparator = DEFAULT_COMPARATOR;
-        }
+        final Comparator<Object> comparator =
+                ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
 
         long llength = getLengthProperty(cx, o);
         final int length = (int) llength;
@@ -1527,7 +1482,8 @@ public class NativeArray extends IdScriptableObject implements List {
         long length = getLengthProperty(cx, o);
 
         /* Convert the first argument into a starting index. */
-        long begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
+        long begin =
+                ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
         argc--;
 
         /* Convert the second argument into count */
@@ -1709,7 +1665,7 @@ public class NativeArray extends IdScriptableObject implements List {
         for (long srcpos = 0; srcpos < srclen; srcpos++, dstpos++) {
             final Object temp = getRawElem(arg, srcpos);
             if (temp != Scriptable.NOT_FOUND) {
-                defineElem(cx, result, dstpos, temp);
+                ArrayLikeAbstractOperations.defineElem(cx, result, dstpos, temp);
             }
         }
         return newlen;
@@ -1720,7 +1676,7 @@ public class NativeArray extends IdScriptableObject implements List {
         if (isConcatSpreadable(cx, scope, arg)) {
             return concatSpreadArg(cx, result, (Scriptable) arg, offset);
         }
-        defineElem(cx, result, offset, arg);
+        ArrayLikeAbstractOperations.defineElem(cx, result, offset, arg);
         return offset + 1;
     }
 
@@ -1755,11 +1711,13 @@ public class NativeArray extends IdScriptableObject implements List {
             begin = 0;
             end = len;
         } else {
-            begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
+            begin = ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
             if (args.length == 1 || args[1] == Undefined.instance) {
                 end = len;
             } else {
-                end = toSliceIndex(ScriptRuntime.toInteger(args[1]), len);
+                end =
+                        ArrayLikeAbstractOperations.toSliceIndex(
+                                ScriptRuntime.toInteger(args[1]), len);
             }
         }
 
@@ -1772,27 +1730,11 @@ public class NativeArray extends IdScriptableObject implements List {
         for (long slot = begin; slot < end; slot++) {
             Object temp = getRawElem(o, slot);
             if (temp != NOT_FOUND) {
-                defineElem(cx, result, slot - begin, temp);
+                ArrayLikeAbstractOperations.defineElem(cx, result, slot - begin, temp);
             }
         }
         setLengthProperty(cx, result, Math.max(0, end - begin));
 
-        return result;
-    }
-
-    private static long toSliceIndex(double value, long length) {
-        long result;
-        if (value < 0.0) {
-            if (value + length < 0.0) {
-                result = 0;
-            } else {
-                result = (long) (value + length);
-            }
-        } else if (value > length) {
-            result = length;
-        } else {
-            result = (long) value;
-        }
         return result;
     }
 
@@ -2118,7 +2060,7 @@ public class NativeArray extends IdScriptableObject implements List {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
 
-        Function f = getCallbackArg(cx, callbackArg);
+        Function f = ArrayLikeAbstractOperations.getCallbackArg(cx, callbackArg);
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         Scriptable thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
@@ -2152,136 +2094,6 @@ public class NativeArray extends IdScriptableObject implements List {
         }
         setLengthProperty(cx, result, j);
         return result;
-    }
-
-    /** Implements the methods "every", "filter", "forEach", "map", and "some". */
-    private static Object iterativeMethod(
-            Context cx,
-            IdFunctionObject idFunctionObject,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args) {
-        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-
-        // execIdCall(..) uses a trick for all the ConstructorId_xxx calls
-        // they are handled like object calls by adjusting the args list
-        // as a result we have to handle ConstructorId_xxx calls (negative id)
-        // the same way and always us the abs value of the id for method selection
-        int id = Math.abs(idFunctionObject.methodId());
-        if (Id_find == id || Id_findIndex == id) {
-            requireObjectCoercible(cx, o, idFunctionObject);
-        }
-
-        long length = getLengthProperty(cx, o);
-        if (id == Id_map && length > Integer.MAX_VALUE) {
-            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
-            throw ScriptRuntime.rangeError(msg);
-        }
-
-        Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
-
-        Function f = getCallbackArg(cx, callbackArg);
-        Scriptable parent = ScriptableObject.getTopLevelScope(f);
-        Scriptable thisArg;
-        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = parent;
-        } else {
-            thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
-        }
-
-        Scriptable array = null;
-        if (id == Id_filter || id == Id_map) {
-            int resultLength = id == Id_map ? (int) length : 0;
-            array = cx.newArray(scope, resultLength);
-        }
-        long j = 0;
-        for (long i = 0; i < length; i++) {
-            Object[] innerArgs = new Object[3];
-            Object elem = getRawElem(o, i);
-            if (elem == Scriptable.NOT_FOUND) {
-                if (id == Id_find || id == Id_findIndex) {
-                    elem = Undefined.instance;
-                } else {
-                    continue;
-                }
-            }
-            innerArgs[0] = elem;
-            innerArgs[1] = Long.valueOf(i);
-            innerArgs[2] = o;
-            Object result = f.call(cx, parent, thisArg, innerArgs);
-            switch (id) {
-                case Id_every:
-                    if (!ScriptRuntime.toBoolean(result)) return Boolean.FALSE;
-                    break;
-                case Id_filter:
-                    if (ScriptRuntime.toBoolean(result)) defineElem(cx, array, j++, innerArgs[0]);
-                    break;
-                case Id_forEach:
-                    break;
-                case Id_map:
-                    defineElem(cx, array, i, result);
-                    break;
-                case Id_some:
-                    if (ScriptRuntime.toBoolean(result)) return Boolean.TRUE;
-                    break;
-                case Id_find:
-                    if (ScriptRuntime.toBoolean(result)) return elem;
-                    break;
-                case Id_findIndex:
-                    if (ScriptRuntime.toBoolean(result)) return ScriptRuntime.wrapNumber(i);
-                    break;
-            }
-        }
-        switch (id) {
-            case Id_every:
-                return Boolean.TRUE;
-            case Id_filter:
-            case Id_map:
-                return array;
-            case Id_some:
-                return Boolean.FALSE;
-            case Id_findIndex:
-                return ScriptRuntime.wrapNumber(-1);
-            case Id_forEach:
-            default:
-                return Undefined.instance;
-        }
-    }
-
-    /** Implements the methods "reduce" and "reduceRight". */
-    private static Object reduceMethod(
-            Context cx, int id, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-
-        long length = getLengthProperty(cx, o);
-        Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
-        if (callbackArg == null || !(callbackArg instanceof Function)) {
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
-        Function f = (Function) callbackArg;
-        Scriptable parent = ScriptableObject.getTopLevelScope(f);
-        // hack to serve both reduce and reduceRight with the same loop
-        boolean movingLeft = id == Id_reduce;
-        Object value = args.length > 1 ? args[1] : Scriptable.NOT_FOUND;
-        for (long i = 0; i < length; i++) {
-            long index = movingLeft ? i : (length - 1 - i);
-            Object elem = getRawElem(o, index);
-            if (elem == Scriptable.NOT_FOUND) {
-                continue;
-            }
-            if (value == Scriptable.NOT_FOUND) {
-                // no initial value passed, use first element found as inital value
-                value = elem;
-            } else {
-                Object[] innerArgs = {value, elem, Long.valueOf(index), o};
-                value = f.call(cx, parent, parent, innerArgs);
-            }
-        }
-        if (value == Scriptable.NOT_FOUND) {
-            // reproduce spidermonkey error message
-            throw ScriptRuntime.typeErrorById("msg.empty.array.reduce");
-        }
-        return value;
     }
 
     private static boolean js_isArray(Object o) {
@@ -2564,64 +2376,6 @@ public class NativeArray extends IdScriptableObject implements List {
             return Id_values;
         }
         return 0;
-    }
-
-    // Comparators for the js_sort method. Putting them here lets us unit-test them better.
-
-    private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
-    private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
-
-    public static final class StringLikeComparator implements Comparator<Object>, Serializable {
-
-        private static final long serialVersionUID = 5299017659728190979L;
-
-        @Override
-        public int compare(final Object x, final Object y) {
-            final String a = ScriptRuntime.toString(x);
-            final String b = ScriptRuntime.toString(y);
-            return a.compareTo(b);
-        }
-    }
-
-    public static final class ElementComparator implements Comparator<Object>, Serializable {
-
-        private static final long serialVersionUID = -1189948017688708858L;
-
-        private final Comparator<Object> child;
-
-        public ElementComparator() {
-            child = STRING_COMPARATOR;
-        }
-
-        public ElementComparator(Comparator<Object> c) {
-            child = c;
-        }
-
-        @Override
-        public int compare(final Object x, final Object y) {
-            // Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
-            // ECMA 22.1.3.25.1.
-            if (x == Undefined.instance) {
-                if (y == Undefined.instance) {
-                    return 0;
-                }
-                if (y == NOT_FOUND) {
-                    return -1;
-                }
-                return 1;
-            } else if (x == NOT_FOUND) {
-                return y == NOT_FOUND ? 0 : 1;
-            }
-
-            if (y == NOT_FOUND) {
-                return -1;
-            }
-            if (y == Undefined.instance) {
-                return -1;
-            }
-
-            return child.compare(x, y);
-        }
     }
 
     @Override

@@ -1,12 +1,12 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.mozilla.javascript.ArrayLikeAbstractOperations.*;
 
 import java.io.FileReader;
 import java.io.IOException;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -43,8 +43,8 @@ public class ComparatorTest {
     }
 
     private static void aChk(Object o1, Object o2, int expected) {
-        assertEquals(expected, new NativeArray.ElementComparator().compare(o1, o2));
-        assertEquals(-expected, new NativeArray.ElementComparator().compare(o2, o1));
+        assertEquals(expected, new ElementComparator().compare(o1, o2));
+        assertEquals(-expected, new ElementComparator().compare(o2, o1));
     }
 
     /*

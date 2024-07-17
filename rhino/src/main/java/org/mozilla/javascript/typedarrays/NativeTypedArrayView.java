@@ -7,12 +7,18 @@
 package org.mozilla.javascript.typedarrays;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 import java.util.RandomAccess;
+import org.mozilla.javascript.ArrayLikeAbstractOperations;
+import org.mozilla.javascript.ArrayLikeAbstractOperations.IterativeOperation;
+import org.mozilla.javascript.ArrayLikeAbstractOperations.ReduceOperation;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
@@ -301,6 +307,279 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
+    private String js_toString(Context cx, Scriptable scope, boolean useLocale) {
+        StringBuilder builder = new StringBuilder();
+        if (length > 0) {
+            Object elem = getElemForToString(cx, scope, 0, useLocale);
+            builder.append(ScriptRuntime.toString(elem));
+        }
+        for (int i = 1; i < length; i++) {
+            builder.append(',');
+            Object elem = getElemForToString(cx, scope, i, useLocale);
+            builder.append(ScriptRuntime.toString(elem));
+        }
+        return builder.toString();
+    }
+
+    private Object getElemForToString(Context cx, Scriptable scope, int index, boolean useLocale) {
+        var elem = js_get(index);
+        if (useLocale) {
+            Callable fun = ScriptRuntime.getPropFunctionAndThis(elem, "toLocaleString", cx, scope);
+            Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
+            return fun.call(cx, scope, funThis, ScriptRuntime.emptyArgs);
+        } else {
+            return elem;
+        }
+    }
+
+    private Boolean js_includes(Object[] args) {
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+
+        if (length == 0) return Boolean.FALSE;
+
+        long start;
+        if (args.length < 2) {
+            start = 0;
+        } else {
+            start = (long) ScriptRuntime.toInteger(args[1]);
+            if (start < 0) {
+                start += length;
+                if (start < 0) start = 0;
+            }
+            if (start > length - 1) return Boolean.FALSE;
+        }
+        for (int i = (int) start; i < length; i++) {
+            Object val = js_get(i);
+            if (ScriptRuntime.sameZero(val, compareTo)) {
+                return Boolean.TRUE;
+            }
+        }
+        return Boolean.FALSE;
+    }
+
+    private Object js_indexOf(Object[] args) {
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+
+        if (length == 0) return -1;
+
+        long start;
+        if (args.length < 2) {
+            // default
+            start = 0;
+        } else {
+            start = (long) ScriptRuntime.toInteger(args[1]);
+            if (start < 0) {
+                start += length;
+                if (start < 0) start = 0;
+            }
+            if (start > length - 1) return -1;
+        }
+        for (int i = (int) start; i < length; i++) {
+            Object val = js_get(i);
+            if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
+                return (long) i;
+            }
+        }
+        return -1;
+    }
+
+    private Object js_lastIndexOf(Object[] args) {
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+
+        if (length == 0) return -1;
+
+        long start;
+        if (args.length < 2) {
+            // default
+            start = length - 1;
+        } else {
+            start = (long) ScriptRuntime.toInteger(args[1]);
+            if (start >= length) start = length - 1;
+            else if (start < 0) start += length;
+            if (start < 0) return -1;
+        }
+        for (int i = (int) start; i >= 0; i--) {
+            Object val = js_get(i);
+            if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
+                return (long) i;
+            }
+        }
+        return -1;
+    }
+
+    private Scriptable js_slice(Context cx, Scriptable scope, Object[] args) {
+        long begin, end;
+        if (args.length == 0) {
+            begin = 0;
+            end = length;
+        } else {
+            begin =
+                    ArrayLikeAbstractOperations.toSliceIndex(
+                            ScriptRuntime.toInteger(args[0]), length);
+            if (args.length == 1 || args[1] == Undefined.instance) {
+                end = length;
+            } else {
+                end =
+                        ArrayLikeAbstractOperations.toSliceIndex(
+                                ScriptRuntime.toInteger(args[1]), length);
+            }
+        }
+
+        if (end - begin > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+
+        return ScriptRuntime.newObject(
+                cx,
+                scope,
+                getClassName(),
+                new Object[] {
+                    this.arrayBuffer, begin * this.getBytesPerElement(), Math.max(0, end - begin)
+                });
+    }
+
+    private String js_join(Object[] args) {
+        // if no args, use "," as separator
+        String separator =
+                (args.length < 1 || args[0] == Undefined.instance)
+                        ? ","
+                        : ScriptRuntime.toString(args[0]);
+        if (length == 0) {
+            return "";
+        }
+        String[] buf = new String[length];
+        int total_size = 0;
+        for (int i = 0; i != length; i++) {
+            Object temp = js_get(i);
+            if (temp != null && temp != Undefined.instance) {
+                String str = ScriptRuntime.toString(temp);
+                total_size += str.length();
+                buf[i] = str;
+            }
+        }
+        total_size += (length - 1) * separator.length();
+        StringBuilder sb = new StringBuilder(total_size);
+        for (int i = 0; i != length; i++) {
+            if (i != 0) {
+                sb.append(separator);
+            }
+            String str = buf[i];
+            if (str != null) {
+                // str == null for undefined or null
+                sb.append(str);
+            }
+        }
+        return sb.toString();
+    }
+
+    private NativeTypedArrayView<T> js_reverse() {
+        for (int i = 0, j = length - 1; i < j; i++, j--) {
+            Object temp = js_get(i);
+            js_set(i, js_get(j));
+            js_set(j, temp);
+        }
+        return this;
+    }
+
+    private NativeTypedArrayView<T> js_fill(Object[] args) {
+        long relativeStart = 0;
+        if (args.length >= 2) {
+            relativeStart = (long) ScriptRuntime.toInteger(args[1]);
+        }
+        final long k;
+        if (relativeStart < 0) {
+            k = Math.max((length + relativeStart), 0);
+        } else {
+            k = Math.min(relativeStart, length);
+        }
+
+        long relativeEnd = length;
+        if (args.length >= 3 && !Undefined.isUndefined(args[2])) {
+            relativeEnd = (long) ScriptRuntime.toInteger(args[2]);
+        }
+        final long fin;
+        if (relativeEnd < 0) {
+            fin = Math.max((length + relativeEnd), 0);
+        } else {
+            fin = Math.min(relativeEnd, length);
+        }
+
+        Object value = args.length > 0 ? args[0] : Undefined.instance;
+        for (int i = (int) k; i < fin; i++) {
+            js_set(i, value);
+        }
+
+        return this;
+    }
+
+    private Scriptable js_sort(Context cx, Scriptable scope, Object[] args) {
+        Comparator<Object> comparator;
+        if (args.length > 0 && Undefined.instance != args[0]) {
+            comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+        } else {
+            comparator = Comparator.comparingDouble(e -> ((Number) e).doubleValue());
+        }
+
+        // Temporary array to rely on Java's built-in sort, which is stable.
+        Object[] working = toArray();
+        Arrays.sort(working, comparator);
+
+        for (int i = 0; i < length; ++i) {
+            js_set(i, working[i]);
+        }
+
+        return this;
+    }
+
+    private Object js_copyWithin(Object[] args) {
+        Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
+        long relativeTarget = (long) ScriptRuntime.toInteger(targetArg);
+        long to;
+        if (relativeTarget < 0) {
+            to = Math.max((length + relativeTarget), 0);
+        } else {
+            to = Math.min(relativeTarget, length);
+        }
+
+        Object startArg = (args.length >= 2) ? args[1] : Undefined.instance;
+        long relativeStart = (long) ScriptRuntime.toInteger(startArg);
+        long from;
+        if (relativeStart < 0) {
+            from = Math.max((length + relativeStart), 0);
+        } else {
+            from = Math.min(relativeStart, length);
+        }
+
+        long relativeEnd = length;
+        if (args.length >= 3 && !Undefined.isUndefined(args[2])) {
+            relativeEnd = (long) ScriptRuntime.toInteger(args[2]);
+        }
+        final long fin;
+        if (relativeEnd < 0) {
+            fin = Math.max((length + relativeEnd), 0);
+        } else {
+            fin = Math.min(relativeEnd, length);
+        }
+
+        long count = Math.min(fin - from, length - to);
+        int direction = 1;
+        if (from < to && to < from + count) {
+            direction = -1;
+            from = from + count - 1;
+            to = to + count - 1;
+        }
+
+        for (; count > 0; count--) {
+            final Object temp = js_get((int) from);
+            js_set((int) to, temp);
+            from += direction;
+            to += direction;
+        }
+
+        return this;
+    }
+
     private Object js_subarray(Context cx, Scriptable scope, int s, int e) {
         int start = (s < 0 ? length + s : s);
         int end = (e < 0 ? length + e : e);
@@ -312,13 +591,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         int byteOff =
                 Math.min(getByteOffset() + start * getBytesPerElement(), arrayBuffer.getLength());
 
-        return cx.newObject(
-                scope,
-                getClassName(),
-                new Object[] {arrayBuffer, Integer.valueOf(byteOff), Integer.valueOf(len)});
+        return cx.newObject(scope, getClassName(), new Object[] {arrayBuffer, byteOff, len});
     }
 
-    private Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_at(Scriptable thisObj, Object[] args) {
         long relativeIndex = 0;
         if (args.length >= 1) {
             relativeIndex = (long) ScriptRuntime.toInteger(args[0]);
@@ -350,17 +626,27 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 return js_constructor(cx, scope, args);
 
             case Id_toString:
-                NativeTypedArrayView<T> realThis = realThis(thisObj, f);
-                final int arrayLength = realThis.getArrayLength();
-                final StringBuilder builder = new StringBuilder();
-                if (arrayLength > 0) {
-                    builder.append(ScriptRuntime.toString(realThis.js_get(0)));
-                }
-                for (int i = 1; i < arrayLength; i++) {
-                    builder.append(',');
-                    builder.append(ScriptRuntime.toString(realThis.js_get(i)));
-                }
-                return builder.toString();
+                return realThis(thisObj, f).js_toString(cx, scope, false);
+            case Id_toLocaleString:
+                return realThis(thisObj, f).js_toString(cx, scope, true);
+            case Id_includes:
+                return realThis(thisObj, f).js_includes(args);
+            case Id_indexOf:
+                return realThis(thisObj, f).js_indexOf(args);
+            case Id_lastIndexOf:
+                return realThis(thisObj, f).js_lastIndexOf(args);
+            case Id_slice:
+                return realThis(thisObj, f).js_slice(cx, scope, args);
+            case Id_join:
+                return realThis(thisObj, f).js_join(args);
+            case Id_reverse:
+                return realThis(thisObj, f).js_reverse();
+            case Id_fill:
+                return realThis(thisObj, f).js_fill(args);
+            case Id_sort:
+                return realThis(thisObj, f).js_sort(cx, scope, args);
+            case Id_copyWithin:
+                return realThis(thisObj, f).js_copyWithin(args);
 
             case Id_get:
                 if (args.length > 0) {
@@ -394,20 +680,82 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
 
             case Id_subarray:
-                NativeTypedArrayView<T> self = realThis(thisObj, f);
-                int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
-                int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
-                if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
-                    return self.js_subarray(cx, scope, start, end);
+                {
+                    NativeTypedArrayView<T> self = realThis(thisObj, f);
+                    int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
+                    int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
+                        return self.js_subarray(cx, scope, start, end);
+                    }
+                    throw ScriptRuntime.constructError("Error", "invalid arguments");
                 }
-                throw ScriptRuntime.constructError("Error", "invalid arguments");
 
             case Id_at:
-                NativeTypedArrayView<T> atSelf = realThis(thisObj, f);
-                if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
-                    return atSelf.js_at(cx, scope, thisObj, args);
+                {
+                    NativeTypedArrayView<T> self = realThis(thisObj, f);
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
+                        return self.js_at(thisObj, args);
+                    }
+                    throw ScriptRuntime.constructError("Error", "invalid arguments");
                 }
-                throw ScriptRuntime.constructError("Error", "invalid arguments");
+
+            case Id_entries:
+                {
+                    NativeTypedArrayView<T> self = realThis(thisObj, f);
+                    return new NativeArrayIterator(scope, self, ARRAY_ITERATOR_TYPE.ENTRIES);
+                }
+
+            case Id_keys:
+                {
+                    NativeTypedArrayView<T> self = realThis(thisObj, f);
+                    return new NativeArrayIterator(scope, self, ARRAY_ITERATOR_TYPE.KEYS);
+                }
+
+            case Id_values:
+                {
+                    NativeTypedArrayView<T> self = realThis(thisObj, f);
+                    return new NativeArrayIterator(scope, self, ARRAY_ITERATOR_TYPE.VALUES);
+                }
+
+            case Id_every:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.EVERY, scope, thisObj, args);
+            case Id_filter:
+                {
+                    // We first create an array and then we wrap it in a TypedArray. This could be
+                    // more efficient.
+                    Object array =
+                            ArrayLikeAbstractOperations.iterativeMethod(
+                                    cx, f, IterativeOperation.FILTER, scope, thisObj, args);
+                    return ScriptRuntime.newObject(cx, scope, getClassName(), new Object[] {array});
+                }
+            case Id_forEach:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.FOR_EACH, scope, thisObj, args);
+            case Id_map:
+                {
+                    // We first create an array and then we wrap it in a TypedArray. This could be
+                    // more efficient.
+                    Object array =
+                            ArrayLikeAbstractOperations.iterativeMethod(
+                                    cx, f, IterativeOperation.MAP, scope, thisObj, args);
+                    return ScriptRuntime.newObject(cx, scope, getClassName(), new Object[] {array});
+                }
+            case Id_some:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.SOME, scope, thisObj, args);
+            case Id_find:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.FIND, scope, thisObj, args);
+            case Id_findIndex:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.FIND_INDEX, scope, thisObj, args);
+            case Id_reduce:
+                return ArrayLikeAbstractOperations.reduceMethod(
+                        cx, ReduceOperation.REDUCE, scope, thisObj, args);
+            case Id_reduceRight:
+                return ArrayLikeAbstractOperations.reduceMethod(
+                        cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
 
             case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
@@ -433,6 +781,46 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 0;
                 s = "toString";
                 break;
+            case Id_toLocaleString:
+                arity = 0;
+                s = "toLocaleString";
+                break;
+            case Id_includes:
+                arity = 1;
+                s = "includes";
+                break;
+            case Id_indexOf:
+                arity = 1;
+                s = "indexOf";
+                break;
+            case Id_lastIndexOf:
+                arity = 1;
+                s = "lastIndexOf";
+                break;
+            case Id_slice:
+                arity = 2;
+                s = "slice";
+                break;
+            case Id_join:
+                arity = 1;
+                s = "join";
+                break;
+            case Id_reverse:
+                arity = 0;
+                s = "reverse";
+                break;
+            case Id_fill:
+                arity = 1;
+                s = "fill";
+                break;
+            case Id_sort:
+                arity = 1;
+                s = "sort";
+                break;
+            case Id_copyWithin:
+                arity = 2;
+                s = "copyWithin";
+                break;
             case Id_get:
                 arity = 1;
                 s = "get";
@@ -448,6 +836,54 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case Id_at:
                 arity = 1;
                 s = "at";
+                break;
+            case Id_entries:
+                arity = 0;
+                s = "entries";
+                break;
+            case Id_keys:
+                arity = 0;
+                s = "keys";
+                break;
+            case Id_values:
+                arity = 0;
+                s = "values";
+                break;
+            case Id_every:
+                arity = 1;
+                s = "every";
+                break;
+            case Id_filter:
+                arity = 1;
+                s = "filter";
+                break;
+            case Id_forEach:
+                arity = 1;
+                s = "forEach";
+                break;
+            case Id_map:
+                arity = 1;
+                s = "map";
+                break;
+            case Id_some:
+                arity = 1;
+                s = "some";
+                break;
+            case Id_find:
+                arity = 1;
+                s = "find";
+                break;
+            case Id_findIndex:
+                arity = 1;
+                s = "findIndex";
+                break;
+            case Id_reduce:
+                arity = 1;
+                s = "reduce";
+                break;
+            case Id_reduceRight:
+                arity = 1;
+                s = "reduceRight";
                 break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
@@ -473,6 +909,36 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "toString":
                 id = Id_toString;
                 break;
+            case "toLocaleString":
+                id = Id_toLocaleString;
+                break;
+            case "includes":
+                id = Id_includes;
+                break;
+            case "indexOf":
+                id = Id_indexOf;
+                break;
+            case "lastIndexOf":
+                id = Id_lastIndexOf;
+                break;
+            case "slice":
+                id = Id_slice;
+                break;
+            case "join":
+                id = Id_join;
+                break;
+            case "reverse":
+                id = Id_reverse;
+                break;
+            case "fill":
+                id = Id_fill;
+                break;
+            case "sort":
+                id = Id_sort;
+                break;
+            case "copyWithin":
+                id = Id_copyWithin;
+                break;
             case "get":
                 id = Id_get;
                 break;
@@ -485,6 +951,42 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "at":
                 id = Id_at;
                 break;
+            case "entries":
+                id = Id_entries;
+                break;
+            case "keys":
+                id = Id_keys;
+                break;
+            case "values":
+                id = Id_values;
+                break;
+            case "every":
+                id = Id_every;
+                break;
+            case "filter":
+                id = Id_filter;
+                break;
+            case "forEach":
+                id = Id_forEach;
+                break;
+            case "map":
+                id = Id_map;
+                break;
+            case "some":
+                id = Id_some;
+                break;
+            case "find":
+                id = Id_find;
+                break;
+            case "findIndex":
+                id = Id_findIndex;
+                break;
+            case "reduce":
+                id = Id_reduce;
+                break;
+            case "reduceRight":
+                id = Id_reduceRight;
+                break;
             default:
                 id = 0;
                 break;
@@ -495,11 +997,33 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     // Table of all functions
     private static final int Id_constructor = 1,
             Id_toString = 2,
-            Id_get = 3,
-            Id_set = 4,
-            Id_subarray = 5,
-            Id_at = 6,
-            SymbolId_iterator = 7;
+            Id_toLocaleString = 3,
+            Id_includes = 4,
+            Id_indexOf = 5,
+            Id_lastIndexOf = 6,
+            Id_slice = 7,
+            Id_join = 8,
+            Id_reverse = 9,
+            Id_fill = 10,
+            Id_sort = 11,
+            Id_copyWithin = 12,
+            Id_get = 13,
+            Id_set = 14,
+            Id_subarray = 15,
+            Id_at = 16,
+            Id_entries = 17,
+            Id_keys = 18,
+            Id_values = 19,
+            Id_every = 20,
+            Id_filter = 21,
+            Id_forEach = 22,
+            Id_map = 23,
+            Id_some = 24,
+            Id_find = 25,
+            Id_findIndex = 26,
+            Id_reduce = 27,
+            Id_reduceRight = 28,
+            SymbolId_iterator = 29;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
