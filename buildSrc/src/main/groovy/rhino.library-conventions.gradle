@@ -47,8 +47,8 @@ tasks.withType(JavaCompile).configureEach {
         "JavaUtilDate",
         // Less important for now, more stylistic than bug
         "InlineMeSuggester",
-        "NonApiType",
-        "UnnecessaryParentheses",
+        // This one either alerts for parameters that we don't use,
+        // or spuriously for local variables in my opinion.
         "UnusedVariable")
     options.errorprone.excludedPaths = '.+/src/test/java/.+'
 }

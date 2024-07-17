@@ -212,7 +212,7 @@ public class Codegen implements Evaluator {
         ot.transform(tree, compilerEnv);
 
         if (optLevel > 0) {
-            (new Optimizer()).optimize(tree);
+            new Optimizer().optimize(tree);
         }
     }
 

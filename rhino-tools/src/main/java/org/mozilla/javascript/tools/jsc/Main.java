@@ -304,7 +304,7 @@ public class Main {
                 s[j] = '_';
             }
         }
-        return (new String(s)).trim();
+        return new String(s).trim();
     }
 
     private static void p(String s) {

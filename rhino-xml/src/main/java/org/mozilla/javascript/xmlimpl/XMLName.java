@@ -409,7 +409,7 @@ class XMLName extends Ref {
                 return false;
             }
         } else {
-            if (this.uri() == null || ((node.isElement()) && this.uri().equals(nodeUri))) {
+            if (this.uri() == null || (node.isElement() && this.uri().equals(nodeUri))) {
                 if (localName().equals("*")) return true;
                 if (node.isElement()) {
                     if (localName().equals(qname.getLocalName())) return true;

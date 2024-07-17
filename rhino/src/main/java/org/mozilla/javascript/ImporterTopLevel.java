@@ -59,7 +59,7 @@ public class ImporterTopLevel extends TopLevel {
 
     @Override
     public String getClassName() {
-        return (topScopeFlag) ? "global" : "JavaImporter";
+        return topScopeFlag ? "global" : "JavaImporter";
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {

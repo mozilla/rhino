@@ -19,7 +19,9 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 
@@ -460,8 +462,7 @@ public final class JavaAdapter implements IdFunctionCall {
         return list.toArray(new Method[0]);
     }
 
-    private static void appendOverridableMethods(
-            Class<?> c, ArrayList<Method> list, HashSet<String> skip) {
+    private static void appendOverridableMethods(Class<?> c, List<Method> list, Set<String> skip) {
         Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
 
         for (Method method : methods) {

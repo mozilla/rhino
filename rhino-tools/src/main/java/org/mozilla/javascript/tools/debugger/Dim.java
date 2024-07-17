@@ -255,7 +255,7 @@ public class Dim {
                     }
                 }
 
-                is = (new URL(sourceUrl)).openStream();
+                is = new URL(sourceUrl).openStream();
             }
 
             try {

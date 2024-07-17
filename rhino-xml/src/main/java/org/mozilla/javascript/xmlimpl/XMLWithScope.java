@@ -37,7 +37,7 @@ final class XMLWithScope extends NativeWith {
         if (prototype instanceof XMLList) {
             XMLList xl = (XMLList) prototype;
             if (xl.length() > 0) {
-                setPrototype((Scriptable) (xl.get(0, null)));
+                setPrototype((Scriptable) xl.get(0, null));
             }
         }
         // Always return the outer-most type of XML lValue of
@@ -70,7 +70,7 @@ final class XMLWithScope extends NativeWith {
                 // reset the expression to run with this object as
                 // the WITH selector.
                 _currIndex = idx;
-                setPrototype((Scriptable) (orgXmlL.get(idx, null)));
+                setPrototype((Scriptable) orgXmlL.get(idx, null));
 
                 // continue looping
                 return null;

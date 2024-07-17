@@ -529,10 +529,10 @@ final class NativeDate extends IdScriptableObject {
      *  floor((1968 - 1969) / 4) == -1
      */
     private static double DayFromYear(double y) {
-        return ((365 * ((y) - 1970)
-                + Math.floor(((y) - 1969) / 4.0)
-                - Math.floor(((y) - 1901) / 100.0)
-                + Math.floor(((y) - 1601) / 400.0)));
+        return (365 * (y - 1970)
+                + Math.floor((y - 1969) / 4.0)
+                - Math.floor((y - 1901) / 100.0)
+                + Math.floor((y - 1601) / 400.0));
     }
 
     private static double TimeFromYear(double y) {

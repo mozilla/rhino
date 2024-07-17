@@ -461,7 +461,7 @@ class XmlProcessor implements Serializable {
         if (node instanceof Text) {
             String data = ((Text) node).getData();
             //    TODO Does Java trim() work same as XMLWhitespace?
-            String v = (prettyPrint) ? data.trim() : data;
+            String v = prettyPrint ? data.trim() : data;
             s.append(escapeElementValue(v));
             return s.toString();
         }

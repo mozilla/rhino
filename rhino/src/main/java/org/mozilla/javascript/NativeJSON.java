@@ -579,7 +579,7 @@ public final class NativeJSON extends ScriptableObject {
         }
         if (o instanceof NativeJavaObject) {
             Object unwrapped = ((NativeJavaObject) o).unwrap();
-            return (unwrapped instanceof Collection) || (unwrapped.getClass().isArray());
+            return (unwrapped instanceof Collection) || unwrapped.getClass().isArray();
         }
         return false;
     }

@@ -2719,12 +2719,12 @@ public class ClassFileWriter {
 
         size += 2; // writeShort(itsFields.size());
         for (int i = 0; i < itsFields.size(); i++) {
-            size += ((ClassFileField) (itsFields.get(i))).getWriteSize();
+            size += ((ClassFileField) itsFields.get(i)).getWriteSize();
         }
 
         size += 2; // writeShort(itsMethods.size());
         for (int i = 0; i < itsMethods.size(); i++) {
-            size += ((ClassFileMethod) (itsMethods.get(i))).getWriteSize();
+            size += ((ClassFileMethod) itsMethods.get(i)).getWriteSize();
         }
 
         size += 2; // writeShort(1);  attributes count, could be zero
@@ -2774,7 +2774,7 @@ public class ClassFileWriter {
         offset = putInt16(itsSuperClassIndex, data, offset);
         offset = putInt16(itsInterfaces.size(), data, offset);
         for (int i = 0; i < itsInterfaces.size(); i++) {
-            int interfaceIndex = ((Short) (itsInterfaces.get(i))).shortValue();
+            int interfaceIndex = ((Short) itsInterfaces.get(i)).shortValue();
             offset = putInt16(interfaceIndex, data, offset);
         }
         offset = putInt16(itsFields.size(), data, offset);

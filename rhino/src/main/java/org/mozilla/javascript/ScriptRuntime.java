@@ -147,7 +147,7 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        (new ClassCache()).associate(scope);
+        new ClassCache().associate(scope);
 
         BaseFunction.init(cx, scope, sealed);
         NativeObject.init(scope, sealed);
@@ -2965,7 +2965,7 @@ public class ScriptRuntime {
             return "object".equals(type) || "function".equals(type);
         }
         if (value instanceof Scriptable) {
-            return (!(value instanceof Callable));
+            return !(value instanceof Callable);
         }
         return false;
     }
@@ -4982,7 +4982,7 @@ public class ScriptRuntime {
      * just by using an "instanceof" check.
      */
     static boolean isSymbol(Object obj) {
-        return (((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol()))
+        return ((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())
                 || (obj instanceof SymbolKey);
     }
 
