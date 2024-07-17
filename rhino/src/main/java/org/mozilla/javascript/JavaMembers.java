@@ -328,8 +328,7 @@ class JavaMembers {
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
                                     if (!map.containsKey(sig)) {
-                                        if (includePrivate && !method.isAccessible())
-                                            method.setAccessible(true);
+                                        if (includePrivate) method.trySetAccessible();
                                         map.put(sig, method);
                                     }
                                 }
@@ -667,7 +666,7 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            if (!field.isAccessible()) field.setAccessible(true);
+                            field.trySetAccessible();
                             fieldsList.add(field);
                         }
                     }
