@@ -41,7 +41,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
 
     @Override
     public int dirtySize() {
-        assert (lock.isReadLocked());
+        assert lock.isReadLocked();
         return map.size();
     }
 
@@ -140,7 +140,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
 
     @Override
     public Iterator<Slot> iterator() {
-        assert (lock.isReadLocked());
+        assert lock.isReadLocked();
         return map.iterator();
     }
 
@@ -150,7 +150,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
      */
     @Override
     protected void checkMapSize() {
-        assert (lock.isWriteLocked());
+        assert lock.isWriteLocked();
         super.checkMapSize();
     }
 }

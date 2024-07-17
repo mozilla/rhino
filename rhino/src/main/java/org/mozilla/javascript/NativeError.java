@@ -41,7 +41,7 @@ final class NativeError extends IdScriptableObject {
     }
 
     static NativeError make(Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
-        Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj));
+        Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
 
         NativeError obj = new NativeError();
         obj.setPrototype(proto);

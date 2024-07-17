@@ -26,7 +26,7 @@ class Block {
                 int i = 0;
                 ObjToIntMap.Iterator iter = map.newIterator();
                 for (iter.start(); !iter.done(); iter.next()) {
-                    FatBlock fb = (FatBlock) (iter.getKey());
+                    FatBlock fb = (FatBlock) iter.getKey();
                     result[i++] = fb.realBlock;
                 }
             }
@@ -161,13 +161,13 @@ class Block {
         // build successor and predecessor links
 
         for (int i = 0; i < theBlocks.size(); i++) {
-            FatBlock fb = (FatBlock) (theBlocks.get(i));
+            FatBlock fb = (FatBlock) theBlocks.get(i);
 
             Node blockEndNode = statementNodes[fb.realBlock.itsEndNodeIndex];
             int blockEndNodeType = blockEndNode.getType();
 
             if ((blockEndNodeType != Token.GOTO) && (i < (theBlocks.size() - 1))) {
-                FatBlock fallThruTarget = (FatBlock) (theBlocks.get(i + 1));
+                FatBlock fallThruTarget = (FatBlock) theBlocks.get(i + 1);
                 fb.addSuccessor(fallThruTarget);
                 fallThruTarget.addPredecessor(fb);
             }
@@ -186,7 +186,7 @@ class Block {
         Block[] result = new Block[theBlocks.size()];
 
         for (int i = 0; i < theBlocks.size(); i++) {
-            FatBlock fb = (FatBlock) (theBlocks.get(i));
+            FatBlock fb = (FatBlock) theBlocks.get(i);
             Block b = fb.realBlock;
             b.itsSuccessors = fb.getSuccessors();
             b.itsPredecessors = fb.getPredecessors();

@@ -39,7 +39,7 @@ public class DoubleHelper {
     static final long kHiddenBit = 0x0010000000000000L;
 
     static DiyFp asDiyFp(long d64) {
-        assert (!isSpecial(d64));
+        assert !isSpecial(d64);
         return new DiyFp(significand(d64), exponent(d64));
     }
 

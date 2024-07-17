@@ -142,7 +142,7 @@ class DToA {
         bits[offset] = (byte) (val >> 24);
         bits[offset + 1] = (byte) (val >> 16);
         bits[offset + 2] = (byte) (val >> 8);
-        bits[offset + 3] = (byte) (val);
+        bits[offset + 3] = (byte) val;
     }
 
     /* Convert d into the form b*2^e, where b is an odd integer.  b is the returned
@@ -153,7 +153,7 @@ class DToA {
         int i, k, y, z, de;
         long dBits = Double.doubleToLongBits(d);
         int d0 = (int) (dBits >>> 32);
-        int d1 = (int) (dBits);
+        int d1 = (int) dBits;
 
         z = d0 & Frac_mask;
         d0 &= 0x7fffffff; /* clear sign bit, which we ignore */
@@ -217,7 +217,7 @@ class DToA {
         long lfloor = (long) dfloor;
         if (lfloor == dfloor) {
             // int part fits long
-            intDigits = Long.toString((negative) ? -lfloor : lfloor, base);
+            intDigits = Long.toString(negative ? -lfloor : lfloor, base);
         } else {
             // BigInteger should be used
             long floorBits = Double.doubleToLongBits(dfloor);
@@ -258,7 +258,7 @@ class DToA {
 
         long dBits = Double.doubleToLongBits(d);
         int word0 = (int) (dBits >> 32);
-        int word1 = (int) (dBits);
+        int word1 = (int) dBits;
 
         int[] e = new int[1];
         int[] bbits = new int[1];
@@ -298,7 +298,7 @@ class DToA {
             b = b.multiply(bigBase);
             BigInteger[] divResult = b.divideAndRemainder(s);
             b = divResult[1];
-            digit = (char) (divResult[0].intValue());
+            digit = (char) divResult[0].intValue();
             if (Objects.equals(mlo, mhi)) mlo = mhi = mlo.multiply(bigBase);
             else {
                 mlo = mlo.multiply(bigBase);
@@ -384,7 +384,7 @@ class DToA {
 
     static int word1(double d) {
         long dBits = Double.doubleToLongBits(d);
-        return (int) (dBits);
+        return (int) dBits;
     }
 
     /* Return b * 5^k.  k must be nonnegative. */
@@ -782,7 +782,7 @@ class DToA {
         mhi = mlo = null;
         if (leftright) {
             if (mode < 2) {
-                i = (denorm) ? be[0] + (Bias + (P - 1) - 1 + 1) : 1 + P - bbits[0];
+                i = denorm ? be[0] + (Bias + (P - 1) - 1 + 1) : 1 + P - bbits[0];
                 /* i is 1 plus the number of trailing zero bits in d's significand. Thus,
                 (2^m2 * 5^m5) / (2^(s2+i) * 5^s5) = (1/2 lsb of d)/10^k. */
             } else {
@@ -893,7 +893,7 @@ class DToA {
             Output either zero or the minimum nonzero output depending on which is closer to d. */
             if ((ilim < 0)
                     || ((i = b.compareTo(S = S.multiply(BigInteger.valueOf(5)))) < 0)
-                    || ((i == 0 && !biasUp))) {
+                    || (i == 0 && !biasUp)) {
                 /* Always emit at least one digit.  If the number appears to be zero
                 using the current mode, then emit one '0' digit and set decpt to 1. */
                 /*no_digits:
