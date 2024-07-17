@@ -1355,8 +1355,7 @@ public class NativeArray extends IdScriptableObject implements List {
         // that sort order is implementation-defined, so we can just return the original array.
         try {
             Arrays.sort(working, comparator);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             return o;
         }
 
