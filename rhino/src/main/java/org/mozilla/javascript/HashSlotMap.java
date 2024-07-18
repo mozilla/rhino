@@ -38,48 +38,21 @@ public class HashSlotMap implements SlotMap {
     @Override
     public Slot modify(Object key, int index, int attributes) {
         Object name = makeKey(key, index);
-        Slot slot = map.get(name);
-        if (slot != null) {
-            return slot;
-        }
-
-        return createSlot(key, index, attributes);
+        return map.computeIfAbsent(name, n -> new Slot(key, index, attributes));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void replace(Slot oldSlot, Slot newSlot) {
-        Object name = makeKey(oldSlot);
-        map.put(name, newSlot);
-    }
-
-    private Slot createSlot(Object key, int index, int attributes) {
-        Slot newSlot = new Slot(key, index, attributes);
-        add(newSlot);
-        return newSlot;
+    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+        Object name = makeKey(key, index);
+        Slot ret = map.compute(name, (n, existing) -> c.compute(key, index, existing));
+        return (S) ret;
     }
 
     @Override
     public void add(Slot newSlot) {
         Object name = makeKey(newSlot);
         map.put(name, newSlot);
-    }
-
-    @Override
-    public void remove(Object key, int index) {
-        Object name = makeKey(key, index);
-        Slot slot = map.get(name);
-        if (slot != null) {
-            // non-configurable
-            if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
-                Context cx = Context.getContext();
-                if (cx.isStrictMode()) {
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.delete.property.with.configurable.false", key);
-                }
-                return;
-            }
-            map.remove(name);
-        }
     }
 
     @Override

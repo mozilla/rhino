@@ -14,6 +14,10 @@ import java.util.function.Supplier;
 public class LambdaSlot extends Slot {
     private static final long serialVersionUID = -3046681698806493052L;
 
+    LambdaSlot(Object name, int index) {
+        super(name, index, 0);
+    }
+
     LambdaSlot(Slot oldSlot) {
         super(oldSlot);
     }

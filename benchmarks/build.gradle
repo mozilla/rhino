@@ -10,12 +10,12 @@ dependencies {
 
 jmh {
     // use this to include only some
-    //includes = ['V8']
+    //includes = ['SlotMap']
     benchmarkMode = ['avgt']
     fork = 1
-    timeUnit = 'us'
-    iterations = 5
+    //timeUnit = 'ns'
+    iterations = 3
     timeOnIteration = '5s'
-    warmupIterations = 5
+    warmupIterations = 3
     warmup = '5s'
 }

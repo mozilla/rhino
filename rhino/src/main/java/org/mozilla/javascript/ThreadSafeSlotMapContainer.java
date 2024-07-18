@@ -73,10 +73,10 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
     }
 
     @Override
-    public void replace(Slot oldSlot, Slot newSlot) {
+    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
         final long stamp = lock.writeLock();
         try {
-            map.replace(oldSlot, newSlot);
+            return map.compute(key, index, c);
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -104,16 +104,6 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
         try {
             checkMapSize();
             map.add(newSlot);
-        } finally {
-            lock.unlockWrite(stamp);
-        }
-    }
-
-    @Override
-    public void remove(Object key, int index) {
-        final long stamp = lock.writeLock();
-        try {
-            map.remove(key, index);
         } finally {
             lock.unlockWrite(stamp);
         }

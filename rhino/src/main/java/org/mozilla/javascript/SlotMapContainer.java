@@ -58,8 +58,8 @@ class SlotMapContainer implements SlotMap {
     }
 
     @Override
-    public void replace(Slot oldSlot, Slot newSlot) {
-        map.replace(oldSlot, newSlot);
+    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+        return map.compute(key, index, c);
     }
 
     @Override
@@ -71,11 +71,6 @@ class SlotMapContainer implements SlotMap {
     public void add(Slot newSlot) {
         checkMapSize();
         map.add(newSlot);
-    }
-
-    @Override
-    public void remove(Object key, int index) {
-        map.remove(key, index);
     }
 
     @Override
