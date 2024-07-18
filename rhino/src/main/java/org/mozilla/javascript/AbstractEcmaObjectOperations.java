@@ -18,7 +18,7 @@ package org.mozilla.javascript;
  *           will be put in the JavaDoc of each method that implements an Abstract Operations
  *     </ul>
  */
-class AbstractEcmaObjectOperations {
+public class AbstractEcmaObjectOperations {
     enum INTEGRITY_LEVEL {
         FROZEN,
         SEALED
@@ -161,7 +161,7 @@ class AbstractEcmaObjectOperations {
      *     constructor on "s" or if the "species" symbol is not set.
      * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
      */
-    static Constructable speciesConstructor(
+    public static Constructable speciesConstructor(
             Context cx, Scriptable s, Constructable defaultConstructor) {
         /*
         The abstract operation SpeciesConstructor takes arguments O (an Object) and

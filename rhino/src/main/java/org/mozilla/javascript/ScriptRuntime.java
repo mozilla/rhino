@@ -1490,7 +1490,7 @@ public class ScriptRuntime {
         return ScriptableObject.getProperty(scope, id);
     }
 
-    static Function getExistingCtor(Context cx, Scriptable scope, String constructorName) {
+    public static Function getExistingCtor(Context cx, Scriptable scope, String constructorName) {
         Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
         if (ctorVal instanceof Function) {
             return (Function) ctorVal;

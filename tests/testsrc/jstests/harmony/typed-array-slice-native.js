@@ -29,6 +29,24 @@ for (var t = 0; t < types.length; t++) {
   slice = oneTwoThreeFour.slice(0, 42);
   assertEquals(4, slice.length);
   assertEquals("1,2,3,4", slice.toString());
+
+  // Check that the constructor property is used correctly
+  oneTwoThreeFour.constructor = 42;
+  try {
+    slice = oneTwoThreeFour.slice(1, 3);
+    assertTrue(false);
+  } catch (e) {
+    assertTrue(e instanceof TypeError);
+  }
+
+  oneTwoThreeFour.constructor = {};
+  oneTwoThreeFour.constructor[Symbol.species] = Array;
+  try {
+    slice = oneTwoThreeFour.slice(1, 3);
+    assertTrue(false);
+  } catch (e) {
+    assertTrue(e instanceof TypeError);
+  }
 }
 
 "success";
