@@ -5,6 +5,10 @@ package org.mozilla.javascript;
  * functions. It's used to load built-in objects more efficiently.
  */
 public class LazyLoadSlot extends Slot {
+    LazyLoadSlot(Object name, int index) {
+        super(name, index, 0);
+    }
+
     LazyLoadSlot(Slot oldSlot) {
         super(oldSlot);
     }

@@ -111,10 +111,12 @@ public class EmbeddedSlotMap implements SlotMap {
         }
 
         // A new slot has to be inserted.
-        return createSlot(key, indexOrHash, attributes);
+        Slot newSlot = new Slot(key, index, attributes);
+        createNewSlot(newSlot);
+        return newSlot;
     }
 
-    private Slot createSlot(Object key, int indexOrHash, int attributes) {
+    private void createNewSlot(Slot newSlot) {
         if (count == 0) {
             // Always throw away old slots if any on empty insert.
             slots = new Slot[INITIAL_SLOT_SIZE];
@@ -128,52 +130,64 @@ public class EmbeddedSlotMap implements SlotMap {
             slots = newSlots;
         }
 
-        Slot newSlot = new Slot(key, indexOrHash, attributes);
         insertNewSlot(newSlot);
-        return newSlot;
     }
 
     @Override
-    public void replace(Slot oldSlot, Slot newSlot) {
-        final int insertPos = getSlotIndex(slots.length, oldSlot.indexOrHash);
-        Slot prev = slots[insertPos];
-        Slot tmpSlot = prev;
-        // Find original slot and previous one in hash table
-        while (tmpSlot != null) {
-            if (tmpSlot == oldSlot) {
-                break;
+    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+        final int indexOrHash = (key != null ? key.hashCode() : index);
+
+        if (slots != null) {
+            Slot slot;
+            final int slotIndex = getSlotIndex(slots.length, indexOrHash);
+            Slot prev = slots[slotIndex];
+            for (slot = prev; slot != null; slot = slot.next) {
+                if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                    break;
+                }
+                prev = slot;
             }
-            prev = tmpSlot;
-            tmpSlot = tmpSlot.next;
+            if (slot != null) {
+                // Modify or remove existing slot
+                S newSlot = c.compute(key, index, slot);
+                if (newSlot == null) {
+                    // Need to delete this slot actually
+                    removeSlot(slot, prev, slotIndex, key);
+                } else if (!Objects.equals(slot, newSlot)) {
+                    // Replace slot in hash table
+                    if (prev == slot) {
+                        slots[slotIndex] = newSlot;
+                    } else {
+                        prev.next = newSlot;
+                    }
+                    newSlot.next = slot.next;
+                    // Replace new slot in linked list, keeping same order
+                    if (slot == firstAdded) {
+                        firstAdded = newSlot;
+                    } else {
+                        Slot ps = firstAdded;
+                        while ((ps != null) && (ps.orderedNext != slot)) {
+                            ps = ps.orderedNext;
+                        }
+                        if (ps != null) {
+                            ps.orderedNext = newSlot;
+                        }
+                    }
+                    newSlot.orderedNext = slot.orderedNext;
+                    if (slot == lastAdded) {
+                        lastAdded = newSlot;
+                    }
+                }
+                return newSlot;
+            }
         }
 
-        // It's an error to call this when the slot isn't already there
-        assert (tmpSlot == oldSlot);
-
-        // add new slot to hash table
-        if (prev == oldSlot) {
-            slots[insertPos] = newSlot;
-        } else {
-            prev.next = newSlot;
+        // If we get here, we know we are potentially adding a new slot
+        S newSlot = c.compute(key, index, null);
+        if (newSlot != null) {
+            createNewSlot(newSlot);
         }
-        newSlot.next = oldSlot.next;
-
-        // Replace new slot in linked list, keeping same order
-        if (oldSlot == firstAdded) {
-            firstAdded = newSlot;
-        } else {
-            Slot ps = firstAdded;
-            while ((ps != null) && (ps.orderedNext != oldSlot)) {
-                ps = ps.orderedNext;
-            }
-            if (ps != null) {
-                ps.orderedNext = newSlot;
-            }
-        }
-        newSlot.orderedNext = oldSlot.orderedNext;
-        if (oldSlot == lastAdded) {
-            lastAdded = newSlot;
-        }
+        return newSlot;
     }
 
     @Override
@@ -194,62 +208,35 @@ public class EmbeddedSlotMap implements SlotMap {
             firstAdded = newSlot;
         }
         lastAdded = newSlot;
-        // add new slot to hash table, return it
         addKnownAbsentSlot(slots, newSlot);
     }
 
-    @Override
-    public void remove(Object key, int index) {
-        int indexOrHash = (key != null ? key.hashCode() : index);
+    private void removeSlot(Slot slot, Slot prev, int ix, Object key) {
+        count--;
+        // remove slot from hash table
+        if (prev == slot) {
+            slots[ix] = slot.next;
+        } else {
+            prev.next = slot.next;
+        }
 
-        if (count != 0) {
-            final int slotIndex = getSlotIndex(slots.length, indexOrHash);
-            Slot prev = slots[slotIndex];
-            Slot slot = prev;
-            while (slot != null) {
-                if (slot.indexOrHash == indexOrHash && Objects.equals(slot.name, key)) {
-                    break;
-                }
-                prev = slot;
-                slot = slot.next;
+        // remove from ordered list. Previously this was done lazily in
+        // getIds() but delete is an infrequent operation so O(n)
+        // should be ok
+
+        // ordered list always uses the actual slot
+        if (slot == firstAdded) {
+            prev = null;
+            firstAdded = slot.orderedNext;
+        } else {
+            prev = firstAdded;
+            while (prev.orderedNext != slot) {
+                prev = prev.orderedNext;
             }
-            if (slot != null) {
-                // non-configurable
-                if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
-                    Context cx = Context.getContext();
-                    if (cx.isStrictMode()) {
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.delete.property.with.configurable.false", key);
-                    }
-                    return;
-                }
-                count--;
-                // remove slot from hash table
-                if (prev == slot) {
-                    slots[slotIndex] = slot.next;
-                } else {
-                    prev.next = slot.next;
-                }
-
-                // remove from ordered list. Previously this was done lazily in
-                // getIds() but delete is an infrequent operation so O(n)
-                // should be ok
-
-                // ordered list always uses the actual slot
-                if (slot == firstAdded) {
-                    prev = null;
-                    firstAdded = slot.orderedNext;
-                } else {
-                    prev = firstAdded;
-                    while (prev.orderedNext != slot) {
-                        prev = prev.orderedNext;
-                    }
-                    prev.orderedNext = slot.orderedNext;
-                }
-                if (slot == lastAdded) {
-                    lastAdded = prev;
-                }
-            }
+            prev.orderedNext = slot.orderedNext;
+        }
+        if (slot == lastAdded) {
+            lastAdded = prev;
         }
     }
 
