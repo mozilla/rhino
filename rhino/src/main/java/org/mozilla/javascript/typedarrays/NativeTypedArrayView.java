@@ -15,18 +15,22 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 import java.util.RandomAccess;
+import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.ArrayLikeAbstractOperations;
 import org.mozilla.javascript.ArrayLikeAbstractOperations.IterativeOperation;
 import org.mozilla.javascript.ArrayLikeAbstractOperations.ReduceOperation;
 import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
+import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -430,13 +434,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             throw ScriptRuntime.rangeError(msg);
         }
 
-        return ScriptRuntime.newObject(
+        return typedArraySpeciesCreate(
                 cx,
                 scope,
-                getClassName(),
                 new Object[] {
                     this.arrayBuffer, begin * this.getBytesPerElement(), Math.max(0, end - begin)
-                });
+                },
+                "slice");
     }
 
     private String js_join(Object[] args) {
@@ -609,6 +613,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return getProperty(thisObj, (int) k);
     }
 
+    private Scriptable typedArraySpeciesCreate(
+            Context cx, Scriptable scope, Object[] args, String methodName) {
+        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        Function defaultConstructor =
+                ScriptRuntime.getExistingCtor(cx, topLevelScope, getClassName());
+        Constructable constructable =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
+
+        Scriptable newArray = constructable.construct(cx, scope, args);
+        if (!(newArray instanceof NativeTypedArrayView<?>)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.ctor.incompatible", methodName);
+        }
+        return newArray;
+    }
+
     // Dispatcher
 
     @Override
@@ -727,7 +746,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                     Object array =
                             ArrayLikeAbstractOperations.iterativeMethod(
                                     cx, f, IterativeOperation.FILTER, scope, thisObj, args);
-                    return ScriptRuntime.newObject(cx, scope, getClassName(), new Object[] {array});
+                    return realThis(thisObj, f)
+                            .typedArraySpeciesCreate(cx, scope, new Object[] {array}, "filter");
                 }
             case Id_forEach:
                 return ArrayLikeAbstractOperations.iterativeMethod(
@@ -739,7 +759,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                     Object array =
                             ArrayLikeAbstractOperations.iterativeMethod(
                                     cx, f, IterativeOperation.MAP, scope, thisObj, args);
-                    return ScriptRuntime.newObject(cx, scope, getClassName(), new Object[] {array});
+                    return realThis(thisObj, f)
+                            .typedArraySpeciesCreate(cx, scope, new Object[] {array}, "map");
                 }
             case Id_some:
                 return ArrayLikeAbstractOperations.iterativeMethod(

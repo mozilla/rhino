@@ -14,10 +14,34 @@ for (var t = 0; t < types.length; t++) {
     assertEquals(0, emptyFiltered.length);
     
     var arr = new type([1, 2, 3]);
-    var arrFiltered = arr.map(n => n + 1);
-    assertTrue(arrFiltered instanceof type);
-    assertEquals(3, arrFiltered.length);
-    assertEquals("2,3,4", arrFiltered.toString());
+    var arrMapped = arr.map(n => n + 1);
+    assertTrue(arrMapped instanceof type);
+    assertEquals(3, arrMapped.length);
+    assertEquals("2,3,4", arrMapped.toString());
+
+    // Check that the constructor property is used correctly
+    arr.constructor = Int16Array;
+    arrMapped = arr.map(n => n + 1);
+    assertTrue(arrMapped instanceof Int16Array);
+    assertEquals(3, arrMapped.length);
+    assertEquals("2,3,4", arrMapped.toString());
+
+    arr.constructor = 42;
+    try {
+        arr.map(n => n + 1);
+        assertTrue(false);
+    } catch (e) {
+        assertTrue(e instanceof TypeError);
+    }
+
+    arr.constructor = {};
+    arr.constructor[Symbol.species] = Array;
+    try {
+        arr.map(n => n + 1);
+        assertTrue(false);
+    } catch (e) {
+        assertTrue(e instanceof TypeError);
+    }
 }
  
 "success";
