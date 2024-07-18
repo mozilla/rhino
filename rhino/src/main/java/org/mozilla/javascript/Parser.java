@@ -162,6 +162,10 @@ public class Parser {
         private static final long serialVersionUID = 5882582646773765630L;
     }
 
+    static interface Transformer {
+        Node transform(AstNode node);
+    }
+
     public Parser() {
         this(new CompilerEnvirons());
     }
@@ -4012,14 +4016,19 @@ public class Parser {
      * @return expression that performs a series of assignments to the variables defined in left
      */
     Node createDestructuringAssignment(int type, Node left, Node right) {
+        return createDestructuringAssignment(type, left, right, null);
+    }
+
+    Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
         String tempName = currentScriptOrFn.getNextTempName();
-        Node result = destructuringAssignmentHelper(type, left, right, tempName);
+        Node result = destructuringAssignmentHelper(type, left, right, tempName, transformer);
         Node comma = result.getLastChild();
         comma.addChildToBack(createName(tempName));
         return result;
     }
 
-    Node destructuringAssignmentHelper(int variableType, Node left, Node right, String tempName) {
+    Node destructuringAssignmentHelper(
+            int variableType, Node left, Node right, String tempName, Transformer transformer) {
         Scope result = createScopeNode(Token.LETEXPR, left.getLineno());
         result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
         try {
@@ -4040,7 +4049,8 @@ public class Parser {
                                 variableType,
                                 tempName,
                                 comma,
-                                destructuringNames);
+                                destructuringNames,
+                                transformer);
                 break;
             case Token.OBJECTLIT:
                 empty =
@@ -4049,7 +4059,8 @@ public class Parser {
                                 variableType,
                                 tempName,
                                 comma,
-                                destructuringNames);
+                                destructuringNames,
+                                transformer);
                 break;
             case Token.GETPROP:
             case Token.GETELEM:
@@ -4059,7 +4070,7 @@ public class Parser {
                     case Token.VAR:
                         reportError("msg.bad.assign.left");
                 }
-                comma.addChildToBack(simpleAssignment(left, createName(tempName)));
+                comma.addChildToBack(simpleAssignment(left, createName(tempName), transformer));
                 break;
             default:
                 reportError("msg.bad.assign.left");
@@ -4077,7 +4088,8 @@ public class Parser {
             int variableType,
             String tempName,
             Node parent,
-            List<String> destructuringNames) {
+            List<String> destructuringNames,
+            Transformer transformer) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
@@ -4098,7 +4110,11 @@ public class Parser {
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
-                                variableType, n, rightElem, currentScriptOrFn.getNextTempName()));
+                                variableType,
+                                n,
+                                rightElem,
+                                currentScriptOrFn.getNextTempName(),
+                                transformer));
             }
             index++;
             empty = false;
@@ -4111,7 +4127,8 @@ public class Parser {
             int variableType,
             String tempName,
             Node parent,
-            List<String> destructuringNames) {
+            List<String> destructuringNames,
+            Transformer transformer) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
 
@@ -4156,7 +4173,8 @@ public class Parser {
                                 variableType,
                                 value,
                                 rightElem,
-                                currentScriptOrFn.getNextTempName()));
+                                currentScriptOrFn.getNextTempName(),
+                                transformer));
             }
             empty = false;
         }
@@ -4215,8 +4233,11 @@ public class Parser {
     // specific object containing the property ("binding" the property
     // to the object) so that it's always the same object, regardless of
     // side effects in the RHS.
-
     protected Node simpleAssignment(Node left, Node right) {
+        return simpleAssignment(left, right, null);
+    }
+
+    protected Node simpleAssignment(Node left, Node right, Transformer transformer) {
         int nodeType = left.getType();
         switch (nodeType) {
             case Token.NAME:
@@ -4236,11 +4257,14 @@ public class Parser {
                     // override getFirstChild/getLastChild and return the appropriate
                     // field, but that seems just as ugly as this casting.
                     if (left instanceof PropertyGet) {
-                        obj = ((PropertyGet) left).getTarget();
+                        AstNode target = ((PropertyGet) left).getTarget();
+                        obj = transformer != null ? transformer.transform(target) : target;
                         id = ((PropertyGet) left).getProperty();
                     } else if (left instanceof ElementGet) {
-                        obj = ((ElementGet) left).getTarget();
-                        id = ((ElementGet) left).getElement();
+                        AstNode target = ((ElementGet) left).getTarget();
+                        AstNode elem = ((ElementGet) left).getElement();
+                        obj = transformer != null ? transformer.transform(target) : target;
+                        id = transformer != null ? transformer.transform(elem) : elem;
                     } else {
                         // This branch is called during IRFactory transform pass.
                         obj = left.getFirstChild();
