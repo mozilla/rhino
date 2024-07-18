@@ -1476,7 +1476,9 @@ public final class IRFactory {
             Node newBody = new Node(Token.BLOCK);
             Node assign;
             if (destructuring != -1) {
-                assign = parser.createDestructuringAssignment(declType, lvalue, id);
+                assign =
+                        parser.createDestructuringAssignment(
+                                declType, lvalue, id, (AstNode node) -> transform(node));
                 if (!isForEach
                         && !isForOf
                         && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
@@ -2053,7 +2055,8 @@ public final class IRFactory {
                     parser.reportError("msg.bad.destruct.op");
                     return right;
                 }
-                return parser.createDestructuringAssignment(-1, left, right);
+                return parser.createDestructuringAssignment(
+                        -1, left, right, (AstNode node) -> transform(node));
             }
             parser.reportError("msg.bad.assign.left");
             return right;
