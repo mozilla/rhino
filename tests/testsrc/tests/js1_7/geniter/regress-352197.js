@@ -6,7 +6,7 @@
 var gTestfile = 'regress-352197.js';
 //-----------------------------------------------------------------------------
 var BUGNUMBER = 352197;
-var summary = 'TypeError if yield after return value in a block';
+var summary = 'SyntaxError if yield after return value in a block';
 var actual = '';
 var expect = '';
 
@@ -21,7 +21,7 @@ function test()
   printBugNumber(BUGNUMBER);
   printStatus (summary);
 
-  expect = /TypeError: anonymous generator function returns a value/;
+  expect = /SyntaxError: anonymous generator function returns a value/;
   try
   {
     var gen = eval('(function() { { return 5; } yield 3; })');
