@@ -27,10 +27,10 @@ load("testsrc/assert.js");
   assertEquals(2, a);
 
   // let
-  assertThrows("let [b, b] = [3, 4];", TypeError);
+  assertThrows("let [b, b] = [3, 4];", SyntaxError);
 
   // const
-  assertThrows("const [c, c] = [5, 6];", TypeError);
+  assertThrows("const [c, c] = [5, 6];", SyntaxError);
 })();
 
 "success";

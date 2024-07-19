@@ -18,4 +18,4 @@ js> try {
   > } catch (e) {
   >   e;
   > }
-SyntaxError: SyntaxError: let declaration not directly within block
+SyntaxError: let declaration not directly within block

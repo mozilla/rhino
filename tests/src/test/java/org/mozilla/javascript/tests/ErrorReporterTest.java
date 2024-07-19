@@ -111,7 +111,7 @@ public class ErrorReporterTest {
         assertEquals(1, errorCollector.errors.size());
 
         ErrorInfo errorInfo = errorCollector.errors.get(0);
-        assertEquals("TypeError: redeclaration of variable x.", errorInfo.message);
+        assertEquals("redeclaration of variable x.", errorInfo.message);
         assertEquals(3, errorInfo.line);
         assertEquals("for (let [x, x] in {}) {}", errorInfo.lineSource);
     }
