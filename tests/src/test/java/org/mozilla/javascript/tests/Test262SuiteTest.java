@@ -538,12 +538,6 @@ public class Test262SuiteTest {
 
     private static String extractJSErrorName(RhinoException ex) {
         if (ex instanceof EvaluatorException) {
-            // See. DefaultErrorReporter#error
-            String message = ex.details();
-            if (message.startsWith("TypeError:")) {
-                return "TypeError";
-            }
-
             // there's no universal format to EvaluatorException's
             // for now, just assume that it's a SyntaxError
             return "SyntaxError";
