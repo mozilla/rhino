@@ -645,7 +645,7 @@ public final class IRFactory {
                 decompiler.addToken(Token.EOL);
             }
 
-            /* Process default parameters */
+            /* Process simple default parameters */
             if (fn.getDefaultParams() != null) {
                 Object[] defaultParams = fn.getDefaultParams();
                 for (int i = defaultParams.length - 1; i > 0; ) {
@@ -2554,6 +2554,10 @@ public final class IRFactory {
                 break;
             case Token.COMPUTED_PROPERTY:
                 parser.reportError("msg.bad.computed.property.in.destruct");
+                break;
+            case Token.ASSIGN:
+                decompile(((Assignment) node).getLeft());
+                decompile(((Assignment) node).getRight());
                 break;
             default:
                 Kit.codeBug("unexpected token: " + Token.typeToName(node.getType()));

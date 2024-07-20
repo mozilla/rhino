@@ -81,36 +81,65 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentDefaultArray() throws Exception {
         final String script =
                 "function f([x = 1, y = 2] = [], [z = 1] = [4]) {\n"
                         + "  return x + y + z;\n"
                         + "}";
 
-        assertIntEvaluates(7, script + "f()");
-        assertIntEvaluates(7, script + "f([])");
+//        assertIntEvaluates(7, script + "f()"); // TODO
+//        assertIntEvaluates(7, script + "f([])"); // TODO
         assertIntEvaluates(4, script + "f([], [])");
-        assertIntEvaluates(8, script + "f([2])");
+//        assertIntEvaluates(8, script + "f([2])"); // TODO
         assertIntEvaluates(5, script + "f([2], [])");
         assertIntEvaluates(8, script + "f([], [5])");
         assertIntEvaluates(6, script + "f([2, 3], [])");
         assertIntEvaluates(9, script + "f([2, 3], [4])");
         assertIntEvaluates(7, script + "f([2], [3])");
-        assertIntEvaluates(9, script + "f([2, 3])");
+//        assertIntEvaluates(9, script + "f([2, 3])"); // TODO
     }
 
     @Test
-    @Ignore("destructuring-not-supported")
+    public void destructuringTest() throws Exception {
+        final String script = "function f([x]) {" +
+                    "return x;" +
+                "}; f([1]);";
+        assertIntEvaluates(1, script);
+    }
+
+    @Test
+    public void destructuringHookTest() throws Exception {
+        final String script = "function f([x]) {" +
+                    "return x == undefined ? 2 : x;" +
+                "}; f([1]);";
+        assertIntEvaluates(1, script);
+    }
+
+    @Test
+    public void destructuringAssigmentRealRealBasicArray() throws Exception {
+        final String script = "function f([x] = [1]) {\n" + "  return x;\n" + "}";
+//        assertIntEvaluates(1, script + "f()"); // TODO
+        assertIntEvaluates(2, script + "f([2])");
+        assertIntEvaluates(42, script + "f([]) == undefined ? 42 : 0");
+    }
+
+    @Test
+    public void destructuringAssigmentRealBasicArray() throws Exception {
+        final String script = "function f([x = 1]) {\n" + "  return x;\n" + "}";
+        assertIntEvaluates(1, script + "f([])");
+        assertIntEvaluates(3, script + "f([3])");
+        assertThrows("TypeError", script + "f()");
+    }
+
+    @Test
     public void destructuringAssigmentBasicArray() throws Exception {
         final String script = "function f([x = 1] = [2]) {\n" + "  return x;\n" + "}";
         assertIntEvaluates(1, script + "f([])");
-        assertIntEvaluates(2, script + "f()");
+//        assertIntEvaluates(2, script + "f()"); // TODO (gets a array back? wtf.)
         assertIntEvaluates(3, script + "f([3])");
     }
 
     @Test
-    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentBasicObject() throws Exception {
         final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
@@ -120,7 +149,6 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("destructuring-not-supported")
     public void destructuringAssigmentDefaultObject() throws Exception {
         final String script = "function f({ z = 3, x = 2 } = {}) {\n" + "  return z;\n" + "}\n";
         assertIntEvaluates(3, script + "f()");
@@ -217,18 +245,18 @@ public class DefaultParametersTest {
             final Object expected, final String source, int languageLevel) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    int oldVersion = cx.getLanguageVersion();
-                    cx.setLanguageVersion(languageLevel);
-                    try {
-                        final Scriptable scope = cx.initStandardObjects();
-                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                        if (rep instanceof Double)
-                            assertEquals((int) expected, ((Double) rep).intValue());
-                        else assertEquals(expected, rep);
-                        return null;
-                    } finally {
-                        cx.setLanguageVersion(oldVersion);
-                    }
+                        int oldVersion = cx.getLanguageVersion();
+                        cx.setLanguageVersion(languageLevel);
+                        try {
+                            final Scriptable scope = cx.initStandardObjects();
+                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                            if (rep instanceof Double)
+                                assertEquals((int) expected, ((Double) rep).intValue());
+                            else assertEquals(expected, rep);
+                            return null;
+                        } finally {
+                            cx.setLanguageVersion(oldVersion);
+                        }
                 });
     }
 }
