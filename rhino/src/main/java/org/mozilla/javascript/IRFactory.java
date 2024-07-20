@@ -668,8 +668,8 @@ public final class IRFactory {
                                                 body.getLineno()),
                                         null,
                                         body.getLineno()));
-                        i -= 2;
                     }
+                    i -= 2;
                 }
             }
 

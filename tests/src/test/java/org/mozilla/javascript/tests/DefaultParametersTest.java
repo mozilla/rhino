@@ -88,20 +88,25 @@ public class DefaultParametersTest {
                         + "  return x + y + z;\n"
                         + "}";
 
-        assertIntEvaluates(3, script + "f()");
-        assertIntEvaluates(3, script + "f([])");
-        assertIntEvaluates(4, script + "f([2])");
-        assertIntEvaluates(5, script + "f([2, 3])");
+        assertIntEvaluates(7, script + "f()");
+        assertIntEvaluates(7, script + "f([])");
+        assertIntEvaluates(4, script + "f([], [])");
+        assertIntEvaluates(8, script + "f([2])");
+        assertIntEvaluates(5, script + "f([2], [])");
+        assertIntEvaluates(8, script + "f([], [5])");
+        assertIntEvaluates(6, script + "f([2, 3], [])");
+        assertIntEvaluates(9, script + "f([2, 3], [4])");
+        assertIntEvaluates(7, script + "f([2], [3])");
+        assertIntEvaluates(9, script + "f([2, 3])");
     }
 
     @Test
     @Ignore("destructuring-not-supported")
     public void destructuringAssigmentBasicArray() throws Exception {
         final String script = "function f([x = 1] = [2]) {\n" + "  return x;\n" + "}";
-
-        //        assertIntEvaluates(1, script + "f([])");
+        assertIntEvaluates(1, script + "f([])");
         assertIntEvaluates(2, script + "f()");
-        //        assertIntEvaluates(3, script + "f([3])");
+        assertIntEvaluates(3, script + "f([3])");
     }
 
     @Test
