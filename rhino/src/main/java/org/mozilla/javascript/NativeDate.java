@@ -6,9 +6,15 @@
 
 package org.mozilla.javascript;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * This class implements the Date native object. See ECMA 15.9.
@@ -21,7 +27,6 @@ final class NativeDate extends IdScriptableObject {
     private static final long serialVersionUID = -8307438915861678966L;
 
     private static final Object DATE_TAG = "Date";
-
     private static final String js_NaN_date_str = "Invalid Date";
 
     static void init(Scriptable scope, boolean sealed) {
@@ -336,7 +341,7 @@ final class NativeDate extends IdScriptableObject {
             case Id_toLocaleTimeString:
             case Id_toLocaleDateString:
                 if (!Double.isNaN(t)) {
-                    return toLocale_helper(t, id);
+                    return toLocale_helper(cx, t, id, args);
                 }
                 return js_NaN_date_str;
 
@@ -529,10 +534,10 @@ final class NativeDate extends IdScriptableObject {
      *  floor((1968 - 1969) / 4) == -1
      */
     private static double DayFromYear(double y) {
-        return (365 * (y - 1970)
-                + Math.floor((y - 1969) / 4.0)
-                - Math.floor((y - 1901) / 100.0)
-                + Math.floor((y - 1601) / 400.0));
+        return ((365 * ((y) - 1970)
+                + Math.floor(((y) - 1969) / 4.0)
+                - Math.floor(((y) - 1901) / 100.0)
+                + Math.floor(((y) - 1601) / 400.0)));
     }
 
     private static double TimeFromYear(double y) {
@@ -1348,10 +1353,8 @@ final class NativeDate extends IdScriptableObject {
                 t = MakeDate(day, TimeWithinDay(t));
             }
             result.append(" (");
-            Date date = new Date((long) t);
-            synchronized (timeZoneFormatter) {
-                result.append(timeZoneFormatter.format(date));
-            }
+            final ZoneId zoneid = cx.getTimeZone().toZoneId();
+            result.append(timeZoneFormatter.format(Instant.ofEpochMilli((long) t).atZone(zoneid)));
             result.append(')');
         }
         return result.toString();
@@ -1399,25 +1402,57 @@ final class NativeDate extends IdScriptableObject {
         return obj;
     }
 
-    private static String toLocale_helper(double t, int methodId) {
-        DateFormat formatter;
+    private static String toLocale_helper(Context cx, double t, int methodId, Object[] args) {
+        DateTimeFormatter formatter;
         switch (methodId) {
             case Id_toLocaleString:
-                formatter = localeDateTimeFormatter;
+                formatter =
+                        cx.getLanguageVersion() >= Context.VERSION_ES6
+                                ? localeDateTimeFormatterES6
+                                : localeDateTimeFormatter;
                 break;
             case Id_toLocaleTimeString:
-                formatter = localeTimeFormatter;
+                formatter =
+                        cx.getLanguageVersion() >= Context.VERSION_ES6
+                                ? localeTimeFormatterES6
+                                : localeTimeFormatter;
                 break;
             case Id_toLocaleDateString:
-                formatter = localeDateFormatter;
+                formatter =
+                        cx.getLanguageVersion() >= Context.VERSION_ES6
+                                ? localeDateFormatterES6
+                                : localeDateFormatter;
                 break;
             default:
                 throw new AssertionError(); // unreachable
         }
 
-        synchronized (formatter) {
-            return formatter.format(new Date((long) t));
+        final List<String> languageTags = new ArrayList<>();
+        if (args.length != 0) {
+            // we use the 'locales' argument but ignore the second 'options' argument as per spec of
+            // an
+            // implementation that has no Intl.DateTimeFormat support
+            if (args[0] instanceof NativeArray) {
+                final NativeArray array = (NativeArray) args[0];
+                for (Object languageTag : array) {
+                    languageTags.add(Context.toString(languageTag));
+                }
+            } else {
+                languageTags.add(Context.toString(args[0]));
+            }
         }
+
+        final List<Locale> availableLocales = Arrays.asList(Locale.getAvailableLocales());
+        for (String languageTag : languageTags) {
+            Locale locale = Locale.forLanguageTag(languageTag);
+            if (availableLocales.contains(locale)) {
+                formatter = formatter.withLocale(locale);
+                break;
+            }
+        }
+
+        final ZoneId zoneid = cx.getTimeZone().toZoneId();
+        return formatter.format(Instant.ofEpochMilli((long) t).atZone(zoneid));
     }
 
     private static String js_toUTCString(double date) {
@@ -1916,12 +1951,22 @@ final class NativeDate extends IdScriptableObject {
 
     private static final int Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
 
-    // not thread safe
-    private static final DateFormat timeZoneFormatter = new SimpleDateFormat("zzz");
-    private static final DateFormat localeDateTimeFormatter =
-            new SimpleDateFormat("MMMM d, yyyy h:mm:ss a z");
-    private static final DateFormat localeDateFormatter = new SimpleDateFormat("MMMM d, yyyy");
-    private static final DateFormat localeTimeFormatter = new SimpleDateFormat("h:mm:ss a z");
+    private static final DateTimeFormatter timeZoneFormatter = DateTimeFormatter.ofPattern("zzz");
 
+    private static final DateTimeFormatter localeDateTimeFormatter =
+            DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm:ss a z");
+    private static final DateTimeFormatter localeDateFormatter =
+            DateTimeFormatter.ofPattern("MMMM d, yyyy");
+    private static final DateTimeFormatter localeTimeFormatter =
+            DateTimeFormatter.ofPattern("h:mm:ss a z");
+
+    // use FormatStyle.SHORT for these as per spec of an implementation that has no
+    // Intl.DateTimeFormat support
+    private static final DateTimeFormatter localeDateTimeFormatterES6 =
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+    private static final DateTimeFormatter localeDateFormatterES6 =
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
+    private static final DateTimeFormatter localeTimeFormatterES6 =
+            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
     private double date;
 }
