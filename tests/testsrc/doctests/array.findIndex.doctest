@@ -5,13 +5,13 @@
 js> function isSmall(n) { return n < 10; };
 
 js> [13, 4, 17].findIndex;
-function findIndex() { [native code for Array.findIndex, arity=1] }
+function findIndex() { [native code] }
 
 js> [13, 4, 17].findIndex(isSmall);
 1
 
 js> Array.findIndex;
-function findIndex() { [native code for Array.findIndex, arity=1] }
+function findIndex() { [native code] }
 
 js> Array.findIndex([13, 4, 17], isSmall);
 1

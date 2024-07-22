@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Date.prototype.toJSON;
-function toJSON() { [native code for Date.toJSON, arity=1] }
+function toJSON() { [native code] }
 
 js> Date.prototype.toJSON.call({
   >   valueOf: function() { return Infinity; }

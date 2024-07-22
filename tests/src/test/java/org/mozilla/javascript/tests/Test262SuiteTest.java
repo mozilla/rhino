@@ -498,6 +498,23 @@ public class Test262SuiteTest {
                                 try (Reader reader = new FileReader(harnessPath)) {
                                     String script = Kit.readReader(reader);
 
+                                    if ("nativeFunctionMatcher.js".equalsIgnoreCase(harnessFile)) {
+                                        // If block-scoped const is implemented, please delete this
+                                        // code.
+                                        script =
+                                                script.replace(
+                                                        "const c = source[pos];",
+                                                        "let c = source[pos];");
+                                        script =
+                                                script.replace(
+                                                        "const end = source.indexOf('*/', pos);",
+                                                        "let end = source.indexOf('*/', pos);");
+                                        script =
+                                                script.replace(
+                                                        "const c = source[end];",
+                                                        "let c = source[end];");
+                                    }
+
                                     return cx.compileString(script, harnessPath, 1, null);
                                 } catch (IOException ioe) {
                                     throw new RuntimeException(

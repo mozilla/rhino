@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> [1, 13, 4].forEach;
-function forEach() { [native code for Array.forEach, arity=1] }
+function forEach() { [native code] }
 
 js> res = '';
 js> [1, 13, 4].forEach(function(elem) { res += elem });
@@ -11,7 +11,7 @@ js> res
 1134
 
 js> Array.forEach;
-function forEach() { [native code for Array.forEach, arity=1] }
+function forEach() { [native code] }
 
 js> res = '';
 js> Array.forEach([1, 13, 4], function(elem) { res += elem });

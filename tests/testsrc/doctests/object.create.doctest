@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.create;
-function create() { [native code for Object.create, arity=2] }
+function create() { [native code] }
 
 js> expectTypeError(function() { Object.create() });
 js> [undefined, true, 1, 'hello'].forEach(function(value) { 

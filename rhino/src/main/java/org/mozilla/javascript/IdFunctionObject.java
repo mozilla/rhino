@@ -106,15 +106,7 @@ public class IdFunctionObject extends BaseFunction {
             sb.append(getFunctionName());
             sb.append("() { ");
         }
-        sb.append("[native code for ");
-        if (idcall instanceof Scriptable) {
-            Scriptable sobj = (Scriptable) idcall;
-            sb.append(sobj.getClassName());
-            sb.append('.');
-        }
-        sb.append(getFunctionName());
-        sb.append(", arity=");
-        sb.append(getArity());
+        sb.append("[native code");
         sb.append(justbody ? "]\n" : "] }\n");
         return sb.toString();
     }

@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Date.prototype.toISOString;
-function toISOString() { [native code for Date.toISOString, arity=0] }
+function toISOString() { [native code] }
 
 js> expectError(function() { 
   >   new Date(Infinity).toISOString() 
