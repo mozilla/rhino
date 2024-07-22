@@ -1452,7 +1452,9 @@ final class NativeDate extends IdScriptableObject {
         }
 
         final ZoneId zoneid = cx.getTimeZone().toZoneId();
-        return formatter.format(Instant.ofEpochMilli((long) t).atZone(zoneid));
+        final String formatted = formatter.format(Instant.ofEpochMilli((long) t).atZone(zoneid));
+        // jdk 21 uses a nnbsp in front of 'PM'
+        return formatted.replace("\u202f", " ");
     }
 
     private static String js_toUTCString(double date) {
