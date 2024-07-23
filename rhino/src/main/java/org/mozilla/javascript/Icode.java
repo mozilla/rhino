@@ -20,9 +20,6 @@ abstract class Icode {
             // Stack: ... value2 value1 -> ... value2 value1 value2 value1
             Icode_DUP2 = -2,
 
-            // Stack: ... value2 value1 -> ... value1 value2
-            Icode_SWAP = -3,
-
             // Stack: ... value1 -> ...
             Icode_POP = -4,
 
@@ -167,8 +164,6 @@ abstract class Icode {
                 return "DUP";
             case Icode_DUP2:
                 return "DUP2";
-            case Icode_SWAP:
-                return "SWAP";
             case Icode_POP:
                 return "POP";
             case Icode_POP_RESULT:

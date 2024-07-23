@@ -1467,16 +1467,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 sDbl[stackTop + 2] = sDbl[stackTop];
                                 stackTop += 2;
                                 continue Loop;
-                            case Icode_SWAP:
-                                {
-                                    Object o = stack[stackTop];
-                                    stack[stackTop] = stack[stackTop - 1];
-                                    stack[stackTop - 1] = o;
-                                    double d = sDbl[stackTop];
-                                    sDbl[stackTop] = sDbl[stackTop - 1];
-                                    sDbl[stackTop - 1] = d;
-                                    continue Loop;
-                                }
                             case Token.RETURN:
                                 frame.result = stack[stackTop];
                                 frame.resultDbl = sDbl[stackTop];
