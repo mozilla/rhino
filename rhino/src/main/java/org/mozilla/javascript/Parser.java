@@ -3528,6 +3528,7 @@ public class Parser {
                 // So we check a whitelist of tokens to check if we're at the
                 // first case. (Because of keywords, the second case may be
                 // many tokens.)
+                int functionSourceStart = pname.getPosition();
                 int peeked = peekToken();
                 if (peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC) {
                     if (peeked == Token.LP) {
@@ -3550,7 +3551,8 @@ public class Parser {
                         propertyName = null;
                     } else {
                         propertyName = ts.getString();
-                        ObjectProperty objectProp = methodDefinition(ppos, pname, entryKind);
+                        ObjectProperty objectProp =
+                                methodDefinition(ppos, pname, entryKind, functionSourceStart);
                         pname.setJsDocNode(jsdocNode);
                         elems.add(objectProp);
                     }
@@ -3685,9 +3687,11 @@ public class Parser {
         return pn;
     }
 
-    private ObjectProperty methodDefinition(int pos, AstNode propName, int entryKind)
-            throws IOException {
+    private ObjectProperty methodDefinition(
+            int pos, AstNode propName, int entryKind, int functionSourceStart) throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION);
+        fn.setRawSourceStart(functionSourceStart);
+
         // We've already parsed the function name, so fn should be anonymous.
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
