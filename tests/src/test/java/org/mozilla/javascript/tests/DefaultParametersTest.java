@@ -32,6 +32,23 @@ public class DefaultParametersTest {
     }
 
     @Test
+    public void functionDefaultArgsArrayArrow() throws Exception {
+        final String script = "(([a = 2, b = 1] = [1, 2]) => { return a + b; })";
+        assertIntEvaluates(3, script + "()");
+        assertIntEvaluates(5, script + "([4,])");
+        assertIntEvaluates(6, script + "([,4])");
+    }
+
+    @Test
+    public void functionDefaultArgsObjectArrow() throws Exception {
+        final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
+
+        assertIntEvaluates(1, script + "f({})");
+        assertIntEvaluates(2, script + "f()");
+        assertIntEvaluates(3, script + "f({x: 3})");
+    }
+
+    @Test
     public void functionDefaultArgsMulti() throws Exception {
         final String script = "function foo(a = 2, b = 23) {" + "   return a + b;" + "}";
         assertIntEvaluates(55, script + "\nfoo(32)");
@@ -97,6 +114,17 @@ public class DefaultParametersTest {
         assertIntEvaluates(9, script + "f([2, 3], [4])");
         assertIntEvaluates(7, script + "f([2], [3])");
         assertIntEvaluates(9, script + "f([2, 3])");
+    }
+
+    @Test
+    public void destructuringAssigmentWithObjectDefaults() throws Exception {
+        final String script =
+                "function f([x = 1, y = 2] = {x: 3, y: 4}) {\n"
+                        + "  return x + y;\n"
+                        + "}";
+
+//        assertThrows("TypeError", script + "f()"); // TODO: returns 3
+//        assertThrows("TypeError", script + "f(2)"); // TODO: returns, should be throwing TypeError
     }
 
     @Test
