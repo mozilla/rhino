@@ -4160,6 +4160,8 @@ public class Parser {
         return result;
     }
 
+
+
     boolean destructuringArray(
             ArrayLiteral array,
             int variableType,
@@ -4176,26 +4178,35 @@ public class Parser {
                 continue;
             }
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+            if (defaultValue != null) {
+                // if there's defaultValue it can be substituted for tempName if that's undefined
+                // i.e. $1 = ($1 == undefined) ? defaultValue : $1
+                Node defaultRvalue = null;
+                if (defaultValue instanceof ArrayLiteral) {
+                    defaultRvalue = new Node(defaultValue.getType());
+                    for (var child: ((ArrayLiteral) defaultValue).getElements())
+                        defaultRvalue.addChildToBack(child);
+                } else if (defaultValue instanceof ObjectLiteral) {
+                        // TODO(satish)
+                } else {
+                    defaultRvalue = new Node(defaultValue.getType(), defaultValue);
+                }
+                Node cond_default = new Node(Token.HOOK,
+                        new Node(Token.SHEQ, createName(tempName), createName("undefined")),
+                        defaultRvalue,
+                        createName(tempName));
+                Node set_default = new Node(setOp,
+                        createName(Token.BINDNAME, tempName, null),
+                        cond_default);
+                parent.addChildToBack(set_default);
+            }
             if (n.getType() == Token.NAME) { /* [x] = [1] */
                 String name = n.getString();
-                if (defaultValue != null) {
-                    // if there's defaultValue it can be substituted for tempName if that's undefined
-                    // i.e. $1 = ($1 == undefined) ? defaultValue : $1
-                    Node cond_default = new Node(Token.HOOK,
-                            new Node(Token.SHEQ, createName(tempName), createName("undefined")),
-                            defaultValue,
-                            createName(tempName));
-                    Node set_default = new Node(setOp,
-                            createName(Token.BINDNAME, tempName, null),
-                            cond_default);
-                    parent.addChildToBack(set_default);
-                }
                 parent.addChildToBack(
                         new Node(setOp, createName(Token.BINDNAME, name, null), rightElem));
                 if (variableType != -1) {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
-                    ((FunctionNode) currentScriptOrFn).putDefaultParams(name, createName(name));
                 }
             } else if (n.getType() == Token.ASSIGN) { /* [x = 1] = [2] */
                 Node left = ((Assignment) n).getLeft(); // NAME x
@@ -4203,19 +4214,6 @@ public class Parser {
                 Node right = ((Assignment) n).getRight(); // NUMBER 1.0
 
                 if (left.getType() == Token.NAME) {
-                    if (defaultValue != null) { /* TODO(satish): refactor duplicate code from above */
-                        // if there's defaultValue it can be substituted for tempName if that's undefined
-                        // i.e. $1 = ($1 == undefined) ? defaultValue : $1
-                        Node cond_default = new Node(Token.HOOK,
-                                new Node(Token.SHEQ, createName("undefined"), createName(tempName)),
-                                new Node(defaultValue.getType(), defaultValue),
-                                createName(tempName));
-                        Node set_default = new Node(setOp,
-                                createName(Token.BINDNAME, tempName, null),
-                                cond_default);
-                        parent.addChildToBack(set_default);
-                    }
-
                     // x = (x == undefined) ?
                     //          (($1[0] == undefined) ?
                     //              1
