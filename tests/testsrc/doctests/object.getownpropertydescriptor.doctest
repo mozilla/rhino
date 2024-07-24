@@ -34,9 +34,9 @@ js> desc.value === undefined;
 true
 js> desc.writable
 js> desc.get.toSource()
-p() {}
+get p() {}
 js> desc.set.toSource()
-p() {}
+set p() {}
 js> desc.enumerable
 true
 js> desc.configurable
