@@ -63,8 +63,7 @@ public class Node implements Iterable<Node> {
             ARROW_FUNCTION_PROP = 26,
             TEMPLATE_LITERAL_PROP = 27,
             TRAILING_COMMA = 28,
-            OBJECT_IDS_COMPUTED_PROP = 39,
-            LAST_PROP = 39;
+            LAST_PROP = 28;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -432,8 +431,6 @@ public class Node implements Iterable<Node> {
                     return "template_literal";
                 case TRAILING_COMMA:
                     return "trailing comma";
-                case OBJECT_IDS_COMPUTED_PROP:
-                    return "object_ids_computed_prop";
 
                 default:
                     Kit.codeBug();
