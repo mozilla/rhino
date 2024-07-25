@@ -1165,11 +1165,16 @@ public class Node implements Iterable<Node> {
                         }
                         break;
                     case OBJECT_IDS_PROP:
+                    case OBJECT_IDS_COMPUTED_PROP:
                         {
                             Object[] a = (Object[]) x.objectValue;
                             sb.append("[");
                             for (int i = 0; i < a.length; i++) {
-                                sb.append(a[i].toString());
+                                if (a[i] != null) {
+                                    sb.append(a[i].toString());
+                                } else {
+                                    sb.append("<empty>");
+                                }
                                 if (i + 1 < a.length) sb.append(", ");
                             }
                             sb.append("]");
