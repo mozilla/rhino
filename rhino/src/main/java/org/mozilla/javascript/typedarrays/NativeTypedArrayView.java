@@ -395,10 +395,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         long start;
         if (args.length < 2) {
             // default
-            start = length - 1;
+            start = length - 1L;
         } else {
             start = (long) ScriptRuntime.toInteger(args[1]);
-            if (start >= length) start = length - 1;
+            if (start >= length) start = length - 1L;
             else if (start < 0) start += length;
             if (start < 0) return -1;
         }
