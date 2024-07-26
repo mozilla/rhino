@@ -99,6 +99,9 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (0 <= index && index < length) {
+            if (super.checkFrozen(Integer.toString(index)) == FrozenCheckResult.SILENTLY_IGNORE)
+                return;
+
             Array.set(array, index, Context.jsToJava(value, cls));
         } else {
             throw Context.reportRuntimeErrorById(

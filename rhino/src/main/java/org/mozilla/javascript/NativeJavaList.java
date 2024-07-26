@@ -124,6 +124,9 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (index >= 0) {
+            if (super.checkFrozen(Integer.toString(index)) == FrozenCheckResult.SILENTLY_IGNORE)
+                return;
+
             Object javaValue = Context.jsToJava(value, Object.class);
             if (index == list.size()) {
                 list.add(javaValue); // use "add" at the end of list.
@@ -139,6 +142,8 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public void put(String name, Scriptable start, Object value) {
         if (list != null && "length".equals(name)) {
+            if (super.checkFrozen(name) == FrozenCheckResult.SILENTLY_IGNORE) return;
+
             setLength(value);
             return;
         }
