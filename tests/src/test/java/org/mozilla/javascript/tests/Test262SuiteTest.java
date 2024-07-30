@@ -238,7 +238,10 @@ public class Test262SuiteTest {
                                                                 .toString()
                                                                 .equals("statements"))
                                         ? 5
-                                        : Math.min(4, testFilePath.getNameCount());
+                                        : Math.min(
+                                                4,
+                                                testFilePath.getNameCount()
+                                                        - (testFile.isDirectory() ? 0 : 1));
                         currentReportingDir = testFilePath.subpath(0, reportDepth);
 
                         if (previousReportingDir == null) {
