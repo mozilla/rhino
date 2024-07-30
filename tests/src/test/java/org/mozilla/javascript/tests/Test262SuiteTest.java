@@ -5,7 +5,6 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mozilla.javascript.drivers.TestUtils.JS_FILE_FILTER;
 import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
@@ -250,9 +249,7 @@ public class Test262SuiteTest {
                         }
 
                         // Determine if switching to another directory and if so whether all files
-                        // in
-                        // the
-                        // previous directory failed
+                        // in the previous directory failed
                         // If so, don't list all failing files, but list only the folder path
                         if (rollUpEnabled
                                 && (!testFilePath.startsWith(previousTestFileParentPath)
@@ -498,30 +495,6 @@ public class Test262SuiteTest {
                                 try (Reader reader = new FileReader(harnessPath)) {
                                     String script = Kit.readReader(reader);
 
-                                    // fix for missing features in Rhino
-                                    if ("compareArray.js".equalsIgnoreCase(harnessFile)) {
-                                        assertTrue(
-                                                UNSUPPORTED_FEATURES.contains(
-                                                        "default-parameters"));
-                                        script =
-                                                script.replace(
-                                                        "assert.compareArray = function(actual, expected, message = '')",
-                                                        "assert.compareArray = function(actual, expected, message)");
-                                    }
-                                    // fix for missing features in Rhino
-                                    if ("nativeFunctionMatcher.js".equalsIgnoreCase(harnessFile)) {
-                                        assertTrue(
-                                                UNSUPPORTED_FEATURES.contains(
-                                                        "regexp-unicode-property-escapes"));
-                                        script =
-                                                script.replace(
-                                                        "const isNewline = (c) => /[\\u000A\\u000D\\u2028\\u2029]/u.test(c);",
-                                                        "const isNewline = (c) => /[\\u000A\\u000D\\u2028\\u2029]/.test(c);");
-                                        script =
-                                                script.replace(
-                                                        "const isWhitespace = (c) => /[\\u0009\\u000B\\u000C\\u0020\\u00A0\\uFEFF]/u.test(c)",
-                                                        "const isWhitespace = (c) => /[\\u0009\\u000B\\u000C\\u0020\\u00A0\\uFEFF]/.test(c)");
-                                    }
                                     return cx.compileString(script, harnessPath, 1, null);
                                 } catch (IOException ioe) {
                                     throw new RuntimeException(
