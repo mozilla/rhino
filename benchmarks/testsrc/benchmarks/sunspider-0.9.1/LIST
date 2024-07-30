@@ -19,6 +19,7 @@ math-cordic
 math-partial-sums
 math-spectral-norm
 regexp-dna
+run
 string-base64
 string-fasta
 string-tagcloud
