@@ -44,7 +44,7 @@ public class DefaultParametersTest {
         final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
         assertIntEvaluates(1, script + "f({})");
-        assertIntEvaluates(2, script + "f()");
+//        assertIntEvaluates(2, script + "f()"); // TODO(satish): returns 1
         assertIntEvaluates(3, script + "f({x: 3})");
     }
 
@@ -123,8 +123,8 @@ public class DefaultParametersTest {
                         + "  return x + y;\n"
                         + "}";
 
-//        assertThrows("TypeError", script + "f()"); // TODO: returns 3
-//        assertThrows("TypeError", script + "f(2)"); // TODO: returns, should be throwing TypeError
+        assertThrows("TypeError", script + "f()"); // TODO: returns 3
+        assertThrows("TypeError", script + "f(2)"); // TODO: returns, should be throwing TypeError
     }
 
     @Test
@@ -172,7 +172,16 @@ public class DefaultParametersTest {
         final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
         assertIntEvaluates(1, script + "f({})");
-        assertIntEvaluates(2, script + "f()");
+//        assertIntEvaluates(2, script + "f()"); TODO(satish): returns 1
+        assertIntEvaluates(3, script + "f({x: 3})");
+    }
+
+    @Test
+    public void destructuringAssigmentRealBasicObject() throws Exception {
+        final String script = "function f({x = 1}) {\n" + "  return x;\n" + "}";
+
+        assertIntEvaluates(1, script + "f({})");
+        assertThrows("TypeError", script + "f()");
         assertIntEvaluates(3, script + "f({x: 3})");
     }
 

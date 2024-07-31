@@ -3621,7 +3621,18 @@ public class Parser {
                 // many tokens.)
                 int peeked = peekToken();
                 if (peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC) {
-                    if (peeked == Token.LP) {
+                    if (peeked == Token.ASSIGN && inDestructuringAssignment) { // we have an object literal with destructuring assignment and a default
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            elems.add(plainProperty(pname, tt));
+                            if (matchToken(Token.COMMA, true)) {
+                                continue;
+                            } else {
+                                break commaLoop;
+                            }
+                        } else {
+                            // TODO(satish): throw an error
+                        }
+                    } else if (peeked == Token.LP) {
                         entryKind = METHOD_ENTRY;
                     } else if (pname.getType() == Token.NAME) {
                         if ("get".equals(propertyName)) {
@@ -3767,6 +3778,13 @@ public class Parser {
             ObjectProperty pn = new ObjectProperty();
             pn.putProp(Node.SHORTHAND_PROPERTY_NAME, Boolean.TRUE);
             pn.setLeftAndRight(property, nn);
+            return pn;
+        } else if (tt == Token.ASSIGN && inDestructuringAssignment) {
+            /* we're in destructuring with defaults in a object literal; treat defaults as values */
+            ObjectProperty pn = new ObjectProperty();
+            pn.putProp(Node.SHORTHAND_PROPERTY_NAME, Boolean.TRUE);
+            consumeToken(); // consume the `=`
+            pn.setLeftAndRight(property, new Assignment(property, assignExpr()));
             return pn;
         }
         mustMatchToken(Token.COLON, "msg.no.colon.prop", true);
@@ -4191,6 +4209,7 @@ public class Parser {
                 continue;
             }
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+
             if (defaultValue != null) {
                 // if there's defaultValue it can be substituted for tempName if that's undefined
                 // i.e. $1 = ($1 == undefined) ? defaultValue : $1
@@ -4218,6 +4237,7 @@ public class Parser {
                         cond_default);
                 parent.addChildToBack(set_default);
             }
+
             if (n.getType() == Token.NAME) { /* [x] = [1] */
                 String name = n.getString();
                 parent.addChildToBack(
@@ -4252,7 +4272,7 @@ public class Parser {
                         destructuringNames.add(name);
                     }
                 } else {
-                    // TODO(satish): error
+                    // TODO(satish): should handle other lvalues eg ArrayLiteral, ObjectLiteral
                 }
             } else {
                 parent.addChildToBack(
@@ -4284,6 +4304,7 @@ public class Parser {
                 lineno = ts.lineno;
             }
             AstNode id = prop.getLeft();
+
             Node rightElem = null;
             if (id instanceof Name) {
                 Node s = Node.newString(((Name) id).getIdentifier());
@@ -4300,7 +4321,36 @@ public class Parser {
             } else {
                 throw codeBug();
             }
+
             rightElem.setLineno(lineno);
+            if (defaultValue != null) {
+                // if there's defaultValue it can be substituted for tempName if that's undefined
+                // i.e. $1 = ($1 == undefined) ? defaultValue : $1
+                Node defaultRvalue = null;
+                if (defaultValue instanceof ArrayLiteral) {
+                    defaultRvalue = new Node(defaultValue.getType());
+                    for (var child: ((ArrayLiteral) defaultValue).getElements())
+                        defaultRvalue.addChildToBack(child);
+                } else if (defaultValue instanceof ObjectLiteral) {
+                    defaultRvalue = new Node(defaultValue.getType());
+                    for (var child: ((ObjectLiteral) defaultValue).getElements())
+                        defaultRvalue.putProp(child.getType(), child.getProp(child.getType()));
+                } else {
+                    defaultRvalue = new Node(defaultValue.getType(), defaultValue);
+                }
+
+                // TODO(satish): Add check if defaultValue is iterable at runtime (i.e has Symbol.ITERATOR)
+
+                Node cond_default = new Node(Token.HOOK,
+                        new Node(Token.SHEQ, createName(tempName), createName("undefined")),
+                        defaultRvalue,
+                        createName(tempName));
+                Node set_default = new Node(setOp,
+                        createName(Token.BINDNAME, tempName, null),
+                        cond_default);
+                parent.addChildToBack(set_default);
+            }
+
             AstNode value = prop.getRight();
             if (value.getType() == Token.NAME) {
                 String name = ((Name) value).getIdentifier();
@@ -4309,6 +4359,34 @@ public class Parser {
                 if (variableType != -1) {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
+                }
+            } else if (value.getType() == Token.ASSIGN || value instanceof Assignment) {
+                Node left = ((Assignment) value).getLeft();
+                String name = left.getString();
+                Node right = ((Assignment) value).getRight();
+
+                if (left.getType() == Token.NAME) {
+                    // x = (x == undefined) ?
+                    //          (($1[0] == undefined) ?
+                    //              1
+                    //              : $1[0])
+                    //          : x
+                    Node cond_inner = new Node(Token.HOOK,
+                            new Node(Token.SHEQ, createName("undefined"), rightElem),
+                            right,
+                            rightElem);
+                    Node cond = new Node(Token.HOOK,
+                            new Node(Token.SHEQ, createName("undefined"), createName(name)),
+                            cond_inner,
+                            left);
+                    parent.addChildToBack(
+                            new Node(setOp, createName(Token.BINDNAME, name, null), cond));
+                    if (variableType != -1) {
+                        defineSymbol(variableType, name, true);
+                        destructuringNames.add(name);
+                    }
+                } else {
+                    // TODO(satish): should handle other lvalues eg ArrayLiteral, ObjectLiteral
                 }
             } else {
                 parent.addChildToBack(
