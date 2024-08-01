@@ -984,7 +984,7 @@ public final class IRFactory {
         return node;
     }
 
-    private Node transformObjectLiteral(ObjectLiteral node) {
+    public Node transformObjectLiteral(ObjectLiteral node) {
         if (node.isDestructuring()) {
             return node;
         }

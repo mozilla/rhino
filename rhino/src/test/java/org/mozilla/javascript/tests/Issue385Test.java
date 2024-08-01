@@ -16,6 +16,8 @@ import org.mozilla.javascript.Scriptable;
  * of failing on some later stage (e.g. in the IRFactory).
  *
  * <p>Should be removed when support for default values is added
+ *
+ * Keeping this around, but change the return values
  */
 public class Issue385Test {
     private Context cx;

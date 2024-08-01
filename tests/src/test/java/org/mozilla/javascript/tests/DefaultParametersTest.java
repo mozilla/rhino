@@ -41,11 +41,11 @@ public class DefaultParametersTest {
 
     @Test
     public void functionDefaultArgsObjectArrow() throws Exception {
-        final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
+        final String script = "(({x = 1} = {x: 2}) => {\n" + "  return x;\n" + "})";
 
-        assertIntEvaluates(1, script + "f({})");
-//        assertIntEvaluates(2, script + "f()"); // TODO(satish): returns 1
-        assertIntEvaluates(3, script + "f({x: 3})");
+        assertIntEvaluates(1, script + "({})");
+//        assertIntEvaluates(2, script + "()"); // TODO(satish): returns 1
+        assertIntEvaluates(3, script + "({x: 3})");
     }
 
     @Test
@@ -124,7 +124,7 @@ public class DefaultParametersTest {
                         + "}";
 
         assertThrows("TypeError", script + "f()"); // TODO: returns 3
-        assertThrows("TypeError", script + "f(2)"); // TODO: returns, should be throwing TypeError
+        assertThrows("TypeError", script + "f(2)"); // TODO: returns 3, should be throwing TypeError
     }
 
     @Test
@@ -172,7 +172,7 @@ public class DefaultParametersTest {
         final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
         assertIntEvaluates(1, script + "f({})");
-//        assertIntEvaluates(2, script + "f()"); TODO(satish): returns 1
+        assertIntEvaluates(2, script + "f()");
         assertIntEvaluates(3, script + "f({x: 3})");
     }
 
@@ -254,15 +254,16 @@ public class DefaultParametersTest {
                     cx.setLanguageVersion(languageLevel);
                     try {
                         final Scriptable scope = cx.initStandardObjects();
+                        Object rep = null;
                         try {
-                            final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                            rep = cx.evaluateString(scope, source, "test.js", 0, null);
                         } catch (EcmaError e) {
                             if (e instanceof EcmaError) {
                                 assertTrue(((EcmaError) e).getMessage().startsWith(expected));
                                 return true;
                             }
                         }
-                        fail();
+                        fail("expected EcmaError but got " + rep);
                         return null;
                     } finally {
                         cx.setLanguageVersion(oldVersion);
