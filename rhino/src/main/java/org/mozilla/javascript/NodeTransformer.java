@@ -389,6 +389,23 @@ public class NodeTransformer {
                         }
                         break;
                     }
+
+                case Token.OBJECTLIT:
+                    {
+                        Object[] computedPropertyIds =
+                                (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
+                        if (computedPropertyIds != null) {
+                            for (Object computedPropertyId : computedPropertyIds) {
+                                if (computedPropertyId == null) continue;
+                                transformCompilationUnit_r(
+                                        tree,
+                                        (Node) computedPropertyId,
+                                        node instanceof Scope ? (Scope) node : scope,
+                                        createScopeObjects,
+                                        inStrictMode);
+                            }
+                        }
+                    }
             }
 
             transformCompilationUnit_r(
