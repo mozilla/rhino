@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -197,6 +198,81 @@ public class NativeRegExpTest {
                                 "SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.",
                                 e.getMessage());
                     }
+
+                    return null;
+                });
+    }
+
+    @Test
+    public void canCreateRegExpPassingExistingRegExp() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    String source =
+                            "var pattern = /./i;\n"
+                                    + "var re = new RegExp(pattern);\n"
+                                    + "pattern.source === re.source &&"
+                                    + "  pattern.multiline === re.multiline &&"
+                                    + "  pattern.global === re.global && "
+                                    + "  pattern.ignoreCase === re.ignoreCase";
+                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
+
+                    return null;
+                });
+    }
+
+    @Test
+    public void canCreateRegExpPassingExistingRegExpAndUndefinedFlags() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    String source =
+                            "var pattern = /./i;\n"
+                                    + "var re = new RegExp(pattern, undefined);\n"
+                                    + "pattern.source === re.source &&"
+                                    + "  pattern.multiline === re.multiline &&"
+                                    + "  pattern.global === re.global && "
+                                    + "  pattern.ignoreCase === re.ignoreCase";
+                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
+
+                    return null;
+                });
+    }
+
+    @Test
+    public void cannotCreateRegExpPassingExistingRegExpAndNewFlagsBeforeEs6() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_1_8);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    String source =
+                            "var pattern = /./im;\n"
+                                    + "pattern.lastIndex = 42;\n"
+                                    + "new RegExp(pattern, \"g\");\n";
+                    assertThrows(
+                            EcmaError.class,
+                            () -> cx.evaluateString(scope, source, "test", 0, null));
+
+                    return null;
+                });
+    }
+
+    @Test
+    public void canCreateRegExpPassingExistingRegExpAndNewFlagsEs6() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    String source =
+                            "var pattern = /./im;\n"
+                                    + "pattern.lastIndex = 42;\n"
+                                    + "var re = new RegExp(pattern, \"g\");\n"
+                                    + "re.global && re.lastIndex === 0";
+                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
 
                     return null;
                 });
