@@ -862,7 +862,7 @@ public final class IRFactory {
             properties = new Object[size];
             computedProperties = new Object[size];
             for (ObjectProperty prop : elems) {
-                Object propKey = getPropKey(prop.getLeft());
+                Object propKey = parser.getPropKey(prop.getLeft());
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
                     computedProperties[i++] = theId;
@@ -884,23 +884,6 @@ public final class IRFactory {
         object.putProp(Node.OBJECT_IDS_PROP, properties);
         object.putProp(Node.OBJECT_IDS_COMPUTED_PROP, computedProperties);
         return object;
-    }
-
-    private Object getPropKey(Node id) {
-        Object key;
-        if (id instanceof Name) {
-            String s = ((Name) id).getIdentifier();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof StringLiteral) {
-            String s = ((StringLiteral) id).getValue();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof NumberLiteral) {
-            double n = ((NumberLiteral) id).getNumber();
-            key = ScriptRuntime.getIndexObject(n);
-        } else {
-            key = null; // Filled later
-        }
-        return key;
     }
 
     private Node transformParenExpr(ParenthesizedExpression node) {
@@ -1506,7 +1489,7 @@ public final class IRFactory {
             if (destructuring != -1) {
                 assign =
                         parser.createDestructuringAssignment(
-                                declType, lvalue, id, (AstNode node) -> transform(node));
+                                declType, lvalue, id, null, (AstNode node) -> transform(node));
                 if (!isForEach
                         && !isForOf
                         && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
@@ -2084,7 +2067,7 @@ public final class IRFactory {
                     return right;
                 }
                 return parser.createDestructuringAssignment(
-                        -1, left, right, (AstNode node) -> transform(node));
+                        -1, left, right, null, (AstNode node) -> transform(node));
             }
             parser.reportError("msg.bad.assign.left");
             return right;

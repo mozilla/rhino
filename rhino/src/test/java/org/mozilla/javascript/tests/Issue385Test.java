@@ -17,7 +17,7 @@ import org.mozilla.javascript.Scriptable;
  *
  * <p>Should be removed when support for default values is added
  *
- * Keeping this around, but change the return values
+ * <p>Keeping this around, but change the return values
  */
 public class Issue385Test {
     private Context cx;
