@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
@@ -91,7 +92,7 @@ final class QName extends IdScriptableObject {
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof QName)) return false;
-        return equals((QName) obj);
+        return equalsInternal((QName) obj);
     }
 
     @Override
@@ -106,7 +107,7 @@ final class QName extends IdScriptableObject {
         return result ? Boolean.TRUE : Boolean.FALSE;
     }
 
-    private boolean equals(QName q) {
+    private boolean equalsInternal(QName q) {
         return this.delegate.equals(q.delegate);
     }
 
@@ -144,7 +145,7 @@ final class QName extends IdScriptableObject {
                 X = "localName";
                 id = Id_localName;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#
@@ -216,7 +217,7 @@ final class QName extends IdScriptableObject {
                 X = "constructor";
                 id = Id_constructor;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         // #/generated#

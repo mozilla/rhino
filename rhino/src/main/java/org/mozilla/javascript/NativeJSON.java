@@ -8,13 +8,13 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Array;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Stack;
 import org.mozilla.javascript.json.JsonParser;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -173,7 +173,7 @@ public final class NativeJSON extends ScriptableObject {
             this.propertyList = propertyList;
         }
 
-        Stack<Object> stack = new Stack<>();
+        ArrayDeque<Object> stack = new ArrayDeque<>();
         String indent;
         String gap;
         Callable replacer;
@@ -372,7 +372,7 @@ public final class NativeJSON extends ScriptableObject {
             trackValue = unwrapped = ((Wrapper) value).unwrap();
         }
 
-        if (state.stack.search(trackValue) != -1) {
+        if (state.stack.contains(trackValue)) {
             throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
         }
         state.stack.push(trackValue);
@@ -415,7 +415,7 @@ public final class NativeJSON extends ScriptableObject {
             k = value.getIds();
         }
 
-        Collection<Object> partial = new LinkedList<>();
+        ArrayList<Object> partial = new ArrayList<>();
 
         for (Object p : k) {
             Object strP = str(p, value, state);
@@ -453,14 +453,14 @@ public final class NativeJSON extends ScriptableObject {
         if (value instanceof Wrapper) {
             trackValue = unwrapped = ((Wrapper) value).unwrap();
         }
-        if (state.stack.search(trackValue) != -1) {
+        if (state.stack.contains(trackValue)) {
             throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
         }
         state.stack.push(trackValue);
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;
-        Collection<Object> partial = new LinkedList<>();
+        ArrayList<Object> partial = new ArrayList<>();
 
         if (unwrapped != null) {
             Object[] elements = null;
@@ -579,7 +579,7 @@ public final class NativeJSON extends ScriptableObject {
         }
         if (o instanceof NativeJavaObject) {
             Object unwrapped = ((NativeJavaObject) o).unwrap();
-            return (unwrapped instanceof Collection) || (unwrapped.getClass().isArray());
+            return (unwrapped instanceof Collection) || unwrapped.getClass().isArray();
         }
         return false;
     }

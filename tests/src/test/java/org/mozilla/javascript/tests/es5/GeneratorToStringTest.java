@@ -7,7 +7,7 @@ public class GeneratorToStringTest {
     @Test
     public void generatorsTest() {
         Utils.assertWithAllOptimizationLevelsTopLevelScopeES6(
-                "\n" + "function* f() {\n" + "    yield 1;\n" + "}\n",
+                "function* f() {\n" + "    yield 1;\n" + "  }",
                 "function* f() {\n" + "    yield 1;\n" + "  }; f.toString();");
     }
 }

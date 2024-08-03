@@ -49,7 +49,7 @@ final class ConstantPool {
         itsPool[itsTop++] = CONSTANT_Integer;
         itsTop = ClassFileWriter.putInt32(k, itsPool, itsTop);
         itsPoolTypes.put(itsTopIndex, CONSTANT_Integer);
-        return (short) (itsTopIndex++);
+        return (short) itsTopIndex++;
     }
 
     int addConstant(long k) {
@@ -219,7 +219,7 @@ final class ConstantPool {
         itsTop = ClassFileWriter.putInt16(nameIndex, itsPool, itsTop);
         itsTop = ClassFileWriter.putInt16(typeIndex, itsPool, itsTop);
         itsPoolTypes.put(itsTopIndex, CONSTANT_NameAndType);
-        return (short) (itsTopIndex++);
+        return (short) itsTopIndex++;
     }
 
     short addClass(String className) {
@@ -298,7 +298,7 @@ final class ConstantPool {
         FieldOrMethodRef r = new FieldOrMethodRef(className, methodName, methodType);
         setConstantData(itsTopIndex, r);
         itsPoolTypes.put(itsTopIndex, CONSTANT_InterfaceMethodref);
-        return (short) (itsTopIndex++);
+        return (short) itsTopIndex++;
     }
 
     short addInvokeDynamic(String methodName, String methodType, int bootstrapIndex) {
@@ -317,7 +317,7 @@ final class ConstantPool {
             setConstantData(theIndex, methodType);
             itsPoolTypes.put(theIndex, CONSTANT_InvokeDynamic);
         }
-        return (short) (theIndex);
+        return (short) theIndex;
     }
 
     short addMethodHandle(ClassFileWriter.MHandle mh) {
@@ -341,7 +341,7 @@ final class ConstantPool {
             itsConstantHash.put(mh, theIndex);
             itsPoolTypes.put(theIndex, CONSTANT_MethodHandle);
         }
-        return (short) (theIndex);
+        return (short) theIndex;
     }
 
     Object getConstantData(int index) {

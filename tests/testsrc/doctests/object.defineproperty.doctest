@@ -48,7 +48,7 @@ js> obj.a
 js> // when define new property with accessor descriptor then those values are used for the descriptor
 js> var obj = define({}, 'a', { get: function() { return 3; }, set: function(value) {} });
 js> var {get:g, set:s} = describe(obj, 'a'); [g, s].toSource();
-[(function () {return 3;}), (function (value) {})]
+[function() { return 3; }, function(value) {}]
 js> obj.a
 3
 
@@ -128,8 +128,7 @@ js> var obj = define(obj, 'a', {get   : function() { return 4 }});
 js> obj.a
 4
 js> describe(obj, 'a').toSource()
-({enumerable:false, configurable:true, get:(function () {return 4;})})
-
+({enumerable:false, configurable:true, get:function() { return 4 }})
 js> // can change from accessor property to data property when configurable is true
 js> var obj = define({},  'a', {get   : function() { return 2 }, configurable:true});
 js> var obj = define(obj, 'a', {value : 5});

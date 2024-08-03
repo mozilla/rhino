@@ -24,7 +24,7 @@ function test()
   var f;
 
   f = function f() { [z] = 3 }
-  expect = 'function f() { [z] = 3; }';
+  expect = 'function f() { [z] = 3 }';
   actual = f + '';
   compareSource(expect, actual, summary);
 

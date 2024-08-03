@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -327,8 +328,7 @@ class JavaMembers {
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
                                     if (!map.containsKey(sig)) {
-                                        if (includePrivate && !method.isAccessible())
-                                            method.setAccessible(true);
+                                        if (includePrivate) method.trySetAccessible();
                                         map.put(sig, method);
                                     }
                                 }
@@ -476,7 +476,7 @@ class JavaMembers {
                 if (scope != null) {
                     ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                 }
-                ht.put(entry.getKey(), fun);
+                entry.setValue(fun);
             }
         }
 
@@ -556,7 +556,7 @@ class JavaMembers {
                     char ch0 = nameComponent.charAt(0);
                     if (Character.isUpperCase(ch0)) {
                         if (nameComponent.length() == 1) {
-                            beanPropertyName = nameComponent.toLowerCase();
+                            beanPropertyName = nameComponent.toLowerCase(Locale.ROOT);
                         } else {
                             char ch1 = nameComponent.charAt(1);
                             if (!Character.isUpperCase(ch1)) {
@@ -666,7 +666,7 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            if (!field.isAccessible()) field.setAccessible(true);
+                            field.trySetAccessible();
                             fieldsList.add(field);
                         }
                     }

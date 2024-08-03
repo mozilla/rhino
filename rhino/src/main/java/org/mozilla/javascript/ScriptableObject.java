@@ -25,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -349,7 +350,7 @@ public abstract class ScriptableObject
     @Override
     public void delete(String name) {
         checkNotSealed(name, 0);
-        slotMap.remove(name, 0);
+        slotMap.compute(name, 0, ScriptableObject::checkSlotRemoval);
     }
 
     /**
@@ -362,14 +363,27 @@ public abstract class ScriptableObject
     @Override
     public void delete(int index) {
         checkNotSealed(null, index);
-        slotMap.remove(null, index);
+        slotMap.compute(null, index, ScriptableObject::checkSlotRemoval);
     }
 
     /** Removes an object like the others, but using a Symbol as the key. */
     @Override
     public void delete(Symbol key) {
         checkNotSealed(key, 0);
-        slotMap.remove(key, 0);
+        slotMap.compute(key, 0, ScriptableObject::checkSlotRemoval);
+    }
+
+    private static Slot checkSlotRemoval(Object key, int index, Slot slot) {
+        if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
+            Context cx = Context.getContext();
+            if (cx.isStrictMode()) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.delete.property.with.configurable.false", key);
+            }
+            // This will cause removal to not happen
+            return slot;
+        }
+        return null;
     }
 
     /**
@@ -550,13 +564,8 @@ public abstract class ScriptableObject
 
         AccessorSlot aSlot;
         if (isExtensible()) {
-            Slot slot = slotMap.modify(name, index, 0);
-            if (slot instanceof AccessorSlot) {
-                aSlot = (AccessorSlot) slot;
-            } else {
-                aSlot = new AccessorSlot(slot);
-                slotMap.replace(slot, aSlot);
-            }
+            // Create a new AccessorSlot, or cast it if it's already set
+            aSlot = slotMap.compute(name, index, ScriptableObject::ensureAccessorSlot);
         } else {
             Slot slot = slotMap.query(name, index);
             if (slot instanceof AccessorSlot) {
@@ -647,15 +656,7 @@ public abstract class ScriptableObject
     void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
-        Slot slot = slotMap.modify(name, index, 0);
-        LazyLoadSlot lslot;
-        if (slot instanceof LazyLoadSlot) {
-            lslot = (LazyLoadSlot) slot;
-        } else {
-            lslot = new LazyLoadSlot(slot);
-            slotMap.replace(slot, lslot);
-        }
-
+        LazyLoadSlot lslot = slotMap.compute(name, index, ScriptableObject::ensureLazySlot);
         lslot.setAttributes(attributes);
         lslot.value = init;
     }
@@ -1268,7 +1269,7 @@ public abstract class ScriptableObject
                     propName = methodName.substring(3);
                     if (Character.isUpperCase(propName.charAt(0))) {
                         if (propName.length() == 1) {
-                            propName = propName.toLowerCase();
+                            propName = propName.toLowerCase(Locale.ROOT);
                         } else if (!Character.isUpperCase(propName.charAt(1))) {
                             propName =
                                     Character.toLowerCase(propName.charAt(0))
@@ -1536,15 +1537,7 @@ public abstract class ScriptableObject
             }
         }
 
-        Slot slot = slotMap.modify(propertyName, 0, 0);
-        AccessorSlot aSlot;
-        if (slot instanceof AccessorSlot) {
-            aSlot = (AccessorSlot) slot;
-        } else {
-            aSlot = new AccessorSlot(slot);
-            slotMap.replace(slot, aSlot);
-        }
-
+        AccessorSlot aSlot = slotMap.compute(propertyName, 0, ScriptableObject::ensureAccessorSlot);
         aSlot.setAttributes(attributes);
         if (getterBox != null) {
             aSlot.getter = new AccessorSlot.MemberBoxGetter(getterBox);
@@ -1612,59 +1605,67 @@ public abstract class ScriptableObject
             }
         }
 
-        Slot slot = slotMap.query(key, index);
-        boolean isNew = slot == null;
+        // Do some complex stuff depending on whether or not the key
+        // already exists in a single hash map operation
+        slotMap.compute(
+                key,
+                index,
+                (k, ix, existing) -> {
+                    if (checkValid) {
+                        ScriptableObject current =
+                                existing == null ? null : existing.getPropertyDescriptor(cx, this);
+                        checkPropertyChange(id, current, desc);
+                    }
 
-        if (checkValid) {
-            ScriptableObject current = slot == null ? null : slot.getPropertyDescriptor(cx, this);
-            checkPropertyChange(id, current, desc);
-        }
+                    Slot slot;
+                    int attributes;
 
-        boolean isAccessor = isAccessorDescriptor(desc);
-        final int attributes;
+                    if (existing == null) {
+                        slot = new Slot(k, ix, 0);
+                        attributes =
+                                applyDescriptorToAttributeBitset(
+                                        DONTENUM | READONLY | PERMANENT, desc);
+                    } else {
+                        slot = existing;
+                        attributes =
+                                applyDescriptorToAttributeBitset(existing.getAttributes(), desc);
+                    }
 
-        if (slot == null) {
-            slot = slotMap.modify(key, index, 0);
-            attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, desc);
-        } else {
-            attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
-        }
+                    if (isAccessorDescriptor(desc)) {
+                        AccessorSlot fslot;
+                        if (slot instanceof AccessorSlot) {
+                            fslot = (AccessorSlot) slot;
+                        } else {
+                            fslot = new AccessorSlot(slot);
+                            slot = fslot;
+                        }
+                        Object getter = getProperty(desc, "get");
+                        if (getter != NOT_FOUND) {
+                            fslot.getter = new AccessorSlot.FunctionGetter(getter);
+                        }
+                        Object setter = getProperty(desc, "set");
+                        if (setter != NOT_FOUND) {
+                            fslot.setter = new AccessorSlot.FunctionSetter(setter);
+                        }
+                        fslot.value = Undefined.instance;
+                    } else {
+                        if (!slot.isValueSlot() && isDataDescriptor(desc)) {
+                            // Replace a non-base slot with a regular slot
+                            slot = new Slot(slot);
+                        }
+                        Object value = getProperty(desc, "value");
+                        if (value != NOT_FOUND) {
+                            slot.value = value;
+                        } else if (existing == null) {
+                            // Ensure we don't get a zombie value if we have switched a lot
+                            slot.value = Undefined.instance;
+                        }
+                    }
 
-        if (isAccessor) {
-            AccessorSlot fslot;
-
-            if (slot instanceof AccessorSlot) {
-                fslot = (AccessorSlot) slot;
-            } else {
-                fslot = new AccessorSlot(slot);
-                slotMap.replace(slot, fslot);
-            }
-
-            Object getter = getProperty(desc, "get");
-            if (getter != NOT_FOUND) {
-                fslot.getter = new AccessorSlot.FunctionGetter(getter);
-            }
-            Object setter = getProperty(desc, "set");
-            if (setter != NOT_FOUND) {
-                fslot.setter = new AccessorSlot.FunctionSetter(setter);
-            }
-
-            fslot.value = Undefined.instance;
-            fslot.setAttributes(attributes);
-        } else {
-            if (!slot.isValueSlot() && isDataDescriptor(desc)) {
-                Slot newSlot = new Slot(slot);
-                slotMap.replace(slot, newSlot);
-                slot = newSlot;
-            }
-            Object value = getProperty(desc, "value");
-            if (value != NOT_FOUND) {
-                slot.value = value;
-            } else if (isNew) {
-                slot.value = Undefined.instance;
-            }
-            slot.setAttributes(attributes);
-        }
+                    // After all that, whatever we return now ends up in the map
+                    slot.setAttributes(attributes);
+                    return slot;
+                });
     }
 
     /**
@@ -1683,19 +1684,10 @@ public abstract class ScriptableObject
      */
     public void defineProperty(
             String name, Supplier<Object> getter, Consumer<Object> setter, int attributes) {
-        Slot slot = slotMap.modify(name, 0, attributes);
-
-        LambdaSlot lSlot;
-        if (slot instanceof LambdaSlot) {
-            lSlot = (LambdaSlot) slot;
-        } else {
-            lSlot = new LambdaSlot(slot);
-            slotMap.replace(slot, lSlot);
-        }
-
-        lSlot.getter = getter;
-        lSlot.setter = setter;
-        setAttributes(name, attributes);
+        LambdaSlot slot = slotMap.compute(name, 0, ScriptableObject::ensureLambdaSlot);
+        slot.setAttributes(attributes);
+        slot.getter = getter;
+        slot.setter = setter;
     }
 
     protected void checkPropertyDefinition(ScriptableObject desc) {
@@ -2668,6 +2660,39 @@ public abstract class ScriptableObject
         }
 
         return result;
+    }
+
+    /*
+     * These are handy for changing slot types in one "compute" operation.
+     */
+    private static AccessorSlot ensureAccessorSlot(Object name, int index, Slot existing) {
+        if (existing == null) {
+            return new AccessorSlot(name, index);
+        } else if (existing instanceof AccessorSlot) {
+            return (AccessorSlot) existing;
+        } else {
+            return new AccessorSlot(existing);
+        }
+    }
+
+    private static LazyLoadSlot ensureLazySlot(Object name, int index, Slot existing) {
+        if (existing == null) {
+            return new LazyLoadSlot(name, index);
+        } else if (existing instanceof LazyLoadSlot) {
+            return (LazyLoadSlot) existing;
+        } else {
+            return new LazyLoadSlot(existing);
+        }
+    }
+
+    private static LambdaSlot ensureLambdaSlot(Object name, int index, Slot existing) {
+        if (existing == null) {
+            return new LambdaSlot(name, index);
+        } else if (existing instanceof LambdaSlot) {
+            return (LambdaSlot) existing;
+        } else {
+            return new LambdaSlot(existing);
+        }
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

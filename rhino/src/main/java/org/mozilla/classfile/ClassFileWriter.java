@@ -244,7 +244,7 @@ public class ClassFileWriter {
      * @param maxLocals the maximum number of local variable slots (a.k.a. Java registers) used by
      *     the method
      */
-    public void stopMethod(short maxLocals) {
+    public void stopMethod(int maxLocals) {
         if (itsCurrentMethod == null) throw new IllegalStateException("No method to stop");
 
         fixLabelGotos();
@@ -1224,7 +1224,7 @@ public class ClassFileWriter {
         itsLabelTable[label] = itsCodeBufferTop;
     }
 
-    public void markLabel(int label, short stackTop) {
+    public void markLabel(int label, int stackTop) {
         markLabel(label);
         itsStackTop = stackTop;
     }
@@ -1292,7 +1292,7 @@ public class ClassFileWriter {
         return itsCodeBufferTop;
     }
 
-    public short getStackTop() {
+    public int getStackTop() {
         return itsStackTop;
     }
 
@@ -2719,12 +2719,12 @@ public class ClassFileWriter {
 
         size += 2; // writeShort(itsFields.size());
         for (int i = 0; i < itsFields.size(); i++) {
-            size += ((ClassFileField) (itsFields.get(i))).getWriteSize();
+            size += ((ClassFileField) itsFields.get(i)).getWriteSize();
         }
 
         size += 2; // writeShort(itsMethods.size());
         for (int i = 0; i < itsMethods.size(); i++) {
-            size += ((ClassFileMethod) (itsMethods.get(i))).getWriteSize();
+            size += ((ClassFileMethod) itsMethods.get(i)).getWriteSize();
         }
 
         size += 2; // writeShort(1);  attributes count, could be zero
@@ -2774,7 +2774,7 @@ public class ClassFileWriter {
         offset = putInt16(itsSuperClassIndex, data, offset);
         offset = putInt16(itsInterfaces.size(), data, offset);
         for (int i = 0; i < itsInterfaces.size(); i++) {
-            int interfaceIndex = ((Short) (itsInterfaces.get(i))).shortValue();
+            int interfaceIndex = ((Short) itsInterfaces.get(i)).shortValue();
             offset = putInt16(interfaceIndex, data, offset);
         }
         offset = putInt16(itsFields.size(), data, offset);
@@ -4367,15 +4367,7 @@ public class ClassFileWriter {
         // Based on the version numbers we scrape, we can also determine what
         // bytecode features we need. For example, Java 6 bytecode (classfile
         // version 50) should have stack maps generated.
-        InputStream is = null;
-        int major = 48, minor = 0;
-        try {
-            is = ClassFileWriter.class.getResourceAsStream("ClassFileWriter.class");
-            if (is == null) {
-                is =
-                        ClassLoader.getSystemResourceAsStream(
-                                "org/mozilla/classfile/ClassFileWriter.class");
-            }
+        try (InputStream is = readClassFile()) {
             byte[] header = new byte[8];
             // read loop is required since JDK7 will only provide 2 bytes
             // on the first read() - see bug #630111
@@ -4385,21 +4377,22 @@ public class ClassFileWriter {
                 if (c < 0) throw new IOException();
                 read += c;
             }
-            minor = (header[4] << 8) | (header[5] & 0xff);
-            major = (header[6] << 8) | (header[7] & 0xff);
-        } catch (Exception e) {
-            // Unable to get class file, use default bytecode version
-        } finally {
-            MinorVersion = minor;
-            MajorVersion = major;
-            GenerateStackMap = major >= 50;
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
+            MinorVersion = (header[4] << 8) | (header[5] & 0xff);
+            MajorVersion = (header[6] << 8) | (header[7] & 0xff);
+            GenerateStackMap = MajorVersion >= 50;
+        } catch (IOException ioe) {
+            throw new AssertionError("Can't read ClassFileWriter.class to get bytecode version");
         }
+    }
+
+    static InputStream readClassFile() {
+        InputStream is = ClassFileWriter.class.getResourceAsStream("ClassFileWriter.class");
+        if (is == null) {
+            is =
+                    ClassLoader.getSystemResourceAsStream(
+                            "org/mozilla/classfile/ClassFileWriter.class");
+        }
+        return is;
     }
 
     final class BootstrapEntry {
@@ -4489,19 +4482,19 @@ public class ClassFileWriter {
     private ConstantPool itsConstantPool;
 
     private ClassFileMethod itsCurrentMethod;
-    private short itsStackTop;
+    private int itsStackTop;
 
-    private short itsMaxStack;
-    private short itsMaxLocals;
+    private int itsMaxStack;
+    private int itsMaxLocals;
 
     private ObjArray itsMethods = new ObjArray();
     private ObjArray itsFields = new ObjArray();
     private ObjArray itsInterfaces = new ObjArray();
 
-    private short itsFlags;
-    private short itsThisClassIndex;
-    private short itsSuperClassIndex;
-    private short itsSourceFileNameIndex;
+    private int itsFlags;
+    private int itsThisClassIndex;
+    private int itsSuperClassIndex;
+    private int itsSourceFileNameIndex;
 
     private static final int MIN_LABEL_TABLE_SIZE = 32;
     private int[] itsLabelTable;

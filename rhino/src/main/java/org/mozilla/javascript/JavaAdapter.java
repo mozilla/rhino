@@ -19,7 +19,9 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 
@@ -460,8 +462,7 @@ public final class JavaAdapter implements IdFunctionCall {
         return list.toArray(new Method[0]);
     }
 
-    private static void appendOverridableMethods(
-            Class<?> c, ArrayList<Method> list, HashSet<String> skip) {
+    private static void appendOverridableMethods(Class<?> c, List<Method> list, Set<String> skip) {
         Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
 
         for (Method method : methods) {
@@ -582,7 +583,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
     private static void generateCtor(
             ClassFileWriter cfw, String adapterName, String superName, Constructor<?> superCtor) {
-        short locals = 3; // this + factory + delegee
+        int locals = 3; // this + factory + delegee
         Class<?>[] parameters = superCtor.getParameterTypes();
 
         // Note that we swapped arguments in app-facing constructors to avoid
@@ -611,7 +612,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
             // Invoke base class constructor
             cfw.add(ByteCode.ALOAD_0); // this
-            short paramOffset = 3;
+            int paramOffset = 3;
             for (Class<?> parameter : parameters) {
                 paramOffset += generatePushParam(cfw, paramOffset, parameter);
             }

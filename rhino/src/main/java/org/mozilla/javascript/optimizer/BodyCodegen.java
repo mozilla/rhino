@@ -3,12 +3,12 @@ package org.mozilla.javascript.optimizer;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
@@ -180,7 +180,7 @@ class BodyCodegen {
             if (hasVarsInRegs) {
                 int n = fnCurrent.fnode.getParamAndVarCount();
                 if (n != 0) {
-                    varRegisters = new short[n];
+                    varRegisters = new int[n];
                 }
             }
             inDirectCallFunction = fnCurrent.isTargetOfDirectCall();
@@ -227,7 +227,7 @@ class BodyCodegen {
                 // make sure that all parameters are objects
                 itsForcedObjectParameters = true;
                 for (int i = 0; i != directParameterCount; ++i) {
-                    short reg = varRegisters[i];
+                    int reg = varRegisters[i];
                     cfw.addALoad(reg);
                     cfw.add(ByteCode.GETSTATIC, "java/lang/Void", "TYPE", "Ljava/lang/Class;");
                     int isObjectLabel = cfw.acquireLabel();
@@ -362,9 +362,9 @@ class BodyCodegen {
 
             // REMIND - only need to initialize the vars that don't get a value
             // before the next call and are used in the function
-            short firstUndefVar = -1;
+            int firstUndefVar = -1;
             for (int i = 0; i != varCount; ++i) {
-                short reg = -1;
+                int reg = -1;
                 if (i < paramCount) {
                     if (!inDirectCallFunction) {
                         reg = getNewWordLocal();
@@ -1218,7 +1218,7 @@ class BodyCodegen {
                     addScriptRuntimeInvoke("toBoolean", "(Ljava/lang/Object;)Z");
                     int elseTarget = cfw.acquireLabel();
                     cfw.add(ByteCode.IFEQ, elseTarget);
-                    short stack = cfw.getStackTop();
+                    int stack = cfw.getStackTop();
                     generateExpression(ifThen, node);
                     int afterHook = cfw.acquireLabel();
                     cfw.add(ByteCode.GOTO, afterHook);
@@ -2015,7 +2015,7 @@ class BodyCodegen {
                 && !isGenerator
                 && !inLocalBlock) {
             if (literals == null) {
-                literals = new LinkedList<>();
+                literals = new ArrayList<>();
             }
             literals.add(node);
             String methodName =
@@ -2104,10 +2104,10 @@ class BodyCodegen {
                 child = child.getNext();
             }
 
-            short keysArrayLocal = firstFreeLocal;
+            int keysArrayLocal = firstFreeLocal;
             ++firstFreeLocal;
             ++localsMax;
-            short valuesArrayLocal = firstFreeLocal;
+            int valuesArrayLocal = firstFreeLocal;
             ++firstFreeLocal;
             ++localsMax;
             addNewObjectArray(count);
@@ -2200,7 +2200,7 @@ class BodyCodegen {
                 && !isGenerator
                 && !inLocalBlock) {
             if (literals == null) {
-                literals = new LinkedList<>();
+                literals = new ArrayList<>();
             }
             literals.add(node);
             String methodName =
@@ -2937,7 +2937,7 @@ class BodyCodegen {
      */
     private class ExceptionManager {
         ExceptionManager() {
-            exceptionInfo = new LinkedList<>();
+            exceptionInfo = new ArrayDeque<>();
         }
 
         /**
@@ -3026,9 +3026,9 @@ class BodyCodegen {
             // the exception handler table have priority when determining which
             // handler to use. Therefore, we start with the most nested try
             // block and move outward.
-            ListIterator<ExceptionInfo> iter = exceptionInfo.listIterator(exceptionInfo.size());
-            while (iter.hasPrevious()) {
-                ExceptionInfo ei = iter.previous();
+            Iterator<ExceptionInfo> iter = exceptionInfo.descendingIterator();
+            while (iter.hasNext()) {
+                ExceptionInfo ei = iter.next();
                 for (int i = 0; i < EXCEPTION_MAX; i++) {
                     if (ei.handlerLabels[i] != 0 && ei.currentFinally == null) {
                         endCatch(ei, i, finallyStart);
@@ -3052,9 +3052,9 @@ class BodyCodegen {
          * @param finallyEnd the label of the end of the inlined code
          */
         void markInlineFinallyEnd(Node finallyBlock, int finallyEnd) {
-            ListIterator<ExceptionInfo> iter = exceptionInfo.listIterator(exceptionInfo.size());
-            while (iter.hasPrevious()) {
-                ExceptionInfo ei = iter.previous();
+            Iterator<ExceptionInfo> iter = exceptionInfo.descendingIterator();
+            while (iter.hasNext()) {
+                ExceptionInfo ei = iter.next();
                 for (int i = 0; i < EXCEPTION_MAX; i++) {
                     if (ei.handlerLabels[i] != 0 && ei.currentFinally == finallyBlock) {
                         ei.exceptionStarts[i] = finallyEnd;
@@ -3111,7 +3111,7 @@ class BodyCodegen {
         }
 
         // A stack of try/catch block information ordered by lexical scoping
-        private LinkedList<ExceptionInfo> exceptionInfo;
+        private ArrayDeque<ExceptionInfo> exceptionInfo;
     }
 
     private ExceptionManager exceptionManager = new ExceptionManager();
@@ -3255,7 +3255,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.GETSTATIC, "java/lang/Void", "TYPE", "Ljava/lang/Class;");
                     int isNumberLabel = cfw.acquireLabel();
                     cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
-                    short stack = cfw.getStackTop();
+                    int stack = cfw.getStackTop();
                     cfw.addALoad(dcp_register);
                     addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
                     int beyond = cfw.acquireLabel();
@@ -3320,7 +3320,7 @@ class BodyCodegen {
                 if (!hasVarsInRegs) Kit.codeBug();
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 int varIndex = fnCurrent.getVarIndex(child);
-                short reg = varRegisters[varIndex];
+                int reg = varRegisters[varIndex];
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
@@ -3748,7 +3748,7 @@ class BodyCodegen {
             if (left_dcp_register != -1 && right_dcp_register != -1) {
                 // Generate code to dynamically check for number content
                 // if both operands are dcp
-                short stack = cfw.getStackTop();
+                int stack = cfw.getStackTop();
                 int leftIsNotNumber = cfw.acquireLabel();
                 cfw.addALoad(left_dcp_register);
                 cfw.add(ByteCode.GETSTATIC, "java/lang/Void", "TYPE", "Ljava/lang/Class;");
@@ -3789,7 +3789,7 @@ class BodyCodegen {
     private void visitIfJumpEqOp(Node node, Node child, int trueGOTO, int falseGOTO) {
         if (trueGOTO == -1 || falseGOTO == -1) throw Codegen.badTree();
 
-        short stackInitial = cfw.getStackTop();
+        int stackInitial = cfw.getStackTop();
         int type = node.getType();
         Node rChild = child.getNext();
 
@@ -3814,7 +3814,7 @@ class BodyCodegen {
                 cfw.add(ByteCode.DUP);
                 int undefCheckLabel = cfw.acquireLabel();
                 cfw.add(ByteCode.IFNONNULL, undefCheckLabel);
-                short stack = cfw.getStackTop();
+                int stack = cfw.getStackTop();
                 cfw.add(ByteCode.POP);
                 cfw.add(ByteCode.GOTO, trueGOTO);
                 cfw.markLabel(undefCheckLabel, stack);
@@ -3932,7 +3932,7 @@ class BodyCodegen {
     private void visitGetVar(Node node) {
         if (!hasVarsInRegs) Kit.codeBug();
         int varIndex = fnCurrent.getVarIndex(node);
-        short reg = varRegisters[varIndex];
+        int reg = varRegisters[varIndex];
         if (varIsDirectCallParameter(varIndex)) {
             // Remember that here the isNumber flag means that we
             // want to use the incoming parameter in a Number
@@ -3955,7 +3955,7 @@ class BodyCodegen {
         int varIndex = fnCurrent.getVarIndex(node);
         generateExpression(child.getNext(), node);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
-        short reg = varRegisters[varIndex];
+        int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
         if (constDeclarations[varIndex]) {
             if (!needValue) {
@@ -3970,7 +3970,7 @@ class BodyCodegen {
                 int isNumberLabel = cfw.acquireLabel();
                 int beyond = cfw.acquireLabel();
                 cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
-                short stack = cfw.getStackTop();
+                int stack = cfw.getStackTop();
                 addDoubleWrap();
                 cfw.addAStore(reg);
                 cfw.add(ByteCode.GOTO, beyond);
@@ -4007,13 +4007,13 @@ class BodyCodegen {
         int varIndex = fnCurrent.getVarIndex(node);
         generateExpression(child.getNext(), node);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
-        short reg = varRegisters[varIndex];
+        int reg = varRegisters[varIndex];
         int beyond = cfw.acquireLabel();
         int noAssign = cfw.acquireLabel();
         if (isNumber) {
             cfw.addILoad(reg + 2);
             cfw.add(ByteCode.IFNE, noAssign);
-            short stack = cfw.getStackTop();
+            int stack = cfw.getStackTop();
             cfw.addPush(1);
             cfw.addIStore(reg + 2);
             cfw.addDStore(reg);
@@ -4028,7 +4028,7 @@ class BodyCodegen {
         } else {
             cfw.addILoad(reg + 1);
             cfw.add(ByteCode.IFNE, noAssign);
-            short stack = cfw.getStackTop();
+            int stack = cfw.getStackTop();
             cfw.addPush(1);
             cfw.addIStore(reg + 1);
             cfw.addAStore(reg);
@@ -4241,7 +4241,7 @@ class BodyCodegen {
         cfw.add(ByteCode.GETSTATIC, "java/lang/Void", "TYPE", "Ljava/lang/Class;");
         int isNumberLabel = cfw.acquireLabel();
         cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
-        short stack = cfw.getStackTop();
+        int stack = cfw.getStackTop();
         cfw.addALoad(dcp_register);
         addObjectToDouble();
         int beyond = cfw.acquireLabel();
@@ -4256,7 +4256,7 @@ class BodyCodegen {
         cfw.add(ByteCode.GETSTATIC, "java/lang/Void", "TYPE", "Ljava/lang/Class;");
         int isNumberLabel = cfw.acquireLabel();
         cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
-        short stack = cfw.getStackTop();
+        int stack = cfw.getStackTop();
         cfw.addALoad(dcp_register);
         int beyond = cfw.acquireLabel();
         cfw.add(ByteCode.GOTO, beyond);
@@ -4389,16 +4389,16 @@ class BodyCodegen {
     }
 
     // This is a valid call only for a local that is allocated by default.
-    private void incReferenceWordLocal(short local) {
+    private void incReferenceWordLocal(int local) {
         locals[local]++;
     }
 
     // This is a valid call only for a local that is allocated by default.
-    private void decReferenceWordLocal(short local) {
+    private void decReferenceWordLocal(int local) {
         locals[local]--;
     }
 
-    private void releaseWordLocal(short local) {
+    private void releaseWordLocal(int local) {
         if (local < firstFreeLocal) firstFreeLocal = local;
         locals[local] = 0;
     }
@@ -4418,13 +4418,13 @@ class BodyCodegen {
 
     private static final int MAX_LOCALS = 1024;
     private int[] locals;
-    private short firstFreeLocal;
-    private short localsMax;
+    private int firstFreeLocal;
+    private int localsMax;
 
     private int itsLineNumber;
 
     private boolean hasVarsInRegs;
-    private short[] varRegisters;
+    private int[] varRegisters;
     private boolean inDirectCallFunction;
     private boolean itsForcedObjectParameters;
     private int enterAreaStartLabel;
@@ -4433,16 +4433,16 @@ class BodyCodegen {
 
     // special known locals. If you add a new local here, be sure
     // to initialize it to -1 in initBodyGeneration
-    private short variableObjectLocal;
-    private short popvLocal;
-    private short contextLocal;
-    private short argsLocal;
-    private short operationLocal;
-    private short thisObjLocal;
-    private short funObjLocal;
-    private short itsZeroArgArray;
-    private short itsOneArgArray;
-    private short generatorStateLocal;
+    private int variableObjectLocal;
+    private int popvLocal;
+    private int contextLocal;
+    private int argsLocal;
+    private int operationLocal;
+    private int thisObjLocal;
+    private int funObjLocal;
+    private int itsZeroArgArray;
+    private int itsOneArgArray;
+    private int generatorStateLocal;
 
     private boolean isGenerator;
     private int generatorSwitch;
@@ -4450,7 +4450,7 @@ class BodyCodegen {
     private int maxStack = 0;
 
     private Map<Node, FinallyReturnPoint> finallys;
-    private List<Node> literals;
+    private ArrayList<Node> literals;
 
     static class FinallyReturnPoint {
         public List<Integer> jsrPoints = new ArrayList<>();

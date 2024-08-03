@@ -12,6 +12,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter"
     testImplementation "junit:junit:4.13.2"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.yaml:snakeyaml:1.33"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
 }

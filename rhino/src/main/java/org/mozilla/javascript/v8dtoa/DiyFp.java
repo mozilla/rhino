@@ -128,12 +128,6 @@ class DiyFp {
         this.e = e;
     }
 
-    static DiyFp normalize(DiyFp a) {
-        DiyFp result = new DiyFp(a.f, a.e);
-        result.normalize();
-        return result;
-    }
-
     long f() {
         return f;
     }

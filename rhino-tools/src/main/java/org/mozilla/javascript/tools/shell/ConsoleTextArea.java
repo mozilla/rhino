@@ -14,6 +14,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -39,11 +40,11 @@ class ConsoleWrite implements Runnable {
 class ConsoleWriter extends java.io.OutputStream {
 
     private ConsoleTextArea textArea;
-    private StringBuffer buffer;
+    private StringBuilder buffer;
 
     public ConsoleWriter(ConsoleTextArea textArea) {
         this.textArea = textArea;
-        buffer = new StringBuffer();
+        buffer = new StringBuilder();
     }
 
     @Override
@@ -101,6 +102,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         super.select(start, end);
     }
 
+    @SuppressWarnings("CatchAndPrintStackTrace")
     public ConsoleTextArea(String[] argv) {
         super();
         history = new java.util.ArrayList<String>();
@@ -109,7 +111,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         out = new PrintStream(console1, true);
         err = new PrintStream(console2, true);
         PipedOutputStream outPipe = new PipedOutputStream();
-        inPipe = new PrintWriter(outPipe);
+        inPipe = new PrintWriter(outPipe, false, StandardCharsets.UTF_8);
         in = new PipedInputStream();
         try {
             outPipe.connect(in);
@@ -122,6 +124,7 @@ public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentL
         setFont(new Font("Monospaced", 0, 12));
     }
 
+    @SuppressWarnings("CatchAndPrintStackTrace")
     synchronized void returnPressed() {
         Document doc = getDocument();
         int len = doc.getLength();

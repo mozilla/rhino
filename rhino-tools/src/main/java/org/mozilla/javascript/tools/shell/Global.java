@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -398,7 +399,7 @@ public class Global extends ImporterTopLevel {
     public int runDoctest(
             Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
         doctestCanonicalizations = new HashMap<String, String>();
-        String[] lines = session.split("\r\n?|\n");
+        String[] lines = session.split("\r\n?|\n", -1);
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
         int testCount = 0;
@@ -446,7 +447,8 @@ public class Global extends ImporterTopLevel {
                 this.setOut(savedOut);
                 this.setErr(savedErr);
                 cx.setErrorReporter(savedErrorReporter);
-                resultString += err.toString() + out.toString();
+                resultString +=
+                        err.toString(StandardCharsets.UTF_8) + out.toString(StandardCharsets.UTF_8);
             }
             if (!doctestOutputMatches(expectedString.toString(), resultString)) {
                 String message =
@@ -698,11 +700,11 @@ public class Global extends ImporterTopLevel {
 
         int exitCode = runProcess(cmd, environment, wd, in, out, err);
         if (outBytes != null) {
-            String s = ScriptRuntime.toString(outObj) + outBytes.toString();
+            String s = ScriptRuntime.toString(outObj) + outBytes.toString(StandardCharsets.UTF_8);
             ScriptableObject.putProperty(params, "output", s);
         }
         if (errBytes != null) {
-            String s = ScriptRuntime.toString(errObj) + errBytes.toString();
+            String s = ScriptRuntime.toString(errObj) + errBytes.toString(StandardCharsets.UTF_8);
             ScriptableObject.putProperty(params, "err", s);
         }
 
@@ -983,7 +985,7 @@ public class Global extends ImporterTopLevel {
             if (s == null) {
                 s = ScriptRuntime.toString(value);
             }
-            is = new ByteArrayInputStream(s.getBytes());
+            is = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
         }
         return is;
     }

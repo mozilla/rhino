@@ -813,7 +813,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     num = 8 * num + (c - '0');
                                 } else break;
                             }
-                            c = (char) (num);
+                            c = (char) num;
                             doFlat(state, c);
                             break;
                         case '1':
@@ -851,7 +851,7 @@ public class NativeRegExp extends IdScriptableObject {
                                         num = 8 * num + (c - '0');
                                     } else break;
                                 }
-                                c = (char) (num);
+                                c = (char) num;
                                 doFlat(state, c);
                                 break;
                             }
@@ -913,7 +913,7 @@ public class NativeRegExp extends IdScriptableObject {
                                         break;
                                     }
                                 }
-                                c = (char) (n);
+                                c = (char) n;
                             }
                             doFlat(state, c);
                             break;
@@ -1150,7 +1150,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (index < 0) throw Kit.codeBug();
         if (index > 0xFFFF) throw Context.reportRuntimeError("Too complex regexp");
         array[pc] = (byte) (index >> 8);
-        array[pc + 1] = (byte) (index);
+        array[pc + 1] = (byte) index;
         return pc + 2;
     }
 
@@ -1219,7 +1219,7 @@ public class NativeRegExp extends IdScriptableObject {
                         if (t.chr < 256) {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_FLAT1i;
                             else program[pc - 1] = REOP_FLAT1;
-                            program[pc++] = (byte) (t.chr);
+                            program[pc++] = (byte) t.chr;
                         } else {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_UCFLAT1i;
                             else program[pc - 1] = REOP_UCFLAT1;
@@ -1252,11 +1252,11 @@ public class NativeRegExp extends IdScriptableObject {
                     break;
                 case REOP_QUANT:
                     if ((t.min == 0) && (t.max == -1))
-                        program[pc - 1] = (t.greedy) ? REOP_STAR : REOP_MINIMALSTAR;
+                        program[pc - 1] = t.greedy ? REOP_STAR : REOP_MINIMALSTAR;
                     else if ((t.min == 0) && (t.max == 1))
-                        program[pc - 1] = (t.greedy) ? REOP_OPT : REOP_MINIMALOPT;
+                        program[pc - 1] = t.greedy ? REOP_OPT : REOP_MINIMALOPT;
                     else if ((t.min == 1) && (t.max == -1))
-                        program[pc - 1] = (t.greedy) ? REOP_PLUS : REOP_MINIMALPLUS;
+                        program[pc - 1] = t.greedy ? REOP_PLUS : REOP_MINIMALPLUS;
                     else {
                         if (!t.greedy) program[pc - 1] = REOP_MINIMALQUANT;
                         pc = addIndex(program, pc, t.min);
@@ -1408,7 +1408,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (c >= cs.length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
-        cs.bits[byteIndex] |= 1 << (c & 0x7);
+        cs.bits[byteIndex] |= (byte) (1 << (c & 0x7));
     }
 
     /* Add a character range, c1 to c2 (inclusive) to the RECharSet */
@@ -1422,15 +1422,15 @@ public class NativeRegExp extends IdScriptableObject {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
 
-        c1 &= 0x7;
-        c2 &= 0x7;
+        c1 = (char) (c1 & 0x7);
+        c2 = (char) (c2 & 0x7);
 
         if (byteIndex1 == byteIndex2) {
-            cs.bits[byteIndex1] |= ((0xFF) >> (7 - (c2 - c1))) << c1;
+            cs.bits[byteIndex1] |= (byte) ((0xFF >> (7 - (c2 - c1))) << c1);
         } else {
-            cs.bits[byteIndex1] |= 0xFF << c1;
+            cs.bits[byteIndex1] |= (byte) (0xFF << c1);
             for (i = byteIndex1 + 1; i < byteIndex2; i++) cs.bits[i] = (byte) 0xFF;
-            cs.bits[byteIndex2] |= (0xFF) >> (7 - c2);
+            cs.bits[byteIndex2] |= (byte) (0xFF >> (7 - c2));
         }
     }
 
@@ -1462,10 +1462,10 @@ public class NativeRegExp extends IdScriptableObject {
         if (src == end) return;
 
         if (gData.regexp.source[src] == '^') {
-            assert (!charSet.sense);
+            assert !charSet.sense;
             ++src;
         } else {
-            assert (charSet.sense);
+            assert charSet.sense;
         }
 
         while (src != end) {
@@ -1518,7 +1518,7 @@ public class NativeRegExp extends IdScriptableObject {
                             }
                             n = (n << 4) | digit;
                         }
-                        thisCh = (char) (n);
+                        thisCh = (char) n;
                         break;
                     case '0':
                     case '1':
@@ -1547,7 +1547,7 @@ public class NativeRegExp extends IdScriptableObject {
                                 else src--;
                             }
                         }
-                        thisCh = (char) (n);
+                        thisCh = (char) n;
                         break;
 
                     case 'd':
@@ -1572,7 +1572,7 @@ public class NativeRegExp extends IdScriptableObject {
                             inRange = false;
                         }
                         for (i = (charSet.length - 1); i >= 0; i--)
-                            if (isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) (i));
+                            if (isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
                         continue;
                     case 'S':
                         if (inRange) {
@@ -1580,7 +1580,7 @@ public class NativeRegExp extends IdScriptableObject {
                             inRange = false;
                         }
                         for (i = (charSet.length - 1); i >= 0; i--)
-                            if (!isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) (i));
+                            if (!isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
                         continue;
                     case 'w':
                         if (inRange) {
@@ -1588,7 +1588,7 @@ public class NativeRegExp extends IdScriptableObject {
                             inRange = false;
                         }
                         for (i = (charSet.length - 1); i >= 0; i--)
-                            if (isWord((char) i)) addCharacterToCharSet(charSet, (char) (i));
+                            if (isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
                         continue;
                     case 'W':
                         if (inRange) {
@@ -1596,7 +1596,7 @@ public class NativeRegExp extends IdScriptableObject {
                             inRange = false;
                         }
                         for (i = (charSet.length - 1); i >= 0; i--)
-                            if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) (i));
+                            if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
                         continue;
                     default:
                         thisCh = c;
@@ -2971,7 +2971,7 @@ class REGlobalData {
 
     /** Get start of parenthesis capture contents, -1 for empty. */
     int parensIndex(int i) {
-        return (int) (parens[i]);
+        return (int) parens[i];
     }
 
     /** Get length of parenthesis capture contents. */

@@ -17,7 +17,7 @@ import org.mozilla.javascript.Token;
 public class ContinueStatement extends Jump {
 
     private Name label;
-    private Loop target;
+    private Loop targetLoop;
 
     {
         type = Token.CONTINUE;
@@ -51,7 +51,7 @@ public class ContinueStatement extends Jump {
 
     /** Returns continue target */
     public Loop getTarget() {
-        return target;
+        return targetLoop;
     }
 
     /**
@@ -63,8 +63,8 @@ public class ContinueStatement extends Jump {
      */
     public void setTarget(Loop target) {
         assertNotNull(target);
-        this.target = target;
-        setJumpStatement(target);
+        this.targetLoop = target;
+        setJumpStatement(targetLoop);
     }
 
     /**

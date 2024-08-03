@@ -17,6 +17,11 @@ package org.mozilla.javascript;
  */
 public interface SlotMap extends Iterable<Slot> {
 
+    @FunctionalInterface
+    public interface SlotComputer<S extends Slot> {
+        S compute(Object key, int index, Slot existing);
+    }
+
     /** Return the size of the map. */
     int size();
 
@@ -44,20 +49,19 @@ public interface SlotMap extends Iterable<Slot> {
      */
     Slot query(Object key, int index);
 
-    /** Replace "slot" with a new slot. This is used to change slot types. */
-    void replace(Slot oldSlot, Slot newSlot);
+    /**
+     * Replace the value of key with the slot computed by the "compute" method. If "compute" throws
+     * an exception, make no change. If "compute" returns null, remove the mapping, otherwise,
+     * replace any existing mapping with the result of "compute", and create a new mapping if none
+     * exists. This is equivalant to the "compute" method on the Map interface, which simplifies
+     * code and is more efficient than making multiple calls to this interface. In order to allow
+     * use of multiple Slot subclasses, this function is templatized.
+     */
+    <S extends Slot> S compute(Object key, int index, SlotComputer<S> compute);
 
     /**
      * Insert a new slot to the map. Both "name" and "indexOrHash" must be populated. Note that
      * ScriptableObject generally adds slots via the "modify" method.
      */
     void add(Slot newSlot);
-
-    /**
-     * Remove the slot at either "key" or "index".
-     *
-     * @param key The key for the slot, which should be a String or a Symbol.
-     * @param index if key is zero, then this will be used as the key instead.
-     */
-    void remove(Object key, int index);
 }

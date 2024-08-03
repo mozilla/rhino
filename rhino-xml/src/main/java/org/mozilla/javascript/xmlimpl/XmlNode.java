@@ -334,11 +334,6 @@ class XmlNode implements Serializable {
             }
         }
 
-        Namespace getNamespaceByUri(String uri) {
-            if (uriToPrefix.get(uri) == null) return null;
-            return Namespace.create(uri, uriToPrefix.get(uri));
-        }
-
         Namespace getNamespace(String prefix) {
             if (map.get(prefix) == null) return null;
             return Namespace.create(prefix, map.get(prefix));
@@ -506,7 +501,7 @@ class XmlNode implements Serializable {
     }
 
     final QName getQname() {
-        String uri = (dom.getNamespaceURI()) == null ? "" : dom.getNamespaceURI();
+        String uri = dom.getNamespaceURI() == null ? "" : dom.getNamespaceURI();
         String prefix = (dom.getPrefix() == null) ? "" : dom.getPrefix();
         return QName.create(uri, dom.getLocalName(), prefix);
     }
@@ -706,7 +701,7 @@ class XmlNode implements Serializable {
             return equals(one.getUri(), two.getUri());
         }
 
-        final boolean equals(QName other) {
+        private final boolean equalsInternal(QName other) {
             if (!namespacesEqual(this.namespace, other.namespace)) return false;
             if (!equals(this.localName, other.localName)) return false;
             return true;
@@ -717,7 +712,7 @@ class XmlNode implements Serializable {
             if (!(obj instanceof QName)) {
                 return false;
             }
-            return equals((QName) obj);
+            return equalsInternal((QName) obj);
         }
 
         @Override
@@ -835,10 +830,10 @@ class XmlNode implements Serializable {
             if (toAdd instanceof XMLList) {
                 XMLList xmlSrc = (XMLList) toAdd;
                 for (int i = 0; i < xmlSrc.length(); i++) {
-                    this._add((xmlSrc.item(i)).getAnnotation());
+                    this._add(xmlSrc.item(i).getAnnotation());
                 }
             } else if (toAdd instanceof XML) {
-                this._add(((XML) (toAdd)).getAnnotation());
+                this._add(((XML) toAdd).getAnnotation());
             } else if (toAdd instanceof XmlNode) {
                 this._add((XmlNode) toAdd);
             }

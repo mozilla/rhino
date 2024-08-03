@@ -172,7 +172,7 @@ public class ObjToIntMap implements Serializable {
         }
         int index = ensureIndex(keyArg);
         values[index] = 0;
-        return (nullKey) ? null : keys[index];
+        return nullKey ? null : keys[index];
     }
 
     public void remove(Object key) {

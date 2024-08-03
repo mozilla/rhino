@@ -41,7 +41,7 @@ function test()
     return value;
   }
 
-  expect = 'function f(x) { var value = ""; switch (x) { '
+  expect = 'function f(x) { var value = \'\'; switch (x) { '
     + 'case 1: value = "1 " + y;  break; '
     + 'case 2: let y = 42; value = "2 " + y;  break; ' 
     + 'default: value = "default " + y; } return value; }';

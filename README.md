@@ -87,8 +87,8 @@ To just run the Rhino shell, you can do this from the top-level directory:
 
 Alternately, you can build an all-in-one JAR and run that:
 
-    ./gradlew shadowJar
-    java -jar rhino/build/libs/rhino-1.7.16-SNAPSHOT.jar
+    ./gradlew :rhino-all:build
+    java -jar rhino-all/build/libs/rhino-all-1.7.16-SNAPSHOT.jar
 
 You can also run the benchmarks:
 

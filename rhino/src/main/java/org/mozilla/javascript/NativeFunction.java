@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.util.EnumSet;
 import org.mozilla.javascript.debug.DebuggableScript;
 
 /**
@@ -31,14 +32,12 @@ public abstract class NativeFunction extends BaseFunction {
      * @param flags Flags specifying format of decompilation output
      */
     @Override
-    final String decompile(int indent, int flags) {
-        String encodedSource = getEncodedSource();
-        if (encodedSource == null) {
-            return super.decompile(indent, flags);
+    final String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+        String rawSource = getRawSource();
+        if (rawSource != null) {
+            return rawSource;
         }
-        UintMap properties = new UintMap(1);
-        properties.put(Decompiler.INITIAL_INDENT_PROP, indent);
-        return Decompiler.decompile(encodedSource, flags, properties);
+        return super.decompile(indent, flags);
     }
 
     @Override
@@ -69,8 +68,8 @@ public abstract class NativeFunction extends BaseFunction {
         return getFunctionName();
     }
 
-    /** Get encoded source string. */
-    public String getEncodedSource() {
+    /** Get raw source string. */
+    public String getRawSource() {
         return null;
     }
 

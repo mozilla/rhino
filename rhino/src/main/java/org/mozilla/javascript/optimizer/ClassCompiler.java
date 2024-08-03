@@ -111,8 +111,13 @@ public class ClassCompiler {
             String source, String sourceLocation, int lineno, String mainClassName) {
         Parser p = new Parser(compilerEnv);
         AstRoot ast = p.parse(source, sourceLocation, lineno);
-        IRFactory irf = new IRFactory(compilerEnv);
+        IRFactory irf = new IRFactory(compilerEnv, source);
         ScriptNode tree = irf.transformTree(ast);
+
+        if (compilerEnv.isGeneratingSource()) {
+            tree.setRawSource(source);
+            tree.setRawSourceBounds(0, source.length());
+        }
 
         // release reference to original parse tree & parser
         irf = null;
@@ -132,8 +137,7 @@ public class ClassCompiler {
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
         byte[] scriptClassBytes =
-                codegen.compileToClassFile(
-                        compilerEnv, scriptClassName, tree, tree.getEncodedSource(), false);
+                codegen.compileToClassFile(compilerEnv, scriptClassName, tree, source, false);
 
         if (isPrimary) {
             return new Object[] {scriptClassName, scriptClassBytes};

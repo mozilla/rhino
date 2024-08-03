@@ -363,7 +363,7 @@ public class FunctionObject extends BaseFunction {
                 Boolean b = inNewExpr ? Boolean.TRUE : Boolean.FALSE;
                 Object[] invokeArgs = {cx, args, this, b};
                 result =
-                        (member.isCtor())
+                        member.isCtor()
                                 ? member.newInstance(invokeArgs)
                                 : member.invoke(null, invokeArgs);
             }

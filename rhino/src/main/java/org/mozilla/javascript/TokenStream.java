@@ -19,7 +19,7 @@ import java.math.BigInteger;
  * @author Mike McCabe
  * @author Brendan Eich
  */
-class TokenStream {
+class TokenStream implements Parser.CurrentPositionReporter {
     /*
      * For chars - because we need something out-of-range
      * to check.  (And checking EOF by exception is annoying.)
@@ -599,7 +599,8 @@ class TokenStream {
         return sourceString;
     }
 
-    final int getLineno() {
+    @Override
+    public int getLineno() {
         return lineno;
     }
 
@@ -2190,7 +2191,8 @@ class TokenStream {
     }
 
     /** Returns the offset into the current line. */
-    final int getOffset() {
+    @Override
+    public int getOffset() {
         int n = sourceCursor - lineStart;
         if (lineEndChar >= 0) {
             --n;
@@ -2233,7 +2235,8 @@ class TokenStream {
         return new String(sourceBuffer, beginIndex, count);
     }
 
-    final String getLine() {
+    @Override
+    public String getLine() {
         int lineEnd = sourceCursor;
         if (lineEndChar >= 0) {
             // move cursor before newline sequence
@@ -2384,6 +2387,16 @@ class TokenStream {
         }
         buf.append(hexCode);
         return buf.toString();
+    }
+
+    @Override
+    public int getPosition() {
+        return tokenBeg;
+    }
+
+    @Override
+    public int getLength() {
+        return tokenEnd - tokenBeg;
     }
 
     // stuff other than whitespace since start of line

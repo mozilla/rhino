@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Objects;
+
 public final class ES6Generator extends IdScriptableObject {
     private static final long serialVersionUID = 1645892441041347273L;
 
@@ -420,7 +422,7 @@ public final class ES6Generator extends IdScriptableObject {
                 X = "return";
                 id = Id_return;
             }
-            if (X != null && X != s && !X.equals(s)) id = 0;
+            if (!Objects.equals(X, s)) id = 0;
             break L0;
         }
         return id;

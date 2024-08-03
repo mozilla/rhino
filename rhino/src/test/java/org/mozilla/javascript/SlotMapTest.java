@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,8 +20,9 @@ public class SlotMapTest {
     private final SlotMap map;
 
     public SlotMapTest(Class<SlotMap> mapClass)
-            throws IllegalAccessException, InstantiationException {
-        this.map = mapClass.newInstance();
+            throws IllegalAccessException, InstantiationException, IllegalArgumentException,
+                    InvocationTargetException, NoSuchMethodException, SecurityException {
+        this.map = mapClass.getDeclaredConstructor().newInstance();
     }
 
     @Parameterized.Parameters
@@ -51,11 +53,11 @@ public class SlotMapTest {
         assertEquals(1, map.size());
         assertFalse(map.isEmpty());
         Slot newSlot = new Slot(slot);
-        map.replace(slot, newSlot);
+        map.compute("foo", 0, (k, i, e) -> newSlot);
         Slot foundNewSlot = map.query("foo", 0);
         assertEquals("Testing", foundNewSlot.value);
         assertSame(foundNewSlot, newSlot);
-        map.remove("foo", 0);
+        map.compute("foo", 0, (k, ii, e) -> null);
         assertNull(map.query("foo", 0));
         assertEquals(0, map.size());
         assertTrue(map.isEmpty());
@@ -70,14 +72,80 @@ public class SlotMapTest {
         assertEquals(1, map.size());
         assertFalse(map.isEmpty());
         Slot newSlot = new Slot(slot);
-        map.replace(slot, newSlot);
+        map.compute(null, 11, (k, i, e) -> newSlot);
         Slot foundNewSlot = map.query(null, 11);
         assertEquals("Testing", foundNewSlot.value);
         assertSame(foundNewSlot, newSlot);
-        map.remove(null, 11);
+        map.compute(null, 11, (k, ii, e) -> null);
         assertNull(map.query(null, 11));
         assertEquals(0, map.size());
         assertTrue(map.isEmpty());
+    }
+
+    @Test
+    public void computeReplaceSlot() {
+        Slot slot = map.modify("one", 0, 0);
+        slot.value = "foo";
+        Slot newSlot =
+                map.compute(
+                        "one",
+                        0,
+                        (k, i, e) -> {
+                            assertEquals(k, "one");
+                            assertEquals(i, 0);
+                            assertNotNull(e);
+                            assertEquals(e.value, "foo");
+                            Slot n = new Slot(e);
+                            n.value = "bar";
+                            return n;
+                        });
+        assertEquals(newSlot.value, "bar");
+        slot = map.query("one", 0);
+        assertEquals(slot.value, "bar");
+        assertEquals(map.size(), 1);
+    }
+
+    @Test
+    public void computeCreateNewSlot() {
+        Slot newSlot =
+                map.compute(
+                        "one",
+                        0,
+                        (k, i, e) -> {
+                            assertEquals(k, "one");
+                            assertEquals(i, 0);
+                            assertNull(e);
+                            Slot n = new Slot(k, i, 0);
+                            n.value = "bar";
+                            return n;
+                        });
+        assertNotNull(newSlot);
+        assertEquals(newSlot.value, "bar");
+        Slot slot = map.query("one", 0);
+        assertNotNull(slot);
+        assertEquals(slot.value, "bar");
+        assertEquals(map.size(), 1);
+    }
+
+    @Test
+    public void computeRemoveSlot() {
+        Slot slot = map.modify("one", 0, 0);
+        slot.value = "foo";
+        Slot newSlot =
+                map.compute(
+                        "one",
+                        0,
+                        (k, i, e) -> {
+                            assertEquals(k, "one");
+                            assertEquals(i, 0);
+                            assertNotNull(e);
+                            assertEquals(e.value, "foo");
+                            return null;
+                        });
+        assertNull(newSlot);
+        slot = map.query("one", 0);
+        assertNull(slot);
+        assertEquals(map.size(), 0);
     }
 
     private static final int NUM_INDICES = 67;
@@ -96,33 +164,33 @@ public class SlotMapTest {
         assertFalse(map.isEmpty());
         verifyIndicesAndKeys();
 
-        // Randomly replace some stuff
+        // Randomly replace some slots
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(NUM_INDICES);
             Slot slot = map.query(null, ix);
             assertNotNull(slot);
-            Slot newSlot = new Slot(slot);
-            map.replace(slot, newSlot);
+            map.compute(null, ix, (k, j, e) -> new Slot(slot));
         }
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(KEYS.length);
             Slot slot = map.query(KEYS[ix], 0);
             assertNotNull(slot);
-            Slot newSlot = new Slot(slot);
-            map.replace(slot, newSlot);
+            map.compute(KEYS[ix], 0, (k, j, e) -> new Slot(slot));
         }
         verifyIndicesAndKeys();
 
+        // Randomly remove slots -- which we do using compute because that's all
+        // that ScriptableObject needs.
         HashSet<Integer> removedIds = new HashSet<>();
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(NUM_INDICES);
-            map.remove(null, ix);
+            map.compute(null, ix, (k, ii, e) -> null);
             removedIds.add(ix);
         }
         HashSet<String> removedKeys = new HashSet<>();
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(NUM_INDICES);
-            map.remove(KEYS[ix], ix);
+            map.compute(KEYS[ix], ix, (k, ii, e) -> null);
             removedKeys.add(KEYS[ix]);
         }
 

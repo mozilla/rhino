@@ -22,7 +22,7 @@ function test()
   printStatus (summary);
  
   var f = function() { return -0 };
-  expect = 'function() { return -0; }';
+  expect = 'function() { return -0 }';
   actual = f + '';
   compareSource(expect, actual, summary);
 

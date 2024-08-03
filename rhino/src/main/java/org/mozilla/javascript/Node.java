@@ -60,12 +60,11 @@ public class Node implements Iterable<Node> {
             DESTRUCTURING_PARAMS = 23,
             JSDOC_PROP = 24,
             EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
-            SHORTHAND_PROPERTY_NAME = 26,
-            ARROW_FUNCTION_PROP = 27,
-            TEMPLATE_LITERAL_PROP = 28,
-            TRAILING_COMMA = 29,
-            OBJECT_IDS_COMPUTED_PROP = 30,
-            LAST_PROP = 30;
+            ARROW_FUNCTION_PROP = 26,
+            TEMPLATE_LITERAL_PROP = 27,
+            TRAILING_COMMA = 28,
+            OBJECT_IDS_COMPUTED_PROP = 39,
+            LAST_PROP = 39;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -1059,8 +1058,8 @@ public class Node implements Iterable<Node> {
                     }
                     sb.append(" [source name: ");
                     sb.append(sof.getSourceName());
-                    sb.append("] [encoded source length: ");
-                    sb.append(sof.getEncodedSourceEnd() - sof.getEncodedSourceStart());
+                    sb.append("] [raw source length: ");
+                    sb.append(sof.getRawSourceEnd() - sof.getRawSourceStart());
                     sb.append("] [base line: ");
                     sb.append(sof.getBaseLineno());
                     sb.append("] [end line: ");
