@@ -577,6 +577,34 @@ public final class IRFactory {
             ++parser.nestingOfFunction; // only for body, not params
             Node body = transform(fn.getBody());
 
+            /* Process simple default parameters */
+            if (fn.getDefaultParams() != null) {
+                Object[] defaultParams = fn.getDefaultParams();
+                for (int i = defaultParams.length - 1; i > 0; ) {
+                    if (defaultParams[i] instanceof AstNode
+                            && defaultParams[i - 1] instanceof String) {
+                        AstNode rhs = (AstNode) defaultParams[i];
+                        String name = (String) defaultParams[i - 1];
+                        body.addChildToFront(
+                                createIf(
+                                        createBinary(
+                                                Token.SHEQ,
+                                                parser.createName(name),
+                                                parser.createName("undefined")),
+                                        new Node(
+                                                Token.EXPR_VOID,
+                                                createAssignment(
+                                                        Token.ASSIGN,
+                                                        parser.createName(name),
+                                                        transform(rhs)),
+                                                body.getLineno()),
+                                        null,
+                                        body.getLineno()));
+                    }
+                    i -= 2;
+                }
+            }
+
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
             }
@@ -815,7 +843,7 @@ public final class IRFactory {
         return node;
     }
 
-    private Node transformObjectLiteral(ObjectLiteral node) {
+    public Node transformObjectLiteral(ObjectLiteral node) {
         if (node.isDestructuring()) {
             return node;
         }
@@ -834,7 +862,7 @@ public final class IRFactory {
             properties = new Object[size];
             computedProperties = new Object[size];
             for (ObjectProperty prop : elems) {
-                Object propKey = getPropKey(prop.getLeft());
+                Object propKey = parser.getPropKey(prop.getLeft());
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
                     computedProperties[i++] = theId;
@@ -856,23 +884,6 @@ public final class IRFactory {
         object.putProp(Node.OBJECT_IDS_PROP, properties);
         object.putProp(Node.OBJECT_IDS_COMPUTED_PROP, computedProperties);
         return object;
-    }
-
-    private Object getPropKey(Node id) {
-        Object key;
-        if (id instanceof Name) {
-            String s = ((Name) id).getIdentifier();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof StringLiteral) {
-            String s = ((StringLiteral) id).getValue();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof NumberLiteral) {
-            double n = ((NumberLiteral) id).getNumber();
-            key = ScriptRuntime.getIndexObject(n);
-        } else {
-            key = null; // Filled later
-        }
-        return key;
     }
 
     private Node transformParenExpr(ParenthesizedExpression node) {
@@ -1478,7 +1489,7 @@ public final class IRFactory {
             if (destructuring != -1) {
                 assign =
                         parser.createDestructuringAssignment(
-                                declType, lvalue, id, (AstNode node) -> transform(node));
+                                declType, lvalue, id, null, (AstNode node) -> transform(node));
                 if (!isForEach
                         && !isForOf
                         && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
@@ -2056,7 +2067,7 @@ public final class IRFactory {
                     return right;
                 }
                 return parser.createDestructuringAssignment(
-                        -1, left, right, (AstNode node) -> transform(node));
+                        -1, left, right, null, (AstNode node) -> transform(node));
             }
             parser.reportError("msg.bad.assign.left");
             return right;
