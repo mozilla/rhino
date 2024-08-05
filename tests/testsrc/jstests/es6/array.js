@@ -22,4 +22,32 @@ assertEquals(a.map(_ => 'a'), ['a', 'a']);
 	assertEquals(Array, symbolSpeciesValue);
 })();
 
+(function TestSymbolUnScopables() {
+	var symbolUnscopablesValue = Array[Symbol.unscopables];
+	assertEquals(undefined, symbolUnscopablesValue);
+})();
+
+(function TestSymbolUnScopablesOnArray() {
+	var symbolValuesToAssert = '{' +
+								'"at":true,' +
+								'"copyWithin":true,' +
+								'"entries":true,' +
+								'"fill":true,' +
+								'"find":true,' +
+								'"findIndex":true,' +
+								'"findLast":true,' +
+								'"findLastIndex":true,' +
+								'"flat":true,' +
+								'"flatMap":true,' +
+								'"includes":true,' +
+								'"keys":true,' +
+								'"toReversed":true,' +
+								'"toSorted":true,' +
+								'"toSpliced":true,' +
+								'"values":true' +
+							'}';
+	var symbolValues = Array.prototype[Symbol.unscopables];
+	assertEquals(JSON.stringify(symbolValues), symbolValuesToAssert);
+})();
+
 "success";
