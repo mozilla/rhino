@@ -4315,7 +4315,6 @@ public class Parser {
             // if there's defaultValue it can be substituted for tempName if that's undefined
             // i.e. $1 = ($1 == undefined) ? defaultValue : $1
             Node defaultRvalue = new Node(defaultValue.getType());
-            ;
             if (defaultValue instanceof ArrayLiteral) {
                 for (AstNode child : ((ArrayLiteral) defaultValue).getElements())
                     defaultRvalue.addChildToBack(child);
