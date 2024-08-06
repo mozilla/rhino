@@ -4223,7 +4223,8 @@ public class Parser {
             }
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
 
-            setupDefaultValues(tempName, parent, defaultValue, setOp);
+            if (defaultValue != null)
+                setupDefaultValues(tempName, parent, defaultValue, setOp);
 
             if (n.getType() == Token.NAME) {
                 /* [x] = [1] */
@@ -4261,11 +4262,11 @@ public class Parser {
             Assignment n,
             Node rightElem,
             int setOp) {
-        Node left = n.getLeft(); // NAME x
-        String name = left.getString();
-        Node right = n.getRight(); // NUMBER 1.0
+        Node left = n.getLeft();
+        Node right = n.getRight();
 
         if (left.getType() == Token.NAME) {
+            String name = left.getString();
             // x = (x == undefined) ?
             //          (($1[0] == undefined) ?
             //              1
@@ -4385,7 +4386,8 @@ public class Parser {
             }
 
             rightElem.setLineno(lineno);
-            setupDefaultValues(tempName, parent, defaultValue, setOp);
+            if (defaultValue != null)
+                setupDefaultValues(tempName, parent, defaultValue, setOp);
 
             AstNode value = prop.getRight();
             if (value.getType() == Token.NAME) {

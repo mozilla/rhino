@@ -44,8 +44,8 @@ public class DefaultParametersTest {
     public void functionDefaultArgsObjectArrow() throws Exception {
         final String script = "(({x = 1} = {x: 2}) => {\n" + "  return x;\n" + "})";
 
-        assertIntEvaluates(1, script + "({})");
-        //        assertIntEvaluates(2, script + "()"); // TODO(satish): returns 1
+        assertIntEvaluates(1, script + "({})"); // TODO(satish): parsing errors with arrow fns
+        assertIntEvaluates(2, script + "()"); // TODO(satish): returns 1
         assertIntEvaluates(3, script + "({x: 3})");
     }
 
