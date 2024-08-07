@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 /**
  * This class implements a JavaScript function that may be used as a constructor by delegating to an
  * interface that can be easily implemented as a lambda. The LambdaFunction class may be used to add
@@ -119,6 +122,17 @@ public class LambdaConstructor extends LambdaFunction {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(key, value, attributes);
     }
+
+    public void definePrototypeProperty(String name, java.util.function.Function<Scriptable, Object> getter, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, getter, null,  attributes );
+    }
+
+    public void definePrototypeProperty(String name, Function<Scriptable, Object> getter, BiConsumer<Scriptable, Object> setter, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, getter, setter,  attributes );
+    }
+
 
     /**
      * Define a function property directly on the constructor that is implemented under the covers
