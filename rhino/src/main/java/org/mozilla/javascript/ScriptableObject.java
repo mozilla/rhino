@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -1690,6 +1691,35 @@ public abstract class ScriptableObject
         slot.setter = setter;
     }
 
+    /**
+     * Define a property on this object that is implemented using lambda functions accepting Scriptable `this` object
+     * as first parameter. Unlike with `defineProperty(String name, Supplier<Object> getter, Consumer<Object> setter, int attributes)`
+     * where getter and setter need to have access to target object instance, this allows for defining properties on
+     * LambdaConstructor prototype providing getter and setter logic with java instance methods.
+     * If a property with the same name already exists, then it will be replaced. This property will appear to the
+     * JavaScript user exactly like any other property -- unlike Function properties and those based
+     * on reflection, the property descriptor will only reflect the value as defined by this
+     * function.
+     *
+     * @param name the name of the property
+     * @param getter a function that given Scriptable `this` returns the value of the property. If null, throws typeError
+     * @param setter a function that Scriptable `this` and a value sets the value of the property, by calling appropriate
+     *               method on `this`. If null, then the value will be
+     *     set directly and may not be retrieved by the getter.
+     * @param attributes the attributes to set on the property
+     */
+    public void defineProperty(
+            String name, java.util.function.Function<Scriptable, Object> getter, BiConsumer<Scriptable, Object> setter, int attributes) {
+        if (getter == null && setter == null)
+            throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
+
+        OwnerAwareLambdaSlot slot = slotMap.compute(name, 0, ScriptableObject::ensureOwnerAwareLambdaSlot);
+        slot.setAttributes(attributes);
+
+        slot.setGetter(getter);
+        slot.setSetter(setter);
+    }
+
     protected void checkPropertyDefinition(ScriptableObject desc) {
         Object getter = getProperty(desc, "get");
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
@@ -2692,6 +2722,16 @@ public abstract class ScriptableObject
             return (LambdaSlot) existing;
         } else {
             return new LambdaSlot(existing);
+        }
+    }
+
+    private static OwnerAwareLambdaSlot ensureOwnerAwareLambdaSlot(Object name, int index, Slot existing) {
+        if (existing == null) {
+            return new OwnerAwareLambdaSlot(name, index);
+        } else if (existing instanceof OwnerAwareLambdaSlot) {
+            return (OwnerAwareLambdaSlot) existing;
+        } else {
+            return new OwnerAwareLambdaSlot(existing);
         }
     }
 
