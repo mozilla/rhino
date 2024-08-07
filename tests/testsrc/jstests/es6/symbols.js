@@ -571,4 +571,19 @@ TestStringify('{}', symbol_wrapper);
 symbol_wrapper.a = 1;
 TestStringify('{"a":1}', symbol_wrapper);
 
+
+function TestDescription() {
+  assertEquals(Symbol("abc").description, "abc");
+  assertEquals(Symbol.iterator.description, "Symbol.iterator");
+  assertEquals(Symbol().description, undefined);
+
+  assertFalse(Symbol("abc").hasOwnProperty("description"));
+  assertTrue(Symbol.prototype.hasOwnProperty("description"));
+  assertTrue(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").configurable);
+  assertFalse(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").enumerable);
+  assertTrue(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").get !== null);
+}
+TestDescription();
+
+
 "success";
