@@ -771,6 +771,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case Id_findIndex:
                 return ArrayLikeAbstractOperations.iterativeMethod(
                         cx, f, IterativeOperation.FIND_INDEX, scope, thisObj, args);
+            case Id_findLast:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.FIND_LAST, scope, thisObj, args);
+            case Id_findLastIndex:
+                return ArrayLikeAbstractOperations.iterativeMethod(
+                        cx, f, IterativeOperation.FIND_LAST_INDEX, scope, thisObj, args);
             case Id_reduce:
                 return ArrayLikeAbstractOperations.reduceMethod(
                         cx, ReduceOperation.REDUCE, scope, thisObj, args);
@@ -898,6 +904,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 1;
                 s = "findIndex";
                 break;
+            case Id_findLast:
+                arity = 1;
+                s = "findLast";
+                break;
+            case Id_findLastIndex:
+                arity = 1;
+                s = "findLastIndex";
+                break;
             case Id_reduce:
                 arity = 1;
                 s = "reduce";
@@ -1002,6 +1016,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "findIndex":
                 id = Id_findIndex;
                 break;
+            case "findLast":
+                id = Id_findLast;
+                break;
+            case "findLastIndex":
+                id = Id_findLastIndex;
+                break;
             case "reduce":
                 id = Id_reduce;
                 break;
@@ -1042,9 +1062,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Id_some = 24,
             Id_find = 25,
             Id_findIndex = 26,
-            Id_reduce = 27,
-            Id_reduceRight = 28,
-            SymbolId_iterator = 29;
+            Id_findLast = 27,
+            Id_findLastIndex = 28,
+            Id_reduce = 29,
+            Id_reduceRight = 30,
+            SymbolId_iterator = 31;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
