@@ -67,6 +67,22 @@ public class DefaultParametersTest {
     }
 
     @Test
+    public void getIntPropArg() throws Exception {
+        final String script =
+                "function foo([gen = function () { return 2; }, xGen = function* x() { yield 2; }] = []) {\n"
+                        + " return gen() + xGen().next().value; }";
+        assertIntEvaluates(4, script + "; foo()");
+    }
+
+    @Test
+    public void getIntProp() throws Exception {
+        final String script =
+                "const { gen = function () { return 2;}, xGen = function* () { yield 2;} } = {};\n"
+                        + "gen() + xGen().next().value";
+        assertIntEvaluates(4, script);
+    }
+
+    @Test
     @Ignore("temporal-dead-zone")
     public void functionDefaultArgsMultiFollowUsage() throws Exception {
         final String script =

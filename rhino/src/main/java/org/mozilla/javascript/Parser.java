@@ -4224,7 +4224,7 @@ public class Parser {
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
 
             if (defaultValue != null)
-                setupDefaultValues(tempName, parent, defaultValue, setOp);
+                setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
 
             if (n.getType() == Token.NAME) {
                 /* [x] = [1] */
@@ -4238,7 +4238,13 @@ public class Parser {
             } else if (n.getType() == Token.ASSIGN) {
                 /* [x = 1] = [2] */
                 processDestructuringDefaults(
-                        variableType, parent, destructuringNames, (Assignment) n, rightElem, setOp);
+                        variableType,
+                        parent,
+                        destructuringNames,
+                        (Assignment) n,
+                        rightElem,
+                        setOp,
+                        transformer);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4261,10 +4267,11 @@ public class Parser {
             List<String> destructuringNames,
             Assignment n,
             Node rightElem,
-            int setOp) {
+            int setOp,
+            Transformer transformer) {
         Node left = n.getLeft();
-        Node right = n.getRight();
-
+        Node right = null;
+        boolean transformLater = false;
         if (left.getType() == Token.NAME) {
             String name = left.getString();
             // x = (x == undefined) ?
@@ -4272,12 +4279,34 @@ public class Parser {
             //              1
             //              : $1[0])
             //          : x
+
+            if (n.getRight() instanceof FunctionNode && transformer != null) {
+                right = transformer.transform(n.getRight());
+            } else {
+                transformLater = true;
+                right = n.getRight();
+            }
+
             Node cond_inner =
                     new Node(
                             Token.HOOK,
                             new Node(Token.SHEQ, createName("undefined"), rightElem),
                             right,
                             rightElem);
+
+            // if right is a function, it should be processed later
+            // store it in the node to be processed
+            if (right instanceof FunctionNode && transformLater) {
+                ArrayList<Object[]> dfns =
+                        (ArrayList<Object[]>)
+                                currentScriptOrFn.getProp(Node.DESTRUCTURING_FUNCTIONS);
+                if (dfns == null) {
+                    dfns = new ArrayList<>();
+                }
+                dfns.add(new Object[] {cond_inner, right});
+                currentScriptOrFn.putProp(Node.DESTRUCTURING_FUNCTIONS, dfns);
+            }
+
             Node cond =
                     new Node(
                             Token.HOOK,
@@ -4311,11 +4340,13 @@ public class Parser {
         return key;
     }
 
-    private void setupDefaultValues(String tempName, Node parent, Node defaultValue, int setOp) {
+    private void setupDefaultValues(
+            String tempName, Node parent, Node defaultValue, int setOp, Transformer transformer) {
         if (defaultValue != null) {
             // if there's defaultValue it can be substituted for tempName if that's undefined
             // i.e. $1 = ($1 == undefined) ? defaultValue : $1
             Node defaultRvalue = new Node(defaultValue.getType());
+
             if (defaultValue instanceof ArrayLiteral) {
                 for (AstNode child : ((ArrayLiteral) defaultValue).getElements())
                     defaultRvalue.addChildToBack(child);
@@ -4341,6 +4372,7 @@ public class Parser {
                             new Node(Token.SHEQ, createName(tempName), createName("undefined")),
                             defaultRvalue,
                             createName(tempName));
+
             Node set_default =
                     new Node(setOp, createName(Token.BINDNAME, tempName, null), cond_default);
             parent.addChildToBack(set_default);
@@ -4387,7 +4419,7 @@ public class Parser {
 
             rightElem.setLineno(lineno);
             if (defaultValue != null)
-                setupDefaultValues(tempName, parent, defaultValue, setOp);
+                setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
 
             AstNode value = prop.getRight();
             if (value.getType() == Token.NAME) {
@@ -4405,7 +4437,8 @@ public class Parser {
                         destructuringNames,
                         (Assignment) value,
                         rightElem,
-                        setOp);
+                        setOp,
+                        transformer);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(

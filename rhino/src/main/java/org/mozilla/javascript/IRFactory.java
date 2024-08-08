@@ -605,6 +605,18 @@ public final class IRFactory {
                 }
             }
 
+            /* Process FunctionNode used as default parameters */
+            ArrayList<Object[]> dfns =
+                    (ArrayList<Object[]>) fn.getProp(Node.DESTRUCTURING_FUNCTIONS);
+            fn.removeProp(Node.DESTRUCTURING_FUNCTIONS);
+            if (dfns != null) {
+                for (var i : dfns) {
+                    Node a = (Node) i[0];
+                    FunctionNode b = (FunctionNode) i[1];
+                    a.replaceChild(b, transformFunction(b));
+                }
+            }
+
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
             }
@@ -1120,7 +1132,13 @@ public final class IRFactory {
                 } else {
                     astNodePos.push(var);
                     try {
-                        Node d = parser.createDestructuringAssignment(node.getType(), left, right);
+                        Node d =
+                                parser.createDestructuringAssignment(
+                                        node.getType(),
+                                        left,
+                                        right,
+                                        null,
+                                        (AstNode n) -> transform(n));
                         node.addChildToBack(d);
                     } finally {
                         astNodePos.pop();
