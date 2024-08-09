@@ -45,11 +45,30 @@ public class NativeArray extends IdScriptableObject implements List {
 
     private static final Object ARRAY_TAG = "Array";
     private static final Long NEGATIVE_ONE = Long.valueOf(-1);
+    private static final String[] UNSCOPABLES = {
+        "at",
+        "copyWithin",
+        "entries",
+        "fill",
+        "find",
+        "findIndex",
+        "findLast",
+        "findLastIndex",
+        "flat",
+        "flatMap",
+        "includes",
+        "keys",
+        "toReversed",
+        "toSorted",
+        "toSpliced",
+        "values"
+    };
 
     static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeArray obj = new NativeArray(0);
         IdFunctionObject constructor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+        ScriptRuntimeES6.addSymbolUnscopables(cx, scope, constructor);
     }
 
     static int getMaximumInitialCapacity() {
@@ -160,6 +179,11 @@ public class NativeArray extends IdScriptableObject implements List {
 
     @Override
     protected void initPrototypeId(int id) {
+        if (id == SymbolId_unscopables) {
+            initPrototypeValue(id, SymbolKey.UNSCOPABLES, makeUnscopables(), DONTENUM | READONLY);
+            return;
+        }
+
         String s, fnName = null;
         int arity;
         switch (id) {
@@ -500,6 +524,25 @@ public class NativeArray extends IdScriptableObject implements List {
         if (!(p instanceof NativeArray)) {
             setDenseOnly(false);
         }
+    }
+
+    private Object makeUnscopables() {
+        Context cx = Context.getCurrentContext();
+        NativeObject obj;
+
+        if (cx != null) {
+            Scriptable scope = this.getParentScope();
+            obj = (NativeObject) cx.newObject(scope);
+        } else {
+            obj = new NativeObject();
+        }
+
+        ScriptableObject desc = ScriptableObject.buildDataDescriptor(obj, true, EMPTY);
+        for (var k : UNSCOPABLES) {
+            obj.defineOwnProperty(cx, k, desc);
+        }
+        obj.setPrototype(null); // unscopables don't have any prototype
+        return obj;
     }
 
     @Override
@@ -2382,6 +2425,8 @@ public class NativeArray extends IdScriptableObject implements List {
             // as the "values" property. We implement this by returning the
             // ID of "values" when the iterator symbol is accessed.
             return Id_values;
+        } else if (SymbolKey.UNSCOPABLES.equals(k)) {
+            return SymbolId_unscopables;
         }
         return 0;
     }
@@ -2533,7 +2578,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 32,
             Id_flat = 33,
             Id_flatMap = 34,
-            MAX_PROTOTYPE_ID = Id_flatMap;
+            SymbolId_unscopables = 35,
+            MAX_PROTOTYPE_ID = SymbolId_unscopables;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
             ConstructorId_sort = -Id_sort,
