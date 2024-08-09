@@ -122,9 +122,15 @@ public class AbstractEcmaObjectOperations {
              7. both conditions under which false would be returned cannot occur here
              8. both conditions under which false would be returned cannot occur here
         */
+        // TODO check .preventExtensions() return value once implemented and act accordingly to spec
+
+        if (o instanceof NativeJavaObject) {
+            ((NativeJavaObject) o).freezeObject();
+            return true;
+        }
+
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
 
-        // TODO check .preventExtensions() return value once implemented and act accordingly to spec
         obj.preventExtensions();
 
         for (Object key : obj.getIds(true, true)) {

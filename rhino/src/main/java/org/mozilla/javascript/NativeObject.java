@@ -633,7 +633,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                            && !(arg instanceof ScriptableObject)) {
+                            && !(arg instanceof ScriptableObject)
+                            && !(arg instanceof NativeJavaObject)) {
                         return arg;
                     }
 
