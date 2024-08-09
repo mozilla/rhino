@@ -162,22 +162,37 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     Scriptable compile(Context cx, Scriptable scope, Object[] args) {
-        if (args.length > 0 && args[0] instanceof NativeRegExp) {
-            if (args.length > 1 && args[1] != Undefined.instance) {
-                // report error
+        if (args.length >= 1
+                && args[0] instanceof NativeRegExp
+                && (args.length == 1 || args[1] == Undefined.instance)) {
+            // Avoid recompiling the regex
+            this.re = ((NativeRegExp) args[0]).re;
+        } else {
+            String pattern;
+            if (args.length == 0 || args[0] == Undefined.instance) {
+                pattern = "";
+            } else if (args[0] instanceof NativeRegExp) {
+                pattern = new String(((NativeRegExp) args[0]).re.source);
+            } else {
+                pattern = escapeRegExp(args[0]);
+            }
+
+            String flags =
+                    args.length > 1 && args[1] != Undefined.instance
+                            ? ScriptRuntime.toString(args[1])
+                            : null;
+
+            // Passing a regex and flags is allowed in ES6, but forbidden in ES5 and lower.
+            // Spec ref: 15.10.4.1 in ES5, 22.2.4.1 in ES6
+            if (args.length > 0
+                    && args[0] instanceof NativeRegExp
+                    && flags != null
+                    && cx.getLanguageVersion() < Context.VERSION_ES6) {
                 throw ScriptRuntime.typeErrorById("msg.bad.regexp.compile");
             }
-            NativeRegExp thatObj = (NativeRegExp) args[0];
-            this.re = thatObj.re;
-            setLastIndex(thatObj.lastIndex);
-            return this;
+
+            this.re = compileRE(cx, pattern, flags, false);
         }
-        String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
-        String global =
-                args.length > 1 && args[1] != Undefined.instance
-                        ? ScriptRuntime.toString(args[1])
-                        : null;
-        this.re = compileRE(cx, s, global, false);
         setLastIndex(ScriptRuntime.zeroObj);
         return this;
     }

@@ -70,7 +70,7 @@ testing but which are not published to Maven Central:
 ### Requirements
 
 Rhino requires Java 11 to build. It will (currently) build with Java versions up to at least 
-Java 21. However, not all tools work with Java 11, such as "spotless", so Java 11 is required for
+Java 21. However, not all tools work with Java 21, such as "spotless", so Java 11 is required for
 regular developers.
 
 ### How to Build

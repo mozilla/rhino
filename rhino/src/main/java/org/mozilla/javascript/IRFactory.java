@@ -865,19 +865,16 @@ public final class IRFactory {
         List<ObjectProperty> elems = node.getElements();
         Node object = new Node(Token.OBJECTLIT);
         Object[] properties;
-        Object[] computedProperties;
         if (elems.isEmpty()) {
             properties = ScriptRuntime.emptyArgs;
-            computedProperties = ScriptRuntime.emptyArgs;
         } else {
             int size = elems.size(), i = 0;
             properties = new Object[size];
-            computedProperties = new Object[size];
             for (ObjectProperty prop : elems) {
                 Object propKey = parser.getPropKey(prop.getLeft());
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
-                    computedProperties[i++] = theId;
+                    properties[i++] = theId;
                 } else {
                     properties[i++] = propKey;
                 }
@@ -894,7 +891,6 @@ public final class IRFactory {
             }
         }
         object.putProp(Node.OBJECT_IDS_PROP, properties);
-        object.putProp(Node.OBJECT_IDS_COMPUTED_PROP, computedProperties);
         return object;
     }
 

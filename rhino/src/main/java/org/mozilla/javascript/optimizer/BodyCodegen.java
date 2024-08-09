@@ -2084,8 +2084,7 @@ class BodyCodegen {
     }
 
     /** load two arrays with property ids and values */
-    private void addLoadProperty(
-            Node node, Node child, Object[] properties, Object[] computedProperties, int count) {
+    private void addLoadProperty(Node node, Node child, Object[] properties, int count) {
         if (count == 0) {
             addNewObjectArray(0);
             addNewObjectArray(0);
@@ -2099,7 +2098,7 @@ class BodyCodegen {
             // of dup2_x2, swap, and pop... this looks a bit cleaner.
 
             for (int i = 0; i < count; ++i) {
-                addLoadPropertyId(node, properties, computedProperties, i);
+                addLoadPropertyId(node, properties, i);
                 addLoadPropertyValue(node, child);
                 child = child.getNext();
             }
@@ -2144,10 +2143,7 @@ class BodyCodegen {
                 cfw.add(ByteCode.DUP2); // Stack: [values, keys, values, keys]
                 cfw.addLoadConstant(i); // Stack: [values, keys, values, keys, i]
                 addLoadPropertyId(
-                        node,
-                        properties,
-                        computedProperties,
-                        i); // Stack: [values, keys, values, keys, i, Ki]
+                        node, properties, i); // Stack: [values, keys, values, keys, i, Ki]
                 cfw.add(ByteCode.AASTORE); // Stack: [values, keys, values]
 
                 cfw.addLoadConstant(i); // Stack: [values, keys, values, i]
@@ -2170,15 +2166,13 @@ class BodyCodegen {
         }
     }
 
-    private void addLoadPropertyId(
-            Node node, Object[] properties, Object[] computedProperties, int i) {
-        Object computedPropertyId = computedProperties != null ? computedProperties[i] : null;
-        if (computedPropertyId != null) {
+    private void addLoadPropertyId(Node node, Object[] properties, int i) {
+        Object id = properties[i];
+        if (id instanceof Node) {
             // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
-            Node computedPropertyNode = (Node) computedPropertyId;
+            Node computedPropertyNode = (Node) id;
             generateExpression(computedPropertyNode.getFirstChild(), node);
         } else {
-            Object id = properties[i];
             if (id instanceof String) {
                 cfw.addPush((String) id);
             } else {
@@ -2190,7 +2184,6 @@ class BodyCodegen {
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-        Object[] computedProperties = (Object[]) node.getProp(Node.OBJECT_IDS_COMPUTED_PROP);
         int count = properties == null ? 0 : properties.length;
 
         // If code budget is tight swap out literals into separate method
@@ -2222,7 +2215,7 @@ class BodyCodegen {
             return;
         }
 
-        addLoadProperty(node, child, properties, computedProperties, count);
+        addLoadProperty(node, child, properties, count);
 
         // check if object literal actually has any getters or setters
         boolean hasGetterSetters = false;
