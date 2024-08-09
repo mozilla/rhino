@@ -1,12 +1,14 @@
 package org.mozilla.javascript.benchmarks;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.EmbeddedSlotMap;
 import org.mozilla.javascript.HashSlotMap;
 import org.mozilla.javascript.Slot;
 import org.mozilla.javascript.SlotMap;
 import org.openjdk.jmh.annotations.*;
 
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class SlotMapBenchmark {
     // Fixed seed for repeatability
     private static final Random rand = new Random(0);
