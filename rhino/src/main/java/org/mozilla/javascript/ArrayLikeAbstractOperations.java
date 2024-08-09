@@ -18,6 +18,8 @@ public class ArrayLikeAbstractOperations {
         SOME,
         FIND,
         FIND_INDEX,
+        FIND_LAST,
+        FIND_LAST_INDEX,
     }
 
     public enum ReduceOperation {
@@ -35,7 +37,10 @@ public class ArrayLikeAbstractOperations {
             Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        if (IterativeOperation.FIND == operation || IterativeOperation.FIND_INDEX == operation) {
+        if (IterativeOperation.FIND == operation
+                || IterativeOperation.FIND_INDEX == operation
+                || IterativeOperation.FIND_LAST == operation
+                || IterativeOperation.FIND_LAST_INDEX == operation) {
             requireObjectCoercible(cx, o, fun);
         }
 
@@ -62,12 +67,29 @@ public class ArrayLikeAbstractOperations {
             array = cx.newArray(scope, resultLength);
         }
         long j = 0;
-        for (long i = 0; i < length; i++) {
+        long start =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? length - 1
+                        : 0;
+        long end =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? -1
+                        : length;
+        long increment =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? -1
+                        : +1;
+        for (long i = start; i != end; i += increment) {
             Object[] innerArgs = new Object[3];
             Object elem = getRawElem(o, i);
             if (elem == NOT_FOUND) {
                 if (operation == IterativeOperation.FIND
-                        || operation == IterativeOperation.FIND_INDEX) {
+                        || operation == IterativeOperation.FIND_INDEX
+                        || operation == IterativeOperation.FIND_LAST
+                        || operation == IterativeOperation.FIND_LAST_INDEX) {
                     elem = Undefined.instance;
                 } else {
                     continue;
@@ -93,9 +115,11 @@ public class ArrayLikeAbstractOperations {
                     if (ScriptRuntime.toBoolean(result)) return Boolean.TRUE;
                     break;
                 case FIND:
+                case FIND_LAST:
                     if (ScriptRuntime.toBoolean(result)) return elem;
                     break;
                 case FIND_INDEX:
+                case FIND_LAST_INDEX:
                     if (ScriptRuntime.toBoolean(result)) return ScriptRuntime.wrapNumber(i);
                     break;
             }
@@ -109,6 +133,7 @@ public class ArrayLikeAbstractOperations {
             case SOME:
                 return Boolean.FALSE;
             case FIND_INDEX:
+            case FIND_LAST_INDEX:
                 return ScriptRuntime.wrapNumber(-1);
             case FOR_EACH:
             default:
