@@ -3,13 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> [9, 16, 25].map;
-function map() { [native code for Array.map, arity=1] }
+function map() { [native code] }
 
 js> "" + [9, 16, 25].map(Math.sqrt);
 3,4,5
 
 js> Array.map;
-function map() { [native code for Array.map, arity=1] }
+function map() { [native code] }
 
 js> "" + Array.map([9, 16, 25], Math.sqrt);
 3,4,5

@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Function.prototype.bind
-function bind() { [native code for Function.bind, arity=1] }
+function bind() { [native code] }
 
 js> expectTypeError(function() {
   >   Function.prototype.bind.call({})

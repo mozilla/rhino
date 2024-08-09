@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.getOwnPropertyDescriptor;
-function getOwnPropertyDescriptor() { [native code for Object.getOwnPropertyDescriptor, arity=2] }
+function getOwnPropertyDescriptor() { [native code] }
 
 js> expectTypeError(function() { Object.getOwnPropertyDescriptor() })
 
@@ -34,9 +34,9 @@ js> desc.value === undefined;
 true
 js> desc.writable
 js> desc.get.toSource()
-p() {}
+get p() {}
 js> desc.set.toSource()
-p() {}
+set p() {}
 js> desc.enumerable
 true
 js> desc.configurable

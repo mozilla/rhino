@@ -5,7 +5,7 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.isSealed
-function isSealed() { [native code for Object.isSealed, arity=1] }
+function isSealed() { [native code] }
 
 js> expectTypeError(function() { Object.isSealed() });
 js> [undefined, null, true, 1, 'hello'].forEach(function(value) { 

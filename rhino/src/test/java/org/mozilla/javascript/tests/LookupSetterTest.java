@@ -44,9 +44,7 @@ public class LookupSetterTest {
 
     @Test
     public void lookedUpGetter_toString() throws Exception {
-        test(
-                "function s() {\n\t[native code, arity=0]\n}\n",
-                "new Foo().__lookupGetter__('s').toString()");
+        test("function s() {\n\t[native code]\n}\n", "new Foo().__lookupGetter__('s').toString()");
     }
 
     @Test
@@ -85,9 +83,7 @@ public class LookupSetterTest {
 
     @Test
     public void lookedUpSetter_toString() throws Exception {
-        test(
-                "function s() {\n\t[native code, arity=0]\n}\n",
-                "new Foo().__lookupSetter__('s').toString()");
+        test("function s() {\n\t[native code]\n}\n", "new Foo().__lookupSetter__('s').toString()");
     }
 
     @Test
