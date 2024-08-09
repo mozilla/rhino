@@ -2,6 +2,7 @@ package org.mozilla.javascript.benchmarks;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
@@ -9,6 +10,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class MathBenchmark {
     @State(Scope.Thread)
     public static class MathState {

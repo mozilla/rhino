@@ -9,13 +9,13 @@ dependencies {
 }
 
 jmh {
-    // use this to include only some
-    //includes = ['SlotMap']
+    if (System.getenv('BENCHMARK') != null) {
+      includes = [System.getenv('BENCHMARK')]
+    }
     benchmarkMode = ['avgt']
     fork = 1
-    //timeUnit = 'ns'
-    iterations = 3
-    timeOnIteration = '5s'
+    iterations = 5
+    timeOnIteration = '2s'
     warmupIterations = 3
     warmup = '5s'
 }
