@@ -23,12 +23,20 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
     private static final Object GLOBAL_TABLE_KEY = new Object();
     private static final Object CONSTRUCTOR_SLOT = new Object();
 
+    static final SymbolKey GETDESCRIPTION = new SymbolKey("[Symbol.getDescription]");
+
     private final SymbolKey key;
     private final NativeSymbol symbolData;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeSymbol obj = new NativeSymbol("");
         ScriptableObject ctor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
+
+        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, obj.get(GETDESCRIPTION, obj));
+        obj.defineOwnProperty(cx, "description", desc);
 
         cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
         try {
@@ -134,6 +142,8 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
             return SymbolId_toStringTag;
         } else if (SymbolKey.TO_PRIMITIVE.equals(key)) {
             return SymbolId_toPrimitive;
+        } else if (GETDESCRIPTION.equals(key)) {
+            return SymbolId_description;
         }
         return 0;
     }
@@ -143,9 +153,10 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
             Id_constructor = 1,
             Id_toString = 2,
             Id_valueOf = 4,
+            SymbolId_description = 6,
             SymbolId_toStringTag = 3,
             SymbolId_toPrimitive = 5,
-            MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
+            MAX_PROTOTYPE_ID = SymbolId_description;
 
     @Override
     protected void initPrototypeId(int id) {
@@ -158,6 +169,9 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
                 break;
             case Id_valueOf:
                 initPrototypeMethod(CLASS_NAME, id, "valueOf", 0);
+                break;
+            case SymbolId_description:
+                initPrototypeMethod(CLASS_NAME, id, GETDESCRIPTION, "get description", 0);
                 break;
             case SymbolId_toStringTag:
                 initPrototypeValue(id, SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
@@ -201,6 +215,9 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
             case Id_valueOf:
             case SymbolId_toPrimitive:
                 return getSelf(cx, scope, thisObj).js_valueOf();
+
+            case SymbolId_description:
+                return getSelf(cx, scope, thisObj).js_getDescription();
             default:
                 return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -269,6 +286,10 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
             }
         }
         return Undefined.instance;
+    }
+
+    private String js_getDescription() {
+        return key.getName();
     }
 
     @Override
