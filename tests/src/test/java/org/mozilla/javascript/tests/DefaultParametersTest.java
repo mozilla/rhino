@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -75,11 +76,27 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("wip")
+    public void getIntPropArgParenExpr() throws Exception {
+        final String script = "const [cover = (function () {}), xCover = (0, function() {})] = [];\n" +
+                "\n" +
+                "cover.name == 'cover' && xCover.name == 'xCover' ? 4 : -1";
+        assertIntEvaluates(4, script);
+    }
+
+    @Test
     public void getIntProp() throws Exception {
         final String script =
                 "const { gen = function () { return 2;}, xGen = function* () { yield 2;} } = {};\n"
                         + "gen() + xGen().next().value";
         assertIntEvaluates(4, script);
+    }
+
+    @Test
+    public void getIntPropExhausted() throws Exception {
+        final String script =
+                "const [x = 23] = []; x";
+        assertIntEvaluates(23, script);
     }
 
     @Test
@@ -135,7 +152,7 @@ public class DefaultParametersTest {
 
     @Test
     @Ignore("wip")
-    public void destructuringAssigmentWithObjectDefaults() throws Exception {
+    public void destructuringAssigmentInFunctionsWithObjectDefaults() throws Exception {
         final String script =
                 "function f([x = 1, y = 2] = {x: 3, y: 4}) {\n" + "  return x + y;\n" + "}";
 
@@ -147,6 +164,24 @@ public class DefaultParametersTest {
     public void destructuringTest() throws Exception {
         final String script = "function f([x]) {" + "return x;" + "}; f([1]);";
         assertIntEvaluates(1, script);
+    }
+
+    @Test
+    public void destructuringAssignmentDefaultArray() throws Exception {
+        final String script = "var [a = 10] = []; a";
+        final String script2 = "var [a = 10] = [1]; a";
+        assertIntEvaluates(10, script);
+        assertIntEvaluates(1, script2);
+    }
+
+    @Test
+    public void destructuringAssignmentDefaultObject() throws Exception {
+        final String script1 = "var {a: b = 10} = {hello: 3}; b+a";
+        final String script3 = "var a = 20; var {a: b = 10} = {hello: 3}; b+a";
+        final String script4 = "var a = 30; var {a: b = 10} = {}; b+a";
+        assertThrows("ReferenceError", script1);
+        assertIntEvaluates(30, script3);
+        assertIntEvaluates(40, script4);
     }
 
     @Test
