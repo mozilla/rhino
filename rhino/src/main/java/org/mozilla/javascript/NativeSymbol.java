@@ -235,12 +235,12 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
         String desc;
         if (args.length > 0) {
             if (Undefined.instance.equals(args[0])) {
-                desc = "";
+                desc = null;
             } else {
                 desc = ScriptRuntime.toString(args[0]);
             }
         } else {
-            desc = "";
+            desc = null;
         }
 
         if (args.length > 1) {
@@ -288,8 +288,12 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
         return Undefined.instance;
     }
 
-    private String js_getDescription() {
-        return key.getName();
+    private Object js_getDescription() {
+        String name = key.getName();
+        if (name == null) {
+            return Undefined.instance;
+        }
+        return name;
     }
 
     @Override
