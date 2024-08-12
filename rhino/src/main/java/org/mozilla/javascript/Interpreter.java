@@ -11,6 +11,7 @@ import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1179,7 +1180,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // save the top frame from the previous interpretLoop
             // invocation on the stack
             if (cx.previousInterpreterInvocations == null) {
-                cx.previousInterpreterInvocations = new ObjArray();
+                cx.previousInterpreterInvocations = new ArrayDeque<>();
             }
             cx.previousInterpreterInvocations.push(cx.lastInterpreterFrame);
         }

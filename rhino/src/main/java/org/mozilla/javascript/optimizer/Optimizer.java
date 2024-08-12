@@ -4,8 +4,9 @@
 
 package org.mozilla.javascript.optimizer;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.mozilla.javascript.Node;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.ScriptNode;
 
@@ -32,7 +33,7 @@ class Optimizer {
         inDirectCallFunction = theFunction.isTargetOfDirectCall();
         this.theFunction = theFunction;
 
-        ObjArray statementsArray = new ObjArray();
+        ArrayList<Node> statementsArray = new ArrayList<>();
         buildStatementList_r(theFunction.fnode, statementsArray);
         Node[] theStatementNodes = new Node[statementsArray.size()];
         statementsArray.toArray(theStatementNodes);
@@ -419,7 +420,7 @@ class Optimizer {
         }
     }
 
-    private static void buildStatementList_r(Node node, ObjArray statements) {
+    private static void buildStatementList_r(Node node, List<Node> statements) {
         int type = node.getType();
         if (type == Token.BLOCK
                 || type == Token.LOCAL_BLOCK

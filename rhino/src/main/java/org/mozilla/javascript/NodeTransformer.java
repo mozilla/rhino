@@ -6,7 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
@@ -43,8 +45,8 @@ public class NodeTransformer {
     }
 
     private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode) {
-        loops = new ObjArray();
-        loopEnds = new ObjArray();
+        loops = new ArrayDeque<>();
+        loopEnds = new ArrayDeque<>();
 
         // to save against upchecks if no finally blocks are used.
         hasFinally = false;
@@ -162,8 +164,8 @@ public class NodeTransformer {
                          */
                         if (!hasFinally) break; // skip the whole mess.
                         Node unwindBlock = null;
-                        for (int i = loops.size() - 1; i >= 0; i--) {
-                            Node n = (Node) loops.get(i);
+                        // Iterate from the top of the stack (most recently inserted) and down
+                        for (Node n : loops) {
                             int elemtype = n.getType();
                             if (elemtype == Token.TRY || elemtype == Token.WITH) {
                                 Node unwind;
@@ -208,15 +210,14 @@ public class NodeTransformer {
                         Jump jumpStatement = jump.getJumpStatement();
                         if (jumpStatement == null) Kit.codeBug();
 
-                        for (int i = loops.size(); ; ) {
-                            if (i == 0) {
-                                // Parser/IRFactory ensure that break/continue
-                                // always has a jump statement associated with it
-                                // which should be found
-                                throw Kit.codeBug();
-                            }
-                            --i;
-                            Node n = (Node) loops.get(i);
+                        if (loops.isEmpty()) {
+                            // Parser/IRFactory ensure that break/continue
+                            // always has a jump statement associated with it
+                            // which should be found
+                            throw Kit.codeBug();
+                        }
+                        // Iterate from the top of the stack (most recently inserted) and down
+                        for (Node n : loops) {
                             if (n == jumpStatement) {
                                 break;
                             }
@@ -549,7 +550,7 @@ public class NodeTransformer {
         return replacement;
     }
 
-    private ObjArray loops;
-    private ObjArray loopEnds;
+    private Deque<Node> loops;
+    private Deque<Node> loopEnds;
     private boolean hasFinally;
 }
