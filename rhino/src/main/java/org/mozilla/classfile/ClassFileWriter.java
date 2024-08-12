@@ -9,9 +9,9 @@ package org.mozilla.classfile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
 
 /**
@@ -211,7 +211,7 @@ public class ClassFileWriter {
         int descriptorIndex = itsConstantPool.addUtf8(type);
         int[] chunk = {nameIndex, descriptorIndex, startPC, register};
         if (itsVarDescriptors == null) {
-            itsVarDescriptors = new ObjArray();
+            itsVarDescriptors = new ArrayList<>();
         }
         itsVarDescriptors.add(chunk);
     }
@@ -852,7 +852,7 @@ public class ClassFileWriter {
         BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
 
         if (itsBootstrapMethods == null) {
-            itsBootstrapMethods = new ObjArray();
+            itsBootstrapMethods = new ArrayList<>();
         }
         int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
         if (bootstrapIndex == -1) {
@@ -4487,9 +4487,9 @@ public class ClassFileWriter {
     private int itsMaxStack;
     private int itsMaxLocals;
 
-    private ObjArray itsMethods = new ObjArray();
-    private ObjArray itsFields = new ObjArray();
-    private ObjArray itsInterfaces = new ObjArray();
+    private ArrayList<ClassFileMethod> itsMethods = new ArrayList<>();
+    private ArrayList<ClassFileField> itsFields = new ArrayList<>();
+    private ArrayList<Short> itsInterfaces = new ArrayList<>();
 
     private int itsFlags;
     private int itsThisClassIndex;
@@ -4504,8 +4504,8 @@ public class ClassFileWriter {
     private static final int MIN_FIXUP_TABLE_SIZE = 40;
     private long[] itsFixupTable;
     private int itsFixupTableTop;
-    private ObjArray itsVarDescriptors;
-    private ObjArray itsBootstrapMethods;
+    private ArrayList<int[]> itsVarDescriptors;
+    private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
 
     private char[] tmpCharBuffer = new char[64];

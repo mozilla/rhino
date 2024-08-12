@@ -6,11 +6,11 @@ package org.mozilla.javascript.optimizer;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 import org.mozilla.javascript.Node;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Jump;
@@ -114,7 +114,7 @@ class Block {
     private static Block[] buildBlocks(Node[] statementNodes) {
         // a mapping from each target node to the block it begins
         Map<Node, FatBlock> theTargetBlocks = new HashMap<>();
-        ObjArray theBlocks = new ObjArray();
+        ArrayList<FatBlock> theBlocks = new ArrayList<>();
 
         // there's a block that starts at index 0
         int beginNodeIndex = 0;

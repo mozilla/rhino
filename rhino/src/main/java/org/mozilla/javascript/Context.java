@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2712,7 +2713,7 @@ public class Context implements Closeable {
 
     // For the interpreter to store information about previous invocations
     // interpreter invocations
-    ObjArray previousInterpreterInvocations;
+    Deque<Object> previousInterpreterInvocations;
 
     // For instruction counting (interpreter only)
     int instructionCount;

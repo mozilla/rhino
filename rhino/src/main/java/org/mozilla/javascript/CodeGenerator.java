@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.mozilla.javascript.ast.AstNode;
@@ -47,7 +48,7 @@ class CodeGenerator extends Icode {
     // fixupTable[i] = (label_index << 32) | fixup_site
     private long[] fixupTable;
     private int fixupTableTop;
-    private ObjArray literalIds = new ObjArray();
+    private ArrayList<Object> literalIds = new ArrayList<>();
 
     private int exceptionTableTop;
 

@@ -14,6 +14,7 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,6 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeFunction;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
@@ -205,7 +205,7 @@ public class Codegen implements Evaluator {
         }
 
         if (possibleDirectCalls != null) {
-            directCallTargets = new ObjArray();
+            directCallTargets = new ArrayList<>();
         }
 
         OptTransformer ot = new OptTransformer(possibleDirectCalls, directCallTargets);
@@ -225,7 +225,7 @@ public class Codegen implements Evaluator {
     }
 
     private void initScriptNodesData(ScriptNode scriptOrFn) {
-        ObjArray x = new ObjArray();
+        ArrayList<ScriptNode> x = new ArrayList<>();
         collectScriptNodes_r(scriptOrFn, x);
 
         int count = x.size();
@@ -238,7 +238,7 @@ public class Codegen implements Evaluator {
         }
     }
 
-    private static void collectScriptNodes_r(ScriptNode n, ObjArray x) {
+    private static void collectScriptNodes_r(ScriptNode n, List<ScriptNode> x) {
         x.add(n);
         int nestedCount = n.getFunctionCount();
         for (int i = 0; i != nestedCount; ++i) {
@@ -1322,7 +1322,7 @@ public class Codegen implements Evaluator {
 
     private CompilerEnvirons compilerEnv;
 
-    private ObjArray directCallTargets;
+    private List<OptFunctionNode> directCallTargets;
     ScriptNode[] scriptOrFnNodes;
     private ObjToIntMap scriptOrFnIndexes;
 
