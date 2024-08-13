@@ -120,7 +120,8 @@ public class ArrayLikeAbstractOperations {
                     break;
                 case FIND_INDEX:
                 case FIND_LAST_INDEX:
-                    if (ScriptRuntime.toBoolean(result)) return ScriptRuntime.wrapNumber(i);
+                    if (ScriptRuntime.toBoolean(result))
+                        return ScriptRuntime.wrapNumber((double) i);
                     break;
             }
         }
