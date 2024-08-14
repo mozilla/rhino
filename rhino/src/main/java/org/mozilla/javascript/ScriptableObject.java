@@ -2334,7 +2334,7 @@ public abstract class ScriptableObject
             return ScriptRuntime.emptyArgs;
         }
         Object[] result = obj.getIds();
-        ObjToIntMap map = null;
+        HashSet<Object> map = null;
         for (; ; ) {
             obj = obj.getPrototype();
             if (obj == null) {
@@ -2349,18 +2349,18 @@ public abstract class ScriptableObject
                     result = ids;
                     continue;
                 }
-                map = new ObjToIntMap(result.length + ids.length);
+                map = new HashSet<>();
                 for (int i = 0; i != result.length; ++i) {
-                    map.intern(result[i]);
+                    map.add(result[i]);
                 }
                 result = null; // Allow to GC the result
             }
             for (int i = 0; i != ids.length; ++i) {
-                map.intern(ids[i]);
+                map.add(ids[i]);
             }
         }
         if (map != null) {
-            result = map.getKeys();
+            result = map.toArray();
         }
         return result;
     }

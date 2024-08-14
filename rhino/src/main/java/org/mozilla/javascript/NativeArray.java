@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -1166,10 +1167,10 @@ public class NativeArray extends IdScriptableObject implements List {
         if (cx.iterating == null) {
             toplevel = true;
             iterating = false;
-            cx.iterating = new ObjToIntMap(31);
+            cx.iterating = new HashSet<Scriptable>();
         } else {
             toplevel = false;
-            iterating = cx.iterating.has(o);
+            iterating = cx.iterating.contains(o);
         }
 
         // Make sure cx.iterating is set to null when done
@@ -1177,7 +1178,7 @@ public class NativeArray extends IdScriptableObject implements List {
         try {
             if (!iterating) {
                 // stop recursion
-                cx.iterating.put(o, 0);
+                cx.iterating.add(o);
 
                 // make toSource print null and undefined values in recent versions
                 boolean skipUndefinedAndNull =

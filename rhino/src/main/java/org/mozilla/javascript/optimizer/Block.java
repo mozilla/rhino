@@ -9,9 +9,10 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.Node;
-import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Jump;
 
@@ -19,14 +20,12 @@ class Block {
 
     private static class FatBlock {
 
-        private static Block[] reduceToArray(ObjToIntMap map) {
+        private static Block[] reduceToArray(Set<FatBlock> map) {
             Block[] result = null;
             if (!map.isEmpty()) {
                 result = new Block[map.size()];
                 int i = 0;
-                ObjToIntMap.Iterator iter = map.newIterator();
-                for (iter.start(); !iter.done(); iter.next()) {
-                    FatBlock fb = (FatBlock) iter.getKey();
+                for (FatBlock fb : map) {
                     result[i++] = fb.realBlock;
                 }
             }
@@ -34,11 +33,11 @@ class Block {
         }
 
         void addSuccessor(FatBlock b) {
-            successors.put(b, 0);
+            successors.add(b);
         }
 
         void addPredecessor(FatBlock b) {
-            predecessors.put(b, 0);
+            predecessors.add(b);
         }
 
         Block[] getSuccessors() {
@@ -50,9 +49,9 @@ class Block {
         }
 
         // all the Blocks that come immediately after this
-        private ObjToIntMap successors = new ObjToIntMap();
+        private final HashSet<FatBlock> successors = new HashSet<>();
         // all the Blocks that come immediately before this
-        private ObjToIntMap predecessors = new ObjToIntMap();
+        private final HashSet<FatBlock> predecessors = new HashSet<>();
 
         Block realBlock;
     }

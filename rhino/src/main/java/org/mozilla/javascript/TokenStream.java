@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigInteger;
+import java.util.HashMap;
 
 /**
  * This class implements the JavaScript scanner.
@@ -782,7 +783,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                         }
                         // Save the string in case we need to use in
                         // object literal definitions.
-                        this.string = (String) allStrings.intern(str);
+                        this.string = internString(str);
                         if (result != Token.RESERVED) {
                             return result;
                         } else if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -807,7 +808,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     return Token.ERROR;
                 }
 
-                this.string = (String) allStrings.intern(str);
+                this.string = internString(str);
                 return Token.NAME;
             }
 
@@ -1114,7 +1115,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 }
 
                 String str = getStringFromBuffer();
-                this.string = (String) allStrings.intern(str);
+                this.string = internString(str);
                 return Token.STRING;
             }
 
@@ -1401,6 +1402,20 @@ class TokenStream implements Parser.CurrentPositionReporter {
             }
         }
         return c;
+    }
+
+    // Use a HashMap to ensure that we only have one copy -- the original one
+    // of any particular string. Yes, the "String.intern" function also does this,
+    // but this is how Rhino has worked for years and it's not clear that we
+    // want to make the JVM-wide intern pool as big as it might happen if we
+    // used that.
+    private String internString(String s) {
+        String existing = allStrings.putIfAbsent(s, s);
+        if (existing == null) {
+            // First time we saw it
+            return s;
+        }
+        return existing;
     }
 
     private static boolean isAlpha(int c) {
@@ -2421,7 +2436,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
     private char[] stringBuffer = new char[128];
     private int stringBufferTop;
-    private ObjToIntMap allStrings = new ObjToIntMap(50);
+    private final HashMap<String, String> allStrings = new HashMap<>();
 
     // Room to backtrace from to < on failed match of the last - in <!--
     private final int[] ungetBuffer = new int[3];

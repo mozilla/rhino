@@ -27,7 +27,6 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeFunction;
-import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -232,7 +231,7 @@ public class Codegen implements Evaluator {
         scriptOrFnNodes = new ScriptNode[count];
         x.toArray(scriptOrFnNodes);
 
-        scriptOrFnIndexes = new ObjToIntMap(count);
+        scriptOrFnIndexes = new HashMap<>();
         for (int i = 0; i != count; ++i) {
             scriptOrFnIndexes.put(scriptOrFnNodes[i], i);
         }
@@ -1231,7 +1230,7 @@ public class Codegen implements Evaluator {
     }
 
     int getIndex(ScriptNode n) {
-        return scriptOrFnIndexes.getExisting(n);
+        return scriptOrFnIndexes.get(n);
     }
 
     String getDirectCtorName(ScriptNode n) {
@@ -1324,7 +1323,7 @@ public class Codegen implements Evaluator {
 
     private List<OptFunctionNode> directCallTargets;
     ScriptNode[] scriptOrFnNodes;
-    private ObjToIntMap scriptOrFnIndexes;
+    private HashMap<ScriptNode, Integer> scriptOrFnIndexes;
 
     private String mainMethodClass = DEFAULT_MAIN_METHOD_CLASS;
 
