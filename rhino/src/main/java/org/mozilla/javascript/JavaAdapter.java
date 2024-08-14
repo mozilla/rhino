@@ -18,6 +18,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +34,10 @@ public final class JavaAdapter implements IdFunctionCall {
     static class JavaAdapterSignature {
         Class<?> superClass;
         Class<?>[] interfaces;
-        ObjToIntMap names;
+        Map<String, Integer> names;
 
-        JavaAdapterSignature(Class<?> superClass, Class<?>[] interfaces, ObjToIntMap names) {
+        JavaAdapterSignature(
+                Class<?> superClass, Class<?>[] interfaces, Map<String, Integer> names) {
             this.superClass = superClass;
             this.interfaces = interfaces;
             this.names = names;
@@ -52,11 +54,10 @@ public final class JavaAdapter implements IdFunctionCall {
                     if (interfaces[i] != sig.interfaces[i]) return false;
             }
             if (names.size() != sig.names.size()) return false;
-            ObjToIntMap.Iterator iter = new ObjToIntMap.Iterator(names);
-            for (iter.start(); !iter.done(); iter.next()) {
-                String name = (String) iter.getKey();
-                int arity = iter.getValue();
-                if (arity != sig.names.get(name, arity + 1)) return false;
+            for (Map.Entry<String, Integer> e : names.entrySet()) {
+                String name = e.getKey();
+                int arity = e.getValue();
+                if (arity != sig.names.getOrDefault(name, arity + 1)) return false;
             }
             return true;
         }
@@ -278,9 +279,9 @@ public final class JavaAdapter implements IdFunctionCall {
         throw new ClassNotFoundException("adapter");
     }
 
-    private static ObjToIntMap getObjectFunctionNames(Scriptable obj) {
+    private static Map<String, Integer> getObjectFunctionNames(Scriptable obj) {
         Object[] ids = ScriptableObject.getPropertyIds(obj);
-        ObjToIntMap map = new ObjToIntMap(ids.length);
+        HashMap<String, Integer> map = new HashMap<>();
         for (int i = 0; i != ids.length; ++i) {
             if (!(ids[i] instanceof String)) continue;
             String id = (String) ids[i];
@@ -302,7 +303,7 @@ public final class JavaAdapter implements IdFunctionCall {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
-        ObjToIntMap names = getObjectFunctionNames(obj);
+        Map<String, Integer> names = getObjectFunctionNames(obj);
         JavaAdapterSignature sig;
         sig = new JavaAdapterSignature(superClass, interfaces, names);
         Class<?> adapterClass = generated.get(sig);
@@ -319,7 +320,7 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     public static byte[] createAdapterCode(
-            ObjToIntMap functionNames,
+            Map<String, Integer> functionNames,
             String adapterName,
             Class<?> superClass,
             Class<?>[] interfaces,
@@ -355,8 +356,8 @@ public final class JavaAdapter implements IdFunctionCall {
             generateEmptyCtor(cfw, adapterName, superName, scriptClassName);
         }
 
-        ObjToIntMap generatedOverrides = new ObjToIntMap();
-        ObjToIntMap generatedMethods = new ObjToIntMap();
+        HashMap<String, Integer> generatedOverrides = new HashMap<>();
+        HashMap<String, Integer> generatedMethods = new HashMap<>();
 
         // generate methods to satisfy all specified interfaces.
         for (int i = 0; i < interfacesCount; i++) {
@@ -368,7 +369,7 @@ public final class JavaAdapter implements IdFunctionCall {
                 }
                 String methodName = method.getName();
                 Class<?>[] argTypes = method.getParameterTypes();
-                if (!functionNames.has(methodName)) {
+                if (!functionNames.containsKey(methodName)) {
                     try {
                         superClass.getMethod(methodName, argTypes);
                         // The class we're extending implements this method and
@@ -383,7 +384,7 @@ public final class JavaAdapter implements IdFunctionCall {
                 // method/signature.
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
-                if (!generatedOverrides.has(methodKey)) {
+                if (!generatedOverrides.containsKey(methodKey)) {
                     generateMethod(
                             cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
@@ -404,13 +405,13 @@ public final class JavaAdapter implements IdFunctionCall {
             // has a property of the same name, then an override is intended.
             boolean isAbstractMethod = Modifier.isAbstract(mods);
             String methodName = method.getName();
-            if (isAbstractMethod || functionNames.has(methodName)) {
+            if (isAbstractMethod || functionNames.containsKey(methodName)) {
                 // make sure to generate only one instance of a particular
                 // method/signature.
                 Class<?>[] argTypes = method.getParameterTypes();
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
-                if (!generatedOverrides.has(methodKey)) {
+                if (!generatedOverrides.containsKey(methodKey)) {
                     generateMethod(
                             cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
@@ -434,11 +435,10 @@ public final class JavaAdapter implements IdFunctionCall {
 
         // Generate Java methods for remaining properties that are not
         // overrides.
-        ObjToIntMap.Iterator iter = new ObjToIntMap.Iterator(functionNames);
-        for (iter.start(); !iter.done(); iter.next()) {
-            String functionName = (String) iter.getKey();
-            if (generatedMethods.has(functionName)) continue;
-            int length = iter.getValue();
+        for (Map.Entry<String, Integer> e : functionNames.entrySet()) {
+            String functionName = e.getKey();
+            if (generatedMethods.containsKey(functionName)) continue;
+            int length = e.getValue();
             Class<?>[] parms = new Class[length];
             for (int k = 0; k < length; k++) parms[k] = ScriptRuntime.ObjectClass;
             generateMethod(cfw, adapterName, functionName, parms, ScriptRuntime.ObjectClass, false);

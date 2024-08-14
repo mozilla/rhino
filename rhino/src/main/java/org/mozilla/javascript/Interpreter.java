@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
@@ -869,7 +870,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     static int[] getLineNumbers(InterpreterData data) {
-        UintMap presentLines = new UintMap();
+        HashSet<Integer> presentLines = new HashSet<>();
 
         byte[] iCode = data.itsICode;
         int iCodeLength = iCode.length;
@@ -879,12 +880,17 @@ public final class Interpreter extends Icode implements Evaluator {
             if (bytecode == Icode_LINE) {
                 if (span != 3) Kit.codeBug();
                 int line = getIndex(iCode, pc + 1);
-                presentLines.put(line, 0);
+                presentLines.add(line);
             }
             pc += span;
         }
 
-        return presentLines.getKeys();
+        int[] ret = new int[presentLines.size()];
+        int i = 0;
+        for (int num : presentLines) {
+            ret[i++] = num;
+        }
+        return ret;
     }
 
     @Override
@@ -2566,7 +2572,7 @@ public final class Interpreter extends Icode implements Evaluator {
                         // -1 accounts for pc pointing to jump opcode + 1
                         frame.pc += offset - 1;
                     } else {
-                        frame.pc = frame.idata.longJumps.getExistingInt(frame.pc);
+                        frame.pc = frame.idata.longJumps.get(frame.pc);
                     }
                     if (instructionCounting) {
                         frame.pcPrevBranch = frame.pc;

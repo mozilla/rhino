@@ -6,8 +6,7 @@
 
 package org.mozilla.classfile;
 
-import org.mozilla.javascript.ObjToIntMap;
-import org.mozilla.javascript.UintMap;
+import java.util.HashMap;
 
 final class ConstantPool {
     ConstantPool(ClassFileWriter cfw) {
@@ -84,7 +83,7 @@ final class ConstantPool {
 
     int addConstant(String k) {
         int utf8Index = 0xFFFF & addUtf8(k);
-        int theIndex = itsStringConstHash.getInt(utf8Index, -1);
+        int theIndex = itsStringConstHash.getOrDefault(utf8Index, -1);
         if (theIndex == -1) {
             theIndex = itsTopIndex++;
             ensure(3);
@@ -156,7 +155,7 @@ final class ConstantPool {
     }
 
     short addUtf8(String k) {
-        int theIndex = itsUtf8Hash.get(k, -1);
+        int theIndex = itsUtf8Hash.getOrDefault(k, -1);
         if (theIndex == -1) {
             int strLen = k.length();
             boolean tooBigString;
@@ -223,12 +222,12 @@ final class ConstantPool {
     }
 
     short addClass(String className) {
-        int theIndex = itsClassHash.get(className, -1);
+        int theIndex = itsClassHash.getOrDefault(className, -1);
         if (theIndex == -1) {
             String slashed = className;
             if (className.indexOf('.') > 0) {
                 slashed = ClassFileWriter.getSlashedForm(className);
-                theIndex = itsClassHash.get(slashed, -1);
+                theIndex = itsClassHash.getOrDefault(slashed, -1);
                 if (theIndex != -1) {
                     itsClassHash.put(className, theIndex);
                 }
@@ -253,7 +252,7 @@ final class ConstantPool {
     short addFieldRef(String className, String fieldName, String fieldType) {
         FieldOrMethodRef ref = new FieldOrMethodRef(className, fieldName, fieldType);
 
-        int theIndex = itsFieldRefHash.get(ref, -1);
+        int theIndex = itsFieldRefHash.getOrDefault(ref, -1);
         if (theIndex == -1) {
             short ntIndex = addNameAndType(fieldName, fieldType);
             short classIndex = addClass(className);
@@ -272,7 +271,7 @@ final class ConstantPool {
     short addMethodRef(String className, String methodName, String methodType) {
         FieldOrMethodRef ref = new FieldOrMethodRef(className, methodName, methodType);
 
-        int theIndex = itsMethodRefHash.get(ref, -1);
+        int theIndex = itsMethodRefHash.getOrDefault(ref, -1);
         if (theIndex == -1) {
             short ntIndex = addNameAndType(methodName, methodType);
             short classIndex = addClass(className);
@@ -304,7 +303,7 @@ final class ConstantPool {
     short addInvokeDynamic(String methodName, String methodType, int bootstrapIndex) {
         ConstantEntry entry =
                 new ConstantEntry(CONSTANT_InvokeDynamic, bootstrapIndex, methodName, methodType);
-        int theIndex = itsConstantHash.get(entry, -1);
+        int theIndex = itsConstantHash.getOrDefault(entry, -1);
 
         if (theIndex == -1) {
             short nameTypeIndex = addNameAndType(methodName, methodType);
@@ -321,7 +320,7 @@ final class ConstantPool {
     }
 
     short addMethodHandle(ClassFileWriter.MHandle mh) {
-        int theIndex = itsConstantHash.get(mh, -1);
+        int theIndex = itsConstantHash.getOrDefault(mh, -1);
 
         if (theIndex == -1) {
             short ref;
@@ -345,7 +344,7 @@ final class ConstantPool {
     }
 
     Object getConstantData(int index) {
-        return itsConstantData.getObject(index);
+        return itsConstantData.get(index);
     }
 
     void setConstantData(int index, Object data) {
@@ -353,7 +352,7 @@ final class ConstantPool {
     }
 
     byte getConstantType(int index) {
-        return (byte) itsPoolTypes.getInt(index, 0);
+        return itsPoolTypes.getOrDefault(index, (byte) 0);
     }
 
     private void ensure(int howMuch) {
@@ -372,16 +371,16 @@ final class ConstantPool {
 
     private static final int MAX_UTF_ENCODING_SIZE = 65535;
 
-    private UintMap itsStringConstHash = new UintMap();
-    private ObjToIntMap itsUtf8Hash = new ObjToIntMap();
-    private ObjToIntMap itsFieldRefHash = new ObjToIntMap();
-    private ObjToIntMap itsMethodRefHash = new ObjToIntMap();
-    private ObjToIntMap itsClassHash = new ObjToIntMap();
-    private ObjToIntMap itsConstantHash = new ObjToIntMap();
+    private final HashMap<Integer, Integer> itsStringConstHash = new HashMap<>();
+    private final HashMap<String, Integer> itsUtf8Hash = new HashMap<>();
+    private final HashMap<FieldOrMethodRef, Integer> itsFieldRefHash = new HashMap<>();
+    private final HashMap<FieldOrMethodRef, Integer> itsMethodRefHash = new HashMap<>();
+    private final HashMap<String, Integer> itsClassHash = new HashMap<>();
+    private final HashMap<Object, Integer> itsConstantHash = new HashMap<>();
 
     private int itsTop;
     private int itsTopIndex;
-    private UintMap itsConstantData = new UintMap();
-    private UintMap itsPoolTypes = new UintMap();
+    private final HashMap<Integer, Object> itsConstantData = new HashMap<>();
+    private final HashMap<Integer, Byte> itsPoolTypes = new HashMap<>();
     private byte[] itsPool;
 }

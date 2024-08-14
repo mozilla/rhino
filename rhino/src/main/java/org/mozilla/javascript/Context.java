@@ -2675,7 +2675,7 @@ public class Context implements Closeable {
     // for Objects, Arrays to tag themselves as being printed out,
     // so they don't print themselves out recursively.
     // Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
-    ObjToIntMap iterating;
+    Set<Scriptable> iterating;
 
     Object interpreterSecurityDomain;
 
