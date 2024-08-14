@@ -334,6 +334,22 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 1;
                 s = "flatMap";
                 break;
+            case Id_toSorted:
+                arity = 1;
+                s = "toSorted";
+                break;
+            case Id_toReversed:
+                arity = 0;
+                s = "toReversed";
+                break;
+            case Id_toSpliced:
+                arity = 2;
+                s = "toSpliced";
+                break;
+            case Id_with:
+                arity = 2;
+                s = "with";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -532,6 +548,15 @@ public class NativeArray extends IdScriptableObject implements List {
                     thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
                     return new NativeArrayIterator(
                             scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+
+                case Id_toSorted:
+                    return js_toSorted(cx, scope, thisObj, args);
+                case Id_toReversed:
+                    return js_toReversed(cx, scope, thisObj, args);
+                case Id_toSpliced:
+                    return js_toSpliced(cx, scope, thisObj, args);
+                case Id_with:
+                    return js_with(cx, scope, thisObj, args);
             }
             throw new IllegalArgumentException(
                     "Array.prototype has no method: " + f.getFunctionName());
@@ -2174,6 +2199,49 @@ public class NativeArray extends IdScriptableObject implements List {
         return "Array".equals(((Scriptable) o).getClassName());
     }
 
+    private static Object js_toSorted(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable result = copyArray(cx, scope, thisObj);
+        js_sort(cx, scope, result, args);
+        return result;
+    }
+
+    private static Object js_toReversed(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable result = copyArray(cx, scope, thisObj);
+        js_reverse(cx, scope, result, args);
+        return result;
+    }
+
+    private static Object js_toSpliced(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable result = copyArray(cx, scope, thisObj);
+        js_splice(cx, scope, result, args);
+        return result;
+    }
+
+    private static Object js_with(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable result = copyArray(cx, scope, thisObj);
+
+        long index = args.length > 0 ? ScriptRuntime.toIndex(args[0]) : 0;
+        Object value = args.length > 1 ? args[1] : Undefined.instance;
+        
+        if (index < 0 || index > getLengthProperty(cx, result)) {
+            throw ScriptRuntime.rangeError("index out of range");
+        }
+        setElem(cx, result, index, value);
+
+        return result;
+    }
+
+    private static Scriptable copyArray(Context cx, Scriptable scope, Scriptable thisObj) {
+        Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+        Scriptable result = cx.newArray(scope, 0);
+        long length = doConcat(cx, scope, result, source, 0);
+        setLengthProperty(cx, result, length);
+        return result;
+    }
+
     // methods to implement java.util.List
 
     @Override
@@ -2563,6 +2631,18 @@ public class NativeArray extends IdScriptableObject implements List {
             case "flatMap":
                 id = Id_flatMap;
                 break;
+            case "toSorted":
+                id = Id_toSorted;
+                break;
+            case "toReversed":
+                id = Id_toReversed;
+                break;
+            case "toSpliced":
+                id = Id_toSpliced;
+                break;
+            case "with":
+                id = Id_with;
+                break;
             default:
                 id = 0;
                 break;
@@ -2606,7 +2686,11 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 34,
             Id_flat = 35,
             Id_flatMap = 36,
-            SymbolId_unscopables = 37,
+            Id_toSorted = 37,
+            Id_toReversed = 38,
+            Id_toSpliced = 39,
+            Id_with = 40,
+            SymbolId_unscopables = 41,
             MAX_PROTOTYPE_ID = SymbolId_unscopables;
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
