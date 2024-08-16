@@ -283,6 +283,10 @@ public class FunctionNode extends ScriptNode {
     public void setIsES6Generator() {
         isES6Generator = true;
         isGenerator = true;
+        // Generators always need activation, because their calling convention is always
+        // different. Make sure that this is set now, even if the generator does not
+        // have any "yield" statements.
+        needsActivation = true;
     }
 
     @Override
