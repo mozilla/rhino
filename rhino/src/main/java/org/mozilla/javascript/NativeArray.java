@@ -2210,7 +2210,6 @@ public class NativeArray extends IdScriptableObject implements List {
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
         Scriptable result = cx.newArray(scope, 0);
-
         long length = getLengthProperty(cx, source);
         setLengthProperty(cx, result, length);
 
@@ -2221,13 +2220,64 @@ public class NativeArray extends IdScriptableObject implements List {
             Object fromValue = getElem(cx, source, from);
             setElem(cx, result, k, fromValue);
         }
+
         return result;
     }
 
     private static Object js_toSpliced(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Scriptable result = copyArray(cx, scope, thisObj);
-        js_splice(cx, scope, result, args);
+        Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = getLengthProperty(cx, source);
+        
+        long actualStart = 0;
+        if (args.length > 0) {
+            actualStart = ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
+        }
+        
+        long insertCount = args.length > 2 ? args.length - 2 : 0;
+        
+        long actualSkipCount;
+        if (args.length == 0) {
+            actualSkipCount = 0;
+        } else if (args.length == 1) {
+            actualSkipCount = len - actualStart;
+        } else {
+            long sc = ScriptRuntime.toLength(args, 1);
+            actualSkipCount = Math.max(0, Math.min(sc, len-actualStart));
+        }
+
+        long newLen = len + insertCount - actualSkipCount;
+        if (newLen > NativeNumber.MAX_SAFE_INTEGER) {
+            throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", newLen);
+        }
+        if (newLen > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        
+        Scriptable result = cx.newArray(scope, (int)newLen);
+        
+        long i = 0;
+        long r = actualStart + actualSkipCount;
+
+        while (i < actualStart) {
+            Object e = getElem(cx, source, i);
+            setElem(cx, result, i, e);
+            i++;
+        }
+        
+        for (int j = 2; j < args.length; j++) {
+            setElem(cx, result, i, args[j]);
+            i++;
+        }
+        
+        while (i < newLen) {
+            Object e = getElem(cx, source, r);
+            setElem(cx, result, i, e);
+            i++;
+            r++;
+        }
+        
         return result;
     }
 
