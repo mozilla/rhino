@@ -2282,15 +2282,30 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     private static Object js_with(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Scriptable result = copyArray(cx, scope, thisObj);
+        Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        long index = args.length > 0 ? ScriptRuntime.toIndex(args[0]) : 0;
-        Object value = args.length > 1 ? args[1] : Undefined.instance;
+        long len = getLengthProperty(cx, source);
+        long relativeIndex = args.length > 0 ? (int)ScriptRuntime.toInteger(args[0]) : 0;
+        long actualIndex = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
         
-        if (index < 0 || index > getLengthProperty(cx, result)) {
+        if (actualIndex < 0 || actualIndex >= len) {
             throw ScriptRuntime.rangeError("index out of range");
         }
-        setElem(cx, result, index, value);
+        if (len > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        
+        Scriptable result = cx.newArray(scope, (int)len);
+        for (long k = 0; k < len; ++k) {
+            Object value;
+            if (k == actualIndex) {
+	            value = args.length > 1 ? args[1] : Undefined.instance;	                
+            } else {
+                value = getElem(cx, source, k);
+            }
+            setElem(cx, result, k, value);
+        }        
 
         return result;
     }
