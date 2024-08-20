@@ -1375,10 +1375,11 @@ public class NativeArray extends IdScriptableObject implements List {
             final Scriptable thisObj,
             final Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+        return sort(cx, o, comparator);
+    }
 
-        final Comparator<Object> comparator =
-                ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
-
+    private static Scriptable sort(Context cx, Scriptable o, Comparator<Object> comparator) {
         long llength = getLengthProperty(cx, o);
         final int length = (int) llength;
         if (llength != length) {
@@ -2201,8 +2202,23 @@ public class NativeArray extends IdScriptableObject implements List {
 
     private static Object js_toSorted(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Scriptable result = copyArray(cx, scope, thisObj);
-        js_sort(cx, scope, result, args);
+        Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+
+        Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = getLengthProperty(cx, source);
+
+        if (len > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        Scriptable result = cx.newArray(scope, (int)len);
+        
+        for (int k = 0; k < len; ++k) {
+            Object fromValue = getElem(cx, source, k);
+            setElem(cx, result, k, fromValue);
+        }
+        
+        sort(cx, result, comparator);
         return result;
     }
 
@@ -2309,14 +2325,6 @@ public class NativeArray extends IdScriptableObject implements List {
             setElem(cx, result, k, value);
         }        
 
-        return result;
-    }
-
-    private static Scriptable copyArray(Context cx, Scriptable scope, Scriptable thisObj) {
-        Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
-        Scriptable result = cx.newArray(scope, 0);
-        long length = doConcat(cx, scope, result, source, 0);
-        setLengthProperty(cx, result, length);
         return result;
     }
 
