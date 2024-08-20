@@ -2209,14 +2209,16 @@ public class NativeArray extends IdScriptableObject implements List {
     private static Object js_toReversed(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
-        Scriptable result = cx.newArray(scope, 0);
-        long length = getLengthProperty(cx, source);
-        setLengthProperty(cx, result, length);
+        long len = getLengthProperty(cx, source);
 
-        // Can't rely on any dense optimization or we would break the spec
-        // (see test262 holes-not-preserved.js)
-        for (int k = 0; k < length; ++k) {
-            int from = (int)(length) - k - 1;
+        if (len > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        Scriptable result = cx.newArray(scope, (int)len);
+
+        for (int k = 0; k < len; ++k) {
+            int from = (int)(len) - k - 1;
             Object fromValue = getElem(cx, source, from);
             setElem(cx, result, k, fromValue);
         }
