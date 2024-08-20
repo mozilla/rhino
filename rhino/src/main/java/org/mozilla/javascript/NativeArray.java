@@ -1375,7 +1375,8 @@ public class NativeArray extends IdScriptableObject implements List {
             final Scriptable thisObj,
             final Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+        Comparator<Object> comparator =
+                ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
         return sort(cx, o, comparator);
     }
 
@@ -2202,7 +2203,8 @@ public class NativeArray extends IdScriptableObject implements List {
 
     private static Object js_toSorted(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+        Comparator<Object> comparator =
+                ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
 
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, source);
@@ -2211,13 +2213,13 @@ public class NativeArray extends IdScriptableObject implements List {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
         }
-        Scriptable result = cx.newArray(scope, (int)len);
-        
+        Scriptable result = cx.newArray(scope, (int) len);
+
         for (int k = 0; k < len; ++k) {
             Object fromValue = getElem(cx, source, k);
             setElem(cx, result, k, fromValue);
         }
-        
+
         sort(cx, result, comparator);
         return result;
     }
@@ -2231,10 +2233,10 @@ public class NativeArray extends IdScriptableObject implements List {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
         }
-        Scriptable result = cx.newArray(scope, (int)len);
+        Scriptable result = cx.newArray(scope, (int) len);
 
         for (int k = 0; k < len; ++k) {
-            int from = (int)(len) - k - 1;
+            int from = (int) (len) - k - 1;
             Object fromValue = getElem(cx, source, from);
             setElem(cx, result, k, fromValue);
         }
@@ -2246,14 +2248,15 @@ public class NativeArray extends IdScriptableObject implements List {
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, source);
-        
+
         long actualStart = 0;
         if (args.length > 0) {
-            actualStart = ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
+            actualStart =
+                    ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
         }
-        
+
         long insertCount = args.length > 2 ? args.length - 2 : 0;
-        
+
         long actualSkipCount;
         if (args.length == 0) {
             actualSkipCount = 0;
@@ -2261,7 +2264,7 @@ public class NativeArray extends IdScriptableObject implements List {
             actualSkipCount = len - actualStart;
         } else {
             long sc = ScriptRuntime.toLength(args, 1);
-            actualSkipCount = Math.max(0, Math.min(sc, len-actualStart));
+            actualSkipCount = Math.max(0, Math.min(sc, len - actualStart));
         }
 
         long newLen = len + insertCount - actualSkipCount;
@@ -2272,9 +2275,9 @@ public class NativeArray extends IdScriptableObject implements List {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
         }
-        
-        Scriptable result = cx.newArray(scope, (int)newLen);
-        
+
+        Scriptable result = cx.newArray(scope, (int) newLen);
+
         long i = 0;
         long r = actualStart + actualSkipCount;
 
@@ -2283,19 +2286,19 @@ public class NativeArray extends IdScriptableObject implements List {
             setElem(cx, result, i, e);
             i++;
         }
-        
+
         for (int j = 2; j < args.length; j++) {
             setElem(cx, result, i, args[j]);
             i++;
         }
-        
+
         while (i < newLen) {
             Object e = getElem(cx, source, r);
             setElem(cx, result, i, e);
             i++;
             r++;
         }
-        
+
         return result;
     }
 
@@ -2303,9 +2306,9 @@ public class NativeArray extends IdScriptableObject implements List {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long len = getLengthProperty(cx, source);
-        long relativeIndex = args.length > 0 ? (int)ScriptRuntime.toInteger(args[0]) : 0;
+        long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
         long actualIndex = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
-        
+
         if (actualIndex < 0 || actualIndex >= len) {
             throw ScriptRuntime.rangeError("index out of range");
         }
@@ -2313,17 +2316,17 @@ public class NativeArray extends IdScriptableObject implements List {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
         }
-        
-        Scriptable result = cx.newArray(scope, (int)len);
+
+        Scriptable result = cx.newArray(scope, (int) len);
         for (long k = 0; k < len; ++k) {
             Object value;
             if (k == actualIndex) {
-	            value = args.length > 1 ? args[1] : Undefined.instance;	                
+                value = args.length > 1 ? args[1] : Undefined.instance;
             } else {
                 value = getElem(cx, source, k);
             }
             setElem(cx, result, k, value);
-        }        
+        }
 
         return result;
     }
