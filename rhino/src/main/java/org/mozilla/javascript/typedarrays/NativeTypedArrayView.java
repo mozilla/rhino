@@ -628,6 +628,33 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return newArray;
     }
 
+    private Object js_toReversed(Context cx, Scriptable scope) {
+	    NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+
+        Scriptable result = cx.newObject(scope, getClassName(),
+                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+
+        for (int k = 0; k < length; ++k) {
+            int from = length - k - 1;
+            Object fromValue = js_get(from);
+            result.put(k, result, fromValue);
+        }
+
+        return result;
+    }
+
+    private Object js_toSorted(Context cx, Scriptable scope, Object[] args) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    private Object js_toSpliced(Context cx, Scriptable scope, Object[] args) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    private Object js_with(Context cx, Scriptable scope, Object[] args) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
     // Dispatcher
 
     @Override
@@ -783,6 +810,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case Id_reduceRight:
                 return ArrayLikeAbstractOperations.reduceMethod(
                         cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
+            case Id_toReversed:
+                return realThis(thisObj, f).js_toReversed(cx, scope);
+            case Id_toSorted:
+                return realThis(thisObj, f).js_toSorted(cx, scope, args);
+            case Id_toSpliced:
+                return realThis(thisObj, f).js_toSpliced(cx, scope, args);
+            case Id_with:
+                return realThis(thisObj, f).js_with(cx, scope, args);
 
             case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
@@ -920,6 +955,22 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 1;
                 s = "reduceRight";
                 break;
+            case Id_toSorted:
+                arity = 1;
+                s = "toSorted";
+                break;
+            case Id_toReversed:
+                arity = 0;
+                s = "toReversed";
+                break;
+            case Id_toSpliced:
+                arity = 2;
+                s = "toSpliced";
+                break;
+            case Id_with:
+                arity = 2;
+                s = "with";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -1028,6 +1079,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "reduceRight":
                 id = Id_reduceRight;
                 break;
+            case "toSorted":
+                id = Id_toSorted;
+                break;
+            case "toReversed":
+                id = Id_toReversed;
+                break;
+            case "toSpliced":
+                id = Id_toSpliced;
+                break;
+            case "with":
+                id = Id_with;
+                break;
             default:
                 id = 0;
                 break;
@@ -1065,8 +1128,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Id_findLast = 27,
             Id_findLastIndex = 28,
             Id_reduce = 29,
-            Id_reduceRight = 30,
-            SymbolId_iterator = 31;
+            Id_reduceRight = 30, 
+            Id_toReversed = 31,
+            Id_toSorted = 32,
+            Id_toSpliced = 33,
+            Id_with = 34,
+            SymbolId_iterator = 35;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
