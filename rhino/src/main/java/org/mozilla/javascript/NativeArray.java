@@ -334,13 +334,13 @@ public class NativeArray extends IdScriptableObject implements List {
                 arity = 1;
                 s = "flatMap";
                 break;
-            case Id_toSorted:
-                arity = 1;
-                s = "toSorted";
-                break;
             case Id_toReversed:
                 arity = 0;
                 s = "toReversed";
+                break;
+            case Id_toSorted:
+                arity = 1;
+                s = "toSorted";
                 break;
             case Id_toSpliced:
                 arity = 2;
@@ -549,10 +549,10 @@ public class NativeArray extends IdScriptableObject implements List {
                     return new NativeArrayIterator(
                             scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
 
-                case Id_toSorted:
-                    return js_toSorted(cx, scope, thisObj, args);
                 case Id_toReversed:
                     return js_toReversed(cx, scope, thisObj, args);
+                case Id_toSorted:
+                    return js_toSorted(cx, scope, thisObj, args);
                 case Id_toSpliced:
                     return js_toSpliced(cx, scope, thisObj, args);
                 case Id_with:
@@ -2720,11 +2720,11 @@ public class NativeArray extends IdScriptableObject implements List {
             case "flatMap":
                 id = Id_flatMap;
                 break;
-            case "toSorted":
-                id = Id_toSorted;
-                break;
             case "toReversed":
                 id = Id_toReversed;
+                break;
+            case "toSorted":
+                id = Id_toSorted;
                 break;
             case "toSpliced":
                 id = Id_toSpliced;
@@ -2775,8 +2775,8 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_at = 34,
             Id_flat = 35,
             Id_flatMap = 36,
-            Id_toSorted = 37,
-            Id_toReversed = 38,
+            Id_toReversed = 37,
+            Id_toSorted = 38,
             Id_toSpliced = 39,
             Id_with = 40,
             SymbolId_unscopables = 41,
