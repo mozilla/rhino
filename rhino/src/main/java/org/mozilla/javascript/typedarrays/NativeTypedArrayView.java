@@ -633,9 +633,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Object js_toReversed(Context cx, Scriptable scope) {
-	    NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
-        Scriptable result = cx.newObject(scope, getClassName(),
-                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
 
         for (int k = 0; k < length; ++k) {
             int from = length - k - 1;
@@ -648,11 +651,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private Object js_toSorted(Context cx, Scriptable scope, Object[] args) {
         Object[] working = sortTemporaryArray(cx, scope, args);
- 
+
         // Move value in a new typed array of the same type
         NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
-        Scriptable result = cx.newObject(scope, getClassName(),
-                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
         for (int k = 0; k < length; ++k) {
             result.put(k, result, working[k]);
         }
@@ -660,27 +666,26 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return result;
     }
 
-    private Object js_toSpliced(Context cx, Scriptable scope, Object[] args) {
-        throw new UnsupportedOperationException("TODO");
-    }
-
     private Object js_with(Context cx, Scriptable scope, Object[] args) {
         long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
         long actualIndex = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
 
-        Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0; 
-        
+        Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0;
+
         if (actualIndex < 0 || actualIndex >= length) {
             throw ScriptRuntime.rangeError("index out of range");
         }
 
         NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
-        Scriptable result = cx.newObject(scope, getClassName(),
-                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
 
         for (int k = 0; k < length; ++k) {
             Object fromValue = (k == actualIndex) ? argsValue : js_get(k);
-	        result.put(k, result, fromValue);
+            result.put(k, result, fromValue);
         }
 
         return result;
@@ -845,8 +850,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 return realThis(thisObj, f).js_toReversed(cx, scope);
             case Id_toSorted:
                 return realThis(thisObj, f).js_toSorted(cx, scope, args);
-            case Id_toSpliced:
-                return realThis(thisObj, f).js_toSpliced(cx, scope, args);
             case Id_with:
                 return realThis(thisObj, f).js_with(cx, scope, args);
 
@@ -994,10 +997,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 0;
                 s = "toReversed";
                 break;
-            case Id_toSpliced:
-                arity = 2;
-                s = "toSpliced";
-                break;
             case Id_with:
                 arity = 2;
                 s = "with";
@@ -1116,9 +1115,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "toReversed":
                 id = Id_toReversed;
                 break;
-            case "toSpliced":
-                id = Id_toSpliced;
-                break;
             case "with":
                 id = Id_with;
                 break;
@@ -1159,12 +1155,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Id_findLast = 27,
             Id_findLastIndex = 28,
             Id_reduce = 29,
-            Id_reduceRight = 30, 
+            Id_reduceRight = 30,
             Id_toReversed = 31,
             Id_toSorted = 32,
-            Id_toSpliced = 33,
-            Id_with = 34,
-            SymbolId_iterator = 35;
+            Id_with = 33,
+            SymbolId_iterator = 34;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
