@@ -518,6 +518,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Scriptable js_sort(Context cx, Scriptable scope, Object[] args) {
+        Object[] working = sortTemporaryArray(cx, scope, args);
+        for (int i = 0; i < length; ++i) {
+            js_set(i, working[i]);
+        }
+
+        return this;
+    }
+
+    private Object[] sortTemporaryArray(Context cx, Scriptable scope, Object[] args) {
         Comparator<Object> comparator;
         if (args.length > 0 && Undefined.instance != args[0]) {
             comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
@@ -528,12 +537,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         // Temporary array to rely on Java's built-in sort, which is stable.
         Object[] working = toArray();
         Arrays.sort(working, comparator);
-
-        for (int i = 0; i < length; ++i) {
-            js_set(i, working[i]);
-        }
-
-        return this;
+        return working;
     }
 
     private Object js_copyWithin(Object[] args) {
@@ -630,7 +634,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private Object js_toReversed(Context cx, Scriptable scope) {
 	    NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
-
         Scriptable result = cx.newObject(scope, getClassName(),
                 new Object[]{newBuffer, 0, length, getBytesPerElement()});
 
@@ -644,7 +647,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Object js_toSorted(Context cx, Scriptable scope, Object[] args) {
-        throw new UnsupportedOperationException("TODO");
+        Object[] working = sortTemporaryArray(cx, scope, args);
+ 
+        // Move value in a new typed array of the same type
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result = cx.newObject(scope, getClassName(),
+                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+        for (int k = 0; k < length; ++k) {
+            result.put(k, result, working[k]);
+        }
+
+        return result;
     }
 
     private Object js_toSpliced(Context cx, Scriptable scope, Object[] args) {
