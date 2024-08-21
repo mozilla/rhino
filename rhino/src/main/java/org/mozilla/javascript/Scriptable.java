@@ -49,6 +49,7 @@ public interface Scriptable {
      * <code>get</code> that takes an integer:
      *
      * <table>
+     * <caption style="display:none">Code examples</caption>
      * <tr><th>JavaScript code</th><th>Java code</th></tr>
      * <tr><td>a.b      </td><td>a.get("b", a)</td></tr>
      * <tr><td>a["foo"] </td><td>a.get("foo", a)</td></tr>
