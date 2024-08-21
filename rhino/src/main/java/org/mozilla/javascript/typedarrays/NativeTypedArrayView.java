@@ -665,7 +665,25 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Object js_with(Context cx, Scriptable scope, Object[] args) {
-        throw new UnsupportedOperationException("TODO");
+        long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
+        long actualIndex = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
+
+        Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0; 
+        
+        if (actualIndex < 0 || actualIndex >= length) {
+            throw ScriptRuntime.rangeError("index out of range");
+        }
+
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result = cx.newObject(scope, getClassName(),
+                new Object[]{newBuffer, 0, length, getBytesPerElement()});
+
+        for (int k = 0; k < length; ++k) {
+            Object fromValue = (k == actualIndex) ? argsValue : js_get(k);
+	        result.put(k, result, fromValue);
+        }
+
+        return result;
     }
 
     // Dispatcher
