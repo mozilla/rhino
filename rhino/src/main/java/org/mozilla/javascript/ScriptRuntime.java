@@ -1618,7 +1618,7 @@ public class ScriptRuntime {
      * Helper to return a string or an integer. Always use a null check on s.stringId to determine
      * if the result is string or integer.
      *
-     * @see ScriptRuntime#toStringIdOrIndex(Context, Object)
+     * @see ScriptRuntime#toStringIdOrIndex(Object)
      */
     public static final class StringIdOrIndex {
         final String stringId;
@@ -2362,7 +2362,7 @@ public class ScriptRuntime {
         ((IdEnumeration) enumObj).enumNumbers = enumNumbers;
     }
 
-    /** @deprecated since 1.7.15. Use {@link #enumNext(Context, Object)} instead */
+    /** @deprecated since 1.7.15. Use {@link #enumNext(Object, Context)} instead */
     @Deprecated
     public static Boolean enumNext(Object enumObj) {
         return enumNext(enumObj, Context.getContext());
