@@ -1,0 +1,81 @@
+plugins {
+    id 'rhino.java-conventions'
+    id 'maven-publish'
+    id 'checkstyle'
+    id 'jacoco'
+    id 'net.ltgt.errorprone'
+}
+
+dependencies {
+    errorprone "com.google.errorprone:error_prone_core:2.28.0"
+}
+
+version = project.version
+
+tasks.named('compileJava') {
+    options.javaModuleVersion = provider { version }
+}
+
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes (
+            "Implementation-Version": project.version,
+            "Implementation-Title":  "Mozilla Rhino",
+            "Implementation-Vendor": "Mozilla Foundation",
+            "Implementation-URL": "http://github.com/mozilla/rhino",
+        )
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable(
+        // JavaDoc stuff
+        "AlmostJavadoc",
+        "EmptyBlockTag",
+        "EscapedEntity",
+        "MissingSummary",
+        "InvalidBlockTag",
+        "InvalidLink",
+        "InvalidParam",
+        "NotJavadoc",
+        "UnicodeEscape",
+        // Great ideas for when minimum version is more than Java 11
+        "PatternMatchingInstanceof",
+        // Stuff that we just love to do but should do less of eventually
+        "EmptyCatch",
+        "LabelledBreakTarget",
+        "JavaUtilDate",
+        // Less important for now, more stylistic than bug
+        "InlineMeSuggester",
+        // This one either alerts for parameters that we don't use,
+        // or spuriously for local variables in my opinion.
+        "UnusedVariable")
+    options.errorprone.excludedPaths = '.+/src/test/java/.+'
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
+    }
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier = 'javadoc'
+    from javadoc
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE-tools.txt') {
+        into 'META-INF'
+    }
+}
