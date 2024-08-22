@@ -123,16 +123,20 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(key, value, attributes);
     }
 
-    public void definePrototypeProperty(String name, java.util.function.Function<Scriptable, Object> getter, int attributes) {
+    public void definePrototypeProperty(
+            String name, java.util.function.Function<Scriptable, Object> getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, getter, null,  attributes );
+        proto.defineProperty(name, getter, null, attributes);
     }
 
-    public void definePrototypeProperty(String name, Function<Scriptable, Object> getter, BiConsumer<Scriptable, Object> setter, int attributes) {
+    public void definePrototypeProperty(
+            String name,
+            Function<Scriptable, Object> getter,
+            BiConsumer<Scriptable, Object> setter,
+            int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, getter, setter,  attributes );
+        proto.defineProperty(name, getter, setter, attributes);
     }
-
 
     /**
      * Define a function property directly on the constructor that is implemented under the covers
