@@ -10,6 +10,10 @@ dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
+
+    testImplementation("com.tngtech.archunit:archunit-junit4:1.2.0") {
+        exclude group: 'junit'
+    }
 }
 
 test {
