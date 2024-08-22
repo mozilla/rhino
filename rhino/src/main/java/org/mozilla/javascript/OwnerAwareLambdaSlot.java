@@ -84,8 +84,7 @@ public class OwnerAwareLambdaSlot extends Slot {
         if (getter != null) {
             return getter.apply(owner);
         }
-        Object v = super.getValue(owner);
-        return v == null ? Undefined.instance : v;
+        return super.getValue(owner);
     }
 
     public void setGetter(Function<Scriptable, Object> getter) {
