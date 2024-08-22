@@ -6,7 +6,6 @@ import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 /** Contains implementation of shared methods useful for arrays and typed arrays. */
 public class ArrayLikeAbstractOperations {
@@ -146,20 +145,23 @@ public class ArrayLikeAbstractOperations {
         if (!(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                && (callbackArg instanceof NativeRegExp)) {
-            // Previously, it was allowed to pass RegExp instance as a callback (it implements
-            // Function)
-            // But according to ES2015 21.2.6 Properties of RegExp Instances:
-            // > RegExp instances are ordinary objects that inherit properties from the RegExp
-            // prototype object.
-            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
-            // [[OriginalFlags]].
-            // so, no [[Call]] for RegExp-s
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
 
         Function f = (Function) callbackArg;
+
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            RegExpProxy reProxy = ScriptRuntime.getRegExpProxy(cx);
+            if (reProxy != null && reProxy.isRegExp(f))
+                // Previously, it was allowed to pass RegExp instance as a callback (it implements
+                // Function)
+                // But according to ES2015 21.2.6 Properties of RegExp Instances:
+                // > RegExp instances are ordinary objects that inherit properties from the RegExp
+                // prototype object.
+                // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
+                // [[OriginalFlags]].
+                // so, no [[Call]] for RegExp-s
+                throw ScriptRuntime.notFunctionError(callbackArg);
+        }
+
         return f;
     }
 
