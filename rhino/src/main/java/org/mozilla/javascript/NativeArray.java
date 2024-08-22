@@ -2236,7 +2236,7 @@ public class NativeArray extends IdScriptableObject implements List {
         Scriptable result = cx.newArray(scope, (int) len);
 
         for (int k = 0; k < len; ++k) {
-            int from = (int) (len) - k - 1;
+            int from = (int) len - k - 1;
             Object fromValue = getElem(cx, source, from);
             setElem(cx, result, k, fromValue);
         }
