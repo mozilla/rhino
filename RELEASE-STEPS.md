@@ -59,7 +59,9 @@ to the new tag. Include the following:
 
 The "Publish to Maven Central" action on GitHub Actions will automatically
 build the release, sign the JARs, and push it to oss.sonatype.org in the
-"org.mozilla" area. Log in to oss.sonatype.org, verify that all the checks
+"org.mozilla" area. Kick off this job using the "Actions" tag in the GitHub UI.
+
+Next, Log in to oss.sonatype.org, verify that all the checks
 that happen there were successful, and "close" the release. It will appear
 on Maven Central a few hours later.
 

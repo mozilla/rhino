@@ -1,0 +1,21 @@
+plugins {
+    id 'rhino.java-conventions'
+    id "me.champeau.jmh" version "0.7.2"
+}
+
+dependencies {
+    implementation project(':rhino')
+    implementation project(':rhino-tools')
+}
+
+jmh {
+    if (System.getenv('BENCHMARK') != null) {
+      includes = [System.getenv('BENCHMARK')]
+    }
+    benchmarkMode = ['avgt']
+    fork = 1
+    iterations = 5
+    timeOnIteration = '2s'
+    warmupIterations = 3
+    warmup = '5s'
+}
