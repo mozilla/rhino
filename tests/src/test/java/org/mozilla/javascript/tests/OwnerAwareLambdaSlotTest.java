@@ -74,7 +74,7 @@ public class OwnerAwareLambdaSlotTest {
         Object setResult = cx.evaluateString(scope, "s.status = 'DONE';", "source", 1, null);
 
         Object newStatus = cx.evaluateString(scope, "s.status", "source", 1, null);
-        assertEquals( "NewStatus: DONE", newStatus);
+        assertEquals("NewStatus: DONE", newStatus);
     }
 
     @Test
