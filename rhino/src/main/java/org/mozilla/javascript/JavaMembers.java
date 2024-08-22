@@ -327,7 +327,8 @@ class JavaMembers {
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
                                     if (!map.containsKey(sig)) {
-                                        if (includePrivate) VMBridge.instance.tryToMakeAccessible(method);
+                                        if (includePrivate)
+                                            VMBridge.instance.tryToMakeAccessible(method);
                                         map.put(sig, method);
                                     }
                                 }
