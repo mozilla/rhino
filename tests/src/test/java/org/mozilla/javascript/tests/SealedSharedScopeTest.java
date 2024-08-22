@@ -41,7 +41,8 @@ public class SealedSharedScopeTest {
                     sharedScope,
                     "jsObj = {'bar': 42};\n"
                     // Some tests...
-                    // + "Object.defineProperties(jsObj, { baz : { writable: true, value: 'aaa' }});\n"
+                    // + "Object.defineProperties(jsObj, { baz : { writable: true, value: 'aaa'
+                    // }});\n"
                     // + "Object.seal(jsObj);"
                     ,
                     "init",
