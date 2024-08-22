@@ -210,6 +210,7 @@ public class File extends ScriptableObject {
      *
      * <p>Close the file when this object is collected.
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void finalize() {
         try {
