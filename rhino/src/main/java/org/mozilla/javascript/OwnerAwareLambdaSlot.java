@@ -1,22 +1,23 @@
 package org.mozilla.javascript;
 
-import java.util.IdentityHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
- * A specialized property accessor using lambda functions, similar to {@link LambdaSlot},
- * but allows defining properties with getter and setter lambdas that require access to the owner object ('this').
- * This enables the implementation of properties that can access instance fields of the owner.
+ * A specialized property accessor using lambda functions, similar to {@link LambdaSlot}, but allows
+ * defining properties with getter and setter lambdas that require access to the owner object
+ * ('this'). This enables the implementation of properties that can access instance fields of the
+ * owner.
  *
- * Unlike {@link LambdaSlot}, Lambda functions used to define getter and setter logic require the owner's
- * `Scriptable` object as one of the parameters.
- * This is particularly useful for implementing properties that behave like standard JavaScript properties,
- * but are implemented with native functionality without the need for reflection.
+ * <p>Unlike {@link LambdaSlot}, Lambda functions used to define getter and setter logic require the
+ * owner's `Scriptable` object as one of the parameters. This is particularly useful for
+ * implementing properties that behave like standard JavaScript properties, but are implemented with
+ * native functionality without the need for reflection.
  */
 public class OwnerAwareLambdaSlot extends Slot {
     private transient Function<Scriptable, Object> getter;
     private transient BiConsumer<Scriptable, Object> setter;
+
     OwnerAwareLambdaSlot(Object name, int index) {
         super(name, index, 0);
     }
@@ -30,23 +31,32 @@ public class OwnerAwareLambdaSlot extends Slot {
         return false;
     }
 
-
     @Override
     ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
         if (getter != null) {
-            desc.defineProperty("get",
-                    new LambdaFunction(scope, "get " + super.name, 0, (cx1, scope1, thisObj, args) ->
-                            getter.apply(thisObj)), ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "get",
+                    new LambdaFunction(
+                            scope,
+                            "get " + super.name,
+                            0,
+                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj)),
+                    ScriptableObject.EMPTY);
         }
 
         if (setter != null) {
-            desc.defineProperty("set",
-                    new LambdaFunction(scope, "set " + super.name, 1, (cx1, scope1, thisObj, args) ->
-                    {
-                        setter.accept(thisObj, args[0]);
-                        return  Undefined.instance;
-                    }), ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "set",
+                    new LambdaFunction(
+                            scope,
+                            "set " + super.name,
+                            1,
+                            (cx1, scope1, thisObj, args) -> {
+                                setter.accept(thisObj, args[0]);
+                                return Undefined.instance;
+                            }),
+                    ScriptableObject.EMPTY);
         }
         desc.setCommonDescriptorProperties(getAttributes(), false);
         return desc;
