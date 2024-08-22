@@ -1784,6 +1784,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
+                                        } else if (fun instanceof LambdaConstructor) {
+                                            break;
                                         } else if (fun instanceof LambdaFunction) {
                                             fun = ((LambdaFunction) fun).getTarget();
                                         } else if (fun instanceof BoundFunction) {
