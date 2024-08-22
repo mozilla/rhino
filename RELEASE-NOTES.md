@@ -1,3 +1,16 @@
+# Rhino 1.7.15
+## May 3, 2024
+
+Highlights of this release include:
+
+* Basic support for "rest parameters"
+* Improvements in Unicode support
+* "Symbol.species" implemented in many places
+* More correct property ordering in many places
+* And many more improvements and bug fixes
+
+This release includes committs from 29 different committers. Thanks to you all for your help!
+
 # Rhino 1.7.14
 ## January 6, 2022
 
