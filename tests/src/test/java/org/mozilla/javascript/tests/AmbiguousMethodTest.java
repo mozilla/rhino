@@ -85,6 +85,7 @@ public class AmbiguousMethodTest {
 
         testIt("AmbiguousMethodTest.check4(1)", "Integer");
         testIt("AmbiguousMethodTest.check4(java.util.UUID.randomUUID())", "UUID");
+        testIt("AmbiguousMethodTest['check4(java.util.UUID)'](null)", "UUID");
         try {
             testIt("AmbiguousMethodTest.check4(null)", "Object");
             Assert.fail();
