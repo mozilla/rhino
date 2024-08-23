@@ -2,9 +2,9 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.mozilla.javascript.LambdaConstructor.CONSTRUCTOR_FUNCTION;
+import static org.mozilla.javascript.LambdaConstructor.CONSTRUCTOR_NEW;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
@@ -14,8 +14,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class InterpreterFunctionPeelingNonRegressionTest {
     @Test
     public void testLambdaFunction() {
-        try (var cx = Context.enter()) {
-            cx.setOptimizationLevel(-1);
+        Utils.runWithAllOptimizationLevels(cx -> {
             Scriptable scope = cx.initStandardObjects();
 
             LambdaFunction makePerson =
@@ -34,13 +33,14 @@ public class InterpreterFunctionPeelingNonRegressionTest {
                             + "testLambdaFunction().name";
             Object value = cx.evaluateString(scope, source, "test", 1, null);
             assertEquals("Andrea", value);
-        }
+            
+            return null;
+        });
     }
 
     @Test
-    public void testLambdaConstructor() {
-        try (var cx = Context.enter()) {
-            cx.setOptimizationLevel(-1);
+    public void testLambdaConstructorAsFunction() {
+        Utils.runWithAllOptimizationLevels(cx -> {
             Scriptable scope = cx.initStandardObjects();
 
             LambdaConstructor personCtor =
@@ -59,7 +59,35 @@ public class InterpreterFunctionPeelingNonRegressionTest {
                             + "testLambdaConstructor().name";
             Object value = cx.evaluateString(scope, source, "test", 1, null);
             assertEquals("Andrea", value);
-        }
+            
+            return null;
+        });
+    }
+
+    @Test
+    public void testLambdaConstructorViaNew() {
+        Utils.runWithAllOptimizationLevels(cx -> {
+            Scriptable scope = cx.initStandardObjects();
+
+            LambdaConstructor personCtor =
+                    new LambdaConstructor(
+                            scope,
+                            "Person",
+                            1,
+                            CONSTRUCTOR_NEW,
+                            (cx1, scope1, args) -> new Person(ScriptRuntime.toString(args[0])));
+            scope.put("Person", scope, personCtor);
+
+            String source =
+                    "function testLambdaConstructor() {\n"
+                            + "  return new Person('Andrea');\n"
+                            + "}\n"
+                            + "testLambdaConstructor().name";
+            Object value = cx.evaluateString(scope, source, "test", 1, null);
+            assertEquals("Andrea", value);
+
+            return null;
+        });
     }
 
     static class Person extends ScriptableObject {
