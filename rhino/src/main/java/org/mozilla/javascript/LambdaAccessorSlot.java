@@ -14,15 +14,17 @@ import java.util.function.Function;
  * implementing properties that behave like standard JavaScript properties, but are implemented with
  * native functionality without the need for reflection.
  */
-public class OwnerAwareLambdaSlot extends Slot {
+public class LambdaAccessorSlot extends Slot {
     private transient Function<Scriptable, Object> getter;
     private transient BiConsumer<Scriptable, Object> setter;
+    private LambdaFunction getterFunction;
+    private LambdaFunction setterFunction;
 
-    OwnerAwareLambdaSlot(Object name, int index) {
+    LambdaAccessorSlot(Object name, int index) {
         super(name, index, 0);
     }
 
-    OwnerAwareLambdaSlot(Slot oldSlot) {
+    LambdaAccessorSlot(Slot oldSlot) {
         super(oldSlot);
     }
 
@@ -35,28 +37,31 @@ public class OwnerAwareLambdaSlot extends Slot {
     ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
         if (getter != null) {
-            desc.defineProperty(
-                    "get",
-                    new LambdaFunction(
-                            scope,
-                            "get " + super.name,
-                            0,
-                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj)),
-                    ScriptableObject.EMPTY);
+            if (getterFunction == null) {
+                this.getterFunction =
+                        new LambdaFunction(
+                                scope,
+                                "get " + super.name,
+                                0,
+                                (cx1, scope1, thisObj, args) -> getter.apply(thisObj));
+            }
+
+            desc.defineProperty("get", this.getterFunction, ScriptableObject.EMPTY);
         }
 
         if (setter != null) {
-            desc.defineProperty(
-                    "set",
-                    new LambdaFunction(
-                            scope,
-                            "set " + super.name,
-                            1,
-                            (cx1, scope1, thisObj, args) -> {
-                                setter.accept(thisObj, args[0]);
-                                return Undefined.instance;
-                            }),
-                    ScriptableObject.EMPTY);
+            if (setterFunction == null) {
+                this.setterFunction =
+                        new LambdaFunction(
+                                scope,
+                                "set " + super.name,
+                                1,
+                                (cx1, scope1, thisObj, args) -> {
+                                    setter.accept(thisObj, args[0]);
+                                    return Undefined.instance;
+                                });
+            }
+            desc.defineProperty("set", this.setterFunction, ScriptableObject.EMPTY);
         }
         desc.setCommonDescriptorProperties(getAttributes(), false);
         return desc;

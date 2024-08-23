@@ -2,7 +2,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.*;
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
-import static org.mozilla.javascript.tests.OwnerAwareLambdaSlotTest.StatusHolder.self;
+import static org.mozilla.javascript.tests.LambdaAccessorSlotTest.StatusHolder.self;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
-public class OwnerAwareLambdaSlotTest {
+public class LambdaAccessorSlotTest {
     private Context cx;
     private ScriptableObject scope;
 
