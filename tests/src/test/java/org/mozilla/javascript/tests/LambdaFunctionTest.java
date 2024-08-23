@@ -37,7 +37,8 @@ public class LambdaFunctionTest {
     }
 
     private void eval(String source) {
-        cx.evaluateString(root, source, "test.js", 1, null);
+        Utils.runWithAllOptimizationLevels(
+                ignored -> cx.evaluateString(root, source, "test.js", 1, null));
     }
 
     @Test
