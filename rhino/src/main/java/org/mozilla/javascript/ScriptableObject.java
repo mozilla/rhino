@@ -1718,8 +1718,8 @@ public abstract class ScriptableObject
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
-        OwnerAwareLambdaSlot slot =
-                slotMap.compute(name, 0, ScriptableObject::ensureOwnerAwareLambdaSlot);
+        LambdaAccessorSlot slot =
+                slotMap.compute(name, 0, ScriptableObject::ensureLambdaAccessorSlot);
         slot.setAttributes(attributes);
 
         slot.setGetter(getter);
@@ -2731,14 +2731,14 @@ public abstract class ScriptableObject
         }
     }
 
-    private static OwnerAwareLambdaSlot ensureOwnerAwareLambdaSlot(
+    private static LambdaAccessorSlot ensureLambdaAccessorSlot(
             Object name, int index, Slot existing) {
         if (existing == null) {
-            return new OwnerAwareLambdaSlot(name, index);
-        } else if (existing instanceof OwnerAwareLambdaSlot) {
-            return (OwnerAwareLambdaSlot) existing;
+            return new LambdaAccessorSlot(name, index);
+        } else if (existing instanceof LambdaAccessorSlot) {
+            return (LambdaAccessorSlot) existing;
         } else {
-            return new OwnerAwareLambdaSlot(existing);
+            return new LambdaAccessorSlot(existing);
         }
     }
 
