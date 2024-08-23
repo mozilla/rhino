@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -85,6 +86,7 @@ public class NativeObject extends IdScriptableObject implements Map {
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze, "freeze", 1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign, "assign", 2);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is, "is", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_groupBy, "groupBy", 2);
         super.fillConstructorProperties(ctor);
     }
 
@@ -687,6 +689,37 @@ public class NativeObject extends IdScriptableObject implements Map {
                     return ScriptRuntime.wrapBoolean(ScriptRuntime.same(a1, a2));
                 }
 
+            case ConstructorId_groupBy:
+                {
+                    Object items = args.length < 1 ? Undefined.instance : args[0];
+                    Object callback = args.length < 2 ? Undefined.instance : args[1];
+
+                    Map<Object, List<Object>> groups =
+                            AbstractEcmaObjectOperations.groupBy(
+                                    cx,
+                                    scope,
+                                    f,
+                                    items,
+                                    callback,
+                                    AbstractEcmaObjectOperations.KEY_COERCION.PROPERTY);
+
+                    NativeObject obj = (NativeObject) cx.newObject(scope);
+                    obj.setPrototype(null);
+
+                    for (Map.Entry<Object, List<Object>> entry : groups.entrySet()) {
+                        Scriptable elements = cx.newArray(scope, entry.getValue().toArray());
+
+                        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+                        desc.put("enumerable", desc, Boolean.TRUE);
+                        desc.put("configurable", desc, Boolean.TRUE);
+                        desc.put("value", desc, elements);
+
+                        obj.defineOwnProperty(cx, entry.getKey(), desc);
+                    }
+
+                    return obj;
+                }
+
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -1021,6 +1054,7 @@ public class NativeObject extends IdScriptableObject implements Map {
             ConstructorId_fromEntries = -20,
             ConstructorId_values = -21,
             ConstructorId_hasOwn = -22,
+            ConstructorId_groupBy = -23,
             Id_constructor = 1,
             Id_toString = 2,
             Id_toLocaleString = 3,
