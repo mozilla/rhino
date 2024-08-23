@@ -518,6 +518,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private Scriptable js_sort(Context cx, Scriptable scope, Object[] args) {
+        Object[] working = sortTemporaryArray(cx, scope, args);
+        for (int i = 0; i < length; ++i) {
+            js_set(i, working[i]);
+        }
+
+        return this;
+    }
+
+    private Object[] sortTemporaryArray(Context cx, Scriptable scope, Object[] args) {
         Comparator<Object> comparator;
         if (args.length > 0 && Undefined.instance != args[0]) {
             comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
@@ -528,12 +537,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         // Temporary array to rely on Java's built-in sort, which is stable.
         Object[] working = toArray();
         Arrays.sort(working, comparator);
-
-        for (int i = 0; i < length; ++i) {
-            js_set(i, working[i]);
-        }
-
-        return this;
+        return working;
     }
 
     private Object js_copyWithin(Object[] args) {
@@ -626,6 +630,65 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             throw ScriptRuntime.typeErrorById("msg.typed.array.ctor.incompatible", methodName);
         }
         return newArray;
+    }
+
+    private Object js_toReversed(Context cx, Scriptable scope) {
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
+
+        for (int k = 0; k < length; ++k) {
+            int from = length - k - 1;
+            Object fromValue = js_get(from);
+            result.put(k, result, fromValue);
+        }
+
+        return result;
+    }
+
+    private Object js_toSorted(Context cx, Scriptable scope, Object[] args) {
+        Object[] working = sortTemporaryArray(cx, scope, args);
+
+        // Move value in a new typed array of the same type
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
+        for (int k = 0; k < length; ++k) {
+            result.put(k, result, working[k]);
+        }
+
+        return result;
+    }
+
+    private Object js_with(Context cx, Scriptable scope, Object[] args) {
+        long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
+        long actualIndex = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
+
+        Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0;
+
+        if (actualIndex < 0 || actualIndex >= length) {
+            throw ScriptRuntime.rangeError("index out of range");
+        }
+
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(length * getBytesPerElement());
+        Scriptable result =
+                cx.newObject(
+                        scope,
+                        getClassName(),
+                        new Object[] {newBuffer, 0, length, getBytesPerElement()});
+
+        for (int k = 0; k < length; ++k) {
+            Object fromValue = (k == actualIndex) ? argsValue : js_get(k);
+            result.put(k, result, fromValue);
+        }
+
+        return result;
     }
 
     // Dispatcher
@@ -783,6 +846,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case Id_reduceRight:
                 return ArrayLikeAbstractOperations.reduceMethod(
                         cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
+            case Id_toReversed:
+                return realThis(thisObj, f).js_toReversed(cx, scope);
+            case Id_toSorted:
+                return realThis(thisObj, f).js_toSorted(cx, scope, args);
+            case Id_with:
+                return realThis(thisObj, f).js_with(cx, scope, args);
 
             case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
@@ -920,6 +989,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 arity = 1;
                 s = "reduceRight";
                 break;
+            case Id_toSorted:
+                arity = 1;
+                s = "toSorted";
+                break;
+            case Id_toReversed:
+                arity = 0;
+                s = "toReversed";
+                break;
+            case Id_with:
+                arity = 2;
+                s = "with";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -1028,6 +1109,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             case "reduceRight":
                 id = Id_reduceRight;
                 break;
+            case "toSorted":
+                id = Id_toSorted;
+                break;
+            case "toReversed":
+                id = Id_toReversed;
+                break;
+            case "with":
+                id = Id_with;
+                break;
             default:
                 id = 0;
                 break;
@@ -1066,7 +1156,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Id_findLastIndex = 28,
             Id_reduce = 29,
             Id_reduceRight = 30,
-            SymbolId_iterator = 31;
+            Id_toReversed = 31,
+            Id_toSorted = 32,
+            Id_with = 33,
+            SymbolId_iterator = 34;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
