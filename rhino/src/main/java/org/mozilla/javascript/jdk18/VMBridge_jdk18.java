@@ -57,6 +57,7 @@ public class VMBridge_jdk18 extends VMBridge {
         return accessible.trySetAccessible();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces) {
         // XXX: How to handle interfaces array withclasses from different

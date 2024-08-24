@@ -440,8 +440,7 @@ public class NativeConsoleTest {
         assertPrintCalls(
                 "console.assert(false, 'Fail', 1)",
                 Collections.singletonList(
-                        new PrinterCall(
-                                Level.ERROR, new Object[] {"Assertion failed: Fail", 1.0})));
+                        new PrinterCall(Level.ERROR, new Object[] {"Assertion failed: Fail", 1})));
         assertPrintMsg("console.assert(false, 'Fail', 1)", "Assertion failed: Fail 1");
 
         assertPrintCalls(

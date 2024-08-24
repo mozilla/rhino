@@ -2,12 +2,14 @@ package org.mozilla.javascript.benchmarks;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class V8Benchmark {
     static Object[] emptyArgs = new Object[] {};
 

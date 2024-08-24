@@ -12,8 +12,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
@@ -22,7 +24,6 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeCall;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -388,7 +389,7 @@ public class Dim {
 
     /** Returns an array of all functions in the given script. */
     private static DebuggableScript[] getAllFunctions(DebuggableScript function) {
-        ObjArray functions = new ObjArray();
+        ArrayList<DebuggableScript> functions = new ArrayList<>();
         collectFunctions_r(function, functions);
         DebuggableScript[] result = new DebuggableScript[functions.size()];
         functions.toArray(result);
@@ -396,7 +397,8 @@ public class Dim {
     }
 
     /** Helper function for {@link #getAllFunctions(DebuggableScript)}. */
-    private static void collectFunctions_r(DebuggableScript function, ObjArray array) {
+    private static void collectFunctions_r(
+            DebuggableScript function, List<DebuggableScript> array) {
         array.add(function);
         for (int i = 0; i != function.getFunctionCount(); ++i) {
             collectFunctions_r(function.getFunction(i), array);
@@ -912,7 +914,7 @@ public class Dim {
     public static class ContextData {
 
         /** The stack frames. */
-        private ObjArray frameStack = new ObjArray();
+        private ArrayList<StackFrame> frameStack = new ArrayList<>();
 
         /** Whether the debugger should break at the next line in this context. */
         private boolean breakNextLine;
@@ -947,12 +949,12 @@ public class Dim {
 
         /** Pushes a stack frame on to the stack. */
         private void pushFrame(StackFrame frame) {
-            frameStack.push(frame);
+            frameStack.add(frame);
         }
 
         /** Pops a stack frame from the stack. */
         private void popFrame() {
-            frameStack.pop();
+            frameStack.remove(frameStack.size() - 1);
         }
     }
 

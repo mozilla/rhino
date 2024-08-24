@@ -56,9 +56,9 @@ public class Bug687669Test {
     public void eval() {
         // test EmptyStatement node doesn't infer with return values (in
         // contrast to wrapping EmptyExpression into an ExpressionStatement)
-        assertEquals(1d, eval("1;;;;"));
+        assertEquals(1, eval("1;;;;"));
         assertEquals(Undefined.instance, eval("(function(){1;;;;})()"));
-        assertEquals(1d, eval("(function(){return 1;;;;})()"));
+        assertEquals(1, eval("(function(){return 1;;;;})()"));
     }
 
     @Test

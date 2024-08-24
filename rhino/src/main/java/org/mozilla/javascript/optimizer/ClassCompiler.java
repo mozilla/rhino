@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.optimizer;
 
+import java.util.HashMap;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JavaAdapter;
-import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ast.AstRoot;
@@ -143,7 +143,7 @@ public class ClassCompiler {
             return new Object[] {scriptClassName, scriptClassBytes};
         }
         int functionCount = tree.getFunctionCount();
-        ObjToIntMap functionNames = new ObjToIntMap(functionCount);
+        HashMap<String, Integer> functionNames = new HashMap<>();
         for (int i = 0; i != functionCount; ++i) {
             FunctionNode ofn = tree.getFunctionNode(i);
             String name = ofn.getName();

@@ -6,7 +6,6 @@ import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 /** Contains implementation of shared methods useful for arrays and typed arrays. */
 public class ArrayLikeAbstractOperations {
@@ -18,6 +17,8 @@ public class ArrayLikeAbstractOperations {
         SOME,
         FIND,
         FIND_INDEX,
+        FIND_LAST,
+        FIND_LAST_INDEX,
     }
 
     public enum ReduceOperation {
@@ -35,7 +36,10 @@ public class ArrayLikeAbstractOperations {
             Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        if (IterativeOperation.FIND == operation || IterativeOperation.FIND_INDEX == operation) {
+        if (IterativeOperation.FIND == operation
+                || IterativeOperation.FIND_INDEX == operation
+                || IterativeOperation.FIND_LAST == operation
+                || IterativeOperation.FIND_LAST_INDEX == operation) {
             requireObjectCoercible(cx, o, fun);
         }
 
@@ -62,12 +66,29 @@ public class ArrayLikeAbstractOperations {
             array = cx.newArray(scope, resultLength);
         }
         long j = 0;
-        for (long i = 0; i < length; i++) {
+        long start =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? length - 1
+                        : 0;
+        long end =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? -1
+                        : length;
+        long increment =
+                (operation == IterativeOperation.FIND_LAST
+                                || operation == IterativeOperation.FIND_LAST_INDEX)
+                        ? -1
+                        : +1;
+        for (long i = start; i != end; i += increment) {
             Object[] innerArgs = new Object[3];
             Object elem = getRawElem(o, i);
             if (elem == NOT_FOUND) {
                 if (operation == IterativeOperation.FIND
-                        || operation == IterativeOperation.FIND_INDEX) {
+                        || operation == IterativeOperation.FIND_INDEX
+                        || operation == IterativeOperation.FIND_LAST
+                        || operation == IterativeOperation.FIND_LAST_INDEX) {
                     elem = Undefined.instance;
                 } else {
                     continue;
@@ -93,10 +114,13 @@ public class ArrayLikeAbstractOperations {
                     if (ScriptRuntime.toBoolean(result)) return Boolean.TRUE;
                     break;
                 case FIND:
+                case FIND_LAST:
                     if (ScriptRuntime.toBoolean(result)) return elem;
                     break;
                 case FIND_INDEX:
-                    if (ScriptRuntime.toBoolean(result)) return ScriptRuntime.wrapNumber(i);
+                case FIND_LAST_INDEX:
+                    if (ScriptRuntime.toBoolean(result))
+                        return ScriptRuntime.wrapNumber((double) i);
                     break;
             }
         }
@@ -109,6 +133,7 @@ public class ArrayLikeAbstractOperations {
             case SOME:
                 return Boolean.FALSE;
             case FIND_INDEX:
+            case FIND_LAST_INDEX:
                 return ScriptRuntime.wrapNumber(-1);
             case FOR_EACH:
             default:
@@ -120,20 +145,23 @@ public class ArrayLikeAbstractOperations {
         if (!(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                && (callbackArg instanceof NativeRegExp)) {
-            // Previously, it was allowed to pass RegExp instance as a callback (it implements
-            // Function)
-            // But according to ES2015 21.2.6 Properties of RegExp Instances:
-            // > RegExp instances are ordinary objects that inherit properties from the RegExp
-            // prototype object.
-            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
-            // [[OriginalFlags]].
-            // so, no [[Call]] for RegExp-s
-            throw ScriptRuntime.notFunctionError(callbackArg);
-        }
 
         Function f = (Function) callbackArg;
+
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            RegExpProxy reProxy = ScriptRuntime.getRegExpProxy(cx);
+            if (reProxy != null && reProxy.isRegExp(f))
+                // Previously, it was allowed to pass RegExp instance as a callback (it implements
+                // Function)
+                // But according to ES2015 21.2.6 Properties of RegExp Instances:
+                // > RegExp instances are ordinary objects that inherit properties from the RegExp
+                // prototype object.
+                // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and
+                // [[OriginalFlags]].
+                // so, no [[Call]] for RegExp-s
+                throw ScriptRuntime.notFunctionError(callbackArg);
+        }
+
         return f;
     }
 

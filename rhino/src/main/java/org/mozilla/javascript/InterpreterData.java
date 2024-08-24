@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Map;
 import org.mozilla.javascript.debug.DebuggableScript;
 
 final class InterpreterData implements Serializable, DebuggableScript {
@@ -84,7 +85,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
 
     Object[] literalIds;
 
-    UintMap longJumps;
+    Map<Integer, Integer> longJumps;
 
     int firstLinePC = -1; // PC for the first LINE icode
 

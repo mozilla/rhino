@@ -4,11 +4,11 @@
 
 package org.mozilla.javascript.optimizer;
 
+import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.NodeTransformer;
-import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.ScriptNode;
 
@@ -20,7 +20,9 @@ import org.mozilla.javascript.ast.ScriptNode;
  */
 class OptTransformer extends NodeTransformer {
 
-    OptTransformer(Map<String, OptFunctionNode> possibleDirectCalls, ObjArray directCallTargets) {
+    OptTransformer(
+            Map<String, OptFunctionNode> possibleDirectCalls,
+            List<OptFunctionNode> directCallTargets) {
         this.possibleDirectCalls = possibleDirectCalls;
         this.directCallTargets = directCallTargets;
     }
@@ -100,5 +102,5 @@ class OptTransformer extends NodeTransformer {
     }
 
     private Map<String, OptFunctionNode> possibleDirectCalls;
-    private ObjArray directCallTargets;
+    private List<OptFunctionNode> directCallTargets;
 }

@@ -1,6 +1,7 @@
 package org.mozilla.javascript.benchmarks;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
@@ -13,8 +14,8 @@ import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.annotations.*;
 import org.openjdk.jmh.annotations.*;
 
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class BuiltinBenchmark {
-
     @State(Scope.Thread)
     public static class AbstractClassState {
 

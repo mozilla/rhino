@@ -14,6 +14,7 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,6 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeFunction;
-import org.mozilla.javascript.ObjArray;
-import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -205,7 +204,7 @@ public class Codegen implements Evaluator {
         }
 
         if (possibleDirectCalls != null) {
-            directCallTargets = new ObjArray();
+            directCallTargets = new ArrayList<>();
         }
 
         OptTransformer ot = new OptTransformer(possibleDirectCalls, directCallTargets);
@@ -225,20 +224,20 @@ public class Codegen implements Evaluator {
     }
 
     private void initScriptNodesData(ScriptNode scriptOrFn) {
-        ObjArray x = new ObjArray();
+        ArrayList<ScriptNode> x = new ArrayList<>();
         collectScriptNodes_r(scriptOrFn, x);
 
         int count = x.size();
         scriptOrFnNodes = new ScriptNode[count];
         x.toArray(scriptOrFnNodes);
 
-        scriptOrFnIndexes = new ObjToIntMap(count);
+        scriptOrFnIndexes = new HashMap<>();
         for (int i = 0; i != count; ++i) {
             scriptOrFnIndexes.put(scriptOrFnNodes[i], i);
         }
     }
 
-    private static void collectScriptNodes_r(ScriptNode n, ObjArray x) {
+    private static void collectScriptNodes_r(ScriptNode n, List<ScriptNode> x) {
         x.add(n);
         int nestedCount = n.getFunctionCount();
         for (int i = 0; i != nestedCount; ++i) {
@@ -1158,7 +1157,7 @@ public class Codegen implements Evaluator {
                         ByteCode.GETSTATIC,
                         "org/mozilla/javascript/ScriptRuntime",
                         "zeroObj",
-                        "Ljava/lang/Double;");
+                        "Ljava/lang/Integer;");
             } else {
                 cfw.addPush(num);
                 addDoubleWrap(cfw);
@@ -1169,7 +1168,7 @@ public class Codegen implements Evaluator {
                     ByteCode.GETSTATIC,
                     "org/mozilla/javascript/optimizer/OptRuntime",
                     "oneObj",
-                    "Ljava/lang/Double;");
+                    "Ljava/lang/Integer;");
             return;
 
         } else if (num == -1.0) {
@@ -1177,7 +1176,7 @@ public class Codegen implements Evaluator {
                     ByteCode.GETSTATIC,
                     "org/mozilla/javascript/optimizer/OptRuntime",
                     "minusOneObj",
-                    "Ljava/lang/Double;");
+                    "Ljava/lang/Integer;");
 
         } else if (Double.isNaN(num)) {
             cfw.add(
@@ -1245,7 +1244,7 @@ public class Codegen implements Evaluator {
     }
 
     int getIndex(ScriptNode n) {
-        return scriptOrFnIndexes.getExisting(n);
+        return scriptOrFnIndexes.get(n);
     }
 
     String getDirectCtorName(ScriptNode n) {
@@ -1336,9 +1335,9 @@ public class Codegen implements Evaluator {
 
     private CompilerEnvirons compilerEnv;
 
-    private ObjArray directCallTargets;
+    private List<OptFunctionNode> directCallTargets;
     ScriptNode[] scriptOrFnNodes;
-    private ObjToIntMap scriptOrFnIndexes;
+    private HashMap<ScriptNode, Integer> scriptOrFnIndexes;
 
     private String mainMethodClass = DEFAULT_MAIN_METHOD_CLASS;
 

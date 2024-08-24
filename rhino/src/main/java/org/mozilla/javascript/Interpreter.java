@@ -11,8 +11,10 @@ import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
@@ -868,7 +870,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     static int[] getLineNumbers(InterpreterData data) {
-        UintMap presentLines = new UintMap();
+        HashSet<Integer> presentLines = new HashSet<>();
 
         byte[] iCode = data.itsICode;
         int iCodeLength = iCode.length;
@@ -878,12 +880,17 @@ public final class Interpreter extends Icode implements Evaluator {
             if (bytecode == Icode_LINE) {
                 if (span != 3) Kit.codeBug();
                 int line = getIndex(iCode, pc + 1);
-                presentLines.put(line, 0);
+                presentLines.add(line);
             }
             pc += span;
         }
 
-        return presentLines.getKeys();
+        int[] ret = new int[presentLines.size()];
+        int i = 0;
+        for (int num : presentLines) {
+            ret[i++] = num;
+        }
+        return ret;
     }
 
     @Override
@@ -1179,7 +1186,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // save the top frame from the previous interpretLoop
             // invocation on the stack
             if (cx.previousInterpreterInvocations == null) {
-                cx.previousInterpreterInvocations = new ObjArray();
+                cx.previousInterpreterInvocations = new ArrayDeque<>();
             }
             cx.previousInterpreterInvocations.push(cx.lastInterpreterFrame);
         }
@@ -1777,6 +1784,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
+                                        } else if (fun instanceof LambdaConstructor) {
+                                            break;
                                         } else if (fun instanceof LambdaFunction) {
                                             fun = ((LambdaFunction) fun).getTarget();
                                         } else if (fun instanceof BoundFunction) {
@@ -2143,13 +2152,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                             case Icode_ZERO:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 0;
+                                stack[stackTop] = Integer.valueOf(0);
                                 continue Loop;
                             case Icode_ONE:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 1;
+                                stack[stackTop] = Integer.valueOf(1);
                                 continue Loop;
                             case Token.NULL:
                                 stack[++stackTop] = null;
@@ -2565,7 +2572,7 @@ public final class Interpreter extends Icode implements Evaluator {
                         // -1 accounts for pc pointing to jump opcode + 1
                         frame.pc += offset - 1;
                     } else {
-                        frame.pc = frame.idata.longJumps.getExistingInt(frame.pc);
+                        frame.pc = frame.idata.longJumps.get(frame.pc);
                     }
                     if (instructionCounting) {
                         frame.pcPrevBranch = frame.pc;

@@ -420,6 +420,7 @@ class JavaMembers {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void reflect(
             Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
         // We reflect methods first, because we want overloaded field/method
@@ -436,14 +437,14 @@ class JavaMembers {
             if (value == null) {
                 ht.put(name, method);
             } else {
-                ObjArray overloadedMethods;
-                if (value instanceof ObjArray) {
-                    overloadedMethods = (ObjArray) value;
+                ArrayList<Object> overloadedMethods;
+                if (value instanceof ArrayList) {
+                    overloadedMethods = (ArrayList<Object>) value;
                 } else {
                     if (!(value instanceof Method)) Kit.codeBug();
                     // value should be instance of Method as at this stage
                     // staticMembers and members can only contain methods
-                    overloadedMethods = new ObjArray();
+                    overloadedMethods = new ArrayList<>();
                     overloadedMethods.add(value);
                     ht.put(name, overloadedMethods);
                 }
@@ -463,7 +464,7 @@ class JavaMembers {
                     methodBoxes = new MemberBox[1];
                     methodBoxes[0] = new MemberBox((Method) value);
                 } else {
-                    ObjArray overloadedMethods = (ObjArray) value;
+                    ArrayList<Object> overloadedMethods = (ArrayList<Object>) value;
                     int N = overloadedMethods.size();
                     if (N < 2) Kit.codeBug();
                     methodBoxes = new MemberBox[N];

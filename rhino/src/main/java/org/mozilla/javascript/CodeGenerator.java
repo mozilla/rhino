@@ -7,8 +7,11 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -38,8 +41,8 @@ class CodeGenerator extends Icode {
     private int lineNumber;
     private int doubleTableTop;
 
-    private ObjToIntMap strings = new ObjToIntMap(20);
-    private ObjToIntMap bigInts = new ObjToIntMap(20);
+    private final HashMap<String, Integer> strings = new HashMap<>();
+    private final HashMap<BigInteger, Integer> bigInts = new HashMap<>();
     private int localTop;
     private int[] labelTable;
     private int labelTableTop;
@@ -47,7 +50,7 @@ class CodeGenerator extends Icode {
     // fixupTable[i] = (label_index << 32) | fixup_site
     private long[] fixupTable;
     private int fixupTableTop;
-    private ObjArray literalIds = new ObjArray();
+    private final ArrayList<Object> literalIds = new ArrayList<>();
 
     private int exceptionTableTop;
 
@@ -146,10 +149,9 @@ class CodeGenerator extends Icode {
             itsData.itsStringTable = null;
         } else {
             itsData.itsStringTable = new String[strings.size()];
-            ObjToIntMap.Iterator iter = strings.newIterator();
-            for (iter.start(); !iter.done(); iter.next()) {
-                String str = (String) iter.getKey();
-                int index = iter.getValue();
+            for (Map.Entry<String, Integer> e : strings.entrySet()) {
+                String str = e.getKey();
+                int index = e.getValue();
                 if (itsData.itsStringTable[index] != null) Kit.codeBug();
                 itsData.itsStringTable[index] = str;
             }
@@ -165,10 +167,9 @@ class CodeGenerator extends Icode {
             itsData.itsBigIntTable = null;
         } else {
             itsData.itsBigIntTable = new BigInteger[bigInts.size()];
-            ObjToIntMap.Iterator iter = bigInts.newIterator();
-            for (iter.start(); !iter.done(); iter.next()) {
-                BigInteger bigInt = (BigInteger) iter.getKey();
-                int index = iter.getValue();
+            for (Map.Entry<BigInteger, Integer> e : bigInts.entrySet()) {
+                BigInteger bigInt = e.getKey();
+                int index = e.getValue();
                 if (itsData.itsBigIntTable[index] != null) Kit.codeBug();
                 itsData.itsBigIntTable[index] = bigInt;
             }
@@ -1343,7 +1344,7 @@ class CodeGenerator extends Icode {
         int offsetSite = fromPC + 1;
         if (offset != (short) offset) {
             if (itsData.longJumps == null) {
-                itsData.longJumps = new UintMap();
+                itsData.longJumps = new HashMap<>();
             }
             itsData.longJumps.put(offsetSite, jumpPC);
             offset = 0;
@@ -1469,7 +1470,7 @@ class CodeGenerator extends Icode {
     }
 
     private void addStringPrefix(String str) {
-        int index = strings.get(str, -1);
+        int index = strings.getOrDefault(str, -1);
         if (index == -1) {
             index = strings.size();
             strings.put(str, index);
@@ -1489,7 +1490,7 @@ class CodeGenerator extends Icode {
     }
 
     private void addBigInt(BigInteger n) {
-        int index = bigInts.get(n, -1);
+        int index = bigInts.getOrDefault(n, -1);
         if (index == -1) {
             index = bigInts.size();
             bigInts.put(n, index);
