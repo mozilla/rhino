@@ -4271,7 +4271,6 @@ public class Parser {
             Transformer transformer) {
         Node left = n.getLeft();
         Node right = null;
-        boolean transformLater = false;
         if (left.getType() == Token.NAME) {
             String name = left.getString();
             // x = (x == undefined) ?
@@ -4280,10 +4279,11 @@ public class Parser {
             //              : $1[0])
             //          : x
 
-            if (n.getRight() instanceof FunctionNode && transformer != null) {
+            /* TODO(satish): should transform other nodes; move this to IRFactory */
+            if ((n.getRight() instanceof FunctionNode || n.getRight() instanceof UpdateExpression)
+                    && transformer != null) {
                 right = transformer.transform(n.getRight());
             } else {
-                transformLater = true;
                 right = n.getRight();
             }
 
@@ -4294,17 +4294,17 @@ public class Parser {
                             right,
                             rightElem);
 
-            // if right is a function, it should be processed later
+            // if right is a function/update expression, it should be processed later
             // store it in the node to be processed
-            if (right instanceof FunctionNode && transformLater) {
+            if ((right instanceof FunctionNode || right instanceof UpdateExpression)
+                    && transformer == null) {
                 ArrayList<Object[]> dfns =
-                        (ArrayList<Object[]>)
-                                currentScriptOrFn.getProp(Node.DESTRUCTURING_FUNCTIONS);
+                        (ArrayList<Object[]>) currentScriptOrFn.getProp(Node.DESTRUCTURING_RVALUES);
                 if (dfns == null) {
                     dfns = new ArrayList<>();
                 }
                 dfns.add(new Object[] {cond_inner, right});
-                currentScriptOrFn.putProp(Node.DESTRUCTURING_FUNCTIONS, dfns);
+                currentScriptOrFn.putProp(Node.DESTRUCTURING_RVALUES, dfns);
             }
 
             Node cond =

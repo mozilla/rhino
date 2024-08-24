@@ -67,7 +67,7 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip")
+    @Ignore("wip") // TODO: generates bad tree
     public void letExprDestructuring() throws Exception {
         // JavaScript
         final String script =
@@ -90,6 +90,13 @@ public class DefaultParametersTest {
     }
 
     @Test
+    public void letExprUnresolvableRefObjDestructuring() throws Exception {
+        // JavaScript
+        final String script = "var f = function({ x = unresolvableReference } = {}) {}; f()";
+        assertThrows("ReferenceError: \"unresolvableReference\" is not defined.", script);
+    }
+
+    @Test
     public void getIntPropArg() throws Exception {
         final String script =
                 "function foo([gen = function () { return 2; }, xGen = function* x() { yield 2; }] = []) {\n"
@@ -98,7 +105,15 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip")
+    public void getIntErrPropArg() throws Exception {
+        final String script =
+                "var e = 0; var b = 'hello'; var { f: y = ++e } = { f: { get: function() {}}}; "
+                        + "Object.keys(y).includes('get') && Object.keys(y).length == 1";
+        assertEvaluates(true, script);
+    }
+
+    @Test
+    @Ignore("wip") // TODO: generates bad tree
     public void getIntPropArgParenExpr() throws Exception {
         final String script =
                 "const [cover = (function () {}), xCover = (0, function() {})] = [];\n"

@@ -605,15 +605,15 @@ public final class IRFactory {
                 }
             }
 
-            /* Process FunctionNode used as default parameters */
-            ArrayList<Object[]> dfns =
-                    (ArrayList<Object[]>) fn.getProp(Node.DESTRUCTURING_FUNCTIONS);
-            fn.removeProp(Node.DESTRUCTURING_FUNCTIONS);
+            /* TODO: fix unchecked cast warnings */
+            /* transform nodes used as default parameters */
+            ArrayList<Object[]> dfns = (ArrayList<Object[]>) fn.getProp(Node.DESTRUCTURING_RVALUES);
+            fn.removeProp(Node.DESTRUCTURING_RVALUES);
             if (dfns != null) {
                 for (var i : dfns) {
                     Node a = (Node) i[0];
-                    FunctionNode b = (FunctionNode) i[1];
-                    a.replaceChild(b, transformFunction(b));
+                    AstNode b = (AstNode) i[1];
+                    a.replaceChild(b, transform(b));
                 }
             }
 
