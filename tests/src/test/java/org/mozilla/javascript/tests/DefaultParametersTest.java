@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -68,6 +67,29 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("wip")
+    public void letExprDestructuring() throws Exception {
+        // JavaScript
+        final String script =
+                "function a() {}; (function() { "
+                        + "                                   for (let {x = a()} = {}; ; ) { "
+                        + "                                       return 3; "
+                        + "                                   }"
+                        + "                               })()";
+        assertIntEvaluates(3, script);
+    }
+
+    @Test
+    public void letExprUnresolvableRefDestructuring() throws Exception {
+        // JavaScript
+        final String script =
+                "  (function() { for (let [ x = unresolvableReference ] = []; ; ) {\n"
+                        + "    return 3;\n"
+                        + "  }})()";
+        assertThrows("ReferenceError: \"unresolvableReference\" is not defined.", script);
+    }
+
+    @Test
     public void getIntPropArg() throws Exception {
         final String script =
                 "function foo([gen = function () { return 2; }, xGen = function* x() { yield 2; }] = []) {\n"
@@ -78,9 +100,9 @@ public class DefaultParametersTest {
     @Test
     @Ignore("wip")
     public void getIntPropArgParenExpr() throws Exception {
-        final String script = "const [cover = (function () {}), xCover = (0, function() {})] = [];\n" +
-                "\n" +
-                "cover.name == 'cover' && xCover.name == 'xCover' ? 4 : -1";
+        final String script =
+                "const [cover = (function () {}), xCover = (0, function() {})] = [];\n"
+                        + "cover.name == 'cover' && xCover.name == 'xCover' ? 4 : -1";
         assertIntEvaluates(4, script);
     }
 
@@ -94,8 +116,7 @@ public class DefaultParametersTest {
 
     @Test
     public void getIntPropExhausted() throws Exception {
-        final String script =
-                "const [x = 23] = []; x";
+        final String script = "const [x = 23] = []; x";
         assertIntEvaluates(23, script);
     }
 
@@ -151,7 +172,7 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip")
+    @Ignore("needs-checking-for-iterator")
     public void destructuringAssigmentInFunctionsWithObjectDefaults() throws Exception {
         final String script =
                 "function f([x = 1, y = 2] = {x: 3, y: 4}) {\n" + "  return x + y;\n" + "}";

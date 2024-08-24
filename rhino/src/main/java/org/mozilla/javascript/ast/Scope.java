@@ -153,6 +153,8 @@ public class Scope extends Jump {
             if (symbolTable != null && symbolTable.containsKey(name)) {
                 return s;
             }
+
+            if (s == s.parentScope) break; // TODO(satish): must fix tree; terrible hack
         }
         return null;
     }
