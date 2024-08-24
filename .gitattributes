@@ -5,8 +5,9 @@
 .project text
 *.html text
 *.htm text
-*.java text
-*.js text
+*.java text eol=lf
+*.js text eol=lf
+*.jstest text eol=lf
 *.jsp text
 *.php text
 *.properties text
