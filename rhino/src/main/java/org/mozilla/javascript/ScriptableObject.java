@@ -1711,6 +1711,7 @@ public abstract class ScriptableObject
      * @param attributes the attributes to set on the property
      */
     public void defineProperty(
+            Context cx,
             String name,
             java.util.function.Function<Scriptable, Object> getter,
             BiConsumer<Scriptable, Object> setter,
@@ -1718,12 +1719,61 @@ public abstract class ScriptableObject
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
-        LambdaAccessorSlot slot =
-                slotMap.compute(name, 0, ScriptableObject::ensureLambdaAccessorSlot);
-        slot.setAttributes(attributes);
+        slotMap.compute(
+                name,
+                0,
+                (id, index, existing) ->
+                        ensureLambdaAccessorSlot(
+                                cx, id, index, existing, getter, setter, attributes));
+    }
 
-        slot.setGetter(getter);
-        slot.setSetter(setter);
+    private LambdaAccessorSlot createLambdaAccessorSlot(
+            Object name,
+            int index,
+            Slot existing,
+            java.util.function.Function<Scriptable, Object> getter,
+            BiConsumer<Scriptable, Object> setter,
+            int attributes) {
+        LambdaAccessorSlot slot;
+        if (existing == null) {
+            slot = new LambdaAccessorSlot(name, index);
+        } else if (existing instanceof LambdaAccessorSlot) {
+            slot = (LambdaAccessorSlot) existing;
+        } else {
+            slot = new LambdaAccessorSlot(existing);
+        }
+
+        slot.setGetter(this, getter);
+        slot.setSetter(this, setter);
+        slot.setAttributes(attributes);
+        return slot;
+    }
+
+    private LambdaAccessorSlot ensureLambdaAccessorSlot(
+            Context cx,
+            Object name,
+            int index,
+            Slot existing,
+            java.util.function.Function<Scriptable, Object> getter,
+            BiConsumer<Scriptable, Object> setter,
+            int attributes) {
+        var newSlot = createLambdaAccessorSlot(name, index, existing, getter, setter, attributes);
+        var newDesc = newSlot.getPropertyDescriptor(cx, this);
+        checkPropertyDefinition(newDesc);
+
+        if (existing == null) {
+            checkPropertyChange(name, null, newDesc);
+            return newSlot;
+        } else if (existing instanceof LambdaAccessorSlot) {
+            var slot = (LambdaAccessorSlot) existing;
+            var existingDesc = slot.getPropertyDescriptor(cx, this);
+            checkPropertyChange(name, existingDesc, newDesc);
+            return newSlot;
+        } else {
+            var existingDesc = existing.getPropertyDescriptor(cx, this);
+            checkPropertyChange(name, existingDesc, newDesc);
+            return newSlot;
+        }
     }
 
     protected void checkPropertyDefinition(ScriptableObject desc) {
