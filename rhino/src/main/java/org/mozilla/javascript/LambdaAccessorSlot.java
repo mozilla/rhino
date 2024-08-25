@@ -52,7 +52,8 @@ public class LambdaAccessorSlot extends Slot {
                         ScriptableObject.EMPTY);
             }
         } else {
-            desc.setCommonDescriptorProperties(attr, getterFunction == null && setterFunction == null);
+            desc.setCommonDescriptorProperties(
+                    attr, getterFunction == null && setterFunction == null);
         }
 
         if (getterFunction != null) {
