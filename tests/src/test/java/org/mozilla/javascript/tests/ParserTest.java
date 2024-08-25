@@ -1204,7 +1204,7 @@ public class ParserTest {
     public void testParseUnicodeMultibyteCharacter() {
         AstRoot root = parse("\uD842\uDFB7");
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
-        assertEquals("𠮷", first.getString());
+        assertEquals("\uD842\uDFB7", first.getString());
     }
 
     @Test
@@ -1215,7 +1215,7 @@ public class ParserTest {
         // the unicode methods and not the java methods.
         AstRoot root = parse("a\u9FEB");
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
-        assertEquals("a鿫", first.getString());
+        assertEquals("a\u9FEB", first.getString());
     }
 
     @Test
