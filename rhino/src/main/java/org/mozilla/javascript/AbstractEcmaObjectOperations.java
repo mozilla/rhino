@@ -1,9 +1,12 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Abstract Object Operations as defined by EcmaScript
@@ -134,8 +137,9 @@ public class AbstractEcmaObjectOperations {
         */
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
 
-        // TODO check .preventExtensions() return value once implemented and act accordingly to spec
-        obj.preventExtensions();
+        if (!obj.preventExtensions()) {
+            return false;
+        }
 
         for (Object key : obj.getIds(true, true)) {
             ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, key);
@@ -302,5 +306,162 @@ public class AbstractEcmaObjectOperations {
         }
 
         return groups;
+    }
+
+    /**
+     * CreateListFromArrayLike ( obj [ , elementTypes ] )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-createlistfromarraylike
+     */
+    static List<Object> createListFromArrayLike(
+            Context cx, Scriptable o, Predicate<Object> elementTypesPredicate, String msg) {
+        ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
+        if (obj instanceof NativeArray) {
+            Object[] arr = ((NativeArray) obj).toArray();
+            for (Object next : arr) {
+                if (!elementTypesPredicate.test(next)) {
+                    throw ScriptRuntime.typeError(msg);
+                }
+            }
+            return Arrays.asList(arr);
+        }
+
+        long len = lengthOfArrayLike(cx, obj);
+        List<Object> list = new ArrayList<>();
+        long index = 0;
+        while (index < len) {
+            // String indexName = ScriptRuntime.toString(index);
+            Object next = ScriptableObject.getProperty(obj, (int) index);
+            if (!elementTypesPredicate.test(next)) {
+                throw ScriptRuntime.typeError(msg);
+            }
+            list.add(next);
+            index++;
+        }
+        return list;
+    }
+
+    /**
+     * LengthOfArrayLike ( obj )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-lengthofarraylike
+     */
+    static long lengthOfArrayLike(Context cx, Scriptable o) {
+        Object value = ScriptableObject.getProperty(o, "length");
+        long len = ScriptRuntime.toLength(new Object[] {value}, 0);
+        return len;
+    }
+
+    /**
+     * IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-iscompatiblepropertydescriptor
+     */
+    static boolean isCompatiblePropertyDescriptor(
+            boolean extensible, ScriptableObject desc, ScriptableObject current) {
+        return validateAndApplyPropertyDescriptor(
+                Undefined.SCRIPTABLE_UNDEFINED,
+                Undefined.SCRIPTABLE_UNDEFINED,
+                extensible,
+                desc,
+                current);
+    }
+
+    /**
+     * ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-validateandapplypropertydescriptor
+     */
+    static boolean validateAndApplyPropertyDescriptor(
+            Scriptable o,
+            Scriptable p,
+            boolean extensible,
+            ScriptableObject desc,
+            ScriptableObject current) {
+        if (Undefined.isUndefined(current)) {
+            if (!extensible) {
+                return false;
+            }
+
+            if (ScriptableObject.isGenericDescriptor(desc)
+                    || ScriptableObject.isDataDescriptor(desc)) {
+                /*
+                i. i. If O is not undefined, create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attribute values are described by Desc.
+                  If the value of an attribute field of Desc is absent, the attribute of the newly created property is set to its default value.
+                 */
+            } else {
+                /*
+                ii. ii. If O is not undefined, create an own accessor property named P of object O whose [[Get]], [[Set]], [[Enumerable]], and [[Configurable]] attribute values are described by Desc. If the value of an attribute field of Desc is absent, the attribute of the newly created property is set to its default value.
+                 */
+            }
+            return true;
+        }
+
+        if (desc.getIds().length == 0) {
+            return true;
+        }
+
+        if (Boolean.FALSE.equals(current.get("configurable"))) {
+            if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "configurable"))
+                    && Boolean.TRUE.equals(desc.get("configurable"))) {
+                return false;
+            }
+
+            if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "enumerable"))
+                    && !Objects.equals(desc.get("enumerable"), current.get("enumerable"))) {
+                return false;
+            }
+        }
+
+        // if (!ScriptableObject.isGenericDescriptor(desc)) {
+        if (ScriptableObject.isGenericDescriptor(desc)) {
+            return true;
+        } else if (!Objects.equals(
+                ScriptableObject.isGenericDescriptor(current),
+                ScriptableObject.isGenericDescriptor(desc))) {
+            if (Boolean.FALSE.equals(current.get("configurable"))) {
+                return false;
+            }
+            if (ScriptableObject.isDataDescriptor(current)) {
+                if (Boolean.FALSE.equals(current.get("configurable"))) {
+                    // i. i. If O is not undefined, convert the property named P of object O from a
+                    // data property to an accessor property. Preserve the existing values of the
+                    // converted property's [[Configurable]] and [[Enumerable]] attributes and set
+                    // the rest of the property's attributes to their default values.
+                } else {
+                    // i. i. If O is not undefined, convert the property named P of object O from an
+                    // accessor property to a data property. Preserve the existing values of the
+                    // converted property's [[Configurable]] and [[Enumerable]] attributes and set
+                    // the rest of the property's attributes to their default values.
+                }
+            }
+        } else if (ScriptableObject.isDataDescriptor(current)
+                && ScriptableObject.isDataDescriptor(desc)) {
+            if (Boolean.FALSE.equals(current.get("configurable"))
+                    && Boolean.FALSE.equals(current.get("writable"))) {
+                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "writable"))
+                        && Boolean.TRUE.equals(desc.get("writable"))) {
+                    return false;
+                }
+                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "value"))
+                        && !Objects.equals(desc.get("value"), current.get("value"))) {
+                    return false;
+                }
+                return true;
+            }
+        } else {
+            if (Boolean.FALSE.equals(current.get("configurable"))) {
+                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "set"))
+                        && !Objects.equals(desc.get("set"), current.get("set"))) {
+                    return false;
+                }
+                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "get"))
+                        && !Objects.equals(desc.get("get"), current.get("get"))) {
+                    return false;
+                }
+                return true;
+            }
+        }
+        return true;
     }
 }

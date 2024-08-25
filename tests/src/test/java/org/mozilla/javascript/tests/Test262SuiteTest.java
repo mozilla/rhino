@@ -91,11 +91,6 @@ public class Test262SuiteTest {
                     Arrays.asList(
                             "Atomics",
                             "IsHTMLDDA",
-                            "Proxy",
-                            "Reflect",
-                            "Reflect.construct",
-                            "Reflect.set",
-                            "Reflect.setPrototypeOf",
                             "SharedArrayBuffer",
                             "async-functions",
                             "async-iteration",

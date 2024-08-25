@@ -2054,7 +2054,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                             continue StateLoop;
                                         }
                                     }
-                                    if (!(lhs instanceof Function)) {
+                                    if (!(lhs instanceof Constructable)) {
                                         if (lhs == DBL_MRK)
                                             lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                         throw ScriptRuntime.notFunctionError(lhs);
