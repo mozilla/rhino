@@ -34,54 +34,61 @@ public class LambdaAccessorSlot extends Slot {
     }
 
     @Override
+    boolean isSetterSlot() {
+        return true;
+    }
+
+    @Override
     ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-        if (getter != null) {
-            if (getterFunction == null) {
-                this.getterFunction =
-                        new LambdaFunction(
-                                scope,
-                                "get " + super.name,
-                                0,
-                                (cx1, scope1, thisObj, args) -> getter.apply(thisObj));
-            }
 
+        int attr = getAttributes();
+        boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
+        if (es6) {
+            if (getterFunction == null && setterFunction == null) {
+                desc.defineProperty(
+                        "writable",
+                        (attr & ScriptableObject.READONLY) == 0,
+                        ScriptableObject.EMPTY);
+            }
+        } else {
+            desc.setCommonDescriptorProperties(attr, getterFunction == null && setterFunction == null);
+        }
+
+        if (getterFunction != null) {
             desc.defineProperty("get", this.getterFunction, ScriptableObject.EMPTY);
         }
 
-        if (setter != null) {
-            if (setterFunction == null) {
-                this.setterFunction =
-                        new LambdaFunction(
-                                scope,
-                                "set " + super.name,
-                                1,
-                                (cx1, scope1, thisObj, args) -> {
-                                    setter.accept(thisObj, args[0]);
-                                    return Undefined.instance;
-                                });
-            }
+        if (setterFunction != null) {
             desc.defineProperty("set", this.setterFunction, ScriptableObject.EMPTY);
+        } else if (es6) {
+            desc.defineProperty("set", Undefined.instance, ScriptableObject.EMPTY);
         }
-        desc.setCommonDescriptorProperties(getAttributes(), false);
+
+        if (es6) {
+            desc.defineProperty(
+                    "enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
+            desc.defineProperty(
+                    "configurable",
+                    (attr & ScriptableObject.PERMANENT) == 0,
+                    ScriptableObject.EMPTY);
+        }
         return desc;
     }
 
     @Override
-    public boolean setValue(Object value, Scriptable scope, Scriptable owner, boolean isStrict) {
-        if (setter != null) {
-            setter.accept(owner, value);
+    public boolean setValue(Object value, Scriptable scope, Scriptable start, boolean isThrow) {
+        if (setter == null) {
+            if (getter != null) {
+                throwNoSetterException(start, value);
+                return true;
+            }
+        } else {
+            setter.accept(start, value);
             return true;
         }
 
-        if (isStrict) {
-            // in strict mode
-            throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
-        } else {
-            super.setValue(value, scope, owner, false);
-        }
-
-        return true;
+        return super.setValue(value, start, start, isThrow);
     }
 
     @Override
@@ -92,11 +99,30 @@ public class LambdaAccessorSlot extends Slot {
         return super.getValue(owner);
     }
 
-    public void setGetter(Function<Scriptable, Object> getter) {
+    public void setGetter(Scriptable scope, Function<Scriptable, Object> getter) {
         this.getter = getter;
+        if (getter != null) {
+            this.getterFunction =
+                    new LambdaFunction(
+                            scope,
+                            "get " + super.name,
+                            0,
+                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj));
+        }
     }
 
-    public void setSetter(BiConsumer<Scriptable, Object> setter) {
+    public void setSetter(Scriptable scope, BiConsumer<Scriptable, Object> setter) {
         this.setter = setter;
+        if (setter != null) {
+            this.setterFunction =
+                    new LambdaFunction(
+                            scope,
+                            "set " + super.name,
+                            1,
+                            (cx1, scope1, thisObj, args) -> {
+                                setter.accept(thisObj, args[0]);
+                                return Undefined.instance;
+                            });
+        }
     }
 }
