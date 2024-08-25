@@ -117,12 +117,10 @@ public class LambdaAccessorSlotTest {
                                         "source",
                                         1,
                                         null));
-        String expectedError = ScriptRuntime.getMessageById(
-                "msg.set.prop.no.setter", "[StatusHolder].status", "DONE");
-        assertTrue(
-                error.toString()
-                        .contains(
-                                expectedError));
+        String expectedError =
+                ScriptRuntime.getMessageById(
+                        "msg.set.prop.no.setter", "[StatusHolder].status", "DONE");
+        assertTrue(error.toString().contains(expectedError));
     }
 
     @Test
@@ -164,7 +162,6 @@ public class LambdaAccessorSlotTest {
         var statusHolder = (StatusHolder) shObj;
         assertEquals("NewStatus: DONE", statusHolder.getStatus());
     }
-
 
     // using getOwnPropertyDescriptor to access property
 
@@ -260,7 +257,7 @@ public class LambdaAccessorSlotTest {
 
     @Test
     public void testRedefineExistingProperty_ChangingConfigurableAttr_ShouldFailValidation() {
-       var sh = new StatusHolder("PENDING");
+        var sh = new StatusHolder("PENDING");
         ScriptableObject existingDesc = (ScriptableObject) cx.newObject(scope);
 
         //
@@ -272,15 +269,22 @@ public class LambdaAccessorSlotTest {
                 assertThrows(
                         EcmaError.class,
                         () ->
-                               sh.defineProperty(cx, "status",
-                                       (thisObj) -> self(thisObj).getStatus(),
-                                       (thisObj, value) -> self(thisObj).setStatus(value),
-                                       DONTENUM));
-        assertTrue(error.toString().contains(ScriptRuntime.getMessageById("msg.change.configurable.false.to.true", "status")));
+                                sh.defineProperty(
+                                        cx,
+                                        "status",
+                                        (thisObj) -> self(thisObj).getStatus(),
+                                        (thisObj, value) -> self(thisObj).setStatus(value),
+                                        DONTENUM));
+        assertTrue(
+                error.toString()
+                        .contains(
+                                ScriptRuntime.getMessageById(
+                                        "msg.change.configurable.false.to.true", "status")));
     }
 
     @Test
-    public void testRedefineExistingProperty_ModifyingNotConfigurableProperty_ShouldFailValidation() {
+    public void
+            testRedefineExistingProperty_ModifyingNotConfigurableProperty_ShouldFailValidation() {
         var sh = new StatusHolder("PENDING");
         ScriptableObject existingDesc = (ScriptableObject) cx.newObject(scope);
 
@@ -294,11 +298,20 @@ public class LambdaAccessorSlotTest {
                 assertThrows(
                         EcmaError.class,
                         () ->
-                                sh.defineProperty(cx, "status",
+                                sh.defineProperty(
+                                        cx,
+                                        "status",
                                         (thisObj) -> self(thisObj).getStatus(),
                                         (thisObj, value) -> self(thisObj).setStatus(value),
-                                        DONTENUM | PERMANENT)); // making new property configurable == false and enumerable == false
-        assertTrue(error.toString().contains(ScriptRuntime.getMessageById("msg.change.enumerable.with.configurable.false", "status")));
+                                        // making new property configurable: false and enumerable:
+                                        // false
+                                        DONTENUM | PERMANENT));
+        assertTrue(
+                error.toString()
+                        .contains(
+                                ScriptRuntime.getMessageById(
+                                        "msg.change.enumerable.with.configurable.false",
+                                        "status")));
     }
 
     @Test
