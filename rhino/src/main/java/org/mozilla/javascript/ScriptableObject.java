@@ -1749,33 +1749,6 @@ public abstract class ScriptableObject
         return slot;
     }
 
-    private LambdaAccessorSlot ensureLambdaAccessorSlot(
-            Context cx,
-            Object name,
-            int index,
-            Slot existing,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
-            int attributes) {
-        var newSlot = createLambdaAccessorSlot(name, index, existing, getter, setter, attributes);
-        var newDesc = newSlot.getPropertyDescriptor(cx, this);
-        checkPropertyDefinition(newDesc);
-
-        if (existing == null) {
-            checkPropertyChange(name, null, newDesc);
-            return newSlot;
-        } else if (existing instanceof LambdaAccessorSlot) {
-            var slot = (LambdaAccessorSlot) existing;
-            var existingDesc = slot.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
-        } else {
-            var existingDesc = existing.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
-        }
-    }
-
     protected void checkPropertyDefinition(ScriptableObject desc) {
         Object getter = getProperty(desc, "get");
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
@@ -2781,14 +2754,30 @@ public abstract class ScriptableObject
         }
     }
 
-    private static LambdaAccessorSlot ensureLambdaAccessorSlot(
-            Object name, int index, Slot existing) {
+    private LambdaAccessorSlot ensureLambdaAccessorSlot(
+            Context cx,
+            Object name,
+            int index,
+            Slot existing,
+            java.util.function.Function<Scriptable, Object> getter,
+            BiConsumer<Scriptable, Object> setter,
+            int attributes) {
+        var newSlot = createLambdaAccessorSlot(name, index, existing, getter, setter, attributes);
+        var newDesc = newSlot.getPropertyDescriptor(cx, this);
+        checkPropertyDefinition(newDesc);
+
         if (existing == null) {
-            return new LambdaAccessorSlot(name, index);
+            checkPropertyChange(name, null, newDesc);
+            return newSlot;
         } else if (existing instanceof LambdaAccessorSlot) {
-            return (LambdaAccessorSlot) existing;
+            var slot = (LambdaAccessorSlot) existing;
+            var existingDesc = slot.getPropertyDescriptor(cx, this);
+            checkPropertyChange(name, existingDesc, newDesc);
+            return newSlot;
         } else {
-            return new LambdaAccessorSlot(existing);
+            var existingDesc = existing.getPropertyDescriptor(cx, this);
+            checkPropertyChange(name, existingDesc, newDesc);
+            return newSlot;
         }
     }
 
