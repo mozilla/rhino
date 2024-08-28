@@ -1698,9 +1698,8 @@ public abstract class ScriptableObject
      * need to have access to target object instance, this allows for defining properties on
      * LambdaConstructor prototype providing getter and setter logic with java instance methods. If
      * a property with the same name already exists, then it will be replaced. This property will
-     * appear to the JavaScript user exactly like any other property -- unlike Function properties
-     * and those based on reflection, the property descriptor will only reflect the value as defined
-     * by this function.
+     * appear to the JavaScript user exactly like descriptor with a getter and setter, just as if
+     * they had been defined in JavaScript using Object.defineOwnProperty.
      *
      * @param name the name of the property
      * @param getter a function that given Scriptable `this` returns the value of the property. If
