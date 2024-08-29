@@ -2406,7 +2406,17 @@ public class Parser {
         AstNode pn = orExpr();
         if (matchToken(Token.NULLISH_COALESCING, true)) {
             int opPos = ts.tokenBeg;
-            pn = new InfixExpression(Token.NULLISH_COALESCING, pn, nullishCoalescingExpr(), opPos);
+            AstNode rn = nullishCoalescingExpr();
+
+            // Cannot immediately contain, or be contained within, an && or || operation.
+            if (pn.getType() == Token.OR
+                    || pn.getType() == Token.AND
+                    || rn.getType() == Token.OR
+                    || rn.getType() == Token.AND) {
+                reportError("msg.nullish.bad.token");
+            }
+
+            pn = new InfixExpression(Token.NULLISH_COALESCING, pn, rn, opPos);
         }
         return pn;
     }

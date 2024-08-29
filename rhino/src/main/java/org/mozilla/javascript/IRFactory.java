@@ -2053,7 +2053,11 @@ public final class IRFactory {
                                     new Node(Token.SHEQ, nullNode, left),
                                     new Node(Token.SHEQ, undefinedNode, left));
 
-                    return new Node(Token.HOOK, conditional, right, left);
+                    return new Node(
+                            Token.HOOK,
+                            /* left= */ conditional,
+                            /* mid= */ right,
+                            /* right= */ left);
                 }
         }
 
