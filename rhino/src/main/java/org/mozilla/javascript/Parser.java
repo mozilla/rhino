@@ -2370,7 +2370,7 @@ public class Parser {
     }
 
     private AstNode condExpr() throws IOException {
-        AstNode pn = orExpr();
+        AstNode pn = nullishCoalescingExpr();
         if (matchToken(Token.HOOK, true)) {
             int line = ts.lineno;
             int qmarkPos = ts.tokenBeg, colonPos = -1;
@@ -2398,6 +2398,15 @@ public class Parser {
             ce.setQuestionMarkPosition(qmarkPos - beg);
             ce.setColonPosition(colonPos - beg);
             pn = ce;
+        }
+        return pn;
+    }
+
+    private AstNode nullishCoalescingExpr() throws IOException {
+        AstNode pn = orExpr();
+        if (matchToken(Token.NULLISH_COALESCING, true)) {
+            int opPos = ts.tokenBeg;
+            pn = new InfixExpression(Token.NULLISH_COALESCING, pn, nullishCoalescingExpr(), opPos);
         }
         return pn;
     }
