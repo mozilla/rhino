@@ -2887,6 +2887,7 @@ public class Parser {
             int tt = peekToken();
             switch (tt) {
                 case Token.DOT:
+                case Token.DOT_QUESTION:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
                     pn = propertyAccess(tt, pn);
@@ -3074,6 +3075,15 @@ public class Parser {
         result.setLineno(pn.getLineno());
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
+
+        if (tt == Token.DOT_QUESTION && result instanceof PropertyGet) {
+            result =
+                    new InfixExpression(
+                            Token.DOT_QUESTION,
+                            ((PropertyGet) result).getTarget(),
+                            result,
+                            result.lineno);
+        }
         return result;
     }
 

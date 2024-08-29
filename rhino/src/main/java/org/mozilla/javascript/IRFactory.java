@@ -2088,6 +2088,21 @@ public final class IRFactory {
                     }
                     break;
                 }
+            case Token.DOT_QUESTION:
+                {
+                    // a?.b == (a == null || a == undefined) ? undefined : a.b
+                    Node undefinedNode = new Name(0, "undefined");
+                    Node nullNode = new Node(Token.NULL);
+
+                    Node conditional =
+                            new Node(
+                                    Token.OR,
+                                    new Node(Token.SHEQ, nullNode, left),
+                                    new Node(Token.SHEQ, undefinedNode, left));
+
+                    Node node = new Node(Token.HOOK, conditional, new Name(0, "undefined"), right);
+                    return node;
+                }
         }
 
         return new Node(nodeType, left, right);
