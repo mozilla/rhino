@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
@@ -194,6 +195,7 @@ public class MozillaSuiteTest {
         // optimizationLevel);
         final ShellContextFactory shellContextFactory = new ShellContextFactory();
         shellContextFactory.setOptimizationLevel(optimizationLevel);
+        shellContextFactory.setLanguageVersion(Context.VERSION_1_8);
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
         ShellTest.runNoFork(shellContextFactory, jsFile, params, status);
