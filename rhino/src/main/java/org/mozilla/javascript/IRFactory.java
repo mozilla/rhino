@@ -2066,11 +2066,17 @@ public final class IRFactory {
             case Token.ASSIGN_BITOR:
                 assignOp = Token.BITOR;
                 break;
+            case Token.ASSIGN_LOGICAL_OR:
+                assignOp = Token.OR;
+                break;
             case Token.ASSIGN_BITXOR:
                 assignOp = Token.BITXOR;
                 break;
             case Token.ASSIGN_BITAND:
                 assignOp = Token.BITAND;
+                break;
+            case Token.ASSIGN_LOGICAL_AND:
+                assignOp = Token.AND;
                 break;
             case Token.ASSIGN_LSH:
                 assignOp = Token.LSH;
