@@ -244,14 +244,14 @@ public class AbstractEcmaObjectOperations {
     }
 
     /**
-     * Implement the ECMAScript abstract operation "GroupBy" defined in section 7.3.35 of ECMA262.
+     * Implement the ECMAScript abstract operation "GroupBy"
      *
      * @param cx
      * @param scope
      * @param items
      * @param callback
      * @param keyCoercion
-     * @see <a href="https://tc39.es/ecma262/#sec-groupby"></a>
+     * @see <a href="https://262.ecma-international.org/15.0/#sec-groupby"></a>
      */
     static Map<Object, List<Object>> groupBy(
             Context cx,
