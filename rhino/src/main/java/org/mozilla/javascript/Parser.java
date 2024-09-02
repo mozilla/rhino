@@ -2887,7 +2887,7 @@ public class Parser {
             int tt = peekToken();
             switch (tt) {
                 case Token.DOT:
-                case Token.DOT_QUESTION:
+                case Token.QUESTION_DOT:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
                     pn = propertyAccess(tt, pn);
@@ -3017,8 +3017,27 @@ public class Parser {
         }
 
         AstNode ref = null; // right side of . or .. operator
-
         int token = nextToken();
+        if (token == Token.LP && tt == Token.QUESTION_DOT) {
+            // optional chaining operator method call, o.func.?()
+            var pos = pn.getPosition();
+            consumeToken();
+            checkCallRequiresActivation(pn);
+            FunctionCall f = new FunctionCall(pos);
+            f.setTarget(pn);
+            // Assign the line number for the function call to where
+            // the paren appeared, not where the name expression started.
+            f.setLineno(lineno);
+            f.setLp(ts.tokenBeg - pos);
+            List<AstNode> args = argumentList();
+            if (args != null && args.size() > ARGC_LIMIT) reportError("msg.too.many.function.args");
+            f.setArguments(args);
+            f.setRp(ts.tokenBeg - pos);
+            f.setLength(ts.tokenEnd - pos);
+
+            return conditionalPropertyAccess(pn, f);
+        }
+
         switch (token) {
             case Token.THROW:
                 // needed for generator.throw();
@@ -3050,7 +3069,6 @@ public class Parser {
                     ref = propertyName(-1, memberTypeFlags);
                     break;
                 }
-
             default:
                 if (compilerEnv.isReservedKeywordAsIdentifier()) {
                     // allow keywords as property names, e.g. ({if: 1})
@@ -3076,15 +3094,35 @@ public class Parser {
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
 
-        if (tt == Token.DOT_QUESTION && result instanceof PropertyGet) {
-            result =
-                    new InfixExpression(
-                            Token.DOT_QUESTION,
-                            ((PropertyGet) result).getTarget(),
-                            result,
-                            result.lineno);
+        if (tt == Token.QUESTION_DOT && result instanceof PropertyGet) {
+            return conditionalPropertyAccess(pn, result);
         }
         return result;
+    }
+
+    private static AstNode conditionalPropertyAccess(AstNode target, AstNode propAccessNode) {
+        var targetCopy = cloneNode(target);
+        var targetCopy2 = cloneNode(target);
+
+        AstNode undefinedNode = new Name(0, "undefined");
+        AstNode nullNode = new KeywordLiteral(0, 4, Token.NULL);
+
+        AstNode nullEq = new InfixExpression(Token.SHEQ, targetCopy, nullNode, 0);
+
+        AstNode undefinedEq = new InfixExpression(Token.SHEQ, targetCopy2, undefinedNode, 0);
+        var conditionalExpr = new ConditionalExpression();
+        conditionalExpr.setTestExpression(new InfixExpression(Token.OR, nullEq, undefinedEq, 0));
+        conditionalExpr.setTrueExpression(new Name(0, "undefined"));
+        conditionalExpr.setFalseExpression(propAccessNode);
+
+        return conditionalExpr;
+    }
+
+    private static AstNode cloneNode(AstNode target) {
+        var newParser = new Parser();
+        var root = newParser.parse(target.toSource(), "", 1);
+        var targetCopy = ((ExpressionStatement) root.first).getExpression();
+        return targetCopy;
     }
 
     /**

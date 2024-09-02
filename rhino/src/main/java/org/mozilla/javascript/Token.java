@@ -611,7 +611,7 @@ public class Token {
                 return "TEMPLATE_LITERAL_SUBST";
             case TAGGED_TEMPLATE_LITERAL:
                 return "TAGGED_TEMPLATE_LITERAL";
-            case DOT_QUESTION:
+            case QUESTION_DOT:
                 return "DOT_QUESTION";
         }
 
