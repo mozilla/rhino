@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
+
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -3474,16 +3475,57 @@ public class ScriptRuntime {
         return -val.doubleValue();
     }
 
-    public static Object toPrimitive(Object val) {
-        return toPrimitive(val, null);
+    public static Object toPrimitive(Object input) {
+        return toPrimitive(input, Optional.empty());
     }
 
-    public static Object toPrimitive(Object val, Class<?> typeHint) {
-        if (!(val instanceof Scriptable)) {
-            return val;
+    /**
+     * 1. If input is an Object, then
+     *   a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
+     *   b. If exoticToPrim is not undefined, then
+     *     i. If preferredType is not present, then
+     *       1. Let hint be "default".
+     *     ii. Else if preferredType is string, then
+     *       1. Let hint be "string".
+     *     iii. Else,
+     *       1. Assert: preferredType is number.
+     *       2. Let hint be "number".
+     *     iv. Let result be ? Call(exoticToPrim, input, « hint »).
+     *     v. If result is not an Object, return result.
+     *     vi. Throw a TypeError exception.
+     *   c. If preferredType is not present, let preferredType be number.
+     *   d. Return ? OrdinaryToPrimitive(input, preferredType).
+     * 2. Return input.
+     * @param input
+     * @param preferredType
+     * @return
+     * @see <a href="https://262.ecma-international.org/15.0/index.html#sec-toprimitive"></a>
+     */
+    public static Object toPrimitive(Object input, Optional<Class<?>> preferredType) {
+        if (!isObject(input)) {
+            return input;
         }
-        Scriptable s = (Scriptable) val;
-        Object result = s.getDefaultValue(typeHint);
+        final Scriptable s = (Scriptable) input;
+        final Object exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
+        if (exoticToPrim instanceof Function) {
+            final Function func = (Function) exoticToPrim;
+            final Context cx = Context.getCurrentContext();
+            final Scriptable scope = func.getParentScope();
+            final String hint = preferredType
+                .map(type -> type == StringClass ? "string" : "number")
+                .orElse("default");
+            final Object[] args = new Object[] {hint};
+            final Object result = func.call(cx, scope, s, args);
+            if (isObject(result)) {
+                throw typeErrorById("msg.cant.convert.to.primitive");
+            }
+            return result;
+        }
+        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != Scriptable.NOT_FOUND) {
+            throw notFunctionError(exoticToPrim);
+        }
+        final Class<?> defaultValueHint = preferredType.orElse(NumberClass);
+        final Object result = s.getDefaultValue(defaultValueHint);
         if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeErrorById("msg.bad.default.value");
         return result;
@@ -3526,6 +3568,8 @@ public class ScriptRuntime {
                 }
             }
             return eqNumber(b ? 1.0 : 0.0, y);
+        } else if (isSymbol(x) && isObject(y)) {
+            return eq(x, toPrimitive(y));
         } else if (x instanceof Scriptable) {
             if (x instanceof Delegator) {
                 x = ((Delegator) x).getDelegee();
@@ -3538,6 +3582,10 @@ public class ScriptRuntime {
             }
             if (y instanceof Delegator && ((Delegator) y).getDelegee() == x) {
                 return true;
+            }
+
+            if (isSymbol(y) && isObject(x)) {
+                return eq(toPrimitive(x), y);
             }
 
             if (y instanceof Scriptable) {

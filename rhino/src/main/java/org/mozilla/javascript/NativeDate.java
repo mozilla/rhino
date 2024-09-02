@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * This class implements the Date native object. See ECMA 15.9.
@@ -293,7 +294,7 @@ final class NativeDate extends IdScriptableObject {
                     final String toISOString = "toISOString";
 
                     Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-                    Object tv = ScriptRuntime.toPrimitive(o, ScriptRuntime.NumberClass);
+                    Object tv = ScriptRuntime.toPrimitive(o, Optional.of(ScriptRuntime.NumberClass));
                     if (tv instanceof Number) {
                         double d = ((Number) tv).doubleValue();
                         if (Double.isNaN(d) || Double.isInfinite(d)) {
