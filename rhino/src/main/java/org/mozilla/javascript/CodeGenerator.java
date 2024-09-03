@@ -38,7 +38,7 @@ class CodeGenerator extends Icode {
     private ScriptNode scriptOrFn;
     private int iCodeTop;
     private int stackDepth;
-    private int lineNumber;
+    private int lineNumber = -1;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
