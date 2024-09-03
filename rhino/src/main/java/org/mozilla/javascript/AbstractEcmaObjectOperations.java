@@ -46,7 +46,7 @@ public class AbstractEcmaObjectOperations {
     static boolean hasOwnProperty(Context cx, Object o, Object property) {
         Scriptable obj = ScriptableObject.ensureScriptable(o);
         boolean result;
-        if (property instanceof Symbol) {
+        if (ScriptRuntime.isSymbol(property)) {
             result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
         } else {
             ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);

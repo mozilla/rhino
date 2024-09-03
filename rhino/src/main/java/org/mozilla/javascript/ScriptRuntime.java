@@ -3000,7 +3000,7 @@ public class ScriptRuntime {
                 return test;
             }
         }
-        if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+        if (isSymbol(val1) || isSymbol(val2)) {
             throw typeErrorById("msg.not.a.number");
         }
         if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
@@ -3911,7 +3911,7 @@ public class ScriptRuntime {
         if (val1 instanceof Number && val2 instanceof Number) {
             return compare((Number) val1, (Number) val2, op);
         } else {
-            if ((isSymbol(val1)) || (isSymbol(val2))) {
+            if (isSymbol(val1) || isSymbol(val2)) {
                 throw typeErrorById("msg.compare.symbol");
             }
             val1 = toPrimitive(val1, Optional.of(NumberClass));
@@ -4640,7 +4640,7 @@ public class ScriptRuntime {
             Object value = propertyValues[i];
 
             if (getterSetter == 0) {
-                if (id instanceof Symbol) {
+                if (isSymbol(id)) {
                     Symbol sym = (Symbol) id;
                     SymbolScriptable so = (SymbolScriptable) object;
                     so.put(sym, object, value);
