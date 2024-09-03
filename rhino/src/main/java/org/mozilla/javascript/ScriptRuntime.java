@@ -2993,6 +2993,7 @@ public class ScriptRuntime {
                 ? (CharSequence) rprim : toString(rprim);
             return new ConsString(lstr, rstr);
         }
+ 
         // e4x extension start
         if (lval instanceof XMLObject) {
             Object test = ((XMLObject) lval).addValues(cx, true, rval);
@@ -3007,8 +3008,10 @@ public class ScriptRuntime {
             }
         }
         // e4x extension end
-        final Number lnum = toNumeric(lval);
-        final Number rnum = toNumeric(rval);
+
+        // Skipping (lval = lprim, rval = rprim) and using xprim values directly.
+        final Number lnum = toNumeric(lprim);
+        final Number rnum = toNumeric(rprim);
         if (lnum instanceof BigInteger && rnum instanceof BigInteger) {
             return ((BigInteger) lnum).add((BigInteger) rnum);
         }
@@ -3504,7 +3507,7 @@ public class ScriptRuntime {
             }
             return result;
         }
-        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != Scriptable.NOT_FOUND) {
+        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != null && exoticToPrim != Scriptable.NOT_FOUND) {
             throw notFunctionError(exoticToPrim);
         }
         final Class<?> defaultValueHint = preferredType.orElse(NumberClass);
