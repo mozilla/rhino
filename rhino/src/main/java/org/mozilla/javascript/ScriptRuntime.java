@@ -437,15 +437,10 @@ public class ScriptRuntime {
             if (val instanceof String) return toNumber((String) val);
             if (val instanceof CharSequence) return toNumber(val.toString());
             if (val instanceof Boolean) return ((Boolean) val).booleanValue() ? 1 : +0.0;
-            if (val instanceof Symbol) throw typeErrorById("msg.not.a.number");
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(NumberClass);
-                if ((val instanceof Scriptable) && !isSymbol(val))
-                    throw errorWithClassName("msg.primitive.expected", val);
-                continue;
-            }
-            warnAboutNonJSObject(val);
-            return NaN;
+            if (isSymbol(val)) throw typeErrorById("msg.not.a.number");
+            // Assert: val is an Object
+            val = toPrimitive(val, Optional.of(NumberClass));
+            // Assert: val is a primitive
         }
     }
 
@@ -714,56 +709,47 @@ public class ScriptRuntime {
 
     /** Convert the value to a BigInt. */
     public static BigInteger toBigInt(Object val) {
-        for (; ; ) {
-            if (val instanceof BigInteger) {
-                return (BigInteger) val;
-            }
-            if (val instanceof BigDecimal) {
-                return ((BigDecimal) val).toBigInteger();
-            }
-            if (val instanceof Number) {
-                if (val instanceof Long) {
-                    return BigInteger.valueOf(((Long) val));
-                } else {
-                    double d = ((Number) val).doubleValue();
-                    if (Double.isNaN(d) || Double.isInfinite(d)) {
-                        throw rangeErrorById(
-                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
-                    }
-                    BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
-                    try {
-                        return bd.toBigIntegerExact();
-                    } catch (ArithmeticException e) {
-                        throw rangeErrorById(
-                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
-                    }
-                }
-            }
-            if (val == null || Undefined.isUndefined(val)) {
-                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
-            }
-            if (val instanceof String) {
-                return toBigInt((String) val);
-            }
-            if (val instanceof CharSequence) {
-                return toBigInt(val.toString());
-            }
-            if (val instanceof Boolean) {
-                return ((Boolean) val).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
-            }
-            if (val instanceof Symbol) {
-                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
-            }
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(BigIntegerClass);
-                if ((val instanceof Scriptable) && !isSymbol(val)) {
-                    throw errorWithClassName("msg.primitive.expected", val);
-                }
-                continue;
-            }
-            warnAboutNonJSObject(val);
-            return BigInteger.ZERO;
+        val = toPrimitive(val, Optional.of(NumberClass));
+        if (val instanceof BigInteger) {
+            return (BigInteger) val;
         }
+        if (val instanceof BigDecimal) {
+            return ((BigDecimal) val).toBigInteger();
+        }
+        if (val instanceof Number) {
+            if (val instanceof Long) {
+                return BigInteger.valueOf(((Long) val));
+            } else {
+                double d = ((Number) val).doubleValue();
+                if (Double.isNaN(d) || Double.isInfinite(d)) {
+                    throw rangeErrorById(
+                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                }
+                BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
+                try {
+                    return bd.toBigIntegerExact();
+                } catch (ArithmeticException e) {
+                    throw rangeErrorById(
+                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                }
+            }
+        }
+        if (val == null || Undefined.isUndefined(val)) {
+            throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+        }
+        if (val instanceof String) {
+            return toBigInt((String) val);
+        }
+        if (val instanceof CharSequence) {
+            return toBigInt(val.toString());
+        }
+        if (val instanceof Boolean) {
+            return ((Boolean) val).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
+        }
+        if (isSymbol(val)) {
+            throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+        }
+        throw errorWithClassName("msg.primitive.expected", val);
     }
 
     /** ToBigInt applied to the String type */
@@ -842,6 +828,7 @@ public class ScriptRuntime {
      * <p>See ECMA 7.1.3 (v11.0).
      */
     public static Number toNumeric(Object val) {
+        val = toPrimitive(val, Optional.of(NumberClass));
         if (val instanceof Number) {
             return (Number) val;
         }
@@ -1028,24 +1015,22 @@ public class ScriptRuntime {
                 return val.toString();
             }
             if (val instanceof BigInteger) {
-                return val.toString();
+                return ((BigInteger) val).toString(10);
             }
             if (val instanceof Number) {
                 // XXX should we just teach NativeNumber.stringValue()
                 // about Numbers?
                 return numberToString(((Number) val).doubleValue(), 10);
             }
-            if (val instanceof Symbol) {
+            if (val instanceof Boolean) {
+                return val.toString();
+            }
+            if (isSymbol(val)) {
                 throw typeErrorById("msg.not.a.string");
             }
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(StringClass);
-                if ((val instanceof Scriptable) && !isSymbol(val)) {
-                    throw errorWithClassName("msg.primitive.expected", val);
-                }
-                continue;
-            }
-            return val.toString();
+            // Assert: val is an Object
+            val = toPrimitive(val, Optional.of(StringClass));
+            // Assert: val is a primitive
         }
     }
 
