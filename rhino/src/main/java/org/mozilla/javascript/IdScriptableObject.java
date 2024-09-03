@@ -241,7 +241,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                                 names = new Object[maxId];
                             }
                             names[count++] = name;
-                        } else if (getSymbols && (ScriptRuntime.isSymbol(name))) {
+                        } else if (getSymbols && ScriptRuntime.isSymbol(name)) {
                             if (names == null) {
                                 names = new Object[maxId];
                             }
