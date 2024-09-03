@@ -3926,17 +3926,31 @@ public class ScriptRuntime {
         if (val1 instanceof Number && val2 instanceof Number) {
             return compare((Number) val1, (Number) val2, op);
         } else {
-            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+            if ((isSymbol(val1)) || (isSymbol(val2))) {
                 throw typeErrorById("msg.compare.symbol");
             }
-            if (val1 instanceof Scriptable) {
-                val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
-            }
-            if (val2 instanceof Scriptable) {
-                val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
-            }
+            val1 = toPrimitive(val1, Optional.of(NumberClass));
+            val2 = toPrimitive(val2, Optional.of(NumberClass));
             if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
                 return compareTo(val1.toString(), val2.toString(), op);
+            }
+            if (val1 instanceof BigInteger && val2 instanceof CharSequence) {
+                final BigInteger ny;
+                try {
+                    ny = toBigInt(val2.toString());
+                } catch (EcmaError e) {
+                    return false;
+                }
+                return compareTo((BigInteger) val1, ny, op);
+            }
+            if (val1 instanceof CharSequence && val2 instanceof BigInteger) {
+                final BigInteger nx;
+                try {
+                    nx = toBigInt(val1.toString());
+                } catch (EcmaError e) {
+                    return false;
+                }
+                return compareTo(nx, (BigInteger) val2, op);
             }
             return compare(toNumeric(val1), toNumeric(val2), op);
         }
