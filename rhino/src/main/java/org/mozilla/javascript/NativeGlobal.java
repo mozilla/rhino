@@ -113,8 +113,12 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                                     cx, scope, TopLevel.Builtins.Error, ScriptRuntime.emptyArgs);
             errorProto.defineProperty("name", name, DONTENUM);
             errorProto.defineProperty("message", "", DONTENUM);
-            IdFunctionObject ctor =
-                    new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
+            IdFunctionObject ctor;
+            if (error == TopLevel.NativeErrors.AggregateError) {
+                ctor = new IdFunctionObject(obj, FTAG, Id_new_AggregateError, name, 2, scope);
+            } else {
+                ctor = new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
+            }
             ctor.markAsConstructor(errorProto);
             ctor.setPrototype(nativeError);
             errorProto.put("constructor", errorProto, ctor);
@@ -203,6 +207,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                     // The implementation of all the ECMA error constructors
                     // (SyntaxError, TypeError, etc.)
                     return NativeError.make(cx, scope, f, args);
+
+                case Id_new_AggregateError:
+                    return NativeError.makeAggregate(cx, scope, f, args);
             }
         }
         throw f.unknown();
@@ -760,5 +767,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
             Id_unescape = 12,
             Id_uneval = 13,
             LAST_SCOPE_FUNCTION_ID = 13,
-            Id_new_CommonError = 14;
+            Id_new_CommonError = 14,
+            Id_new_AggregateError = 15;
 }
