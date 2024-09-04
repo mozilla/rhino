@@ -3465,6 +3465,12 @@ public class ScriptRuntime {
         return toPrimitive(input, Optional.empty());
     }
 
+    /** @deprecated Use {@link #toPrimitive(Object, Optional)} instead */
+    @Deprecated
+    public static Object toPrimitive(Object input, Class<?> preferredType) {
+        return toPrimitive(input, Optional.ofNullable(preferredType));
+    }
+
     /**
      * 1. If input is an Object, then
      *   a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).

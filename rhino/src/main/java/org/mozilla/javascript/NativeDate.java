@@ -1374,21 +1374,19 @@ final class NativeDate extends IdScriptableObject {
 
         // if called with just one arg -
         if (args.length == 1) {
-            Object arg0 = args[0];
-            if (arg0 instanceof NativeDate) {
-                obj.date = ((NativeDate) arg0).date;
+            final Object value = args[0];
+            if (value instanceof NativeDate) {
+                obj.date = ((NativeDate) value).date;
                 return obj;
             }
-            if (arg0 instanceof Scriptable) {
-                arg0 = ((Scriptable) arg0).getDefaultValue(null);
-            }
-            double date;
-            if (arg0 instanceof CharSequence) {
+            final Object v = ScriptRuntime.toPrimitive(value);
+            final double date;
+            if (v instanceof CharSequence) {
                 // it's a string; parse it.
-                date = date_parseString(cx, arg0.toString());
+                date = date_parseString(cx, v.toString());
             } else {
                 // if it's not a string, use it as a millisecond date
-                date = ScriptRuntime.toNumber(arg0);
+                date = ScriptRuntime.toNumber(v);
             }
             obj.date = TimeClip(date);
             return obj;
