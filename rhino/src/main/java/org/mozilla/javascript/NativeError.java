@@ -7,6 +7,8 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The class of error objects
@@ -55,12 +57,7 @@ final class NativeError extends IdScriptableObject {
             }
             if (arglen >= 2) {
                 if (args[1] instanceof NativeObject) {
-                    NativeObject options = (NativeObject) args[1];
-                    Object cause = ScriptableObject.getProperty(options, "cause");
-                    if (cause != NOT_FOUND) {
-                        ScriptableObject.putProperty(obj, "cause", cause);
-                        obj.setAttributes("cause", DONTENUM);
-                    }
+                    installCause((NativeObject) args[1], obj);
                 } else {
                     ScriptableObject.putProperty(obj, "fileName", ScriptRuntime.toString(args[1]));
                     if (arglen >= 3) {
@@ -71,6 +68,58 @@ final class NativeError extends IdScriptableObject {
             }
         }
         return obj;
+    }
+
+    static NativeError makeAggregate(
+            Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
+        Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
+
+        NativeError obj = new NativeError();
+        obj.setPrototype(proto);
+        obj.setParentScope(scope);
+
+        int arglen = args.length;
+        if (arglen >= 1) {
+            if (arglen >= 2) {
+                if (!Undefined.isUndefined(args[1])) {
+                    ScriptableObject.putProperty(obj, "message", ScriptRuntime.toString(args[1]));
+                    obj.setAttributes("message", DONTENUM);
+                }
+
+                if (arglen >= 3) {
+                    if (args[2] instanceof NativeObject) {
+                        installCause((NativeObject) args[2], obj);
+                    } else {
+                        ScriptableObject.putProperty(
+                                obj, "fileName", ScriptRuntime.toString(args[2]));
+                        if (arglen >= 4) {
+                            ScriptableObject.putProperty(
+                                    obj, "lineNumber", ScriptRuntime.toInt32(args[3]));
+                        }
+                    }
+                }
+            }
+
+            final Object iterator = ScriptRuntime.callIterator(args[0], cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                List<Object> errors = new ArrayList<>();
+                for (Object o : it) {
+                    errors.add(o);
+                }
+
+                Scriptable newArray = cx.newArray(scope, errors.toArray());
+                obj.defineProperty("errors", newArray, DONTENUM);
+            }
+        }
+        return obj;
+    }
+
+    static void installCause(NativeObject options, NativeError obj) {
+        Object cause = ScriptableObject.getProperty(options, "cause");
+        if (cause != NOT_FOUND) {
+            ScriptableObject.putProperty(obj, "cause", cause);
+            obj.setAttributes("cause", DONTENUM);
+        }
     }
 
     @Override
