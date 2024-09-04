@@ -4216,6 +4216,7 @@ public class Parser {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
+        boolean defaultValuesSetup = false;
         for (AstNode n : array.getElements()) {
             if (n.getType() == Token.EMPTY) {
                 index++;
@@ -4223,8 +4224,10 @@ public class Parser {
             }
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
 
-            if (defaultValue != null)
+            if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
+                defaultValuesSetup = true;
+            }
 
             if (n.getType() == Token.NAME) {
                 /* [x] = [1] */
@@ -4389,6 +4392,7 @@ public class Parser {
             Transformer transformer) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
+        boolean defaultValuesSetup = false;
 
         for (ObjectProperty prop : node.getElements()) {
             int lineno = 0;
@@ -4418,8 +4422,10 @@ public class Parser {
             }
 
             rightElem.setLineno(lineno);
-            if (defaultValue != null)
+            if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
+                defaultValuesSetup = true;
+            }
 
             AstNode value = prop.getRight();
             if (value.getType() == Token.NAME) {

@@ -6,10 +6,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.*;
 
 /*
    Many of these are taken from examples at developer.mozilla.org
@@ -40,9 +37,9 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip")
+    @Ignore("wip") // TODO TODO TODO!!
     public void functionDefaultArgsObjectArrow() throws Exception {
-        final String script = "(({x = 1} = {x: 2}) => {\n" + "  return x;\n" + "})";
+        final String script = "(({x = 1} = {x: 2}) => {\n  return x;\n})";
 
         assertIntEvaluates(1, script + "({})"); // TODO(satish): parsing errors with arrow fns
         assertIntEvaluates(2, script + "()"); // TODO(satish): returns 1
@@ -51,7 +48,7 @@ public class DefaultParametersTest {
 
     @Test
     public void functionDefaultArgsMulti() throws Exception {
-        final String script = "function foo(a = 2, b = 23) {" + "   return a + b;" + "}";
+        final String script = "function foo(a = 2, b = 23) { return a + b; }";
         assertIntEvaluates(55, script + "\nfoo(32)");
         assertIntEvaluates(25, script + "\nfoo()");
         assertIntEvaluates(34, script + "\nfoo(32, 2)");
@@ -60,10 +57,28 @@ public class DefaultParametersTest {
 
     @Test
     public void functionDefaultArgsUsage() throws Exception {
-        final String script = "function foo(a = 2, b = a * 2) {" + "   return a + b;" + "}";
+        final String script = "function foo(a = 2, b = a * 2) { return a + b; }";
         assertIntEvaluates(96, script + "\nfoo(32)");
         assertIntEvaluates(6, script + "\nfoo()");
         assertIntEvaluates(34, script + "\nfoo(32, 2)");
+    }
+
+    @Test
+    public void ObjIdInitSimpleStrictExpr() throws Exception {
+        final String script = "(0, { eval = 0 } = {});";
+        assertThrows("missing ( before function parameters.", script);
+    }
+
+    @Test
+    public void ObjIdInitSimpleStrictForOf() throws Exception {
+        final String script = "for ({ eval = 0 } of [{}]) ;";
+        assertThrows("missing ( before function parameters.", script);
+    }
+
+    @Test
+    public void CoverInitName() throws Exception {
+        final String script = "({ a = 1 });";
+        assertThrows("missing ( before function parameters.", script);
     }
 
     @Test
@@ -254,9 +269,9 @@ public class DefaultParametersTest {
     public void destructuringAssigmentBasicObject() throws Exception {
         final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
 
-        assertIntEvaluates(1, script + "f({})"); // TODO
-        assertIntEvaluates(2, script + "f()"); // TODO
-        assertIntEvaluates(3, script + "f({x: 3})"); // TODO
+        assertIntEvaluates(1, script + "f({})");
+        assertIntEvaluates(2, script + "f()");
+        assertIntEvaluates(3, script + "f({x: 3})");
     }
 
     @Test
@@ -272,6 +287,15 @@ public class DefaultParametersTest {
     public void destructuringAssigmentDefaultObject() throws Exception {
         final String script = "function f({ z = 3, x = 2 } = {}) {\n" + "  return z;\n" + "}\n";
         assertIntEvaluates(3, script + "f()");
+        assertIntEvaluates(3, script + "f({})");
+        assertIntEvaluates(2, script + "f({z: 2})");
+    }
+
+    @Test
+    public void destructuringAssigmentDefaultObjectWithDefaults() throws Exception {
+        final String script =
+                "function f({ z = 3, x = 2 } = {z: 4, x: 5}) {\n" + "  return z;\n" + "}\n";
+        assertIntEvaluates(4, script + "f()");
         assertIntEvaluates(3, script + "f({})");
         assertIntEvaluates(2, script + "f({z: 2})");
     }
@@ -345,6 +369,9 @@ public class DefaultParametersTest {
                                 assertTrue(((EcmaError) e).getMessage().startsWith(expected));
                                 return true;
                             }
+                        } catch (EvaluatorException e) {
+                            assertTrue(((EvaluatorException) e).getMessage().startsWith(expected));
+                            return true;
                         }
                         fail("expected EcmaError but got " + rep);
                         return null;
