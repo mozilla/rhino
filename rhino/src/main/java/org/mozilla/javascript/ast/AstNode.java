@@ -111,7 +111,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.SHNE, "!==");
         operatorNames.put(Token.ASSIGN, "=");
         operatorNames.put(Token.ASSIGN_BITOR, "|=");
+        operatorNames.put(Token.ASSIGN_LOGICAL_OR, "||=");
         operatorNames.put(Token.ASSIGN_BITAND, "&=");
+        operatorNames.put(Token.ASSIGN_LOGICAL_AND, "&&=");
         operatorNames.put(Token.ASSIGN_LSH, "<<=");
         operatorNames.put(Token.ASSIGN_RSH, ">>=");
         operatorNames.put(Token.ASSIGN_URSH, ">>>=");
@@ -359,7 +361,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.ASSIGN:
             case Token.ASSIGN_ADD:
             case Token.ASSIGN_BITAND:
+            case Token.ASSIGN_LOGICAL_AND:
             case Token.ASSIGN_BITOR:
+            case Token.ASSIGN_LOGICAL_OR:
             case Token.ASSIGN_BITXOR:
             case Token.ASSIGN_DIV:
             case Token.ASSIGN_LSH:

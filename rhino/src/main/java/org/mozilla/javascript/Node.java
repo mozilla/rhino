@@ -933,8 +933,10 @@ public class Node implements Iterable<Node> {
             case Token.ASSIGN_DIV:
             case Token.ASSIGN_MOD:
             case Token.ASSIGN_BITOR:
+            case Token.ASSIGN_LOGICAL_OR:
             case Token.ASSIGN_BITXOR:
             case Token.ASSIGN_BITAND:
+            case Token.ASSIGN_LOGICAL_AND:
             case Token.ASSIGN_LSH:
             case Token.ASSIGN_RSH:
             case Token.ASSIGN_URSH:
