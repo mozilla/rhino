@@ -603,6 +603,7 @@ class CodeGenerator extends Icode {
 
             case Token.REF_CALL:
             case Token.CALL:
+            case Token.CALL_OPTIONAL:
             case Token.NEW:
                 {
                     if (type == Token.NEW) {
@@ -686,6 +687,11 @@ class CodeGenerator extends Icode {
                     visitExpression(ifElse, contextFlags & ECF_TAIL);
                     resolveForwardGoto(afterElseJumpStart);
                 }
+                break;
+            case Token.GETPROP_OPTIONAL:
+                visitExpression(child, 0);
+                child = child.getNext();
+                addStringOp(type, child.getString());
                 break;
 
             case Token.GETPROP:
@@ -1058,6 +1064,7 @@ class CodeGenerator extends Icode {
                     stackChange(2);
                     break;
                 }
+            case Token.GETPROP_OPTIONAL:
             case Token.GETPROP:
             case Token.GETELEM:
                 {
@@ -1068,6 +1075,11 @@ class CodeGenerator extends Icode {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
                         addStringOp(Icode_PROP_AND_THIS, property);
+                        stackChange(1);
+                    } else if (type == Token.GETPROP_OPTIONAL) {
+                        String property = id.getString();
+                        // stack: ... target -> ... function thisObj
+                        addStringOp(Icode_PROP_AND_THIS_OPTIONAL, property);
                         stackChange(1);
                     } else {
                         visitExpression(id, 0);
