@@ -121,9 +121,12 @@ public class Token {
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
             BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            GETPROP_OPTIONAL = BIGINT + 1,
+            REF_SPECIAL_OPTIONAL = GETPROP_OPTIONAL + 1,
+            CALL_OPTIONAL = REF_SPECIAL_OPTIONAL + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+    public static final int LAST_BYTECODE_TOKEN = CALL_OPTIONAL,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets

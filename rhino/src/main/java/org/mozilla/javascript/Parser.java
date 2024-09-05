@@ -3019,8 +3019,9 @@ public class Parser {
         AstNode ref = null; // right side of . or .. operator
         int token = nextToken();
         if (token == Token.LP && tt == Token.QUESTION_DOT) {
-            // optional chaining operator method call, o.func.?()
+            // optional chaining operator method call, o.func?.()
             var pos = pn.getPosition();
+            pn.setType(Token.QUESTION_DOT);
             consumeToken();
             checkCallRequiresActivation(pn);
             FunctionCall f = new FunctionCall(pos);
@@ -3034,8 +3035,8 @@ public class Parser {
             f.setArguments(args);
             f.setRp(ts.tokenBeg - pos);
             f.setLength(ts.tokenEnd - pos);
-
-            return conditionalPropertyAccess(pn, f);
+            f.setType(Token.CALL_OPTIONAL);
+            return f;
         }
 
         switch (token) {
@@ -3095,7 +3096,7 @@ public class Parser {
         result.setRight(ref);
 
         if (tt == Token.QUESTION_DOT && result instanceof PropertyGet) {
-            return conditionalPropertyAccess(pn, result);
+            result.setType(Token.QUESTION_DOT);
         }
         return result;
     }
