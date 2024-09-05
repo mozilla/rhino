@@ -166,7 +166,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
                 break;
             case SymbolId_toPrimitive:
                 initPrototypeMethod(
-                        CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
+                        CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "[Symbol.toPrimitive]", 1);
                 break;
             default:
                 super.initPrototypeId(id);
