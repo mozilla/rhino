@@ -298,7 +298,8 @@ final class NativeDate extends IdScriptableObject {
                     final String toISOString = "toISOString";
 
                     Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-                    Object tv = ScriptRuntime.toPrimitive(o, Optional.of(ScriptRuntime.NumberClass));
+                    Object tv =
+                            ScriptRuntime.toPrimitive(o, Optional.of(ScriptRuntime.NumberClass));
                     if (tv instanceof Number) {
                         double d = ((Number) tv).doubleValue();
                         if (Double.isNaN(d) || Double.isInfinite(d)) {
@@ -332,19 +333,23 @@ final class NativeDate extends IdScriptableObject {
                     Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
                     final Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
                     final Optional<String> hint =
-                        Optional.ofNullable(arg0 instanceof CharSequence ? arg0.toString() : null);
-                    final Class<?> tryFirst = hint
-                        .map(h -> {
-                            if (h.equals("string") || h.equals("default")) {
-                                return ScriptRuntime.StringClass;
-                            } else if (h.equals("number")) {
-                                return ScriptRuntime.NumberClass;
-                            }
-                            return null;
-                        })
-                        .orElseThrow(() -> ScriptRuntime.typeErrorById(
-                            "msg.invalid.toprimitive.hint",
-                            ScriptRuntime.toString(arg0)));
+                            Optional.ofNullable(
+                                    arg0 instanceof CharSequence ? arg0.toString() : null);
+                    final Class<?> tryFirst =
+                            hint.map(
+                                            h -> {
+                                                if (h.equals("string") || h.equals("default")) {
+                                                    return ScriptRuntime.StringClass;
+                                                } else if (h.equals("number")) {
+                                                    return ScriptRuntime.NumberClass;
+                                                }
+                                                return null;
+                                            })
+                                    .orElseThrow(
+                                            () ->
+                                                    ScriptRuntime.typeErrorById(
+                                                            "msg.invalid.toprimitive.hint",
+                                                            ScriptRuntime.toString(arg0)));
                     return ScriptableObject.getDefaultValue(o, tryFirst);
                 }
         }

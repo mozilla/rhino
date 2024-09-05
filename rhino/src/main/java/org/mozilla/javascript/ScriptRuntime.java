@@ -18,7 +18,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
-
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -722,15 +721,13 @@ public class ScriptRuntime {
             } else {
                 double d = ((Number) val).doubleValue();
                 if (Double.isNaN(d) || Double.isInfinite(d)) {
-                    throw rangeErrorById(
-                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    throw rangeErrorById("msg.cant.convert.to.bigint.isnt.integer", toString(val));
                 }
                 BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
                 try {
                     return bd.toBigIntegerExact();
                 } catch (ArithmeticException e) {
-                    throw rangeErrorById(
-                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    throw rangeErrorById("msg.cant.convert.to.bigint.isnt.integer", toString(val));
                 }
             }
         }
@@ -2977,23 +2974,25 @@ public class ScriptRuntime {
         if (lval instanceof BigInteger && rval instanceof BigInteger) {
             return ((BigInteger) lval).add((BigInteger) rval);
         }
-        if (lval instanceof Number && !(lval instanceof BigInteger)
-               && rval instanceof Number && !(rval instanceof BigInteger)) {
+        if (lval instanceof Number
+                && !(lval instanceof BigInteger)
+                && rval instanceof Number
+                && !(rval instanceof BigInteger)) {
             return wrapNumber(((Number) lval).doubleValue() + ((Number) rval).doubleValue());
         }
-        
+
         // spec starts here for abstract operation ApplyStringOrNumericBinaryOperator
-        // where opText is "+". 
+        // where opText is "+".
         final Object lprim = toPrimitive(lval);
         final Object rprim = toPrimitive(rval);
         if (lprim instanceof CharSequence || rprim instanceof CharSequence) {
-            final CharSequence lstr = (lprim instanceof CharSequence)
-                ? (CharSequence) lprim : toString(lprim);
-            final CharSequence rstr = (rprim instanceof CharSequence)
-                ? (CharSequence) rprim : toString(rprim);
+            final CharSequence lstr =
+                    (lprim instanceof CharSequence) ? (CharSequence) lprim : toString(lprim);
+            final CharSequence rstr =
+                    (rprim instanceof CharSequence) ? (CharSequence) rprim : toString(rprim);
             return new ConsString(lstr, rstr);
         }
- 
+
         // e4x extension start
         if (lval instanceof XMLObject) {
             Object test = ((XMLObject) lval).addValues(cx, true, rval);
@@ -3471,7 +3470,7 @@ public class ScriptRuntime {
         return toPrimitive(input, Optional.ofNullable(preferredType));
     }
 
-    /**
+    /*
      * 1. If input is an Object, then
      *   a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
      *   b. If exoticToPrim is not undefined, then
@@ -3488,6 +3487,8 @@ public class ScriptRuntime {
      *   c. If preferredType is not present, let preferredType be number.
      *   d. Return ? OrdinaryToPrimitive(input, preferredType).
      * 2. Return input.
+    /
+    /**
      * @param input
      * @param preferredType
      * @return
@@ -3503,9 +3504,10 @@ public class ScriptRuntime {
             final Function func = (Function) exoticToPrim;
             final Context cx = Context.getCurrentContext();
             final Scriptable scope = func.getParentScope();
-            final String hint = preferredType
-                .map(type -> type == StringClass ? "string" : "number")
-                .orElse("default");
+            final String hint =
+                    preferredType
+                            .map(type -> type == StringClass ? "string" : "number")
+                            .orElse("default");
             final Object[] args = new Object[] {hint};
             final Object result = func.call(cx, scope, s, args);
             if (isObject(result)) {
@@ -3513,7 +3515,9 @@ public class ScriptRuntime {
             }
             return result;
         }
-        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != null && exoticToPrim != Scriptable.NOT_FOUND) {
+        if (!Undefined.isUndefined(exoticToPrim)
+                && exoticToPrim != null
+                && exoticToPrim != Scriptable.NOT_FOUND) {
             throw notFunctionError(exoticToPrim);
         }
         final Class<?> defaultValueHint = preferredType.orElse(NumberClass);
