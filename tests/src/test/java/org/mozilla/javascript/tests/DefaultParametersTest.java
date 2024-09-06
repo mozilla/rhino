@@ -37,16 +37,6 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip") // TODO TODO TODO!!
-    public void functionDefaultArgsObjectArrow() throws Exception {
-        final String script = "(({x = 1} = {x: 2}) => {\n  return x;\n})";
-
-        assertIntEvaluates(1, script + "({})"); // TODO(satish): parsing errors with arrow fns
-        assertIntEvaluates(2, script + "()"); // TODO(satish): returns 1
-        assertIntEvaluates(3, script + "({x: 3})");
-    }
-
-    @Test
     public void functionDefaultArgsMulti() throws Exception {
         final String script = "function foo(a = 2, b = 23) { return a + b; }";
         assertIntEvaluates(55, script + "\nfoo(32)");
@@ -65,20 +55,30 @@ public class DefaultParametersTest {
 
     @Test
     public void ObjIdInitSimpleStrictExpr() throws Exception {
-        final String script = "(0, { eval = 0 } = {});";
-        assertThrows("missing ( before function parameters.", script);
+        final String script =
+                "(function () { \n " + "'use strict'; \n " + "(0, { eval = 0 } = {}) })()";
+        assertThrows("syntax error", script);
     }
 
     @Test
     public void ObjIdInitSimpleStrictForOf() throws Exception {
         final String script = "for ({ eval = 0 } of [{}]) ;";
-        assertThrows("missing ( before function parameters.", script);
+        assertThrows("syntax error", script);
     }
 
     @Test
     public void CoverInitName() throws Exception {
         final String script = "({ a = 1 });";
-        assertThrows("missing ( before function parameters.", script);
+        assertThrows("syntax error", script);
+    }
+
+    @Test
+    public void functionDefaultArgsObjectArrow() throws Exception {
+        final String script = "(({x = 1} = {x: 2}) => {\n  return x;\n})";
+
+        assertIntEvaluates(1, script + "({})");
+        assertIntEvaluates(2, script + "()");
+        assertIntEvaluates(3, script + "({x: 3})");
     }
 
     @Test

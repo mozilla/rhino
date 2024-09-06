@@ -272,6 +272,8 @@ public class Token {
                 return "IFNE";
             case SETNAME:
                 return "SETNAME";
+            case STRICT_SETNAME:
+                return "STRICT_SETNAME";
             case BITOR:
                 return "BITOR";
             case BITXOR:

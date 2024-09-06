@@ -2448,6 +2448,9 @@ public class Parser {
         } else if (!hasEOL && tt == Token.ARROW) {
             consumeToken();
             pn = arrowFunction(pn);
+        } else if (pn.getIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 0) == 1
+                && !inDestructuringAssignment) {
+            reportError("msg.syntax");
         }
         return pn;
     }
@@ -3282,8 +3285,11 @@ public class Parser {
 
             int length = ts.tokenEnd - begin;
 
+            boolean hasObjectLiteralDestructuring =
+                    e.getIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 0) == 1;
             boolean hasTrailingComma = e.getIntProp(Node.TRAILING_COMMA, 0) == 1;
-            if ((hasTrailingComma || e.getType() == Token.EMPTY) && peekToken() != Token.ARROW) {
+            if ((hasTrailingComma || hasObjectLiteralDestructuring || e.getType() == Token.EMPTY)
+                    && peekToken() != Token.ARROW) {
                 reportError("msg.syntax");
                 return makeErrorNode();
             }
@@ -3588,7 +3594,7 @@ public class Parser {
             setterNames = new HashSet<>();
         }
         Comment objJsdocNode = getAndResetJsDoc();
-
+        boolean objectLiteralDestructuringDefault = false;
         commaLoop:
         for (; ; ) {
             String propertyName = null;
@@ -3621,10 +3627,9 @@ public class Parser {
                 // many tokens.)
                 int peeked = peekToken();
                 if (peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC) {
-                    if (peeked == Token.ASSIGN
-                            && inDestructuringAssignment) { // we have an object literal with
-                        // destructuring assignment and a
-                        // default
+                    if (peeked == Token.ASSIGN) { // we have an object literal with
+                        // destructuring assignment and a default value
+                        objectLiteralDestructuringDefault = true;
                         if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                             elems.add(plainProperty(pname, tt));
                             if (matchToken(Token.COMMA, true)) {
@@ -3705,6 +3710,9 @@ public class Parser {
 
         mustMatchToken(Token.RC, "msg.no.brace.prop", true);
         ObjectLiteral pn = new ObjectLiteral(pos, ts.tokenEnd - pos);
+        if (objectLiteralDestructuringDefault) {
+            pn.putIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 1);
+        }
         if (objJsdocNode != null) {
             pn.setJsDocNode(objJsdocNode);
         }
@@ -3782,7 +3790,7 @@ public class Parser {
             pn.setIsShorthand(true);
             pn.setLeftAndRight(property, nn);
             return pn;
-        } else if (tt == Token.ASSIGN && inDestructuringAssignment) {
+        } else if (tt == Token.ASSIGN) {
             /* we're in destructuring with defaults in a object literal; treat defaults as values */
             ObjectProperty pn = new ObjectProperty();
             consumeToken(); // consume the `=`
