@@ -79,3 +79,22 @@ task sourceJar(type: Jar) {
         into 'META-INF'
     }
 }
+
+publishing {
+    if (project.hasProperty("mavenPassword")) {
+        repositories {
+
+            maven {
+                credentials {
+                    username mavenUser
+                    password mavenPassword
+                }
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url mavenSnapshotRepo
+                } else {
+                    url mavenReleaseRepo
+                }
+            }
+        }
+    }
+}
