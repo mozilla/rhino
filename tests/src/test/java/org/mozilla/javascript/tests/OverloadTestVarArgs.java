@@ -56,20 +56,42 @@ public class OverloadTestVarArgs {
     /** ensures, that js + java produces the same result */
     @Test
     public void argsTest() {
-        /*	assertEvaluates("args(String arg1)", this.args("foo"), "self.args('foo');");
-        assertEvaluates("args(String arg1, String arg2)", this.args("foo", "bar"), "self.args('foo', 'bar');");
-        assertEvaluates("args(String arg1, String... args)",
-        this.args("foo", "bar", "baz"), "self.args('foo', 'bar', 'baz');");
-        assertEvaluates("args(String arg1, int integer)" ,this.args("foo", 1), "self.args('foo', 1);");
+        assertEvaluates("args(String arg1)", this.args("foo"), "self.args('foo');");
+        assertEvaluates(
+                "args(String arg1, String arg2)",
+                this.args("foo", "bar"),
+                "self.args('foo', 'bar');");
+        assertEvaluates(
+                "args(String arg1, String... args)",
+                this.args("foo", "bar", "baz"),
+                "self.args('foo', 'bar', 'baz');");
+        assertEvaluates(
+                "args(String arg1, int integer)", this.args("foo", 1), "self.args('foo', 1);");
 
         assertEvaluates("args2(String arg1)", this.args2("foo"), "self.args2('foo');");
-        assertEvaluates("args2(String arg1, String arg2)", this.args2("foo", "bar"), "self.args2('foo', 'bar');");
-        assertEvaluates("args2(String arg1, String... args)", this.args2("foo", "bar", "baz"), "self.args2('foo', 'bar', 'baz');");
+        assertEvaluates(
+                "args2(String arg1, String arg2)",
+                this.args2("foo", "bar"),
+                "self.args2('foo', 'bar');");
+        assertEvaluates(
+                "args2(String arg1, String... args)",
+                this.args2("foo", "bar", "baz"),
+                "self.args2('foo', 'bar', 'baz');");
 
-        assertEvaluates("args3(String arg1, String arg2)", this.args3("foo", "bar"), "self.args3('foo', 'bar');");
-        assertEvaluates("args3(String arg1, int... integers)", this.args3("foo", 1), "self.args3('foo', 1);");
-        int[] intArr = new int[]{1, 2, 3};
-        assertEvaluates("args3(String arg1, int... integers)", this.args3("foo", intArr), "self.args3('foo', 1);", intArr);*/
+        assertEvaluates(
+                "args3(String arg1, String arg2)",
+                this.args3("foo", "bar"),
+                "self.args3('foo', 'bar');");
+        assertEvaluates(
+                "args3(String arg1, int... integers)",
+                this.args3("foo", 1),
+                "self.args3('foo', 1);");
+        int[] intArr = new int[] {1, 2, 3};
+        assertEvaluates(
+                "args3(String arg1, int... integers)",
+                this.args3("foo", intArr),
+                "self.args3('foo', 1);",
+                intArr);
 
         String[] stringArr = new String[] {"foo", "bar", "baz"};
         assertEvaluates(
