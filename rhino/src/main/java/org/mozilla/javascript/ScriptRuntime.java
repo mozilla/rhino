@@ -3499,26 +3499,28 @@ public class ScriptRuntime {
             return input;
         }
         final Scriptable s = (Scriptable) input;
-        final Object exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
-        if (exoticToPrim instanceof Function) {
-            final Function func = (Function) exoticToPrim;
-            final Context cx = Context.getCurrentContext();
-            final Scriptable scope = func.getParentScope();
-            final String hint =
-                    preferredType
-                            .map(type -> type == StringClass ? "string" : "number")
-                            .orElse("default");
-            final Object[] args = new Object[] {hint};
-            final Object result = func.call(cx, scope, s, args);
-            if (isObject(result)) {
-                throw typeErrorById("msg.cant.convert.to.primitive");
+        final Context cx = Context.getCurrentContext();
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            final Object exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
+            if (exoticToPrim instanceof Function) {
+                final Function func = (Function) exoticToPrim;
+                final Scriptable scope = func.getParentScope();
+                final String hint =
+                        preferredType
+                                .map(type -> type == StringClass ? "string" : "number")
+                                .orElse("default");
+                final Object[] args = new Object[] {hint};
+                final Object result = func.call(cx, scope, s, args);
+                if (isObject(result)) {
+                    throw typeErrorById("msg.cant.convert.to.primitive");
+                }
+                return result;
             }
-            return result;
-        }
-        if (!Undefined.isUndefined(exoticToPrim)
-                && exoticToPrim != null
-                && exoticToPrim != Scriptable.NOT_FOUND) {
-            throw notFunctionError(exoticToPrim);
+            if (!Undefined.isUndefined(exoticToPrim)
+                    && exoticToPrim != null
+                    && exoticToPrim != Scriptable.NOT_FOUND) {
+                throw notFunctionError(exoticToPrim);
+            }
         }
         final Class<?> defaultValueHint = preferredType.orElse(NumberClass);
         final Object result = s.getDefaultValue(defaultValueHint);
