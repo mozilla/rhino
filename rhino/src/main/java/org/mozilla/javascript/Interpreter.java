@@ -1784,6 +1784,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
+                                        } else if (fun instanceof LambdaConstructor) {
+                                            break;
                                         } else if (fun instanceof LambdaFunction) {
                                             fun = ((LambdaFunction) fun).getTarget();
                                         } else if (fun instanceof BoundFunction) {
@@ -2150,13 +2152,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                             case Icode_ZERO:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 0;
+                                stack[stackTop] = Integer.valueOf(0);
                                 continue Loop;
                             case Icode_ONE:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 1;
+                                stack[stackTop] = Integer.valueOf(1);
                                 continue Loop;
                             case Token.NULL:
                                 stack[++stackTop] = null;

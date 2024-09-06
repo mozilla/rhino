@@ -32,7 +32,7 @@ public class StackTraceTest {
             final String source2 = "function f2() { 'H'.toLowerCase(); throw 'hello'; }; f2();";
             final String source3 =
                     "function f2() { new java.lang.String('H').toLowerCase(); throw 'hello'; }; f2();";
-            final String result = "\tat test.js (f2)" + LS + "\tat test.js" + LS;
+            final String result = "\tat test.js:0 (f2)" + LS + "\tat test.js:0" + LS;
 
             runWithExpectedStackTrace(source1, result);
             runWithExpectedStackTrace(source2, result);
@@ -56,7 +56,7 @@ public class StackTraceTest {
             final String source2 = "function f2() { 'H'.toLowerCase(); throw 'hello'; }; f2();";
             final String source3 =
                     "function f2() { new java.lang.String('H').toLowerCase(); throw 'hello'; }; f2();";
-            final String result = "f2()@test.js" + LS + "@test.js" + LS;
+            final String result = "f2()@test.js:0" + LS + "@test.js:0" + LS;
 
             runWithExpectedStackTrace(source1, result);
             runWithExpectedStackTrace(source2, result);
@@ -80,7 +80,7 @@ public class StackTraceTest {
             final String source2 = "function f2() { 'H'.toLowerCase(); throw 'hello'; }; f2();";
             final String source3 =
                     "function f2() { new java.lang.String('H').toLowerCase(); throw 'hello'; }; f2();";
-            final String result = "f2()@test.js\n@test.js\n";
+            final String result = "f2()@test.js:0\n@test.js:0\n";
 
             runWithExpectedStackTrace(source1, result);
             runWithExpectedStackTrace(source2, result);

@@ -16,7 +16,7 @@ public class NumericSeparatorTest {
     /** Special Tokenizer test for numeric constant at end. */
     @Test
     public void numericAtEndOneDigit() {
-        Utils.assertWithAllOptimizationLevelsES6(1.0, "1");
+        Utils.assertWithAllOptimizationLevelsES6(1, "1");
     }
 
     /** Special Tokenizer test for numeric constant at end. */

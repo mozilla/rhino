@@ -1,5 +1,10 @@
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Abstract Object Operations as defined by EcmaScript
  *
@@ -22,6 +27,11 @@ public class AbstractEcmaObjectOperations {
     enum INTEGRITY_LEVEL {
         FROZEN,
         SEALED
+    }
+
+    enum KEY_COERCION {
+        PROPERTY,
+        COLLECTION,
     }
 
     /**
@@ -231,5 +241,66 @@ public class AbstractEcmaObjectOperations {
         } else {
             base.put(p, o, v);
         }
+    }
+
+    /**
+     * Implement the ECMAScript abstract operation "GroupBy"
+     *
+     * @param cx
+     * @param scope
+     * @param items
+     * @param callback
+     * @param keyCoercion
+     * @see <a href="https://262.ecma-international.org/15.0/#sec-groupby"></a>
+     */
+    static Map<Object, List<Object>> groupBy(
+            Context cx,
+            Scriptable scope,
+            IdFunctionObject f,
+            Object items,
+            Object callback,
+            KEY_COERCION keyCoercion) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ScriptRuntimeES6.requireObjectCoercible(cx, items, f);
+        }
+        if (!(callback instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function", callback, ScriptRuntime.typeof(callback));
+        }
+
+        // LinkedHashMap used to preserve key creation order
+        Map<Object, List<Object>> groups = new LinkedHashMap<>();
+        final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            double i = 0;
+            for (Object o : it) {
+                if (i > NativeNumber.MAX_SAFE_INTEGER) {
+                    it.close();
+                    throw ScriptRuntime.typeError("Too many values to iterate");
+                }
+
+                Object[] args = {o, i};
+                Object key =
+                        ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                if (keyCoercion == KEY_COERCION.PROPERTY) {
+                    if (!ScriptRuntime.isSymbol(key)) {
+                        key = ScriptRuntime.toString(key);
+                    }
+                } else {
+                    assert keyCoercion == KEY_COERCION.COLLECTION;
+                    if ((key instanceof Number)
+                            && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+                        key = ScriptRuntime.zeroObj;
+                    }
+                }
+
+                List<Object> group = groups.computeIfAbsent(key, (k) -> new ArrayList<>());
+                group.add(o);
+
+                i++;
+            }
+        }
+
+        return groups;
     }
 }
