@@ -24,8 +24,6 @@ jobs:
         distribution: 'adopt'
         server-id: github
         settings-path: ${{ github.workspace }}
-    - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@16bf8bc8fe830fa669c3c9f914d3eb147c629707 # v4.0.1
     - name: Publish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
