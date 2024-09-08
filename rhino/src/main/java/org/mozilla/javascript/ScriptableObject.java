@@ -2102,18 +2102,10 @@ public abstract class ScriptableObject
     }
 
     /**
-     * Gets a named property from an object or any object in its prototype chain.
-     *
-     * <p>Searches the prototype chain for a property named <code>name</code>.
-     *
-     * <p>
-     *
-     * @param obj a JavaScript object
-     * @param name a property name
-     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
-     *     object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
-     * @since 1.5R2
+     * @deprecated
+     * @see Scriptable#getProperty(Scriptable, String)
      */
+    @Deprecated
     public static Object getProperty(Scriptable obj, String name) {
         Scriptable start = obj;
         Object result;
@@ -2125,7 +2117,13 @@ public abstract class ScriptableObject
         return result;
     }
 
-    /** This is a version of getProperty that works with Symbols. */
+    /**
+     * @deprecated This method will throw a TypeError when {@code obj} or objects searched in its
+     *     prototype chain do not implement {@link SymbolScriptable}, but the replacement method
+     *     will return {@link Scriptable#NOT_FOUND} instead for any non-SymbolScriptable..
+     * @see Scriptable#getProperty(Scriptable, Symbol)
+     */
+    @Deprecated
     public static Object getProperty(Scriptable obj, Symbol key) {
         Scriptable start = obj;
         Object result;
@@ -2164,20 +2162,10 @@ public abstract class ScriptableObject
     }
 
     /**
-     * Gets an indexed property from an object or any object in its prototype chain.
-     *
-     * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
-     * that if you wish to look for properties with numerical but non-integral indicies, you should
-     * use getProperty(Scriptable,String) with the string value of the index.
-     *
-     * <p>
-     *
-     * @param obj a JavaScript object
-     * @param index an integral index
-     * @return the value of a property with index <code>index</code> found in <code>obj</code> or
-     *     any object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
-     * @since 1.5R2
+     * @deprecated
+     * @see Scriptable#getProperty(Scriptable, int)
      */
+    @Deprecated
     public static Object getProperty(Scriptable obj, int index) {
         Scriptable start = obj;
         Object result;
