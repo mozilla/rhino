@@ -969,6 +969,7 @@ class CodeGenerator extends Icode {
                 visitArrayComprehension(node, child, child.getNext());
                 break;
 
+            case Token.REF_SPECIAL_OPTIONAL:
             case Token.REF_SPECIAL:
                 visitExpression(child, 0);
                 addStringOp(type, (String) node.getProp(Node.NAME_PROP));

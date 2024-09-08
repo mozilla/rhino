@@ -67,6 +67,19 @@ public class OptionalChainingOperatorTests {
                                     1,
                                     null));
 
+                    // SpecialRef and Optional Chaining operator
+                    assertEquals(
+                            Undefined.instance,
+                            cx.evaluateString(
+                                    scope, " var a = null; a?.__proto__", sourceName, 1, null));
+                    assertEquals(
+                            Undefined.instance,
+                            cx.evaluateString(scope, "a?.__proto__", sourceName, 1, null));
+
+                    assertEquals(
+                            Undefined.instance,
+                            cx.evaluateString(scope, "a?.__parent__", sourceName, 1, null));
+
                     // NOT WORKING
                     //                    assertEquals(
                     //                            Undefined.instance,

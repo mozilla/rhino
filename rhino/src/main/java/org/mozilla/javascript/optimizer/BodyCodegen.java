@@ -1521,7 +1521,22 @@ class BodyCodegen {
                                     + ")Lorg/mozilla/javascript/Ref;");
                 }
                 break;
-
+            case Token.REF_SPECIAL_OPTIONAL:
+                {
+                    String special = (String) node.getProp(Node.NAME_PROP);
+                    generateExpression(child, node);
+                    cfw.addPush(special);
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    addScriptRuntimeInvoke(
+                            "optionalSpecialRef",
+                            "(Ljava/lang/Object;"
+                                    + "Ljava/lang/String;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + ")Lorg/mozilla/javascript/Ref;");
+                }
+                break;
             case Token.REF_MEMBER:
             case Token.REF_NS_MEMBER:
             case Token.REF_NAME:

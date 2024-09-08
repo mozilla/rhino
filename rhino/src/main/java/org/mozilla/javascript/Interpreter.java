@@ -2284,6 +2284,17 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     obj, stringReg, cx, frame.scope);
                                     continue Loop;
                                 }
+                            case Token.REF_SPECIAL_OPTIONAL:
+                                {
+                                    // stringReg: name of special property
+                                    Object obj = stack[stackTop];
+                                    if (obj == DBL_MRK)
+                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    stack[stackTop] =
+                                            ScriptRuntime.optionalSpecialRef(
+                                                    obj, stringReg, cx, frame.scope);
+                                    continue Loop;
+                                }
                             case Token.REF_MEMBER:
                                 {
                                     // indexReg: flags
