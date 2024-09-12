@@ -110,6 +110,7 @@ public class Test262SuiteTest {
                             "regexp-lookbehind",
                             "regexp-named-groups",
                             "regexp-unicode-property-escapes",
+                            "resizable-arraybuffer",
                             "super",
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
