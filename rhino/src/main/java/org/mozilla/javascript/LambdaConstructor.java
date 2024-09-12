@@ -66,12 +66,30 @@ public class LambdaConstructor extends LambdaFunction {
         this.flags = flags;
     }
 
+    /**
+     * Create a new constructor that may be called using new or as a function, and exhibits
+     * different behavior for each.
+     */
+    public LambdaConstructor(
+            Scriptable scope,
+            String name,
+            int length,
+            Callable target,
+            Constructable targetConstructor) {
+        super(scope, name, length, target);
+        this.targetConstructor = targetConstructor;
+        this.flags = CONSTRUCTOR_DEFAULT;
+    }
+
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
-        return targetConstructor.construct(cx, scope, args);
+        if (target == null) {
+            return targetConstructor.construct(cx, scope, args);
+        }
+        return target.call(cx, scope, thisObj, args);
     }
 
     @Override

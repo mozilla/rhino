@@ -16,7 +16,7 @@ public class LambdaFunction extends BaseFunction {
     private static final long serialVersionUID = -8388132362854748293L;
 
     // The target is expected to be a lambda -- lambdas should not be serialized.
-    private final transient Callable target;
+    protected final transient Callable target;
     private final String name;
     private final int length;
 
