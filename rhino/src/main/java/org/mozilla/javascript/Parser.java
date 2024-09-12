@@ -2456,7 +2456,7 @@ public class Parser {
     }
 
     private AstNode condExpr() throws IOException {
-        AstNode pn = orExpr();
+        AstNode pn = nullishCoalescingExpr();
         if (matchToken(Token.HOOK, true)) {
             int line = ts.lineno;
             int qmarkPos = ts.tokenBeg, colonPos = -1;
@@ -2484,6 +2484,25 @@ public class Parser {
             ce.setQuestionMarkPosition(qmarkPos - beg);
             ce.setColonPosition(colonPos - beg);
             pn = ce;
+        }
+        return pn;
+    }
+
+    private AstNode nullishCoalescingExpr() throws IOException {
+        AstNode pn = orExpr();
+        if (matchToken(Token.NULLISH_COALESCING, true)) {
+            int opPos = ts.tokenBeg;
+            AstNode rn = nullishCoalescingExpr();
+
+            // Cannot immediately contain, or be contained within, an && or || operation.
+            if (pn.getType() == Token.OR
+                    || pn.getType() == Token.AND
+                    || rn.getType() == Token.OR
+                    || rn.getType() == Token.AND) {
+                reportError("msg.nullish.bad.token");
+            }
+
+            pn = new InfixExpression(Token.NULLISH_COALESCING, pn, rn, opPos);
         }
         return pn;
     }

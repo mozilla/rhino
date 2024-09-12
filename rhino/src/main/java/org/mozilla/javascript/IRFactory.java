@@ -2067,6 +2067,27 @@ public final class IRFactory {
                     }
                     break;
                 }
+
+            case Token.NULLISH_COALESCING:
+                {
+                    // foo ?? default =>
+                    //     (foo == undefined || foo == null) ? foo (left) : default (right)
+
+                    Node undefinedNode = new Name(0, "undefined");
+                    Node nullNode = new Node(Token.NULL);
+
+                    Node conditional =
+                            new Node(
+                                    Token.OR,
+                                    new Node(Token.SHEQ, nullNode, left),
+                                    new Node(Token.SHEQ, undefinedNode, left));
+
+                    return new Node(
+                            Token.HOOK,
+                            /* left= */ conditional,
+                            /* mid= */ right,
+                            /* right= */ left);
+                }
         }
 
         return new Node(nodeType, left, right);

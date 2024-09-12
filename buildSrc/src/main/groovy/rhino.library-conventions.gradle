@@ -53,6 +53,11 @@ tasks.withType(JavaCompile).configureEach {
     options.errorprone.excludedPaths = '.+/src/test/java/.+'
 }
 
+tasks.withType(Javadoc) {
+      failOnError false
+      options.addStringOption('Xdoclint:none', '-quiet')
+}
+
 jacocoTestReport {
     reports {
         xml.required = false
@@ -77,5 +82,33 @@ task sourceJar(type: Jar) {
     }
     from ('NOTICE-tools.txt') {
         into 'META-INF'
+    }
+}
+
+publishing {
+    if (project.hasProperty("mavenPassword")) {
+        repositories {
+            maven {
+                credentials {
+                    username mavenUser
+                    password mavenPassword
+                }
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url mavenSnapshotRepo
+                } else {
+                    url mavenReleaseRepo
+                }
+            }
+        }
+    } else if (System.getenv("GITHUB_TOKEN") != null) {
+        repositories {
+            maven {
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+                url githubPackagesRepo
+            }
+        }
     }
 }

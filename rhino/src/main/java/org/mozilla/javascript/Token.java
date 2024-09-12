@@ -229,7 +229,8 @@ public class Token {
             TEMPLATE_LITERAL_SUBST = 175, // template literal - substitution
             TAGGED_TEMPLATE_LITERAL = 176, // template literal - tagged/handler
             DOTDOTDOT = 177, // spread/rest ...
-            LAST_TOKEN = 177;
+            NULLISH_COALESCING = 178, // nullish coalescing (??)
+            LAST_TOKEN = 178;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -470,6 +471,8 @@ public class Token {
                 return "COLON";
             case OR:
                 return "OR";
+            case NULLISH_COALESCING:
+                return "NULLISH_COALESCING";
             case AND:
                 return "AND";
             case INC:
