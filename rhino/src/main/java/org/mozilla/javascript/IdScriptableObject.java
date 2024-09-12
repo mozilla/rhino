@@ -182,7 +182,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 } else {
                     int nameSlot = (id - 1) * SLOT_SPAN + NAME_SLOT;
                     Object name = valueArray[nameSlot];
-                    if (name instanceof Symbol) {
+                    if (ScriptRuntime.isSymbol(name)) {
                         if (start instanceof SymbolScriptable) {
                             ((SymbolScriptable) start).put((Symbol) name, start, value);
                         }
@@ -241,7 +241,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                                 names = new Object[maxId];
                             }
                             names[count++] = name;
-                        } else if (getSymbols && (name instanceof Symbol)) {
+                        } else if (getSymbols && ScriptRuntime.isSymbol(name)) {
                             if (names == null) {
                                 names = new Object[maxId];
                             }

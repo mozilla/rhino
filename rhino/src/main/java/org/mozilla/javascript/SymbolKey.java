@@ -12,17 +12,19 @@ public class SymbolKey implements Symbol, Serializable {
 
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.
-    public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator");
-    public static final SymbolKey TO_STRING_TAG = new SymbolKey("Symbol.toStringTag");
-    public static final SymbolKey SPECIES = new SymbolKey("Symbol.species");
+    public static final SymbolKey ASYNC_ITERATOR = new SymbolKey("Symbol.asyncIterator");
     public static final SymbolKey HAS_INSTANCE = new SymbolKey("Symbol.hasInstance");
     public static final SymbolKey IS_CONCAT_SPREADABLE = new SymbolKey("Symbol.isConcatSpreadable");
     public static final SymbolKey IS_REGEXP = new SymbolKey("Symbol.isRegExp");
-    public static final SymbolKey TO_PRIMITIVE = new SymbolKey("Symbol.toPrimitive");
+    public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator");
     public static final SymbolKey MATCH = new SymbolKey("Symbol.match");
+    public static final SymbolKey MATCH_ALL = new SymbolKey("Symbol.matchAll");
     public static final SymbolKey REPLACE = new SymbolKey("Symbol.replace");
     public static final SymbolKey SEARCH = new SymbolKey("Symbol.search");
+    public static final SymbolKey SPECIES = new SymbolKey("Symbol.species");
     public static final SymbolKey SPLIT = new SymbolKey("Symbol.split");
+    public static final SymbolKey TO_PRIMITIVE = new SymbolKey("Symbol.toPrimitive");
+    public static final SymbolKey TO_STRING_TAG = new SymbolKey("Symbol.toStringTag");
     public static final SymbolKey UNSCOPABLES = new SymbolKey("Symbol.unscopables");
 
     private String name;

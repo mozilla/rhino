@@ -32,18 +32,20 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 
         cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
         try {
-            createStandardSymbol(cx, scope, ctor, "iterator", SymbolKey.ITERATOR);
-            createStandardSymbol(cx, scope, ctor, "species", SymbolKey.SPECIES);
-            createStandardSymbol(cx, scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
+            createStandardSymbol(cx, scope, ctor, "asyncIterator", SymbolKey.ASYNC_ITERATOR);
             createStandardSymbol(cx, scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
             createStandardSymbol(
                     cx, scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
             createStandardSymbol(cx, scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
-            createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
+            createStandardSymbol(cx, scope, ctor, "iterator", SymbolKey.ITERATOR);
             createStandardSymbol(cx, scope, ctor, "match", SymbolKey.MATCH);
+            createStandardSymbol(cx, scope, ctor, "matchAll", SymbolKey.MATCH_ALL);
             createStandardSymbol(cx, scope, ctor, "replace", SymbolKey.REPLACE);
             createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
+            createStandardSymbol(cx, scope, ctor, "species", SymbolKey.SPECIES);
             createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);
+            createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
+            createStandardSymbol(cx, scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
             createStandardSymbol(cx, scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
 
         } finally {
@@ -164,7 +166,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
                 break;
             case SymbolId_toPrimitive:
                 initPrototypeMethod(
-                        CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
+                        CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "[Symbol.toPrimitive]", 1);
                 break;
             default:
                 super.initPrototypeId(id);
