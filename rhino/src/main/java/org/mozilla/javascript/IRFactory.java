@@ -758,7 +758,37 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        return createBinary(node.getType(), left, right);
+        if (node.getType() == Token.NULLISH_COALESCING) {
+            return transformNullishCoalescing(left, right, node);
+        } else {
+            return createBinary(node.getType(), left, right);
+        }
+    }
+
+    private Node transformNullishCoalescing(Node left, Node right, Node parent) {
+        String tempName = parser.currentScriptOrFn.getNextTempName();
+
+        Node nullNode = new Node(Token.NULL);
+        Node undefinedNode = new Name(0, "undefined");
+
+        Node conditional =
+                new Node(
+                        Token.OR,
+                        new Node(Token.SHEQ, nullNode, parser.createName(tempName)),
+                        new Node(Token.SHEQ, undefinedNode, parser.createName(tempName)));
+
+        Node hookNode =
+                new Node(
+                        Token.HOOK,
+                        /* left= */ conditional,
+                        /* mid= */ right,
+                        /* right= */ parser.createName(tempName));
+
+        parser.defineSymbol(Token.LP, tempName, true);
+        return createBinary(
+                Token.COMMA,
+                createAssignment(Token.ASSIGN, parser.createName(tempName), left),
+                hookNode);
     }
 
     private Node transformLabeledStatement(LabeledStatement ls) {
@@ -2037,27 +2067,6 @@ public final class IRFactory {
                         return right;
                     }
                     break;
-                }
-
-            case Token.NULLISH_COALESCING:
-                {
-                    // foo ?? default =>
-                    //     (foo == undefined || foo == null) ? foo (left) : default (right)
-
-                    Node undefinedNode = new Name(0, "undefined");
-                    Node nullNode = new Node(Token.NULL);
-
-                    Node conditional =
-                            new Node(
-                                    Token.OR,
-                                    new Node(Token.SHEQ, nullNode, left),
-                                    new Node(Token.SHEQ, undefinedNode, left));
-
-                    return new Node(
-                            Token.HOOK,
-                            /* left= */ conditional,
-                            /* mid= */ right,
-                            /* right= */ left);
                 }
         }
 
