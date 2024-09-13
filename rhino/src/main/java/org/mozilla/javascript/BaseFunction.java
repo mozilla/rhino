@@ -47,7 +47,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
         // The "GeneratorFunction" name actually never appears in the global scope.
         // Return it here so it can be cached as a "builtin"
-        return ScriptableObject.getProperty(scope, GENERATOR_FUNCTION_CLASS);
+        return Scriptable.getProperty(scope, GENERATOR_FUNCTION_CLASS);
     }
 
     public BaseFunction() {}
@@ -95,7 +95,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
      */
     @Override
     public boolean hasInstance(Scriptable instance) {
-        Object protoProp = ScriptableObject.getProperty(this, "prototype");
+        Object protoProp = Scriptable.getProperty(this, "prototype");
         if (protoProp instanceof Scriptable) {
             return ScriptRuntime.jsDelegatesTo(instance, (Scriptable) protoProp);
         }

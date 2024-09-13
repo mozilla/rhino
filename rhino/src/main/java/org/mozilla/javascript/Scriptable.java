@@ -106,7 +106,7 @@ public interface Scriptable {
      * @param start the object in which the lookup began
      * @return true if and only if the named property is found in the object
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, String)
+     * @see org.mozilla.javascript.Scriptable#getProperty(Scriptable, String)
      */
     boolean has(String name, Scriptable start);
 
@@ -123,7 +123,7 @@ public interface Scriptable {
      * @param start the object in which the lookup began
      * @return true if and only if the indexed property is found in the object
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, int)
+     * @see org.mozilla.javascript.Scriptable#getProperty(Scriptable, int)
      */
     boolean has(int index, Scriptable start);
 

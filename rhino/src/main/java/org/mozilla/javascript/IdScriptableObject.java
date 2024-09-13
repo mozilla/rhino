@@ -866,7 +866,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     ScriptableObject current = getOwnPropertyDescriptor(cx, key);
                     checkPropertyChange(name, current, desc);
                     int attr = (info >>> 16);
-                    Object value = getProperty(desc, "value");
+                    Object value = Scriptable.getProperty(desc, "value");
                     if (value != NOT_FOUND && ((attr & READONLY) == 0 || (attr & PERMANENT) == 0)) {
                         Object currentValue = getInstanceIdValue(id);
                         if (!sameValue(value, currentValue)) {
@@ -888,7 +888,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         ScriptableObject current = getOwnPropertyDescriptor(cx, key);
                         checkPropertyChange(name, current, desc);
                         int attr = prototypeValues.getAttributes(id);
-                        Object value = getProperty(desc, "value");
+                        Object value = Scriptable.getProperty(desc, "value");
                         if (value != NOT_FOUND && (attr & READONLY) == 0) {
                             Object currentValue = prototypeValues.get(id);
                             if (!sameValue(value, currentValue)) {

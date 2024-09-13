@@ -255,14 +255,14 @@ public final class NativeJSON extends ScriptableObject {
         int keyInt = 0;
         if (key instanceof String) {
             keyString = (String) key;
-            value = getProperty(holder, keyString);
+            value = Scriptable.getProperty(holder, keyString);
         } else {
             keyInt = ((Number) key).intValue();
-            value = getProperty(holder, keyInt);
+            value = Scriptable.getProperty(holder, keyInt);
         }
 
         if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
-            Object toJSON = getProperty((Scriptable) value, "toJSON");
+            Object toJSON = Scriptable.getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
                 value =
                         callMethod(
@@ -276,7 +276,7 @@ public final class NativeJSON extends ScriptableObject {
         } else if (value instanceof BigInteger) {
             Scriptable bigInt = ScriptRuntime.toObject(state.cx, state.scope, value);
             if (hasProperty(bigInt, "toJSON")) {
-                Object toJSON = getProperty(bigInt, "toJSON");
+                Object toJSON = Scriptable.getProperty(bigInt, "toJSON");
                 if (toJSON instanceof Callable) {
                     value =
                             callMethod(

@@ -616,7 +616,7 @@ public class NativePromise extends ScriptableObject {
             }
 
             Scriptable sresolution = ScriptableObject.ensureScriptable(resolution);
-            Object thenObj = ScriptableObject.getProperty(sresolution, "then");
+            Object thenObj = Scriptable.getProperty(sresolution, "then");
             if (!(thenObj instanceof Callable)) {
                 return promise.fulfillPromise(cx, scope, resolution);
             }

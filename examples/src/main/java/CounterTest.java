@@ -31,16 +31,16 @@ public class CounterTest {
 
             Scriptable testCounter = cx.newObject(scope, "Counter");
 
-            Object count = ScriptableObject.getProperty(testCounter, "count");
+            Object count = Scriptable.getProperty(testCounter, "count");
             System.out.println("count = " + count);
 
-            count = ScriptableObject.getProperty(testCounter, "count");
+            count = Scriptable.getProperty(testCounter, "count");
             System.out.println("count = " + count);
 
             ScriptableObject.callMethod(testCounter, "resetCount", new Object[0]);
             System.out.println("resetCount");
 
-            count = ScriptableObject.getProperty(testCounter, "count");
+            count = Scriptable.getProperty(testCounter, "count");
             System.out.println("count = " + count);
         } finally {
             Context.exit();

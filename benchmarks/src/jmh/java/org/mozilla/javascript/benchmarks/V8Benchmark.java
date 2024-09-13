@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -18,7 +17,7 @@ public class V8Benchmark {
         Scriptable scope;
 
         Callable getFunc(String name) {
-            Object f = ScriptableObject.getProperty(scope, name);
+            Object f = Scriptable.getProperty(scope, name);
             if (!(f instanceof Callable)) {
                 throw new RuntimeException("Benchmark function " + name + " not found");
             }

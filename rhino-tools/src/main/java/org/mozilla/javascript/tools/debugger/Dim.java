@@ -547,14 +547,14 @@ public class Dim {
             } else if (name.equals("__parent__")) {
                 result = scriptable.getParentScope();
             } else {
-                result = ScriptableObject.getProperty(scriptable, name);
+                result = Scriptable.getProperty(scriptable, name);
                 if (result == ScriptableObject.NOT_FOUND) {
                     result = Undefined.instance;
                 }
             }
         } else {
             int index = ((Integer) id).intValue();
-            result = ScriptableObject.getProperty(scriptable, index);
+            result = Scriptable.getProperty(scriptable, index);
             if (result == ScriptableObject.NOT_FOUND) {
                 result = Undefined.instance;
             }

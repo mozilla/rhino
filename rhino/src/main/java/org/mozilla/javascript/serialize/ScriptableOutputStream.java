@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.UniqueTag;
 
 /**
@@ -150,7 +149,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         Object result = scope;
         while (st.hasMoreTokens()) {
             String s = st.nextToken();
-            result = ScriptableObject.getProperty((Scriptable) result, s);
+            result = Scriptable.getProperty((Scriptable) result, s);
             if (result == null || !(result instanceof Scriptable)) break;
         }
         return result;

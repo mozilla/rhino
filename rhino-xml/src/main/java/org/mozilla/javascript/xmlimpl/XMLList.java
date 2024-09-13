@@ -12,7 +12,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -772,7 +771,7 @@ class XMLList extends XMLObjectImpl implements Function {
             if (sobj != null) {
                 thisObj = sobj;
                 if (!(sobj instanceof XMLObject)) {
-                    func = ScriptableObject.getProperty(sobj, methodName);
+                    func = Scriptable.getProperty(sobj, methodName);
                 }
             }
         }

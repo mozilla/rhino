@@ -7,7 +7,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -43,21 +42,21 @@ public class MathBenchmark {
             try (FileReader rdr = new FileReader("testsrc/benchmarks/micro/math-benchmarks.js")) {
                 cx.evaluateReader(scope, rdr, "math-benchmarks.js", 1, null);
             }
-            addConstantInts = (Function) ScriptableObject.getProperty(scope, "addConstantInts");
-            addIntAndConstant = (Function) ScriptableObject.getProperty(scope, "addIntAndConstant");
-            addTwoInts = (Function) ScriptableObject.getProperty(scope, "addTwoInts");
-            addConstantFloats = (Function) ScriptableObject.getProperty(scope, "addConstantFloats");
-            addTwoFloats = (Function) ScriptableObject.getProperty(scope, "addTwoFloats");
-            addStringsInLoop = (Function) ScriptableObject.getProperty(scope, "addStringsInLoop");
-            addMixedStrings = (Function) ScriptableObject.getProperty(scope, "addMixedStrings");
-            subtractInts = (Function) ScriptableObject.getProperty(scope, "subtractInts");
-            subtractFloats = (Function) ScriptableObject.getProperty(scope, "subtractFloats");
-            subtractTwoFloats = (Function) ScriptableObject.getProperty(scope, "subtractTwoFloats");
-            bitwiseAnd = (Function) ScriptableObject.getProperty(scope, "bitwiseAnd");
-            bitwiseOr = (Function) ScriptableObject.getProperty(scope, "bitwiseOr");
-            bitwiseLsh = (Function) ScriptableObject.getProperty(scope, "bitwiseLsh");
-            bitwiseRsh = (Function) ScriptableObject.getProperty(scope, "bitwiseRsh");
-            bitwiseSignedRsh = (Function) ScriptableObject.getProperty(scope, "bitwiseSignedRsh");
+            addConstantInts = (Function) Scriptable.getProperty(scope, "addConstantInts");
+            addIntAndConstant = (Function) Scriptable.getProperty(scope, "addIntAndConstant");
+            addTwoInts = (Function) Scriptable.getProperty(scope, "addTwoInts");
+            addConstantFloats = (Function) Scriptable.getProperty(scope, "addConstantFloats");
+            addTwoFloats = (Function) Scriptable.getProperty(scope, "addTwoFloats");
+            addStringsInLoop = (Function) Scriptable.getProperty(scope, "addStringsInLoop");
+            addMixedStrings = (Function) Scriptable.getProperty(scope, "addMixedStrings");
+            subtractInts = (Function) Scriptable.getProperty(scope, "subtractInts");
+            subtractFloats = (Function) Scriptable.getProperty(scope, "subtractFloats");
+            subtractTwoFloats = (Function) Scriptable.getProperty(scope, "subtractTwoFloats");
+            bitwiseAnd = (Function) Scriptable.getProperty(scope, "bitwiseAnd");
+            bitwiseOr = (Function) Scriptable.getProperty(scope, "bitwiseOr");
+            bitwiseLsh = (Function) Scriptable.getProperty(scope, "bitwiseLsh");
+            bitwiseRsh = (Function) Scriptable.getProperty(scope, "bitwiseRsh");
+            bitwiseSignedRsh = (Function) Scriptable.getProperty(scope, "bitwiseSignedRsh");
         }
 
         @TearDown(Level.Trial)

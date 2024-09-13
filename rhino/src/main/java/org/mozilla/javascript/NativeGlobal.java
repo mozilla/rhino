@@ -96,10 +96,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
             with the 'name' property set to the name of the error.
         */
         Scriptable nativeError =
-                ScriptableObject.ensureScriptable(ScriptableObject.getProperty(scope, "Error"));
+                ScriptableObject.ensureScriptable(Scriptable.getProperty(scope, "Error"));
         Scriptable nativeErrorProto =
-                ScriptableObject.ensureScriptable(
-                        ScriptableObject.getProperty(nativeError, "prototype"));
+                ScriptableObject.ensureScriptable(Scriptable.getProperty(nativeError, "prototype"));
 
         for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
             if (error == TopLevel.NativeErrors.Error) {

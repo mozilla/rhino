@@ -141,9 +141,7 @@ public final class ES6Generator extends IdScriptableObject {
                 delegee = null;
                 // Return a result to the original generator
                 return resumeLocal(
-                        cx,
-                        scope,
-                        ScriptableObject.getProperty(nextResult, ES6Iterator.VALUE_PROPERTY));
+                        cx, scope, Scriptable.getProperty(nextResult, ES6Iterator.VALUE_PROPERTY));
             }
             // Otherwise, we have a normal result and should continue
             return nextResult;

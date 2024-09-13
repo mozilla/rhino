@@ -363,16 +363,16 @@ public class Global extends ImporterTopLevel {
 
     public String[] getPrompts(Context cx) {
         if (ScriptableObject.hasProperty(this, "prompts")) {
-            Object promptsJS = ScriptableObject.getProperty(this, "prompts");
+            Object promptsJS = Scriptable.getProperty(this, "prompts");
             if (promptsJS instanceof Scriptable) {
                 Scriptable s = (Scriptable) promptsJS;
                 if (ScriptableObject.hasProperty(s, 0) && ScriptableObject.hasProperty(s, 1)) {
-                    Object elem0 = ScriptableObject.getProperty(s, 0);
+                    Object elem0 = Scriptable.getProperty(s, 0);
                     if (elem0 instanceof Function) {
                         elem0 = ((Function) elem0).call(cx, this, s, new Object[0]);
                     }
                     prompts[0] = Context.toString(elem0);
-                    Object elem1 = ScriptableObject.getProperty(s, 1);
+                    Object elem1 = Scriptable.getProperty(s, 1);
                     if (elem1 instanceof Function) {
                         elem1 = ((Function) elem1).call(cx, this, s, new Object[0]);
                     }
@@ -616,7 +616,7 @@ public class Global extends ImporterTopLevel {
         if (args[L - 1] instanceof Scriptable) {
             params = (Scriptable) args[L - 1];
             --L;
-            Object envObj = ScriptableObject.getProperty(params, "env");
+            Object envObj = Scriptable.getProperty(params, "env");
             if (envObj != Scriptable.NOT_FOUND) {
                 if (envObj == null) {
                     environment = new String[0];
@@ -632,11 +632,11 @@ public class Global extends ImporterTopLevel {
                         String key;
                         if (keyObj instanceof String) {
                             key = (String) keyObj;
-                            val = ScriptableObject.getProperty(envHash, key);
+                            val = Scriptable.getProperty(envHash, key);
                         } else {
                             int ikey = ((Number) keyObj).intValue();
                             key = Integer.toString(ikey);
-                            val = ScriptableObject.getProperty(envHash, ikey);
+                            val = Scriptable.getProperty(envHash, ikey);
                         }
                         if (val == ScriptableObject.NOT_FOUND) {
                             val = Undefined.instance;
@@ -645,16 +645,16 @@ public class Global extends ImporterTopLevel {
                     }
                 }
             }
-            Object wdObj = ScriptableObject.getProperty(params, "dir");
+            Object wdObj = Scriptable.getProperty(params, "dir");
             if (wdObj != Scriptable.NOT_FOUND) {
                 wd = new File(ScriptRuntime.toString(wdObj));
             }
 
-            Object inObj = ScriptableObject.getProperty(params, "input");
+            Object inObj = Scriptable.getProperty(params, "input");
             if (inObj != Scriptable.NOT_FOUND) {
                 in = toInputStream(inObj);
             }
-            outObj = ScriptableObject.getProperty(params, "output");
+            outObj = Scriptable.getProperty(params, "output");
             if (outObj != Scriptable.NOT_FOUND) {
                 out = toOutputStream(outObj);
                 if (out == null) {
@@ -662,7 +662,7 @@ public class Global extends ImporterTopLevel {
                     out = outBytes;
                 }
             }
-            errObj = ScriptableObject.getProperty(params, "err");
+            errObj = Scriptable.getProperty(params, "err");
             if (errObj != Scriptable.NOT_FOUND) {
                 err = toOutputStream(errObj);
                 if (err == null) {
@@ -670,7 +670,7 @@ public class Global extends ImporterTopLevel {
                     err = errBytes;
                 }
             }
-            Object addArgsObj = ScriptableObject.getProperty(params, "args");
+            Object addArgsObj = Scriptable.getProperty(params, "args");
             if (addArgsObj != Scriptable.NOT_FOUND) {
                 Scriptable s = Context.toObject(addArgsObj, getTopLevelScope(thisObj));
                 addArgs = cx.getElements(s);

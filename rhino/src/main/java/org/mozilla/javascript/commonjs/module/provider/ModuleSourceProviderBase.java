@@ -56,7 +56,7 @@ public abstract class ModuleSourceProviderBase implements ModuleSourceProvider, 
 
     private ModuleSource loadFromPathArray(String moduleId, Scriptable paths, Object validator)
             throws IOException {
-        final long llength = ScriptRuntime.toUint32(ScriptableObject.getProperty(paths, "length"));
+        final long llength = ScriptRuntime.toUint32(Scriptable.getProperty(paths, "length"));
         // Yeah, I'll ignore entries beyond Integer.MAX_VALUE; so sue me.
         int ilength = llength > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) llength;
 

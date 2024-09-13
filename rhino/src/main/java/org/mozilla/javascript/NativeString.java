@@ -474,7 +474,7 @@ final class NativeString extends IdScriptableObject {
                             Scriptable arg0 = (Scriptable) args[0];
                             if (reProxy.isRegExp(arg0)) {
                                 if (ScriptableObject.isTrue(
-                                        ScriptableObject.getProperty(arg0, SymbolKey.MATCH))) {
+                                        Scriptable.getProperty(arg0, SymbolKey.MATCH))) {
                                     throw ScriptRuntime.typeErrorById(
                                             "msg.first.arg.not.regexp",
                                             String.class.getSimpleName(),

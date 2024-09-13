@@ -101,7 +101,7 @@ public class TopLevel extends IdScriptableObject {
     public void cacheBuiltins(Scriptable scope, boolean sealed) {
         ctors = new EnumMap<>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
-            Object value = ScriptableObject.getProperty(this, builtin.name());
+            Object value = Scriptable.getProperty(this, builtin.name());
             if (value instanceof BaseFunction) {
                 ctors.put(builtin, (BaseFunction) value);
             } else if (builtin == Builtins.GeneratorFunction) {
@@ -114,7 +114,7 @@ public class TopLevel extends IdScriptableObject {
         }
         errors = new EnumMap<>(NativeErrors.class);
         for (NativeErrors error : NativeErrors.values()) {
-            Object value = ScriptableObject.getProperty(this, error.name());
+            Object value = Scriptable.getProperty(this, error.name());
             if (value instanceof BaseFunction) {
                 errors.put(error, (BaseFunction) value);
             }

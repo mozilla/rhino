@@ -329,7 +329,7 @@ public class Require extends BaseFunction {
         moduleScript.getScript().exec(cx, executionScope);
         executeOptionalScript(postExec, cx, executionScope);
         return ScriptRuntime.toObject(
-                cx, nativeScope, ScriptableObject.getProperty(moduleObject, "exports"));
+                cx, nativeScope, Scriptable.getProperty(moduleObject, "exports"));
     }
 
     private static void executeOptionalScript(

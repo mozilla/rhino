@@ -79,9 +79,9 @@ public class WrapFactoryTest {
             cx.evaluateString(scope, script, "", 1, null);
 
             // evaluate result
-            assertEquals(result, ScriptableObject.getProperty(scope, "result"));
-            assertEquals(mapResult, ScriptableObject.getProperty(scope, "mapResult"));
-            assertEquals(getResult, ScriptableObject.getProperty(scope, "getResult"));
+            assertEquals(result, Scriptable.getProperty(scope, "result"));
+            assertEquals(mapResult, Scriptable.getProperty(scope, "mapResult"));
+            assertEquals(getResult, Scriptable.getProperty(scope, "getResult"));
         }
     }
 }

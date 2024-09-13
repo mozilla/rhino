@@ -72,7 +72,7 @@ public class IterableTest {
         @Override
         public Object get(Symbol key, Scriptable start) {
             if (SymbolKey.ITERATOR.equals(key)) {
-                return ScriptableObject.getProperty(
+                return Scriptable.getProperty(
                         ScriptableObject.getArrayPrototype(scope), SymbolKey.ITERATOR);
             }
             throw new IllegalStateException();
