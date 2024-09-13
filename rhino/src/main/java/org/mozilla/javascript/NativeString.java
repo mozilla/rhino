@@ -318,6 +318,14 @@ final class NativeString extends IdScriptableObject {
                 arity = 0;
                 s = "trimEnd";
                 break;
+            case Id_isWellFormed:
+                arity = 0;
+                s = "isWellFormed";
+                break;
+            case Id_toWellFormed:
+                arity = 0;
+                s = "toWellFormed";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -771,6 +779,56 @@ final class NativeString extends IdScriptableObject {
                         }
 
                         return str.substring(k, k + 1);
+                    }
+                case Id_isWellFormed:
+                    {
+                        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                        int len = str.length();
+                        boolean foundLeadingSurrogate = false;
+                        for (int i = 0; i < len; i++) {
+                            char c = str.charAt(i);
+                            if (NativeJSON.isLeadingSurrogate(c)) {
+                                if (foundLeadingSurrogate) {
+                                    return false;
+                                }
+                                foundLeadingSurrogate = true;
+                            } else if (NativeJSON.isTrailingSurrogate(c)) {
+                                if (!foundLeadingSurrogate) {
+                                    return false;
+                                }
+                                foundLeadingSurrogate = false;
+                            } else if (foundLeadingSurrogate) {
+                                return false;
+                            }
+                        }
+                        return !foundLeadingSurrogate;
+                    }
+                case Id_toWellFormed:
+                    {
+                        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                        StringBuilder sb = new StringBuilder();
+                        int len = str.length();
+                        char prev = 0;
+                        for (int i = 0; i < len; i++) {
+                            char c = str.charAt(i);
+
+                            if (NativeJSON.isLeadingSurrogate(c)
+                                    && i < len - 1
+                                    && NativeJSON.isTrailingSurrogate(str.charAt(i + 1))) {
+                                // do nothing as the next case will add both surrogates
+                            } else if (NativeJSON.isTrailingSurrogate(c)
+                                    && NativeJSON.isLeadingSurrogate(prev)) {
+                                sb.append(prev).append(c);
+                            } else if (NativeJSON.isLeadingSurrogate(c)
+                                    || NativeJSON.isTrailingSurrogate(c)) {
+                                sb.append('\uFFFD');
+                            } else {
+                                sb.append(c);
+                            }
+                            prev = c;
+                        }
+
+                        return sb.toString();
                     }
 
                 case SymbolId_iterator:
@@ -1358,6 +1416,12 @@ final class NativeString extends IdScriptableObject {
             case "at":
                 id = Id_at;
                 break;
+            case "isWellFormed":
+                id = Id_isWellFormed;
+                break;
+            case "toWellFormed":
+                id = Id_toWellFormed;
+                break;
             default:
                 id = 0;
                 break;
@@ -1420,7 +1484,9 @@ final class NativeString extends IdScriptableObject {
             Id_trimStart = 50,
             Id_trimEnd = 51,
             Id_at = 52,
-            MAX_PROTOTYPE_ID = Id_at;
+            Id_isWellFormed = 53,
+            Id_toWellFormed = 54,
+            MAX_PROTOTYPE_ID = Id_toWellFormed;
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
             ConstructorId_indexOf = -Id_indexOf,

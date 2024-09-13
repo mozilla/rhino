@@ -549,7 +549,9 @@ public final class NativeJSON extends ScriptableObject {
                     product.append("\\t");
                     break;
                 default:
-                    if (isLeadingSurrogate(c) && i < length - 1 && isTrailingSurrogate(string.charAt(i + 1))) {
+                    if (isLeadingSurrogate(c)
+                            && i < length - 1
+                            && isTrailingSurrogate(string.charAt(i + 1))) {
                         // do nothing as the next case will add both surrogates
                         break;
                     } else if (isTrailingSurrogate(c) && isLeadingSurrogate(prev)) {
@@ -569,11 +571,11 @@ public final class NativeJSON extends ScriptableObject {
         return product.toString();
     }
 
-    private static boolean isLeadingSurrogate(char c) {
+    static boolean isLeadingSurrogate(char c) {
         return c >= 0xD800 && c <= 0xDBFF;
     }
 
-    private static boolean isTrailingSurrogate(char c) {
+    static boolean isTrailingSurrogate(char c) {
         return c >= 0xDC00 && c <= 0xDFFF;
     }
 
