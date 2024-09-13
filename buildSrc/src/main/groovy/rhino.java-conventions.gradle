@@ -3,6 +3,12 @@ plugins {
     id 'com.diffplug.spotless'
 }
 
+int testJavaVersion = -1
+String jv = System.getenv("RHINO_TEST_JAVA_VERSION")
+if (jv != null) {
+    testJavaVersion = Integer.parseInt(jv);
+}
+
 repositories {
     mavenCentral()
 }
@@ -19,9 +25,18 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+    options.release = 11
     options.compilerArgs = [
         '-Xlint:deprecation,unchecked'
     ]
+}
+
+tasks.withType(Test) {
+    if (testJavaVersion > 0) {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(testJavaVersion)
+        }
+    }
 }
 
 test {
@@ -32,9 +47,9 @@ spotless {
     // There is no version of googleJavaFormat that works for Java 11 and 17,
     // and different versions format differently. For now, only run spotless on Java 11.
     // This will have to be changed when Java 11 support is removed.
-    if (JavaVersion.current() == JavaVersion.VERSION_11) {
+    if (JavaVersion.current() == JavaVersion.VERSION_21) {
         java {
-            googleJavaFormat('1.10.0').aosp()
+            googleJavaFormat('1.17.0').aosp()
         }
     } else {
         System.out.println("Not running Spotless: Java language version is " + JavaVersion.current())
