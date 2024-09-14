@@ -758,11 +758,9 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        if (node.getType() == Token.NULLISH_COALESCING) {
-            return transformNullishCoalescing(left, right, node);
-        } else {
-            return createBinary(node.getType(), left, right);
-        }
+        return (node.getType() == Token.NULLISH_COALESCING)
+                ? transformNullishCoalescing(left, right, node)
+                : createBinary(node.getType(), left, right);
     }
 
     private Node transformNullishCoalescing(Node left, Node right, Node parent) {
