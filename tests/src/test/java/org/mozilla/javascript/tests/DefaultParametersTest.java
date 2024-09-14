@@ -2,8 +2,8 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.*;
@@ -14,7 +14,15 @@ import org.mozilla.javascript.*;
 public class DefaultParametersTest {
     @Test
     public void functionDefaultArgsBasic() throws Exception {
-        final String script = "function foo(a = 2) {" + "   return a;" + "}";
+        final String script = "function foo(a = 2) { return a; }";
+        assertIntEvaluates(32, script + "\nfoo(32)");
+        assertIntEvaluates(2, script + "\nfoo()");
+        assertIntEvaluates(2, script + "\nfoo(undefined)");
+    }
+
+    @Test
+    public void functionDefaultArgsBasicCall() throws Exception {
+        final String script = "function b() { return 2; }; function foo(a = b()) { return a; }";
         assertIntEvaluates(32, script + "\nfoo(32)");
         assertIntEvaluates(2, script + "\nfoo()");
         assertIntEvaluates(2, script + "\nfoo(undefined)");
@@ -82,15 +90,15 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip") // TODO: generates bad tree
+    @Ignore("defaults-not-supported-in-let-destructuring")
     public void letExprDestructuring() throws Exception {
         // JavaScript
         final String script =
                 "function a() {}; (function() { "
-                        + "                                   for (let {x = a()} = {}; ; ) { "
-                        + "                                       return 3; "
-                        + "                                   }"
-                        + "                               })()";
+                        + "            for (let {x = a()} = {}; ; ) { "
+                        + "                return 3; "
+                        + "            }"
+                        + "        })()";
         assertIntEvaluates(3, script);
     }
 
@@ -203,8 +211,7 @@ public class DefaultParametersTest {
     @Test
     @Ignore("needs-checking-for-iterator")
     public void destructuringAssigmentInFunctionsWithObjectDefaults() throws Exception {
-        final String script =
-                "function f([x = 1, y = 2] = {x: 3, y: 4}) {\n" + "  return x + y;\n" + "}";
+        final String script = "function f([x = 1, y = 2] = {x: 3, y: 4}) {\n return x + y;\n }";
 
         assertThrows("TypeError", script + "f()"); // TODO: returns 3
         assertThrows("TypeError", script + "f(2)"); // TODO: returns 3, should be throwing TypeError
@@ -212,7 +219,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringTest() throws Exception {
-        final String script = "function f([x]) {" + "return x;" + "}; f([1]);";
+        final String script = "function f([x]) { return x; }; f([1]);";
         assertIntEvaluates(1, script);
     }
 
@@ -236,13 +243,13 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringHookTest() throws Exception {
-        final String script = "function f([x]) {" + "return x == undefined ? 2 : x;" + "}; f([1]);";
+        final String script = "function f([x]) { return x == undefined ? 2 : x; }; f([1]);";
         assertIntEvaluates(1, script);
     }
 
     @Test
     public void destructuringAssigmentRealRealBasicArray() throws Exception {
-        final String script = "function f([x] = [1]) {\n" + "  return x;\n" + "}";
+        final String script = "function f([x] = [1]) {\n return x;\n }";
         assertIntEvaluates(1, script + "f()");
         assertIntEvaluates(2, script + "f([2])");
         assertIntEvaluates(42, script + "f([]) == undefined ? 42 : 0");
@@ -250,7 +257,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentRealBasicArray() throws Exception {
-        final String script = "function f([x = 1]) {\n" + "  return x;\n" + "}";
+        final String script = "function f([x = 1]) {\n return x;\n }";
         assertIntEvaluates(1, script + "f([])");
         assertIntEvaluates(3, script + "f([3])");
         assertThrows("TypeError", script + "f()");
@@ -258,7 +265,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentBasicArray() throws Exception {
-        final String script = "function f([x = 1] = [2]) {\n" + "  return x;\n" + "}";
+        final String script = "function f([x = 1] = [2]) {\n return x;\n }";
         assertIntEvaluates(1, script + "f([])");
         assertIntEvaluates(2, script + "f()");
         assertIntEvaluates(3, script + "f([3])");
@@ -266,7 +273,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentBasicObject() throws Exception {
-        final String script = "function f({x = 1} = {x: 2}) {\n" + "  return x;\n" + "}";
+        final String script = "function f({x = 1} = {x: 2}) {\n return x;\n }";
 
         assertIntEvaluates(1, script + "f({})");
         assertIntEvaluates(2, script + "f()");
@@ -275,7 +282,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentRealBasicObject() throws Exception {
-        final String script = "function f({x = 1}) {\n" + "  return x;\n" + "}";
+        final String script = "function f({x = 1}) {\n return x;\n }";
 
         assertIntEvaluates(1, script + "f({})");
         assertThrows("TypeError", script + "f()");
@@ -284,7 +291,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentDefaultObject() throws Exception {
-        final String script = "function f({ z = 3, x = 2 } = {}) {\n" + "  return z;\n" + "}\n";
+        final String script = "function f({ z = 3, x = 2 } = {}) {\n return z;\n}\n";
         assertIntEvaluates(3, script + "f()");
         assertIntEvaluates(3, script + "f({})");
         assertIntEvaluates(2, script + "f({z: 2})");
@@ -292,8 +299,7 @@ public class DefaultParametersTest {
 
     @Test
     public void destructuringAssigmentDefaultObjectWithDefaults() throws Exception {
-        final String script =
-                "function f({ z = 3, x = 2 } = {z: 4, x: 5}) {\n" + "  return z;\n" + "}\n";
+        final String script = "function f({ z = 3, x = 2 } = {z: 4, x: 5}) {\n return z;\n}\n";
         assertIntEvaluates(4, script + "f()");
         assertIntEvaluates(3, script + "f({})");
         assertIntEvaluates(2, script + "f({z: 2})");
@@ -358,25 +364,13 @@ public class DefaultParametersTest {
                 cx -> {
                     int oldVersion = cx.getLanguageVersion();
                     cx.setLanguageVersion(languageLevel);
-                    try {
-                        final Scriptable scope = cx.initStandardObjects();
-                        Object rep = null;
-                        try {
-                            rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                        } catch (EcmaError e) {
-                            if (e instanceof EcmaError) {
-                                assertTrue(((EcmaError) e).getMessage().startsWith(expected));
-                                return true;
-                            }
-                        } catch (EvaluatorException e) {
-                            assertTrue(((EvaluatorException) e).getMessage().startsWith(expected));
-                            return true;
-                        }
-                        fail("expected EcmaError but got " + rep);
-                        return null;
-                    } finally {
-                        cx.setLanguageVersion(oldVersion);
-                    }
+                    final Scriptable scope = cx.initStandardObjects();
+                    var error =
+                            Assert.assertThrows(
+                                    RhinoException.class,
+                                    () -> cx.evaluateString(scope, source, "test.js", 0, null));
+                    assertTrue(error.getMessage().startsWith(expected));
+                    return null;
                 });
     }
 
@@ -394,16 +388,12 @@ public class DefaultParametersTest {
                 cx -> {
                     int oldVersion = cx.getLanguageVersion();
                     cx.setLanguageVersion(languageLevel);
-                    try {
-                        final Scriptable scope = cx.initStandardObjects();
-                        final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                        if (rep instanceof Double)
-                            assertEquals((int) expected, ((Double) rep).intValue());
-                        else assertEquals(expected, rep);
-                        return null;
-                    } finally {
-                        cx.setLanguageVersion(oldVersion);
-                    }
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    if (rep instanceof Double)
+                        assertEquals((int) expected, ((Double) rep).intValue());
+                    else assertEquals(expected, rep);
+                    return null;
                 });
     }
 }

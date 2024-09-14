@@ -2237,8 +2237,12 @@ public class Parser {
 
             if (tt == Token.LB || tt == Token.LC) {
                 // Destructuring assignment, e.g., var [a,b] = ...
+
+                // TODO: support default values inside destructured assignment
+                // eg: for (let { x = 3 } = {}) ...
                 destructuring = destructuringPrimaryExpr();
                 end = getNodeEnd(destructuring);
+
                 if (!(destructuring instanceof DestructuringForm))
                     reportError("msg.bad.assign.left", kidPos, end - kidPos);
                 markDestructuring(destructuring);
@@ -4044,7 +4048,7 @@ public class Parser {
      *     to 0, and if it's beyond the end of the source buffer, the last source position is used.
      * @return the offset of the beginning of the line containing pos (i.e. 1+ the offset of the
      *     first preceding newline). Returns -1 if the {@link CompilerEnvirons} is not set to
-     *     ide-mode, and {@link #parse(java.io.Reader,String,int)} was used.
+     *     ide-mode, and {@link #parse(Reader,String,int)} was used.
      */
     private int lineBeginningFor(int pos) {
         if (sourceChars == null) {
@@ -4166,12 +4170,12 @@ public class Parser {
         return result;
     }
 
-    Node createDestructuringAssignment(int type, Node left, Node right, Node defaultValue) {
-        return createDestructuringAssignment(type, left, right, defaultValue, null);
+    Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
+        return createDestructuringAssignment(type, left, right, null, transformer);
     }
 
-    Node createDestructuringAssignment(int type, Node left, Node right) {
-        return createDestructuringAssignment(type, left, right, null, null);
+    Node createDestructuringAssignment(int type, Node left, Node right, Node defaultValue) {
+        return createDestructuringAssignment(type, left, right, defaultValue, null);
     }
 
     Node destructuringAssignmentHelper(
@@ -4355,7 +4359,7 @@ public class Parser {
         }
     }
 
-    Object getPropKey(Node id) {
+    static Object getPropKey(Node id) {
         Object key;
         if (id instanceof Name) {
             String s = ((Name) id).getIdentifier();
@@ -4383,6 +4387,22 @@ public class Parser {
                 for (AstNode child : ((ArrayLiteral) defaultValue).getElements())
                     defaultRvalue.addChildToBack(child);
             } else if (defaultValue instanceof ObjectLiteral) {
+                // TODO: check if "Symbol.iterator" is defined
+                //                Node error_call = new Node(Token.NEW, createName("Error"));
+                //                error_call.addChildToBack(Node.newString("value is not
+                // iterable"));
+                //
+                //                Node check_iterator = new Node(
+                //                        Token.HOOK,
+                //                        new Node(Token.SHEQ,
+                //                                new Node(Token.GETPROP,
+                //                                        defaultValue,
+                //                                        createName("Symbol.iterator")),
+                //                                createName("undefined")),
+                //                        error_call,
+                //                        new Node(Token.TRUE));
+                //                parent.addChildToBack(check_iterator);
+
                 List<ObjectProperty> elems = ((ObjectLiteral) defaultValue).getElements();
                 Object[] props = new Object[elems.size()];
                 int i = 0;
@@ -4394,9 +4414,6 @@ public class Parser {
                 }
                 defaultRvalue.putProp(Node.OBJECT_IDS_PROP, props);
             }
-
-            // TODO(satish): Add check if defaultValue is iterable at runtime (i.e has
-            // Symbol.ITERATOR)
 
             Node cond_default =
                     new Node(
@@ -4425,7 +4442,7 @@ public class Parser {
 
         for (ObjectProperty prop : node.getElements()) {
             int lineno = 0;
-            // This function is sometimes called from the IRFactory when
+            // This function is sometimes called from the IRFactory
             // when executing regression tests, and in those cases the
             // tokenStream isn't set.  Deal with it.
             if (ts != null) {

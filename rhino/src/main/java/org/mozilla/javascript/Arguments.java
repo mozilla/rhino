@@ -122,11 +122,7 @@ final class Arguments extends IdScriptableObject {
         NativeFunction f = activation.function;
 
         // Check if default arguments are present
-        if (f instanceof InterpretedFunction && ((InterpretedFunction) f).idata.argsHasDefaults) {
-            return false;
-        } else if (f != null && f.hasDefaultParameters()) {
-            return false;
-        } else if (f == null) {
+        if (f == null || f.hasDefaultParameters()) {
             return false;
         }
 
