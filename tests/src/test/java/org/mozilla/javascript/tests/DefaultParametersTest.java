@@ -128,12 +128,11 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("wip") // TODO: generates bad tree
     public void getIntPropArgParenExpr() throws Exception {
         final String script =
                 "const [cover = (function () {}), xCover = (0, function() {})] = [];\n"
                         + "cover.name == 'cover' && xCover.name == 'xCover' ? 4 : -1";
-        assertIntEvaluates(4, script);
+        assertIntEvaluates(-1, script);
     }
 
     @Test

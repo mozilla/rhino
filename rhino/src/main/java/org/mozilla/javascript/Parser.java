@@ -4310,7 +4310,9 @@ public class Parser {
             //          : x
 
             /* TODO(satish): should transform other nodes; move this to IRFactory */
-            if ((n.getRight() instanceof FunctionNode || n.getRight() instanceof UpdateExpression)
+            if ((n.getRight() instanceof FunctionNode
+                            || n.getRight() instanceof UpdateExpression
+                            || n.getRight() instanceof ParenthesizedExpression)
                     && transformer != null) {
                 right = transformer.transform(n.getRight());
             } else {
