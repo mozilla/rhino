@@ -860,11 +860,13 @@ public class Parser {
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
                     }
-                    if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
-                            && matchToken(Token.ASSIGN, true)) {
-                        fnNode.putDefaultParams(paramName, assignExpr());
-                    } else {
-                        // TODO(satish): raise error
+
+                    if (matchToken(Token.ASSIGN, true)) {
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            fnNode.putDefaultParams(paramName, assignExpr());
+                        } else {
+                            reportError("msg.default.args");
+                        }
                     }
                 } else {
                     fnNode.addParam(makeErrorNode());
@@ -1143,7 +1145,7 @@ public class Parser {
                     fnNode.addParam(makeErrorNode());
                 }
             } else {
-                // TODO(satish): raise error
+                reportError("msg.default.args");
             }
         } else {
             reportError("msg.no.parm", params.getPosition(), params.getLength());
@@ -3661,7 +3663,7 @@ public class Parser {
                                 break commaLoop;
                             }
                         } else {
-                            // TODO(satish): throw an error
+                            reportError("msg.default.args");
                         }
                     } else if (peeked == Token.LP) {
                         entryKind = METHOD_ENTRY;

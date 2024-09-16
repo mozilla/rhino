@@ -389,6 +389,33 @@ public class DefaultParametersTest {
         assertIntEvaluatesWithLanguageLevel(expected, source, Context.VERSION_ES6);
     }
 
+    @Test
+    public void parserThrowsOnLowerLanguageLevelBasic() throws Exception {
+        final String script = "function f(x = 1) {\n return x;\n }";
+        assertThrowsWithLanguageLevel(
+                "Default values are only supported in version >= 200",
+                script + "f()",
+                Context.VERSION_1_8);
+    }
+
+    @Test
+    public void parserThrowsOnLowerLanguageLevelObjLit() throws Exception {
+        final String script = "function f({ z = 3, x = 2 } = {}) {\n return z;\n}\n";
+        assertThrowsWithLanguageLevel(
+                "Default values are only supported in version >= 200",
+                script + "f()",
+                Context.VERSION_1_8);
+    }
+
+    @Test
+    public void parserThrowsOnLowerLanguageLevelArrowBasic() throws Exception {
+        final String script = "((x = 1) => {\n return x;\n })";
+        assertThrowsWithLanguageLevel(
+                "Default values are only supported in version >= 200",
+                script + "()",
+                Context.VERSION_1_8);
+    }
+
     private static void assertIntEvaluatesWithLanguageLevel(
             final Object expected, final String source, int languageLevel) {
         Utils.runWithAllOptimizationLevels(
