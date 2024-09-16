@@ -4334,13 +4334,7 @@ public class Parser {
             // store it in the node to be processed
             if ((right instanceof FunctionNode || right instanceof UpdateExpression)
                     && transformer == null) {
-                ArrayList<Object[]> dfns =
-                        (ArrayList<Object[]>) currentScriptOrFn.getProp(Node.DESTRUCTURING_RVALUES);
-                if (dfns == null) {
-                    dfns = new ArrayList<>();
-                }
-                dfns.add(new Object[] {cond_inner, right});
-                currentScriptOrFn.putProp(Node.DESTRUCTURING_RVALUES, dfns);
+                currentScriptOrFn.putDestructuringRvalues(cond_inner, right);
             }
 
             Node cond =

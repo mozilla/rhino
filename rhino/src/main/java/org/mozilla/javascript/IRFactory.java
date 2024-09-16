@@ -578,13 +578,13 @@ public final class IRFactory {
             Node body = transform(fn.getBody());
 
             /* Process simple default parameters */
-            Object[] defaultParams = fn.getDefaultParams();
+            List<Object> defaultParams = fn.getDefaultParams();
             if (defaultParams != null) {
-                for (int i = defaultParams.length - 1; i > 0; ) {
-                    if (defaultParams[i] instanceof AstNode
-                            && defaultParams[i - 1] instanceof String) {
-                        AstNode rhs = (AstNode) defaultParams[i];
-                        String name = (String) defaultParams[i - 1];
+                for (int i = defaultParams.size() - 1; i > 0; ) {
+                    if (defaultParams.get(i) instanceof AstNode
+                            && defaultParams.get(i - 1) instanceof String) {
+                        AstNode rhs = (AstNode) defaultParams.get(i);
+                        String name = (String) defaultParams.get(i - 1);
                         body.addChildToFront(
                                 createIf(
                                         createBinary(
@@ -605,13 +605,11 @@ public final class IRFactory {
                 }
             }
 
-            /* TODO: fix unchecked cast warnings */
             /* transform nodes used as default parameters */
-            ArrayList<Object[]> dfns = (ArrayList<Object[]>) fn.getProp(Node.DESTRUCTURING_RVALUES);
-            fn.removeProp(Node.DESTRUCTURING_RVALUES);
+            List<Node[]> dfns = fn.getDestructuringRvalues();
             if (dfns != null) {
                 for (var i : dfns) {
-                    Node a = (Node) i[0];
+                    Node a = i[0];
                     AstNode b = (AstNode) i[1];
                     a.replaceChild(b, transform(b));
                 }

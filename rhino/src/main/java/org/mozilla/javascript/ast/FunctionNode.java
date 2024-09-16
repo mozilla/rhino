@@ -83,30 +83,33 @@ public class FunctionNode extends ScriptNode {
     private boolean hasRestParameter;
 
     @Override
-    public Object[] getDefaultParams() {
+    public List<Object> getDefaultParams() {
         return defaultParams;
     }
 
     public void putDefaultParams(Object left, Object right) {
-        int size = 0;
         if (defaultParams == null) {
-            defaultParams = new Object[2];
-        } else {
-            Object[] existing = defaultParams;
-            size = existing.length;
-            Object[] current = new Object[size + 2];
-            System.arraycopy(existing, 0, current, 0, existing.length);
-            defaultParams = current;
+            defaultParams = new ArrayList<>();
         }
-        defaultParams[size] = left;
-        defaultParams[defaultParams.length - 1] = right;
+        defaultParams.add(left);
+        defaultParams.add(right);
     }
 
-    public void setDefaultParams(Object[] defaultParams) {
-        this.defaultParams = defaultParams;
+    @Override
+    public List<Node[]> getDestructuringRvalues() {
+        return destructuringRvalues;
     }
 
-    Object[] defaultParams;
+    @Override
+    public void putDestructuringRvalues(Node left, Node right) {
+        if (destructuringRvalues == null) {
+            destructuringRvalues = new ArrayList<>();
+        }
+        destructuringRvalues.add(new Node[] {left, right});
+    }
+
+    ArrayList<Object> defaultParams;
+    ArrayList<Node[]> destructuringRvalues;
 
     // codegen variables
     private int functionType;
