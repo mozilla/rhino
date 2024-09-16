@@ -347,9 +347,27 @@ public class Context implements Closeable {
      * Internationalization API implementation (see https://tc39.github.io/ecma402) can be activated
      * using this feature.
      *
-     * @since 1.7 Release 15
+     * @since 1.7 Release 16
      */
     public static final int FEATURE_INTL_402 = 22;
+
+    /**
+     * Configure whether JavaMembers lazy init off.
+     *
+     * <p>default is lazy init.
+     *
+     * @since 1.7 Release 16
+     */
+    public static final int FEATURE_JAVAMEMBERS_LAZY_INIT_OFF = 22;
+
+    /**
+     * Configure whether JavaMembers reflect cache off.
+     *
+     * <p>default is cache on.
+     *
+     * @since 1.7 Release 15
+     */
+    public static final int FEATURE_JAVAMEMBERS_REFLECT_CACHE_OFF = 23;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
