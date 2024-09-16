@@ -23,19 +23,21 @@ jobs:
       run: git submodule update --init --single-branch
     - name: Set up Java
       uses: actions/setup-java@2dfa2011c5b2a0f1489bf9e433881c92c1631f88 # v4.3.0
+      # By putting JVMs in reverse order, the last one is the one that
+      # will go in the path.
       with:
         java-version: |
-          21
-          17
           11
+          17
+          21
         distribution: 'adopt'
-    - name: Build and test Java 11
+    - name: Build and test Java 21
       run: >-
         ./gradlew check
-    - name: Upload results Java 11
+    - name: Upload results Java 21
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
-        name: reports-java-11
+        name: reports-java-21
         path: '*/build/reports'
     - name: Build and test Java 17
       env:
@@ -47,13 +49,13 @@ jobs:
       with:
         name: reports-java-17
         path: '*/build/reports'
-    - name: Build and test Java 21
+    - name: Build and test Java 11
       env:
-        RHINO_TEST_JAVA_VERSION: "21"
+        RHINO_TEST_JAVA_VERSION: "11"
       run: >-
         ./gradlew check
-    - name: Upload results Java 21
+    - name: Upload results Java 11
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
-        name: reports-java-21
+        name: reports-java-11
         path: '*/build/reports'

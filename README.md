@@ -69,9 +69,14 @@ testing but which are not published to Maven Central:
 
 ### Requirements
 
-Rhino requires Java 11 to build. It will (currently) build with Java versions up to at least 
-Java 21. However, not all tools work with Java 21, such as "spotless", so Java 11 is required for
-regular developers.
+Rhino requires Java 17 or higher to build. The "spotless" tool, which enforces code formatting, will not
+run on older Java versions and you will receive a warning. If in doubt, Java 21 works great.
+
+Rhino runs on Java 11 and higher. The build tools use the "--release" flag to ensure that only
+features from Java 11 are used in the product.
+
+The CI tools run the Rhino tests on Java 11, 17, and 21. Regardless of what version of Java you are
+building with, you can test on another Java version using the RHINO_TEST_JAVA_VERSION environment variable.
 
 ### How to Build
 
@@ -93,6 +98,22 @@ Alternately, you can build an all-in-one JAR and run that:
 You can also run the benchmarks:
 
     ./gradlew jmh
+
+### Testing on other Java Versions
+
+It is a good idea to test major changes on Java 11 before assuming that they will pass the CI
+tests. To do this, set the environment variable RHINO_TEST_JAVA_VERSION to the version that you
+want to test. For example:
+
+    RHINO_TEST_JAVA_VERSION=11 ./gradlew check
+
+This will only work if Gradle can find a JDK of the appropriate version. You can troubleshoot
+this using the command:
+
+    ./gradlew -q javaToolchains
+
+Not all installers seem to put JDKs in the places where Gradle can find them. When in doubt,
+installatioons from [Adoptium](https://adoptium.net) seem to work on most platforms.
 
 ### Code Coverage
 
@@ -138,7 +159,7 @@ option to authorize the packages that your scripts shall use, for example:
 --add-opens java.desktop/javax.swing.table=ALL-UNNAMED
 ```
 
-This is not necessary just to build Rhino -- it may be necessary when embedding it
+This is not necessary just to build or test Rhino -- it may be necessary when embedding it
 depending on what your project does.
 
 ## Issues
@@ -163,6 +184,14 @@ if you can un-disable some tests.
 some time to get back to you.
 * Thank you for contributing!
 
+## Updating Test262 tests
+
+If you are adding new capabilities to Rhino, you may be making more test262 tests pass, which is
+a good thing. Please [see the instructions](./tests/testsrc/README.md) on how to update our test262 configuration.
+
+Because of differences between Java and JavaScript, when testing on newer Java versions, many
+Unicode-related test262 tests appear to pass, but they will fail on Java 11. Please ignore these!
+
 ### Code Formatting
 
 Code formatting was introduced in 2021. The "spotless" plugin will fail your
@@ -174,9 +203,7 @@ hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
 
-Currently, you must be building on Java 11 for Spotless to run. We recommend that you
-have that ready. (We have not been able to figure out a version of Spotless and the 
-Google formatting plugin that it uses that works on many Java versions.)
+Currently, you must be building on Java 17 or higher for Spotless to run.
 
 ## More Help
 

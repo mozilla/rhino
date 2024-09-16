@@ -50,6 +50,11 @@ test {
 
     systemProperty 'test262properties', System.getProperty('test262properties')
     if (System.getProperty('updateTest262properties') != null) {
+        if (System.getenv("RHINO_TEST_JAVA_VERSION") != "11") {
+            System.out.println("Test262 properties update is only accurate on Java 11 and you have " + JavaVersion.current())
+            System.out.println("Set RHINO_TEST_JAVA_VERSION in the environment to use this feature")
+            throw new Exception("Incorrect Java version for Test 262 properties update")
+        }
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
     }
 
