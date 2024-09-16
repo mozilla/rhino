@@ -303,7 +303,9 @@ public class Global extends ImporterTopLevel {
      * @exception InstantiationException if unable to instantiate the named class
      */
     public static void loadClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IllegalAccessException, InstantiationException, NoSuchMethodException,
+            throws IllegalAccessException,
+                    InstantiationException,
+                    NoSuchMethodException,
                     InvocationTargetException {
         Class<?> clazz = getClass(args);
         if (!Script.class.isAssignableFrom(clazz)) {

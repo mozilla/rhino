@@ -723,7 +723,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + indexReg);
                     ++pc;
                     break;
-                    // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
+                // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
                 case Icode_REG_BIGINT_C0:
                 case Icode_REG_BIGINT_C1:
                 case Icode_REG_BIGINT_C2:
@@ -1288,7 +1288,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     }
                                     // We are now resuming execution. Fall through to YIELD case.
                                 }
-                                // fall through...
+                            // fall through...
                             case Token.YIELD:
                             case Icode_YIELD_STAR:
                                 {
@@ -2098,7 +2098,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_SETCONSTVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.SETCONSTVAR:
                                 stackTop =
                                         doSetConstVar(
@@ -2113,7 +2113,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_SETVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.SETVAR:
                                 stackTop =
                                         doSetVar(
@@ -2128,7 +2128,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_GETVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.GETVAR:
                                 stackTop =
                                         doGetVar(

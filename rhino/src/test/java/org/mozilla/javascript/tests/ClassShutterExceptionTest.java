@@ -14,7 +14,9 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 
-/** @author Norris Boyd */
+/**
+ * @author Norris Boyd
+ */
 public class ClassShutterExceptionTest {
     private static Context.ClassShutterSetter classShutterSetter;
 

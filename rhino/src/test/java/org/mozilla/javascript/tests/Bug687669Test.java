@@ -18,7 +18,9 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.ast.AstRoot;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug687669Test {
 
     private Context cx;

@@ -25,7 +25,9 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.IdeErrorReporter;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 @SuppressWarnings("serial")
 @RunWith(Parameterized.class)
 public class Bug789277Test {

@@ -11,7 +11,9 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-/** @author Hannes Wallnoefer */
+/**
+ * @author Hannes Wallnoefer
+ */
 public class Bug491621Test {
 
     /**

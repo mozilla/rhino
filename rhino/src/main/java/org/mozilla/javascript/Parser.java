@@ -1944,7 +1944,7 @@ public class Parser {
                     // Take extra care to preserve language compatibility
                     break;
                 }
-                // fallthrough
+            // fallthrough
             default:
                 e = expr(false);
                 end = getNodeEnd(e);
@@ -2497,7 +2497,7 @@ public class Parser {
             switch (tt) {
                 case Token.IN:
                     if (inForInit) break;
-                    // fall through
+                // fall through
                 case Token.INSTANCEOF:
                 case Token.LE:
                 case Token.LT:
@@ -2637,8 +2637,8 @@ public class Parser {
                     consumeToken();
                     return memberExprTail(true, xmlInitializer());
                 }
-                // Fall thru to the default handling of RELOP
-                // fall through
+            // Fall thru to the default handling of RELOP
+            // fall through
 
             default:
                 AstNode pn = memberExpr(true);
@@ -2997,16 +2997,16 @@ public class Parser {
         int tt = nextToken(), atPos = ts.tokenBeg;
 
         switch (tt) {
-                // handles: @name, @ns::name, @ns::*, @ns::[expr]
+            // handles: @name, @ns::name, @ns::*, @ns::[expr]
             case Token.NAME:
                 return propertyName(atPos, 0);
 
-                // handles: @*, @*::name, @*::*, @*::[expr]
+            // handles: @*, @*::name, @*::*, @*::[expr]
             case Token.MUL:
                 saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
                 return propertyName(atPos, 0);
 
-                // handles @[expr]
+            // handles @[expr]
             case Token.LB:
                 return xmlElemRef(atPos, null, -1);
 
@@ -3037,18 +3037,18 @@ public class Parser {
             colonPos = ts.tokenBeg;
 
             switch (nextToken()) {
-                    // handles name::name
+                // handles name::name
                 case Token.NAME:
                     name = createNameNode();
                     break;
 
-                    // handles name::*
+                // handles name::*
                 case Token.MUL:
                     saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
                     name = createNameNode(false, -1);
                     break;
 
-                    // handles name::[expr] or *::[expr]
+                // handles name::[expr] or *::[expr]
                 case Token.LB:
                     return xmlElemRef(atPos, ns, colonPos);
 
@@ -3397,7 +3397,7 @@ public class Parser {
                         isForOf = true;
                         break;
                     }
-                    // fall through
+                // fall through
                 default:
                     reportError("msg.in.after.for.name");
             }

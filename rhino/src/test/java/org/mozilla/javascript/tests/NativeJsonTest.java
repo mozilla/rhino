@@ -11,7 +11,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-/** @author Ronald Brill */
+/**
+ * @author Ronald Brill
+ */
 public class NativeJsonTest {
 
     @Test

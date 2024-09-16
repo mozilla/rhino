@@ -18,7 +18,9 @@ import org.mozilla.javascript.tests.Utils;
  */
 public class FunctionNullSetTest {
 
-    /** @throws Exception if the test fails */
+    /**
+     * @throws Exception if the test fails
+     */
     @Test
     public void setFunctionToNull() throws Exception {
         final String script = "function onclick() {onclick=null}";
