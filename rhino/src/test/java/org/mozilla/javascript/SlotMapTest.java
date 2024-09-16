@@ -20,8 +20,12 @@ public class SlotMapTest {
     private final SlotMap map;
 
     public SlotMapTest(Class<SlotMap> mapClass)
-            throws IllegalAccessException, InstantiationException, IllegalArgumentException,
-                    InvocationTargetException, NoSuchMethodException, SecurityException {
+            throws IllegalAccessException,
+                    InstantiationException,
+                    IllegalArgumentException,
+                    InvocationTargetException,
+                    NoSuchMethodException,
+                    SecurityException {
         this.map = mapClass.getDeclaredConstructor().newInstance();
     }
 

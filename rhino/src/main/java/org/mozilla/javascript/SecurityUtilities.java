@@ -10,7 +10,9 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 
-/** @author Attila Szegedi */
+/**
+ * @author Attila Szegedi
+ */
 public class SecurityUtilities {
     /**
      * Retrieves a system property within a privileged block. Use it only when the property is used

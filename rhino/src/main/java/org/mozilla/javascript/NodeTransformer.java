@@ -270,7 +270,7 @@ public class NodeTransformer {
                         }
                         // fall through to process let declaration...
                     }
-                    /* fall through */
+                /* fall through */
                 case Token.CONST:
                 case Token.VAR:
                     {
@@ -355,7 +355,7 @@ public class NodeTransformer {
                             }
                         }
                     }
-                    /* fall through */
+                /* fall through */
                 case Token.NAME:
                 case Token.SETCONST:
                 case Token.DELPROP:

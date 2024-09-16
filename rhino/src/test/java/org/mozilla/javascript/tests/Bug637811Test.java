@@ -10,7 +10,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug637811Test {
 
     private Context cx;

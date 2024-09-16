@@ -505,7 +505,7 @@ final class NativeString extends IdScriptableObject {
                     if (id == Id_endsWith) {
                         return Boolean.valueOf(idx != -1);
                     }
-                    // fallthrough
+                // fallthrough
 
                 case Id_padStart:
                 case Id_padEnd:
@@ -641,7 +641,7 @@ final class NativeString extends IdScriptableObject {
                         return ScriptRuntime.checkRegExpProxy(cx)
                                 .action(cx, scope, thisObj, args, actionType);
                     }
-                    // ECMA-262 1 5.5.4.9
+                // ECMA-262 1 5.5.4.9
                 case Id_localeCompare:
                     {
                         // For now, create and configure a collator instance. I can't

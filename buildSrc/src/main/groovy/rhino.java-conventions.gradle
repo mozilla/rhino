@@ -49,7 +49,7 @@ spotless {
     // This will have to be changed when Java 11 support is removed.
     if (JavaVersion.current() == JavaVersion.VERSION_21) {
         java {
-            googleJavaFormat('1.17.0').aosp()
+            googleJavaFormat('1.23.0').aosp()
         }
     } else {
         System.out.println("Not running Spotless: Java language version is " + JavaVersion.current())

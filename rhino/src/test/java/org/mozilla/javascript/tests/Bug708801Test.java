@@ -30,7 +30,9 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.optimizer.Codegen;
 import org.mozilla.javascript.optimizer.OptFunctionNode;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug708801Test {
 
     private static final ContextFactory factory =

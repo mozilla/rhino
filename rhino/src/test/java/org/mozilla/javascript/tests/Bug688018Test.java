@@ -16,7 +16,9 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-/** @author André Bargull */
+/**
+ * @author André Bargull
+ */
 public class Bug688018Test {
 
     private Context cx;

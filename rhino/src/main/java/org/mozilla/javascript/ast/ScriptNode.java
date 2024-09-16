@@ -118,7 +118,9 @@ public class ScriptNode extends Scope {
         this.rawSource = rawSource;
     }
 
-    /** @return the raw source, or {@code null} if it was not recorded. */
+    /**
+     * @return the raw source, or {@code null} if it was not recorded.
+     */
     public String getRawSource() {
         return rawSource;
     }

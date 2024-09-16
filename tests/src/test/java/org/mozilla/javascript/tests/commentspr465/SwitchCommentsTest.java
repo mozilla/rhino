@@ -11,7 +11,9 @@ import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 
-/** @author ravik @@since 07/08/18 12:36 PM */
+/**
+ * @author ravik @@since 07/08/18 12:36 PM
+ */
 public class SwitchCommentsTest {
 
     @Test
