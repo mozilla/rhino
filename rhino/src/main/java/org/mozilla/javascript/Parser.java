@@ -4313,7 +4313,6 @@ public class Parser {
             //              : $1[0])
             //          : x
 
-            /* TODO(satish): should transform other nodes; move this to IRFactory */
             if ((n.getRight() instanceof FunctionNode
                             || n.getRight() instanceof UpdateExpression
                             || n.getRight() instanceof ParenthesizedExpression)
@@ -4332,7 +4331,9 @@ public class Parser {
 
             // if right is a function/update expression, it should be processed later
             // store it in the node to be processed
-            if ((right instanceof FunctionNode || right instanceof UpdateExpression)
+            if ((right instanceof FunctionNode
+                            || right instanceof UpdateExpression
+                            || right instanceof ParenthesizedExpression)
                     && transformer == null) {
                 currentScriptOrFn.putDestructuringRvalues(cond_inner, right);
             }

@@ -113,6 +113,13 @@ public class DefaultParametersTest {
     }
 
     @Test
+    public void destructuringNestedArray() throws Exception {
+        // JavaScript
+        final String script = "let [[y], x] = [[4], 3]; x + y";
+        assertIntEvaluates(7, script);
+    }
+
+    @Test
     public void letExprUnresolvableRefObjDestructuring() throws Exception {
         // JavaScript
         final String script = "var f = function({ x = unresolvableReference } = {}) {}; f()";
