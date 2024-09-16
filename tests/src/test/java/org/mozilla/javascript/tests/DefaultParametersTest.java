@@ -313,6 +313,22 @@ public class DefaultParametersTest {
     }
 
     @Test
+    @Ignore("deeply-nested-literal-not-supported")
+    public void deeplyNestedObjectLiteral() throws Exception {
+        final String script =
+                "let { d: { b }, d, a} = { \n"
+                        + "                          a: \"world\",\n"
+                        + "                          d: {\n"
+                        + "                            b: \"hello\"\n"
+                        + "                          }\n"
+                        + "                        }\n"
+                        + "                        \n";
+        assertEvaluates("hello", script + "b");
+        assertEvaluates("world", script + "a");
+        assertEvaluates("hello", script + "d[b]");
+    }
+
+    @Test
     public void defaultParametersWithArgumentsObject() throws Exception {
         final String script =
                 "function f(a = 55) {\n"

@@ -4352,7 +4352,7 @@ public class Parser {
                 destructuringNames.add(name);
             }
         } else {
-            // TODO(satish): should handle other lvalues eg ArrayLiteral, ObjectLiteral
+            // TODO: should handle other nested values on the lhs (ArrayLiteral, ObjectLiteral)
         }
     }
 
