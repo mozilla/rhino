@@ -11,7 +11,9 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 
 /**
@@ -782,7 +784,9 @@ final class NativeString extends IdScriptableObject {
                     }
                 case Id_isWellFormed:
                     {
-                        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                        CharSequence str =
+                                ScriptRuntime.toCharSequence(
+                                        requireObjectCoercible(cx, thisObj, f));
                         int len = str.length();
                         boolean foundLeadingSurrogate = false;
                         for (int i = 0; i < len; i++) {
@@ -805,27 +809,49 @@ final class NativeString extends IdScriptableObject {
                     }
                 case Id_toWellFormed:
                     {
-                        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        StringBuilder sb = new StringBuilder();
+                        CharSequence str =
+                                ScriptRuntime.toCharSequence(
+                                        requireObjectCoercible(cx, thisObj, f));
+                        // true represents a surrogate pair
+                        // false represents a singular surrogate
+                        // normal characters aren't present
+                        Map<Integer, Boolean> surrogates = new HashMap<>();
+
                         int len = str.length();
                         char prev = 0;
+                        int firstSurrogateIndex = -1;
                         for (int i = 0; i < len; i++) {
                             char c = str.charAt(i);
 
-                            if (NativeJSON.isLeadingSurrogate(c)
-                                    && i < len - 1
-                                    && NativeJSON.isTrailingSurrogate(str.charAt(i + 1))) {
-                                // do nothing as the next case will add both surrogates
-                            } else if (NativeJSON.isTrailingSurrogate(c)
-                                    && NativeJSON.isLeadingSurrogate(prev)) {
-                                sb.append(prev).append(c);
+                            if (NativeJSON.isLeadingSurrogate(prev)
+                                    && NativeJSON.isTrailingSurrogate(c)) {
+                                surrogates.put(Integer.valueOf(i - 1), Boolean.TRUE);
+                                surrogates.put(Integer.valueOf(i), Boolean.TRUE);
                             } else if (NativeJSON.isLeadingSurrogate(c)
                                     || NativeJSON.isTrailingSurrogate(c)) {
-                                sb.append('\uFFFD');
-                            } else {
-                                sb.append(c);
+                                surrogates.put(Integer.valueOf(i), Boolean.FALSE);
+                                if (firstSurrogateIndex == -1) {
+                                    firstSurrogateIndex = i;
+                                }
                             }
+
                             prev = c;
+                        }
+
+                        if (surrogates.isEmpty()) {
+                            return str.toString();
+                        }
+
+                        StringBuilder sb =
+                                new StringBuilder(str.subSequence(0, firstSurrogateIndex));
+                        for (int i = firstSurrogateIndex; i < len; i++) {
+                            char c = str.charAt(i);
+                            Boolean pairOrNormal = surrogates.get(Integer.valueOf(i));
+                            if (pairOrNormal == null || pairOrNormal) {
+                                sb.append(c);
+                            } else {
+                                sb.append('\uFFFD');
+                            }
                         }
 
                         return sb.toString();
