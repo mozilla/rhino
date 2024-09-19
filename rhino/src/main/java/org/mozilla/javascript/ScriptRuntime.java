@@ -1755,6 +1755,14 @@ public class ScriptRuntime {
         return getObjectProp(obj, property, cx, scope);
     }
 
+    public static Object getObjectPropOptional(
+            Scriptable obj, String property, Context cx, Scriptable scope) {
+        if (obj == null || Undefined.isUndefined(obj)) {
+            return Undefined.instance;
+        }
+        return getObjectProp(obj, property, cx);
+    }
+
     public static Object getObjectProp(Scriptable obj, String property, Context cx) {
 
         Object result = ScriptableObject.getProperty(obj, property);
