@@ -21,6 +21,7 @@ class SpecialOptionalRef extends Ref {
         return specialRef.get(cx);
     }
 
+    @Deprecated
     @Override
     public Object set(Context cx, Object value) {
         throw new IllegalStateException();

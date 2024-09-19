@@ -3101,24 +3101,6 @@ public class Parser {
         return result;
     }
 
-    private static AstNode conditionalPropertyAccess(AstNode target, AstNode propAccessNode) {
-        var targetCopy = cloneNode(target);
-        var targetCopy2 = cloneNode(target);
-
-        AstNode undefinedNode = new Name(0, "undefined");
-        AstNode nullNode = new KeywordLiteral(0, 4, Token.NULL);
-
-        AstNode nullEq = new InfixExpression(Token.SHEQ, targetCopy, nullNode, 0);
-
-        AstNode undefinedEq = new InfixExpression(Token.SHEQ, targetCopy2, undefinedNode, 0);
-        var conditionalExpr = new ConditionalExpression();
-        conditionalExpr.setTestExpression(new InfixExpression(Token.OR, nullEq, undefinedEq, 0));
-        conditionalExpr.setTrueExpression(new Name(0, "undefined"));
-        conditionalExpr.setFalseExpression(propAccessNode);
-
-        return conditionalExpr;
-    }
-
     private static AstNode cloneNode(AstNode target) {
         var newParser = new Parser();
         var root = newParser.parse(target.toSource(), "", 1);
