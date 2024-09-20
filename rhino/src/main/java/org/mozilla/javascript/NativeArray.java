@@ -905,13 +905,13 @@ public class NativeArray extends IdScriptableObject implements List {
             Context cx, Scriptable scope, Scriptable arg, long length, boolean lengthAlways) {
         Scriptable result = null;
 
-        if (arg instanceof Function) {
+        if (arg instanceof Constructable) {
             try {
                 final Object[] args =
                         (lengthAlways || (length > 0))
                                 ? new Object[] {Long.valueOf(length)}
                                 : ScriptRuntime.emptyArgs;
-                result = ((Function) arg).construct(cx, scope, args);
+                result = ((Constructable) arg).construct(cx, scope, args);
             } catch (EcmaError ee) {
                 if (!"TypeError".equals(ee.getName())) {
                     throw ee;
@@ -1717,9 +1717,8 @@ public class NativeArray extends IdScriptableObject implements List {
 
         if (cx.getLanguageVersion() < Context.VERSION_ES6) {
             // Otherwise, for older Rhino versions, fall back to the old algorithm, which treats
-            // things with
-            // the Array constructor as arrays. However, this is contrary to ES6!
-            final Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
+            // things with the Array constructor as arrays. However, this is contrary to ES6!
+            final Constructable ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
             if (ScriptRuntime.instanceOf(val, ctor, cx)) {
                 return true;
             }

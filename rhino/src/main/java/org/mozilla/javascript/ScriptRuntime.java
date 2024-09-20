@@ -1322,7 +1322,7 @@ public class ScriptRuntime {
     public static Scriptable newObject(
             Context cx, Scriptable scope, String constructorName, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = getExistingCtor(cx, scope, constructorName);
+        Constructable ctor = getExistingCtor(cx, scope, constructorName);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -1332,7 +1332,7 @@ public class ScriptRuntime {
     public static Scriptable newBuiltinObject(
             Context cx, Scriptable scope, TopLevel.Builtins type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = TopLevel.getBuiltinCtor(cx, scope, type);
+        Constructable ctor = TopLevel.getBuiltinCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -1342,7 +1342,7 @@ public class ScriptRuntime {
     static Scriptable newNativeError(
             Context cx, Scriptable scope, TopLevel.NativeErrors type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
+        Constructable ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -2748,11 +2748,10 @@ public class ScriptRuntime {
      * <p>See ECMA 11.2.2
      */
     public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-        if (!(fun instanceof Function)) {
+        if (!(fun instanceof Constructable)) {
             throw notFunctionError(fun);
         }
-        Function function = (Function) fun;
-        return function.construct(cx, scope, args);
+        return ((Constructable) fun).construct(cx, scope, args);
     }
 
     public static Object callSpecial(

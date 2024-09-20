@@ -2035,10 +2035,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                             lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                         throw ScriptRuntime.notFunctionError(lhs);
                                     }
-                                    Function fun = (Function) lhs;
+                                    Constructable ctor = (Constructable) lhs;
 
-                                    if (fun instanceof IdFunctionObject) {
-                                        IdFunctionObject ifun = (IdFunctionObject) fun;
+                                    if (ctor instanceof IdFunctionObject) {
+                                        IdFunctionObject ifun = (IdFunctionObject) ctor;
                                         if (NativeContinuation.isContinuationConstructor(ifun)) {
                                             frame.stack[stackTop] =
                                                     captureContinuation(
@@ -2049,7 +2049,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
                                     Object[] outArgs =
                                             getArgsArray(stack, sDbl, stackTop + 1, indexReg);
-                                    stack[stackTop] = fun.construct(cx, frame.scope, outArgs);
+                                    stack[stackTop] = ctor.construct(cx, frame.scope, outArgs);
                                     continue Loop;
                                 }
                             case Token.TYPEOF:
