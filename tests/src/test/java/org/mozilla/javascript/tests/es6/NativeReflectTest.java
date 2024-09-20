@@ -157,12 +157,11 @@ public class NativeReflectTest {
     public void constructNoConstructorFunction() {
         String js =
                 "try {\n"
-                        + "  Reflect.construct(function() {}, [], Date.now);\n"
+                        + "  Reflect.construct(function() {}, [], Math.abs);\n"
                         + "} catch(e) {\n"
                         + "  '' + e;\n"
                         + "}";
-        // testString("TypeError: \"object\" is not a constructor.", js);
-        // found no way to check a function for constructor
+        testString("TypeError: \"function\" is not a constructor.", js);
     }
 
     @Test

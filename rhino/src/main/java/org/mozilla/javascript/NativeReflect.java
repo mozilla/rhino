@@ -142,7 +142,7 @@ final class NativeReflect extends ScriptableObject {
                     Integer.toString(args.length));
         }
 
-        if (!(args[0] instanceof Constructable)) {
+        if (!isConstructor(args[0])) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[0]));
         }
 
@@ -151,7 +151,7 @@ final class NativeReflect extends ScriptableObject {
             return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         }
 
-        if (args.length > 2 && !(args[2] instanceof Constructable)) {
+        if (args.length > 2 && !isConstructor(args[2])) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
         }
 
@@ -196,6 +196,19 @@ final class NativeReflect extends ScriptableObject {
         }
 
         return newScriptable;
+    }
+
+    private static boolean isConstructor(final Object argument) {
+        // Hack for the moment because all Functions are Constructable
+        // see #1376 for more
+        if (argument instanceof LambdaConstructor) {
+            return true;
+        }
+        if (argument instanceof LambdaFunction) {
+            return false;
+        }
+
+        return argument instanceof Constructable;
     }
 
     private static Object defineProperty(

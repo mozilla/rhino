@@ -930,7 +930,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             Object trapResultObj = callTrap(trap, new Object[] {target, id});
             if (!Undefined.isUndefined(trapResultObj)
                     && !(trapResultObj instanceof Scriptable
-                    && !ScriptRuntime.isSymbol(trapResultObj))) {
+                            && !ScriptRuntime.isSymbol(trapResultObj))) {
                 throw ScriptRuntime.typeError(
                         "getOwnPropertyDescriptor trap has to return undefined or an object");
             }

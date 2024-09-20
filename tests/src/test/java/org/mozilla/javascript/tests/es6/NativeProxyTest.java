@@ -210,7 +210,7 @@ public class NativeProxyTest {
 
     @Test
     public void
-    definePropertyDescNotConfigurableAndTargetPropertyDescriptorConfigurableAndTrapResultIsTrue() {
+            definePropertyDescNotConfigurableAndTargetPropertyDescriptorConfigurableAndTrapResultIsTrue() {
         String js =
                 "var target = {};\n"
                         + "var p = new Proxy(target, {\n"
