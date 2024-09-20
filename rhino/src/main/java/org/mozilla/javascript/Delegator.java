@@ -267,7 +267,7 @@ public class Delegator implements Function, SymbolScriptable {
      *     closure.
      * @param args the array of arguments
      * @return the allocated object
-     * @see Function#construct(Context, Scriptable, Object[])
+     * @see Constructable#construct(Context, Scriptable, Object[])
      */
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
@@ -284,6 +284,6 @@ public class Delegator implements Function, SymbolScriptable {
             n.setDelegee(delegee);
             return n;
         }
-        return ((Function) myDelegee).construct(cx, scope, args);
+        return ((Constructable) myDelegee).construct(cx, scope, args);
     }
 }
