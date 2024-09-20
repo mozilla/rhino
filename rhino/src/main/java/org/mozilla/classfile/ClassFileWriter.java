@@ -4367,21 +4367,31 @@ public class ClassFileWriter {
         // Based on the version numbers we scrape, we can also determine what
         // bytecode features we need. For example, Java 6 bytecode (classfile
         // version 50) should have stack maps generated.
+        int minor = 0;
+        int major = 48;
         try (InputStream is = readClassFile()) {
-            byte[] header = new byte[8];
-            // read loop is required since JDK7 will only provide 2 bytes
-            // on the first read() - see bug #630111
-            int read = 0;
-            while (read < 8) {
-                int c = is.read(header, read, 8 - read);
-                if (c < 0) throw new IOException();
-                read += c;
+            if (is != null) {
+                byte[] header = new byte[8];
+                // read loop is required since JDK7 will only provide 2 bytes
+                // on the first read() - see bug #630111
+                int read = 0;
+                while (read < 8) {
+                    int c = is.read(header, read, 8 - read);
+                    if (c < 0) throw new IOException();
+                    read += c;
+                }
+                minor = (header[4] << 8) | (header[5] & 0xff);
+                major = (header[6] << 8) | (header[7] & 0xff);
+            } else {
+                System.err.println(
+                        "Warning: Unable to read ClassFileWriter.class, using default bytecode version");
             }
-            MinorVersion = (header[4] << 8) | (header[5] & 0xff);
-            MajorVersion = (header[6] << 8) | (header[7] & 0xff);
-            GenerateStackMap = MajorVersion >= 50;
         } catch (IOException ioe) {
             throw new AssertionError("Can't read ClassFileWriter.class to get bytecode version");
+        } finally {
+            MinorVersion = minor;
+            MajorVersion = major;
+            GenerateStackMap = MajorVersion >= 50;
         }
     }
 
