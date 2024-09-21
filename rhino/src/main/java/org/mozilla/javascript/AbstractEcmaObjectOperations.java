@@ -413,12 +413,13 @@ public class AbstractEcmaObjectOperations {
             }
         }
 
-        // if (!ScriptableObject.isGenericDescriptor(desc)) {
         if (ScriptableObject.isGenericDescriptor(desc)) {
             return true;
-        } else if (!Objects.equals(
-                ScriptableObject.isGenericDescriptor(current),
-                ScriptableObject.isGenericDescriptor(desc))) {
+        }
+
+        if (!Objects.equals(
+                ScriptableObject.isDataDescriptor(current),
+                ScriptableObject.isDataDescriptor(desc))) {
             if (Boolean.FALSE.equals(current.get("configurable"))) {
                 return false;
             }

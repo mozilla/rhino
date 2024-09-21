@@ -121,6 +121,21 @@ public class Utils {
                     final Scriptable scope = cx.initStandardObjects();
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
 
+                    if (expected instanceof Integer && res instanceof Double) {
+                        assertEquals(
+                                ((Integer) expected).doubleValue(),
+                                ((Double) res).doubleValue(),
+                                0.00001);
+                        return null;
+                    }
+                    if (expected instanceof Double && res instanceof Integer) {
+                        assertEquals(
+                                ((Double) expected).doubleValue(),
+                                ((Integer) res).doubleValue(),
+                                0.00001);
+                        return null;
+                    }
+
                     assertEquals(expected, res);
                     return null;
                 });

@@ -2813,11 +2813,11 @@ public class ScriptRuntime {
      *
      * <p>See ECMA 11.2.2
      */
-    public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-        if (!(fun instanceof Constructable)) {
-            throw notFunctionError(fun);
+    public static Scriptable newObject(Object ctor, Context cx, Scriptable scope, Object[] args) {
+        if (!(ctor instanceof Constructable)) {
+            throw notFunctionError(ctor);
         }
-        return ((Constructable) fun).construct(cx, scope, args);
+        return ((Constructable) ctor).construct(cx, scope, args);
     }
 
     public static Object callSpecial(
