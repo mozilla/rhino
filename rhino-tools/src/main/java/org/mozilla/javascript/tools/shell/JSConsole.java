@@ -24,6 +24,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.mozilla.javascript.SecurityUtilities;
 
+@SuppressWarnings("AndroidJdkLibsChecker")
 public class JSConsole extends JFrame implements ActionListener {
     static final long serialVersionUID = 2551225560631876300L;
 

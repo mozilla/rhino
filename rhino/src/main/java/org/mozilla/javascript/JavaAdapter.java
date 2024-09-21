@@ -319,6 +319,7 @@ public final class JavaAdapter implements IdFunctionCall {
         return adapterClass;
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     public static byte[] createAdapterCode(
             Map<String, Integer> functionNames,
             String adapterName,

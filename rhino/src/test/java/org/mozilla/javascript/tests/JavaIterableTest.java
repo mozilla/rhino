@@ -24,6 +24,7 @@ import org.mozilla.javascript.Scriptable;
 
 public class JavaIterableTest {
 
+    @SuppressWarnings("unchecked")
     @Test
     public void map() {
         Map<Object, Object> map = new LinkedHashMap<>();
