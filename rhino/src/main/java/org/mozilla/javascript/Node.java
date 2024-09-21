@@ -65,7 +65,8 @@ public class Node implements Iterable<Node> {
             ARROW_FUNCTION_PROP = 26,
             TEMPLATE_LITERAL_PROP = 27,
             TRAILING_COMMA = 28,
-            LAST_PROP = 28;
+            OBJECT_LITERAL_DESTRUCTURING = 29,
+            LAST_PROP = 29;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types

@@ -577,6 +577,44 @@ public final class IRFactory {
             ++parser.nestingOfFunction; // only for body, not params
             Node body = transform(fn.getBody());
 
+            /* Process simple default parameters */
+            List<Object> defaultParams = fn.getDefaultParams();
+            if (defaultParams != null) {
+                for (int i = defaultParams.size() - 1; i > 0; ) {
+                    if (defaultParams.get(i) instanceof AstNode
+                            && defaultParams.get(i - 1) instanceof String) {
+                        AstNode rhs = (AstNode) defaultParams.get(i);
+                        String name = (String) defaultParams.get(i - 1);
+                        body.addChildToFront(
+                                createIf(
+                                        createBinary(
+                                                Token.SHEQ,
+                                                parser.createName(name),
+                                                parser.createName("undefined")),
+                                        new Node(
+                                                Token.EXPR_VOID,
+                                                createAssignment(
+                                                        Token.ASSIGN,
+                                                        parser.createName(name),
+                                                        transform(rhs)),
+                                                body.getLineno()),
+                                        null,
+                                        body.getLineno()));
+                    }
+                    i -= 2;
+                }
+            }
+
+            /* transform nodes used as default parameters */
+            List<Node[]> dfns = fn.getDestructuringRvalues();
+            if (dfns != null) {
+                for (var i : dfns) {
+                    Node a = i[0];
+                    AstNode b = (AstNode) i[1];
+                    a.replaceChild(b, transform(b));
+                }
+            }
+
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
             }
@@ -859,7 +897,7 @@ public final class IRFactory {
             int size = elems.size(), i = 0;
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
-                Object propKey = getPropKey(prop.getLeft());
+                Object propKey = Parser.getPropKey(prop.getLeft());
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
                     properties[i++] = theId;
@@ -880,23 +918,6 @@ public final class IRFactory {
         }
         object.putProp(Node.OBJECT_IDS_PROP, properties);
         return object;
-    }
-
-    private Object getPropKey(Node id) {
-        Object key;
-        if (id instanceof Name) {
-            String s = ((Name) id).getIdentifier();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof StringLiteral) {
-            String s = ((StringLiteral) id).getValue();
-            key = ScriptRuntime.getIndexObject(s);
-        } else if (id instanceof NumberLiteral) {
-            double n = ((NumberLiteral) id).getNumber();
-            key = ScriptRuntime.getIndexObject(n);
-        } else {
-            key = null; // Filled later
-        }
-        return key;
     }
 
     private Node transformParenExpr(ParenthesizedExpression node) {
@@ -1133,7 +1154,9 @@ public final class IRFactory {
                 } else {
                     astNodePos.push(var);
                     try {
-                        Node d = parser.createDestructuringAssignment(node.getType(), left, right);
+                        Node d =
+                                parser.createDestructuringAssignment(
+                                        node.getType(), left, right, this::transform);
                         node.addChildToBack(d);
                     } finally {
                         astNodePos.pop();
@@ -1501,8 +1524,7 @@ public final class IRFactory {
             Node assign;
             if (destructuring != -1) {
                 assign =
-                        parser.createDestructuringAssignment(
-                                declType, lvalue, id, (AstNode node) -> transform(node));
+                        parser.createDestructuringAssignment(declType, lvalue, id, this::transform);
                 if (!isForEach
                         && !isForOf
                         && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
@@ -2079,8 +2101,7 @@ public final class IRFactory {
                     parser.reportError("msg.bad.destruct.op");
                     return right;
                 }
-                return parser.createDestructuringAssignment(
-                        -1, left, right, (AstNode node) -> transform(node));
+                return parser.createDestructuringAssignment(-1, left, right, this::transform);
             }
             parser.reportError("msg.bad.assign.left");
             return right;

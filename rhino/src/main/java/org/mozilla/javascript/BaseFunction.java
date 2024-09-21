@@ -70,6 +70,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return isGeneratorFunction;
     }
 
+    // Generated code will override this
+    protected boolean hasDefaultParameters() {
+        return false;
+    }
+
     /**
      * Gets the value returned by calling the typeof operator on this object.
      *

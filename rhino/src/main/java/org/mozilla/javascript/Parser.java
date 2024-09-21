@@ -719,6 +719,9 @@ public class Parser {
                                 if (directive == null) {
                                     inDirectivePrologue = false;
                                 } else if (directive.equals("use strict")) {
+                                    if (fnNode.getDefaultParams() != null) {
+                                        reportError("msg.default.args.use.strict");
+                                    }
                                     inUseStrictDirective = true;
                                     fnNode.setInStrictMode(true);
                                     if (!savedStrictMode) {
@@ -763,6 +766,8 @@ public class Parser {
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = null;
+        Map<String, Node> destructuringDefault = null;
+
         Set<String> paramNames = new HashSet<>();
         do {
             int tt = peekToken();
@@ -781,18 +786,45 @@ public class Parser {
                     reportError("msg.parm.after.rest", ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
                 }
 
-                AstNode expr = destructuringPrimaryExpr();
-                markDestructuring(expr);
-                fnNode.addParam(expr);
-                // Destructuring assignment for parameters: add a dummy
-                // parameter name, and add a statement to the body to initialize
-                // variables from the destructuring assignment
+                AstNode expr = destructuringAssignExpr();
                 if (destructuring == null) {
                     destructuring = new HashMap<>();
                 }
-                String pname = currentScriptOrFn.getNextTempName();
-                defineSymbol(Token.LP, pname, false);
-                destructuring.put(pname, expr);
+
+                if (expr instanceof Assignment) {
+                    // We have default arguments inside destructured function parameters
+                    // eg: f([x = 1] = [2]) { ... }, transform this into:
+                    // f(x) {
+                    //      if ($1 == undefined)
+                    //          var $1 = [2];
+                    //      if (x == undefined)
+                    //          if (($1[0]) == undefined)
+                    //              var x = 1;
+                    //          else
+                    //              var x = $1[0];
+                    // }
+                    // fnNode.addParam(name)
+                    AstNode lhs = ((Assignment) expr).getLeft(); // [x = 1]
+                    AstNode rhs = ((Assignment) expr).getRight(); // [2]
+                    markDestructuring(lhs);
+                    fnNode.addParam(lhs);
+                    String pname = currentScriptOrFn.getNextTempName();
+                    defineSymbol(Token.LP, pname, false);
+                    if (destructuringDefault == null) {
+                        destructuringDefault = new HashMap<>();
+                    }
+                    destructuring.put(pname, lhs);
+                    destructuringDefault.put(pname, rhs);
+                } else {
+                    markDestructuring(expr);
+                    fnNode.addParam(expr);
+                    // Destructuring assignment for parameters: add a dummy
+                    // parameter name, and add a statement to the body to initialize
+                    // variables from the destructuring assignment
+                    String pname = currentScriptOrFn.getNextTempName();
+                    defineSymbol(Token.LP, pname, false);
+                    destructuring.put(pname, expr);
+                }
             } else {
                 boolean wasRest = false;
                 if (tt == Token.DOTDOTDOT) {
@@ -828,6 +860,14 @@ public class Parser {
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
                     }
+
+                    if (matchToken(Token.ASSIGN, true)) {
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            fnNode.putDefaultParams(paramName, assignExpr());
+                        } else {
+                            reportError("msg.default.args");
+                        }
+                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
@@ -838,9 +878,16 @@ public class Parser {
             Node destructuringNode = new Node(Token.COMMA);
             // Add assignment helper for each destructuring parameter
             for (Map.Entry<String, Node> param : destructuring.entrySet()) {
+                Node defaultValue = null;
+                if (destructuringDefault != null) {
+                    defaultValue = destructuringDefault.get(param.getKey());
+                }
                 Node assign =
                         createDestructuringAssignment(
-                                Token.VAR, param.getValue(), createName(param.getKey()));
+                                Token.VAR,
+                                param.getValue(),
+                                createName(param.getKey()),
+                                defaultValue);
                 destructuringNode.addChildToBack(assign);
             }
             fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
@@ -977,6 +1024,7 @@ public class Parser {
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = new HashMap<>();
+        Map<String, Node> destructuringDefault = new HashMap<>();
         Set<String> paramNames = new HashSet<>();
 
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
@@ -988,19 +1036,27 @@ public class Parser {
                 }
                 AstNode p = ((ParenthesizedExpression) params).getExpression();
                 if (!(p instanceof EmptyExpression)) {
-                    arrowFunctionParams(fnNode, p, destructuring, paramNames);
+                    arrowFunctionParams(fnNode, p, destructuring, destructuringDefault, paramNames);
                 }
             } else {
-                arrowFunctionParams(fnNode, params, destructuring, paramNames);
+                arrowFunctionParams(
+                        fnNode, params, destructuring, destructuringDefault, paramNames);
             }
 
             if (!destructuring.isEmpty()) {
                 Node destructuringNode = new Node(Token.COMMA);
                 // Add assignment helper for each destructuring parameter
                 for (Map.Entry<String, Node> param : destructuring.entrySet()) {
+                    Node defaultValue = null;
+                    if (destructuringDefault != null) {
+                        defaultValue = destructuringDefault.get(param.getKey());
+                    }
                     Node assign =
                             createDestructuringAssignment(
-                                    Token.VAR, param.getValue(), createName(param.getKey()));
+                                    Token.VAR,
+                                    param.getValue(),
+                                    createName(param.getKey()),
+                                    defaultValue);
                     destructuringNode.addChildToBack(assign);
                 }
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
@@ -1031,7 +1087,9 @@ public class Parser {
             FunctionNode fnNode,
             AstNode params,
             Map<String, Node> destructuring,
-            Set<String> paramNames) {
+            Map<String, Node> destructuringDefault,
+            Set<String> paramNames)
+            throws IOException {
         if (params instanceof ArrayLiteral || params instanceof ObjectLiteral) {
             markDestructuring(params);
             fnNode.addParam(params);
@@ -1040,9 +1098,17 @@ public class Parser {
             destructuring.put(pname, params);
         } else if (params instanceof InfixExpression && params.getType() == Token.COMMA) {
             arrowFunctionParams(
-                    fnNode, ((InfixExpression) params).getLeft(), destructuring, paramNames);
+                    fnNode,
+                    ((InfixExpression) params).getLeft(),
+                    destructuring,
+                    destructuringDefault,
+                    paramNames);
             arrowFunctionParams(
-                    fnNode, ((InfixExpression) params).getRight(), destructuring, paramNames);
+                    fnNode,
+                    ((InfixExpression) params).getRight(),
+                    destructuring,
+                    destructuringDefault,
+                    paramNames);
         } else if (params instanceof Name) {
             fnNode.addParam(params);
             String paramName = ((Name) params).getIdentifier();
@@ -1054,6 +1120,32 @@ public class Parser {
                 }
                 if (paramNames.contains(paramName)) addError("msg.dup.param.strict", paramName);
                 paramNames.add(paramName);
+            }
+        } else if (params instanceof Assignment) {
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                AstNode rhs = ((Assignment) params).getRight();
+                AstNode lhs = ((Assignment) params).getLeft();
+                String paramName;
+
+                /* copy default values for use in IR */
+                if (lhs instanceof Name) {
+                    paramName = ((Name) lhs).getIdentifier();
+                    fnNode.putDefaultParams(paramName, rhs);
+                    arrowFunctionParams(
+                            fnNode, lhs, destructuring, destructuringDefault, paramNames);
+                } else if (lhs instanceof ArrayLiteral || lhs instanceof ObjectLiteral) {
+                    markDestructuring(lhs);
+                    fnNode.addParam(lhs);
+                    String pname = currentScriptOrFn.getNextTempName();
+                    defineSymbol(Token.LP, pname, false);
+                    destructuring.put(pname, lhs);
+                    destructuringDefault.put(pname, rhs);
+                } else {
+                    reportError("msg.no.parm", params.getPosition(), params.getLength());
+                    fnNode.addParam(makeErrorNode());
+                }
+            } else {
+                reportError("msg.default.args");
             }
         } else {
             reportError("msg.no.parm", params.getPosition(), params.getLength());
@@ -2147,8 +2239,12 @@ public class Parser {
 
             if (tt == Token.LB || tt == Token.LC) {
                 // Destructuring assignment, e.g., var [a,b] = ...
+
+                // TODO: support default values inside destructured assignment
+                // eg: for (let { x = 3 } = {}) ...
                 destructuring = destructuringPrimaryExpr();
                 end = getNodeEnd(destructuring);
+
                 if (!(destructuring instanceof DestructuringForm))
                     reportError("msg.bad.assign.left", kidPos, end - kidPos);
                 markDestructuring(destructuring);
@@ -2336,13 +2432,6 @@ public class Parser {
             tt = peekToken();
         }
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
-            if (inDestructuringAssignment) {
-                // default values inside destructuring assignments,
-                // like 'var [a = 10] = b' or 'var {a: b = 10} = c',
-                // are not supported
-                reportError("msg.destruct.default.vals");
-            }
-
             consumeToken();
 
             // Pull out JSDoc info and reset it before recursing.
@@ -2365,6 +2454,9 @@ public class Parser {
         } else if (!hasEOL && tt == Token.ARROW) {
             consumeToken();
             pn = arrowFunction(pn);
+        } else if (pn.getIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 0) == 1
+                && !inDestructuringAssignment) {
+            reportError("msg.syntax");
         }
         return pn;
     }
@@ -3020,7 +3112,6 @@ public class Parser {
      * Check if :: follows name in which case it becomes a qualified name.
      *
      * @param atPos a natural number if we just read an '@' token, else -1
-     * @param s the name or string that was matched (an identifier, "throw" or "*").
      * @param memberTypeFlags flags tracking whether we're a '.' or '..' child
      * @return an XmlRef node if it's an attribute access, a child of a '..' operator, or the name
      *     is followed by ::. For a plain name, returns a Name node. Returns an ErrorNode for
@@ -3090,6 +3181,15 @@ public class Parser {
         ref.setExpression(expr);
         ref.setBrackets(lb, rb);
         return ref;
+    }
+
+    private AstNode destructuringAssignExpr() throws IOException, ParserException {
+        try {
+            inDestructuringAssignment = true;
+            return assignExpr();
+        } finally {
+            inDestructuringAssignment = false;
+        }
     }
 
     private AstNode destructuringPrimaryExpr() throws IOException, ParserException {
@@ -3210,8 +3310,11 @@ public class Parser {
 
             int length = ts.tokenEnd - begin;
 
+            boolean hasObjectLiteralDestructuring =
+                    e.getIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 0) == 1;
             boolean hasTrailingComma = e.getIntProp(Node.TRAILING_COMMA, 0) == 1;
-            if ((hasTrailingComma || e.getType() == Token.EMPTY) && peekToken() != Token.ARROW) {
+            if ((hasTrailingComma || hasObjectLiteralDestructuring || e.getType() == Token.EMPTY)
+                    && peekToken() != Token.ARROW) {
                 reportError("msg.syntax");
                 return makeErrorNode();
             }
@@ -3516,7 +3619,7 @@ public class Parser {
             setterNames = new HashSet<>();
         }
         Comment objJsdocNode = getAndResetJsDoc();
-
+        boolean objectLiteralDestructuringDefault = false;
         commaLoop:
         for (; ; ) {
             String propertyName = null;
@@ -3549,7 +3652,20 @@ public class Parser {
                 // many tokens.)
                 int peeked = peekToken();
                 if (peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC) {
-                    if (peeked == Token.LP) {
+                    if (peeked == Token.ASSIGN) { // we have an object literal with
+                        // destructuring assignment and a default value
+                        objectLiteralDestructuringDefault = true;
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            elems.add(plainProperty(pname, tt));
+                            if (matchToken(Token.COMMA, true)) {
+                                continue;
+                            } else {
+                                break commaLoop;
+                            }
+                        } else {
+                            reportError("msg.default.args");
+                        }
+                    } else if (peeked == Token.LP) {
                         entryKind = METHOD_ENTRY;
                     } else if (pname.getType() == Token.NAME) {
                         if ("get".equals(propertyName)) {
@@ -3619,6 +3735,9 @@ public class Parser {
 
         mustMatchToken(Token.RC, "msg.no.brace.prop", true);
         ObjectLiteral pn = new ObjectLiteral(pos, ts.tokenEnd - pos);
+        if (objectLiteralDestructuringDefault) {
+            pn.putIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 1);
+        }
         if (objJsdocNode != null) {
             pn.setJsDocNode(objJsdocNode);
         }
@@ -3695,6 +3814,14 @@ public class Parser {
             ObjectProperty pn = new ObjectProperty();
             pn.setIsShorthand(true);
             pn.setLeftAndRight(property, nn);
+            return pn;
+        } else if (tt == Token.ASSIGN) {
+            /* we're in destructuring with defaults in a object literal; treat defaults as values */
+            ObjectProperty pn = new ObjectProperty();
+            consumeToken(); // consume the `=`
+            Assignment defaultValue = new Assignment(property, assignExpr());
+            defaultValue.setType(Token.ASSIGN);
+            pn.setLeftAndRight(property, defaultValue);
             return pn;
         }
         mustMatchToken(Token.COLON, "msg.no.colon.prop", true);
@@ -3923,7 +4050,7 @@ public class Parser {
      *     to 0, and if it's beyond the end of the source buffer, the last source position is used.
      * @return the offset of the beginning of the line containing pos (i.e. 1+ the offset of the
      *     first preceding newline). Returns -1 if the {@link CompilerEnvirons} is not set to
-     *     ide-mode, and {@link #parse(java.io.Reader,String,int)} was used.
+     *     ide-mode, and {@link #parse(Reader,String,int)} was used.
      */
     private int lineBeginningFor(int pos) {
         if (sourceChars == null) {
@@ -4034,20 +4161,32 @@ public class Parser {
      * @param right expression to assign from
      * @return expression that performs a series of assignments to the variables defined in left
      */
-    Node createDestructuringAssignment(int type, Node left, Node right) {
-        return createDestructuringAssignment(type, left, right, null);
-    }
-
-    Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
+    Node createDestructuringAssignment(
+            int type, Node left, Node right, Node defaultValue, Transformer transformer) {
         String tempName = currentScriptOrFn.getNextTempName();
-        Node result = destructuringAssignmentHelper(type, left, right, tempName, transformer);
+        Node result =
+                destructuringAssignmentHelper(
+                        type, left, right, tempName, defaultValue, transformer);
         Node comma = result.getLastChild();
         comma.addChildToBack(createName(tempName));
         return result;
     }
 
+    Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
+        return createDestructuringAssignment(type, left, right, null, transformer);
+    }
+
+    Node createDestructuringAssignment(int type, Node left, Node right, Node defaultValue) {
+        return createDestructuringAssignment(type, left, right, defaultValue, null);
+    }
+
     Node destructuringAssignmentHelper(
-            int variableType, Node left, Node right, String tempName, Transformer transformer) {
+            int variableType,
+            Node left,
+            Node right,
+            String tempName,
+            Node defaultValue,
+            Transformer transformer) {
         Scope result = createScopeNode(Token.LETEXPR, left.getLineno());
         result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
         try {
@@ -4068,6 +4207,7 @@ public class Parser {
                             tempName,
                             comma,
                             destructuringNames,
+                            defaultValue,
                             transformer);
         } else if (left instanceof ObjectLiteral) {
             empty =
@@ -4077,6 +4217,7 @@ public class Parser {
                             tempName,
                             comma,
                             destructuringNames,
+                            defaultValue,
                             transformer);
         } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
             switch (variableType) {
@@ -4103,17 +4244,26 @@ public class Parser {
             String tempName,
             Node parent,
             List<String> destructuringNames,
+            Node defaultValue, /* defaultValue to use in function param decls */
             Transformer transformer) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
+        boolean defaultValuesSetup = false;
         for (AstNode n : array.getElements()) {
             if (n.getType() == Token.EMPTY) {
                 index++;
                 continue;
             }
             Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+
+            if (defaultValue != null && !defaultValuesSetup) {
+                setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
+                defaultValuesSetup = true;
+            }
+
             if (n.getType() == Token.NAME) {
+                /* [x] = [1] */
                 String name = n.getString();
                 parent.addChildToBack(
                         new Node(setOp, createName(Token.BINDNAME, name, null), rightElem));
@@ -4121,6 +4271,16 @@ public class Parser {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
                 }
+            } else if (n.getType() == Token.ASSIGN) {
+                /* [x = 1] = [2] */
+                processDestructuringDefaults(
+                        variableType,
+                        parent,
+                        destructuringNames,
+                        (Assignment) n,
+                        rightElem,
+                        setOp,
+                        transformer);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4128,6 +4288,7 @@ public class Parser {
                                 n,
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
+                                null,
                                 transformer));
             }
             index++;
@@ -4136,25 +4297,156 @@ public class Parser {
         return empty;
     }
 
+    private void processDestructuringDefaults(
+            int variableType,
+            Node parent,
+            List<String> destructuringNames,
+            Assignment n,
+            Node rightElem,
+            int setOp,
+            Transformer transformer) {
+        Node left = n.getLeft();
+        Node right = null;
+        if (left.getType() == Token.NAME) {
+            String name = left.getString();
+            // x = (x == undefined) ?
+            //          (($1[0] == undefined) ?
+            //              1
+            //              : $1[0])
+            //          : x
+
+            if ((n.getRight() instanceof FunctionNode
+                            || n.getRight() instanceof UpdateExpression
+                            || n.getRight() instanceof ParenthesizedExpression)
+                    && transformer != null) {
+                right = transformer.transform(n.getRight());
+            } else {
+                right = n.getRight();
+            }
+
+            Node cond_inner =
+                    new Node(
+                            Token.HOOK,
+                            new Node(Token.SHEQ, createName("undefined"), rightElem),
+                            right,
+                            rightElem);
+
+            // if right is a function/update expression, it should be processed later
+            // store it in the node to be processed
+            if ((right instanceof FunctionNode
+                            || right instanceof UpdateExpression
+                            || right instanceof ParenthesizedExpression)
+                    && transformer == null) {
+                currentScriptOrFn.putDestructuringRvalues(cond_inner, right);
+            }
+
+            Node cond =
+                    new Node(
+                            Token.HOOK,
+                            new Node(Token.SHEQ, createName("undefined"), createName(name)),
+                            cond_inner,
+                            left);
+            parent.addChildToBack(new Node(setOp, createName(Token.BINDNAME, name, null), cond));
+            if (variableType != -1) {
+                defineSymbol(variableType, name, true);
+                destructuringNames.add(name);
+            }
+        } else {
+            // TODO: should handle other nested values on the lhs (ArrayLiteral, ObjectLiteral)
+        }
+    }
+
+    static Object getPropKey(Node id) {
+        Object key;
+        if (id instanceof Name) {
+            String s = ((Name) id).getIdentifier();
+            key = ScriptRuntime.getIndexObject(s);
+        } else if (id instanceof StringLiteral) {
+            String s = ((StringLiteral) id).getValue();
+            key = ScriptRuntime.getIndexObject(s);
+        } else if (id instanceof NumberLiteral) {
+            double n = ((NumberLiteral) id).getNumber();
+            key = ScriptRuntime.getIndexObject(n);
+        } else {
+            key = null; // Filled later
+        }
+        return key;
+    }
+
+    private void setupDefaultValues(
+            String tempName, Node parent, Node defaultValue, int setOp, Transformer transformer) {
+        if (defaultValue != null) {
+            // if there's defaultValue it can be substituted for tempName if that's undefined
+            // i.e. $1 = ($1 == undefined) ? defaultValue : $1
+            Node defaultRvalue = new Node(defaultValue.getType());
+
+            if (defaultValue instanceof ArrayLiteral) {
+                for (AstNode child : ((ArrayLiteral) defaultValue).getElements())
+                    defaultRvalue.addChildToBack(child);
+            } else if (defaultValue instanceof ObjectLiteral) {
+                // TODO: check if "Symbol.iterator" is defined
+                //                Node error_call = new Node(Token.NEW, createName("Error"));
+                //                error_call.addChildToBack(Node.newString("value is not
+                // iterable"));
+                //
+                //                Node check_iterator = new Node(
+                //                        Token.HOOK,
+                //                        new Node(Token.SHEQ,
+                //                                new Node(Token.GETPROP,
+                //                                        defaultValue,
+                //                                        createName("Symbol.iterator")),
+                //                                createName("undefined")),
+                //                        error_call,
+                //                        new Node(Token.TRUE));
+                //                parent.addChildToBack(check_iterator);
+
+                List<ObjectProperty> elems = ((ObjectLiteral) defaultValue).getElements();
+                Object[] props = new Object[elems.size()];
+                int i = 0;
+                for (ObjectProperty child : elems) {
+                    Object key = getPropKey(child.getLeft());
+                    Node right = child.getRight();
+                    props[i++] = key;
+                    defaultRvalue.addChildToBack(right);
+                }
+                defaultRvalue.putProp(Node.OBJECT_IDS_PROP, props);
+            }
+
+            Node cond_default =
+                    new Node(
+                            Token.HOOK,
+                            new Node(Token.SHEQ, createName(tempName), createName("undefined")),
+                            defaultRvalue,
+                            createName(tempName));
+
+            Node set_default =
+                    new Node(setOp, createName(Token.BINDNAME, tempName, null), cond_default);
+            parent.addChildToBack(set_default);
+        }
+    }
+
     boolean destructuringObject(
             ObjectLiteral node,
             int variableType,
             String tempName,
             Node parent,
             List<String> destructuringNames,
+            Node defaultValue, /* defaultValue to use in function param decls */
             Transformer transformer) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
+        boolean defaultValuesSetup = false;
 
         for (ObjectProperty prop : node.getElements()) {
             int lineno = 0;
-            // This function is sometimes called from the IRFactory when
+            // This function is sometimes called from the IRFactory
             // when executing regression tests, and in those cases the
             // tokenStream isn't set.  Deal with it.
             if (ts != null) {
                 lineno = ts.lineno;
             }
             AstNode id = prop.getLeft();
+
             Node rightElem = null;
             if (id instanceof Name) {
                 Node s = Node.newString(((Name) id).getIdentifier());
@@ -4171,7 +4463,13 @@ public class Parser {
             } else {
                 throw codeBug();
             }
+
             rightElem.setLineno(lineno);
+            if (defaultValue != null && !defaultValuesSetup) {
+                setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
+                defaultValuesSetup = true;
+            }
+
             AstNode value = prop.getRight();
             if (value.getType() == Token.NAME) {
                 String name = ((Name) value).getIdentifier();
@@ -4181,6 +4479,15 @@ public class Parser {
                     defineSymbol(variableType, name, true);
                     destructuringNames.add(name);
                 }
+            } else if (value.getType() == Token.ASSIGN) {
+                processDestructuringDefaults(
+                        variableType,
+                        parent,
+                        destructuringNames,
+                        (Assignment) value,
+                        rightElem,
+                        setOp,
+                        transformer);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4188,6 +4495,7 @@ public class Parser {
                                 value,
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
+                                null,
                                 transformer));
             }
             empty = false;

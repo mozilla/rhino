@@ -245,6 +245,17 @@ public class ScriptNode extends Scope {
         return false;
     }
 
+    public List<Object> getDefaultParams() {
+        return null;
+    }
+
+    public List<Node[]> getDestructuringRvalues() {
+        return null;
+    }
+
+    // Overridden in FunctionNode
+    public void putDestructuringRvalues(Node left, Node right) {}
+
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();
         if (symbol.getDeclType() == Token.LP) {
