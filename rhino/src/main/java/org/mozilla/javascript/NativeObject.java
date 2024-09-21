@@ -647,9 +647,9 @@ public class NativeObject extends IdScriptableObject implements Map {
 
                     boolean status =
                             AbstractEcmaObjectOperations.setIntegrityLevel(
-                                    cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                                    cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
                     if (!status) {
-                        throw ScriptRuntime.typeError("Object is not sealable");
+                        throw ScriptRuntime.typeError("Object is not freezable");
                     }
 
                     return arg;
