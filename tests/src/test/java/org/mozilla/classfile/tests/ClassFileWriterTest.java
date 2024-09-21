@@ -48,7 +48,7 @@ public class ClassFileWriterTest {
 
         byte[] bytecode = cfw.toByteArray();
         DefiningClassLoader loader = new DefiningClassLoader();
-        Class cl = loader.defineClass(CLASS_NAME, bytecode);
+        Class<?> cl = loader.defineClass(CLASS_NAME, bytecode);
 
         Method method = cl.getMethod(METHOD_NAME);
         Object ret = method.invoke(cl);

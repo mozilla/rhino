@@ -520,6 +520,7 @@ public class Bug789277Test {
         return parser.parse(source, SOURCE_NAME, 1);
     }
 
+    @SuppressWarnings("deprecation")
     private static AstRoot parseStrict(Reader source, ErrorReporter reporter, boolean ide)
             throws IOException {
         Parser parser = new Parser(compilerEnv(reporter, ide));
@@ -544,6 +545,7 @@ public class Bug789277Test {
                 super(keyType);
             }
 
+            @SuppressWarnings("unchecked")
             public DataMap<K, V> putAll(V v, K... ks) {
                 for (K k : ks) {
                     put(k, v);

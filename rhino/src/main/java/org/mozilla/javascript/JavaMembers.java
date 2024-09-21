@@ -311,6 +311,7 @@ class JavaMembers {
         return map.values().toArray(new Method[0]);
     }
 
+    @SuppressWarnings("deprecation")
     private void discoverAccessibleMethods(
             Class<?> clazz,
             Map<MethodSignature, Method> map,
@@ -656,6 +657,7 @@ class JavaMembers {
         return cl.getConstructors();
     }
 
+    @SuppressWarnings("deprecation")
     private Field[] getAccessibleFields(boolean includeProtected, boolean includePrivate) {
         if (includePrivate || includeProtected) {
             try {
@@ -669,7 +671,7 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            field.trySetAccessible();
+                            if (!field.isAccessible()) field.setAccessible(true);
                             fieldsList.add(field);
                         }
                     }

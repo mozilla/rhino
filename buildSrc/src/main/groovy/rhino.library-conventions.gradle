@@ -1,7 +1,6 @@
 plugins {
     id 'rhino.java-conventions'
     id 'maven-publish'
-    id 'checkstyle'
     id 'jacoco'
     id 'net.ltgt.errorprone'
 }
@@ -50,6 +49,15 @@ tasks.withType(JavaCompile).configureEach {
         // This one either alerts for parameters that we don't use,
         // or spuriously for local variables in my opinion.
         "UnusedVariable")
+    options.errorprone.enable(
+        // These two do the last thing that Checkstyle used to do for us
+        "RemoveUnusedImports",
+        "WildcardImport",
+        // Warn us proactively that we are using things that might not work on Android.
+        // We will aggressively used "SuppressWarnings" for these, but these can be
+        // a reminder to check with an Android user since we don't have automated
+        // Android unit tests.
+        "AndroidJdkLibsChecker")
     options.errorprone.excludedPaths = '.+/src/test/java/.+'
 }
 

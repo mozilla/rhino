@@ -577,6 +577,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return id & 0xff;
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     private static boolean isValidIdentifierName(String str) {
         int i = 0;
         for (int c : str.codePoints().toArray()) {
