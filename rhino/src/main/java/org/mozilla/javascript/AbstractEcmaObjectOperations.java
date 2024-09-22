@@ -417,9 +417,7 @@ public class AbstractEcmaObjectOperations {
             return true;
         }
 
-        if (!Objects.equals(
-                ScriptableObject.isDataDescriptor(current),
-                ScriptableObject.isDataDescriptor(desc))) {
+        if (ScriptableObject.isDataDescriptor(current) != ScriptableObject.isDataDescriptor(desc)) {
             if (Boolean.FALSE.equals(current.get("configurable"))) {
                 return false;
             }
@@ -464,5 +462,34 @@ public class AbstractEcmaObjectOperations {
             }
         }
         return true;
+    }
+
+    /**
+     * IsConstructor ( argument )
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-isconstructor
+     */
+    static boolean isConstructor(Object argument) {
+        /*
+            The abstract operation IsConstructor takes argument argument (an ECMAScript language value).
+            It determines if argument is a function object with a [[Construct]] internal method.
+            It performs the following steps when called:
+
+            1. If Type(argument) is not Object, return false.
+            2. If argument has a [[Construct]] internal method, return true.
+            3. Return false.
+         */
+
+        // Found no good way to implement this based on the spec.
+        // Therefor I did this as first step - this only supports Lambda based method declarations.
+        // see #1376 for more
+        if (argument instanceof LambdaConstructor) {
+            return true;
+        }
+        if (argument instanceof LambdaFunction) {
+            return false;
+        }
+
+        return argument instanceof Constructable;
     }
 }
