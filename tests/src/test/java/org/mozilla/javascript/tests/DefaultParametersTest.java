@@ -313,7 +313,6 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("deeply-nested-literal-not-supported")
     public void deeplyNestedObjectLiteral() throws Exception {
         final String script =
                 "let { d: { b }, d, a} = { \n"
@@ -325,7 +324,7 @@ public class DefaultParametersTest {
                         + "                        \n";
         assertEvaluates("hello", script + "b");
         assertEvaluates("world", script + "a");
-        assertEvaluates("hello", script + "d[b]");
+        assertEvaluates("hello", script + "d.b");
     }
 
     @Test
