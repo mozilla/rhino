@@ -471,14 +471,14 @@ public class AbstractEcmaObjectOperations {
      */
     static boolean isConstructor(Object argument) {
         /*
-            The abstract operation IsConstructor takes argument argument (an ECMAScript language value).
-            It determines if argument is a function object with a [[Construct]] internal method.
-            It performs the following steps when called:
+           The abstract operation IsConstructor takes argument argument (an ECMAScript language value).
+           It determines if argument is a function object with a [[Construct]] internal method.
+           It performs the following steps when called:
 
-            1. If Type(argument) is not Object, return false.
-            2. If argument has a [[Construct]] internal method, return true.
-            3. Return false.
-         */
+           1. If Type(argument) is not Object, return false.
+           2. If argument has a [[Construct]] internal method, return true.
+           3. Return false.
+        */
 
         // Found no good way to implement this based on the spec.
         // Therefor I did this as first step - this only supports Lambda based method declarations.
