@@ -15,7 +15,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.AccessControlContext;
 import java.security.AllPermission;
 import java.security.Permission;
 import java.util.ArrayList;
@@ -328,7 +327,8 @@ class JavaMembers {
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
                                     if (!map.containsKey(sig)) {
-                                        if (includePrivate) method.trySetAccessible();
+                                        if (includePrivate)
+                                            VMBridge.instance.tryToMakeAccessible(method);
                                         map.put(sig, method);
                                     }
                                 }
@@ -667,7 +667,7 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            field.trySetAccessible();
+                            VMBridge.instance.tryToMakeAccessible(field);
                             fieldsList.add(field);
                         }
                     }
@@ -779,17 +779,16 @@ class JavaMembers {
             Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
         JavaMembers members;
         ClassCache cache = ClassCache.get(scope);
-        Map<ClassCache.CacheKey, JavaMembers> ct = cache.getClassCacheMap();
+        Map<Class, JavaMembers> ct = cache.getClassCacheMap();
 
         Class<?> cl = dynamicType;
-        Object secCtx = getSecurityContext();
         for (; ; ) {
-            members = ct.get(new ClassCache.CacheKey(cl, secCtx));
+            members = ct.get(cl);
             if (members != null) {
                 if (cl != dynamicType) {
                     // member lookup for the original class failed because of
                     // missing privileges, cache the result so we don't try again
-                    ct.put(new ClassCache.CacheKey(dynamicType, secCtx), members);
+                    ct.put(dynamicType, members);
                 }
                 return members;
             }
@@ -820,11 +819,11 @@ class JavaMembers {
         }
 
         if (cache.isCachingEnabled()) {
-            ct.put(new ClassCache.CacheKey(cl, secCtx), members);
+            ct.put(cl, members);
             if (cl != dynamicType) {
                 // member lookup for the original class failed because of
                 // missing privileges, cache the result so we don't try again
-                ct.put(new ClassCache.CacheKey(dynamicType, secCtx), members);
+                ct.put(dynamicType, members);
             }
         }
         return members;
@@ -837,24 +836,6 @@ class JavaMembers {
         } else {
             return new JavaMembers(associatedScope, cl, includeProtected);
         }
-    }
-
-    private static Object getSecurityContext() {
-        Object sec = null;
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sec = sm.getSecurityContext();
-            if (sec instanceof AccessControlContext) {
-                try {
-                    ((AccessControlContext) sec).checkPermission(allPermission);
-                    // if we have allPermission, we do not need to store the
-                    // security object in the cache key
-                    return null;
-                } catch (SecurityException e) {
-                }
-            }
-        }
-        return sec;
     }
 
     RuntimeException reportMemberNotFound(String memberName) {

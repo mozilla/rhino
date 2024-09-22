@@ -8,9 +8,6 @@
 
 package org.mozilla.javascript;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
  * ContextFactory</code> can also notify listeners about context creation and release.
@@ -333,18 +330,11 @@ public class ContextFactory {
 
     /**
      * Create class loader for generated classes. This method creates an instance of the default
-     * implementation of {@link GeneratedClassLoader}. Rhino uses this interface to load generated
-     * JVM classes when no {@link SecurityController} is installed. Application can override the
-     * method to provide custom class loading.
+     * implementation of {@link GeneratedClassLoader}. Application can override the method to
+     * provide custom class loading.
      */
     protected GeneratedClassLoader createClassLoader(final ClassLoader parent) {
-        return AccessController.doPrivileged(
-                new PrivilegedAction<DefiningClassLoader>() {
-                    @Override
-                    public DefiningClassLoader run() {
-                        return new DefiningClassLoader(parent);
-                    }
-                });
+        return new DefiningClassLoader(parent);
     }
 
     /**
@@ -495,9 +485,9 @@ public class ContextFactory {
      *      }
      * </pre>
      *
-     * Instead of using <code>enterContext()</code>, <code>exit()</code> pair consider using {@link
-     * #call(ContextAction)} which guarantees proper association of Context instances with the
-     * current thread. With this method the above example becomes:
+     * <p>Instead of using <code>enterContext()</code>, <code>exit()</code> pair consider using
+     * {@link #call(ContextAction)} which guarantees proper association of Context instances with
+     * the current thread. With this method the above example becomes:
      *
      * <pre>
      *      ContextFactory.call(new ContextAction() {
@@ -519,8 +509,8 @@ public class ContextFactory {
     }
 
     /**
-     * @deprecated use {@link #enterContext()} instead
      * @return a Context associated with the current thread
+     * @deprecated use {@link #enterContext()} instead
      */
     @Deprecated
     public final Context enter() {
@@ -542,10 +532,10 @@ public class ContextFactory {
      *
      * @param cx a Context to associate with the thread if possible
      * @return a Context associated with the current thread
-     * @see #enterContext()
-     * @see #call(ContextAction)
      * @throws IllegalStateException if <code>cx</code> is already associated with a different
      *     thread
+     * @see #enterContext()
+     * @see #call(ContextAction)
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);

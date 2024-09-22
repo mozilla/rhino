@@ -18,7 +18,6 @@ import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
@@ -520,7 +519,7 @@ public class NativeConsoleTest {
 
     @Test
     public void printError() {
-        String lf = SecurityUtilities.getSystemProperty("line.separator");
+        String lf = System.getProperty("line.separator");
         String js =
                 "try {\n"
                         + "  JSON.parse('{\"abc');\n"

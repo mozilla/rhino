@@ -22,7 +22,6 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import org.mozilla.javascript.SecurityUtilities;
 
 public class JSConsole extends JFrame implements ActionListener {
     static final long serialVersionUID = 2551225560631876300L;
@@ -33,7 +32,7 @@ public class JSConsole extends JFrame implements ActionListener {
 
     public String chooseFile() {
         if (CWD == null) {
-            String dir = SecurityUtilities.getSystemProperty("user.dir");
+            String dir = System.getProperty("user.dir");
             if (dir != null) {
                 CWD = new File(dir);
             }

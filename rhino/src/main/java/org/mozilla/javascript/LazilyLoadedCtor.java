@@ -8,8 +8,6 @@ package org.mozilla.javascript;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * Avoid loading classes unless they are used.
@@ -26,27 +24,16 @@ public final class LazilyLoadedCtor implements Serializable {
     private final String propertyName;
     private final String className;
     private final boolean sealed;
-    private final boolean privileged;
     private Object initializedValue;
     private int state;
 
-    public LazilyLoadedCtor(
-            ScriptableObject scope, String propertyName, String className, boolean sealed) {
-        this(scope, propertyName, className, sealed, false);
-    }
-
     LazilyLoadedCtor(
-            ScriptableObject scope,
-            String propertyName,
-            String className,
-            boolean sealed,
-            boolean privileged) {
+            ScriptableObject scope, String propertyName, String className, boolean sealed) {
 
         this.scope = scope;
         this.propertyName = propertyName;
         this.className = className;
         this.sealed = sealed;
-        this.privileged = privileged;
         this.state = STATE_BEFORE_INIT;
 
         scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
@@ -77,19 +64,6 @@ public final class LazilyLoadedCtor implements Serializable {
     }
 
     private Object buildValue() {
-        if (privileged) {
-            return AccessController.doPrivileged(
-                    new PrivilegedAction<Object>() {
-                        @Override
-                        public Object run() {
-                            return buildValue0();
-                        }
-                    });
-        }
-        return buildValue0();
-    }
-
-    private Object buildValue0() {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
