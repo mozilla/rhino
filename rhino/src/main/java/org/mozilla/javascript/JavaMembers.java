@@ -328,11 +328,13 @@ class JavaMembers {
 
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
-                                    if (includePrivate) {
+                                    // We don't want to replace the deprecated method here
+                                    // because it is not available on Android.
+                                    if (includePrivate && !method.isAccessible()) {
                                         map.computeIfAbsent(
                                                 sig,
                                                 k -> {
-                                                    method.trySetAccessible();
+                                                    method.setAccessible(true);
                                                     return method;
                                                 });
                                     } else {
