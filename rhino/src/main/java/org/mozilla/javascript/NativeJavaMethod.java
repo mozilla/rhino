@@ -473,10 +473,15 @@ public class NativeJavaMethod extends BaseFunction {
 			Object arg = args[j];
 
 			// Determine which of type1, type2 is easier to convert from arg.
+			int rank1 = NativeJavaObject.getConversionWeight(arg, type1);
+			int rank2 = NativeJavaObject.getConversionWeight(arg, type2);
 
-			int rank1 = NativeJavaObject.getConversionWeight(arg, vararg1 ? type1.getComponentType() : type1);
-			int rank2 = NativeJavaObject.getConversionWeight(arg, vararg2 ? type2.getComponentType() : type2);
-
+			if (vararg1 && rank1 != NativeJavaObject.CONVERSION_NONTRIVIAL) {
+				rank1 = Math.min(rank1, NativeJavaObject.getConversionWeight(arg, type1.getComponentType()));
+			}
+			if (vararg2 && rank2 != NativeJavaObject.CONVERSION_NONTRIVIAL) {
+				rank2 = Math.min(rank2, NativeJavaObject.getConversionWeight(arg, type2.getComponentType()));
+			}
 			int preference;
 			if (rank1 < rank2) {
 				preference = PREFERENCE_FIRST_ARG;
@@ -492,7 +497,7 @@ public class NativeJavaMethod extends BaseFunction {
 					} else {
 						preference = PREFERENCE_AMBIGUOUS;
 					}
-				} else if(vararg1 != vararg2) {
+				} else if (vararg1 != vararg2) {
 					preference = vararg2 ? PREFERENCE_FIRST_ARG : PREFERENCE_SECOND_ARG;
 				} else {
 					preference = PREFERENCE_AMBIGUOUS;
