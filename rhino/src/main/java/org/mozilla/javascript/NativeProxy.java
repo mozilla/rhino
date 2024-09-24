@@ -1036,7 +1036,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                 }
             } else {
                 if (!AbstractEcmaObjectOperations.isCompatiblePropertyDescriptor(
-                        extensibleTarget, desc, targetDesc)) {
+                        cx, extensibleTarget, desc, targetDesc)) {
                     throw ScriptRuntime.typeError(
                             "proxy can't define an incompatible property descriptor");
                 }

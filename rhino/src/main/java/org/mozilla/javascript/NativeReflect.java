@@ -142,7 +142,7 @@ final class NativeReflect extends ScriptableObject {
                     Integer.toString(args.length));
         }
 
-        if (!AbstractEcmaObjectOperations.isConstructor(args[0])) {
+        if (!AbstractEcmaObjectOperations.isConstructor(cx, args[0])) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[0]));
         }
 
@@ -151,7 +151,7 @@ final class NativeReflect extends ScriptableObject {
             return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         }
 
-        if (args.length > 2 && !AbstractEcmaObjectOperations.isConstructor(args[2])) {
+        if (args.length > 2 && !AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
         }
 
