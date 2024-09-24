@@ -986,12 +986,10 @@ class BodyCodegen {
                 {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
-                    cfw.addPush(node.getString());
-                    addScriptRuntimeInvoke(
-                            "name",
+                    addDynamicInvoke(
+                            "NAME:GET:" + node.getString(),
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/String;"
                                     + ")Ljava/lang/Object;");
                 }
                 break;
@@ -1491,12 +1489,10 @@ class BodyCodegen {
                     // Generate code for "ScriptRuntime.bind(varObj, "s")"
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
-                    cfw.addPush(node.getString());
-                    addScriptRuntimeInvoke(
-                            "bind",
+                    addDynamicInvoke(
+                            "NAME:BIND:" + node.getString(),
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/String;"
                                     + ")Lorg/mozilla/javascript/Scriptable;");
                 }
                 break;
@@ -1686,13 +1682,13 @@ class BodyCodegen {
         if (unnestedYields.containsKey(node)) {
             // Yield was previously moved up via the "nestedYield" code below.
             if (exprContext) {
+                String property = unnestedYields.get(node);
                 cfw.addALoad(variableObjectLocal);
-                cfw.addLoadConstant(unnestedYields.get(node));
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "getObjectPropNoWarn",
-                        "(Ljava/lang/Object;Ljava/lang/String;Lorg/mozilla/javascript/Context;"
+                addDynamicInvoke(
+                        "PROP:GETNOWARN:" + property,
+                        "(Ljava/lang/Object;Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;");
             }
             return;
@@ -2652,13 +2648,11 @@ class BodyCodegen {
                     Node id = target.getNext();
                     if (type == Token.GETPROP) {
                         String property = id.getString();
-                        cfw.addPush(property);
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
-                        addScriptRuntimeInvoke(
-                                "getPropFunctionAndThis",
+                        addDynamicInvoke(
+                                "PROP:GETWITHTHIS:" + property,
                                 "(Ljava/lang/Object;"
-                                        + "Ljava/lang/String;"
                                         + "Lorg/mozilla/javascript/Context;"
                                         + "Lorg/mozilla/javascript/Scriptable;"
                                         + ")Lorg/mozilla/javascript/Callable;");
@@ -2681,13 +2675,11 @@ class BodyCodegen {
             case Token.NAME:
                 {
                     String name = node.getString();
-                    cfw.addPush(name);
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "getNameFunctionAndThis",
-                            "(Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
+                    addDynamicInvoke(
+                            "NAME:GETWITHTHIS:" + name,
+                            "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + ")Lorg/mozilla/javascript/Callable;");
                     break;
@@ -4060,39 +4052,20 @@ class BodyCodegen {
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
         Node nameChild = child.getNext();
-        generateExpression(nameChild, node); // the name
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+
         if (node.getType() == Token.GETPROPNOWARN) {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectPropNoWarn",
+            addDynamicInvoke(
+                    "PROP:GETNOWARN:" + nameChild.getString(),
                     "(Ljava/lang/Object;"
-                            + "Ljava/lang/String;"
                             + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + ")Ljava/lang/Object;");
-            return;
-        }
-        /*
-            for 'this.foo' we call getObjectProp(Scriptable...) which can
-            skip some casting overhead.
-        */
-        int childType = child.getType();
-        if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
-            cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectProp",
-                    "(Lorg/mozilla/javascript/Scriptable;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + ")Ljava/lang/Object;");
         } else {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectProp",
+            addDynamicInvoke(
+                    "PROP:GET:" + nameChild.getString(),
                     "(Ljava/lang/Object;"
-                            + "Ljava/lang/String;"
                             + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + ")Ljava/lang/Object;");
@@ -4130,47 +4103,27 @@ class BodyCodegen {
     }
 
     private void visitSetProp(int type, Node node, Node child) {
-        Node objectChild = child;
         generateExpression(child, node);
         child = child.getNext();
+        Node nameChild = child;
         if (type == Token.SETPROP_OP) {
             cfw.add(ByteCode.DUP);
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            addDynamicInvoke(
+                    "PROP:GET:" + nameChild.getString(),
+                    "(Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;");
         }
-        Node nameChild = child;
-        generateExpression(child, node);
         child = child.getNext();
-        if (type == Token.SETPROP_OP) {
-            // stack: ... object object name -> ... object name object name
-            cfw.add(ByteCode.DUP_X1);
-            // for 'this.foo += ...' we call thisGet which can skip some
-            // casting overhead.
-            if (objectChild.getType() == Token.THIS && nameChild.getType() == Token.STRING) {
-                cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "getObjectProp",
-                        "(Lorg/mozilla/javascript/Scriptable;"
-                                + "Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/Object;");
-            } else {
-                cfw.addALoad(contextLocal);
-                cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "getObjectProp",
-                        "(Ljava/lang/Object;"
-                                + "Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;");
-            }
-        }
         generateExpression(child, node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "setObjectProp",
+        addDynamicInvoke(
+                "PROP:SET:" + nameChild.getString(),
                 "(Ljava/lang/Object;"
-                        + "Ljava/lang/String;"
                         + "Ljava/lang/Object;"
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
@@ -4353,6 +4306,10 @@ class BodyCodegen {
                 "org/mozilla/javascript/optimizer/OptRuntime",
                 methodName,
                 methodSignature);
+    }
+
+    private void addDynamicInvoke(String operation, String signature) {
+        cfw.addInvokeDynamic(operation, signature, Bootstrapper.BOOTSTRAP_HANDLE);
     }
 
     private void addJumpedBooleanWrap(int trueLabel, int falseLabel) {

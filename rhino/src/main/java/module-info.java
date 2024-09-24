@@ -12,5 +12,6 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.xml;
 
     requires java.compiler;
+    requires jdk.dynalink;
     requires transitive java.desktop;
 }
