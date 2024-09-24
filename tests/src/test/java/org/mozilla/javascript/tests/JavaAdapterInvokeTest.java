@@ -112,7 +112,7 @@ public class JavaAdapterInvokeTest {
                         + "var thread = new java.lang.Thread(runnable)\n"
                         + "thread.start()\n"
                         + "thread.join()\n"
-                        + "runnable.myObj.one"; // we do not ue start here (as we do not catch the error
+                        + "runnable.myObj.one";
 
         Utils.runWithAllOptimizationLevels(
                 cx -> {
