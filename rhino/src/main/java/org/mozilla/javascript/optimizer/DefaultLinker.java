@@ -19,6 +19,7 @@ import org.mozilla.javascript.ScriptRuntime;
  * operation that we support. It links every operation to the corresponding ScriptRuntime or
  * OptRuntime operation that was used in the bytecode before we introduced dynamic linking.
  */
+@SuppressWarnings("AndroidJdkLibsChecker")
 class DefaultLinker implements GuardingDynamicLinker {
     static final boolean DEBUG;
 

@@ -16,8 +16,9 @@ import org.mozilla.classfile.ClassFileWriter;
 
 /**
  * The Bootstrapper contains the method that is called by invokedynamic instructions in the bytecode
- * to map a call site to a method.
+ * to map a call site to a method. We should never go down this entire code path on Android.
  */
+@SuppressWarnings("AndroidJdkLibsChecker")
 public class Bootstrapper {
     private static final Pattern SEPARATOR = Pattern.compile(":");
 
