@@ -27,6 +27,7 @@ import org.mozilla.javascript.Undefined;
  * These are some tests for the Hashtable implementation that's used by the collection classes in
  * Rhino.
  */
+@SuppressWarnings("deprecation")
 public class CollectionHashtableTest {
     private Hashtable ht;
 

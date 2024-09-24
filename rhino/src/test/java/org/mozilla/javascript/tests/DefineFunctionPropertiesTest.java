@@ -48,7 +48,7 @@ public class DefineFunctionPropertiesTest {
     public void simpleFunction() {
         try (Context cx = Context.enter()) {
             Object result = cx.evaluateString(global, "f(7) + 1", "test source", 1, null);
-            assertEquals(15.0, result);
+            assertEquals(15, result);
         }
     }
 

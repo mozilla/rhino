@@ -723,7 +723,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + indexReg);
                     ++pc;
                     break;
-                    // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
+                // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
                 case Icode_REG_BIGINT_C0:
                 case Icode_REG_BIGINT_C1:
                 case Icode_REG_BIGINT_C2:
@@ -1288,7 +1288,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     }
                                     // We are now resuming execution. Fall through to YIELD case.
                                 }
-                                // fall through...
+                            // fall through...
                             case Token.YIELD:
                             case Icode_YIELD_STAR:
                                 {
@@ -1784,6 +1784,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
+                                        } else if (fun instanceof LambdaConstructor) {
+                                            break;
                                         } else if (fun instanceof LambdaFunction) {
                                             fun = ((LambdaFunction) fun).getTarget();
                                         } else if (fun instanceof BoundFunction) {
@@ -2033,10 +2035,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                             lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                         throw ScriptRuntime.notFunctionError(lhs);
                                     }
-                                    Function fun = (Function) lhs;
+                                    Constructable ctor = (Constructable) lhs;
 
-                                    if (fun instanceof IdFunctionObject) {
-                                        IdFunctionObject ifun = (IdFunctionObject) fun;
+                                    if (ctor instanceof IdFunctionObject) {
+                                        IdFunctionObject ifun = (IdFunctionObject) ctor;
                                         if (NativeContinuation.isContinuationConstructor(ifun)) {
                                             frame.stack[stackTop] =
                                                     captureContinuation(
@@ -2047,7 +2049,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
                                     Object[] outArgs =
                                             getArgsArray(stack, sDbl, stackTop + 1, indexReg);
-                                    stack[stackTop] = fun.construct(cx, frame.scope, outArgs);
+                                    stack[stackTop] = ctor.construct(cx, frame.scope, outArgs);
                                     continue Loop;
                                 }
                             case Token.TYPEOF:
@@ -2096,7 +2098,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_SETCONSTVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.SETCONSTVAR:
                                 stackTop =
                                         doSetConstVar(
@@ -2111,7 +2113,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_SETVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.SETVAR:
                                 stackTop =
                                         doSetVar(
@@ -2126,7 +2128,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_GETVAR1:
                                 indexReg = iCode[frame.pc++];
-                                // fallthrough
+                            // fallthrough
                             case Token.GETVAR:
                                 stackTop =
                                         doGetVar(
@@ -2150,13 +2152,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                             case Icode_ZERO:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 0;
+                                stack[stackTop] = Integer.valueOf(0);
                                 continue Loop;
                             case Icode_ONE:
                                 ++stackTop;
-                                stack[stackTop] = DBL_MRK;
-                                sDbl[stackTop] = 1;
+                                stack[stackTop] = Integer.valueOf(1);
                                 continue Loop;
                             case Token.NULL:
                                 stack[++stackTop] = null;

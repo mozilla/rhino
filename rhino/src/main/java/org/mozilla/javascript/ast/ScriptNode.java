@@ -118,7 +118,9 @@ public class ScriptNode extends Scope {
         this.rawSource = rawSource;
     }
 
-    /** @return the raw source, or {@code null} if it was not recorded. */
+    /**
+     * @return the raw source, or {@code null} if it was not recorded.
+     */
     public String getRawSource() {
         return rawSource;
     }
@@ -244,6 +246,17 @@ public class ScriptNode extends Scope {
     public boolean hasRestParameter() {
         return false;
     }
+
+    public List<Object> getDefaultParams() {
+        return null;
+    }
+
+    public List<Node[]> getDestructuringRvalues() {
+        return null;
+    }
+
+    // Overridden in FunctionNode
+    public void putDestructuringRvalues(Node left, Node right) {}
 
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();

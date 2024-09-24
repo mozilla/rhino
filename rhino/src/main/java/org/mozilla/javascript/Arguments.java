@@ -120,6 +120,12 @@ final class Arguments extends IdScriptableObject {
             return false;
         }
         NativeFunction f = activation.function;
+
+        // Check if default arguments are present
+        if (f == null || f.hasDefaultParameters()) {
+            return false;
+        }
+
         int definedCount = f.getParamCount();
         if (index < definedCount) {
             // Check if argument is not hidden by later argument with the same

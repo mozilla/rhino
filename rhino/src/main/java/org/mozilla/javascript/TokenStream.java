@@ -577,6 +577,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return id & 0xff;
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     private static boolean isValidIdentifierName(String str) {
         int i = 0;
         for (int c : str.codePoints().toArray()) {
@@ -1013,8 +1014,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                 c = '\t';
                                 break;
 
-                                // \v a late addition to the ECMA spec,
-                                // it is not in Java, so use 0xb
+                            // \v a late addition to the ECMA spec,
+                            // it is not in Java, so use 0xb
                             case 'v':
                                 c = 0xb;
                                 break;
@@ -1146,6 +1147,9 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case ',':
                     return Token.COMMA;
                 case '?':
+                    if (matchChar('?')) {
+                        return Token.NULLISH_COALESCING;
+                    }
                     return Token.HOOK;
                 case ':':
                     if (matchChar(':')) {
@@ -1167,7 +1171,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
                 case '|':
                     if (matchChar('|')) {
-                        return Token.OR;
+                        if (matchChar('=')) return Token.ASSIGN_LOGICAL_OR;
+                        else return Token.OR;
                     } else if (matchChar('=')) {
                         return Token.ASSIGN_BITOR;
                     } else {
@@ -1182,7 +1187,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
                 case '&':
                     if (matchChar('&')) {
-                        return Token.AND;
+                        if (matchChar('=')) return Token.ASSIGN_LOGICAL_AND;
+                        else return Token.AND;
                     } else if (matchChar('=')) {
                         return Token.ASSIGN_BITAND;
                     } else {

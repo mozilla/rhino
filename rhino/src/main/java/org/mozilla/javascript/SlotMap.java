@@ -17,6 +17,7 @@ package org.mozilla.javascript;
  */
 public interface SlotMap extends Iterable<Slot> {
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     @FunctionalInterface
     public interface SlotComputer<S extends Slot> {
         S compute(Object key, int index, Slot existing);

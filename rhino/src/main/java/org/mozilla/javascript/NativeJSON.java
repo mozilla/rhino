@@ -523,6 +523,7 @@ public final class NativeJSON extends ScriptableObject {
                 new StringBuilder(string.length() + 2); // two extra chars for " on either side
         product.append('"');
         int length = string.length();
+        char prev = 0;
         for (int i = 0; i < length; i++) {
             char c = string.charAt(i);
             switch (c) {
@@ -548,7 +549,14 @@ public final class NativeJSON extends ScriptableObject {
                     product.append("\\t");
                     break;
                 default:
-                    if (c < ' ') {
+                    if (isLeadingSurrogate(c)
+                            && i < length - 1
+                            && isTrailingSurrogate(string.charAt(i + 1))) {
+                        // do nothing as the next case will add both surrogates
+                        break;
+                    } else if (isTrailingSurrogate(c) && isLeadingSurrogate(prev)) {
+                        product.append(prev).append(c);
+                    } else if (c < ' ' || isLeadingSurrogate(c) || isTrailingSurrogate(c)) {
                         product.append("\\u");
                         String hex = String.format("%04x", Integer.valueOf(c));
                         product.append(hex);
@@ -557,9 +565,18 @@ public final class NativeJSON extends ScriptableObject {
                     }
                     break;
             }
+            prev = c;
         }
         product.append('"');
         return product.toString();
+    }
+
+    static boolean isLeadingSurrogate(char c) {
+        return c >= 0xD800 && c <= 0xDBFF;
+    }
+
+    static boolean isTrailingSurrogate(char c) {
+        return c >= 0xDC00 && c <= 0xDFFF;
     }
 
     private static Object javaToJSON(Object value, StringifyState state) {

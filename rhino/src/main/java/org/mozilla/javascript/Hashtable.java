@@ -123,20 +123,25 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
     public void put(Object key, Object value) {
         final Entry nv = new Entry(key, value);
 
-        if (!map.containsKey(nv)) {
-            // New value -- insert to end of doubly-linked list
-            map.put(nv, nv);
-            if (first == null) {
-                first = last = nv;
-            } else {
-                last.next = nv;
-                nv.prev = last;
-                last = nv;
-            }
-        } else {
-            // Update the existing value and keep it in the same place in the list
-            map.get(nv).value = value;
-        }
+        map.compute(
+                nv,
+                (k, existing) -> {
+                    if (existing == null) {
+                        // New value -- insert to end of doubly-linked list
+                        if (first == null) {
+                            first = last = nv;
+                        } else {
+                            last.next = nv;
+                            nv.prev = last;
+                            last = nv;
+                        }
+                        return nv;
+                    } else {
+                        // Update the existing value and keep it in the same place in the list
+                        existing.value = value;
+                        return existing;
+                    }
+                });
     }
 
     /**

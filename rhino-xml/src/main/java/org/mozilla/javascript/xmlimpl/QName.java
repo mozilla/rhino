@@ -79,7 +79,9 @@ final class QName extends IdScriptableObject {
         return delegate.getNamespace().getUri();
     }
 
-    /** @deprecated */
+    /**
+     * @deprecated
+     */
     @Deprecated
     final XmlNode.QName toNodeQname() {
         return delegate;

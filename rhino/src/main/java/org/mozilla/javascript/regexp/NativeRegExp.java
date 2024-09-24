@@ -593,7 +593,7 @@ public class NativeRegExp extends IdScriptableObject {
                         break;
                     case 'u':
                         nDigits += 2;
-                        // fall through
+                    // fall through
                     case 'x':
                         n = 0;
                         for (i = 0; (i < nDigits) && (index < end); i++) {
@@ -786,7 +786,7 @@ public class NativeRegExp extends IdScriptableObject {
         int termStart;
 
         switch (c) {
-                /* assertions and atoms */
+            /* assertions and atoms */
             case '^':
                 state.result = new RENode(REOP_BOL);
                 state.progLength++;
@@ -799,7 +799,7 @@ public class NativeRegExp extends IdScriptableObject {
                 if (state.cp < state.cpend) {
                     c = src[state.cp++];
                     switch (c) {
-                            /* assertion escapes */
+                        /* assertion escapes */
                         case 'b':
                             state.result = new RENode(REOP_WBDRY);
                             state.progLength++;
@@ -808,7 +808,7 @@ public class NativeRegExp extends IdScriptableObject {
                             state.result = new RENode(REOP_WNONBDRY);
                             state.progLength++;
                             return true;
-                            /* Decimal escape */
+                        /* Decimal escape */
                         case '0':
                             /*
                              * We're deliberately violating the ECMA 5.1 specification and allow octal
@@ -878,7 +878,7 @@ public class NativeRegExp extends IdScriptableObject {
                                 state.maxBackReference = num;
                             }
                             break;
-                            /* Control escape */
+                        /* Control escape */
                         case 'f':
                             c = 0xC;
                             doFlat(state, c);
@@ -899,7 +899,7 @@ public class NativeRegExp extends IdScriptableObject {
                             c = 0xB;
                             doFlat(state, c);
                             break;
-                            /* Control letter */
+                        /* Control letter */
                         case 'c':
                             if ((state.cp < state.cpend) && isControlLetter(src[state.cp]))
                                 c = (char) (src[state.cp++] & 0x1F);
@@ -910,10 +910,10 @@ public class NativeRegExp extends IdScriptableObject {
                             }
                             doFlat(state, c);
                             break;
-                            /* UnicodeEscapeSequence */
+                        /* UnicodeEscapeSequence */
                         case 'u':
                             nDigits += 2;
-                            /* fall through */ case 'x': /* HexEscapeSequence */
+                        /* fall through */ case 'x': /* HexEscapeSequence */
                             {
                                 int n = 0;
                                 int i;
@@ -932,7 +932,7 @@ public class NativeRegExp extends IdScriptableObject {
                             }
                             doFlat(state, c);
                             break;
-                            /* Character class escapes */
+                        /* Character class escapes */
                         case 'd':
                             state.result = new RENode(REOP_DIGIT);
                             state.progLength++;
@@ -957,7 +957,7 @@ public class NativeRegExp extends IdScriptableObject {
                             state.result = new RENode(REOP_NONALNUM);
                             state.progLength++;
                             break;
-                            /* IdentityEscape */
+                        /* IdentityEscape */
                         default:
                             state.result = new RENode(REOP_FLAT);
                             state.result.chr = c;
@@ -1194,7 +1194,7 @@ public class NativeRegExp extends IdScriptableObject {
                     pc += INDEX_LEN;
                     addIndex(program, pc, ignoreCase ? upcase((char) t.index) : t.index);
                     pc += INDEX_LEN;
-                    // fall through to REOP_ALT
+                // fall through to REOP_ALT
                 case REOP_ALT:
                     nextAlt = t.kid2;
                     nextAltFixup = pc; /* address of next alternate */
@@ -1517,7 +1517,7 @@ public class NativeRegExp extends IdScriptableObject {
                         break;
                     case 'u':
                         nDigits += 2;
-                        // fall through
+                    // fall through
                     case 'x':
                         n = 0;
                         for (i = 0; (i < nDigits) && (src < end); i++) {
@@ -1936,8 +1936,8 @@ public class NativeRegExp extends IdScriptableObject {
                                 }
                             }
                         }
-                        /* else false thru... */
-                        // fall through
+                    /* else false thru... */
+                    // fall through
                     case REOP_ALT:
                         {
                             int nextpc = pc + getOffset(program, pc);
@@ -2062,28 +2062,28 @@ public class NativeRegExp extends IdScriptableObject {
                             switch (op) {
                                 case REOP_STAR:
                                     greedy = true;
-                                    // fallthrough
+                                // fallthrough
                                 case REOP_MINIMALSTAR:
                                     min = 0;
                                     max = -1;
                                     break;
                                 case REOP_PLUS:
                                     greedy = true;
-                                    // fallthrough
+                                // fallthrough
                                 case REOP_MINIMALPLUS:
                                     min = 1;
                                     max = -1;
                                     break;
                                 case REOP_OPT:
                                     greedy = true;
-                                    // fallthrough
+                                // fallthrough
                                 case REOP_MINIMALOPT:
                                     min = 0;
                                     max = 1;
                                     break;
                                 case REOP_QUANT:
                                     greedy = true;
-                                    // fallthrough
+                                // fallthrough
                                 case REOP_MINIMALQUANT:
                                     min = getOffset(program, pc);
                                     pc += INDEX_LEN;

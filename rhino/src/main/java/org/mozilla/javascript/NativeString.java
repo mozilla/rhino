@@ -11,9 +11,10 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the String native object.
@@ -319,6 +320,14 @@ final class NativeString extends IdScriptableObject {
                 arity = 0;
                 s = "trimEnd";
                 break;
+            case Id_isWellFormed:
+                arity = 0;
+                s = "isWellFormed";
+                break;
+            case Id_toWellFormed:
+                arity = 0;
+                s = "toWellFormed";
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -468,15 +477,20 @@ final class NativeString extends IdScriptableObject {
                 case Id_endsWith:
                     String thisString =
                             ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    if (args.length > 0 && args[0] instanceof NativeRegExp) {
-                        if (ScriptableObject.isTrue(
-                                ScriptableObject.getProperty(
-                                        ScriptableObject.ensureScriptable(args[0]),
-                                        SymbolKey.MATCH))) {
-                            throw ScriptRuntime.typeErrorById(
-                                    "msg.first.arg.not.regexp",
-                                    String.class.getSimpleName(),
-                                    f.getFunctionName());
+
+                    if (args.length > 0) {
+                        RegExpProxy reProxy = ScriptRuntime.getRegExpProxy(cx);
+                        if (reProxy != null && args[0] instanceof Scriptable) {
+                            Scriptable arg0 = (Scriptable) args[0];
+                            if (reProxy.isRegExp(arg0)) {
+                                if (ScriptableObject.isTrue(
+                                        ScriptableObject.getProperty(arg0, SymbolKey.MATCH))) {
+                                    throw ScriptRuntime.typeErrorById(
+                                            "msg.first.arg.not.regexp",
+                                            String.class.getSimpleName(),
+                                            f.getFunctionName());
+                                }
+                            }
                         }
                     }
 
@@ -491,7 +505,7 @@ final class NativeString extends IdScriptableObject {
                     if (id == Id_endsWith) {
                         return Boolean.valueOf(idx != -1);
                     }
-                    // fallthrough
+                // fallthrough
 
                 case Id_padStart:
                 case Id_padEnd:
@@ -627,7 +641,7 @@ final class NativeString extends IdScriptableObject {
                         return ScriptRuntime.checkRegExpProxy(cx)
                                 .action(cx, scope, thisObj, args, actionType);
                     }
-                    // ECMA-262 1 5.5.4.9
+                // ECMA-262 1 5.5.4.9
                 case Id_localeCompare:
                     {
                         // For now, create and configure a collator instance. I can't
@@ -767,6 +781,80 @@ final class NativeString extends IdScriptableObject {
                         }
 
                         return str.substring(k, k + 1);
+                    }
+                case Id_isWellFormed:
+                    {
+                        CharSequence str =
+                                ScriptRuntime.toCharSequence(
+                                        requireObjectCoercible(cx, thisObj, f));
+                        int len = str.length();
+                        boolean foundLeadingSurrogate = false;
+                        for (int i = 0; i < len; i++) {
+                            char c = str.charAt(i);
+                            if (NativeJSON.isLeadingSurrogate(c)) {
+                                if (foundLeadingSurrogate) {
+                                    return false;
+                                }
+                                foundLeadingSurrogate = true;
+                            } else if (NativeJSON.isTrailingSurrogate(c)) {
+                                if (!foundLeadingSurrogate) {
+                                    return false;
+                                }
+                                foundLeadingSurrogate = false;
+                            } else if (foundLeadingSurrogate) {
+                                return false;
+                            }
+                        }
+                        return !foundLeadingSurrogate;
+                    }
+                case Id_toWellFormed:
+                    {
+                        CharSequence str =
+                                ScriptRuntime.toCharSequence(
+                                        requireObjectCoercible(cx, thisObj, f));
+                        // true represents a surrogate pair
+                        // false represents a singular surrogate
+                        // normal characters aren't present
+                        Map<Integer, Boolean> surrogates = new HashMap<>();
+
+                        int len = str.length();
+                        char prev = 0;
+                        int firstSurrogateIndex = -1;
+                        for (int i = 0; i < len; i++) {
+                            char c = str.charAt(i);
+
+                            if (NativeJSON.isLeadingSurrogate(prev)
+                                    && NativeJSON.isTrailingSurrogate(c)) {
+                                surrogates.put(Integer.valueOf(i - 1), Boolean.TRUE);
+                                surrogates.put(Integer.valueOf(i), Boolean.TRUE);
+                            } else if (NativeJSON.isLeadingSurrogate(c)
+                                    || NativeJSON.isTrailingSurrogate(c)) {
+                                surrogates.put(Integer.valueOf(i), Boolean.FALSE);
+                                if (firstSurrogateIndex == -1) {
+                                    firstSurrogateIndex = i;
+                                }
+                            }
+
+                            prev = c;
+                        }
+
+                        if (surrogates.isEmpty()) {
+                            return str.toString();
+                        }
+
+                        StringBuilder sb =
+                                new StringBuilder(str.subSequence(0, firstSurrogateIndex));
+                        for (int i = firstSurrogateIndex; i < len; i++) {
+                            char c = str.charAt(i);
+                            Boolean pairOrNormal = surrogates.get(Integer.valueOf(i));
+                            if (pairOrNormal == null || pairOrNormal) {
+                                sb.append(c);
+                            } else {
+                                sb.append('\uFFFD');
+                            }
+                        }
+
+                        return sb.toString();
                     }
 
                 case SymbolId_iterator:
@@ -1354,6 +1442,12 @@ final class NativeString extends IdScriptableObject {
             case "at":
                 id = Id_at;
                 break;
+            case "isWellFormed":
+                id = Id_isWellFormed;
+                break;
+            case "toWellFormed":
+                id = Id_toWellFormed;
+                break;
             default:
                 id = 0;
                 break;
@@ -1416,7 +1510,9 @@ final class NativeString extends IdScriptableObject {
             Id_trimStart = 50,
             Id_trimEnd = 51,
             Id_at = 52,
-            MAX_PROTOTYPE_ID = Id_at;
+            Id_isWellFormed = 53,
+            Id_toWellFormed = 54,
+            MAX_PROTOTYPE_ID = Id_toWellFormed;
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
             ConstructorId_indexOf = -Id_indexOf,

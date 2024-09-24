@@ -458,7 +458,7 @@ public class ScriptRuntime {
     // Preserve backward-compatibility with historical value of this.
     public static final double negativeZero = Double.longBitsToDouble(0x8000000000000000L);
 
-    public static final Double zeroObj = Double.valueOf(0.0);
+    public static final Integer zeroObj = Integer.valueOf(0);
     public static final Double negativeZeroObj = Double.valueOf(-0.0);
 
     static double stringPrefixToNumber(String s, int start, int radix) {
@@ -577,7 +577,7 @@ public class ScriptRuntime {
                             if (bit) {
                                 state = MIXED_AFTER_54;
                             }
-                            // fallthrough
+                        // fallthrough
                         case MIXED_AFTER_54:
                             factor *= 2;
                             break;
@@ -1223,7 +1223,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    /** @param scope the scope that should be used to resolve primitive prototype */
+    /**
+     * @param scope the scope that should be used to resolve primitive prototype
+     */
     public static Scriptable toObjectOrNull(Context cx, Object obj, Scriptable scope) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
@@ -1233,7 +1235,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    /** @deprecated Use {@link #toObject(Scriptable, Object)} instead. */
+    /**
+     * @deprecated Use {@link #toObject(Scriptable, Object)} instead.
+     */
     @Deprecated
     public static Scriptable toObject(Scriptable scope, Object val, Class<?> staticClass) {
         if (val instanceof Scriptable) {
@@ -1297,14 +1301,18 @@ public class ScriptRuntime {
         throw errorWithClassName("msg.invalid.type", val);
     }
 
-    /** @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead. */
+    /**
+     * @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead.
+     */
     @Deprecated
     public static Scriptable toObject(
             Context cx, Scriptable scope, Object val, Class<?> staticClass) {
         return toObject(cx, scope, val);
     }
 
-    /** @deprecated The method is only present for compatibility. */
+    /**
+     * @deprecated The method is only present for compatibility.
+     */
     @Deprecated
     public static Object call(
             Context cx, Object fun, Object thisArg, Object[] args, Scriptable scope) {
@@ -1322,7 +1330,7 @@ public class ScriptRuntime {
     public static Scriptable newObject(
             Context cx, Scriptable scope, String constructorName, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = getExistingCtor(cx, scope, constructorName);
+        Constructable ctor = getExistingCtor(cx, scope, constructorName);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -1332,7 +1340,7 @@ public class ScriptRuntime {
     public static Scriptable newBuiltinObject(
             Context cx, Scriptable scope, TopLevel.Builtins type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = TopLevel.getBuiltinCtor(cx, scope, type);
+        Constructable ctor = TopLevel.getBuiltinCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -1342,7 +1350,7 @@ public class ScriptRuntime {
     static Scriptable newNativeError(
             Context cx, Scriptable scope, TopLevel.NativeErrors type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
+        Constructable ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
@@ -1618,7 +1626,7 @@ public class ScriptRuntime {
      * Helper to return a string or an integer. Always use a null check on s.stringId to determine
      * if the result is string or integer.
      *
-     * @see ScriptRuntime#toStringIdOrIndex(Context, Object)
+     * @see ScriptRuntime#toStringIdOrIndex(Object)
      */
     public static final class StringIdOrIndex {
         final String stringId;
@@ -1753,7 +1761,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #getObjectPropNoWarn(Object, String, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #getObjectPropNoWarn(Object, String, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Object getObjectPropNoWarn(Object obj, String property, Context cx) {
         return getObjectPropNoWarn(obj, property, cx, getTopCallScope(cx));
@@ -1943,7 +1953,9 @@ public class ScriptRuntime {
         return ref.get(cx);
     }
 
-    /** @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Object refSet(Ref ref, Object value, Context cx) {
         return refSet(ref, value, cx, getTopCallScope(cx));
@@ -1961,7 +1973,9 @@ public class ScriptRuntime {
         return s.equals("__proto__") || s.equals("__parent__");
     }
 
-    /** @deprecated Use {@link #specialRef(Object, String, Context, Scriptable)} instead */
+    /**
+     * @deprecated Use {@link #specialRef(Object, String, Context, Scriptable)} instead
+     */
     @Deprecated
     public static Ref specialRef(Object obj, String specialProperty, Context cx) {
         return specialRef(obj, specialProperty, cx, getTopCallScope(cx));
@@ -1971,7 +1985,9 @@ public class ScriptRuntime {
         return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
     }
 
-    /** @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead */
+    /**
+     * @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead
+     */
     @Deprecated
     public static Object delete(Object obj, Object id, Context cx) {
         return delete(obj, id, cx, false);
@@ -2296,7 +2312,9 @@ public class ScriptRuntime {
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
     public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
-    /** @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object enumInit(Object value, Context cx, int enumType) {
         return enumInit(value, cx, getTopCallScope(cx), enumType);
@@ -2362,7 +2380,9 @@ public class ScriptRuntime {
         ((IdEnumeration) enumObj).enumNumbers = enumNumbers;
     }
 
-    /** @deprecated since 1.7.15. Use {@link #enumNext(Context, Object)} instead */
+    /**
+     * @deprecated since 1.7.15. Use {@link #enumNext(Object, Context)} instead
+     */
     @Deprecated
     public static Boolean enumNext(Object enumObj) {
         return enumNext(enumObj, Context.getContext());
@@ -2748,11 +2768,10 @@ public class ScriptRuntime {
      * <p>See ECMA 11.2.2
      */
     public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-        if (!(fun instanceof Function)) {
+        if (!(fun instanceof Constructable)) {
             throw notFunctionError(fun);
         }
-        Function function = (Function) fun;
-        return function.construct(cx, scope, args);
+        return ((Constructable) fun).construct(cx, scope, args);
     }
 
     public static Object callSpecial(
@@ -2845,7 +2864,9 @@ public class ScriptRuntime {
         return callThis;
     }
 
-    /** @return true if the passed in Scriptable looks like an array */
+    /**
+     * @return true if the passed in Scriptable looks like an array
+     */
     private static boolean isArrayLike(Scriptable obj) {
         return obj != null
                 && (obj instanceof NativeArray
@@ -2991,6 +3012,9 @@ public class ScriptRuntime {
                 || (val1 instanceof BigInteger && val2 instanceof Number)) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         }
+        if (val1 instanceof Integer && val2 instanceof Integer) {
+            return add((Integer) val1, (Integer) val2);
+        }
         if (val1 instanceof Number && val2 instanceof Number) {
             return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
         }
@@ -3064,6 +3088,8 @@ public class ScriptRuntime {
             return ((BigInteger) val1).subtract((BigInteger) val2);
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return subtract((Integer) val1, (Integer) val2);
         } else {
             return val1.doubleValue() - val2.doubleValue();
         }
@@ -3074,6 +3100,8 @@ public class ScriptRuntime {
             return ((BigInteger) val1).multiply((BigInteger) val2);
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return multiply((Integer) val1, (Integer) val2);
         } else {
             return val1.doubleValue() * val2.doubleValue();
         }
@@ -3088,6 +3116,8 @@ public class ScriptRuntime {
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         } else {
+            // Do not try to optimize for the integer case because JS doesn't
+            // have an integer type.
             return val1.doubleValue() / val2.doubleValue();
         }
     }
@@ -3101,10 +3131,42 @@ public class ScriptRuntime {
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         } else {
+            // Do not try an integer-specific optimization because we need to get
+            // both +0 and -0 right.
             return val1.doubleValue() % val2.doubleValue();
         }
     }
 
+    // Integer-optimized methods.
+
+    public static Object add(Integer i1, Integer i2) {
+        // Try to add integers for efficiency, but account for overflow
+        long r = (long) i1.intValue() + (long) i2.intValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return Integer.valueOf((int) r);
+        }
+        return Double.valueOf((double) r);
+    }
+
+    public static Number subtract(Integer i1, Integer i2) {
+        // Account for overflow
+        long r = (long) i1.intValue() - (long) i2.intValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return Integer.valueOf((int) r);
+        }
+        return Double.valueOf((double) r);
+    }
+
+    public static Number multiply(Integer i1, Integer i2) {
+        // Aunt for overflow
+        long r = (long) i1.intValue() * (long) i2.intValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return Integer.valueOf((int) r);
+        }
+        return Double.valueOf((double) r);
+    }
+
+    @SuppressWarnings("AndroidJdkLibsChecker")
     public static Number exponentiate(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             if (((BigInteger) val2).signum() == -1) {
@@ -3130,6 +3192,8 @@ public class ScriptRuntime {
             return ((BigInteger) val1).and((BigInteger) val2);
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return Integer.valueOf(((Integer) val1).intValue() & ((Integer) val2).intValue());
         } else {
             int result = toInt32(val1.doubleValue()) & toInt32(val2.doubleValue());
             return Double.valueOf(result);
@@ -3141,6 +3205,8 @@ public class ScriptRuntime {
             return ((BigInteger) val1).or((BigInteger) val2);
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return Integer.valueOf(((Integer) val1).intValue() | ((Integer) val2).intValue());
         } else {
             int result = toInt32(val1.doubleValue()) | toInt32(val2.doubleValue());
             return Double.valueOf(result);
@@ -3152,12 +3218,15 @@ public class ScriptRuntime {
             return ((BigInteger) val1).xor((BigInteger) val2);
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return Integer.valueOf(((Integer) val1).intValue() ^ ((Integer) val2).intValue());
         } else {
             int result = toInt32(val1.doubleValue()) ^ toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     public static Number leftShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             try {
@@ -3169,12 +3238,15 @@ public class ScriptRuntime {
             }
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return Integer.valueOf(((Integer) val1).intValue() << ((Integer) val2).intValue());
         } else {
             int result = toInt32(val1.doubleValue()) << toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
     }
 
+    @SuppressWarnings("AndroidJdkLibsChecker")
     public static Number signedRightShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             try {
@@ -3186,6 +3258,8 @@ public class ScriptRuntime {
             }
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else if (val1 instanceof Integer && val2 instanceof Integer) {
+            return Integer.valueOf(((Integer) val1).intValue() >> ((Integer) val2).intValue());
         } else {
             int result = toInt32(val1.doubleValue()) >> toInt32(val2.doubleValue());
             return Double.valueOf(result);
@@ -3195,6 +3269,8 @@ public class ScriptRuntime {
     public static Number bitwiseNOT(Number val) {
         if (val instanceof BigInteger) {
             return ((BigInteger) val).not();
+        } else if (val instanceof Integer) {
+            return Integer.valueOf(~((Integer) val).intValue());
         } else {
             int result = ~toInt32(val.doubleValue());
             return Double.valueOf(result);
@@ -3240,7 +3316,9 @@ public class ScriptRuntime {
         return doScriptableIncrDecr(target, id, scopeChain, value, incrDecrMask);
     }
 
-    /** @deprecated Use {@link #propIncrDecr(Object, String, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #propIncrDecr(Object, String, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object propIncrDecr(Object obj, String id, Context cx, int incrDecrMask) {
         return propIncrDecr(obj, id, cx, getTopCallScope(cx), incrDecrMask);
@@ -3292,6 +3370,12 @@ public class ScriptRuntime {
             } else {
                 result = ((BigInteger) number).subtract(BigInteger.ONE);
             }
+        } else if (number instanceof Integer) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((Integer) number).intValue() + 1;
+            } else {
+                result = ((Integer) number).intValue() - 1;
+            }
         } else {
             if ((incrDecrMask & Node.DECR_FLAG) == 0) {
                 result = number.doubleValue() + 1.0;
@@ -3307,7 +3391,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object elemIncrDecr(Object obj, Object index, Context cx, int incrDecrMask) {
         return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
@@ -3332,6 +3418,12 @@ public class ScriptRuntime {
             } else {
                 result = ((BigInteger) number).subtract(BigInteger.ONE);
             }
+        } else if (number instanceof Integer) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((Integer) number).intValue() + 1;
+            } else {
+                result = ((Integer) number).intValue() - 1;
+            }
         } else {
             if ((incrDecrMask & Node.DECR_FLAG) == 0) {
                 result = number.doubleValue() + 1.0;
@@ -3347,7 +3439,9 @@ public class ScriptRuntime {
         return result;
     }
 
-    /** @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead */
+    /**
+     * @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead
+     */
     @Deprecated
     public static Object refIncrDecr(Ref ref, Context cx, int incrDecrMask) {
         return refIncrDecr(ref, cx, getTopCallScope(cx), incrDecrMask);
@@ -3371,6 +3465,12 @@ public class ScriptRuntime {
             } else {
                 result = ((BigInteger) number).subtract(BigInteger.ONE);
             }
+        } else if (number instanceof Integer) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((Integer) number).intValue() + 1;
+            } else {
+                result = ((Integer) number).intValue() - 1;
+            }
         } else {
             if ((incrDecrMask & Node.DECR_FLAG) == 0) {
                 result = number.doubleValue() + 1.0;
@@ -3389,6 +3489,17 @@ public class ScriptRuntime {
     public static Number negate(Number val) {
         if (val instanceof BigInteger) {
             return ((BigInteger) val).negate();
+        }
+        if (val instanceof Integer) {
+            int iv = (Integer) val;
+            if (iv == 0) {
+                return negativeZeroObj;
+            }
+            if (iv > Integer.MIN_VALUE && iv < Integer.MAX_VALUE) {
+                // Account for twos-complement representation by not trying
+                // to negate values at the extremes
+                return Integer.valueOf(-((Integer) val).intValue());
+            }
         }
         return -val.doubleValue();
     }
@@ -4574,34 +4685,44 @@ public class ScriptRuntime {
         }
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage0(String messageId) {
         return getMessage(messageId, null);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage1(String messageId, Object arg1) {
         Object[] arguments = {arg1};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage2(String messageId, Object arg1, Object arg2) {
         Object[] arguments = {arg1, arg2};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage3(String messageId, Object arg1, Object arg2, Object arg3) {
         Object[] arguments = {arg1, arg2, arg3};
         return getMessage(messageId, arguments);
     }
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage4(
             String messageId, Object arg1, Object arg2, Object arg3, Object arg4) {
@@ -4629,7 +4750,9 @@ public class ScriptRuntime {
 
     public static final MessageProvider messageProvider = new DefaultMessageProvider();
 
-    /** @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static String getMessage(String messageId, Object[] arguments) {
         return messageProvider.getMessage(messageId, arguments);
@@ -4715,28 +4838,36 @@ public class ScriptRuntime {
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError0(String messageId) {
         String msg = getMessage0(messageId);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError1(String messageId, Object arg1) {
         String msg = getMessage1(messageId, arg1);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError2(String messageId, Object arg1, Object arg2) {
         String msg = getMessage2(messageId, arg1, arg2);
         return typeError(msg);
     }
 
-    /** @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead */
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
     @Deprecated
     public static EcmaError typeError3(String messageId, String arg1, String arg2, String arg3) {
         String msg = getMessage3(messageId, arg1, arg2, arg3);

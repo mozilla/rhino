@@ -37,7 +37,8 @@ public class LambdaFunctionTest {
     }
 
     private void eval(String source) {
-        cx.evaluateString(root, source, "test.js", 1, null);
+        Utils.runWithAllOptimizationLevels(
+                ignored -> cx.evaluateString(root, source, "test.js", 1, null));
     }
 
     @Test
@@ -201,6 +202,22 @@ public class LambdaFunctionTest {
                         + "assertThrows(() => { new noNewFunc(); }, TypeError)");
     }
 
+    @Test
+    public void lambdaSpecialConstructorCallConstructor() {
+        // This class has different functions for the constructor when invoked
+        // by "new" and when invoked as a function
+        SpecialConstructorClass.init(cx, root);
+        // Invoke the function via "new" and ensure that the constructor functionality is executed
+        eval("let o = new SpecialConstructorClass('foo');\n" + "assertEquals('foo', o.value);\n");
+    }
+
+    @Test
+    public void lambdaSpecialConstructorCallFunction() {
+        SpecialConstructorClass.init(cx, root);
+        // Invoke the function directly and ensure that the function functionality is executed
+        eval("let v = SpecialConstructorClass('foo');\n" + "assertEquals('You passed foo', v);\n");
+    }
+
     private static class TestClass extends ScriptableObject {
 
         private String instanceVal;
@@ -282,6 +299,55 @@ public class LambdaFunctionTest {
                 throw ScriptRuntime.typeError("Expected an argument");
             }
             return "Hello, " + ScriptRuntime.toString(args[0]) + '!';
+        }
+    }
+
+    private static class SpecialConstructorClass extends ScriptableObject {
+        private String value;
+
+        public static void init(Context cx, Scriptable scope) {
+            LambdaConstructor constructor =
+                    new LambdaConstructor(
+                            scope,
+                            "SpecialConstructorClass",
+                            1,
+                            (Context lcx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                                String arg = "";
+                                if (args.length > 0) {
+                                    arg = ScriptRuntime.toString(args[0]);
+                                }
+                                return "You passed " + arg;
+                            },
+                            (Context lcx, Scriptable s, Object[] args) -> {
+                                SpecialConstructorClass tc = new SpecialConstructorClass();
+                                if (args.length > 0) {
+                                    tc.value = ScriptRuntime.toString(args[0]);
+                                }
+                                return tc;
+                            });
+            constructor.definePrototypeProperty(
+                    cx,
+                    "value",
+                    (Scriptable s) -> {
+                        SpecialConstructorClass thisObj =
+                                LambdaConstructor.convertThisObject(
+                                        s, SpecialConstructorClass.class);
+                        return thisObj.value;
+                    },
+                    (Scriptable s, Object newVal) -> {
+                        SpecialConstructorClass thisObj =
+                                LambdaConstructor.convertThisObject(
+                                        s, SpecialConstructorClass.class);
+                        thisObj.value = ScriptRuntime.toString(newVal);
+                    },
+                    0);
+            ScriptableObject.defineProperty(
+                    scope, "SpecialConstructorClass", constructor, PERMANENT);
+        }
+
+        @Override
+        public String getClassName() {
+            return "SpecialConstructorClass";
         }
     }
 }

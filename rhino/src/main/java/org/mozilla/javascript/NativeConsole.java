@@ -249,8 +249,8 @@ public class NativeConsole extends IdScriptableObject {
                             replaceArg = formatObj(cx, scope, val);
                             break;
 
-                            // %c is not supported,
-                            // simply removed from the output
+                        // %c is not supported,
+                        // simply removed from the output
 
                         default:
                             replaceArg = "";

@@ -38,7 +38,7 @@ class CodeGenerator extends Icode {
     private ScriptNode scriptOrFn;
     private int iCodeTop;
     private int stackDepth;
-    private int lineNumber;
+    private int lineNumber = -1;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -189,6 +189,7 @@ class CodeGenerator extends Icode {
         itsData.argIsConst = scriptOrFn.getParamAndVarConst();
         itsData.argCount = scriptOrFn.getParamCount();
         itsData.argsHasRest = scriptOrFn.hasRestParameter();
+        itsData.argsHasDefaults = scriptOrFn.getDefaultParams() != null;
 
         itsData.rawSourceStart = scriptOrFn.getRawSourceStart();
         itsData.rawSourceEnd = scriptOrFn.getRawSourceEnd();
@@ -314,7 +315,7 @@ class CodeGenerator extends Icode {
             case Token.EMPTY:
             case Token.WITH:
                 updateLineNumber(node);
-                // fall through
+            // fall through
             case Token.SCRIPT:
                 while (child != null) {
                     visitStatement(child, initialStackDepth);
@@ -1442,7 +1443,7 @@ class CodeGenerator extends Icode {
                     addUint8(varIndex);
                     return;
                 }
-                // fallthrough
+            // fallthrough
             case Icode_VAR_INC_DEC:
                 addIndexOp(op, varIndex);
                 return;

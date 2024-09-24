@@ -109,13 +109,17 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         this.globalScope = globalScope;
     }
 
-    /** @deprecated */
+    /**
+     * @deprecated
+     */
     @Deprecated
     QName qnamePrototype() {
         return qnamePrototype;
     }
 
-    /** @deprecated */
+    /**
+     * @deprecated
+     */
     @Deprecated
     Scriptable globalScope() {
         return globalScope;
@@ -142,7 +146,9 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         qnamePrototype.exportAsJSClass(sealed);
     }
 
-    /** @deprecated */
+    /**
+     * @deprecated
+     */
     @Deprecated
     XMLName toAttributeName(Context cx, Object nameValue) {
         if (nameValue instanceof XMLName) {

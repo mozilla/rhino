@@ -164,4 +164,9 @@ final class InterpretedFunction extends NativeFunction implements Script {
         }
         return true;
     }
+
+    @Override
+    public boolean hasDefaultParameters() {
+        return idata.argsHasDefaults;
+    }
 }

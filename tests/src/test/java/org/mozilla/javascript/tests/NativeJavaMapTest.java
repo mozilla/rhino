@@ -173,7 +173,7 @@ public class NativeJavaMapTest {
 
     @Test
     public void symbolIterator() {
-        Map map = new LinkedHashMap();
+        Map<Object, Object> map = new LinkedHashMap<>();
         String script =
                 "var a = [];\n" + "for (var [key, value] of value) a.push(key, value);\n" + "a";
 

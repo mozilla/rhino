@@ -7,6 +7,8 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The class of error objects
@@ -34,8 +36,8 @@ final class NativeError extends IdScriptableObject {
         ScriptableObject.putProperty(obj, "message", "");
         ScriptableObject.putProperty(obj, "fileName", "");
         ScriptableObject.putProperty(obj, "lineNumber", 0);
-        obj.setAttributes("name", ScriptableObject.DONTENUM);
-        obj.setAttributes("message", ScriptableObject.DONTENUM);
+        obj.setAttributes("name", DONTENUM);
+        obj.setAttributes("message", DONTENUM);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
         NativeCallSite.init(obj, sealed);
     }
@@ -51,17 +53,75 @@ final class NativeError extends IdScriptableObject {
         if (arglen >= 1) {
             if (!Undefined.isUndefined(args[0])) {
                 ScriptableObject.putProperty(obj, "message", ScriptRuntime.toString(args[0]));
-                obj.setAttributes("message", ScriptableObject.DONTENUM);
+                obj.setAttributes("message", DONTENUM);
             }
             if (arglen >= 2) {
-                ScriptableObject.putProperty(obj, "fileName", args[1]);
-                if (arglen >= 3) {
-                    int line = ScriptRuntime.toInt32(args[2]);
-                    ScriptableObject.putProperty(obj, "lineNumber", line);
+                if (args[1] instanceof NativeObject) {
+                    installCause((NativeObject) args[1], obj);
+                } else {
+                    ScriptableObject.putProperty(obj, "fileName", ScriptRuntime.toString(args[1]));
+                    if (arglen >= 3) {
+                        ScriptableObject.putProperty(
+                                obj, "lineNumber", ScriptRuntime.toInt32(args[2]));
+                    }
                 }
             }
         }
         return obj;
+    }
+
+    static NativeError makeAggregate(
+            Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
+        Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
+
+        NativeError obj = new NativeError();
+        obj.setPrototype(proto);
+        obj.setParentScope(scope);
+
+        int arglen = args.length;
+        if (arglen >= 1) {
+            if (arglen >= 2) {
+                if (!Undefined.isUndefined(args[1])) {
+                    ScriptableObject.putProperty(obj, "message", ScriptRuntime.toString(args[1]));
+                    obj.setAttributes("message", DONTENUM);
+                }
+
+                if (arglen >= 3) {
+                    if (args[2] instanceof NativeObject) {
+                        installCause((NativeObject) args[2], obj);
+                    } else {
+                        ScriptableObject.putProperty(
+                                obj, "fileName", ScriptRuntime.toString(args[2]));
+                        if (arglen >= 4) {
+                            ScriptableObject.putProperty(
+                                    obj, "lineNumber", ScriptRuntime.toInt32(args[3]));
+                        }
+                    }
+                }
+            }
+
+            final Object iterator = ScriptRuntime.callIterator(args[0], cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                List<Object> errors = new ArrayList<>();
+                for (Object o : it) {
+                    errors.add(o);
+                }
+
+                Scriptable newArray = cx.newArray(scope, errors.toArray());
+                obj.defineProperty("errors", newArray, DONTENUM);
+            }
+        } else {
+            throw ScriptRuntime.typeErrorById("msg.iterable.expected");
+        }
+        return obj;
+    }
+
+    static void installCause(NativeObject options, NativeError obj) {
+        Object cause = ScriptableObject.getProperty(options, "cause");
+        if (cause != NOT_FOUND) {
+            ScriptableObject.putProperty(obj, "cause", cause);
+            obj.setAttributes("cause", DONTENUM);
+        }
     }
 
     @Override
@@ -106,6 +166,10 @@ final class NativeError extends IdScriptableObject {
         return toString instanceof String ? (String) toString : super.toString();
     }
 
+    private static NativeError realThis(Scriptable thisObj, IdFunctionObject f) {
+        return ensureType(thisObj, NativeError.class, f);
+    }
+
     @Override
     protected void initPrototypeId(int id) {
         String s;
@@ -145,7 +209,10 @@ final class NativeError extends IdScriptableObject {
                 return err;
 
             case Id_toString:
-                return js_toString(thisObj);
+                if (thisObj != scope && thisObj instanceof NativeObject) {
+                    return js_toString(thisObj);
+                }
+                return js_toString(realThis(thisObj, f));
 
             case Id_toSource:
                 return js_toSource(cx, scope, thisObj);
@@ -311,7 +378,7 @@ final class NativeError extends IdScriptableObject {
         // at the time captureStackTrace was called. Stack traces collected through
         // Error.captureStackTrace are immediately collected, formatted,
         // and attached to the given error object.
-        obj.defineProperty(STACK_TAG, err.get(STACK_TAG), ScriptableObject.DONTENUM);
+        obj.defineProperty(STACK_TAG, err.get(STACK_TAG), DONTENUM);
     }
 
     @Override

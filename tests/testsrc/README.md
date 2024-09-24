@@ -84,7 +84,7 @@ While the test262.properties file does support this (because it is a Java Proper
 While the [test262.properties](test262.properties) file could be manually updated, the tooling also comes with a mechanism to (re)generate the file based on the current revision of the test262 submodule and the results of running Test262SuiteTest against this revision on all standard optLevels (-1, 0 & 9)
 
 ```
-./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
+RHINO_TEST_JAVA_VERSION=11 ./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
 ```
 The .properties file generation can be parameterized to affect the output:
 - rollup: include only a single line for a subfolder that contains only failing tests

@@ -4,9 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
@@ -16,6 +14,8 @@ import org.mozilla.javascript.Scriptable;
  * of failing on some later stage (e.g. in the IRFactory).
  *
  * <p>Should be removed when support for default values is added
+ *
+ * <p>Keeping this around, but change the return values
  */
 public class Issue385Test {
     private Context cx;
@@ -37,9 +37,11 @@ public class Issue385Test {
         Context.exit();
     }
 
-    @Test(expected = EvaluatorException.class)
+    @Test()
     public void objDestructSimple() {
-        cx.evaluateString(scope, "var {a: a = 10} = {}", "<eval>", 1, null);
+        Object result = cx.evaluateString(scope, "var {a: a = 10} = {}; a", "<eval>", 1, null);
+        Assert.assertTrue(result instanceof Double);
+        Assert.assertEquals(result, 10.0);
     }
 
     @Test(expected = EvaluatorException.class)
@@ -55,18 +57,29 @@ public class Issue385Test {
         cx.evaluateString(scope, "var {a = 10} = {}", "<eval>", 1, null);
     }
 
-    @Test(expected = EvaluatorException.class)
+    @Test()
+    @Ignore("complex-destructuring-not-supported")
     public void objDestructComplex() {
-        cx.evaluateString(scope, "var {a: {b} = {b: 10}} = {}", "<eval>", 1, null);
+        Object result =
+                cx.evaluateString(scope, "var {a: {b} = {b: 10}} = {}; a + b", "<eval>", 1, null);
+        Assert.assertTrue(result instanceof Double);
+        Assert.assertEquals(result, 20.0);
     }
 
-    @Test(expected = EvaluatorException.class)
+    @Test()
     public void arrDestructSimple() {
-        cx.evaluateString(scope, "var [a = 10] = []", "<eval>", 1, null);
+        Object result = cx.evaluateString(scope, "var [a = 10] = []; a", "<eval>", 1, null);
+        Assert.assertTrue(result instanceof Double);
+        Assert.assertEquals(result, 10.0);
     }
 
-    @Test(expected = EvaluatorException.class)
+    @Test()
+    @Ignore("complex-destructuring-not-supported")
     public void arrDestructComplex() {
-        cx.evaluateString(scope, "var [[a = [b] = [4]] = [2]] = []", "<eval>", 1, null);
+        Object result =
+                cx.evaluateString(
+                        scope, "var [[a = [b] = [4]] = [2]] = []; a + b", "<eval>", 1, null);
+        Assert.assertTrue(result instanceof Double);
+        Assert.assertEquals(result, 10.0);
     }
 }

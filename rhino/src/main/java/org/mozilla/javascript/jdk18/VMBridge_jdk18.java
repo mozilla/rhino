@@ -52,11 +52,16 @@ public class VMBridge_jdk18 extends VMBridge {
         storage[0] = cx;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected boolean tryToMakeAccessible(AccessibleObject accessible) {
-        return accessible.trySetAccessible();
+        if (!accessible.isAccessible()) {
+            accessible.setAccessible(true);
+        }
+        return true;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces) {
         // XXX: How to handle interfaces array withclasses from different

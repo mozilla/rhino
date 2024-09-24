@@ -7,6 +7,8 @@
 
 package com.example.securitytest;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * Class for SecurityControllerTest.
  *
@@ -19,8 +21,16 @@ public class SomeFactory {
     public SomeInterface create() {
         try {
             return (SomeInterface)
-                    Class.forName("com.example.securitytest.impl.SomeClass").newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                    Class.forName("com.example.securitytest.impl.SomeClass")
+                            .getDeclaredConstructor()
+                            .newInstance();
+        } catch (InstantiationException
+                | IllegalAccessException
+                | ClassNotFoundException
+                | IllegalArgumentException
+                | InvocationTargetException
+                | NoSuchMethodException
+                | SecurityException e) {
             throw new RuntimeException("Could not create impl", e);
         }
     }

@@ -15,7 +15,9 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 
-/** @author Norris Boyd */
+/**
+ * @author Norris Boyd
+ */
 public class ObserveInstructionCountTest {
 
     static class MyContext extends Context {

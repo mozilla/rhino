@@ -743,7 +743,8 @@ public class Codegen implements Evaluator {
         final int Do_getParamOrVarConst = 5;
         final int Do_isGeneratorFunction = 6;
         final int Do_hasRestParameter = 7;
-        final int SWITCH_COUNT = 8;
+        final int Do_hasDefaultParameters = 8;
+        final int SWITCH_COUNT = 9;
 
         for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
             if (methodIndex == Do_getRawSource && rawSource == null) {
@@ -789,6 +790,10 @@ public class Codegen implements Evaluator {
                 case Do_hasRestParameter:
                     methodLocals = 1; // Only this
                     cfw.startMethod("hasRestParameter", "()Z", ACC_PUBLIC);
+                    break;
+                case Do_hasDefaultParameters:
+                    methodLocals = 1; // Only this
+                    cfw.startMethod("hasDefaultParameters", "()Z", ACC_PUBLIC);
                     break;
                 default:
                     throw Kit.codeBug();
@@ -931,6 +936,15 @@ public class Codegen implements Evaluator {
                     case Do_hasRestParameter:
                         // Push boolean of defined hasRestParameter
                         cfw.addPush(n.hasRestParameter());
+                        cfw.add(ByteCode.IRETURN);
+                        break;
+
+                    case Do_hasDefaultParameters:
+                        if (n instanceof FunctionNode) {
+                            cfw.addPush(n.getDefaultParams() != null);
+                        } else {
+                            cfw.addPush(false);
+                        }
                         cfw.add(ByteCode.IRETURN);
                         break;
 
@@ -1143,7 +1157,7 @@ public class Codegen implements Evaluator {
                         ByteCode.GETSTATIC,
                         "org/mozilla/javascript/ScriptRuntime",
                         "zeroObj",
-                        "Ljava/lang/Double;");
+                        "Ljava/lang/Integer;");
             } else {
                 cfw.addPush(num);
                 addDoubleWrap(cfw);
@@ -1154,7 +1168,7 @@ public class Codegen implements Evaluator {
                     ByteCode.GETSTATIC,
                     "org/mozilla/javascript/optimizer/OptRuntime",
                     "oneObj",
-                    "Ljava/lang/Double;");
+                    "Ljava/lang/Integer;");
             return;
 
         } else if (num == -1.0) {
@@ -1162,7 +1176,7 @@ public class Codegen implements Evaluator {
                     ByteCode.GETSTATIC,
                     "org/mozilla/javascript/optimizer/OptRuntime",
                     "minusOneObj",
-                    "Ljava/lang/Double;");
+                    "Ljava/lang/Integer;");
 
         } else if (Double.isNaN(num)) {
             cfw.add(

@@ -34,7 +34,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    /** @deprecated Use {@link #init(Context, Scriptable, boolean)} instead */
+    /**
+     * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
+     */
     @Deprecated
     static void init(Scriptable scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);
@@ -68,6 +70,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
     // Generated code will override this
     protected boolean isGeneratorFunction() {
         return isGeneratorFunction;
+    }
+
+    // Generated code will override this
+    protected boolean hasDefaultParameters() {
+        return false;
     }
 
     /**

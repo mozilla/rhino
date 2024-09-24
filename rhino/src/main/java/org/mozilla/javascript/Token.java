@@ -135,99 +135,102 @@ public class Token {
             COMMA = 92, // comma operator
             ASSIGN = 93, // simple assignment  (=)
             ASSIGN_BITOR = 94, // |=
-            ASSIGN_BITXOR = 95, // ^=
-            ASSIGN_BITAND = 96, // |=
-            ASSIGN_LSH = 97, // <<=
-            ASSIGN_RSH = 98, // >>=
-            ASSIGN_URSH = 99, // >>>=
-            ASSIGN_ADD = 100, // +=
-            ASSIGN_SUB = 101, // -=
-            ASSIGN_MUL = 102, // *=
-            ASSIGN_DIV = 103, // /=
-            ASSIGN_MOD = 104, // %=
-            ASSIGN_EXP = 105; // **=
+            ASSIGN_LOGICAL_OR = 95, // ||=
+            ASSIGN_BITXOR = 96, // ^=
+            ASSIGN_BITAND = 97, // |=
+            ASSIGN_LOGICAL_AND = 98, // &&=
+            ASSIGN_LSH = 99, // <<=
+            ASSIGN_RSH = 100, // >>=
+            ASSIGN_URSH = 101, // >>>=
+            ASSIGN_ADD = 102, // +=
+            ASSIGN_SUB = 103, // -=
+            ASSIGN_MUL = 104, // *=
+            ASSIGN_DIV = 105, // /=
+            ASSIGN_MOD = 106, // %=
+            ASSIGN_EXP = 107; // **=
     public static final int FIRST_ASSIGN = ASSIGN,
             LAST_ASSIGN = ASSIGN_EXP,
-            HOOK = 106, // conditional (?:)
-            COLON = 107,
-            OR = 108, // logical or (||)
-            AND = 109, // logical and (&&)
-            INC = 110, // increment/decrement (++ --)
-            DEC = 111,
-            DOT = 112, // member operator (.)
-            FUNCTION = 113, // function keyword
-            EXPORT = 114, // export keyword
-            IMPORT = 115, // import keyword
-            IF = 116, // if keyword
-            ELSE = 117, // else keyword
-            SWITCH = 118, // switch keyword
-            CASE = 119, // case keyword
-            DEFAULT = 120, // default keyword
-            WHILE = 121, // while keyword
-            DO = 122, // do keyword
-            FOR = 123, // for keyword
-            BREAK = 124, // break keyword
-            CONTINUE = 125, // continue keyword
-            VAR = 126, // var keyword
-            WITH = 127, // with keyword
-            CATCH = 128, // catch keyword
-            FINALLY = 129, // finally keyword
-            VOID = 130, // void keyword
-            RESERVED = 131, // reserved keywords
-            EMPTY = 132,
-            COMPUTED_PROPERTY = 133, // computed property in object initializer [x]
+            HOOK = 108, // conditional (?:)
+            COLON = 109,
+            OR = 110, // logical or (||)
+            AND = 111, // logical and (&&)
+            INC = 112, // increment/decrement (++ --)
+            DEC = 113,
+            DOT = 114, // member operator (.)
+            FUNCTION = 115, // function keyword
+            EXPORT = 116, // export keyword
+            IMPORT = 117, // import keyword
+            IF = 118, // if keyword
+            ELSE = 119, // else keyword
+            SWITCH = 120, // switch keyword
+            CASE = 121, // case keyword
+            DEFAULT = 122, // default keyword
+            WHILE = 123, // while keyword
+            DO = 124, // do keyword
+            FOR = 125, // for keyword
+            BREAK = 126, // break keyword
+            CONTINUE = 127, // continue keyword
+            VAR = 128, // var keyword
+            WITH = 129, // with keyword
+            CATCH = 130, // catch keyword
+            FINALLY = 131, // finally keyword
+            VOID = 132, // void keyword
+            RESERVED = 133, // reserved keywords
+            EMPTY = 134,
+            COMPUTED_PROPERTY = 135, // computed property in object initializer [x]
 
             /* types used for the parse tree - these never get returned
              * by the scanner.
              */
 
-            BLOCK = 134, // statement block
-            LABEL = 135, // label
-            TARGET = 136,
-            LOOP = 137,
-            EXPR_VOID = 138, // expression statement in functions
-            EXPR_RESULT = 139, // expression statement in scripts
-            JSR = 140,
-            SCRIPT = 141, // top-level node for entire script
-            TYPEOFNAME = 142, // for typeof(simple-name)
-            USE_STACK = 143,
-            SETPROP_OP = 144, // x.y op= something
-            SETELEM_OP = 145, // x[y] op= something
-            LOCAL_BLOCK = 146,
-            SET_REF_OP = 147, // *reference op= something
+            BLOCK = 136, // statement block
+            LABEL = 137, // label
+            TARGET = 138,
+            LOOP = 139,
+            EXPR_VOID = 140, // expression statement in functions
+            EXPR_RESULT = 141, // expression statement in scripts
+            JSR = 142,
+            SCRIPT = 143, // top-level node for entire script
+            TYPEOFNAME = 144, // for typeof(simple-name)
+            USE_STACK = 145,
+            SETPROP_OP = 146, // x.y op= something
+            SETELEM_OP = 147, // x[y] op= something
+            LOCAL_BLOCK = 148,
+            SET_REF_OP = 149, // *reference op= something
 
             // For XML support:
-            DOTDOT = 148, // member operator (..)
-            COLONCOLON = 149, // namespace::name
-            XML = 150, // XML type
-            DOTQUERY = 151, // .() -- e.g., x.emps.emp.(name == "terry")
-            XMLATTR = 152, // @
-            XMLEND = 153,
+            DOTDOT = 150, // member operator (..)
+            COLONCOLON = 151, // namespace::name
+            XML = 152, // XML type
+            DOTQUERY = 153, // .() -- e.g., x.emps.emp.(name == "terry")
+            XMLATTR = 154, // @
+            XMLEND = 155,
 
             // Optimizer-only-tokens
-            TO_OBJECT = 154,
-            TO_DOUBLE = 155,
-            GET = 156, // JS 1.5 get pseudo keyword
-            SET = 157, // JS 1.5 set pseudo keyword
-            LET = 158, // JS 1.7 let pseudo keyword
-            CONST = 159,
-            SETCONST = 160,
-            SETCONSTVAR = 161,
-            ARRAYCOMP = 162, // array comprehension
-            LETEXPR = 163,
-            WITHEXPR = 164,
-            DEBUGGER = 165,
-            COMMENT = 166,
-            GENEXPR = 167,
-            METHOD = 168, // ES6 MethodDefinition
-            ARROW = 169, // ES6 ArrowFunction
-            YIELD_STAR = 170, // ES6 "yield *", a specialization of yield
-            TEMPLATE_LITERAL = 171, // template literal
-            TEMPLATE_CHARS = 172, // template literal - literal section
-            TEMPLATE_LITERAL_SUBST = 173, // template literal - substitution
-            TAGGED_TEMPLATE_LITERAL = 174, // template literal - tagged/handler
-            DOTDOTDOT = 175, // spread/rest ...
-            LAST_TOKEN = 175;
+            TO_OBJECT = 156,
+            TO_DOUBLE = 157,
+            GET = 158, // JS 1.5 get pseudo keyword
+            SET = 159, // JS 1.5 set pseudo keyword
+            LET = 160, // JS 1.7 let pseudo keyword
+            CONST = 161,
+            SETCONST = 162,
+            SETCONSTVAR = 163,
+            ARRAYCOMP = 164, // array comprehension
+            LETEXPR = 165,
+            WITHEXPR = 166,
+            DEBUGGER = 167,
+            COMMENT = 168,
+            GENEXPR = 169,
+            METHOD = 170, // ES6 MethodDefinition
+            ARROW = 171, // ES6 ArrowFunction
+            YIELD_STAR = 172, // ES6 "yield *", a specialization of yield
+            TEMPLATE_LITERAL = 173, // template literal
+            TEMPLATE_CHARS = 174, // template literal - literal section
+            TEMPLATE_LITERAL_SUBST = 175, // template literal - substitution
+            TAGGED_TEMPLATE_LITERAL = 176, // template literal - tagged/handler
+            DOTDOTDOT = 177, // spread/rest ...
+            NULLISH_COALESCING = 178, // nullish coalescing (??)
+            LAST_TOKEN = 178;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -270,6 +273,8 @@ public class Token {
                 return "IFNE";
             case SETNAME:
                 return "SETNAME";
+            case STRICT_SETNAME:
+                return "STRICT_SETNAME";
             case BITOR:
                 return "BITOR";
             case BITXOR:
@@ -434,10 +439,14 @@ public class Token {
                 return "ASSIGN";
             case ASSIGN_BITOR:
                 return "ASSIGN_BITOR";
+            case ASSIGN_LOGICAL_OR:
+                return "ASSIGN_LOGICAL_OR";
             case ASSIGN_BITXOR:
                 return "ASSIGN_BITXOR";
             case ASSIGN_BITAND:
                 return "ASSIGN_BITAND";
+            case ASSIGN_LOGICAL_AND:
+                return "ASSIGN_LOGICAL_AND";
             case ASSIGN_LSH:
                 return "ASSIGN_LSH";
             case ASSIGN_RSH:
@@ -462,6 +471,8 @@ public class Token {
                 return "COLON";
             case OR:
                 return "OR";
+            case NULLISH_COALESCING:
+                return "NULLISH_COALESCING";
             case AND:
                 return "AND";
             case INC:

@@ -65,7 +65,8 @@ public class Node implements Iterable<Node> {
             ARROW_FUNCTION_PROP = 26,
             TEMPLATE_LITERAL_PROP = 27,
             TRAILING_COMMA = 28,
-            LAST_PROP = 28;
+            OBJECT_LITERAL_DESTRUCTURING = 29,
+            LAST_PROP = 29;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -932,8 +933,10 @@ public class Node implements Iterable<Node> {
             case Token.ASSIGN_DIV:
             case Token.ASSIGN_MOD:
             case Token.ASSIGN_BITOR:
+            case Token.ASSIGN_LOGICAL_OR:
             case Token.ASSIGN_BITXOR:
             case Token.ASSIGN_BITAND:
+            case Token.ASSIGN_LOGICAL_AND:
             case Token.ASSIGN_LSH:
             case Token.ASSIGN_RSH:
             case Token.ASSIGN_URSH:

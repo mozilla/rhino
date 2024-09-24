@@ -390,7 +390,9 @@ public class NativeObjectTest {
         }
     }
 
-    /** @throws Exception if the test fails */
+    /**
+     * @throws Exception if the test fails
+     */
     @Test
     public void definePropertyUsingConsString() throws Exception {
         final String script =

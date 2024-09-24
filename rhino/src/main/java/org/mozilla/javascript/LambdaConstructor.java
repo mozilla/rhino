@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 /**
  * This class implements a JavaScript function that may be used as a constructor by delegating to an
  * interface that can be easily implemented as a lambda. The LambdaFunction class may be used to add
@@ -63,12 +66,30 @@ public class LambdaConstructor extends LambdaFunction {
         this.flags = flags;
     }
 
+    /**
+     * Create a new constructor that may be called using new or as a function, and exhibits
+     * different behavior for each.
+     */
+    public LambdaConstructor(
+            Scriptable scope,
+            String name,
+            int length,
+            Callable target,
+            Constructable targetConstructor) {
+        super(scope, name, length, target);
+        this.targetConstructor = targetConstructor;
+        this.flags = CONSTRUCTOR_DEFAULT;
+    }
+
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
-        return targetConstructor.construct(cx, scope, args);
+        if (target == null) {
+            return targetConstructor.construct(cx, scope, args);
+        }
+        return target.call(cx, scope, thisObj, args);
     }
 
     @Override
@@ -118,6 +139,25 @@ public class LambdaConstructor extends LambdaFunction {
     public void definePrototypeProperty(Symbol key, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(key, value, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx,
+            String name,
+            java.util.function.Function<Scriptable, Object> getter,
+            int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, name, getter, null, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx,
+            String name,
+            Function<Scriptable, Object> getter,
+            BiConsumer<Scriptable, Object> setter,
+            int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, name, getter, setter, attributes);
     }
 
     /**

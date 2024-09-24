@@ -311,6 +311,7 @@ class JavaMembers {
         return map.values().toArray(new Method[0]);
     }
 
+    @SuppressWarnings("deprecation")
     private void discoverAccessibleMethods(
             Class<?> clazz,
             Map<MethodSignature, Method> map,
@@ -327,9 +328,17 @@ class JavaMembers {
 
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
-                                    if (!map.containsKey(sig)) {
-                                        if (includePrivate) method.trySetAccessible();
-                                        map.put(sig, method);
+                                    // We don't want to replace the deprecated method here
+                                    // because it is not available on Android.
+                                    if (includePrivate && !method.isAccessible()) {
+                                        map.computeIfAbsent(
+                                                sig,
+                                                k -> {
+                                                    method.setAccessible(true);
+                                                    return method;
+                                                });
+                                    } else {
+                                        map.putIfAbsent(sig, method);
                                     }
                                 }
                             }
@@ -346,7 +355,7 @@ class JavaMembers {
                             Method[] methods = clazz.getMethods();
                             for (Method method : methods) {
                                 MethodSignature sig = new MethodSignature(method);
-                                if (!map.containsKey(sig)) map.put(sig, method);
+                                map.putIfAbsent(sig, method);
                             }
                             break; // getMethods gets superclass methods, no
                             // need to loop any more
@@ -387,9 +396,7 @@ class JavaMembers {
     static void registerMethod(Map<MethodSignature, Method> map, Method method) {
         MethodSignature sig = new MethodSignature(method);
         // Array may contain methods with same signature but different return value!
-        if (!map.containsKey(sig)) {
-            map.put(sig, method);
-        }
+        map.putIfAbsent(sig, method);
     }
 
     static final class MethodSignature {
@@ -595,23 +602,21 @@ class JavaMembers {
                     NativeJavaMethod setters = null;
                     String setterName = "set".concat(nameComponent);
 
-                    if (ht.containsKey(setterName)) {
-                        // Is this value a method?
-                        Object member = ht.get(setterName);
-                        if (member instanceof NativeJavaMethod) {
-                            NativeJavaMethod njmSet = (NativeJavaMethod) member;
-                            if (getter != null) {
-                                // We have a getter. Now, do we have a matching
-                                // setter?
-                                Class<?> type = getter.method().getReturnType();
-                                setter = extractSetMethod(type, njmSet.methods, isStatic);
-                            } else {
-                                // No getter, find any set method
-                                setter = extractSetMethod(njmSet.methods, isStatic);
-                            }
-                            if (njmSet.methods.length > 1) {
-                                setters = njmSet;
-                            }
+                    // Is this value a method?
+                    Object member = ht.get(setterName);
+                    if (member instanceof NativeJavaMethod) {
+                        NativeJavaMethod njmSet = (NativeJavaMethod) member;
+                        if (getter != null) {
+                            // We have a getter. Now, do we have a matching
+                            // setter?
+                            Class<?> type = getter.method().getReturnType();
+                            setter = extractSetMethod(type, njmSet.methods, isStatic);
+                        } else {
+                            // No getter, find any set method
+                            setter = extractSetMethod(njmSet.methods, isStatic);
+                        }
+                        if (njmSet.methods.length > 1) {
+                            setters = njmSet;
                         }
                     }
                     // Make the property.
@@ -654,6 +659,7 @@ class JavaMembers {
         return cl.getConstructors();
     }
 
+    @SuppressWarnings("deprecation")
     private Field[] getAccessibleFields(boolean includeProtected, boolean includePrivate) {
         if (includePrivate || includeProtected) {
             try {
@@ -667,7 +673,7 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            field.trySetAccessible();
+                            if (!field.isAccessible()) field.setAccessible(true);
                             fieldsList.add(field);
                         }
                     }
@@ -687,13 +693,11 @@ class JavaMembers {
     private static MemberBox findGetter(
             boolean isStatic, Map<String, Object> ht, String prefix, String propertyName) {
         String getterName = prefix.concat(propertyName);
-        if (ht.containsKey(getterName)) {
-            // Check that the getter is a method.
-            Object member = ht.get(getterName);
-            if (member instanceof NativeJavaMethod) {
-                NativeJavaMethod njmGet = (NativeJavaMethod) member;
-                return extractGetMethod(njmGet.methods, isStatic);
-            }
+        // Check that the getter is a method.
+        Object member = ht.get(getterName);
+        if (member instanceof NativeJavaMethod) {
+            NativeJavaMethod njmGet = (NativeJavaMethod) member;
+            return extractGetMethod(njmGet.methods, isStatic);
         }
         return null;
     }
