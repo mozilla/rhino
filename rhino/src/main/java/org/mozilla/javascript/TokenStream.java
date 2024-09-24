@@ -642,7 +642,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return hitEOF;
     }
 
-    final int getToken() throws IOException {
+    final Token getToken() throws IOException {
         int c;
 
         for (; ; ) {
@@ -1609,7 +1609,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return c;
     }
 
-    int readTemplateLiteral(boolean isTaggedLiteral) throws IOException {
+    Token readTemplateLiteral(boolean isTaggedLiteral) throws IOException {
         rawString.setLength(0);
         stringBufferTop = 0;
         boolean hasInvalidEscapeSequences = false;

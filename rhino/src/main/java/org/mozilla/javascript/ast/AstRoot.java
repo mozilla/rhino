@@ -131,7 +131,7 @@ public class AstRoot extends ScriptNode {
                 new NodeVisitor() {
                     @Override
                     public boolean visit(AstNode node) {
-                        int type = node.getType();
+                        Token type = node.getType();
                         if (type == Token.SCRIPT) return true;
                         if (node.getParent() == null)
                             throw new IllegalStateException(

@@ -8,7 +8,7 @@ package org.mozilla.javascript.ast;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Kit;
@@ -69,7 +69,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * and so on
      */
     protected AstNode inlineComment;
-    private static Map<Integer, String> operatorNames = new HashMap<>();
+    private static Map<Token, String> operatorNames = new EnumMap<>(Token.class);
 
     private static final int MAX_INDENT = 42;
     private static final String[] INDENTATIONS = new String[MAX_INDENT + 1];
@@ -359,76 +359,76 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     @Override
     public boolean hasSideEffects() {
         switch (getType()) {
-            case Token.ASSIGN:
-            case Token.ASSIGN_ADD:
-            case Token.ASSIGN_BITAND:
-            case Token.ASSIGN_LOGICAL_AND:
-            case Token.ASSIGN_BITOR:
-            case Token.ASSIGN_LOGICAL_OR:
-            case Token.ASSIGN_BITXOR:
-            case Token.ASSIGN_DIV:
-            case Token.ASSIGN_LSH:
-            case Token.ASSIGN_MOD:
-            case Token.ASSIGN_MUL:
-            case Token.ASSIGN_RSH:
-            case Token.ASSIGN_SUB:
-            case Token.ASSIGN_URSH:
-            case Token.BLOCK:
-            case Token.BREAK:
-            case Token.CALL:
-            case Token.CATCH:
-            case Token.CATCH_SCOPE:
-            case Token.CONST:
-            case Token.CONTINUE:
-            case Token.DEC:
-            case Token.DELPROP:
-            case Token.DEL_REF:
-            case Token.DO:
-            case Token.ELSE:
-            case Token.ENTERWITH:
-            case Token.ERROR: // Avoid cascaded error messages
-            case Token.EXPORT:
-            case Token.EXPR_RESULT:
-            case Token.FINALLY:
-            case Token.FUNCTION:
-            case Token.FOR:
-            case Token.GOTO:
-            case Token.IF:
-            case Token.IFEQ:
-            case Token.IFNE:
-            case Token.IMPORT:
-            case Token.INC:
-            case Token.JSR:
-            case Token.LABEL:
-            case Token.LEAVEWITH:
-            case Token.LET:
-            case Token.LETEXPR:
-            case Token.LOCAL_BLOCK:
-            case Token.LOOP:
-            case Token.NEW:
-            case Token.REF_CALL:
-            case Token.RETHROW:
-            case Token.RETURN:
-            case Token.RETURN_RESULT:
-            case Token.SEMI:
-            case Token.SETELEM:
-            case Token.SETELEM_OP:
-            case Token.SETNAME:
-            case Token.SETPROP:
-            case Token.SETPROP_OP:
-            case Token.SETVAR:
-            case Token.SET_REF:
-            case Token.SET_REF_OP:
-            case Token.SWITCH:
-            case Token.TARGET:
-            case Token.THROW:
-            case Token.TRY:
-            case Token.VAR:
-            case Token.WHILE:
-            case Token.WITH:
-            case Token.WITHEXPR:
-            case Token.YIELD:
-            case Token.YIELD_STAR:
+            case ASSIGN:
+            case ASSIGN_ADD:
+            case ASSIGN_BITAND:
+            case ASSIGN_LOGICAL_AND:
+            case ASSIGN_BITOR:
+            case ASSIGN_LOGICAL_OR:
+            case ASSIGN_BITXOR:
+            case ASSIGN_DIV:
+            case ASSIGN_LSH:
+            case ASSIGN_MOD:
+            case ASSIGN_MUL:
+            case ASSIGN_RSH:
+            case ASSIGN_SUB:
+            case ASSIGN_URSH:
+            case BLOCK:
+            case BREAK:
+            case CALL:
+            case CATCH:
+            case CATCH_SCOPE:
+            case CONST:
+            case CONTINUE:
+            case DEC:
+            case DELPROP:
+            case DEL_REF:
+            case DO:
+            case ELSE:
+            case ENTERWITH:
+            case ERROR: // Avoid cascaded error messages
+            case EXPORT:
+            case EXPR_RESULT:
+            case FINALLY:
+            case FUNCTION:
+            case FOR:
+            case GOTO:
+            case IF:
+            case IFEQ:
+            case IFNE:
+            case IMPORT:
+            case INC:
+            case JSR:
+            case LABEL:
+            case LEAVEWITH:
+            case LET:
+            case LETEXPR:
+            case LOCAL_BLOCK:
+            case LOOP:
+            case NEW:
+            case REF_CALL:
+            case RETHROW:
+            case RETURN:
+            case RETURN_RESULT:
+            case SEMI:
+            case SETELEM:
+            case SETELEM_OP:
+            case SETNAME:
+            case SETPROP:
+            case SETPROP_OP:
+            case SETVAR:
+            case SET_REF:
+            case SET_REF_OP:
+            case SWITCH:
+            case TARGET:
+            case THROW:
+            case TRY:
+            case VAR:
+            case WHILE:
+            case WITH:
+            case WITHEXPR:
+            case YIELD:
+            case YIELD_STAR:
                 return true;
 
             default:
@@ -569,7 +569,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 
         @Override
         public boolean visit(AstNode node) {
-            int tt = node.getType();
+            Token tt = node.getType();
             String name = Token.typeToName(tt);
             buffer.append(node.getAbsolutePosition()).append("\t");
             buffer.append(makeIndent(node.depth()));

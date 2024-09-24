@@ -25,21 +25,21 @@ public class Jump extends AstNode {
         type = Token.ERROR;
     }
 
-    public Jump(int nodeType) {
+    public Jump(Token nodeType) {
         type = nodeType;
     }
 
-    public Jump(int type, int lineno) {
+    public Jump(Token type, int lineno) {
         this(type);
         setLineno(lineno);
     }
 
-    public Jump(int type, Node child) {
+    public Jump(Token type, Node child) {
         this(type);
         addChildToBack(child);
     }
 
-    public Jump(int type, Node child, int lineno) {
+    public Jump(Token type, Node child, int lineno) {
         this(type, child);
         setLineno(lineno);
     }

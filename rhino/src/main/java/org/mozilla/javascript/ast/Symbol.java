@@ -14,7 +14,7 @@ public class Symbol {
 
     // One of Token.FUNCTION, Token.LP (for parameters), Token.VAR,
     // Token.LET, or Token.CONST
-    private int declType;
+    private Token declType;
     private int index = -1;
     private String name;
     private Node node;
@@ -28,18 +28,18 @@ public class Symbol {
      * @param declType {@link Token#FUNCTION}, {@link Token#LP} (for params), {@link Token#VAR},
      *     {@link Token#LET} or {@link Token#CONST}
      */
-    public Symbol(int declType, String name) {
+    public Symbol(Token declType, String name) {
         setName(name);
         setDeclType(declType);
     }
 
     /** Returns symbol declaration type */
-    public int getDeclType() {
+    public Token getDeclType() {
         return declType;
     }
 
     /** Sets symbol declaration type */
-    public void setDeclType(int declType) {
+    public void setDeclType(Token declType) {
         if (!(declType == Token.FUNCTION
                 || declType == Token.LP
                 || declType == Token.VAR

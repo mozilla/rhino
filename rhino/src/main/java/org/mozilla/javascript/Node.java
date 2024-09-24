@@ -90,17 +90,17 @@ public class Node implements Iterable<Node> {
         Object objectValue;
     }
 
-    public Node(int nodeType) {
+    public Node(Token nodeType) {
         type = nodeType;
     }
 
-    public Node(int nodeType, Node child) {
+    public Node(Token nodeType, Node child) {
         type = nodeType;
         first = last = child;
         child.next = null;
     }
 
-    public Node(int nodeType, Node left, Node right) {
+    public Node(Token nodeType, Node left, Node right) {
         type = nodeType;
         first = left;
         last = right;
@@ -108,7 +108,7 @@ public class Node implements Iterable<Node> {
         right.next = null;
     }
 
-    public Node(int nodeType, Node left, Node mid, Node right) {
+    public Node(Token nodeType, Node left, Node mid, Node right) {
         type = nodeType;
         first = left;
         last = right;
@@ -117,22 +117,22 @@ public class Node implements Iterable<Node> {
         right.next = null;
     }
 
-    public Node(int nodeType, int line) {
+    public Node(Token nodeType, int line) {
         type = nodeType;
         lineno = line;
     }
 
-    public Node(int nodeType, Node child, int line) {
+    public Node(Token nodeType, Node child, int line) {
         this(nodeType, child);
         lineno = line;
     }
 
-    public Node(int nodeType, Node left, Node right, int line) {
+    public Node(Token nodeType, Node left, Node right, int line) {
         this(nodeType, left, right);
         lineno = line;
     }
 
-    public Node(int nodeType, Node left, Node mid, Node right, int line) {
+    public Node(Token nodeType, Node left, Node mid, Node right, int line) {
         this(nodeType, left, mid, right);
         lineno = line;
     }
@@ -147,19 +147,19 @@ public class Node implements Iterable<Node> {
         return newString(Token.STRING, str);
     }
 
-    public static Node newString(int type, String str) {
+    public static Node newString(Token type, String str) {
         Name name = new Name();
         name.setIdentifier(str);
         name.setType(type);
         return name;
     }
 
-    public int getType() {
+    public Token getType() {
         return type;
     }
 
     /** Sets the node type and returns this node. */
-    public Node setType(int type) {
+    public Node setType(Token type) {
         this.type = type;
         return this;
     }
@@ -855,48 +855,48 @@ public class Node implements Iterable<Node> {
      */
     private int endCheck() {
         switch (type) {
-            case Token.BREAK:
+            case BREAK:
                 return endCheckBreak();
 
-            case Token.EXPR_VOID:
+            case EXPR_VOID:
                 if (this.first != null) return first.endCheck();
                 return END_DROPS_OFF;
 
-            case Token.YIELD:
-            case Token.YIELD_STAR:
+            case YIELD:
+            case YIELD_STAR:
                 return END_YIELDS;
 
-            case Token.CONTINUE:
-            case Token.THROW:
+            case CONTINUE:
+            case THROW:
                 return END_UNREACHED;
 
-            case Token.RETURN:
+            case RETURN:
                 if (this.first != null) return END_RETURNS_VALUE;
                 return END_RETURNS;
 
-            case Token.TARGET:
+            case TARGET:
                 if (next != null) return next.endCheck();
                 return END_DROPS_OFF;
 
-            case Token.LOOP:
+            case LOOP:
                 return endCheckLoop();
 
-            case Token.LOCAL_BLOCK:
-            case Token.BLOCK:
+            case LOCAL_BLOCK:
+            case BLOCK:
                 // there are several special kinds of blocks
                 if (first == null) return END_DROPS_OFF;
 
                 switch (first.type) {
-                    case Token.LABEL:
+                    case LABEL:
                         return first.endCheckLabel();
 
-                    case Token.IFNE:
+                    case IFNE:
                         return first.endCheckIf();
 
-                    case Token.SWITCH:
+                    case SWITCH:
                         return first.endCheckSwitch();
 
-                    case Token.TRY:
+                    case TRY:
                         return first.endCheckTry();
 
                     default:
@@ -910,87 +910,87 @@ public class Node implements Iterable<Node> {
 
     public boolean hasSideEffects() {
         switch (type) {
-            case Token.EXPR_VOID:
-            case Token.COMMA:
+            case EXPR_VOID:
+            case COMMA:
                 if (last != null) return last.hasSideEffects();
                 return true;
 
-            case Token.HOOK:
+            case HOOK:
                 if (first == null || first.next == null || first.next.next == null) Kit.codeBug();
                 return first.next.hasSideEffects() && first.next.next.hasSideEffects();
 
-            case Token.AND:
-            case Token.OR:
+            case AND:
+            case OR:
                 if (first == null || last == null) Kit.codeBug();
                 return first.hasSideEffects() || last.hasSideEffects();
 
-            case Token.ERROR: // Avoid cascaded error messages
-            case Token.EXPR_RESULT:
-            case Token.ASSIGN:
-            case Token.ASSIGN_ADD:
-            case Token.ASSIGN_SUB:
-            case Token.ASSIGN_MUL:
-            case Token.ASSIGN_DIV:
-            case Token.ASSIGN_MOD:
-            case Token.ASSIGN_BITOR:
-            case Token.ASSIGN_LOGICAL_OR:
-            case Token.ASSIGN_BITXOR:
-            case Token.ASSIGN_BITAND:
-            case Token.ASSIGN_LOGICAL_AND:
-            case Token.ASSIGN_LSH:
-            case Token.ASSIGN_RSH:
-            case Token.ASSIGN_URSH:
-            case Token.ENTERWITH:
-            case Token.LEAVEWITH:
-            case Token.RETURN:
-            case Token.GOTO:
-            case Token.IFEQ:
-            case Token.IFNE:
-            case Token.NEW:
-            case Token.DELPROP:
-            case Token.SETNAME:
-            case Token.SETPROP:
-            case Token.SETELEM:
-            case Token.CALL:
-            case Token.THROW:
-            case Token.RETHROW:
-            case Token.SETVAR:
-            case Token.CATCH_SCOPE:
-            case Token.RETURN_RESULT:
-            case Token.SET_REF:
-            case Token.DEL_REF:
-            case Token.REF_CALL:
-            case Token.TRY:
-            case Token.SEMI:
-            case Token.INC:
-            case Token.DEC:
-            case Token.IF:
-            case Token.ELSE:
-            case Token.SWITCH:
-            case Token.WHILE:
-            case Token.DO:
-            case Token.FOR:
-            case Token.BREAK:
-            case Token.CONTINUE:
-            case Token.VAR:
-            case Token.CONST:
-            case Token.LET:
-            case Token.LETEXPR:
-            case Token.WITH:
-            case Token.WITHEXPR:
-            case Token.CATCH:
-            case Token.FINALLY:
-            case Token.BLOCK:
-            case Token.LABEL:
-            case Token.TARGET:
-            case Token.LOOP:
-            case Token.JSR:
-            case Token.SETPROP_OP:
-            case Token.SETELEM_OP:
-            case Token.LOCAL_BLOCK:
-            case Token.SET_REF_OP:
-            case Token.YIELD:
-            case Token.YIELD_STAR:
+            case ERROR: // Avoid cascaded error messages
+            case EXPR_RESULT:
+            case ASSIGN:
+            case ASSIGN_ADD:
+            case ASSIGN_SUB:
+            case ASSIGN_MUL:
+            case ASSIGN_DIV:
+            case ASSIGN_MOD:
+            case ASSIGN_BITOR:
+            case ASSIGN_LOGICAL_OR:
+            case ASSIGN_BITXOR:
+            case ASSIGN_BITAND:
+            case ASSIGN_LOGICAL_AND:
+            case ASSIGN_LSH:
+            case ASSIGN_RSH:
+            case ASSIGN_URSH:
+            case ENTERWITH:
+            case LEAVEWITH:
+            case RETURN:
+            case GOTO:
+            case IFEQ:
+            case IFNE:
+            case NEW:
+            case DELPROP:
+            case SETNAME:
+            case SETPROP:
+            case SETELEM:
+            case CALL:
+            case THROW:
+            case RETHROW:
+            case SETVAR:
+            case CATCH_SCOPE:
+            case RETURN_RESULT:
+            case SET_REF:
+            case DEL_REF:
+            case REF_CALL:
+            case TRY:
+            case SEMI:
+            case INC:
+            case DEC:
+            case IF:
+            case ELSE:
+            case SWITCH:
+            case WHILE:
+            case DO:
+            case FOR:
+            case BREAK:
+            case CONTINUE:
+            case VAR:
+            case CONST:
+            case LET:
+            case LETEXPR:
+            case WITH:
+            case WITHEXPR:
+            case CATCH:
+            case FINALLY:
+            case BLOCK:
+            case LABEL:
+            case TARGET:
+            case LOOP:
+            case JSR:
+            case SETPROP_OP:
+            case SETELEM_OP:
+            case LOCAL_BLOCK:
+            case SET_REF_OP:
+            case YIELD:
+            case YIELD_STAR:
                 return true;
 
             default:
@@ -1247,7 +1247,7 @@ public class Node implements Iterable<Node> {
         }
     }
 
-    protected int type = Token.ERROR; // type of the node, e.g. Token.NAME
+    protected Token type = Token.ERROR; // type of the node, e.g. Token.NAME
     protected Node next; // next sibling
     protected Node first; // first element of a linked list of children
     protected Node last; // last element of a linked list of children

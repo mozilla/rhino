@@ -3902,7 +3902,7 @@ public class ScriptRuntime {
         return hasObjectElem((Scriptable) b, a, cx);
     }
 
-    public static boolean compare(Object val1, Object val2, int op) {
+    public static boolean compare(Object val1, Object val2, Token op) {
         assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
 
         if (val1 instanceof Number && val2 instanceof Number) {
@@ -3924,7 +3924,7 @@ public class ScriptRuntime {
         }
     }
 
-    public static boolean compare(Number val1, Number val2, int op) {
+    public static boolean compare(Number val1, Number val2, Token op) {
         assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
 
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
@@ -3965,30 +3965,30 @@ public class ScriptRuntime {
         return compareTo(val1.doubleValue(), val2.doubleValue(), op);
     }
 
-    private static <T> boolean compareTo(Comparable<T> val1, T val2, int op) {
+    private static <T> boolean compareTo(Comparable<T> val1, T val2, Token op) {
         switch (op) {
-            case Token.GE:
+            case GE:
                 return val1.compareTo(val2) >= 0;
-            case Token.LE:
+            case LE:
                 return val1.compareTo(val2) <= 0;
-            case Token.GT:
+            case GT:
                 return val1.compareTo(val2) > 0;
-            case Token.LT:
+            case LT:
                 return val1.compareTo(val2) < 0;
             default:
                 throw Kit.codeBug();
         }
     }
 
-    private static boolean compareTo(double d1, double d2, int op) {
+    private static boolean compareTo(double d1, double d2, Token op) {
         switch (op) {
-            case Token.GE:
+            case GE:
                 return d1 >= d2;
-            case Token.LE:
+            case LE:
                 return d1 <= d2;
-            case Token.GT:
+            case GT:
                 return d1 > d2;
-            case Token.LT:
+            case LT:
                 return d1 < d2;
             default:
                 throw Kit.codeBug();

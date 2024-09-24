@@ -15,7 +15,206 @@ package org.mozilla.javascript;
  * @author Mike McCabe
  * @author Brendan Eich
  */
-public class Token {
+public enum Token {
+    ERROR, // well-known as the only code < EOF
+    EOF, // end of file token - (not EOF_CHAR)
+    EOL, // end of line
+    // Interpreter reuses the following as bytecodes
+
+    ENTERWITH,
+    LEAVEWITH,
+    RETURN,
+    GOTO,
+    IFEQ,
+    IFNE,
+    SETNAME,
+    BITOR,
+    BITXOR,
+    BITAND,
+    EQ,
+    NE,
+    LT,
+    LE,
+    GT,
+    GE,
+    LSH,
+    RSH,
+    URSH,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
+    NOT,
+    BITNOT,
+    POS,
+    NEG,
+    NEW,
+    DELPROP,
+    TYPEOF,
+    GETPROP,
+    GETPROPNOWARN,
+    SETPROP,
+    GETELEM,
+    SETELEM,
+    CALL,
+    NAME,
+    NUMBER,
+    STRING,
+    NULL,
+    THIS,
+    FALSE,
+    TRUE,
+    SHEQ, // shallow equality (===)
+    SHNE, // shallow inequality (!==)
+    REGEXP,
+    BINDNAME,
+    THROW,
+    RETHROW, // rethrow caught exception: catch (e if ) use it
+    IN,
+    INSTANCEOF,
+    LOCAL_LOAD,
+    GETVAR,
+    SETVAR,
+    CATCH_SCOPE,
+    ENUM_INIT_KEYS,
+    ENUM_INIT_VALUES,
+    ENUM_INIT_ARRAY,
+    ENUM_INIT_VALUES_IN_ORDER,
+    ENUM_NEXT,
+    ENUM_ID,
+    THISFN,
+    RETURN_RESULT, // to return previously stored return result
+    ARRAYLIT, // array literal
+    OBJECTLIT, // object literal
+    GET_REF, // *reference
+    SET_REF, // *reference    = something
+    DEL_REF, // delete reference
+    REF_CALL, // f(args)    = something or f(args)++
+    REF_SPECIAL, // reference for special properties like __proto
+    YIELD, // JS 1.7 yield pseudo keyword
+    STRICT_SETNAME,
+    EXP, // Exponentiation Operator
+
+    // For XML support:
+    DEFAULTNAMESPACE, // default xml namespace =
+    ESCXMLATTR,
+    ESCXMLTEXT,
+    REF_MEMBER, // Reference for x.@y, x..y etc.
+    REF_NS_MEMBER, // Reference for x.ns::y, x..ns::y etc.
+    REF_NAME, // Reference for @y, @[y] etc.
+    REF_NS_NAME, // Reference for ns::y, @ns::y@[y] etc.
+    BIGINT, // ES2020 BigInt
+
+    // End of interpreter bytecodes
+    TRY,
+    SEMI, // semicolon
+    LB, // left and right brackets
+    RB,
+    LC, // left and right curlies (braces)
+    RC,
+    LP, // left and right parentheses
+    RP,
+    COMMA, // comma operator
+
+    ASSIGN, // simple assignment  (=)
+    ASSIGN_BITOR, // |=
+    ASSIGN_LOGICAL_OR, // ||=
+    ASSIGN_BITXOR, // ^=
+    ASSIGN_BITAND, // |=
+    ASSIGN_LOGICAL_AND, // &&=
+    ASSIGN_LSH, // <<=
+    ASSIGN_RSH, // >>=
+    ASSIGN_URSH, // >>>=
+    ASSIGN_ADD, // +=
+    ASSIGN_SUB, // -=
+    ASSIGN_MUL, // *=
+    ASSIGN_DIV, // /=
+    ASSIGN_MOD, // %=
+    ASSIGN_EXP, // **=
+
+    HOOK, // conditional (?:)
+    COLON,
+    OR, // logical or (||)
+    AND, // logical and (&&)
+    INC, // increment/decrement (++ --)
+    DEC,
+    DOT, // member operator (.)
+    FUNCTION, // function keyword
+    EXPORT, // export keyword
+    IMPORT, // import keyword
+    IF, // if keyword
+    ELSE, // else keyword
+    SWITCH, // switch keyword
+    CASE, // case keyword
+    DEFAULT, // default keyword
+    WHILE, // while keyword
+    DO, // do keyword
+    FOR, // for keyword
+    BREAK, // break keyword
+    CONTINUE, // continue keyword
+    VAR, // var keyword
+    WITH, // with keyword
+    CATCH, // catch keyword
+    FINALLY, // finally keyword
+    VOID, // void keyword
+    RESERVED, // reserved keywords
+    EMPTY,
+    COMPUTED_PROPERTY, // computed property in object initializer [x]
+
+    /* types used for the parse tree - these never get returned
+     * by the scanner.
+     */
+
+    BLOCK, // statement block
+    LABEL, // label
+    TARGET,
+    LOOP,
+    EXPR_VOID, // expression statement in functions
+    EXPR_RESULT, // expression statement in scripts
+    JSR,
+    SCRIPT, // top-level node for entire script
+    TYPEOFNAME, // for typeof(simple-name)
+    USE_STACK,
+    SETPROP_OP, // x.y op= something
+    SETELEM_OP, // x[y] op= something
+    LOCAL_BLOCK,
+    SET_REF_OP, // *reference op= something
+
+    // For XML support:
+    DOTDOT, // member operator (..)
+    COLONCOLON, // namespace::name
+    XML, // XML type
+    DOTQUERY, // .() -- e.g., x.emps.emp.(name == "terry")
+    XMLATTR, // @
+    XMLEND,
+
+    // Optimizer-only-tokens
+    TO_OBJECT,
+    TO_DOUBLE,
+    GET, // JS 1.5 get pseudo keyword
+    SET, // JS 1.5 set pseudo keyword
+    LET, // JS 1.7 let pseudo keyword
+    CONST,
+    SETCONST,
+    SETCONSTVAR,
+    ARRAYCOMP, // array comprehension
+    LETEXPR,
+    WITHEXPR,
+    DEBUGGER,
+    COMMENT,
+    GENEXPR,
+    METHOD, // ES6 MethodDefinition
+    ARROW, // ES6 ArrowFunction
+    YIELD_STAR, // ES6 "yield *", a specialization of yield
+    TEMPLATE_LITERAL, // template literal
+    TEMPLATE_CHARS, // template literal - literal section
+    TEMPLATE_LITERAL_SUBST, // template literal - substitution
+    TAGGED_TEMPLATE_LITERAL, // template literal - tagged/handler
+    DOTDOTDOT, // spread/rest ...
+    NULLISH_COALESCING,
+    ;
+
     public static enum CommentType {
         LINE,
         BLOCK_COMMENT,
@@ -28,216 +227,17 @@ public class Token {
     static final boolean printICode = false;
     static final boolean printNames = printTrees || printICode;
 
-    /** Token types. These values correspond to JSTokenType values in jsscan.c. */
-    public static final int
-            // start enum
-            ERROR = -1, // well-known as the only code < EOF
-            EOF = 0, // end of file token - (not EOF_CHAR)
-            EOL = 1, // end of line
-
-            // Interpreter reuses the following as bytecodes
-            FIRST_BYTECODE_TOKEN = 2,
-            ENTERWITH = 2,
-            LEAVEWITH = 3,
-            RETURN = 4,
-            GOTO = 5,
-            IFEQ = 6,
-            IFNE = 7,
-            SETNAME = 8,
-            BITOR = 9,
-            BITXOR = 10,
-            BITAND = 11,
-            EQ = 12,
-            NE = 13,
-            LT = 14,
-            LE = 15,
-            GT = 16,
-            GE = 17,
-            LSH = 18,
-            RSH = 19,
-            URSH = 20,
-            ADD = 21,
-            SUB = 22,
-            MUL = 23,
-            DIV = 24,
-            MOD = 25,
-            NOT = 26,
-            BITNOT = 27,
-            POS = 28,
-            NEG = 29,
-            NEW = 30,
-            DELPROP = 31,
-            TYPEOF = 32,
-            GETPROP = 33,
-            GETPROPNOWARN = 34,
-            SETPROP = 35,
-            GETELEM = 36,
-            SETELEM = 37,
-            CALL = 38,
-            NAME = 39,
-            NUMBER = 40,
-            STRING = 41,
-            NULL = 42,
-            THIS = 43,
-            FALSE = 44,
-            TRUE = 45,
-            SHEQ = 46, // shallow equality (===)
-            SHNE = 47, // shallow inequality (!==)
-            REGEXP = 48,
-            BINDNAME = 49,
-            THROW = 50,
-            RETHROW = 51, // rethrow caught exception: catch (e if ) use it
-            IN = 52,
-            INSTANCEOF = 53,
-            LOCAL_LOAD = 54,
-            GETVAR = 55,
-            SETVAR = 56,
-            CATCH_SCOPE = 57,
-            ENUM_INIT_KEYS = 58,
-            ENUM_INIT_VALUES = 59,
-            ENUM_INIT_ARRAY = 60,
-            ENUM_INIT_VALUES_IN_ORDER = 61,
-            ENUM_NEXT = 62,
-            ENUM_ID = 63,
-            THISFN = 64,
-            RETURN_RESULT = 65, // to return previously stored return result
-            ARRAYLIT = 66, // array literal
-            OBJECTLIT = 67, // object literal
-            GET_REF = 68, // *reference
-            SET_REF = 69, // *reference    = something
-            DEL_REF = 70, // delete reference
-            REF_CALL = 71, // f(args)    = something or f(args)++
-            REF_SPECIAL = 72, // reference for special properties like __proto
-            YIELD = 73, // JS 1.7 yield pseudo keyword
-            STRICT_SETNAME = 74,
-            EXP = 75, // Exponentiation Operator
-
-            // For XML support:
-            DEFAULTNAMESPACE = 76, // default xml namespace =
-            ESCXMLATTR = 77,
-            ESCXMLTEXT = 78,
-            REF_MEMBER = 79, // Reference for x.@y, x..y etc.
-            REF_NS_MEMBER = 80, // Reference for x.ns::y, x..ns::y etc.
-            REF_NAME = 81, // Reference for @y, @[y] etc.
-            REF_NS_NAME = 82, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = 83; // ES2020 BigInt
-
-    // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
-            TRY = 84,
-            SEMI = 85, // semicolon
-            LB = 86, // left and right brackets
-            RB = 87,
-            LC = 88, // left and right curlies (braces)
-            RC = 89,
-            LP = 90, // left and right parentheses
-            RP = 91,
-            COMMA = 92, // comma operator
-            ASSIGN = 93, // simple assignment  (=)
-            ASSIGN_BITOR = 94, // |=
-            ASSIGN_LOGICAL_OR = 95, // ||=
-            ASSIGN_BITXOR = 96, // ^=
-            ASSIGN_BITAND = 97, // |=
-            ASSIGN_LOGICAL_AND = 98, // &&=
-            ASSIGN_LSH = 99, // <<=
-            ASSIGN_RSH = 100, // >>=
-            ASSIGN_URSH = 101, // >>>=
-            ASSIGN_ADD = 102, // +=
-            ASSIGN_SUB = 103, // -=
-            ASSIGN_MUL = 104, // *=
-            ASSIGN_DIV = 105, // /=
-            ASSIGN_MOD = 106, // %=
-            ASSIGN_EXP = 107; // **=
-    public static final int FIRST_ASSIGN = ASSIGN,
-            LAST_ASSIGN = ASSIGN_EXP,
-            HOOK = 108, // conditional (?:)
-            COLON = 109,
-            OR = 110, // logical or (||)
-            AND = 111, // logical and (&&)
-            INC = 112, // increment/decrement (++ --)
-            DEC = 113,
-            DOT = 114, // member operator (.)
-            FUNCTION = 115, // function keyword
-            EXPORT = 116, // export keyword
-            IMPORT = 117, // import keyword
-            IF = 118, // if keyword
-            ELSE = 119, // else keyword
-            SWITCH = 120, // switch keyword
-            CASE = 121, // case keyword
-            DEFAULT = 122, // default keyword
-            WHILE = 123, // while keyword
-            DO = 124, // do keyword
-            FOR = 125, // for keyword
-            BREAK = 126, // break keyword
-            CONTINUE = 127, // continue keyword
-            VAR = 128, // var keyword
-            WITH = 129, // with keyword
-            CATCH = 130, // catch keyword
-            FINALLY = 131, // finally keyword
-            VOID = 132, // void keyword
-            RESERVED = 133, // reserved keywords
-            EMPTY = 134,
-            COMPUTED_PROPERTY = 135, // computed property in object initializer [x]
-
-            /* types used for the parse tree - these never get returned
-             * by the scanner.
-             */
-
-            BLOCK = 136, // statement block
-            LABEL = 137, // label
-            TARGET = 138,
-            LOOP = 139,
-            EXPR_VOID = 140, // expression statement in functions
-            EXPR_RESULT = 141, // expression statement in scripts
-            JSR = 142,
-            SCRIPT = 143, // top-level node for entire script
-            TYPEOFNAME = 144, // for typeof(simple-name)
-            USE_STACK = 145,
-            SETPROP_OP = 146, // x.y op= something
-            SETELEM_OP = 147, // x[y] op= something
-            LOCAL_BLOCK = 148,
-            SET_REF_OP = 149, // *reference op= something
-
-            // For XML support:
-            DOTDOT = 150, // member operator (..)
-            COLONCOLON = 151, // namespace::name
-            XML = 152, // XML type
-            DOTQUERY = 153, // .() -- e.g., x.emps.emp.(name == "terry")
-            XMLATTR = 154, // @
-            XMLEND = 155,
-
-            // Optimizer-only-tokens
-            TO_OBJECT = 156,
-            TO_DOUBLE = 157,
-            GET = 158, // JS 1.5 get pseudo keyword
-            SET = 159, // JS 1.5 set pseudo keyword
-            LET = 160, // JS 1.7 let pseudo keyword
-            CONST = 161,
-            SETCONST = 162,
-            SETCONSTVAR = 163,
-            ARRAYCOMP = 164, // array comprehension
-            LETEXPR = 165,
-            WITHEXPR = 166,
-            DEBUGGER = 167,
-            COMMENT = 168,
-            GENEXPR = 169,
-            METHOD = 170, // ES6 MethodDefinition
-            ARROW = 171, // ES6 ArrowFunction
-            YIELD_STAR = 172, // ES6 "yield *", a specialization of yield
-            TEMPLATE_LITERAL = 173, // template literal
-            TEMPLATE_CHARS = 174, // template literal - literal section
-            TEMPLATE_LITERAL_SUBST = 175, // template literal - substitution
-            TAGGED_TEMPLATE_LITERAL = 176, // template literal - tagged/handler
-            DOTDOTDOT = 177, // spread/rest ...
-            NULLISH_COALESCING = 178, // nullish coalescing (??)
-            LAST_TOKEN = 178;
+    static Token FIRST_BYTECODE_TOKEN = ENTERWITH;
+    static Token LAST_BYTECODE_TOKEN = BIGINT;
+    public static final Token FIRST_ASSIGN = ASSIGN;
+    public static final Token LAST_ASSIGN = ASSIGN_EXP;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
      * this file, it calls {@code #typeToName}; otherwise it returns a string whose value is the
      * token number.
      */
-    public static String name(int token) {
+    public static String name(Token token) {
         if (!printNames) {
             return String.valueOf(token);
         }
@@ -251,7 +251,7 @@ public class Token {
      * @param token the token code
      * @return the actual name for the token code
      */
-    public static String typeToName(int token) {
+    public static String typeToName(Token token) {
         switch (token) {
             case ERROR:
                 return "ERROR";
@@ -622,71 +622,71 @@ public class Token {
      * @param token A token
      * @return the corresponding name string
      */
-    public static String keywordToName(int token) {
+    public static String keywordToName(Token token) {
         switch (token) {
-            case Token.BREAK:
+            case BREAK:
                 return "break";
-            case Token.CASE:
+            case CASE:
                 return "case";
-            case Token.CONTINUE:
+            case CONTINUE:
                 return "continue";
-            case Token.DEFAULT:
+            case DEFAULT:
                 return "default";
-            case Token.DELPROP:
+            case DELPROP:
                 return "delete";
-            case Token.DO:
+            case DO:
                 return "do";
-            case Token.ELSE:
+            case ELSE:
                 return "else";
-            case Token.FALSE:
+            case FALSE:
                 return "false";
-            case Token.FOR:
+            case FOR:
                 return "for";
-            case Token.FUNCTION:
+            case FUNCTION:
                 return "function";
-            case Token.IF:
+            case IF:
                 return "if";
-            case Token.IN:
+            case IN:
                 return "in";
-            case Token.LET:
+            case LET:
                 return "let";
-            case Token.NEW:
+            case NEW:
                 return "new";
-            case Token.NULL:
+            case NULL:
                 return "null";
-            case Token.RETURN:
+            case RETURN:
                 return "return";
-            case Token.SWITCH:
+            case SWITCH:
                 return "switch";
-            case Token.THIS:
+            case THIS:
                 return "this";
-            case Token.TRUE:
+            case TRUE:
                 return "true";
-            case Token.TYPEOF:
+            case TYPEOF:
                 return "typeof";
-            case Token.VAR:
+            case VAR:
                 return "var";
-            case Token.VOID:
+            case VOID:
                 return "void";
-            case Token.WHILE:
+            case WHILE:
                 return "while";
-            case Token.WITH:
+            case WITH:
                 return "with";
-            case Token.YIELD:
+            case YIELD:
                 return "yield";
-            case Token.CATCH:
+            case CATCH:
                 return "catch";
-            case Token.CONST:
+            case CONST:
                 return "const";
-            case Token.DEBUGGER:
+            case DEBUGGER:
                 return "debugger";
-            case Token.FINALLY:
+            case FINALLY:
                 return "finally";
-            case Token.INSTANCEOF:
+            case INSTANCEOF:
                 return "instanceof";
-            case Token.THROW:
+            case THROW:
                 return "throw";
-            case Token.TRY:
+            case TRY:
                 return "try";
             default:
                 return null;
@@ -699,7 +699,7 @@ public class Token {
      * @param code a potential token code
      * @return true if it's a known token
      */
-    public static boolean isValidToken(int code) {
-        return code >= ERROR && code <= LAST_TOKEN;
+    public static boolean isValidToken(Token code) {
+        return code.ordinal() >= ERROR.ordinal();
     }
 }

@@ -146,7 +146,7 @@ abstract class Icode {
             // Last icode
             MIN_ICODE = -76;
 
-    static String bytecodeName(int bytecode) {
+    static String bytecodeName(Token bytecode) {
         if (!validBytecode(bytecode)) {
             throw new IllegalArgumentException(String.valueOf(bytecode));
         }
@@ -316,7 +316,7 @@ abstract class Icode {
         throw new IllegalStateException(String.valueOf(bytecode));
     }
 
-    static boolean validIcode(int icode) {
+    static boolean validIcode(Token icode) {
         return MIN_ICODE <= icode && icode <= 0;
     }
 
@@ -324,7 +324,7 @@ abstract class Icode {
         return Token.FIRST_BYTECODE_TOKEN <= token && token <= Token.LAST_BYTECODE_TOKEN;
     }
 
-    static boolean validBytecode(int bytecode) {
+    static boolean validBytecode(Token bytecode) {
         return validIcode(bytecode) || validTokenCode(bytecode);
     }
 }
