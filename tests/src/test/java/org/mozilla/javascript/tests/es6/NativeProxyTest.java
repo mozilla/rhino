@@ -895,4 +895,30 @@ public class NativeProxyTest {
                 "var rev = Proxy.revocable({}, {}); rev.revoke(); "
                         + "try { Object.getPrototypeOf(rev.proxy); } catch(e) { '' + e }");
     }
+
+    @Test
+    public void keysFailsWithOwnKeysOverwritten() {
+        String js =
+                "var target = {};\n"
+                    + "Object.defineProperty(target, 'prop', {\n"
+                    + "  value: 1,\n"
+                    + "  writable: true,\n"
+                    + "  enumerable: false,\n"
+                    + "  configurable: false,\n"
+                    + "});\n"
+
+                    + "var proxy = new Proxy(target, {\n"
+                    + "  ownKeys: function() {\n"
+                    + "    return [];\n"
+                    + "  },\n"
+                    + "});\n"
+
+                    + "try {"
+                    + "  Object.keys(proxy);\n"
+                    + "} catch(e) {\n"
+                    + "  '' + e;\n"
+                    + "}";
+
+        Utils.assertWithAllOptimizationLevelsES6("TypeError: proxy can't skip a non-configurable property '\"prop\"'", js);
+    }
 }
