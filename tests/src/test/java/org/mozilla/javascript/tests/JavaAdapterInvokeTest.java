@@ -117,7 +117,7 @@ public class JavaAdapterInvokeTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
-                    Number result = (Number)  cx.evaluateString(scope, testCode, "", 1, null);
+                    Number result = (Number) cx.evaluateString(scope, testCode, "", 1, null);
                     Assert.assertEquals(2, result.intValue());
                     return null;
                 });
