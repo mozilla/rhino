@@ -10,5 +10,10 @@ public enum RhinoOperation implements Operation {
     BIND,
     GETNOWARN,
     GETWITHTHIS,
+    GETELEMENT,
+    GETINDEX,
     SETSTRICT,
+    SETCONST,
+    SETELEMENT,
+    SETINDEX,
 }

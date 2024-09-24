@@ -88,21 +88,25 @@ class DefaultLinker implements GuardingDynamicLinker {
         // Put the property name back in the right place in the parameter list
         // so that we can invoke the operation normally.
         if (StandardOperation.GET.equals(op)) {
-            tt = mType.insertParameterTypes(1, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getObjectProp", tt);
-            mh = MethodHandles.insertArguments(mh, 1, name);
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "getObjectProp", 1, name);
         } else if (RhinoOperation.GETNOWARN.equals(op)) {
-            tt = mType.insertParameterTypes(1, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getObjectPropNoWarn", tt);
-            mh = MethodHandles.insertArguments(mh, 1, name);
+            mh =
+                    bindStringParameter(
+                            lookup, mType, ScriptRuntime.class, "getObjectPropNoWarn", 1, name);
         } else if (RhinoOperation.GETWITHTHIS.equals(op)) {
-            tt = mType.insertParameterTypes(1, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getPropFunctionAndThis", tt);
-            mh = MethodHandles.insertArguments(mh, 1, name);
+            mh =
+                    bindStringParameter(
+                            lookup, mType, ScriptRuntime.class, "getPropFunctionAndThis", 1, name);
         } else if (StandardOperation.SET.equals(op)) {
-            tt = mType.insertParameterTypes(1, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "setObjectProp", tt);
-            mh = MethodHandles.insertArguments(mh, 1, name);
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setObjectProp", 1, name);
+        } else if (RhinoOperation.GETELEMENT.equals(op)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "getObjectElem", mType);
+        } else if (RhinoOperation.GETINDEX.equals(op)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "getObjectIndex", mType);
+        } else if (RhinoOperation.SETELEMENT.equals(op)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "setObjectElem", mType);
+        } else if (RhinoOperation.SETINDEX.equals(op)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "setObjectIndex", mType);
         }
 
         if (mh != null) {
@@ -120,23 +124,24 @@ class DefaultLinker implements GuardingDynamicLinker {
             Operation op,
             String name)
             throws NoSuchMethodException, IllegalAccessException {
-        MethodType tt;
         MethodHandle mh = null;
 
         // Like above for properties, the name to handle is not on the Java stack,
         // but is something that we parsed from the name of the invokedynamic operation.
         if (RhinoOperation.BIND.equals(op)) {
-            tt = mType.insertParameterTypes(2, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "bind", tt);
-            mh = MethodHandles.insertArguments(mh, 2, name);
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "bind", 2, name);
         } else if (StandardOperation.GET.equals(op)) {
-            tt = mType.insertParameterTypes(2, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "name", tt);
-            mh = MethodHandles.insertArguments(mh, 2, name);
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "name", 2, name);
         } else if (RhinoOperation.GETWITHTHIS.equals(op)) {
-            tt = mType.insertParameterTypes(0, String.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThis", tt);
-            mh = MethodHandles.insertArguments(mh, 0, name);
+            mh =
+                    bindStringParameter(
+                            lookup, mType, ScriptRuntime.class, "getNameFunctionAndThis", 0, name);
+        } else if (StandardOperation.SET.equals(op)) {
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setName", 4, name);
+        } else if (RhinoOperation.SETSTRICT.equals(op)) {
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "strictSetName", 4, name);
+        } else if (RhinoOperation.SETCONST.equals(op)) {
+            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setConst", 3, name);
         }
 
         if (mh != null) {
@@ -145,9 +150,8 @@ class DefaultLinker implements GuardingDynamicLinker {
         throw new UnsupportedOperationException(rootOp.toString());
     }
 
-    // If the operation is a named operation, then return the name,
-    // or the empty string if it's not.
-    static String getName(Operation op) {
+    /** If the operation is a named operation, then return the name, */
+    private static String getName(Operation op) {
         Object nameObj = NamedOperation.getName(op);
         if (nameObj instanceof String) {
             return (String) nameObj;
@@ -156,5 +160,28 @@ class DefaultLinker implements GuardingDynamicLinker {
         } else {
             return "";
         }
+    }
+
+    /**
+     * Given a class name and a method name, do the following:
+     *
+     * <ol>
+     *   <li>insert a String parameter into the method type at "index"
+     *   <li>Lookup a named static method from the specified class using the new type
+     *   <li>Bind a string constant to the method handle at "index"
+     *   <li>Return the bound handle
+     * </ol>
+     */
+    private static MethodHandle bindStringParameter(
+            MethodHandles.Lookup lookup,
+            MethodType mt,
+            Class<?> cls,
+            String method,
+            int index,
+            String nameParam)
+            throws NoSuchMethodException, IllegalAccessException {
+        MethodType actualType = mt.insertParameterTypes(index, String.class);
+        MethodHandle mh = lookup.findStatic(cls, method, actualType);
+        return MethodHandles.insertArguments(mh, index, nameParam);
     }
 }
