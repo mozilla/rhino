@@ -379,7 +379,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                 throw ScriptRuntime.typeError("proxy can't skip properties");
             }
 
-            return trapResult.toArray();
+            // target is not extensible, fall back to the target call
         }
 
         return target.getIds(getNonEnumerable, getSymbols);

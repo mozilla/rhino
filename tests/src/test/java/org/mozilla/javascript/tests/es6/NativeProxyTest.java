@@ -70,7 +70,6 @@ public class NativeProxyTest {
                 "try { Proxy() } catch(e) { '' + e }");
     }
 
-    @Test
     public void construct() {
         String js =
                 "var _target, _handler, _args, _P;\n"
@@ -920,5 +919,33 @@ public class NativeProxyTest {
                     + "}";
 
         Utils.assertWithAllOptimizationLevelsES6("TypeError: proxy can't skip a non-configurable property '\"prop\"'", js);
+    }
+
+    @Test
+    public void keysPreventExtensions() {
+        String js =
+                "var target = {};\n"
+                        + "Object.defineProperty(target, 'prop', {\n"
+                        + "  value: 3,\n"
+                        + "  writable: true,\n"
+                        + "  enumerable: false,\n"
+                        + "  configurable: true,\n"
+                        + "});\n"
+
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  ownKeys: function() {\n"
+                        + "    return ['prop'];\n"
+                        + "  },\n"
+                        + "});\n"
+
+                        + "Object.preventExtensions(target);\n"
+
+                        + "try {"
+                        + "  Object.keys(proxy).length === 0;\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
+
+        Utils.assertWithAllOptimizationLevelsES6(true, js);
     }
 }
