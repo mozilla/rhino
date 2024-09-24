@@ -10,7 +10,7 @@ import jdk.dynalink.DynamicLinkerFactory;
 import jdk.dynalink.Operation;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
-import jdk.dynalink.support.SimpleRelinkableCallSite;
+import jdk.dynalink.support.ChainedCallSite;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 
@@ -35,7 +35,7 @@ public class Bootstrapper {
     static {
         // Set up the linkers that will be invoked whenever a call site needs to be resolved.
         DynamicLinkerFactory factory = new DynamicLinkerFactory();
-        factory.setPrioritizedLinkers(new DefaultLinker());
+        factory.setPrioritizedLinkers(new ConstAwareLinker(), new DefaultLinker());
         linker = factory.createLinker();
     }
 
@@ -45,8 +45,7 @@ public class Bootstrapper {
             throws NoSuchMethodException, IllegalAccessException {
         Operation op = parseOperation(name);
         // For now, use a very simple call site.
-        // When we change to add more linkers, we will likely switch to ChainedCallSite.
-        return linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(lookup, op, mType)));
+        return linker.link(new ChainedCallSite(new CallSiteDescriptor(lookup, op, mType)));
     }
 
     /**
