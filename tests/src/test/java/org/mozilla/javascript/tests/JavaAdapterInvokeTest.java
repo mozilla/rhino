@@ -102,6 +102,27 @@ public class JavaAdapterInvokeTest {
                 });
     }
 
+    @Test
+    public void testJavaLangThread() {
+        String testCode =
+                "'use strict'\n"
+                        + "function MyRunnable() { this.myObj = {one: 1} }\n"
+                        + "MyRunnable.prototype.run = function() { this.myObj.one++ }\n"
+                        + "var runnable = new MyRunnable()\n"
+                        + "var thread = new java.lang.Thread(runnable)\n"
+                        + "thread.start()\n"
+                        + "thread.join()\n"
+                        + "runnable.myObj.one"; // we do not ue start here (as we do not catch the error
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    Number result = (Number)  cx.evaluateString(scope, testCode, "", 1, null);
+                    Assert.assertEquals(2, result.intValue());
+                    return null;
+                });
+    }
+
     /** Equivalent javascript code of {@link #testInvokeWithPrototypeAndObjs()} */
     @Test
     public void testInvokeJsOnly() {
