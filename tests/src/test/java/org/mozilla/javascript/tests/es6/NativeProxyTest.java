@@ -899,26 +899,25 @@ public class NativeProxyTest {
     public void keysFailsWithOwnKeysOverwritten() {
         String js =
                 "var target = {};\n"
-                    + "Object.defineProperty(target, 'prop', {\n"
-                    + "  value: 1,\n"
-                    + "  writable: true,\n"
-                    + "  enumerable: false,\n"
-                    + "  configurable: false,\n"
-                    + "});\n"
+                        + "Object.defineProperty(target, 'prop', {\n"
+                        + "  value: 1,\n"
+                        + "  writable: true,\n"
+                        + "  enumerable: false,\n"
+                        + "  configurable: false,\n"
+                        + "});\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  ownKeys: function() {\n"
+                        + "    return [];\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "try {"
+                        + "  Object.keys(proxy);\n"
+                        + "} catch(e) {\n"
+                        + "  '' + e;\n"
+                        + "}";
 
-                    + "var proxy = new Proxy(target, {\n"
-                    + "  ownKeys: function() {\n"
-                    + "    return [];\n"
-                    + "  },\n"
-                    + "});\n"
-
-                    + "try {"
-                    + "  Object.keys(proxy);\n"
-                    + "} catch(e) {\n"
-                    + "  '' + e;\n"
-                    + "}";
-
-        Utils.assertWithAllOptimizationLevelsES6("TypeError: proxy can't skip a non-configurable property '\"prop\"'", js);
+        Utils.assertWithAllOptimizationLevelsES6(
+                "TypeError: proxy can't skip a non-configurable property 'prop'", js);
     }
 
     @Test
@@ -931,15 +930,12 @@ public class NativeProxyTest {
                         + "  enumerable: false,\n"
                         + "  configurable: true,\n"
                         + "});\n"
-
                         + "var proxy = new Proxy(target, {\n"
                         + "  ownKeys: function() {\n"
                         + "    return ['prop'];\n"
                         + "  },\n"
                         + "});\n"
-
                         + "Object.preventExtensions(target);\n"
-
                         + "try {"
                         + "  Object.keys(proxy).length === 0;\n"
                         + "} catch(e) {\n"
