@@ -21,7 +21,6 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     public static final String TYPE_NAME = "symbol";
 
     private static final Object GLOBAL_TABLE_KEY = new Object();
-    private static final Object CONSTRUCTOR_SLOT = new Object();
 
     private final SymbolKey key;
     private final NativeSymbol symbolData;
@@ -32,36 +31,18 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                         scope,
                         CLASS_NAME,
                         0,
-                        0, // Unused
-                        NativeSymbol::js_constructor) {
-                    // Calling new Symbol('foo') is not allowed. However, we need to be able to
-                    // create
-                    // a new symbol instance to register built-in ones and for the implementation of
-                    // "for",
-                    // so we have this trick of a thread-local variable to allow it.
-                    @Override
-                    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-                        if (cx.getThreadLocal(CONSTRUCTOR_SLOT) == null) {
-                            throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
-                        }
-                        return (Scriptable) call(cx, scope, null, args);
-                    }
-
-                    // Calling Symbol('foo') should act like a constructor call
-                    @Override
-                    public Object call(
-                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                        Scriptable obj = targetConstructor.construct(cx, scope, args);
-                        obj.setPrototype(getClassPrototype());
-                        obj.setParentScope(scope);
-                        return obj;
-                    }
-                };
+                        LambdaConstructor.CONSTRUCTOR_FUNCTION,
+                        NativeSymbol::js_constructor);
 
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         ctor.defineConstructorMethod(
-                scope, "for", 1, NativeSymbol::js_for, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "for",
+                1,
+                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
+                DONTENUM,
+                DONTENUM | READONLY);
         ctor.defineConstructorMethod(
                 scope, "keyFor", 1, NativeSymbol::js_keyFor, DONTENUM, DONTENUM | READONLY);
 
@@ -82,40 +63,24 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
 
-        cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
-        try {
-            createStandardSymbol(cx, scope, ctor, "iterator", SymbolKey.ITERATOR);
-            createStandardSymbol(cx, scope, ctor, "species", SymbolKey.SPECIES);
-            createStandardSymbol(cx, scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
-            createStandardSymbol(cx, scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
-            createStandardSymbol(
-                    cx, scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
-            createStandardSymbol(cx, scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
-            createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
-            createStandardSymbol(cx, scope, ctor, "match", SymbolKey.MATCH);
-            createStandardSymbol(cx, scope, ctor, "replace", SymbolKey.REPLACE);
-            createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
-            createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);
-            createStandardSymbol(cx, scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
-        } finally {
-            cx.removeThreadLocal(CONSTRUCTOR_SLOT);
-        }
+        createStandardSymbol(scope, ctor, "iterator", SymbolKey.ITERATOR);
+        createStandardSymbol(scope, ctor, "species", SymbolKey.SPECIES);
+        createStandardSymbol(scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
+        createStandardSymbol(scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
+        createStandardSymbol(
+                scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
+        createStandardSymbol(scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
+        createStandardSymbol(scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
+        createStandardSymbol(scope, ctor, "match", SymbolKey.MATCH);
+        createStandardSymbol(scope, ctor, "replace", SymbolKey.REPLACE);
+        createStandardSymbol(scope, ctor, "search", SymbolKey.SEARCH);
+        createStandardSymbol(scope, ctor, "split", SymbolKey.SPLIT);
+        createStandardSymbol(scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
 
         if (sealed) {
             // Can't seal until we have created all the stuff above!
             ctor.sealObject();
         }
-    }
-
-    /**
-     * This has to be used only for constructing the prototype instance. This sets symbolData to
-     * null (see isSymbol() for more).
-     *
-     * @param desc the description
-     */
-    private NativeSymbol(String desc) {
-        this.key = new SymbolKey(desc);
-        this.symbolData = null;
     }
 
     NativeSymbol(SymbolKey key) {
@@ -128,36 +93,35 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         this.symbolData = s.symbolData;
     }
 
-    /**
-     * Use this when we need to create symbols internally because of the convoluted way we have to
-     * construct them.
-     */
-    public static NativeSymbol construct(Context cx, Scriptable scope, Object[] args) {
-        cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
-        try {
-            return (NativeSymbol) cx.newObject(scope, CLASS_NAME, args);
-        } finally {
-            cx.removeThreadLocal(CONSTRUCTOR_SLOT);
-        }
-    }
-
     @Override
     public String getClassName() {
         return CLASS_NAME;
     }
 
+    private static NativeSymbol constructSymbol(
+            Scriptable scope, LambdaConstructor ctor, SymbolKey key) {
+        NativeSymbol sym = new NativeSymbol(key);
+        sym.setPrototype(ctor.getClassPrototype());
+        sym.setParentScope(scope);
+        return sym;
+    }
+
+    private static NativeSymbol constructSymbol(
+            Scriptable scope, LambdaConstructor ctor, String name) {
+        NativeSymbol sym = new NativeSymbol(new SymbolKey(name));
+        sym.setPrototype(ctor.getClassPrototype());
+        sym.setParentScope(scope);
+        return sym;
+    }
+
     private static void createStandardSymbol(
-            Context cx, Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
-        Scriptable sym = (Scriptable) ctor.call(cx, scope, scope, new Object[] {name, key});
+            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+        NativeSymbol sym = constructSymbol(scope, ctor, key);
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
-    private static NativeSymbol getSelf(Context cx, Scriptable scope, Object thisObj) {
-        try {
-            return (NativeSymbol) ScriptRuntime.toObject(cx, scope, thisObj);
-        } catch (ClassCastException cce) {
-            throw ScriptRuntime.typeErrorById("msg.invalid.type", thisObj.getClass().getName());
-        }
+    private static NativeSymbol getSelf(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
     private static NativeSymbol js_constructor(Context cx, Scriptable scope, Object[] args) {
@@ -175,13 +139,13 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static String js_toString(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return getSelf(cx, scope, thisObj).toString();
+        return getSelf(thisObj).toString();
     }
 
     private static Object js_valueOf(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // In the case that "Object()" was called we actually have a different "internal slot"
-        return getSelf(cx, scope, thisObj).symbolData;
+        return getSelf(thisObj).symbolData;
     }
 
     private static Object js_description(Scriptable thisObj) {
@@ -189,7 +153,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return self.getKey().getDescription();
     }
 
-    private static Object js_for(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
@@ -199,7 +163,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         NativeSymbol ret = table.get(name);
 
         if (ret == null) {
-            ret = construct(cx, scope, new Object[] {name});
+            ret = constructSymbol(scope, constructor, name);
             table.put(name, ret);
         }
         return ret;
