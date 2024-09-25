@@ -2464,6 +2464,8 @@ public class Parser {
     }
 
     private static boolean isNotValidSimpleAssignmentTarget(AstNode pn) {
+        if (pn.getType() == Token.GETPROP )
+            return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
         return pn.getType() == Token.QUESTION_DOT;
     }
 
