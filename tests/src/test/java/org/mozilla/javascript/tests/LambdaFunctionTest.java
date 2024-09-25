@@ -91,6 +91,22 @@ public class LambdaFunctionTest {
     }
 
     @Test
+    public void constructLambdaClassWithFunction() {
+        TestClass.init(root);
+        eval(
+                "let tc = TestClass('foo');\n"
+                        + "assertEquals(tc.value, 'foo');\n"
+                        + "tc.value = 'bar';\n"
+                        + "assertEquals(tc.value, 'bar');\n"
+                        + "tc.anotherValue = 123;\n"
+                        + "assertEquals(tc.anotherValue, 123);\n"
+                        + "assertEquals(TestClass.name, 'TestClass');\n"
+                        + "assertEquals(TestClass.length, 1);\n"
+                        + "assertEquals(typeof TestClass, 'function');\n"
+                        + "assertTrue(tc instanceof TestClass);\n");
+    }
+
+    @Test
     public void nativePrototypeFunctions() {
         eval(
                 "function TestClass(v) { this.value = v; }\n"
