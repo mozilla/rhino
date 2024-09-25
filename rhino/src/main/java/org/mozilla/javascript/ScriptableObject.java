@@ -1584,11 +1584,13 @@ public abstract class ScriptableObject
      * Defines a property on an object.
      *
      * <p>Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
+     * see <a href="https://tc39.es/ecma262/#table-essential-internal-methods">[[DefineOwnProperty]]</a>
      *
      * @param cx the current Context
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      * @param checkValid whether to perform validity checks
+     * @return always true at the moment
      */
     protected boolean defineOwnProperty(
             Context cx, Object id, ScriptableObject desc, boolean checkValid) {
