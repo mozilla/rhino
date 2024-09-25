@@ -40,7 +40,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                 scope,
                 "for",
                 1,
-                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
+                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lcx, lscope, args, ctor),
                 DONTENUM,
                 DONTENUM | READONLY);
         ctor.defineConstructorMethod(
@@ -63,19 +63,19 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
 
-        createStandardSymbol(scope, ctor, "iterator", SymbolKey.ITERATOR);
-        createStandardSymbol(scope, ctor, "species", SymbolKey.SPECIES);
-        createStandardSymbol(scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
-        createStandardSymbol(scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
-        createStandardSymbol(
-                scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
-        createStandardSymbol(scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
-        createStandardSymbol(scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
-        createStandardSymbol(scope, ctor, "match", SymbolKey.MATCH);
-        createStandardSymbol(scope, ctor, "replace", SymbolKey.REPLACE);
-        createStandardSymbol(scope, ctor, "search", SymbolKey.SEARCH);
-        createStandardSymbol(scope, ctor, "split", SymbolKey.SPLIT);
-        createStandardSymbol(scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
+        // Create all the predefined symbols and bind them to the scope.
+        createStandardSymbol(cx, scope, ctor, "iterator", SymbolKey.ITERATOR);
+        createStandardSymbol(cx, scope, ctor, "species", SymbolKey.SPECIES);
+        createStandardSymbol(cx, scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
+        createStandardSymbol(cx, scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
+        createStandardSymbol(cx, scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
+        createStandardSymbol(cx, scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
+        createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
+        createStandardSymbol(cx, scope, ctor, "match", SymbolKey.MATCH);
+        createStandardSymbol(cx, scope, ctor, "replace", SymbolKey.REPLACE);
+        createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
+        createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);
+        createStandardSymbol(cx, scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
 
         if (sealed) {
             // Can't seal until we have created all the stuff above!
@@ -98,25 +98,23 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return CLASS_NAME;
     }
 
+    /**
+     * Create a symbol directly. We use this internally to construct new symbols as if the
+     * constructor was called directly.
+     */
     private static NativeSymbol constructSymbol(
-            Scriptable scope, LambdaConstructor ctor, SymbolKey key) {
-        NativeSymbol sym = new NativeSymbol(key);
-        sym.setPrototype(ctor.getClassPrototype());
-        sym.setParentScope(scope);
-        return sym;
+            Context cx, Scriptable scope, LambdaConstructor ctor, SymbolKey key) {
+        return (NativeSymbol) ctor.call(cx, scope, null, new Object[] {Undefined.instance, key});
     }
 
     private static NativeSymbol constructSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name) {
-        NativeSymbol sym = new NativeSymbol(new SymbolKey(name));
-        sym.setPrototype(ctor.getClassPrototype());
-        sym.setParentScope(scope);
-        return sym;
+            Context cx, Scriptable scope, LambdaConstructor ctor, String name) {
+        return (NativeSymbol) ctor.call(cx, scope, null, new Object[] {name});
     }
 
     private static void createStandardSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
-        NativeSymbol sym = constructSymbol(scope, ctor, key);
+            Context cx, Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+        NativeSymbol sym = constructSymbol(cx, scope, ctor, key);
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
@@ -144,29 +142,22 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static Object js_valueOf(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        // In the case that "Object()" was called we actually have a different "internal slot"
         return getSelf(thisObj).symbolData;
     }
 
     private static Object js_description(Scriptable thisObj) {
-        NativeSymbol self = LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
-        return self.getKey().getDescription();
+        return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(
+            Context cx, Scriptable scope, Object[] args, LambdaConstructor constructor) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
                         : ScriptRuntime.toString(Undefined.instance));
 
         Map<String, NativeSymbol> table = getGlobalMap(scope);
-        NativeSymbol ret = table.get(name);
-
-        if (ret == null) {
-            ret = constructSymbol(scope, constructor, name);
-            table.put(name, ret);
-        }
-        return ret;
+        return table.computeIfAbsent(name, (k) -> constructSymbol(cx, scope, constructor, name));
     }
 
     @SuppressWarnings("ReferenceEquality")
@@ -256,6 +247,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return key;
     }
 
+    /**
+     * Return the Map that stores global symbols for the 'for' and 'keyFor' operations. It must work
+     * across "realms" in the same top-level Rhino scope, so we store it there as an associated
+     * property.
+     */
     @SuppressWarnings("unchecked")
     private static Map<String, NativeSymbol> getGlobalMap(Scriptable scope) {
         ScriptableObject top = (ScriptableObject) getTopLevelScope(scope);
