@@ -41,7 +41,9 @@ public class LambdaConstructor extends LambdaFunction {
     /**
      * Create a new function that may be used as a constructor. The new object will have the
      * Function prototype and no parent. The caller is responsible for binding this object to the
-     * appropriate scope.
+     * appropriate scope. The new constructor function can be invoked using "new" or by calling it
+     * directly, and in either case will result in a new object being returned and wired to the
+     * correct prototype and scope.
      *
      * @param scope scope of the calling context
      * @param name name of the function
@@ -56,8 +58,18 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     /**
-     * Create a new function and control whether it may be invoked using new, as a function, or
-     * both.
+     * Create a new function that may be used as a constructor. The new object will have the
+     * Function prototype and no parent. The caller is responsible for binding this object to the
+     * appropriate scope. The "flags" argument controls whether the function may be invoked using
+     * "new," via a direct call, or both. If allowed by the flags, then the constructor will have
+     * the same effect either way. If not allowed by the flags, then a TypeError will be thrown.
+     *
+     * @param scope scope of the calling context
+     * @param name name of the function
+     * @param length the arity of the function
+     * @param flags which may be a combination of CONSTRUCTOR_NEW and CONSTRUCTOR_FUNCTION
+     * @param target an object that implements the function in Java. Since Constructable is a
+     *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
             Scriptable scope, String name, int length, int flags, Constructable target) {
@@ -67,8 +79,19 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     /**
-     * Create a new constructor that may be called using new or as a function, and exhibits
-     * different behavior for each.
+     * Create a new function that may be used as a constructor. The new object will have the
+     * Function prototype and no parent. The caller is responsible for binding this object to the
+     * appropriate scope. The new constructor function will have different behavior depending on
+     * whether it is invoked via "new" or via a direct call. In the case of "new", a new object with
+     * a prototype and scope chain be returned, but in the case of a direct call, the user must
+     * implement whatever they need. This is typically used in the case of functions like the native
+     * Date constructor, which has totally different behavior depending on how it's invoked.
+     *
+     * @param scope scope of the calling context
+     * @param name name of the function
+     * @param length the arity of the function
+     * @param target an object that implements the function in Java. Since Constructable is a
+     *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
             Scriptable scope,
@@ -162,15 +185,22 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(key, value, attributes);
     }
 
+    /**
+     * Define a property on the prototype using a function. The function will be wired to a
+     * JavaScript function, so the resulting property will look just like one that was defined using
+     * "Object.defineOwnProperty" with a property descriptor.
+     */
     public void definePrototypeProperty(
-            Context cx,
-            String name,
-            java.util.function.Function<Scriptable, Object> getter,
-            int attributes) {
+            Context cx, String name, Function<Scriptable, Object> getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, null, attributes);
     }
 
+    /**
+     * Define a property on the prototype using functions for getter and setter. The function will
+     * be wired to a JavaScript function, so the resulting property will look just like one that was
+     * defined using "Object.defineOwnProperty" with a property descriptor.
+     */
     public void definePrototypeProperty(
             Context cx,
             String name,
