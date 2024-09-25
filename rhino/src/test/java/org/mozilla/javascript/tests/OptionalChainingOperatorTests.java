@@ -2,7 +2,10 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
@@ -79,6 +82,16 @@ public class OptionalChainingOperatorTests {
                     assertEquals(
                             Undefined.instance,
                             cx.evaluateString(scope, "a?.__parent__", sourceName, 1, null));
+
+                    var err =  Assert.assertThrows(EvaluatorException.class, () ->
+                            cx.evaluateString(scope, "var y = {};\n" +
+                                    "0, { x: y?.z = 42 } = { x: 23 };", sourceName, 1, null));
+                    Assert.assertTrue(err.getMessage().contains("Invalid left-hand side in assignment"));
+
+                    err =  Assert.assertThrows(EvaluatorException.class, () ->
+                            cx.evaluateString(scope,
+                                    "y?.z = 42", sourceName, 1, null));
+                    Assert.assertTrue(err.getMessage().contains("Invalid left-hand side in assignment"));
 
                     // NOT WORKING
                     //                    assertEquals(
