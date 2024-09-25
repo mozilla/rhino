@@ -83,15 +83,26 @@ public class OptionalChainingOperatorTests {
                             Undefined.instance,
                             cx.evaluateString(scope, "a?.__parent__", sourceName, 1, null));
 
-                    var err =  Assert.assertThrows(EvaluatorException.class, () ->
+                    var e =  Assert.assertThrows(EvaluatorException.class, () ->
                             cx.evaluateString(scope, "var y = {};\n" +
                                     "0, { x: y?.z = 42 } = { x: 23 };", sourceName, 1, null));
-                    Assert.assertTrue(err.getMessage().contains("Invalid left-hand side in assignment"));
+                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
 
-                    err =  Assert.assertThrows(EvaluatorException.class, () ->
+                    e =  Assert.assertThrows(EvaluatorException.class, () ->
                             cx.evaluateString(scope,
                                     "y?.z = 42", sourceName, 1, null));
-                    Assert.assertTrue(err.getMessage().contains("Invalid left-hand side in assignment"));
+                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+
+                    e =  Assert.assertThrows(EvaluatorException.class, () ->
+                            cx.evaluateString(scope,
+                                    "y.z?.x = 42", sourceName, 1, null));
+                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+
+                    e =  Assert.assertThrows(EvaluatorException.class, () ->
+                            cx.evaluateString(scope,
+                                    "y?.z.x = 42", sourceName, 1, null));
+                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+
 
                     // NOT WORKING
                     //                    assertEquals(
