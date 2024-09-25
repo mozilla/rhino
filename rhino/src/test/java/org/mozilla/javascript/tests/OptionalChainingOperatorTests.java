@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -83,44 +82,46 @@ public class OptionalChainingOperatorTests {
                             Undefined.instance,
                             cx.evaluateString(scope, "a?.__parent__", sourceName, 1, null));
 
-                    var e =  Assert.assertThrows(EvaluatorException.class, () ->
-                            cx.evaluateString(scope, "var y = {};\n" +
-                                    "0, { x: y?.z = 42 } = { x: 23 };", sourceName, 1, null));
-                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+                    var e =
+                            Assert.assertThrows(
+                                    EvaluatorException.class,
+                                    () ->
+                                            cx.evaluateString(
+                                                    scope,
+                                                    "var y = {};\n"
+                                                            + "0, { x: y?.z = 42 } = { x: 23 };",
+                                                    sourceName,
+                                                    1,
+                                                    null));
+                    Assert.assertTrue(
+                            e.getMessage().contains("Invalid left-hand side in assignment"));
 
-                    e =  Assert.assertThrows(EvaluatorException.class, () ->
-                            cx.evaluateString(scope,
-                                    "y?.z = 42", sourceName, 1, null));
-                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+                    e =
+                            Assert.assertThrows(
+                                    EvaluatorException.class,
+                                    () ->
+                                            cx.evaluateString(
+                                                    scope, "y?.z = 42", sourceName, 1, null));
+                    Assert.assertTrue(
+                            e.getMessage().contains("Invalid left-hand side in assignment"));
 
-                    e =  Assert.assertThrows(EvaluatorException.class, () ->
-                            cx.evaluateString(scope,
-                                    "y.z?.x = 42", sourceName, 1, null));
-                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
+                    e =
+                            Assert.assertThrows(
+                                    EvaluatorException.class,
+                                    () ->
+                                            cx.evaluateString(
+                                                    scope, "y.z?.x = 42", sourceName, 1, null));
+                    Assert.assertTrue(
+                            e.getMessage().contains("Invalid left-hand side in assignment"));
 
-                    e =  Assert.assertThrows(EvaluatorException.class, () ->
-                            cx.evaluateString(scope,
-                                    "y?.z.x = 42", sourceName, 1, null));
-                    Assert.assertTrue(e.getMessage().contains("Invalid left-hand side in assignment"));
-
-
-                    // NOT WORKING
-                    //                    assertEquals(
-                    //                            Undefined.instance,
-                    //                            cx.evaluateString(
-                    //                                    scope,
-                    //                                    "{}?.a",
-                    //                                    sourceName,
-                    //                                    1,
-                    //                                    null));
-                    //                    assertEquals(
-                    //                            Undefined.instance,
-                    //                            cx.evaluateString(
-                    //                                    scope,
-                    //                                    "var b = {}; for (const key of b.a) ",
-                    //                                    sourceName,
-                    //                                    1,
-                    //                                    null));
+                    e =
+                            Assert.assertThrows(
+                                    EvaluatorException.class,
+                                    () ->
+                                            cx.evaluateString(
+                                                    scope, "y?.z.x = 42", sourceName, 1, null));
+                    Assert.assertTrue(
+                            e.getMessage().contains("Invalid left-hand side in assignment"));
 
                     return null;
                 });

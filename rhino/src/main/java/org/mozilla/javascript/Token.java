@@ -120,7 +120,7 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
             GETPROP_OPTIONAL = BIGINT + 1,
             REF_SPECIAL_OPTIONAL = GETPROP_OPTIONAL + 1,
             CALL_OPTIONAL = REF_SPECIAL_OPTIONAL + 1;
@@ -234,8 +234,8 @@ public class Token {
                     TEMPLATE_LITERAL_SUBST + 1, // template literal - tagged/handler
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
-        DOT_QUESTION = NULLISH_COALESCING + 1, // optional chaining operator (?.)
-            LAST_TOKEN = DOT_QUESTION + 1;
+            QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
+            LAST_TOKEN = QUESTION_DOT;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in

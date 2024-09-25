@@ -2464,7 +2464,7 @@ public class Parser {
     }
 
     private static boolean isNotValidSimpleAssignmentTarget(AstNode pn) {
-        if (pn.getType() == Token.GETPROP )
+        if (pn.getType() == Token.GETPROP)
             return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
         return pn.getType() == Token.QUESTION_DOT;
     }
@@ -2878,8 +2878,8 @@ public class Parser {
     }
 
     /**
-     * Parse any number of "(expr)", "[expr]" ".expr", "..expr", or ".(expr)" constructs trailing
-     * the passed expression.
+     * Parse any number of "(expr)", "[expr]" ".expr", "?.expr", "..expr", ".(expr)" or "?.(expr)"
+     * constructs trailing the passed expression.
      *
      * @param pn the non-null parent node
      * @return the outermost (lexically last occurring) expression, which will have the passed
@@ -3107,13 +3107,6 @@ public class Parser {
             result.setType(Token.QUESTION_DOT);
         }
         return result;
-    }
-
-    private static AstNode cloneNode(AstNode target) {
-        var newParser = new Parser();
-        var root = newParser.parse(target.toSource(), "", 1);
-        var targetCopy = ((ExpressionStatement) root.first).getExpression();
-        return targetCopy;
     }
 
     /**

@@ -2006,7 +2006,9 @@ public class ScriptRuntime {
         return SpecialOptionalRef.create(cx, scope, obj, specialProperty);
     }
 
-    /** @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead */
+    /**
+     * @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead
+     */
     @Deprecated
     public static Object delete(Object obj, Object id, Context cx) {
         return delete(obj, id, cx, false);
