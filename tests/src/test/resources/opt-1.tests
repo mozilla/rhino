@@ -280,14 +280,12 @@ ecma/Date/15.9.5.10-7.js
 ecma/Date/15.9.5.10-8.js
 ecma/Date/15.9.5.10-9.js
 ecma/Date/15.9.5.11-1.js
-ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.11-3.js
 ecma/Date/15.9.5.11-4.js
 ecma/Date/15.9.5.11-5.js
 ecma/Date/15.9.5.11-6.js
 ecma/Date/15.9.5.11-7.js
 ecma/Date/15.9.5.12-1.js
-ecma/Date/15.9.5.12-2.js
 ecma/Date/15.9.5.12-3.js
 ecma/Date/15.9.5.12-4.js
 ecma/Date/15.9.5.12-5.js
@@ -384,8 +382,6 @@ ecma/Date/15.9.5.4-2-n.js
 ecma/Date/15.9.5.5.js
 ecma/Date/15.9.5.6.js
 ecma/Date/15.9.5.7.js
-ecma/Date/15.9.5.8.js
-ecma/Date/15.9.5.9.js
 ecma/Date/15.9.5.js
 ecma/ExecutionContexts/10.1.3-1.js
 ecma/ExecutionContexts/10.1.3-2.js
@@ -1289,7 +1285,6 @@ js1_5/Array/regress-345961.js
 js1_5/Array/regress-348810.js
 js1_5/Array/regress-350256-01.js
 js1_5/Array/regress-350256-02.js
-js1_5/Array/regress-350256-03.js
 js1_5/Array/regress-360681-01.js
 js1_5/Array/regress-360681-02.js
 js1_5/Array/regress-364104.js
@@ -1329,8 +1324,6 @@ js1_5/Function/regress-292215.js
 js1_5/Function/regress-344052.js
 js1_5/Function/regress-364023.js
 js1_5/GC/regress-104584.js
-js1_5/GC/regress-203278-3.js
-js1_5/GC/regress-278725.js
 js1_5/GC/regress-306788.js
 js1_5/GC/regress-311497.js
 js1_5/GC/regress-313276.js
@@ -1339,7 +1332,6 @@ js1_5/GC/regress-316885-02.js
 js1_5/GC/regress-316885-03.js
 js1_5/GC/regress-319980-01.js
 js1_5/GC/regress-331719.js
-js1_5/GC/regress-338653.js
 js1_5/GC/regress-341877-01.js
 js1_5/GC/regress-341877-02.js
 js1_5/GC/regress-352606.js
@@ -1394,7 +1386,6 @@ js1_5/Regress/regress-191633.js
 js1_5/Regress/regress-191668.js
 js1_5/Regress/regress-192414.js
 js1_5/Regress/regress-193418.js
-js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-203402.js
 js1_5/Regress/regress-203841.js
 js1_5/Regress/regress-204210.js
@@ -1537,7 +1528,6 @@ js1_5/Regress/regress-396684.js
 js1_5/Regress/regress-398085-01.js
 js1_5/Regress/regress-398085-02.js
 js1_5/Regress/regress-398609.js
-js1_5/Regress/regress-404755.js
 js1_5/Regress/regress-406769.js
 js1_5/Regress/regress-407024.js
 js1_5/Regress/regress-407323.js
@@ -1778,7 +1768,6 @@ js1_5/extensions/regress-354541-03.js
 js1_5/extensions/regress-355982.js
 js1_5/extensions/regress-356402.js
 js1_5/extensions/regress-363988.js
-js1_5/extensions/regress-365527.js
 js1_5/extensions/regress-365692.js
 js1_5/extensions/regress-366288.js
 js1_5/extensions/regress-366292.js
@@ -1791,7 +1780,6 @@ js1_5/extensions/regress-367121.js
 js1_5/extensions/regress-367501-01.js
 js1_5/extensions/regress-367501-02.js
 js1_5/extensions/regress-367501-03.js
-js1_5/extensions/regress-367501-04.js
 js1_5/extensions/regress-367589.js
 js1_5/extensions/regress-369404.js
 js1_5/extensions/regress-369696-01.js
@@ -2122,7 +2110,6 @@ js1_8/extensions/regress-385393-01.js
 js1_8/extensions/regress-385393-10.js
 js1_8/extensions/regress-385393-11.js
 js1_8/extensions/regress-415721.js
-js1_8/extensions/regress-417131.js
 js1_8/extensions/regress-417817.js
 js1_8/extensions/regress-419091.js
 js1_8/extensions/regress-422269.js
@@ -2136,14 +2123,12 @@ js1_8/extensions/regress-455973.js
 js1_8/extensions/regress-465337.js
 js1_8/extensions/regress-471197.js
 js1_8/extensions/regress-475971.js
-js1_8/extensions/regress-476427.js
 js1_8/extensions/regress-476653.js
 js1_8/extensions/regress-476871-02.js
 js1_8/extensions/regress-479252.js
 js1_8/extensions/regress-479381.js
 js1_8/extensions/simple-tree.js
 js1_8/genexps/regress-347739.js
-js1_8/genexps/regress-380237-01.js
 js1_8/regress/regress-404734.js
 js1_8/regress/regress-427798.js
 js1_8/regress/regress-433279-01.js
