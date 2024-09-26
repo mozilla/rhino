@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -3983,8 +3982,6 @@ public class ScriptRuntime {
     // ------------------
     // Statements
     // ------------------
-
-
 
     public static boolean hasTopCall(Context cx) {
         return (cx.topCallScope != null);

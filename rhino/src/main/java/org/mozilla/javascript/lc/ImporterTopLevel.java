@@ -9,7 +9,6 @@
 package org.mozilla.javascript.lc;
 
 import java.util.ArrayList;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;

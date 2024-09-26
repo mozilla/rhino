@@ -32,7 +32,7 @@ public class NativeWrappedArrayTest {
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
-        ((JavaWrapFactory)cx.getWrapFactory()).setJavaPrimitiveWrap(false);
+        ((JavaWrapFactory) cx.getWrapFactory()).setJavaPrimitiveWrap(false);
         global = new Global(cx);
     }
 

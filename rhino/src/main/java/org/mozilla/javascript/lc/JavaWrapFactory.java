@@ -58,19 +58,19 @@ public class JavaWrapFactory implements WrapFactory {
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
         new LazilyLoadedCtor(
-                scope, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                scope, "Packages", "org.mozilla.javascript.lc.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                scope, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                scope, "getClass", "org.mozilla.javascript.lc.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                scope, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
+                scope, "JavaAdapter", "org.mozilla.javascript.lc.JavaAdapter", sealed, true);
         new LazilyLoadedCtor(
-                scope, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+                scope, "JavaImporter", "org.mozilla.javascript.lc.ImporterTopLevel", sealed, true);
 
         for (String packageName : NativeJavaTopPackage.getTopPackageNames()) {
             new LazilyLoadedCtor(
                     scope,
                     packageName,
-                    "org.mozilla.javascript.NativeJavaTopPackage",
+                    "org.mozilla.javascript.lc.NativeJavaTopPackage",
                     sealed,
                     true);
         }
