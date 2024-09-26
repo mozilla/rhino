@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
+import org.mozilla.javascript.lc.ClassCache;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with single method or multiple
@@ -24,7 +25,7 @@ public class InterfaceAdapter {
      * @return The glue object or null if <code>cl</code> is not interface or has methods with
      *     different signatures.
      */
-    static Object create(Context cx, Class<?> cl, ScriptableObject object) {
+    public static Object create(Context cx, Class<?> cl, ScriptableObject object) {
         if (!cl.isInterface()) throw new IllegalArgumentException();
 
         Scriptable topScope = ScriptRuntime.getTopCallScope(cx);

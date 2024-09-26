@@ -462,7 +462,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
      * @param indent How much to indent the decompiled result.
      * @param flags Flags specifying format of decompilation output.
      */
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
         boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {

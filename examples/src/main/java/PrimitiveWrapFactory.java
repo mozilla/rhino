@@ -7,6 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrapFactory;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * An example WrapFactory that can be used to avoid wrapping of Java types that can be converted to
@@ -21,7 +22,7 @@ import org.mozilla.javascript.WrapFactory;
  *
  * <p>The PrimitiveWrapFactory is enabled on a Context by calling setWrapFactory on that context.
  */
-public class PrimitiveWrapFactory extends WrapFactory {
+public class PrimitiveWrapFactory extends JavaWrapFactory {
 
     @Override
     public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {

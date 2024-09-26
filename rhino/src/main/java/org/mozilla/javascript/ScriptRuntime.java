@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.lc.ClassCache;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -189,8 +190,8 @@ public class ScriptRuntime {
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        // NativeJavaObject.init(scope, sealed);
+        // NativeJavaMap.init(scope, sealed);
 
         boolean withXml =
                 cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
@@ -302,28 +303,12 @@ public class ScriptRuntime {
     public static ScriptableObject initStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
-
-        new LazilyLoadedCtor(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
-
-        for (String packageName : getTopPackageNames()) {
-            new LazilyLoadedCtor(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        WrapFactory wrapFactory = cx.getWrapFactory();
+        if (wrapFactory != null) {
+            wrapFactory.initStandardObjects(cx, scope, sealed);
         }
 
         return s;
-    }
-
-    static String[] getTopPackageNames() {
-        // Include "android" top package if running on Android
-        return "Dalvik".equals(System.getProperty("java.vm.name"))
-                ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
-                : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }
 
     public static ScriptableObject getLibraryScopeOrNull(Scriptable scope) {
@@ -3999,23 +3984,7 @@ public class ScriptRuntime {
     // Statements
     // ------------------
 
-    public static ScriptableObject getGlobal(Context cx) {
-        final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
-        Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
-        if (globalClass != null) {
-            try {
-                Class<?>[] parm = {ScriptRuntime.ContextClass};
-                Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
-                Object[] arg = {cx};
-                return (ScriptableObject) globalClassCtor.newInstance(arg);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                // fall through...
-            }
-        }
-        return new ImporterTopLevel(cx);
-    }
+
 
     public static boolean hasTopCall(Context cx) {
         return (cx.topCallScope != null);

@@ -4,13 +4,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.DecompilerFlag;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.MemberBox;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class reflects Java methods into the JavaScript environment and handles overloading of
@@ -87,7 +99,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
         boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {
@@ -114,7 +126,7 @@ public class NativeJavaMethod extends BaseFunction {
             } else {
                 sb.append(methods[i].getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
+            sb.append(JavaMembers.liveConnectSignature(methods[i].getArgTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -135,9 +147,9 @@ public class NativeJavaMethod extends BaseFunction {
         }
 
         MemberBox meth = methods[index];
-        Class<?>[] argTypes = meth.argTypes;
+        Class<?>[] argTypes = meth.getArgTypes();
 
-        if (meth.vararg) {
+        if (meth.isVararg()) {
             // marshall the explicit parameters
             Object[] newArgs = new Object[argTypes.length];
             for (int i = 0; i < argTypes.length - 1; i++) {
@@ -267,10 +279,10 @@ public class NativeJavaMethod extends BaseFunction {
             return -1;
         } else if (methodsOrCtors.length == 1) {
             MemberBox member = methodsOrCtors[0];
-            Class<?>[] argTypes = member.argTypes;
+            Class<?>[] argTypes = member.getArgTypes();
             int alength = argTypes.length;
 
-            if (member.vararg) {
+            if (member.isVararg()) {
                 alength--;
                 if (alength > args.length) {
                     return -1;
@@ -297,9 +309,9 @@ public class NativeJavaMethod extends BaseFunction {
         search:
         for (int i = 0; i < methodsOrCtors.length; i++) {
             MemberBox member = methodsOrCtors[i];
-            Class<?>[] argTypes = member.argTypes;
+            Class<?>[] argTypes = member.getArgTypes();
             int alength = argTypes.length;
-            if (member.vararg) {
+            if (member.isVararg()) {
                 alength--;
                 if (alength > args.length) {
                     continue search;
@@ -347,9 +359,9 @@ public class NativeJavaMethod extends BaseFunction {
                                 preferSignature(
                                         args,
                                         argTypes,
-                                        member.vararg,
-                                        bestFit.argTypes,
-                                        bestFit.vararg);
+                                        member.isVararg(),
+                                        bestFit.getArgTypes(),
+                                        bestFit.isVararg());
                         if (preference == PREFERENCE_AMBIGUOUS) {
                             break;
                         } else if (preference == PREFERENCE_FIRST_ARG) {
@@ -424,7 +436,7 @@ public class NativeJavaMethod extends BaseFunction {
                 bestFitIndex = extraBestFits[j];
             }
             buf.append("\n    ");
-            buf.append(methodsOrCtors[bestFitIndex].toJavaDeclaration());
+            buf.append(toJavaDeclaration(methodsOrCtors[bestFitIndex]));
         }
 
         MemberBox firstFitMember = methodsOrCtors[firstBestFit];
@@ -441,6 +453,26 @@ public class NativeJavaMethod extends BaseFunction {
                 memberName,
                 scriptSignature(args),
                 buf.toString());
+    }
+
+    static String toJavaDeclaration(MemberBox memberBox) {
+        StringBuilder sb = new StringBuilder();
+        if (memberBox.isMethod()) {
+            Method method = memberBox.method();
+            sb.append(method.getReturnType());
+            sb.append(' ');
+            sb.append(method.getName());
+        } else {
+            Constructor<?> ctor = memberBox.ctor();
+            String name = ctor.getDeclaringClass().getName();
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot >= 0) {
+                name = name.substring(lastDot + 1);
+            }
+            sb.append(name);
+        }
+        sb.append(JavaMembers.liveConnectSignature(memberBox.getArgTypes()));
+        return sb.toString();
     }
 
     /** Types are equal */
@@ -513,7 +545,7 @@ public class NativeJavaMethod extends BaseFunction {
             if (member.isMethod()) {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.argTypes));
+            sb.append(JavaMembers.liveConnectSignature(member.getArgTypes()));
             sb.append(" for arguments (");
             sb.append(scriptSignature(args));
             sb.append(')');

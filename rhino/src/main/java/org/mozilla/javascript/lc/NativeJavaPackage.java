@@ -4,12 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashSet;
 import java.util.Set;
+import org.mozilla.javascript.ClassShutter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.WrapFactory;
 
 /**
  * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
@@ -95,7 +102,7 @@ public class NativeJavaPackage extends ScriptableObject {
         return pkg;
     }
 
-    synchronized Object getPkgProperty(String name, Scriptable start, boolean createPkg) {
+    public synchronized Object getPkgProperty(String name, Scriptable start, boolean createPkg) {
         Object cached = super.get(name, start);
         if (cached != NOT_FOUND) return cached;
         if (negativeCache != null && negativeCache.contains(name)) {

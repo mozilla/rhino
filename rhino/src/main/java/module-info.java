@@ -10,6 +10,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.serialize;
     exports org.mozilla.javascript.typedarrays;
     exports org.mozilla.javascript.xml;
+    exports org.mozilla.javascript.lc;
 
     requires java.compiler;
     requires transitive java.desktop;

@@ -35,7 +35,7 @@ public final class LazilyLoadedCtor implements Serializable {
         this(scope, propertyName, className, sealed, false);
     }
 
-    LazilyLoadedCtor(
+    public LazilyLoadedCtor(
             ScriptableObject scope,
             String propertyName,
             String className,

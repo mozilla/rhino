@@ -33,6 +33,8 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
+import org.mozilla.javascript.lc.JavaWrapFactory;
+import org.mozilla.javascript.lc.NativeJavaObject;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -637,7 +639,7 @@ public class Context implements Closeable {
     }
 
     @SuppressWarnings("DoNotCallSuggester")
-    static void onSealedMutation() {
+    public static void onSealedMutation() {
         throw new IllegalStateException();
     }
 
@@ -949,7 +951,7 @@ public class Context implements Closeable {
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
-    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+    public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }
@@ -2057,7 +2059,7 @@ public class Context implements Closeable {
         hasClassShutter = true;
     }
 
-    final synchronized ClassShutter getClassShutter() {
+    public final synchronized ClassShutter getClassShutter() {
         return classShutter;
     }
 
@@ -2130,14 +2132,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * @deprecated
-     * @see ClassCache#get(Scriptable)
-     * @see ClassCache#setCachingEnabled(boolean)
-     */
-    @Deprecated
-    public static void setCachingEnabled(boolean cachingEnabled) {}
-
-    /**
      * Set a WrapFactory for this Context.
      *
      * <p>The WrapFactory allows custom object wrapping behavior for Java object manipulated with
@@ -2160,7 +2154,7 @@ public class Context implements Closeable {
      */
     public final WrapFactory getWrapFactory() {
         if (wrapFactory == null) {
-            wrapFactory = new WrapFactory();
+            wrapFactory = new JavaWrapFactory();
         }
         return wrapFactory;
     }
@@ -2418,7 +2412,7 @@ public class Context implements Closeable {
     /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
-    static Context getContext() {
+    public static Context getContext() {
         Context cx = getCurrentContext();
         if (cx == null) {
             throw new RuntimeException("No Context associated with current Thread");

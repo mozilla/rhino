@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.NativeJavaObject;
+import org.mozilla.javascript.lc.NativeJavaObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.Global;

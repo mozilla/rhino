@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -18,6 +18,26 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ES6Iterator;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.InterfaceAdapter;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeDate;
+import org.mozilla.javascript.NativeFunction;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.SymbolScriptable;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
@@ -187,7 +207,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /**
      * @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
-     *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
+     *     JavaWrapFactory#wrap(Context, Scriptable, Object, Class)}
      */
     @Deprecated
     public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
@@ -483,7 +503,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     /** Type-munging for field setting and method invocation. Conforms to LC3 specification */
-    static Object coerceTypeImpl(Class<?> type, Object value) {
+    public static Object coerceTypeImpl(Class<?> type, Object value) {
         if (value != null && value.getClass() == type) {
             return value;
         }
