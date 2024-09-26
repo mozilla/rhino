@@ -304,7 +304,7 @@ public class ScriptRuntime {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
         WrapFactory wrapFactory = cx.getWrapFactory();
         if (wrapFactory != null) {
-            wrapFactory.initStandardObjects(cx, scope, sealed);
+            wrapFactory.initStandardObjects(cx, s, sealed);
         }
 
         return s;
