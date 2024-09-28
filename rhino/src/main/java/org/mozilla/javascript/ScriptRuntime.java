@@ -1052,17 +1052,12 @@ public class ScriptRuntime {
         if (obj == null) return "[object Null]";
         if (Undefined.isUndefined(obj)) return "[object Undefined]";
 
-        String tag = null;
         Object tagValue = ScriptableObject.getProperty(obj, SymbolKey.TO_STRING_TAG);
         if (tagValue != Scriptable.NOT_FOUND && tagValue instanceof CharSequence) {
-            tag = tagValue.toString();
+            return "[object " + tagValue.toString() + "]";
         }
 
-        if (tag == null) {
-            tag = obj.getClassName();
-        }
-
-        return "[object " + tag + "]";
+        return "[object " + obj.getClassName() + "]";
     }
 
     public static String toString(Object[] args, int index) {
