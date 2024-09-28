@@ -1051,7 +1051,15 @@ public class ScriptRuntime {
     static String defaultObjectToString(Scriptable obj) {
         if (obj == null) return "[object Null]";
         if (Undefined.isUndefined(obj)) return "[object Undefined]";
-        return "[object " + obj.getClassName() + ']';
+
+        Object tagValue = ScriptableObject.getProperty(obj, SymbolKey.TO_STRING_TAG);
+        // Note: Scriptable.NOT_FOUND is not a CharSequence, so we don't need to explicitly check
+        // for it
+        if (tagValue instanceof CharSequence) {
+            return "[object " + tagValue + "]";
+        }
+
+        return "[object " + obj.getClassName() + "]";
     }
 
     public static String toString(Object[] args, int index) {
