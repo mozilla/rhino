@@ -184,7 +184,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return booleanTrapResult;
         }
 
-        return ScriptableObject.hasProperty(target, name);
+        if (start == this) {
+            start = target;
+        }
+        return target.has(name, start);
     }
 
     /**
@@ -233,7 +236,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return booleanTrapResult;
         }
 
-        return ScriptableObject.hasProperty(target, index);
+        if (start == this) {
+            start = target;
+        }
+        return target.has(index, start);
     }
 
     /**
@@ -263,7 +269,11 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return booleanTrapResult;
         }
 
-        return ScriptableObject.hasProperty(target, key);
+        if (start == this) {
+            start = target;
+        }
+        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
+        return symbolScriptableTarget.has(key, start);
     }
 
     /**
@@ -438,7 +448,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return trapResult;
         }
 
-        return ScriptRuntime.getObjectProp(target, name, Context.getContext());
+        if (start == this) {
+            start = target;
+        }
+        return target.get(name, start);
     }
 
     /**
@@ -495,7 +508,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return trapResult;
         }
 
-        return ScriptRuntime.getObjectIndex(target, index, Context.getContext());
+        if (start == this) {
+            start = target;
+        }
+        return target.get(index, start);
     }
 
     /**
@@ -612,7 +628,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return; // true
         }
 
-        ScriptableObject.putProperty(target, name, value);
+        if (start == this) {
+            start = target;
+        }
+        target.put(name, start, value);
     }
 
     /**
@@ -672,7 +691,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return; // true
         }
 
-        ScriptableObject.putProperty(target, index, value);
+        if (start == this) {
+            start = target;
+        }
+        target.put(index, start, value);
     }
 
     /**
@@ -1270,11 +1292,10 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                     "2",
                     Integer.toString(args.length));
         }
-        ScriptableObject trgt = ensureScriptableObject(args[0]);
+        ScriptableObject target = ensureScriptableObjectButNotSymbol(args[0]);
+        ScriptableObject handler = ensureScriptableObjectButNotSymbol(args[1]);
 
-        ScriptableObject hndlr = ensureScriptableObject(args[1]);
-
-        NativeProxy proxy = new NativeProxy(trgt, hndlr);
+        NativeProxy proxy = new NativeProxy(target, handler);
         proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(scope, PROXY_TAG));
         proxy.setParentScope(scope);
         return proxy;

@@ -1928,6 +1928,13 @@ public abstract class ScriptableObject
         throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
     }
 
+    protected static ScriptableObject ensureScriptableObjectButNotSymbol(Object arg) {
+        if (arg instanceof Symbol) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
+        }
+        return ensureScriptableObject(arg);
+    }
+
     /**
      * Search for names in a class, adding the resulting methods as properties.
      *

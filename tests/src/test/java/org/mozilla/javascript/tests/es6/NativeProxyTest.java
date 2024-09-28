@@ -64,6 +64,16 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void ctorWrongArgs() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                "TypeError: Expected argument of type object, but instead had type symbol",
+                "try { new Proxy({}, Symbol()) } catch(e) { '' + e }");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "TypeError: Expected argument of type object, but instead had type symbol",
+                "try { new Proxy(Symbol(), {}) } catch(e) { '' + e }");
+    }
+
+    @Test
     public void ctorAsFunction() {
         Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: The constructor for Proxy may not be invoked as a function",
