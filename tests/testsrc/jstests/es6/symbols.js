@@ -585,5 +585,24 @@ function TestDescription() {
 }
 TestDescription();
 
+function TestToStringTag() {
+  assertEquals(Object.prototype.toString.call([]), "[object Array]");
+  assertEquals(Object.prototype.toString.call({}), "[object Object]");
+
+  const customObject = {
+    [Symbol.toStringTag]: "CustomObject"
+  };
+  assertEquals(Object.prototype.toString.call(customObject), "[object CustomObject]");
+
+  const noTagObject = {};
+  assertEquals(Object.prototype.toString.call(noTagObject), "[object Object]");
+
+  assertFalse(Symbol.toStringTag.hasOwnProperty("description"));
+  assertTrue(Symbol.prototype.hasOwnProperty("description"));
+  assertTrue(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").configurable);
+  assertFalse(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").enumerable);
+  assertTrue(Object.getOwnPropertyDescriptor(Symbol.prototype, "description").get !== null);
+}
+TestToStringTag();
 
 "success";
