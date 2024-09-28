@@ -1053,11 +1053,9 @@ public class ScriptRuntime {
         if (Undefined.isUndefined(obj)) return "[object Undefined]";
 
         String tag = null;
-        if (ScriptableObject.hasProperty(obj, SymbolKey.TO_STRING_TAG)) {
-            Object tagValue = ScriptableObject.getProperty(obj, SymbolKey.TO_STRING_TAG);
-            if (tagValue instanceof String) {
-                tag = (String) tagValue;
-            }
+        Object tagValue = ScriptableObject.getProperty(obj, SymbolKey.TO_STRING_TAG);
+        if (tagValue != Scriptable.NOT_FOUND && tagValue instanceof CharSequence) {
+            tag = tagValue.toString();
         }
 
         if (tag == null) {
