@@ -1586,22 +1586,24 @@ public abstract class ScriptableObject
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
-        defineOwnProperty(cx, id, desc, true);
+        return defineOwnProperty(cx, id, desc, true);
     }
 
     /**
      * Defines a property on an object.
      *
-     * <p>Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
+     * <p>Based on [[DefineOwnProperty]] from 8.12.10 of the spec. see <a
+     * href="https://tc39.es/ecma262/#table-essential-internal-methods">[[DefineOwnProperty]]</a>
      *
      * @param cx the current Context
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      * @param checkValid whether to perform validity checks
+     * @return always true at the moment
      */
-    protected void defineOwnProperty(
+    protected boolean defineOwnProperty(
             Context cx, Object id, ScriptableObject desc, boolean checkValid) {
 
         Object key = null;
@@ -1693,6 +1695,7 @@ public abstract class ScriptableObject
                     slot.setAttributes(attributes);
                     return slot;
                 });
+        return true;
     }
 
     /**
@@ -1937,7 +1940,7 @@ public abstract class ScriptableObject
      * @param desc a property descriptor
      * @return true if this is a generic descriptor.
      */
-    protected boolean isGenericDescriptor(ScriptableObject desc) {
+    protected static boolean isGenericDescriptor(ScriptableObject desc) {
         return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
@@ -1962,6 +1965,13 @@ public abstract class ScriptableObject
             return (ScriptableObject) ((Delegator) arg).getDelegee();
         }
         throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
+    }
+
+    protected static ScriptableObject ensureScriptableObjectButNotSymbol(Object arg) {
+        if (arg instanceof Symbol) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
+        }
+        return ensureScriptableObject(arg);
     }
 
     /**
@@ -2068,8 +2078,9 @@ public abstract class ScriptableObject
         return isExtensible;
     }
 
-    public void preventExtensions() {
+    public boolean preventExtensions() {
         isExtensible = false;
+        return true;
     }
 
     /**
@@ -2465,6 +2476,15 @@ public abstract class ScriptableObject
         if (base == null) return true;
         base.delete(index);
         return !base.has(index, obj);
+    }
+
+    /** A version of deleteProperty for properties with Symbol keys. */
+    public static boolean deleteProperty(Scriptable obj, Symbol key) {
+        Scriptable base = getBase(obj, key);
+        if (base == null) return true;
+        SymbolScriptable scriptable = ensureSymbolScriptable(base);
+        scriptable.delete(key);
+        return !scriptable.has(key, obj);
     }
 
     /**
