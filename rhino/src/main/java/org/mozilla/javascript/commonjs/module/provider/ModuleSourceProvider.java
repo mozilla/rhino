@@ -32,7 +32,7 @@ public interface ModuleSourceProvider {
      * current cached representation of the resource (using whatever semantics for validation that
      * this source provider implements), then {@link #NOT_MODIFIED} should be returned. Otherwise,
      * it should return a {@link ModuleSource} object with the actual source text of the module,
-     * preferrably a validator for it, and a security domain, where applicable.
+     * preferably a validator for it, and a security domain, where applicable.
      *
      * @param moduleId the ID of the module. An implementation must only accept an absolute ID,
      *     starting with a term.
@@ -65,7 +65,7 @@ public interface ModuleSourceProvider {
      * the provider would use to load the source, and the validator validates the current cached
      * representation of the resource (using whatever semantics for validation that this source
      * provider implements), then {@link #NOT_MODIFIED} should be returned. Otherwise, it should
-     * return a {@link ModuleSource} object with the actual source text of the module, preferrably a
+     * return a {@link ModuleSource} object with the actual source text of the module, preferably a
      * validator for it, and a security domain, where applicable.
      *
      * @param uri the absolute URI from which to load the module source, but without an extension

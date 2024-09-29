@@ -224,7 +224,7 @@ public class ArrayLikeAbstractOperations {
                 continue;
             }
             if (value == NOT_FOUND) {
-                // no initial value passed, use first element found as inital value
+                // no initial value passed, use first element found as initial value
                 value = elem;
             } else {
                 Object[] innerArgs = {value, elem, index, o};

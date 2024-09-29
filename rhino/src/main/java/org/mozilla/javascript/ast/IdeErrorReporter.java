@@ -35,7 +35,7 @@ public interface IdeErrorReporter extends ErrorReporter {
      *
      * @param message a {@code String} describing the warning
      * @param sourceName a {@code String} describing the JavaScript source where the warning
-     *     occured; typically a filename or URL
+     *     occurred; typically a filename or URL
      * @param offset the warning's 0-indexed char position in the input stream
      * @param length the length of the region contributing to the warning
      */
@@ -53,7 +53,7 @@ public interface IdeErrorReporter extends ErrorReporter {
      * <p>
      *
      * @param message a String describing the error
-     * @param sourceName a String describing the JavaScript source where the error occured;
+     * @param sourceName a String describing the JavaScript source where the error occurred;
      *     typically a filename or URL
      * @param offset 0-indexed char position of the error in the input stream
      * @param length the length of the region contributing to the error

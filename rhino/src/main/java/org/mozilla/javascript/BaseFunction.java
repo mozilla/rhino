@@ -443,8 +443,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
     }
 
     /**
-     * Creates new script object. The default implementation of {@link #construct} uses the method
-     * to to get the value for <code>thisObj</code> argument when invoking {@link #call}. The methos
+     * Creates new script object. The default implementation of {@link #construct} uses this method
+     * to to get the value for <code>thisObj</code> argument when invoking {@link #call}. The method
      * is allowed to return <code>null</code> to indicate that {@link #call} will create a new
      * object itself. In this case {@link #construct} will set scope and prototype on the result
      * {@link #call} unless they are already set.

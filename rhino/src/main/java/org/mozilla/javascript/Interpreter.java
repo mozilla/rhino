@@ -3305,7 +3305,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Continuation jump is almost done: capturedFrame
             // points to the call to the function that captured
             // continuation, so clone capturedFrame and
-            // emulate return that function with the suplied result
+            // emulate return that function with the supplied result
             frame = cjump.capturedFrame.cloneFrozen();
             setCallResult(frame, cjump.result, cjump.resultDbl);
             // restart the execution

@@ -387,7 +387,7 @@ class DToA {
         return (int) dBits;
     }
 
-    /* Return b * 5^k.  k must be nonnegative. */
+    /* Return b * 5^k.  k must be non negative. */
     // XXXX the C version built a cache of these
     static BigInteger pow5mult(BigInteger b, int k) {
         return b.multiply(BigInteger.valueOf(5).pow(k));
