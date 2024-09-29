@@ -1118,7 +1118,7 @@ public final class IRFactory {
     private Node transformUnary(UnaryExpression node) {
         int type = node.getType();
         if (type == Token.DEFAULTNAMESPACE) {
-            return transformDefaultXmlNamepace(node);
+            return transformDefaultXmlNamespace(node);
         }
 
         Node child = transform(node.getOperand());
@@ -1274,7 +1274,7 @@ public final class IRFactory {
         return createElementGet(pn, ns, expr, memberTypeFlags);
     }
 
-    private Node transformDefaultXmlNamepace(UnaryExpression node) {
+    private Node transformDefaultXmlNamespace(UnaryExpression node) {
         Node child = transform(node.getOperand());
         return createUnary(Token.DEFAULTNAMESPACE, child);
     }
@@ -1645,10 +1645,10 @@ public final class IRFactory {
             // after_catch:
             //
             // If there is no default catch, then the last with block
-            // arround  "somethingDefault;" is replaced by "rethrow;"
+            // around  "somethingDefault;" is replaced by "rethrow;"
 
             // It is assumed that catch handler generation will store
-            // exeception object in handlerBlock register
+            // exception object in handlerBlock register
 
             // Block with local for exception scope objects
             Node catchScopeBlock = new Node(Token.LOCAL_BLOCK);
@@ -2008,7 +2008,7 @@ public final class IRFactory {
                 }
                 // can't do anything if we don't know  both types - since
                 // 0 + object is supposed to call toString on the object and do
-                // string concantenation rather than addition
+                // string concatenation rather than addition
                 break;
 
             case Token.SUB:
@@ -2064,7 +2064,7 @@ public final class IRFactory {
                         return left;
                     } else if (rd == 1.0) {
                         // second 1: x/1 -> +x
-                        // not simply x to force number convertion
+                        // not simply x to force number conversion
                         return new Node(Token.POS, left);
                     }
                 }

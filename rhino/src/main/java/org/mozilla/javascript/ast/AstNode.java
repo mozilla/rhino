@@ -522,7 +522,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * @param other another node
      * @return -1 if this node's start position is less than {@code other}'s start position. If
      *     tied, -1 if this node's length is less than {@code other}'s length. If the lengths are
-     *     equal, sorts abitrarily on hashcode unless the nodes are the same per {@link #equals}.
+     *     equal, sorts arbitrarily on hashcode unless the nodes are the same per {@link #equals}.
      */
     @Override
     public int compareTo(AstNode other) {

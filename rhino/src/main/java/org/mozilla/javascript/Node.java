@@ -807,7 +807,7 @@ public class Node implements Iterable<Node> {
         Node n;
         int rv = END_DROPS_OFF;
 
-        // check each statment and if the statement can continue onto the next
+        // check each statement and if the statement can continue onto the next
         // one, then check the next statement
         for (n = first; ((rv & END_DROPS_OFF) != 0) && n != null; n = n.next) {
             rv &= ~END_DROPS_OFF;

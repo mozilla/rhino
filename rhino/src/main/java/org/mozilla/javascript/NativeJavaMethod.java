@@ -323,9 +323,9 @@ public class NativeJavaMethod extends BaseFunction {
                 // The loop starts from -1 denoting firstBestFit and proceed
                 // until extraBestFitsCount to avoid extraBestFits allocation
                 // in the most common case of no ambiguity
-                int betterCount = 0; // number of times member was prefered over
+                int betterCount = 0; // number of times member was preferred over
                 // best fits
-                int worseCount = 0; // number of times best fits were prefered
+                int worseCount = 0; // number of times best fits were preferred
                 // over member
                 for (int j = -1; j != extraBestFitsCount; ++j) {
                     int bestFitIndex;
@@ -386,12 +386,12 @@ public class NativeJavaMethod extends BaseFunction {
                     }
                 }
                 if (betterCount == 1 + extraBestFitsCount) {
-                    // member was prefered over all best fits
+                    // member was preferred over all best fits
                     if (debug) printDebug("New first applicable ", member, args);
                     firstBestFit = i;
                     extraBestFitsCount = 0;
                 } else if (worseCount == 1 + extraBestFitsCount) {
-                    // all best fits were prefered over member, ignore it
+                    // all best fits were preferred over member, ignore it
                     if (debug) printDebug("Rejecting (all current bests better) ", member, args);
                 } else {
                     // some ambiguity was present, add member to best fit set

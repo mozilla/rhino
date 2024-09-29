@@ -22,7 +22,7 @@ public interface ErrorReporter {
      * <p>The implementing class may choose to ignore the warning if it desires.
      *
      * @param message a String describing the warning
-     * @param sourceName a String describing the JavaScript source where the warning occured;
+     * @param sourceName a String describing the JavaScript source where the warning occurred;
      *     typically a filename or URL
      * @param line the line number associated with the warning
      * @param lineSource the text of the line (may be null)
@@ -40,7 +40,7 @@ public interface ErrorReporter {
      * however.
      *
      * @param message a String describing the error
-     * @param sourceName a String describing the JavaScript source where the error occured;
+     * @param sourceName a String describing the JavaScript source where the error occurred;
      *     typically a filename or URL
      * @param line the line number associated with the error
      * @param lineSource the text of the line (may be null)
@@ -54,7 +54,7 @@ public interface ErrorReporter {
      * <p>runtimeErrors, unlike errors, will always terminate the current script.
      *
      * @param message a String describing the error
-     * @param sourceName a String describing the JavaScript source where the error occured;
+     * @param sourceName a String describing the JavaScript source where the error occurred;
      *     typically a filename or URL
      * @param line the line number associated with the error
      * @param lineSource the text of the line (may be null)
