@@ -568,7 +568,9 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     ScriptableObject obj = ensureScriptableObject(arg);
-                    obj.preventExtensions();
+                    if (!obj.preventExtensions()) {
+                        throw ScriptRuntime.typeError("Object.preventExtensions is not allowed");
+                    }
                     return obj;
                 }
             case ConstructorId_defineProperties:
@@ -626,9 +628,12 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return arg;
                     }
 
-                    AbstractEcmaObjectOperations.setIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
-
+                    boolean status =
+                            AbstractEcmaObjectOperations.setIntegrityLevel(
+                                    cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                    if (!status) {
+                        throw ScriptRuntime.typeError("Object is not sealable");
+                    }
                     return arg;
                 }
             case ConstructorId_freeze:
@@ -639,8 +644,12 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return arg;
                     }
 
-                    AbstractEcmaObjectOperations.setIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                    boolean status =
+                            AbstractEcmaObjectOperations.setIntegrityLevel(
+                                    cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                    if (!status) {
+                        throw ScriptRuntime.typeError("Object is not freezable");
+                    }
 
                     return arg;
                 }
