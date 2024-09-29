@@ -3547,16 +3547,53 @@ public class ScriptRuntime {
         return -val.doubleValue();
     }
 
-    public static Object toPrimitive(Object val) {
-        return toPrimitive(val, null);
+    public static Object toPrimitive(Object input) {
+        return toPrimitive(input, null);
     }
 
-    public static Object toPrimitive(Object val, Class<?> typeHint) {
-        if (!(val instanceof Scriptable)) {
-            return val;
+    /**
+     * 1. If input is an Object, then a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive). b.
+     * If exoticToPrim is not undefined, then i. If preferredType is not present, then 1. Let hint
+     * be "default". ii. Else if preferredType is string, then 1. Let hint be "string". iii. Else,
+     * 1. Assert: preferredType is number. 2. Let hint be "number". iv. Let result be ?
+     * Call(exoticToPrim, input, « hint »). v. If result is not an Object, return result. vi. Throw
+     * a TypeError exception. c. If preferredType is not present, let preferredType be number. d.
+     * Return ? OrdinaryToPrimitive(input, preferredType). 2. Return input.
+     *
+     * @param input
+     * @param preferredType
+     * @return
+     * @see <a href="https://262.ecma-international.org/15.0/index.html#sec-toprimitive"></a>
+     */
+    public static Object toPrimitive(Object input, Class<?> preferredType) {
+        if (!isObject(input)) {
+            return input;
         }
-        Scriptable s = (Scriptable) val;
-        Object result = s.getDefaultValue(typeHint);
+        final Scriptable s = (Scriptable) input;
+        final Object exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
+        if (exoticToPrim instanceof Function) {
+            final Function func = (Function) exoticToPrim;
+            final Context cx = Context.getCurrentContext();
+            final Scriptable scope = func.getParentScope();
+            final String hint;
+            if (preferredType == null) {
+                hint = "default";
+            } else if (StringClass == preferredType) {
+                hint = "string";
+            } else {
+                hint = "number";
+            }
+            final Object result = func.call(cx, scope, s, new Object[] {hint});
+            if (isObject(result)) {
+                throw typeErrorById("msg.cant.convert.to.primitive");
+            }
+            return result;
+        }
+        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != Scriptable.NOT_FOUND) {
+            throw notFunctionError(exoticToPrim);
+        }
+        final Class<?> defaultValueHint = preferredType == null ? preferredType : NumberClass;
+        final Object result = s.getDefaultValue(defaultValueHint);
         if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeErrorById("msg.bad.default.value");
         return result;
@@ -3599,6 +3636,8 @@ public class ScriptRuntime {
                 }
             }
             return eqNumber(b ? 1.0 : 0.0, y);
+        } else if (isSymbol(x) && isObject(y)) {
+            return eq(x, toPrimitive(y));
         } else if (x instanceof Scriptable) {
             if (x instanceof Delegator) {
                 x = ((Delegator) x).getDelegee();
@@ -3612,7 +3651,9 @@ public class ScriptRuntime {
             if (y instanceof Delegator && ((Delegator) y).getDelegee() == x) {
                 return true;
             }
-
+            if (isSymbol(y) && isObject(x)) {
+                return eq(toPrimitive(x), y);
+            }
             if (y instanceof Scriptable) {
                 if (x instanceof ScriptableObject) {
                     Object test = ((ScriptableObject) x).equivalentValues(y);
@@ -3951,18 +3992,33 @@ public class ScriptRuntime {
         if (val1 instanceof Number && val2 instanceof Number) {
             return compare((Number) val1, (Number) val2, op);
         } else {
-            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+            if ((isSymbol(val1)) || (isSymbol(val2))) {
                 throw typeErrorById("msg.compare.symbol");
             }
-            if (val1 instanceof Scriptable) {
-                val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
+            val1 = toPrimitive(val1, NumberClass);
+            val2 = toPrimitive(val2, NumberClass);
+
+            if (val1 instanceof CharSequence) {
+                if (val2 instanceof CharSequence) {
+                    return compareTo(val1.toString(), val2.toString(), op);
+                }
+
+                if (val2 instanceof BigInteger) {
+                    try {
+                        return compareTo(toBigInt(val1.toString()), (BigInteger) val2, op);
+                    } catch (EcmaError e) {
+                        return false;
+                    }
+                }
             }
-            if (val2 instanceof Scriptable) {
-                val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+            if (val1 instanceof BigInteger && val2 instanceof CharSequence) {
+                try {
+                    return compareTo((BigInteger) val1, toBigInt(val2.toString()), op);
+                } catch (EcmaError e) {
+                    return false;
+                }
             }
-            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-                return compareTo(val1.toString(), val2.toString(), op);
-            }
+
             return compare(toNumeric(val1), toNumeric(val2), op);
         }
     }
