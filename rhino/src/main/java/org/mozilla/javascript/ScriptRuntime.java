@@ -3992,7 +3992,7 @@ public class ScriptRuntime {
         if (val1 instanceof Number && val2 instanceof Number) {
             return compare((Number) val1, (Number) val2, op);
         } else {
-            if ((isSymbol(val1)) || (isSymbol(val2))) {
+            if (isSymbol(val1) || isSymbol(val2)) {
                 throw typeErrorById("msg.compare.symbol");
             }
             val1 = toPrimitive(val1, NumberClass);
