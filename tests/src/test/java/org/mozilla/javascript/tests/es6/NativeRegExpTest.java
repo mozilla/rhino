@@ -4,16 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
 /**
@@ -23,124 +14,50 @@ public class NativeRegExpTest {
 
     @Test
     public void regExIsCallableForBackwardCompatibility() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_8);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source = "var a = new RegExp('1'); a(1).toString();";
-                    assertEquals("1", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "/^\\{(.*)\\}$/('{1234}').toString();";
-                    assertEquals("{1234},1234", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "RegExp('a|b','g')()";
-                    assertNull(cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "new /z/();";
-                    assertNull(cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "(new new RegExp).toString()";
-                    assertEquals("", cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels_1_8("1", "var a = new RegExp('1'); a(1).toString();");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "{1234},1234", "/^\\{(.*)\\}$/('{1234}').toString();");
+        Utils.assertWithAllOptimizationLevels_1_8(null, "RegExp('a|b','g')()");
+        Utils.assertWithAllOptimizationLevels_1_8(null, "new /z/();");
+        Utils.assertWithAllOptimizationLevels_1_8("", "(new new RegExp).toString()");
     }
 
     @Test
     public void regExMinusInRangeBorderCases() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_8);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-]+/g, 'x');";
-                    assertEquals(
-                            "axbxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\s]+/g, 'x');";
-                    assertEquals(
-                            "axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\S]+/g, 'x');";
-                    assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\w]+/g, 'x');";
-                    assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\W]+/g, 'x');";
-                    assertEquals(
-                            "axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\d]+/g, 'x');";
-                    assertEquals(
-                            "axbxc d efg x x", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\D]+/g, 'x');";
-                    assertEquals("x1x23", cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\a]+/g, 'x');";
-                    assertEquals(
-                            "x-bxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "axbxc d efg 1 23", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "axbxcxdxefgx1x23",
+                "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\s]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "x x x x x", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\S]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "x x x x x", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\w]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "axbxcxdxefgx1x23",
+                "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\W]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "axbxc d efg x x",
+                "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\d]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "x1x23", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\D]+/g, 'x');");
+        Utils.assertWithAllOptimizationLevels_1_8(
+                "x-bxc d efg 1 23",
+                "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\a]+/g, 'x');");
     }
 
     @Test
     public void regExIsNotCallable() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source = "var a = new RegExp('1'); a(1);";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail();
-                    } catch (EcmaError e) {
-                        // expected
-                        assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-                    }
-
-                    source = "/^\\{(.*)\\}$/('{1234}');";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail();
-                    } catch (EcmaError e) {
-                        // expected
-                        assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-                    }
-
-                    source = "RegExp('a|b','g')();";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail();
-                    } catch (EcmaError e) {
-                        // expected
-                        assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-                    }
-
-                    source = "new /z/();";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail();
-                    } catch (EcmaError e) {
-                        // expected
-                        assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-                    }
-
-                    source = "new new RegExp";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail();
-                    } catch (EcmaError e) {
-                        // expected
-                        assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-                    }
-
-                    return null;
-                });
+        Utils.assertEcmaErrorES6(
+                "TypeError: a is not a function, it is object.", "var a = new RegExp('1'); a(1);");
+        Utils.assertEcmaErrorES6(
+                "TypeError: /^\\{(.*)\\}$/ is not a function, it is object.",
+                "/^\\{(.*)\\}$/('{1234}');");
+        Utils.assertEcmaErrorES6(
+                "TypeError: /a|b/g is not a function, it is object.", "RegExp('a|b','g')();");
+        Utils.assertEcmaErrorES6("TypeError: /z/ is not a function, it is object.", "new /z/();");
+        Utils.assertEcmaErrorES6(
+                "TypeError: /(?:)/ is not a function, it is object.", "new new RegExp");
     }
 
     @Test
@@ -151,132 +68,67 @@ public class NativeRegExpTest {
                         + "  Object.defineProperty(r, 'lastIndex', { writable: false });"
                         + "  r.exec('abc');"
                         + "} catch (e) { e.message }";
-        Utils.runWithAllOptimizationLevels(
-                _cx -> {
-                    final ScriptableObject scope = _cx.initStandardObjects();
-                    final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-                    assertEquals(
-                            "Cannot modify readonly property: lastIndex.",
-                            Context.toString(result));
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(
+                "Cannot modify readonly property: lastIndex.", script);
     }
 
     @Test
     public void search() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source = "'abc'.search(/b/);";
-                    assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "/b/[Symbol.search]('abc');";
-                    assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "'abc'.search(/d/);";
-                    assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
-
-                    source = "/d/[Symbol.search]('abc');";
-                    assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevelsES6(1, "'abc'.search(/b/);");
+        Utils.assertWithAllOptimizationLevelsES6(1, "/b/[Symbol.search]('abc');");
+        Utils.assertWithAllOptimizationLevelsES6(-1, "'abc'.search(/d/);");
+        Utils.assertWithAllOptimizationLevelsES6(-1, "/d/[Symbol.search]('abc');");
     }
 
     @Test
     public void regExWrongQuantifier() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source = "'abc'.search(/b{2,1}/);";
-                    try {
-                        cx.evaluateString(scope, source, "test", 0, null);
-                        fail("Shoud throw");
-                    } catch (Exception e) {
-                        assertEquals(
-                                "SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.",
-                                e.getMessage());
-                    }
-
-                    return null;
-                });
+        Utils.assertEcmaError(
+                "SyntaxError: Invalid regular expression: The quantifier maximum '1' is less than the minimum '2'.",
+                "'abc'.search(/b{2,1}/);");
     }
 
     @Test
     public void canCreateRegExpPassingExistingRegExp() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source =
-                            "var pattern = /./i;\n"
-                                    + "var re = new RegExp(pattern);\n"
-                                    + "pattern.source === re.source &&"
-                                    + "  pattern.multiline === re.multiline &&"
-                                    + "  pattern.global === re.global && "
-                                    + "  pattern.ignoreCase === re.ignoreCase";
-                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        String script =
+                "var pattern = /./i;\n"
+                        + "var re = new RegExp(pattern);\n"
+                        + "pattern.script === re.script &&"
+                        + "  pattern.multiline === re.multiline &&"
+                        + "  pattern.global === re.global && "
+                        + "  pattern.ignoreCase === re.ignoreCase";
+        Utils.assertWithAllOptimizationLevels(true, script);
     }
 
     @Test
     public void canCreateRegExpPassingExistingRegExpAndUndefinedFlags() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source =
-                            "var pattern = /./i;\n"
-                                    + "var re = new RegExp(pattern, undefined);\n"
-                                    + "pattern.source === re.source &&"
-                                    + "  pattern.multiline === re.multiline &&"
-                                    + "  pattern.global === re.global && "
-                                    + "  pattern.ignoreCase === re.ignoreCase";
-                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        String script =
+                "var pattern = /./i;\n"
+                        + "var re = new RegExp(pattern, undefined);\n"
+                        + "pattern.script === re.script &&"
+                        + "  pattern.multiline === re.multiline &&"
+                        + "  pattern.global === re.global && "
+                        + "  pattern.ignoreCase === re.ignoreCase";
+        Utils.assertWithAllOptimizationLevels(true, script);
     }
 
     @Test
     public void cannotCreateRegExpPassingExistingRegExpAndNewFlagsBeforeEs6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_8);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source =
-                            "var pattern = /./im;\n"
-                                    + "pattern.lastIndex = 42;\n"
-                                    + "new RegExp(pattern, \"g\");\n";
-                    assertThrows(
-                            EcmaError.class,
-                            () -> cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        String script =
+                "var pattern = /./im;\n"
+                        + "pattern.lastIndex = 42;\n"
+                        + "new RegExp(pattern, \"g\");\n";
+        Utils.assertEcmaError_1_8(
+                "TypeError: Only one argument may be specified if the first argument to RegExp.prototype.compile is a RegExp object.",
+                script);
     }
 
     @Test
     public void canCreateRegExpPassingExistingRegExpAndNewFlagsEs6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    String source =
-                            "var pattern = /./im;\n"
-                                    + "pattern.lastIndex = 42;\n"
-                                    + "var re = new RegExp(pattern, \"g\");\n"
-                                    + "re.global && re.lastIndex === 0";
-                    assertEquals(Boolean.TRUE, cx.evaluateString(scope, source, "test", 0, null));
-
-                    return null;
-                });
+        String script =
+                "var pattern = /./im;\n"
+                        + "pattern.lastIndex = 42;\n"
+                        + "var re = new RegExp(pattern, \"g\");\n"
+                        + "re.global && re.lastIndex === 0";
+        Utils.assertWithAllOptimizationLevelsES6(true, script);
     }
 }

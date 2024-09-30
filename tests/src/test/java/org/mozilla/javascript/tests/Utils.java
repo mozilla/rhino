@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -145,13 +146,73 @@ public class Utils {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
 
-                    try {
-                        cx.evaluateString(scope, js, "test", 1, null);
-                        fail("EvaluatorException expected");
-                    } catch (EvaluatorException e) {
-                        assertEquals(expectedMessage, e.getMessage());
-                    }
+                    EvaluatorException e =
+                            assertThrows(
+                                    EvaluatorException.class,
+                                    () -> cx.evaluateString(scope, js, "test", 1, null));
+                    assertEquals(expectedMessage, e.getMessage());
+                    return null;
+                });
+    }
 
+    public static void assertEcmaError(String expectedMessage, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    EcmaError e =
+                            assertThrows(
+                                    EcmaError.class,
+                                    () -> cx.evaluateString(scope, js, "test", 1, null));
+                    assertTrue(
+                            "'"
+                                    + e.getMessage()
+                                    + "' does not start with '"
+                                    + expectedMessage
+                                    + "'",
+                            e.getMessage().startsWith(expectedMessage));
+                    return null;
+                });
+    }
+
+    public static void assertEcmaError_1_8(String expectedMessage, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_1_8);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    EcmaError e =
+                            assertThrows(
+                                    EcmaError.class,
+                                    () -> cx.evaluateString(scope, js, "test", 1, null));
+                    assertTrue(
+                            "'"
+                                    + e.getMessage()
+                                    + "' does not start with '"
+                                    + expectedMessage
+                                    + "'",
+                            e.getMessage().startsWith(expectedMessage));
+                    return null;
+                });
+    }
+
+    public static void assertEcmaErrorES6(String expectedMessage, String js) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope = cx.initStandardObjects();
+
+                    EcmaError e =
+                            assertThrows(
+                                    EcmaError.class,
+                                    () -> cx.evaluateString(scope, js, "test", 1, null));
+                    assertTrue(
+                            "'"
+                                    + e.getMessage()
+                                    + "' does not start with '"
+                                    + expectedMessage
+                                    + "'",
+                            e.getMessage().startsWith(expectedMessage));
                     return null;
                 });
     }
