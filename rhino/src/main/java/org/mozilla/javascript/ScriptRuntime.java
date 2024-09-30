@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.lc.ClassCache;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -148,7 +147,6 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache().associate(scope);
 
         BaseFunction.init(cx, scope, sealed);
         NativeObject.init(scope, sealed);
