@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
@@ -432,11 +434,10 @@ public class Test262SuiteTest {
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
      */
-    public static class $262 {
-        private ScriptableObject scope;
+    public static class $262 extends ScriptableObject {
 
-        static $262 install(ScriptableObject scope) {
-            $262 instance = new $262(scope);
+        static $262 install(ScriptableObject scope, Scriptable parentScope) {
+            $262 instance = new $262(scope, parentScope);
 
             scope.put("$262", scope, instance);
             scope.setAttributes("$262", ScriptableObject.DONTENUM);
@@ -444,8 +445,12 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        $262(ScriptableObject scope) {
-            this.scope = scope;
+        public $262() {
+            super();
+        }
+
+        $262(Scriptable scope, Scriptable prototype) {
+            super(scope, prototype);
         }
 
         @JSFunction
@@ -456,21 +461,20 @@ public class Test262SuiteTest {
         @JSFunction
         public Object evalScript(String source) {
             try (Context cx = Context.enter()) {
-                return cx.evaluateString(this.scope, source, "<evalScript>", 1, null);
+                return cx.evaluateString(this.getParentScope(), source, "<evalScript>", 1, null);
             }
         }
 
         @JSGetter
         public Object getGlobal() {
-            return this.scope;
+            return this.getParentScope();
         }
 
         @JSFunction
         public $262 createRealm() {
             try (Context cx = Context.enter()) {
                 ScriptableObject realm = cx.initSafeStandardObjects();
-
-                return $262.install(realm);
+                return new $262(realm, getPrototype());
             }
         }
 
@@ -484,10 +488,15 @@ public class Test262SuiteTest {
         public Object getAgent() {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
+
+        @Override
+        public String getClassName() {
+            return "__262__";
+        }
     }
 
     private Scriptable buildScope(Context cx, Test262Case testCase, int optLevel)
-            throws IOException {
+            throws InvocationTargetException, IllegalAccessException, InstantiationException {
         ScriptableObject scope = cx.initSafeStandardObjects();
 
         for (String harnessFile : testCase.harnessFiles) {
@@ -509,8 +518,11 @@ public class Test262SuiteTest {
             harnessScript.exec(cx, scope);
         }
 
-        $262.install(scope);
+        ScriptableObject.defineClass(scope, $262.class);
 
+        // same as cx.evaluateString(scope, "var $262 = new __262__()", "<init>", 1, null);
+        BaseFunction ctor = (BaseFunction) scope.get("__262__", scope);
+        $262.install(scope, ctor.construct(cx, scope, new Object[0]));
         return scope;
     }
 
