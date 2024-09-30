@@ -4297,7 +4297,7 @@ public class ScriptRuntime {
             catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
         }
 
-        if (isVisible(cx, t)) {
+        if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) && isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
             // scope that can be used to retrieve the Java exception associated
             // with the JavaScript exception (to get stack trace info, etc.)
