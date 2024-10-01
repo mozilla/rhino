@@ -76,20 +76,48 @@ public class Utils {
         return version >= desiredVersion;
     }
 
+    /**
+     * Execute the provided script and assert the result. The language version is not changed.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
     public static void assertWithAllOptimizationLevels(final Object expected, final String script) {
         assertWithAllOptimizationLevels(-1, expected, script);
     }
 
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_1_8}.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
     public static void assertWithAllOptimizationLevels_1_8(
             final Object expected, final String script) {
         assertWithAllOptimizationLevels(Context.VERSION_1_8, expected, script);
     }
 
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_ES6}.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
     public static void assertWithAllOptimizationLevelsES6(
             final Object expected, final String script) {
         assertWithAllOptimizationLevels(Context.VERSION_ES6, expected, script);
     }
 
+    /**
+     * Execute the provided script and assert the result.
+     *
+     * @param languageVersion the language version constant from @{@link Context} or -1 to not
+     *     change the language version at all
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
     public static void assertWithAllOptimizationLevels(
             final int languageVersion, final Object expected, final String script) {
         runWithAllOptimizationLevels(
@@ -133,24 +161,65 @@ public class Utils {
                 });
     }
 
-    public static void assertEvaluatorException_1_8(final String expectedMessage, final String js) {
-        assertException(Context.VERSION_1_8, EvaluatorException.class, expectedMessage, js);
+    /**
+     * Execute the provided script and assert an {@link EvaluatorException}. The error message of
+     * the {@link EvaluatorException} has to start with the provided expectedMessage. Before the
+     * execution the language version is set to {@link Context#VERSION_1_8}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertEvaluatorException_1_8(
+            final String expectedMessage, final String script) {
+        assertException(Context.VERSION_1_8, EvaluatorException.class, expectedMessage, script);
     }
 
-    public static void assertEvaluatorExceptionES6(final String expectedMessage, final String js) {
-        assertException(Context.VERSION_ES6, EvaluatorException.class, expectedMessage, js);
+    /**
+     * Execute the provided script and assert an {@link EvaluatorException}. The error message of
+     * the {@link EvaluatorException} has to start with the provided expectedMessage. Before the
+     * execution the language version is set to {@link Context#VERSION_ES6}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertEvaluatorExceptionES6(
+            final String expectedMessage, final String script) {
+        assertException(Context.VERSION_ES6, EvaluatorException.class, expectedMessage, script);
     }
 
-    public static void assertEcmaError(final String expectedMessage, final String js) {
-        assertException(-1, EcmaError.class, expectedMessage, js);
+    /**
+     * Execute the provided script and assert an {@link EcmaError}. The error message of the {@link
+     * EcmaError} has to start with the provided expectedMessage.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertEcmaError(final String expectedMessage, final String script) {
+        assertException(-1, EcmaError.class, expectedMessage, script);
     }
 
-    public static void assertEcmaError_1_8(final String expectedMessage, final String js) {
-        assertException(Context.VERSION_1_8, EcmaError.class, expectedMessage, js);
+    /**
+     * Execute the provided script and assert an {@link EcmaError}. The error message of the {@link
+     * EcmaError} has to start with the provided expectedMessage. Before the execution the language
+     * version is set to {@link Context#VERSION_1_8}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertEcmaError_1_8(final String expectedMessage, final String script) {
+        assertException(Context.VERSION_1_8, EcmaError.class, expectedMessage, script);
     }
 
-    public static void assertEcmaErrorES6(final String expectedMessage, final String js) {
-        assertException(Context.VERSION_ES6, EcmaError.class, expectedMessage, js);
+    /**
+     * Execute the provided script and assert an {@link EcmaError}. The error message of the {@link
+     * EcmaError} has to start with the provided expectedMessage. Before the execution the language
+     * version is set to {@link Context#VERSION_1_8}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertEcmaErrorES6(final String expectedMessage, final String script) {
+        assertException(Context.VERSION_ES6, EcmaError.class, expectedMessage, script);
     }
 
     private static <T extends Exception> void assertException(
