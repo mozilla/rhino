@@ -59,20 +59,6 @@ public class Utils {
     }
 
     /**
-     * Execute the provided script in a fresh context as "myScript.js".
-     *
-     * @param script the script code
-     */
-    static void executeScript(final String script, final int optimizationLevel) {
-        Utils.runWithOptimizationLevel(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    return cx.evaluateString(scope, script, "myScript.js", 1, null);
-                },
-                optimizationLevel);
-    }
-
-    /**
      * If the TEST_OPTLEVEL system property is set, then return an array containing only that one
      * integer. Otherwise, return an array of the typical opt levels that we expect for testing.
      */
@@ -91,36 +77,43 @@ public class Utils {
     }
 
     public static void assertWithAllOptimizationLevels(final Object expected, final String script) {
-        runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
-
-                    assertEquals(expected, res);
-                    return null;
-                });
+        assertWithAllOptimizationLevels(-1, expected, script);
     }
 
     public static void assertWithAllOptimizationLevels_1_8(
             final Object expected, final String script) {
-        runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_8);
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
-
-                    assertEquals(expected, res);
-                    return null;
-                });
+        assertWithAllOptimizationLevels(Context.VERSION_1_8, expected, script);
     }
 
     public static void assertWithAllOptimizationLevelsES6(
             final Object expected, final String script) {
+        assertWithAllOptimizationLevels(Context.VERSION_ES6, expected, script);
+    }
+
+    public static void assertWithAllOptimizationLevels(
+            final int languageVersion, final Object expected, final String script) {
         runWithAllOptimizationLevels(
                 cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    if (languageVersion > -1) {
+                        cx.setLanguageVersion(languageVersion);
+                    }
                     final Scriptable scope = cx.initStandardObjects();
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+
+                    if (expected instanceof Integer && res instanceof Double) {
+                        assertEquals(
+                                ((Integer) expected).doubleValue(),
+                                ((Double) res).doubleValue(),
+                                0.00001);
+                        return null;
+                    }
+                    if (expected instanceof Double && res instanceof Integer) {
+                        assertEquals(
+                                ((Double) expected).doubleValue(),
+                                ((Integer) res).doubleValue(),
+                                0.00001);
+                        return null;
+                    }
 
                     assertEquals(expected, res);
                     return null;
@@ -140,72 +133,43 @@ public class Utils {
                 });
     }
 
-    public static void assertEvaluatorExceptionES6(String expectedMessage, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    EvaluatorException e =
-                            assertThrows(
-                                    EvaluatorException.class,
-                                    () -> cx.evaluateString(scope, js, "test", 1, null));
-                    assertEquals(expectedMessage, e.getMessage());
-                    return null;
-                });
+    public static void assertEvaluatorException_1_8(final String expectedMessage, final String js) {
+        assertException(Context.VERSION_1_8, EvaluatorException.class, expectedMessage, js);
     }
 
-    public static void assertEcmaError(String expectedMessage, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    EcmaError e =
-                            assertThrows(
-                                    EcmaError.class,
-                                    () -> cx.evaluateString(scope, js, "test", 1, null));
-                    assertTrue(
-                            "'"
-                                    + e.getMessage()
-                                    + "' does not start with '"
-                                    + expectedMessage
-                                    + "'",
-                            e.getMessage().startsWith(expectedMessage));
-                    return null;
-                });
+    public static void assertEvaluatorExceptionES6(final String expectedMessage, final String js) {
+        assertException(Context.VERSION_ES6, EvaluatorException.class, expectedMessage, js);
     }
 
-    public static void assertEcmaError_1_8(String expectedMessage, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_1_8);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    EcmaError e =
-                            assertThrows(
-                                    EcmaError.class,
-                                    () -> cx.evaluateString(scope, js, "test", 1, null));
-                    assertTrue(
-                            "'"
-                                    + e.getMessage()
-                                    + "' does not start with '"
-                                    + expectedMessage
-                                    + "'",
-                            e.getMessage().startsWith(expectedMessage));
-                    return null;
-                });
+    public static void assertEcmaError(final String expectedMessage, final String js) {
+        assertException(-1, EcmaError.class, expectedMessage, js);
     }
 
-    public static void assertEcmaErrorES6(String expectedMessage, String js) {
+    public static void assertEcmaError_1_8(final String expectedMessage, final String js) {
+        assertException(Context.VERSION_1_8, EcmaError.class, expectedMessage, js);
+    }
+
+    public static void assertEcmaErrorES6(final String expectedMessage, final String js) {
+        assertException(Context.VERSION_ES6, EcmaError.class, expectedMessage, js);
+    }
+
+    private static <T extends Exception> void assertException(
+            final int languageVersion,
+            final Class<T> expectedThrowable,
+            final String expectedMessage,
+            String js) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    if (languageVersion > -1) {
+                        cx.setLanguageVersion(languageVersion);
+                    }
                     ScriptableObject scope = cx.initStandardObjects();
 
-                    EcmaError e =
+                    T e =
                             assertThrows(
-                                    EcmaError.class,
+                                    expectedThrowable,
                                     () -> cx.evaluateString(scope, js, "test", 1, null));
+
                     assertTrue(
                             "'"
                                     + e.getMessage()
