@@ -107,13 +107,14 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                 continue;
             }
             String name = error.name();
-            ScriptableObject errorProto =
-                    (ScriptableObject)
-                            ScriptRuntime.newBuiltinObject(
-                                    cx, scope, TopLevel.Builtins.Error, ScriptRuntime.emptyArgs);
+            Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+            IdFunctionObject ctor =
+                    (IdFunctionObject)
+                            TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
+            ScriptableObject errorProto = NativeError.makeProto(topLevelScope, ctor);
             errorProto.defineProperty("name", name, DONTENUM);
             errorProto.defineProperty("message", "", DONTENUM);
-            IdFunctionObject ctor;
+
             if (error == TopLevel.NativeErrors.AggregateError) {
                 ctor = new IdFunctionObject(obj, FTAG, Id_new_AggregateError, name, 2, scope);
             } else {
