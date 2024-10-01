@@ -448,17 +448,15 @@ public class Test262SuiteTest {
             proto.setPrototype(getObjectPrototype(scope));
             proto.setParentScope(scope);
 
-            proto.defineProperty("toSource", "Math", DONTENUM | READONLY | PERMANENT);
-
-            proto.defineProperty(scope, "gc", 1, $262::gc, DONTENUM, DONTENUM | READONLY);
+            proto.defineProperty(scope, "gc", 0, $262::gc, DONTENUM, DONTENUM | READONLY);
             proto.defineProperty(
-                    scope, "createRealm", 1, $262::createRealm, DONTENUM, DONTENUM | READONLY);
+                    scope, "createRealm", 0, $262::createRealm, DONTENUM, DONTENUM | READONLY);
             proto.defineProperty(
                     scope, "evalScript", 1, $262::evalScript, DONTENUM, DONTENUM | READONLY);
             proto.defineProperty(
                     scope,
                     "detachArrayBuffer",
-                    1,
+                    0,
                     $262::detachArrayBuffer,
                     DONTENUM,
                     DONTENUM | READONLY);

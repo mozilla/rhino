@@ -1345,7 +1345,18 @@ public abstract class ScriptableObject
         so.defineProperty(propertyName, value, attributes);
     }
 
-    /** Utility method to add lambda properties to arbitrary Scriptable object. */
+    /**
+     * Utility method to add lambda properties to arbitrary Scriptable object.
+     *
+     * @param scope ScriptableObject to define the property on
+     * @param name the name of the property to define.
+     * @param length the arity of the function
+     * @param target an object that implements the function in Java. Since Callable is a
+     *     single-function interface this will typically be implemented as a lambda.
+     * @param attributes the attributes of the JavaScript property
+     * @param propertyAttributes Sets the attributes of the "name", "length", and "arity" properties
+     *     of the internal LambdaFunction, which differ for many * native objects.
+     */
     public void defineProperty(
             Scriptable scope,
             String name,
