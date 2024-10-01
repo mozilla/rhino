@@ -244,7 +244,6 @@ public class EmbeddedSlotMap implements SlotMap {
         for (Slot slot : oldSlots) {
             while (slot != null) {
                 Slot nextSlot = slot.next;
-                slot.next = null;
                 addKnownAbsentSlot(newSlots, slot);
                 slot = nextSlot;
             }
@@ -257,9 +256,8 @@ public class EmbeddedSlotMap implements SlotMap {
      */
     private static void addKnownAbsentSlot(Slot[] addSlots, Slot slot) {
         final int insertPos = getSlotIndex(addSlots.length, slot.indexOrHash);
-        Slot old = addSlots[insertPos];
+        slot.next = addSlots[insertPos];
         addSlots[insertPos] = slot;
-        slot.next = old;
     }
 
     private static int getSlotIndex(int tableSize, int indexOrHash) {

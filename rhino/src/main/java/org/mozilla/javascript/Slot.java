@@ -82,7 +82,7 @@ public class Slot implements Serializable {
         return attributes;
     }
 
-    synchronized void setAttributes(int value) {
+    void setAttributes(int value) {
         ScriptableObject.checkValidAttributes(value);
         attributes = (short) value;
     }
