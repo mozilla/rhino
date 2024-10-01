@@ -1346,7 +1346,7 @@ public abstract class ScriptableObject
     }
 
     /** Utility method to add lambda properties to arbitrary Scriptable object. */
-    protected void defineProperty(
+    public void defineProperty(
             Scriptable scope,
             String name,
             int length,
