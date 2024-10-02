@@ -27,6 +27,7 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.EqualObjectGraphs;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.IdFunctionCall;
@@ -42,7 +43,7 @@ import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
 
-public final class JavaAdapter implements IdFunctionCall {
+public final class JavaAdapter implements IdFunctionCall, EqualObjectGraphs.Stateless {
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
      * hash table.
