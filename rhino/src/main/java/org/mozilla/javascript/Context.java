@@ -33,7 +33,6 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
-import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.lc.NativeJavaObject;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -1762,7 +1761,8 @@ public class Context implements Closeable {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
-                || value instanceof Scriptable) {
+                || value instanceof Scriptable
+                || value instanceof Undefined) {
             return value;
         } else if (value instanceof Character) {
             return String.valueOf(((Character) value).charValue());
