@@ -2153,9 +2153,6 @@ public class Context implements Closeable {
      * @since 1.5 Release 4
      */
     public final WrapFactory getWrapFactory() {
-        if (wrapFactory == null) {
-            wrapFactory = new JavaWrapFactory();
-        }
         return wrapFactory;
     }
 

@@ -58,6 +58,9 @@ public class JavaWrapFactory implements WrapFactory {
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
         new ClassCache().associate(scope);
+        if (cx.getWrapFactory() == null) {
+            cx.setWrapFactory(new JavaWrapFactory());
+        }
         new LazilyLoadedCtor(
                 scope, "Packages", "org.mozilla.javascript.lc.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(

@@ -4367,25 +4367,27 @@ public class ScriptRuntime {
                 ((NativeError) errorObject).setStackProvider(re);
             }
 
-            if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "javaException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
-            }
-            if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "rhinoException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
+            if (cx.getWrapFactory() != null) {
+                if (javaException != null && isVisible(cx, javaException)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "javaException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
+                if (isVisible(cx, re)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "rhinoException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
             }
             obj = errorObject;
         }
