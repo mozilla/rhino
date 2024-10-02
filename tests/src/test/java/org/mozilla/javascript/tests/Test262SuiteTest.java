@@ -663,6 +663,7 @@ public class Test262SuiteTest {
     private static void addTestFiles(List<File> testFiles, Map<File, String> filesExpectedToFail)
             throws IOException {
         List<File> topLevelFolderContents = new LinkedList<File>();
+        Map<String, File> fileLookup = new HashMap<>();
         File topLevelFolder = null;
         boolean excludeTopLevelFolder = false;
 
@@ -711,6 +712,16 @@ public class Test262SuiteTest {
                     topLevelFolderContents.clear();
                     recursiveListFilesHelper(
                             topLevelFolder, JS_FILE_FILTER, topLevelFolderContents);
+                    fileLookup.clear();
+                    for (File file : topLevelFolderContents) {
+                        fileLookup.put(
+                                topLevelFolder
+                                        .toPath()
+                                        .relativize(file.toPath())
+                                        .toString()
+                                        .replaceAll("\\\\", "/"),
+                                file);
+                    }
 
                     if (updateTest262Properties) {
                         // Make sure files are always sorted the same way, alphabetically, with
@@ -758,32 +769,20 @@ public class Test262SuiteTest {
                                     + " without encountering a top level");
                 }
 
-                boolean fileFound = false;
-
                 // Now onto the files and folders listed under the topLevel folder
                 if (path.endsWith(".js")) {
-                    for (File file : topLevelFolderContents) {
-                        if (topLevelFolder
-                                .toPath()
-                                .relativize(file.toPath())
-                                .toString()
-                                .replaceAll("\\\\", "/")
-                                .equals(path)) {
-                            filesExpectedToFail.put(file, comment);
-
-                            if (excludeTopLevelFolder) {
-                                /* adding paths listed in the .properties file under the topLevel folder marked to skip
-                                 * to testFiles, in order to be able to not loose then when regenerate the .properties file
-                                 *
-                                 * Want to keep track of these files as they apparently failed at the time when the directory was marked to be skipped
-                                 */
-                                testFiles.add(file);
-                            }
-                            fileFound = true;
+                    File file = fileLookup.get(path);
+                    if (file != null) {
+                        filesExpectedToFail.put(file, comment);
+                        if (excludeTopLevelFolder) {
+                            /* adding paths listed in the .properties file under the topLevel folder marked to skip
+                             * to testFiles, in order to be able to not loose then when regenerate the .properties file
+                             *
+                             * Want to keep track of these files as they apparently failed at the time when the directory was marked to be skipped
+                             */
+                            testFiles.add(file);
                         }
-                    }
-
-                    if (!fileFound) {
+                    } else {
                         System.err.format(
                                 "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
                                 path, lineNo);
