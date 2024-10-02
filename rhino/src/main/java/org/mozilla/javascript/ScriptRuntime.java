@@ -708,56 +708,47 @@ public class ScriptRuntime {
 
     /** Convert the value to a BigInt. */
     public static BigInteger toBigInt(Object val) {
-        for (; ; ) {
-            if (val instanceof BigInteger) {
-                return (BigInteger) val;
-            }
-            if (val instanceof BigDecimal) {
-                return ((BigDecimal) val).toBigInteger();
-            }
-            if (val instanceof Number) {
-                if (val instanceof Long) {
-                    return BigInteger.valueOf(((Long) val));
-                } else {
-                    double d = ((Number) val).doubleValue();
-                    if (Double.isNaN(d) || Double.isInfinite(d)) {
-                        throw rangeErrorById(
-                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
-                    }
-                    BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
-                    try {
-                        return bd.toBigIntegerExact();
-                    } catch (ArithmeticException e) {
-                        throw rangeErrorById(
-                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
-                    }
-                }
-            }
-            if (val == null || Undefined.isUndefined(val)) {
-                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
-            }
-            if (val instanceof String) {
-                return toBigInt((String) val);
-            }
-            if (val instanceof CharSequence) {
-                return toBigInt(val.toString());
-            }
-            if (val instanceof Boolean) {
-                return ((Boolean) val).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
-            }
-            if (val instanceof Symbol) {
-                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
-            }
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(BigIntegerClass);
-                if ((val instanceof Scriptable) && !isSymbol(val)) {
-                    throw errorWithClassName("msg.primitive.expected", val);
-                }
-                continue;
-            }
-            warnAboutNonJSObject(val);
-            return BigInteger.ZERO;
+        val = toPrimitive(val, NumberClass);
+        if (val instanceof BigInteger) {
+            return (BigInteger) val;
         }
+        if (val instanceof BigDecimal) {
+            return ((BigDecimal) val).toBigInteger();
+        }
+        if (val instanceof Number) {
+            if (val instanceof Long) {
+                return BigInteger.valueOf(((Long) val));
+            } else {
+                double d = ((Number) val).doubleValue();
+                if (Double.isNaN(d) || Double.isInfinite(d)) {
+                    throw rangeErrorById(
+                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                }
+                BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
+                try {
+                    return bd.toBigIntegerExact();
+                } catch (ArithmeticException e) {
+                    throw rangeErrorById(
+                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                }
+            }
+        }
+        if (val == null || Undefined.isUndefined(val)) {
+            throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+        }
+        if (val instanceof String) {
+            return toBigInt((String) val);
+        }
+        if (val instanceof CharSequence) {
+            return toBigInt(val.toString());
+        }
+        if (val instanceof Boolean) {
+            return ((Boolean) val).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
+        }
+        if (isSymbol(val)) {
+            throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+        }
+        throw errorWithClassName("msg.primitive.expected", val);
     }
 
     /** ToBigInt applied to the String type */
