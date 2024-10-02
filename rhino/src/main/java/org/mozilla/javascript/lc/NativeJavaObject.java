@@ -759,7 +759,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             /* Long values cannot be expressed exactly in doubles.
              * We thus use the largest and smallest double value that
              * has a value expressible as a long value. We build these
-             * numerical values from their hexidecimal representations
+             * numerical values from their hexadecimal representations
              * to avoid any problems caused by attempting to parse a
              * decimal representation.
              */

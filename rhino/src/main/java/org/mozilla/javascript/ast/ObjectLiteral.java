@@ -12,7 +12,7 @@ import java.util.List;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an Object literal (also called an Object initialiser in Ecma-262). The elements list
+ * AST node for an Object literal (also called an Object initializer in Ecma-262). The elements list
  * will always be non-{@code null}, although the list will have no elements if the Object literal is
  * empty.
  *

@@ -19,7 +19,7 @@ public enum StackStyle {
     MOZILLA,
 
     /**
-     * This is the same as MOZILLA but uses LF as speparator instead of the system dependent line
+     * This is the same as MOZILLA but uses LF as separator instead of the system dependent line
      * separator.
      */
     MOZILLA_LF,

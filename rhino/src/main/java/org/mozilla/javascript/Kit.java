@@ -71,7 +71,7 @@ public class Kit {
 
     /**
      * If character <code>c</code> is a hexadecimal digit, return <code>accumulator</code> * 16 plus
-     * corresponding number. Otherise return -1.
+     * corresponding number. Otherwise return -1.
      */
     public static int xDigitToInt(int c, int accumulator) {
         check:

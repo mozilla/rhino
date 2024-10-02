@@ -1147,6 +1147,9 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case ',':
                     return Token.COMMA;
                 case '?':
+                    if (matchChar('.')) {
+                        return Token.QUESTION_DOT;
+                    }
                     if (matchChar('?')) {
                         return Token.NULLISH_COALESCING;
                     }
@@ -2241,7 +2244,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 // ignore it, we're already displaying an error...
                 return EOF_CHAR;
             }
-            // index recalculuation as fillSourceBuffer can move saved
+            // index recalculation as fillSourceBuffer can move saved
             // line buffer and change sourceCursor
             index -= (oldSourceCursor - sourceCursor);
         }

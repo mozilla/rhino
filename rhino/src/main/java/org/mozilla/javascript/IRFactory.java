@@ -141,6 +141,7 @@ public final class IRFactory {
                 return transformBlock(node);
             case Token.BREAK:
                 return transformBreak((BreakStatement) node);
+            case Token.CALL_OPTIONAL:
             case Token.CALL:
                 return transformFunctionCall((FunctionCall) node);
             case Token.CONTINUE:
@@ -161,6 +162,7 @@ public final class IRFactory {
                 return transformGenExpr((GeneratorExpression) node);
             case Token.GETELEM:
                 return transformElementGet((ElementGet) node);
+            case Token.QUESTION_DOT:
             case Token.GETPROP:
                 return transformPropertyGet((PropertyGet) node);
             case Token.HOOK:
@@ -347,7 +349,8 @@ public final class IRFactory {
         Node call =
                 createCallOrNew(
                         Token.CALL,
-                        createPropertyGet(parser.createName(arrayName), null, "push", 0));
+                        createPropertyGet(
+                                parser.createName(arrayName), null, "push", 0, node.type));
 
         Node body = new Node(Token.EXPR_VOID, call, lineno);
 
@@ -641,7 +644,10 @@ public final class IRFactory {
     }
 
     private Node transformFunctionCall(FunctionCall node) {
-        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
+        Node call =
+                createCallOrNew(
+                        node.type == Token.CALL_OPTIONAL ? Token.CALL_OPTIONAL : Token.CALL,
+                        transform(node.getTarget()));
         call.setLineno(node.getLineno());
         List<AstNode> args = node.getArguments();
         for (int i = 0; i < args.size(); i++) {
@@ -938,7 +944,7 @@ public final class IRFactory {
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
-        return createPropertyGet(target, null, name, 0);
+        return createPropertyGet(target, null, name, 0, node.type);
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {
@@ -1112,7 +1118,7 @@ public final class IRFactory {
     private Node transformUnary(UnaryExpression node) {
         int type = node.getType();
         if (type == Token.DEFAULTNAMESPACE) {
-            return transformDefaultXmlNamepace(node);
+            return transformDefaultXmlNamespace(node);
         }
 
         Node child = transform(node.getOperand());
@@ -1262,13 +1268,13 @@ public final class IRFactory {
         String ns = namespace != null ? namespace.getIdentifier() : null;
         if (node instanceof XmlPropRef) {
             String name = ((XmlPropRef) node).getPropName().getIdentifier();
-            return createPropertyGet(pn, ns, name, memberTypeFlags);
+            return createPropertyGet(pn, ns, name, memberTypeFlags, node.type);
         }
         Node expr = transform(((XmlElemRef) node).getExpression());
         return createElementGet(pn, ns, expr, memberTypeFlags);
     }
 
-    private Node transformDefaultXmlNamepace(UnaryExpression node) {
+    private Node transformDefaultXmlNamespace(UnaryExpression node) {
         Node child = transform(node.getOperand());
         return createUnary(Token.DEFAULTNAMESPACE, child);
     }
@@ -1639,10 +1645,10 @@ public final class IRFactory {
             // after_catch:
             //
             // If there is no default catch, then the last with block
-            // arround  "somethingDefault;" is replaced by "rethrow;"
+            // around  "somethingDefault;" is replaced by "rethrow;"
 
             // It is assumed that catch handler generation will store
-            // exeception object in handlerBlock register
+            // exception object in handlerBlock register
 
             // Block with local for exception scope objects
             Node catchScopeBlock = new Node(Token.LOCAL_BLOCK);
@@ -1897,18 +1903,27 @@ public final class IRFactory {
     }
 
     private Node createPropertyGet(
-            Node target, String namespace, String name, int memberTypeFlags) {
+            Node target, String namespace, String name, int memberTypeFlags, int type) {
         if (namespace == null && memberTypeFlags == 0) {
             if (target == null) {
                 return parser.createName(name);
             }
             parser.checkActivationName(name, Token.GETPROP);
             if (ScriptRuntime.isSpecialProperty(name)) {
-                Node ref = new Node(Token.REF_SPECIAL, target);
+                Node ref =
+                        new Node(
+                                type == Token.QUESTION_DOT
+                                        ? Token.REF_SPECIAL_OPTIONAL
+                                        : Token.REF_SPECIAL,
+                                target);
                 ref.putProp(Node.NAME_PROP, name);
                 return new Node(Token.GET_REF, ref);
             }
-            return new Node(Token.GETPROP, target, Node.newString(name));
+
+            return new Node(
+                    type == Token.QUESTION_DOT ? Token.GETPROP_OPTIONAL : Token.GETPROP,
+                    target,
+                    Node.newString(name));
         }
         Node elem = Node.newString(name);
         memberTypeFlags |= Node.PROPERTY_FLAG;
@@ -1993,7 +2008,7 @@ public final class IRFactory {
                 }
                 // can't do anything if we don't know  both types - since
                 // 0 + object is supposed to call toString on the object and do
-                // string concantenation rather than addition
+                // string concatenation rather than addition
                 break;
 
             case Token.SUB:
@@ -2049,7 +2064,7 @@ public final class IRFactory {
                         return left;
                     } else if (rd == 1.0) {
                         // second 1: x/1 -> +x
-                        // not simply x to force number convertion
+                        // not simply x to force number conversion
                         return new Node(Token.POS, left);
                     }
                 }

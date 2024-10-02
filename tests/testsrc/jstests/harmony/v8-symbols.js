@@ -169,8 +169,8 @@ function TestEquality() {
     assertTrue(symbols[i] == symbols[i])
     assertFalse(symbols[i] === Object(symbols[i]))
     assertFalse(Object(symbols[i]) === symbols[i])
-    assertFalse(symbols[i] == Object(symbols[i]))
-    assertFalse(Object(symbols[i]) == symbols[i])
+    assertTrue(symbols[i] == Object(symbols[i]))
+    assertTrue(Object(symbols[i]) == symbols[i])
     assertTrue(symbols[i] === symbols[i].valueOf())
     assertTrue(symbols[i].valueOf() === symbols[i])
     assertTrue(symbols[i] == symbols[i].valueOf())
@@ -245,8 +245,7 @@ function TestCall() {
 TestCall()
 
 
-/*
- * TODO Rhino not implemented
+/* Rhino changed - weakmap does not support symbol keys */
 function TestCollections() {
   var set = new Set
   var map = new Map
@@ -254,28 +253,27 @@ function TestCollections() {
   for (var i in symbols) {
     set.add(symbols[i])
     map.set(symbols[i], i)
-    weakmap.set(symbols[i], i)
+    /* weakmap.set(symbols[i], i) */
   }
   assertEquals(symbols.length, set.size)
   assertEquals(symbols.length, map.size)
   for (var i in symbols) {
     assertTrue(set.has(symbols[i]))
     assertTrue(map.has(symbols[i]))
-    assertTrue(weakmap.has(symbols[i]))
+    /* assertTrue(weakmap.has(symbols[i])) */
     assertEquals(i, map.get(symbols[i]))
-    assertEquals(i, weakmap.get(symbols[i]))
+    /* assertEquals(i, weakmap.get(symbols[i])) */
   }
   for (var i in symbols) {
     assertTrue(set.delete(symbols[i]))
     assertTrue(map.delete(symbols[i]))
-    assertTrue(weakmap.delete(symbols[i]))
+    /* assertTrue(weakmap.delete(symbols[i])) */
   }
   assertEquals(0, set.size)
   assertEquals(0, map.size)
 }
 TestCollections()
 
-*/
 
 function TestKeySet(obj) {
   //assertTrue(%HasFastProperties(obj))
@@ -364,9 +362,7 @@ function TestKeyDelete(obj) {
   }
 }
 
-// TODO Rhino no Map
-//var objs = [{}, [], Object.create(null), Object(1), new Map, function(){}]
-var objs = [{}, [], Object.create(null), Object(1), function(){}]
+var objs = [{}, [], Object.create(null), Object(1), new Map, function(){}]
 
 for (var i in objs) {
   //print('Testing ' + i + ' (' + typeof i + ')');

@@ -120,10 +120,13 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
+            GETPROP_OPTIONAL = BIGINT + 1,
+            REF_SPECIAL_OPTIONAL = GETPROP_OPTIONAL + 1,
+            CALL_OPTIONAL = REF_SPECIAL_OPTIONAL + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+    public static final int LAST_BYTECODE_TOKEN = CALL_OPTIONAL,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -231,7 +234,8 @@ public class Token {
                     TEMPLATE_LITERAL_SUBST + 1, // template literal - tagged/handler
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
-            LAST_TOKEN = NULLISH_COALESCING;
+            QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
+            LAST_TOKEN = QUESTION_DOT;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -610,6 +614,8 @@ public class Token {
                 return "TEMPLATE_LITERAL_SUBST";
             case TAGGED_TEMPLATE_LITERAL:
                 return "TAGGED_TEMPLATE_LITERAL";
+            case QUESTION_DOT:
+                return "DOT_QUESTION";
         }
 
         // Token without name

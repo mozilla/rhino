@@ -147,7 +147,7 @@ public class FunctionObject extends BaseFunction {
 
     /**
      * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type or {@link
-     *     #JAVA_UNSUPPORTED_TYPE} if the convertion is not possible
+     *     #JAVA_UNSUPPORTED_TYPE} if the conversion is not possible
      */
     public static int getTypeTag(Class<?> type) {
         if (type == ScriptRuntime.StringClass) return JAVA_STRING_TYPE;

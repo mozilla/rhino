@@ -70,6 +70,14 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
+    /** Implement x?.property() call shrinking optimizer code. */
+    public static Object callProp0Optional(
+            Object value, String property, Context cx, Scriptable scope) {
+        Callable f = getPropFunctionAndThisOptional(value, property, cx, scope);
+        Scriptable thisObj = lastStoredScriptable(cx);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+    }
+
     public static Object add(Object val1, double val2, Context cx) {
         if (val1 instanceof Double) {
             return ((Double) val1) + val2;

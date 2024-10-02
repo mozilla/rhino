@@ -66,7 +66,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if (id == constructorId) {
                 if (!(value instanceof IdFunctionObject)) {
                     throw new IllegalArgumentException(
-                            "consructor should be initialized with IdFunctionObject");
+                            "constructor should be initialized with IdFunctionObject");
                 }
                 constructor = (IdFunctionObject) value;
                 constructorAttrs = (short) attributes;
@@ -86,7 +86,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if (id == constructorId) {
                 if (!(value instanceof IdFunctionObject)) {
                     throw new IllegalArgumentException(
-                            "consructor should be initialized with IdFunctionObject");
+                            "constructor should be initialized with IdFunctionObject");
                 }
                 constructor = (IdFunctionObject) value;
                 constructorAttrs = (short) attributes;

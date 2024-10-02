@@ -138,7 +138,7 @@ public class Context implements Closeable {
      * when applied to objects and arrays. If <code>hasFeature(FEATURE_TO_STRING_AS_SOURCE)</code>
      * returns true, calling <code>toString()</code> on JS objects gives the same result as calling
      * <code>toSource()</code>. That is it returns JS source with code to create an object with all
-     * enumeratable fields of the original object instead of printing <code>[object <i>result of
+     * enumerable fields of the original object instead of printing <code>[object <i>result of
      * {@link Scriptable#getClassName()}</i>]</code>.
      *
      * <p>By default {@link #hasFeature(int)} returns true only if the current JS version is set to
@@ -624,7 +624,7 @@ public class Context implements Closeable {
 
     /**
      * Unseal previously sealed Context object. The <code>sealKey</code> argument should not be null
-     * and should match <code>sealKey</code> suplied with the last call to {@link #seal(Object)} or
+     * and should match <code>sealKey</code> supplied with the last call to {@link #seal(Object)} or
      * an exception will be thrown.
      *
      * @see #isSealed()

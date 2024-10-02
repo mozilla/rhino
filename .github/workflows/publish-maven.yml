@@ -16,7 +16,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@2dfa2011c5b2a0f1489bf9e433881c92c1631f88 # v4.3.0
       with:
-        java-version: '11'
+        java-version: '21'
         distribution: 'adopt'
         server-id: github
         settings-path: ${{ github.workspace }}

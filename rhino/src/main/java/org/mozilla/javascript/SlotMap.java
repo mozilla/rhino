@@ -54,7 +54,7 @@ public interface SlotMap extends Iterable<Slot> {
      * Replace the value of key with the slot computed by the "compute" method. If "compute" throws
      * an exception, make no change. If "compute" returns null, remove the mapping, otherwise,
      * replace any existing mapping with the result of "compute", and create a new mapping if none
-     * exists. This is equivalant to the "compute" method on the Map interface, which simplifies
+     * exists. This is equivalent to the "compute" method on the Map interface, which simplifies
      * code and is more efficient than making multiple calls to this interface. In order to allow
      * use of multiple Slot subclasses, this function is templatized.
      */

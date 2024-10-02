@@ -12,7 +12,7 @@ import java.util.WeakHashMap;
 
 /**
  * This is an implementation of the ES6 WeakMap class. As per the spec, keys must be ordinary
- * objects. Since there is no defined "equality" for objects, comparisions are done strictly by
+ * objects. Since there is no defined "equality" for objects, comparisons are done strictly by
  * object equality. Both ES6 and the java.util.WeakHashMap class have the same basic structure --
  * entries are removed automatically when the sole remaining reference to the key is a weak
  * reference. Therefore, we can use WeakHashMap as the basis of this implementation and preserve the

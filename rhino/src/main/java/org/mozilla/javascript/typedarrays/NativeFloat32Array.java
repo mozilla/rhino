@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 32-bit quantities and implements the JavaScript "loat32Array"
+ * An array view that stores 32-bit quantities and implements the JavaScript "Float32Array"
  * interface. It also implements List&lt;Float&gt; for direct manipulation in Java.
  */
 public class NativeFloat32Array extends NativeTypedArrayView<Float> {

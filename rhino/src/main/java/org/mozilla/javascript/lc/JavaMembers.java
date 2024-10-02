@@ -335,18 +335,11 @@ class JavaMembers {
                                 int mods = method.getModifiers();
 
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
-                                    MethodSignature sig = new MethodSignature(method);
+                                    Method registered = registerMethod(map, method);
                                     // We don't want to replace the deprecated method here
                                     // because it is not available on Android.
-                                    if (includePrivate && !method.isAccessible()) {
-                                        map.computeIfAbsent(
-                                                sig,
-                                                k -> {
-                                                    method.setAccessible(true);
-                                                    return method;
-                                                });
-                                    } else {
-                                        map.putIfAbsent(sig, method);
+                                    if (includePrivate && !registered.isAccessible()) {
+                                        registered.setAccessible(true);
                                     }
                                 }
                             }
@@ -360,11 +353,7 @@ class JavaMembers {
                             // Some security settings (i.e., applets) disallow
                             // access to Class.getDeclaredMethods. Fall back to
                             // Class.getMethods.
-                            Method[] methods = clazz.getMethods();
-                            for (Method method : methods) {
-                                MethodSignature sig = new MethodSignature(method);
-                                map.putIfAbsent(sig, method);
-                            }
+                            discoverPublicMethods(clazz, map);
                             break; // getMethods gets superclass methods, no
                             // need to loop any more
                         }
@@ -401,10 +390,21 @@ class JavaMembers {
         }
     }
 
-    static void registerMethod(Map<MethodSignature, Method> map, Method method) {
+    static Method registerMethod(Map<MethodSignature, Method> map, Method method) {
         MethodSignature sig = new MethodSignature(method);
-        // Array may contain methods with same signature but different return value!
-        map.putIfAbsent(sig, method);
+        // Array may contain methods with same parameter signature but different return value!
+        // (which is allowed in bytecode, but not in JLS) we will take the best method
+        return map.merge(sig, method, JavaMembers::getMoreConcreteMethod);
+    }
+
+    private static Method getMoreConcreteMethod(Method oldValue, Method newValue) {
+        if (oldValue.getReturnType().equals(newValue.getReturnType())) {
+            return oldValue; // same return type. Do not overwrite existing method
+        } else if (oldValue.getReturnType().isAssignableFrom(newValue.getReturnType())) {
+            return newValue; // more concrete return type. Replace method
+        } else {
+            return oldValue;
+        }
     }
 
     static final class MethodSignature {

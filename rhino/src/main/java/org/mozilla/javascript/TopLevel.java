@@ -25,9 +25,9 @@ import java.util.EnumMap;
  *
  * <p>Calling {@link org.mozilla.javascript.Context#initStandardObjects()} with an instance of this
  * class as argument will automatically cache built-in classes after initialization. For other
- * setups involving top-level scopes that inherit global properties from their proptotypes (e.g.
- * with dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable,
- * boolean)} to initialize the class cache for each top-level scope.
+ * setups involving top-level scopes that inherit global properties from their prototypes (e.g. with
+ * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable, boolean)} to
+ * initialize the class cache for each top-level scope.
  */
 public class TopLevel extends IdScriptableObject {
 

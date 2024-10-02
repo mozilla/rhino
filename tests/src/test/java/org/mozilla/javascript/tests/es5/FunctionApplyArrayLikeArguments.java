@@ -7,58 +7,36 @@
  */
 package org.mozilla.javascript.tests.es5;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.tests.Utils;
 
 public class FunctionApplyArrayLikeArguments {
 
-    private static void test(String testCode, Object expected) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result = null;
-                    try {
-                        result = cx.evaluateString(scope, testCode, "test", 1, null);
-                    } catch (Exception e) {
-                        result = "EXCEPTIONCAUGHT";
-                    }
-                    assertEquals(expected, result);
-
-                    return null;
-                });
-    }
-
     @Test
     public void arrayLikeArgumentsOfFunctionApply() {
-        test(
-                "function test() { return arguments[0]; }" + "test.apply(this, {});",
-                Undefined.instance);
+        Utils.assertWithAllOptimizationLevels(
+                Undefined.instance,
+                "function test() { return arguments[0]; } test.apply(this, {});");
 
-        test(
-                "function test() { return arguments[0]; }"
-                        + "test.apply(this, {'length':1, '0':'banana'});",
-                "banana");
+        Utils.assertWithAllOptimizationLevels(
+                "banana",
+                "function test() { return arguments[0]; } test.apply(this, {'length':1, '0':'banana'});");
 
-        test(
-                "function test() { return arguments[0]; }"
-                        + "test.apply(this, {'length':'1', '0':'lala'});",
-                "lala");
+        Utils.assertWithAllOptimizationLevels(
+                "lala",
+                "function test() { return arguments[0]; } test.apply(this, {'length':'1', '0':'lala'});");
 
-        test("function test() { return arguments[0]; }" + "test.apply(2,2);", "EXCEPTIONCAUGHT");
+        Utils.assertEcmaError(
+                "TypeError: second argument to Function.prototype.apply must be an array",
+                "function test() { return arguments[0]; } test.apply(2,2);");
 
-        test(
-                "function test() { return arguments[0]; }"
-                        + "test.apply(this,{'length':'abc', '0':'banana'});",
-                Undefined.instance);
+        Utils.assertWithAllOptimizationLevels(
+                Undefined.instance,
+                "function test() { return arguments[0]; } test.apply(this,{'length':'abc', '0':'banana'});");
 
-        test(
-                "function test() { return arguments[0]; }"
-                        + "test.apply(this,{'length':function(){return 1;}, '0':'banana'});",
-                Undefined.instance);
+        Utils.assertWithAllOptimizationLevels(
+                Undefined.instance,
+                "function test() { return arguments[0]; } test.apply(this,{'length':function(){return 1;}, '0':'banana'});");
     }
 }
