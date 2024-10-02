@@ -436,15 +436,10 @@ public class ScriptRuntime {
             if (val instanceof String) return toNumber((String) val);
             if (val instanceof CharSequence) return toNumber(val.toString());
             if (val instanceof Boolean) return ((Boolean) val).booleanValue() ? 1 : +0.0;
-            if (val instanceof Symbol) throw typeErrorById("msg.not.a.number");
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(NumberClass);
-                if ((val instanceof Scriptable) && !isSymbol(val))
-                    throw errorWithClassName("msg.primitive.expected", val);
-                continue;
-            }
-            warnAboutNonJSObject(val);
-            return NaN;
+            if (isSymbol(val)) throw typeErrorById("msg.not.a.number");
+            // Assert: val is an Object
+            val = toPrimitive(val, NumberClass);
+            // Assert: val is a primitive
         }
     }
 
