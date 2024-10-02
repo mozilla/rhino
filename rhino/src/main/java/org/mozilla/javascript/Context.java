@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.UnaryOperator;
@@ -2568,23 +2569,29 @@ public class Context implements Closeable {
             Evaluator evaluator = createInterpreter();
             if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
         }
-        /**
-         * A bit of a hack, but the only way to get filename and line number from an enclosing
-         * frame.
-         */
-        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        for (StackTraceElement st : stackTrace) {
-            String file = st.getFileName();
-            if (!(file == null || file.endsWith(".java"))) {
-                int line = st.getLineNumber();
-                if (line >= 0) {
-                    linep[0] = line;
-                    return file;
-                }
-            }
-        }
 
-        return null;
+        return getSourcePositionFromJavaStack(linep);
+    }
+
+    /** Returns the current filename in the java stack. */
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    // Android uses interpreter, so we should not get here.
+    static String getSourcePositionFromJavaStack(int[] linep) {
+        Optional<StackWalker.StackFrame> frame =
+                StackWalker.getInstance()
+                        .walk(stream -> stream.filter(Context::frameMatches).findFirst());
+        return frame.map(
+                        f -> {
+                            linep[0] = f.getLineNumber();
+                            return f.getFileName();
+                        })
+                .orElse(null);
+    }
+
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    private static boolean frameMatches(StackWalker.StackFrame frame) {
+        return (frame.getFileName() == null || !frame.getFileName().endsWith(".java"))
+                && frame.getLineNumber() > 0;
     }
 
     RegExpProxy getRegExpProxy() {
