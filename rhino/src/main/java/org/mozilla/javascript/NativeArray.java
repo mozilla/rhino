@@ -1947,10 +1947,9 @@ public class NativeArray extends IdScriptableObject implements List {
     */
     private static Boolean js_includes(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = ScriptRuntime.toLength(new Object[] {getProperty(thisObj, "length")}, 0);
+        long len = getLengthProperty(cx, o);
         if (len == 0) return Boolean.FALSE;
 
         long k;
@@ -1964,6 +1963,8 @@ public class NativeArray extends IdScriptableObject implements List {
             }
             if (k > len - 1) return Boolean.FALSE;
         }
+
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly) {
