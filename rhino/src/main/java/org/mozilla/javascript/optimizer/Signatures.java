@@ -3,7 +3,9 @@ package org.mozilla.javascript.optimizer;
 /**
  * This class defines the method signatures for the properties used by the invokedynamic
  * instructions in the bytecode. This helps us identify what each bytecode operation means, and what
- * the method signature should be.
+ * the method signature should be. The method signatures here don't necessarily map 1:1 with
+ * ScriptRuntime operations -- the runtime will insert the value of the "name" part of the operation
+ * name before making the call.
  */
 interface Signatures {
     /**

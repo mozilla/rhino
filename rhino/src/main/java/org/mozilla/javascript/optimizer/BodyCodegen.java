@@ -1664,14 +1664,11 @@ class BodyCodegen {
         if (unnestedYields.containsKey(node)) {
             // Yield was previously moved up via the "nestedYield" code below.
             if (exprContext) {
+                String name = unnestedYields.get(node);
                 cfw.addALoad(variableObjectLocal);
-                cfw.addLoadConstant(unnestedYields.get(node));
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "getObjectPropNoWarn",
-                        "(Ljava/lang/Object;Ljava/lang/String;Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;");
+                addDynamicInvoke("PROP:GETNOWARN:" + name, Signatures.PROP_GET_NOWARN);
             }
             return;
         }
@@ -1689,14 +1686,9 @@ class BodyCodegen {
             unnestedYieldCount++;
             cfw.addALoad(variableObjectLocal);
             cfw.add(ByteCode.SWAP);
-            cfw.addLoadConstant(nn);
-            cfw.add(ByteCode.SWAP);
             cfw.addALoad(contextLocal);
-
-            addScriptRuntimeInvoke(
-                    "setObjectProp",
-                    "(Lorg/mozilla/javascript/Scriptable;Ljava/lang/String;Ljava/lang/Object;"
-                            + "Lorg/mozilla/javascript/Context;)Ljava/lang/Object;");
+            cfw.addALoad(variableObjectLocal);
+            addDynamicInvoke("PROP:SET:" + nn, Signatures.PROP_SET);
             cfw.add(ByteCode.POP);
 
             unnestedYields.put(nestedYield, nn);
