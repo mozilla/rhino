@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EqualObjectGraphs;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -29,7 +30,7 @@ import org.mozilla.javascript.WrapFactory;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-public class NativeJavaPackage extends ScriptableObject {
+public class NativeJavaPackage extends ScriptableObject implements EqualObjectGraphs.JavaEquals {
     private static final long serialVersionUID = 7445054382212031523L;
 
     NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {
