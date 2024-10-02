@@ -45,10 +45,11 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.annotations.JSFunction;
-import org.mozilla.javascript.annotations.JSGetter;
+import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -432,11 +433,45 @@ public class Test262SuiteTest {
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
      */
-    public static class $262 {
-        private ScriptableObject scope;
+    public static class $262 extends ScriptableObject {
 
-        static $262 install(ScriptableObject scope) {
-            $262 instance = new $262(scope);
+        $262() {
+            super();
+        }
+
+        $262(Scriptable scope, Scriptable prototype) {
+            super(scope, prototype);
+        }
+
+        static $262 init(Context cx, Scriptable scope) {
+            $262 proto = new $262();
+            proto.setPrototype(getObjectPrototype(scope));
+            proto.setParentScope(scope);
+
+            proto.defineProperty(scope, "gc", 0, $262::gc, DONTENUM, DONTENUM | READONLY);
+            proto.defineProperty(
+                    scope, "createRealm", 0, $262::createRealm, DONTENUM, DONTENUM | READONLY);
+            proto.defineProperty(
+                    scope, "evalScript", 1, $262::evalScript, DONTENUM, DONTENUM | READONLY);
+            proto.defineProperty(
+                    scope,
+                    "detachArrayBuffer",
+                    0,
+                    $262::detachArrayBuffer,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+
+            proto.defineProperty(cx, "global", $262::getGlobal, null, DONTENUM | READONLY);
+            proto.defineProperty(cx, "agent", $262::getAgent, null, DONTENUM | READONLY);
+
+            proto.defineProperty(SymbolKey.TO_STRING_TAG, "__262__", DONTENUM | READONLY);
+
+            ScriptableObject.defineProperty(scope, "__262__", proto, DONTENUM);
+            return proto;
+        }
+
+        static $262 install(ScriptableObject scope, Scriptable parentScope) {
+            $262 instance = new $262(scope, parentScope);
 
             scope.put("$262", scope, instance);
             scope.setAttributes("$262", ScriptableObject.DONTENUM);
@@ -444,50 +479,47 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        $262(ScriptableObject scope) {
-            this.scope = scope;
-        }
-
-        @JSFunction
-        public void gc() {
+        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             System.gc();
+            return Undefined.instance;
         }
 
-        @JSFunction
-        public Object evalScript(String source) {
-            try (Context cx = Context.enter()) {
-                return cx.evaluateString(this.scope, source, "<evalScript>", 1, null);
+        public static Object evalScript(
+                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            if (args.length == 0) {
+                throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }
+            String source = Context.toString(args[0]);
+            return cx.evaluateString(scope, source, "<evalScript>", 1, null);
         }
 
-        @JSGetter
-        public Object getGlobal() {
-            return this.scope;
+        public static Object getGlobal(Scriptable scriptable) {
+            return scriptable.getParentScope();
         }
 
-        @JSFunction
-        public $262 createRealm() {
-            try (Context cx = Context.enter()) {
-                ScriptableObject realm = cx.initSafeStandardObjects();
-
-                return $262.install(realm);
-            }
+        public static $262 createRealm(
+                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            ScriptableObject realm = cx.initSafeStandardObjects();
+            return install(realm, thisObj.getPrototype());
         }
 
-        @JSFunction
-        public void detachArrayBuffer() {
+        public static Object detachArrayBuffer(
+                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             throw new UnsupportedOperationException(
                     "$262.detachArrayBuffer() method not yet implemented");
         }
 
-        @JSGetter
-        public Object getAgent() {
+        public static Object getAgent(Scriptable scriptable) {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
+        }
+
+        @Override
+        public String getClassName() {
+            return "__262__";
         }
     }
 
-    private Scriptable buildScope(Context cx, Test262Case testCase, int optLevel)
-            throws IOException {
+    private Scriptable buildScope(Context cx, Test262Case testCase, int optLevel) {
         ScriptableObject scope = cx.initSafeStandardObjects();
 
         for (String harnessFile : testCase.harnessFiles) {
@@ -509,8 +541,8 @@ public class Test262SuiteTest {
             harnessScript.exec(cx, scope);
         }
 
-        $262.install(scope);
-
+        $262 proto = $262.init(cx, scope);
+        $262.install(scope, proto);
         return scope;
     }
 
