@@ -827,6 +827,7 @@ public class ScriptRuntime {
      * <p>See ECMA 7.1.3 (v11.0).
      */
     public static Number toNumeric(Object val) {
+        val = toPrimitive(val, NumberClass);
         if (val instanceof Number) {
             return (Number) val;
         }
