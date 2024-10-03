@@ -3576,7 +3576,9 @@ public class ScriptRuntime {
             }
             return result;
         }
-        if (!Undefined.isUndefined(exoticToPrim) && exoticToPrim != Scriptable.NOT_FOUND) {
+        if (exoticToPrim != null
+                && exoticToPrim != Scriptable.NOT_FOUND
+                && !Undefined.isUndefined(exoticToPrim)) {
             throw notFunctionError(exoticToPrim);
         }
         final Class<?> defaultValueHint = preferredType == null ? preferredType : NumberClass;
