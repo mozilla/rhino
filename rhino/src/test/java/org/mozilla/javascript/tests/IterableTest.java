@@ -288,6 +288,9 @@ public class IterableTest {
 
         @Override
         public Object get(Symbol key, Scriptable start) {
+            if (SymbolKey.TO_PRIMITIVE == key) {
+                return null;
+            }
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.
