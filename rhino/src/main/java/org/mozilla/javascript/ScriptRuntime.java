@@ -1014,24 +1014,22 @@ public class ScriptRuntime {
                 return val.toString();
             }
             if (val instanceof BigInteger) {
-                return val.toString();
+                return ((BigInteger) val).toString(10);
             }
             if (val instanceof Number) {
                 // XXX should we just teach NativeNumber.stringValue()
                 // about Numbers?
                 return numberToString(((Number) val).doubleValue(), 10);
             }
-            if (val instanceof Symbol) {
+            if (val instanceof Boolean) {
+                return val.toString();
+            }
+            if (isSymbol(val)) {
                 throw typeErrorById("msg.not.a.string");
             }
-            if (val instanceof Scriptable) {
-                val = ((Scriptable) val).getDefaultValue(StringClass);
-                if ((val instanceof Scriptable) && !isSymbol(val)) {
-                    throw errorWithClassName("msg.primitive.expected", val);
-                }
-                continue;
-            }
-            return val.toString();
+            // Assert: val is an Object
+            val = toPrimitive(val, StringClass);
+            // Assert: val is a primitive
         }
     }
 
@@ -3581,7 +3579,7 @@ public class ScriptRuntime {
                 && !Undefined.isUndefined(exoticToPrim)) {
             throw notFunctionError(exoticToPrim);
         }
-        final Class<?> defaultValueHint = preferredType == null ? preferredType : NumberClass;
+        final Class<?> defaultValueHint = preferredType == null ? NumberClass : preferredType;
         final Object result = s.getDefaultValue(defaultValueHint);
         if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeErrorById("msg.bad.default.value");
