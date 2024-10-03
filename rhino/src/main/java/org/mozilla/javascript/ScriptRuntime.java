@@ -721,15 +721,13 @@ public class ScriptRuntime {
             } else {
                 double d = ((Number) val).doubleValue();
                 if (Double.isNaN(d) || Double.isInfinite(d)) {
-                    throw rangeErrorById(
-                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    throw rangeErrorById("msg.cant.convert.to.bigint.isnt.integer", toString(val));
                 }
                 BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
                 try {
                     return bd.toBigIntegerExact();
                 } catch (ArithmeticException e) {
-                    throw rangeErrorById(
-                            "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    throw rangeErrorById("msg.cant.convert.to.bigint.isnt.integer", toString(val));
                 }
             }
         }

@@ -18,7 +18,9 @@ public class NativeArray2Test {
                         + " '' + e;\n"
                         + "};";
 
-        Utils.assertWithAllOptimizationLevelsES6("TypeError: Array length 9,007,199,254,740,992 exceeds supported capacity limit.", js);
+        Utils.assertWithAllOptimizationLevelsES6(
+                "TypeError: Array length 9,007,199,254,740,992 exceeds supported capacity limit.",
+                js);
     }
 
     @Test
