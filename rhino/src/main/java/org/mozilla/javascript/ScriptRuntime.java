@@ -3535,13 +3535,11 @@ public class ScriptRuntime {
     }
 
     /**
-     * 1. If input is an Object, then a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive). b.
-     * If exoticToPrim is not undefined, then i. If preferredType is not present, then 1. Let hint
-     * be "default". ii. Else if preferredType is string, then 1. Let hint be "string". iii. Else,
-     * 1. Assert: preferredType is number. 2. Let hint be "number". iv. Let result be ?
-     * Call(exoticToPrim, input, « hint »). v. If result is not an Object, return result. vi. Throw
-     * a TypeError exception. c. If preferredType is not present, let preferredType be number. d.
-     * Return ? OrdinaryToPrimitive(input, preferredType). 2. Return input.
+     * The abstract operation ToPrimitive takes argument input (an ECMAScript language value) and
+     * optional argument preferredType (string or number) and returns either a normal completion
+     * containing an ECMAScript language value or a throw completion. It converts its input argument
+     * to a non-Object type. If an object is capable of converting to more than one primitive type,
+     * it may use the optional hint preferredType to favour that type.
      *
      * @param input
      * @param preferredType
@@ -3549,11 +3547,36 @@ public class ScriptRuntime {
      * @see <a href="https://262.ecma-international.org/15.0/index.html#sec-toprimitive"></a>
      */
     public static Object toPrimitive(Object input, Class<?> preferredType) {
-        if (!isObject(input)) {
+        // 1. If input is an Object, then
+        //    a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
+        //    b. If exoticToPrim is not undefined, then
+        //        i. If preferredType is not present, then
+        //            1. Let hint be "default".
+        //        ii. Else if preferredType is string, then
+        //            1. Let hint be "string".
+        //        iii. Else,
+        //            1. Assert: preferredType is number.
+        //            2. Let hint be "number".
+        //        iv. Let result be ? Call(exoticToPrim, input, « hint »).
+        //        v.  If result is not an Object, return result.
+        //        vi. Throw a TypeError exception.
+        //    c. If preferredType is not present, let preferredType be number.
+        //    d. Return ? OrdinaryToPrimitive(input, preferredType).
+        // 2. Return input.
+
+        // do not return on Scriptable's here; we like to fall back to our
+        // default impl getDefaultValue() for them
+        if (!(input instanceof Scriptable) && !isObject(input)) {
             return input;
         }
+
         final Scriptable s = (Scriptable) input;
-        final Object exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
+        // to be backward compatible: getProperty(Scriptable obj, Symbol key)
+        // throws if obj is not a SymbolScriptable
+        Object exoticToPrim = null;
+        if (s instanceof SymbolScriptable) {
+            exoticToPrim = ScriptableObject.getProperty(s, SymbolKey.TO_PRIMITIVE);
+        }
         if (exoticToPrim instanceof Function) {
             final Function func = (Function) exoticToPrim;
             final Context cx = Context.getCurrentContext();
