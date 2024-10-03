@@ -110,8 +110,8 @@ public class IterableTest {
                                 null);
 
                     } catch (Throwable t) {
-                        assertEquals(t.getClass(), EcmaError.class);
-                        assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
+                        assertEquals(EcmaError.class, t.getClass());
+                        assertEquals("TypeError: [object Object] is not iterable", t.getMessage());
                     }
 
                     return null;
@@ -143,8 +143,8 @@ public class IterableTest {
                                 0,
                                 null);
                     } catch (Throwable t) {
-                        assertEquals(t.getClass(), EcmaError.class);
-                        assertEquals(t.getMessage(), "TypeError: [object Object] is not iterable");
+                        assertEquals(EcmaError.class, t.getClass());
+                        assertEquals("TypeError: [object Object] is not iterable", t.getMessage());
                     }
 
                     return null;
