@@ -125,9 +125,14 @@ public class ShellTimerTest {
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "let count = 0;\n"
-                        + "setTimeout(() => { assertEquals(0, count++);\n"
-                        + "  setTimeout(() => { assertEquals(2, count++); TestsComplete = true; }, 5);\n"
-                        + "  setTimeout(() => { assertEquals(1, count++); }, 2);\n"
+                        + "setTimeout(() => {\n"
+                        + "  setTimeout(() => {\n"
+                        + "    setTimeout(() => {\n"
+                        + "      assertEquals(2, count++); TestsComplete = true;\n"
+                        + "    });"
+                        + "    assertEquals(1, count++);\n"
+                        + "  }, 2);\n"
+                        + "  assertEquals(0, count++);\n"
                         + "});");
     }
 
