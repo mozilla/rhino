@@ -107,10 +107,11 @@ public class ErrorHandlingTest {
 
     @Test
     public void stackProvider() {
+        String nl = System.lineSeparator();
         Utils.assertWithAllOptimizationLevels(Undefined.instance, "Error.stack");
-        Utils.assertWithAllOptimizationLevels("\tat test.js:0\n", "new Error().stack");
+        Utils.assertWithAllOptimizationLevels("\tat test.js:0" + nl, "new Error().stack");
         Utils.assertWithAllOptimizationLevels(Undefined.instance, "EvalError.stack");
-        Utils.assertWithAllOptimizationLevels("\tat test.js:0\n", "new EvalError('foo').stack");
+        Utils.assertWithAllOptimizationLevels("\tat test.js:0" + nl, "new EvalError('foo').stack");
     }
 
     private void testIt(final String script, final Consumer<Throwable> exception) {
