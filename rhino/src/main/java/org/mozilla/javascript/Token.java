@@ -32,6 +32,7 @@ public class Token {
     public static final int
             // start enum
             ERROR = -1, // well-known as the only code < EOF
+            FIRST_TOKEN = ERROR,
             EOF = ERROR + 1, // end of file token - (not EOF_CHAR)
             EOL = EOF + 1, // end of line
 
@@ -586,6 +587,8 @@ public class Token {
                 return "CONST";
             case SETCONST:
                 return "SETCONST";
+            case SETCONSTVAR:
+                return "SETCONSTVAR";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:
@@ -606,6 +609,12 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case GETPROP_OPTIONAL:
+                return "GETPROP_OPTIONAL";
+            case REF_SPECIAL_OPTIONAL:
+                return "REF_SPECIAL_OPTIONAL";
+            case CALL_OPTIONAL:
+                return "CALL_OPTIONAL";
             case TEMPLATE_LITERAL:
                 return "TEMPLATE_LITERAL";
             case TEMPLATE_CHARS:
@@ -614,6 +623,8 @@ public class Token {
                 return "TEMPLATE_LITERAL_SUBST";
             case TAGGED_TEMPLATE_LITERAL:
                 return "TAGGED_TEMPLATE_LITERAL";
+            case DOTDOTDOT:
+                return "DOTDOTDOT";
             case QUESTION_DOT:
                 return "DOT_QUESTION";
         }
