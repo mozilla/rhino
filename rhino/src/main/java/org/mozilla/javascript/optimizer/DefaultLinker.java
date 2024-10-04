@@ -12,7 +12,10 @@ import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
+import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * This linker is the last one in the chain, and as such it must be able to link every type of
@@ -125,18 +128,30 @@ class DefaultLinker implements GuardingDynamicLinker {
             Operation op,
             String name)
             throws NoSuchMethodException, IllegalAccessException {
+        MethodType tt;
         MethodHandle mh = null;
 
         // Like above for properties, the name to handle is not on the Java stack,
         // but is something that we parsed from the name of the invokedynamic operation.
         if (RhinoOperation.BIND.equals(op)) {
-            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "bind", 2, name);
+            tt =
+                    MethodType.methodType(
+                            Scriptable.class, Context.class, Scriptable.class, String.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "bind", tt);
+            mh = MethodHandles.insertArguments(mh, 2, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (StandardOperation.GET.equals(op)) {
-            mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "name", 2, name);
+            tt = MethodType.methodType(Object.class, Context.class, Scriptable.class, String.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "name", tt);
+            mh = MethodHandles.insertArguments(mh, 2, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (RhinoOperation.GETWITHTHIS.equals(op)) {
-            mh =
-                    bindStringParameter(
-                            lookup, mType, ScriptRuntime.class, "getNameFunctionAndThis", 0, name);
+            tt =
+                    MethodType.methodType(
+                            Callable.class, String.class, Context.class, Scriptable.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThis", tt);
+            mh = MethodHandles.insertArguments(mh, 0, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (StandardOperation.SET.equals(op)) {
             mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setName", 4, name);
         } else if (RhinoOperation.SETSTRICT.equals(op)) {

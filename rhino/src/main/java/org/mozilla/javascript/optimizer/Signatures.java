@@ -5,7 +5,9 @@ package org.mozilla.javascript.optimizer;
  * instructions in the bytecode. This helps us identify what each bytecode operation means, and what
  * the method signature should be. The method signatures here don't necessarily map 1:1 with
  * ScriptRuntime operations -- the runtime will insert the value of the "name" part of the operation
- * name before making the call.
+ * name before making the call. Also, many of the "name" operations have a different signature than
+ * the ScriptRuntime equivalents because in these signatures we are trying to make the "target" of
+ * each operation the first argument to make future optimizations easier.
  */
 interface Signatures {
     /**
@@ -92,8 +94,8 @@ interface Signatures {
      * NAME:GET:{name}: Looks up a the named value from the scope. Falls back to ScriptRuntime.name.
      */
     String NAME_GET =
-            "(Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -101,8 +103,8 @@ interface Signatures {
      * "last stored scriptable." Falls back to ScriptRuntime.getNameFunctionAndThis.
      */
     String NAME_GET_THIS =
-            "(Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/Context;"
                     + ")Lorg/mozilla/javascript/Callable;";
 
     /** NAME:SET:{name}: Sets the named value in the scope. Falls back to ScriptRuntime.setName. */
@@ -118,8 +120,8 @@ interface Signatures {
      * ScriptRuntime.bind.
      */
     String NAME_BIND =
-            "(Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/Context;"
                     + ")Lorg/mozilla/javascript/Scriptable;";
 
     /**

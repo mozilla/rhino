@@ -984,8 +984,8 @@ class BodyCodegen {
 
             case Token.NAME:
                 {
-                    cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
+                    cfw.addALoad(contextLocal);
                     addDynamicInvoke("NAME:GET:" + node.getString(), Signatures.NAME_GET);
                 }
                 break;
@@ -1473,8 +1473,8 @@ class BodyCodegen {
                         child = child.getNext();
                     }
                     // Generate code for "ScriptRuntime.bind(varObj, "s")"
-                    cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
+                    cfw.addALoad(contextLocal);
                     addDynamicInvoke("NAME:BIND:" + node.getString(), Signatures.NAME_BIND);
                 }
                 break;
@@ -2644,8 +2644,8 @@ class BodyCodegen {
             case Token.NAME:
                 {
                     String name = node.getString();
-                    cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
+                    cfw.addALoad(contextLocal);
                     addDynamicInvoke("NAME:GETWITHTHIS:" + name, Signatures.NAME_GET_THIS);
                     break;
                 }
