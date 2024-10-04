@@ -196,7 +196,6 @@ public class ScriptRuntime {
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
                 || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -287,11 +286,17 @@ public class ScriptRuntime {
         return scope;
     }
 
+    public static boolean isLiveConnectEnabled(Scriptable scope) {
+        return Boolean.TRUE.equals(
+                ScriptableObject.getTopScopeValue(scope, LIVE_CONNECT_ENABLED));
+    }
+
     public static ScriptableObject initStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
         // The following obects are "unsafe", as they allow access to java classes with reflection
+        s.associateValue(LIVE_CONNECT_ENABLED, Boolean.TRUE);
         new ClassCache().associate(s);
 
         NativeJavaObject.init(s, sealed);
@@ -1458,6 +1463,7 @@ public class ScriptRuntime {
     // XXX: this is until setDefaultNamespace will learn how to store NS
     // properly and separates namespace form Scriptable.get etc.
     private static final String DEFAULT_NS_TAG = "__default_namespace__";
+    private static final String LIVE_CONNECT_ENABLED = "__live_connect_enabled__";
 
     public static Object setDefaultNamespace(Object namespace, Context cx) {
         Scriptable scope = cx.currentActivationCall;
@@ -4407,26 +4413,27 @@ public class ScriptRuntime {
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
             }
-
-            if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "javaException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
-            }
-            if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "rhinoException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
+            if (ScriptRuntime.isLiveConnectEnabled(scope)) {
+                if (javaException != null && isVisible(cx, javaException)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "javaException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
+                if (isVisible(cx, re)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "rhinoException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
             }
             obj = errorObject;
         }
@@ -4506,26 +4513,27 @@ public class ScriptRuntime {
         if (errorObject instanceof NativeError) {
             ((NativeError) errorObject).setStackProvider(re);
         }
-
-        if (javaException != null && isVisible(cx, javaException)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "javaException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
-        }
-        if (isVisible(cx, re)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "rhinoException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
+        if (ScriptRuntime.isLiveConnectEnabled(scope)) {
+            if (javaException != null && isVisible(cx, javaException)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "javaException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
+            if (isVisible(cx, re)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "rhinoException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
         }
         return errorObject;
     }
