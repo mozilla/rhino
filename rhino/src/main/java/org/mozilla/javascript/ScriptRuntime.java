@@ -287,8 +287,7 @@ public class ScriptRuntime {
     }
 
     public static boolean isLiveConnectEnabled(Scriptable scope) {
-        return Boolean.TRUE.equals(
-                ScriptableObject.getTopScopeValue(scope, LIVE_CONNECT_ENABLED));
+        return Boolean.TRUE.equals(ScriptableObject.getTopScopeValue(scope, LIVE_CONNECT_ENABLED));
     }
 
     public static ScriptableObject initStandardObjects(
