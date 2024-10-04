@@ -148,7 +148,6 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache().associate(scope);
 
         BaseFunction.init(cx, scope, sealed);
         NativeObject.init(scope, sealed);
@@ -190,10 +189,6 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
 
         NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
-
-        boolean withXml =
-                cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 
         // define lazy-loaded properties using their class name
         new LazilyLoadedCtor(
@@ -201,13 +196,6 @@ public class ScriptRuntime {
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-        if (withXml) {
-            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
-            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
-        }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
@@ -302,6 +290,23 @@ public class ScriptRuntime {
     public static ScriptableObject initStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+
+        // The following obects are "unsafe", as they allow access to java classes with reflection
+        new ClassCache().associate(s);
+
+        NativeJavaObject.init(s, sealed);
+        NativeJavaMap.init(s, sealed);
+
+        boolean withXml =
+                cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
+
+        if (withXml) {
+            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
+            new LazilyLoadedCtor(s, "XML", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(s, "XMLList", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(s, "Namespace", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(s, "QName", xmlImpl, sealed, true);
+        }
 
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
