@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.WrappedException;
 
 /**
@@ -39,6 +40,12 @@ public class ErrorHandlingTest {
                 e -> {
                     Assert.assertEquals(JavaScriptException.class, e.getClass());
                     Assert.assertEquals("Error: foo (myScript.js#1)", e.getMessage());
+                });
+        testIt(
+                "throw new EvalError('foo')",
+                e -> {
+                    Assert.assertEquals(JavaScriptException.class, e.getClass());
+                    Assert.assertEquals("EvalError: foo (myScript.js#1)", e.getMessage());
                 });
         testIt(
                 "try { throw new Error('foo') } catch (e) { throw e }",
@@ -96,6 +103,14 @@ public class ErrorHandlingTest {
                     Assert.assertEquals(RuntimeException.class, e.getCause().getClass());
                     Assert.assertEquals("foo", e.getCause().getMessage());
                 });
+    }
+
+    @Test
+    public void stackProvider() {
+        Utils.assertWithAllOptimizationLevels(Undefined.instance, "Error.stack");
+        Utils.assertWithAllOptimizationLevels("\tat test.js:0\n", "new Error().stack");
+        Utils.assertWithAllOptimizationLevels(Undefined.instance, "EvalError.stack");
+        Utils.assertWithAllOptimizationLevels("\tat test.js:0\n", "new EvalError('foo').stack");
     }
 
     private void testIt(final String script, final Consumer<Throwable> exception) {

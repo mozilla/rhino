@@ -42,12 +42,17 @@ final class NativeError extends IdScriptableObject {
         NativeCallSite.init(obj, sealed);
     }
 
-    static NativeError make(Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
+    static NativeError makeProto(Scriptable scope, IdFunctionObject ctorObj) {
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
 
         NativeError obj = new NativeError();
         obj.setPrototype(proto);
         obj.setParentScope(scope);
+        return obj;
+    }
+
+    static NativeError make(Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
+        NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
         if (arglen >= 1) {
@@ -67,16 +72,15 @@ final class NativeError extends IdScriptableObject {
                 }
             }
         }
+        // All new Errors (but not prototypes) have a default exception installed so that
+        // there is a stack trace captured even if they are never thrown.
+        obj.setStackProvider(new EvaluatorException(""));
         return obj;
     }
 
     static NativeError makeAggregate(
             Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
-        Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
-
-        NativeError obj = new NativeError();
-        obj.setPrototype(proto);
-        obj.setParentScope(scope);
+        NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
         if (arglen >= 1) {
@@ -113,6 +117,9 @@ final class NativeError extends IdScriptableObject {
         } else {
             throw ScriptRuntime.typeErrorById("msg.iterable.expected");
         }
+        // All new Errors (but not prototypes) have a default exception installed so that
+        // there is a stack trace captured even if they are never thrown.
+        obj.setStackProvider(new EvaluatorException(""));
         return obj;
     }
 
@@ -128,11 +135,6 @@ final class NativeError extends IdScriptableObject {
     protected void fillConstructorProperties(IdFunctionObject ctor) {
         addIdFunctionProperty(
                 ctor, ERROR_TAG, ConstructorId_captureStackTrace, "captureStackTrace", 2);
-
-        // Define a stack to be used even if this Error is never thrown.
-        // The big cost is in turning this into an actual stack trace, which is set up to
-        // be done lazily below.
-        stackProvider = new EvaluatorException("");
 
         // This is running on the global "Error" object. Associate an object there that can store
         // default stack trace, etc.
@@ -202,11 +204,7 @@ final class NativeError extends IdScriptableObject {
         int id = f.methodId();
         switch (id) {
             case Id_constructor:
-                NativeError err = make(cx, scope, f, args);
-                // All new Errors have a default exception installed so that
-                // there is a stack trace captured even if they are never thrown.
-                err.setStackProvider(new EvaluatorException(""));
-                return err;
+                return make(cx, scope, f, args);
 
             case Id_toString:
                 if (thisObj != scope && thisObj instanceof NativeObject) {

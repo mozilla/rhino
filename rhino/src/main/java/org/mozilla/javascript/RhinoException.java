@@ -10,6 +10,7 @@ import java.io.CharArrayWriter;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -386,15 +387,20 @@ public abstract class RhinoException extends RuntimeException {
 
     // Allow us to override default stack style for debugging.
     static {
-        String style = System.getProperty("rhino.stack.style");
-        if (style != null) {
-            if ("Rhino".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.RHINO;
-            } else if ("Mozilla".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.MOZILLA;
-            } else if ("V8".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.V8;
+        try {
+            String style = System.getProperty("rhino.stack.style");
+            if (style != null) {
+                if ("Rhino".equalsIgnoreCase(style)) {
+                    stackStyle = StackStyle.RHINO;
+                } else if ("Mozilla".equalsIgnoreCase(style)) {
+                    stackStyle = StackStyle.MOZILLA;
+                } else if ("V8".equalsIgnoreCase(style)) {
+                    stackStyle = StackStyle.V8;
+                }
             }
+        } catch (AccessControlException ace) {
+            // ignore. We will land here, if SecurityManager is in place and error is lazily
+            // initialized
         }
     }
 }

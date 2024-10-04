@@ -1415,21 +1415,16 @@ public class Context implements Closeable {
             String sourceName,
             int lineno,
             Object securityDomain) {
-        try {
-            return (Script)
-                    compileImpl(
-                            null,
-                            source,
-                            sourceName,
-                            lineno,
-                            securityDomain,
-                            false,
-                            compiler,
-                            compilationErrorReporter);
-        } catch (IOException ioe) {
-            // Should not happen when dealing with source as string
-            throw new RuntimeException(ioe);
-        }
+        return (Script)
+                compileImpl(
+                        null,
+                        source,
+                        sourceName,
+                        lineno,
+                        securityDomain,
+                        false,
+                        compiler,
+                        compilationErrorReporter);
     }
 
     /**
@@ -1461,22 +1456,16 @@ public class Context implements Closeable {
             String sourceName,
             int lineno,
             Object securityDomain) {
-        try {
-            return (Function)
-                    compileImpl(
-                            scope,
-                            source,
-                            sourceName,
-                            lineno,
-                            securityDomain,
-                            true,
-                            compiler,
-                            compilationErrorReporter);
-        } catch (IOException ioe) {
-            // Should never happen because we just made the reader
-            // from a String
-            throw new RuntimeException(ioe);
-        }
+        return (Function)
+                compileImpl(
+                        scope,
+                        source,
+                        sourceName,
+                        lineno,
+                        securityDomain,
+                        true,
+                        compiler,
+                        compilationErrorReporter);
     }
 
     /**
@@ -2425,8 +2414,7 @@ public class Context implements Closeable {
             Object securityDomain,
             boolean returnFunction,
             Evaluator compiler,
-            ErrorReporter compilationErrorReporter)
-            throws IOException {
+            ErrorReporter compilationErrorReporter) {
         if (sourceName == null) {
             sourceName = "unnamed script";
         }
@@ -2504,8 +2492,7 @@ public class Context implements Closeable {
             int lineno,
             CompilerEnvirons compilerEnv,
             ErrorReporter compilationErrorReporter,
-            boolean returnFunction)
-            throws IOException {
+            boolean returnFunction) {
         Parser p = new Parser(compilerEnv, compilationErrorReporter);
         if (returnFunction) {
             p.calledByCompileFunction = true;
