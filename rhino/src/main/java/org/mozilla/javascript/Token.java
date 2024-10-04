@@ -586,6 +586,8 @@ public class Token {
                 return "CONST";
             case SETCONST:
                 return "SETCONST";
+            case SETCONSTVAR:
+                return "SETCONSTVAR";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:
@@ -614,6 +616,8 @@ public class Token {
                 return "TEMPLATE_LITERAL_SUBST";
             case TAGGED_TEMPLATE_LITERAL:
                 return "TAGGED_TEMPLATE_LITERAL";
+            case DOTDOTDOT:
+                return "DOTDOTDOT";
             case QUESTION_DOT:
                 return "DOT_QUESTION";
         }
