@@ -23,6 +23,7 @@ import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.lc.ImporterTopLevel;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class SealedSharedScopeTest {
@@ -40,6 +41,7 @@ public class SealedSharedScopeTest {
         }
 
         ctx = Context.enter();
+        ctx.setWrapFactory(new JavaWrapFactory());
         scope1 = ctx.newObject(sharedScope);
         scope1.setPrototype(sharedScope);
         scope1.setParentScope(null);

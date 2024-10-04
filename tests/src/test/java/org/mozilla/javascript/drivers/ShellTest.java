@@ -21,6 +21,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -449,6 +450,7 @@ public class ShellTest {
                         status.running(jsFile);
                         testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
                         cx.setErrorReporter(testState.errors);
+                        cx.setWrapFactory(new JavaWrapFactory());
                         global.init(cx);
                         try {
                             runFileIfExists(

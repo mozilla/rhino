@@ -6,6 +6,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 // Tests that continuations work across arrow function, bound function, and apply/call invocations.
 public class InterpreterFunctionPeelingTest {
@@ -19,6 +20,7 @@ public class InterpreterFunctionPeelingTest {
     public static void executeScript(String script) {
         try (var cx = Context.enter()) {
             cx.setOptimizationLevel(-1);
+            cx.setWrapFactory(new JavaWrapFactory());
             Script s = cx.compileString(script, "unknown source", 0, null);
             Scriptable scope = cx.initStandardObjects();
             scope.put("c", scope, Context.javaToJS(CAPTURER, scope));

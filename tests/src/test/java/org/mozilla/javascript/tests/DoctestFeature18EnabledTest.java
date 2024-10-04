@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 @RunWith(Parameterized.class)
@@ -46,6 +47,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
 
         try (Context context = contextFactory.enterContext()) {
             context.setOptimizationLevel(optimizationLevel);
+            context.setWrapFactory(new JavaWrapFactory());
             Global global = new Global(context);
             int testsPassed = global.runDoctest(context, global, source, name, 1);
             assertTrue(testsPassed > 0);

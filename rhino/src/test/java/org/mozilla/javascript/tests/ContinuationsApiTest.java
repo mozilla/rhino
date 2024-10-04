@@ -317,6 +317,7 @@ public class ContinuationsApiTest {
         Scriptable globalScope;
 
         try (Context cx = Context.enter()) {
+            cx.setWrapFactory(new JavaWrapFactory());
             globalScope = cx.initStandardObjects();
             cx.setOptimizationLevel(-1); // must use interpreter mode
             globalScope.put("myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));

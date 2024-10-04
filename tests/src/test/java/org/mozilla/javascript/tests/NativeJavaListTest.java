@@ -21,6 +21,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
@@ -232,6 +233,7 @@ public class NativeJavaListTest {
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
+                            context.setWrapFactory(new JavaWrapFactory());
                             Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
