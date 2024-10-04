@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -1287,6 +1288,9 @@ public class ScriptRuntime {
             return result;
         }
 
+        if (cx.getWrapFactory() == null) {
+            throw new UnsupportedOperationException("Cannot convert java value " + val + "(" + (val == null ? "null" : val.getClass()) + ") to javascript");
+        }
         // Extension: Wrap as a LiveConnect object.
         Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
         if (wrapped instanceof Scriptable) return (Scriptable) wrapped;

@@ -25,6 +25,7 @@ public class Bug496585Test {
         new ContextFactory()
                 .call(
                         cx -> {
+                            cx.setWrapFactory(new JavaWrapFactory());
                             ((JavaWrapFactory) cx.getWrapFactory()).setJavaPrimitiveWrap(false);
                             Assert.assertEquals(
                                     "string[]",

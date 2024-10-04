@@ -1759,6 +1759,9 @@ public class Context implements Closeable {
             if (cx == null) {
                 cx = Context.getContext();
             }
+			if (cx.getWrapFactory() == null) {
+				throw new UnsupportedOperationException("Cannot convert java value " + value + "(" + (value == null ? "null" : value.getClass()) + ") to javascript");
+			}
             return cx.getWrapFactory().wrap(cx, scope, value, null);
         }
     }
