@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -303,9 +302,10 @@ public class ScriptRuntime {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
         if (cx.getWrapFactory() == null) {
-            cx.setWrapFactory(new JavaWrapFactory());
+            System.err.println("No wrapfactory present");
+        } else {
+            cx.getWrapFactory().initStandardObjects(cx, s, sealed);
         }
-        cx.getWrapFactory().initStandardObjects(cx, s, sealed);
 
         return s;
     }
