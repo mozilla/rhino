@@ -70,8 +70,8 @@ public class NativeObjectTest {
     @Test
     public void nativeJavaObject_hasOwnProperty() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
             cx.setWrapFactory(new JavaWrapFactory());
+            Scriptable scope = cx.initStandardObjects();
             ScriptableObject.putProperty(scope, "javaObj", Context.javaToJS(new JavaObj(), scope));
             Object result =
                     cx.evaluateString(

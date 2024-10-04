@@ -47,7 +47,6 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
 
         try (Context context = contextFactory.enterContext()) {
             context.setOptimizationLevel(optimizationLevel);
-            context.setWrapFactory(new JavaWrapFactory());
             Global global = new Global(context);
             int testsPassed = global.runDoctest(context, global, source, name, 1);
             assertTrue(testsPassed > 0);

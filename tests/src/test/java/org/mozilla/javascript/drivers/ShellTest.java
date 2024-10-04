@@ -450,7 +450,6 @@ public class ShellTest {
                         status.running(jsFile);
                         testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
                         cx.setErrorReporter(testState.errors);
-                        cx.setWrapFactory(new JavaWrapFactory());
                         global.init(cx);
                         try {
                             runFileIfExists(

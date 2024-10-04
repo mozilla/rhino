@@ -36,6 +36,7 @@ public class SealedSharedScopeTest {
     @Before
     public void setUp() throws Exception {
         try (Context tmpCtx = Context.enter()) {
+            tmpCtx.setWrapFactory(new JavaWrapFactory());
             sharedScope = new ImporterTopLevel(tmpCtx, true);
             sharedScope.sealObject();
         }
