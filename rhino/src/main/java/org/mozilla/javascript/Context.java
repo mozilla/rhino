@@ -1749,7 +1749,8 @@ public class Context implements Closeable {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
-                || value instanceof Scriptable) {
+                || value instanceof Scriptable
+                || value instanceof Undefined) {
             return value;
         } else if (value instanceof Character) {
             return String.valueOf(((Character) value).charValue());
