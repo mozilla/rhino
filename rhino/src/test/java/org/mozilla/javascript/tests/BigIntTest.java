@@ -23,4 +23,26 @@ public class BigIntTest {
             assertEquals(stmt, root.toSource());
         }
     }
+
+    @Test
+    public void compareWithString() {
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740992n < '9007199254740993'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740992n <= '9007199254740993'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740993n <= '9007199254740993'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740993n == '9007199254740993'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740993n >= '9007199254740993'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740993n >= '9007199254740992'");
+        Utils.assertWithAllOptimizationLevelsES6(true, "9007199254740993n > '9007199254740992'");
+    }
+
+    @Test
+    public void compareStringWith() {
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740992' < 9007199254740993n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740992' <= 9007199254740993n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740993' <= 9007199254740993n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740993' == 9007199254740993n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740993' >= 9007199254740993n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740993' >= 9007199254740992n");
+        Utils.assertWithAllOptimizationLevelsES6(true, "'9007199254740993' > 9007199254740992n");
+    }
 }
