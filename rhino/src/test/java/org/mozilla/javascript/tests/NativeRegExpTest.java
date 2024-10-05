@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 public class NativeRegExpTest {
@@ -340,7 +339,7 @@ public class NativeRegExpTest {
                         + "res += regex.sticky;\n"
                         + "res";
 
-        test(expected, script);
+        Utils.assertWithAllOptimizationLevelsES6(expected, script);
     }
 
     /**
@@ -359,7 +358,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + regex.test(str);\n"
                         + "res = res + '-' + regex.lastIndex;\n"
                         + "res;";
-        test("true-9-false-0-false-0", script);
+        Utils.assertWithAllOptimizationLevelsES6("true-9-false-0-false-0", script);
     }
 
     /**
@@ -372,7 +371,7 @@ public class NativeRegExpTest {
                         + "regex.lastIndex = 2;\n"
                         + "var res = '' + regex.test('..foo');\n"
                         + "res;";
-        test("false", script);
+        Utils.assertWithAllOptimizationLevelsES6("false", script);
     }
 
     /**
@@ -387,7 +386,7 @@ public class NativeRegExpTest {
                         + "regex.lastIndex = 2;\n"
                         + "res = res + '-' + regex.test('.\\nfoo');\n"
                         + "res;";
-        test("false-true", script);
+        Utils.assertWithAllOptimizationLevelsES6("false-true", script);
     }
 
     /**
@@ -402,7 +401,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[1];\n"
                         + "res = res + '-' + result[2];\n"
                         + "res;";
-        test("3-a-a-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("3-a-a-a", script);
     }
 
     /**
@@ -417,7 +416,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[1];\n"
                         + "res = res + '-' + result[2];\n"
                         + "res;";
-        test("3-a-a-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("3-a-a-a", script);
     }
 
     /**
@@ -430,7 +429,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        test("1-bar\nfoo", script);
+        Utils.assertWithAllOptimizationLevelsES6("1-bar\nfoo", script);
     }
 
     /**
@@ -443,7 +442,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        test("1-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("1-a", script);
     }
 
     /**
@@ -456,7 +455,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        test("1-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("1-a", script);
     }
 
     /**
@@ -470,7 +469,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[0];\n"
                         + "res = res + '-' + result[1];\n"
                         + "res;";
-        test("2-a-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("2-a-a", script);
     }
 
     /**
@@ -484,7 +483,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[0];\n"
                         + "res = res + '-' + result[1];\n"
                         + "res;";
-        test("2-a-a", script);
+        Utils.assertWithAllOptimizationLevelsES6("2-a-a", script);
     }
 
     /**
@@ -500,7 +499,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + get.enumerable;\n"
                         + "res = res + '-' + get.writable;\n"
                         + "res;";
-        test("0-undefined-true-false-undefined", script);
+        Utils.assertWithAllOptimizationLevelsES6("0-undefined-true-false-undefined", script);
     }
 
     /**
@@ -508,33 +507,26 @@ public class NativeRegExpTest {
      */
     @Test
     public void objectToString() throws Exception {
-        test("/undefined/undefined", "RegExp.prototype.toString.call({})");
-        test("/Foo/undefined", "RegExp.prototype.toString.call({source: 'Foo'})");
-        test("/undefined/gy", "RegExp.prototype.toString.call({flags: 'gy'})");
-        test("/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g'})");
-        test("/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g', sticky: true})");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "/undefined/undefined", "RegExp.prototype.toString.call({})");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "/Foo/undefined", "RegExp.prototype.toString.call({source: 'Foo'})");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "/undefined/gy", "RegExp.prototype.toString.call({flags: 'gy'})");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g'})");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "/Foo/g",
+                "RegExp.prototype.toString.call({source: 'Foo', flags: 'g', sticky: true})");
 
-        test(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "try { RegExp.prototype.toString.call(''); } catch (e) { ('' + e).substr(0, 58) }");
-        test(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "try { RegExp.prototype.toString.call(undefined); } catch (e) { ('' + e).substr(0, 58) }");
-        test(
+        Utils.assertWithAllOptimizationLevelsES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
-    }
-
-    private static void test(final String expected, final String script) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    // to have symbol available
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-                    final String res =
-                            (String) cx.evaluateString(scope, script, "test.js", 0, null);
-                    assertEquals(expected, res);
-                    return null;
-                });
     }
 }
