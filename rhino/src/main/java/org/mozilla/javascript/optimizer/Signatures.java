@@ -92,6 +92,9 @@ interface Signatures {
 
     /**
      * NAME:GET:{name}: Looks up a the named value from the scope. Falls back to ScriptRuntime.name.
+     * Compared to that function, this version of the signature puts the "scope" first in the
+     * argument list rather than second. This makes it easier for future linkers to work because
+     * they can always assume that the "receiver" of an operation is the first argument.
      */
     String NAME_GET =
             "(Lorg/mozilla/javascript/Scriptable;"
@@ -100,7 +103,8 @@ interface Signatures {
 
     /**
      * NAME:GETWITHTHIS:{name}: Looks up a name in the scope like NAME:GET, and sets "this" in the
-     * "last stored scriptable." Falls back to ScriptRuntime.getNameFunctionAndThis.
+     * "last stored scriptable." Falls back to ScriptRuntime.getNameFunctionAndThis. Also, this
+     * version of the signature makes the scope the first argument, as described above.
      */
     String NAME_GET_THIS =
             "(Lorg/mozilla/javascript/Scriptable;"
@@ -117,7 +121,9 @@ interface Signatures {
 
     /**
      * NAME:BIND:{name}: Bind the named value into the current scope. Falls back to
-     * ScriptRuntime.bind.
+     * ScriptRuntime.bind. Like some methods above, this version of the signature puts the scope
+     * first in the argument list so that future linkers can have a consistent place to find the
+     * "receiver".
      */
     String NAME_BIND =
             "(Lorg/mozilla/javascript/Scriptable;"
