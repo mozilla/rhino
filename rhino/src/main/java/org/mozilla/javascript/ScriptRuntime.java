@@ -1133,7 +1133,7 @@ public class ScriptRuntime {
             // Wrapped Java objects won't have "toSource" and will report
             // errors for get()s of nonexistent name, so use has() first
             if (ScriptableObject.hasProperty(obj, "toSource")) {
-                Object v = ScriptableObject.getProperty(obj, "toSource");
+                Object v = Scriptable.getProperty(obj, "toSource");
                 if (v instanceof Function) {
                     Function f = (Function) v;
                     return toString(f.call(cx, scope, obj, emptyArgs));
@@ -1487,7 +1487,7 @@ public class ScriptRuntime {
         for (; ; ) {
             Scriptable parent = scope.getParentScope();
             if (parent == null) {
-                nsObject = ScriptableObject.getProperty(scope, DEFAULT_NS_TAG);
+                nsObject = Scriptable.getProperty(scope, DEFAULT_NS_TAG);
                 if (nsObject == Scriptable.NOT_FOUND) {
                     return null;
                 }
@@ -1504,11 +1504,11 @@ public class ScriptRuntime {
 
     public static Object getTopLevelProp(Scriptable scope, String id) {
         scope = ScriptableObject.getTopLevelScope(scope);
-        return ScriptableObject.getProperty(scope, id);
+        return Scriptable.getProperty(scope, id);
     }
 
     public static Function getExistingCtor(Context cx, Scriptable scope, String constructorName) {
-        Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
+        Object ctorVal = Scriptable.getProperty(scope, constructorName);
         if (ctorVal instanceof Function) {
             return (Function) ctorVal;
         }
@@ -1714,14 +1714,14 @@ public class ScriptRuntime {
         if (obj instanceof XMLObject) {
             result = ((XMLObject) obj).get(cx, elem);
         } else if (isSymbol(elem)) {
-            result = ScriptableObject.getProperty(obj, (Symbol) elem);
+            result = Scriptable.getProperty(obj, (Symbol) elem);
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
                 int index = s.index;
-                result = ScriptableObject.getProperty(obj, index);
+                result = Scriptable.getProperty(obj, index);
             } else {
-                result = ScriptableObject.getProperty(obj, s.stringId);
+                result = Scriptable.getProperty(obj, s.stringId);
             }
         }
 
@@ -1773,7 +1773,7 @@ public class ScriptRuntime {
 
     public static Object getObjectProp(Scriptable obj, String property, Context cx) {
 
-        Object result = ScriptableObject.getProperty(obj, property);
+        Object result = Scriptable.getProperty(obj, property);
         if (result == Scriptable.NOT_FOUND) {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
                 Context.reportWarning(
@@ -1799,7 +1799,7 @@ public class ScriptRuntime {
         if (sobj == null) {
             throw undefReadError(obj, property);
         }
-        Object result = ScriptableObject.getProperty(sobj, property);
+        Object result = Scriptable.getProperty(sobj, property);
         if (result == Scriptable.NOT_FOUND) {
             return Undefined.instance;
         }
@@ -1832,7 +1832,7 @@ public class ScriptRuntime {
     }
 
     public static Object getObjectIndex(Scriptable obj, int index, Context cx) {
-        Object result = ScriptableObject.getProperty(obj, index);
+        Object result = Scriptable.getProperty(obj, index);
         if (result == Scriptable.NOT_FOUND) {
             result = Undefined.instance;
         }
@@ -2099,7 +2099,7 @@ public class ScriptRuntime {
                         firstXMLObject = xmlObj;
                     }
                 } else {
-                    result = ScriptableObject.getProperty(withObj, name);
+                    result = Scriptable.getProperty(withObj, name);
                     if (result != Scriptable.NOT_FOUND) {
                         // function this should be the target object of with
                         thisObj = withObj;
@@ -2121,7 +2121,7 @@ public class ScriptRuntime {
             } else {
                 // Can happen if Rhino embedding decided that nested
                 // scopes are useful for what ever reasons.
-                result = ScriptableObject.getProperty(scope, name);
+                result = Scriptable.getProperty(scope, name);
                 if (result != Scriptable.NOT_FOUND) {
                     thisObj = scope;
                     break;
@@ -2161,7 +2161,7 @@ public class ScriptRuntime {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
-        return ScriptableObject.getProperty(scope, name);
+        return Scriptable.getProperty(scope, name);
     }
 
     /**
@@ -2308,7 +2308,7 @@ public class ScriptRuntime {
     public static Scriptable toIterator(
             Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
         if (ScriptableObject.hasProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME)) {
-            Object v = ScriptableObject.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
+            Object v = Scriptable.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
             if (!(v instanceof Callable)) {
                 throw typeErrorById("msg.invalid.iterator");
             }
@@ -2390,7 +2390,7 @@ public class ScriptRuntime {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
 
-        Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
+        Object iterator = Scriptable.getProperty(x.obj, SymbolKey.ITERATOR);
         if (!(iterator instanceof Callable)) {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
@@ -2423,7 +2423,7 @@ public class ScriptRuntime {
             if (x.enumType == ENUMERATE_VALUES_IN_ORDER) {
                 return enumNextInOrder(x, cx);
             }
-            Object v = ScriptableObject.getProperty(x.iterator, "next");
+            Object v = Scriptable.getProperty(x.iterator, "next");
             if (!(v instanceof Callable)) return Boolean.FALSE;
             Callable f = (Callable) v;
             try {
@@ -2465,7 +2465,7 @@ public class ScriptRuntime {
     }
 
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
-        Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
+        Object v = Scriptable.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
@@ -2473,12 +2473,11 @@ public class ScriptRuntime {
         Scriptable scope = enumObj.iterator.getParentScope();
         Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
         Scriptable iteratorResult = toObject(cx, scope, r);
-        Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
+        Object done = Scriptable.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
         if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
             return Boolean.FALSE;
         }
-        enumObj.currentId =
-                ScriptableObject.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY);
+        enumObj.currentId = Scriptable.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY);
         return Boolean.TRUE;
     }
 
@@ -2642,7 +2641,7 @@ public class ScriptRuntime {
             if (thisObj == null) {
                 throw undefCallError(obj, String.valueOf(elem));
             }
-            value = ScriptableObject.getProperty(thisObj, (Symbol) elem);
+            value = Scriptable.getProperty(thisObj, (Symbol) elem);
 
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
@@ -2655,7 +2654,7 @@ public class ScriptRuntime {
                 throw undefCallError(obj, String.valueOf(elem));
             }
 
-            value = ScriptableObject.getProperty(thisObj, s.index);
+            value = Scriptable.getProperty(thisObj, s.index);
         }
 
         if (!(value instanceof Callable)) {
@@ -2712,9 +2711,9 @@ public class ScriptRuntime {
             throw undefCallError(obj, property);
         }
 
-        Object value = ScriptableObject.getProperty(thisObj, property);
+        Object value = Scriptable.getProperty(thisObj, property);
         if (!(value instanceof Callable)) {
-            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
+            Object noSuchMethod = Scriptable.getProperty(thisObj, "__noSuchMethod__");
             if (noSuchMethod instanceof Callable)
                 value = new NoSuchMethodShim((Callable) noSuchMethod, property);
         }
@@ -4769,7 +4768,7 @@ public class ScriptRuntime {
         }
         Object[] result = new Object[len];
         for (int i = 0; i < len; i++) {
-            Object elem = ScriptableObject.getProperty(object, i);
+            Object elem = Scriptable.getProperty(object, i);
             result[i] = (elem == Scriptable.NOT_FOUND) ? Undefined.instance : elem;
         }
         return result;

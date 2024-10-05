@@ -7,7 +7,6 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 /**
  * Example of controlling the JavaScript execution engine.
@@ -57,7 +56,7 @@ public class Control {
             System.out.println("obj.b[1] == " + b.get(1, b));
 
             // Should print {a:1, b:["x", "y"]}
-            Function fn = (Function) ScriptableObject.getProperty(obj, "toString");
+            Function fn = (Function) Scriptable.getProperty(obj, "toString");
             System.out.println(fn.call(cx, scope, obj, new Object[0]));
         } finally {
             Context.exit();

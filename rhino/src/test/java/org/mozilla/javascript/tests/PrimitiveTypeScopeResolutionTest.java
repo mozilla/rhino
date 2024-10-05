@@ -102,7 +102,7 @@ public class PrimitiveTypeScopeResolutionTest {
         }
 
         public Object readPropFoo(final Scriptable s) {
-            return ScriptableObject.getProperty(s, "foo");
+            return Scriptable.getProperty(s, "foo");
         }
     }
 

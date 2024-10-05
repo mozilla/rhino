@@ -124,7 +124,7 @@ final class NativeError extends IdScriptableObject {
     }
 
     static void installCause(NativeObject options, NativeError obj) {
-        Object cause = ScriptableObject.getProperty(options, "cause");
+        Object cause = Scriptable.getProperty(options, "cause");
         if (cause != NOT_FOUND) {
             ScriptableObject.putProperty(obj, "cause", cause);
             obj.setAttributes("cause", DONTENUM);
@@ -288,14 +288,14 @@ final class NativeError extends IdScriptableObject {
     }
 
     private static Object js_toString(Scriptable thisObj) {
-        Object nameObj = ScriptableObject.getProperty(thisObj, "name");
+        Object nameObj = Scriptable.getProperty(thisObj, "name");
         String name;
         if (nameObj == NOT_FOUND || Undefined.isUndefined(nameObj)) {
             name = "Error";
         } else {
             name = ScriptRuntime.toString(nameObj);
         }
-        Object msgObj = ScriptableObject.getProperty(thisObj, "message");
+        Object msgObj = Scriptable.getProperty(thisObj, "message");
         String msg;
         if (msgObj == NOT_FOUND || Undefined.isUndefined(msgObj)) {
             msg = "";
@@ -313,10 +313,10 @@ final class NativeError extends IdScriptableObject {
 
     private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
         // Emulation of SpiderMonkey behavior
-        Object name = ScriptableObject.getProperty(thisObj, "name");
-        Object message = ScriptableObject.getProperty(thisObj, "message");
-        Object fileName = ScriptableObject.getProperty(thisObj, "fileName");
-        Object lineNumber = ScriptableObject.getProperty(thisObj, "lineNumber");
+        Object name = Scriptable.getProperty(thisObj, "name");
+        Object message = Scriptable.getProperty(thisObj, "message");
+        Object fileName = Scriptable.getProperty(thisObj, "fileName");
+        Object lineNumber = Scriptable.getProperty(thisObj, "lineNumber");
 
         StringBuilder sb = new StringBuilder();
         sb.append("(new ");

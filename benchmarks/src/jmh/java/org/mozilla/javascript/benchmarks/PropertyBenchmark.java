@@ -7,7 +7,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -35,11 +34,11 @@ public class PropertyBenchmark {
                     new FileReader("testsrc/benchmarks/micro/property-benchmarks.js")) {
                 cx.evaluateReader(scope, rdr, "property-benchmarks.js", 1, null);
             }
-            create = (Function) ScriptableObject.getProperty(scope, "createObject");
+            create = (Function) Scriptable.getProperty(scope, "createObject");
             createFieldByField =
-                    (Function) ScriptableObject.getProperty(scope, "createObjectFieldByField");
-            getName = (Function) ScriptableObject.getProperty(scope, "getName");
-            check = (Function) ScriptableObject.getProperty(scope, "check");
+                    (Function) Scriptable.getProperty(scope, "createObjectFieldByField");
+            getName = (Function) Scriptable.getProperty(scope, "getName");
+            check = (Function) Scriptable.getProperty(scope, "check");
 
             object = create.call(cx, scope, null, new Object[] {"testing"});
         }

@@ -174,7 +174,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     if (thisObj == null) {
                         throw ScriptRuntime.notFunctionError(null);
                     }
-                    Object toString = ScriptableObject.getProperty(thisObj, "toString");
+                    Object toString = Scriptable.getProperty(thisObj, "toString");
                     if (!(toString instanceof Callable)) {
                         throw ScriptRuntime.notFunctionError(toString);
                     }

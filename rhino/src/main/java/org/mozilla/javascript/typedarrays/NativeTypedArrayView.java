@@ -614,7 +614,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             return Undefined.instance;
         }
 
-        return getProperty(thisObj, (int) k);
+        return Scriptable.getProperty(thisObj, (int) k);
     }
 
     private Scriptable typedArraySpeciesCreate(

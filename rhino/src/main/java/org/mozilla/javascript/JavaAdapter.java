@@ -285,10 +285,10 @@ public final class JavaAdapter implements IdFunctionCall {
         for (int i = 0; i != ids.length; ++i) {
             if (!(ids[i] instanceof String)) continue;
             String id = (String) ids[i];
-            Object value = ScriptableObject.getProperty(obj, id);
+            Object value = Scriptable.getProperty(obj, id);
             if (value instanceof Function) {
                 Function f = (Function) value;
-                int length = ScriptRuntime.toInt32(ScriptableObject.getProperty(f, "length"));
+                int length = ScriptRuntime.toInt32(Scriptable.getProperty(f, "length"));
                 if (length < 0) {
                     length = 0;
                 }
@@ -509,7 +509,7 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     public static Function getFunction(Scriptable obj, String functionName) {
-        Object x = ScriptableObject.getProperty(obj, functionName);
+        Object x = Scriptable.getProperty(obj, functionName);
         if (x == Scriptable.NOT_FOUND) {
             // This method used to swallow the exception from calling
             // an undefined method. People have come to depend on this

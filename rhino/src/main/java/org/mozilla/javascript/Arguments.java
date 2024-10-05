@@ -378,12 +378,12 @@ final class Arguments extends IdScriptableObject {
             return;
         }
 
-        Object newValue = getProperty(desc, "value");
+        Object newValue = Scriptable.getProperty(desc, "value");
         if (newValue == NOT_FOUND) return;
 
         replaceArg(index, newValue);
 
-        if (isFalse(getProperty(desc, "writable"))) {
+        if (isFalse(Scriptable.getProperty(desc, "writable"))) {
             removeArg(index);
         }
     }

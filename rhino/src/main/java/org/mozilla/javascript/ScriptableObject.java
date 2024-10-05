@@ -52,7 +52,7 @@ import org.mozilla.javascript.debug.DebuggableObject;
  * @author Norris Boyd
  */
 public abstract class ScriptableObject
-        implements Scriptable, SymbolScriptable, Serializable, DebuggableObject, ConstProperties {
+        implements SymbolScriptable, Serializable, DebuggableObject, ConstProperties {
 
     private static final long serialVersionUID = 2829861078851942586L;
 
@@ -789,7 +789,7 @@ public abstract class ScriptableObject
             } else {
                 methodName = "valueOf";
             }
-            Object v = getProperty(object, methodName);
+            Object v = Scriptable.getProperty(object, methodName);
             if (!(v instanceof Function)) continue;
             Function fun = (Function) v;
             if (cx == null) {
@@ -1056,7 +1056,7 @@ public abstract class ScriptableObject
         String className = proto.getClassName();
 
         // check for possible redefinition
-        Object existing = getProperty(getTopLevelScope(scope), className);
+        Object existing = Scriptable.getProperty(getTopLevelScope(scope), className);
         if (existing instanceof BaseFunction) {
             Object existingProto = ((BaseFunction) existing).getPrototypeProperty();
             if (existingProto != null && clazz.equals(existingProto.getClass())) {
@@ -1651,11 +1651,11 @@ public abstract class ScriptableObject
                             fslot = new AccessorSlot(slot);
                             slot = fslot;
                         }
-                        Object getter = getProperty(desc, "get");
+                        Object getter = Scriptable.getProperty(desc, "get");
                         if (getter != NOT_FOUND) {
                             fslot.getter = new AccessorSlot.FunctionGetter(getter);
                         }
-                        Object setter = getProperty(desc, "set");
+                        Object setter = Scriptable.getProperty(desc, "set");
                         if (setter != NOT_FOUND) {
                             fslot.setter = new AccessorSlot.FunctionSetter(setter);
                         }
@@ -1665,7 +1665,7 @@ public abstract class ScriptableObject
                             // Replace a non-base slot with a regular slot
                             slot = new Slot(slot);
                         }
-                        Object value = getProperty(desc, "value");
+                        Object value = Scriptable.getProperty(desc, "value");
                         if (value != NOT_FOUND) {
                             slot.value = value;
                         } else if (existing == null) {
@@ -1760,11 +1760,11 @@ public abstract class ScriptableObject
     }
 
     protected void checkPropertyDefinition(ScriptableObject desc) {
-        Object getter = getProperty(desc, "get");
+        Object getter = Scriptable.getProperty(desc, "get");
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(getter);
         }
-        Object setter = getProperty(desc, "set");
+        Object setter = Scriptable.getProperty(desc, "set");
         if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(setter);
         }
@@ -1778,10 +1778,10 @@ public abstract class ScriptableObject
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
         } else {
             if (isFalse(current.get("configurable", current))) {
-                if (isTrue(getProperty(desc, "configurable")))
+                if (isTrue(Scriptable.getProperty(desc, "configurable")))
                     throw ScriptRuntime.typeErrorById("msg.change.configurable.false.to.true", id);
                 if (isTrue(current.get("enumerable", current))
-                        != isTrue(getProperty(desc, "enumerable")))
+                        != isTrue(Scriptable.getProperty(desc, "enumerable")))
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.enumerable.with.configurable.false", id);
                 boolean isData = isDataDescriptor(desc);
@@ -1790,21 +1790,25 @@ public abstract class ScriptableObject
                     // no further validation required for generic descriptor
                 } else if (isData && isDataDescriptor(current)) {
                     if (isFalse(current.get("writable", current))) {
-                        if (isTrue(getProperty(desc, "writable")))
+                        if (isTrue(Scriptable.getProperty(desc, "writable")))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.writable.false.to.true.with.configurable.false",
                                     id);
 
-                        if (!sameValue(getProperty(desc, "value"), current.get("value", current)))
+                        if (!sameValue(
+                                Scriptable.getProperty(desc, "value"),
+                                current.get("value", current)))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.value.with.writable.false", id);
                     }
                 } else if (isAccessor && isAccessorDescriptor(current)) {
-                    if (!sameValue(getProperty(desc, "set"), current.get("set", current)))
+                    if (!sameValue(
+                            Scriptable.getProperty(desc, "set"), current.get("set", current)))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.setter.with.configurable.false", id);
 
-                    if (!sameValue(getProperty(desc, "get"), current.get("get", current)))
+                    if (!sameValue(
+                            Scriptable.getProperty(desc, "get"), current.get("get", current)))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.getter.with.configurable.false", id);
                 } else {
@@ -1856,7 +1860,7 @@ public abstract class ScriptableObject
     }
 
     protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
-        Object enumerable = getProperty(desc, "enumerable");
+        Object enumerable = Scriptable.getProperty(desc, "enumerable");
         if (enumerable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(enumerable)
@@ -1864,7 +1868,7 @@ public abstract class ScriptableObject
                             : attributes | DONTENUM;
         }
 
-        Object writable = getProperty(desc, "writable");
+        Object writable = Scriptable.getProperty(desc, "writable");
         if (writable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(writable)
@@ -1872,7 +1876,7 @@ public abstract class ScriptableObject
                             : attributes | READONLY;
         }
 
-        Object configurable = getProperty(desc, "configurable");
+        Object configurable = Scriptable.getProperty(desc, "configurable");
         if (configurable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(configurable)
@@ -2001,7 +2005,7 @@ public abstract class ScriptableObject
      */
     public static Scriptable getClassPrototype(Scriptable scope, String className) {
         scope = getTopLevelScope(scope);
-        Object ctor = getProperty(scope, className);
+        Object ctor = Scriptable.getProperty(scope, className);
         Object proto;
         if (ctor instanceof BaseFunction) {
             proto = ((BaseFunction) ctor).getPrototypeProperty();
@@ -2113,18 +2117,10 @@ public abstract class ScriptableObject
     }
 
     /**
-     * Gets a named property from an object or any object in its prototype chain.
-     *
-     * <p>Searches the prototype chain for a property named <code>name</code>.
-     *
-     * <p>
-     *
-     * @param obj a JavaScript object
-     * @param name a property name
-     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
-     *     object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
-     * @since 1.5R2
+     * @deprecated
+     * @see Scriptable#getProperty(Scriptable, String)
      */
+    @Deprecated
     public static Object getProperty(Scriptable obj, String name) {
         Scriptable start = obj;
         Object result;
@@ -2136,7 +2132,13 @@ public abstract class ScriptableObject
         return result;
     }
 
-    /** This is a version of getProperty that works with Symbols. */
+    /**
+     * @deprecated This method will throw a TypeError when {@code obj} or objects searched in its
+     *     prototype chain do not implement {@link SymbolScriptable}, but the replacement method
+     *     will return {@link Scriptable#NOT_FOUND} instead for any non-SymbolScriptable..
+     * @see Scriptable#getProperty(Scriptable, Symbol)
+     */
+    @Deprecated
     public static Object getProperty(Scriptable obj, Symbol key) {
         Scriptable start = obj;
         Object result;
@@ -2167,7 +2169,7 @@ public abstract class ScriptableObject
      * @since 1.7R3
      */
     public static <T> T getTypedProperty(Scriptable s, int index, Class<T> type) {
-        Object val = getProperty(s, index);
+        Object val = Scriptable.getProperty(s, index);
         if (val == Scriptable.NOT_FOUND) {
             val = null;
         }
@@ -2175,20 +2177,10 @@ public abstract class ScriptableObject
     }
 
     /**
-     * Gets an indexed property from an object or any object in its prototype chain.
-     *
-     * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
-     * that if you wish to look for properties with numerical but non-integral indicies, you should
-     * use getProperty(Scriptable,String) with the string value of the index.
-     *
-     * <p>
-     *
-     * @param obj a JavaScript object
-     * @param index an integral index
-     * @return the value of a property with index <code>index</code> found in <code>obj</code> or
-     *     any object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
-     * @since 1.5R2
+     * @deprecated
+     * @see Scriptable#getProperty(Scriptable, int)
      */
+    @Deprecated
     public static Object getProperty(Scriptable obj, int index) {
         Scriptable start = obj;
         Object result;
@@ -2217,7 +2209,7 @@ public abstract class ScriptableObject
      * @since 1.7R3
      */
     public static <T> T getTypedProperty(Scriptable s, String name, Class<T> type) {
-        Object val = getProperty(s, name);
+        Object val = Scriptable.getProperty(s, name);
         if (val == Scriptable.NOT_FOUND) {
             val = null;
         }
@@ -2455,7 +2447,7 @@ public abstract class ScriptableObject
      * @param args the arguments for the call
      */
     public static Object callMethod(Context cx, Scriptable obj, String methodName, Object[] args) {
-        Object funObj = getProperty(obj, methodName);
+        Object funObj = Scriptable.getProperty(obj, methodName);
         if (!(funObj instanceof Function)) {
             throw ScriptRuntime.notFunctionError(obj, methodName);
         }

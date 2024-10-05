@@ -189,7 +189,7 @@ public class AbstractEcmaObjectOperations {
         7. If IsConstructor(S) is true, return S.
         8. Throw a TypeError exception.
          */
-        Object constructor = ScriptableObject.getProperty(s, "constructor");
+        Object constructor = Scriptable.getProperty(s, "constructor");
         if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
             return defaultConstructor;
         }
@@ -197,7 +197,7 @@ public class AbstractEcmaObjectOperations {
             throw ScriptRuntime.typeErrorById(
                     "msg.arg.not.object", ScriptRuntime.typeof(constructor));
         }
-        Object species = ScriptableObject.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
+        Object species = Scriptable.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
         if (species == Scriptable.NOT_FOUND || species == null || Undefined.isUndefined(species)) {
             return defaultConstructor;
         }

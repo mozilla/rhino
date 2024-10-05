@@ -301,7 +301,7 @@ final class NativeDate extends IdScriptableObject {
                             return null;
                         }
                     }
-                    Object toISO = ScriptableObject.getProperty(o, toISOString);
+                    Object toISO = Scriptable.getProperty(o, toISOString);
                     if (toISO == NOT_FOUND) {
                         throw ScriptRuntime.typeErrorById(
                                 "msg.function.not.found.in",

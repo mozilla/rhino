@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tools.shell.Global;
 import org.openjdk.jmh.annotations.*;
 
@@ -72,7 +71,7 @@ public class ObjectBenchmark {
     @OperationsPerInvocation(1000)
     @SuppressWarnings("unused")
     public void createFields(FieldTestState state) {
-        Function create = (Function) ScriptableObject.getProperty(state.scope, "createObject");
+        Function create = (Function) Scriptable.getProperty(state.scope, "createObject");
         create.call(state.cx, state.scope, null, new Object[] {count, state.strings, state.ints});
     }
 
@@ -80,11 +79,11 @@ public class ObjectBenchmark {
     @OperationsPerInvocation(1000)
     @SuppressWarnings("unused")
     public void accessFields(FieldTestState state) {
-        Function create = (Function) ScriptableObject.getProperty(state.scope, "createObject");
+        Function create = (Function) Scriptable.getProperty(state.scope, "createObject");
         Object o =
                 create.call(
                         state.cx, state.scope, null, new Object[] {1, state.strings, state.ints});
-        Function access = (Function) ScriptableObject.getProperty(state.scope, "accessObject");
+        Function access = (Function) Scriptable.getProperty(state.scope, "accessObject");
         access.call(
                 state.cx, state.scope, null, new Object[] {count, o, state.strings, state.ints});
     }
@@ -93,11 +92,11 @@ public class ObjectBenchmark {
     @OperationsPerInvocation(1000)
     @SuppressWarnings("unused")
     public void iterateFields(FieldTestState state) {
-        Function create = (Function) ScriptableObject.getProperty(state.scope, "createObject");
+        Function create = (Function) Scriptable.getProperty(state.scope, "createObject");
         Object o =
                 create.call(
                         state.cx, state.scope, null, new Object[] {1, state.strings, state.ints});
-        Function iterate = (Function) ScriptableObject.getProperty(state.scope, "iterateObject");
+        Function iterate = (Function) Scriptable.getProperty(state.scope, "iterateObject");
         iterate.call(state.cx, state.scope, null, new Object[] {count, o});
     }
 
@@ -105,12 +104,11 @@ public class ObjectBenchmark {
     @OperationsPerInvocation(1000)
     @SuppressWarnings("unused")
     public void ownKeysFields(FieldTestState state) {
-        Function create = (Function) ScriptableObject.getProperty(state.scope, "createObject");
+        Function create = (Function) Scriptable.getProperty(state.scope, "createObject");
         Object o =
                 create.call(
                         state.cx, state.scope, null, new Object[] {1, state.strings, state.ints});
-        Function iterate =
-                (Function) ScriptableObject.getProperty(state.scope, "iterateOwnKeysObject");
+        Function iterate = (Function) Scriptable.getProperty(state.scope, "iterateOwnKeysObject");
         iterate.call(state.cx, state.scope, null, new Object[] {count, o});
     }
 
@@ -118,11 +116,11 @@ public class ObjectBenchmark {
     @OperationsPerInvocation(1000)
     @SuppressWarnings("unused")
     public void deleteFields(FieldTestState state) {
-        Function create = (Function) ScriptableObject.getProperty(state.scope, "createObject");
+        Function create = (Function) Scriptable.getProperty(state.scope, "createObject");
         Object o =
                 create.call(
                         state.cx, state.scope, null, new Object[] {1, state.strings, state.ints});
-        Function delete = (Function) ScriptableObject.getProperty(state.scope, "deleteObject");
+        Function delete = (Function) Scriptable.getProperty(state.scope, "deleteObject");
         delete.call(
                 state.cx, state.scope, null, new Object[] {count, o, state.strings, state.ints});
     }

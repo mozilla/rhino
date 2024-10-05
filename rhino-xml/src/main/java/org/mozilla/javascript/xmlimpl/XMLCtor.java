@@ -43,7 +43,7 @@ class XMLCtor extends IdFunctionObject {
         for (int i = 1; i <= MAX_INSTANCE_ID; ++i) {
             int id = super.getMaxInstanceId() + i;
             String name = getInstanceIdName(id);
-            Object value = ScriptableObject.getProperty(source, name);
+            Object value = Scriptable.getProperty(source, name);
             if (value == Scriptable.NOT_FOUND) {
                 continue;
             }

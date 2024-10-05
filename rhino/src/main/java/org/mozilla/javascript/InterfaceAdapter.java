@@ -121,7 +121,7 @@ public class InterfaceAdapter {
         } else {
             Scriptable s = (Scriptable) target;
             String methodName = method.getName();
-            Object value = ScriptableObject.getProperty(s, methodName);
+            Object value = Scriptable.getProperty(s, methodName);
             if (value == Scriptable.NOT_FOUND) {
                 // We really should throw an error here, but for the sake of
                 // compatibility with JavaAdapter we silently ignore undefined

@@ -31,7 +31,7 @@ import java.util.Objects;
  * @see NativeJavaPackage
  * @see NativeJavaClass
  */
-public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
+public class NativeJavaObject implements SymbolScriptable, Wrapper, Serializable {
 
     private static final long serialVersionUID = -6948590651130498591L;
 

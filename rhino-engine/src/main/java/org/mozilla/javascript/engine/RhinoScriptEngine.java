@@ -188,7 +188,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
                 localThis = Context.toObject(thiz, scope);
             }
 
-            Object f = ScriptableObject.getProperty(localThis, name);
+            Object f = Scriptable.getProperty(localThis, name);
             if (f == Scriptable.NOT_FOUND) {
                 throw new NoSuchMethodException(name);
             }
@@ -306,7 +306,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             if (m.getDeclaringClass() == Object.class) {
                 continue;
             }
-            Object methodObj = ScriptableObject.getProperty(scope, m.getName());
+            Object methodObj = Scriptable.getProperty(scope, m.getName());
             if (!(methodObj instanceof Callable)) {
                 return true;
             }

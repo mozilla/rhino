@@ -350,11 +350,11 @@ final class EqualObjectGraphs {
 
     private static Object getValue(final Scriptable s, final Object id) {
         if (id instanceof Symbol) {
-            return ScriptableObject.getProperty(s, (Symbol) id);
+            return Scriptable.getProperty(s, (Symbol) id);
         } else if (id instanceof Integer) {
-            return ScriptableObject.getProperty(s, (Integer) id);
+            return Scriptable.getProperty(s, (Integer) id);
         } else if (id instanceof String) {
-            return ScriptableObject.getProperty(s, (String) id);
+            return Scriptable.getProperty(s, (String) id);
         } else {
             throw new ClassCastException();
         }

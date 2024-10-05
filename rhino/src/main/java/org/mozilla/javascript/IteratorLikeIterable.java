@@ -74,7 +74,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
             // This will throw if "val" is not an object.
             // "getObjectPropNoWarn" won't, so do this as follows.
             Object doneval =
-                    ScriptableObject.getProperty(
+                    Scriptable.getProperty(
                             ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
             if (doneval == Scriptable.NOT_FOUND) {
                 doneval = Undefined.instance;

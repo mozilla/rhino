@@ -33,10 +33,10 @@ public interface Scriptable {
      *
      * <p>See ECMA 8.6.2 and 15.2.4.2.
      */
-    public String getClassName();
+    String getClassName();
 
     /** Value returned from <code>get</code> if the property is not found. */
-    public static final Object NOT_FOUND = UniqueTag.NOT_FOUND;
+    static final Object NOT_FOUND = UniqueTag.NOT_FOUND;
 
     /**
      * Get a named property from the object.
@@ -78,7 +78,7 @@ public interface Scriptable {
      * @return the value of the property (may be null), or NOT_FOUND
      * @see org.mozilla.javascript.Context#getUndefinedValue
      */
-    public Object get(String name, Scriptable start);
+    Object get(String name, Scriptable start);
 
     /**
      * Get a property from the object selected by an integral index.
@@ -91,7 +91,7 @@ public interface Scriptable {
      * @return the value of the property (may be null), or NOT_FOUND
      * @see org.mozilla.javascript.Scriptable#get(String,Scriptable)
      */
-    public Object get(int index, Scriptable start);
+    Object get(int index, Scriptable start);
 
     /**
      * Indicates whether or not a named property is defined in an object.
@@ -106,9 +106,9 @@ public interface Scriptable {
      * @param start the object in which the lookup began
      * @return true if and only if the named property is found in the object
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, String)
+     * @see org.mozilla.javascript.Scriptable#getProperty(Scriptable, String)
      */
-    public boolean has(String name, Scriptable start);
+    boolean has(String name, Scriptable start);
 
     /**
      * Indicates whether or not an indexed property is defined in an object.
@@ -123,9 +123,9 @@ public interface Scriptable {
      * @param start the object in which the lookup began
      * @return true if and only if the indexed property is found in the object
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, int)
+     * @see org.mozilla.javascript.Scriptable#getProperty(Scriptable, int)
      */
-    public boolean has(int index, Scriptable start);
+    boolean has(int index, Scriptable start);
 
     /**
      * Sets a named property in this object.
@@ -174,7 +174,7 @@ public interface Scriptable {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(String name, Scriptable start, Object value);
+    void put(String name, Scriptable start, Object value);
 
     /**
      * Sets an indexed property in this object.
@@ -192,7 +192,7 @@ public interface Scriptable {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, int, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(int index, Scriptable start, Object value);
+    void put(int index, Scriptable start, Object value);
 
     /**
      * Removes a property from this object. This operation corresponds to the ECMA [[Delete]] except
@@ -211,7 +211,7 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
      */
-    public void delete(String name);
+    void delete(String name);
 
     /**
      * Removes a property from this object.
@@ -227,35 +227,35 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
      */
-    public void delete(int index);
+    void delete(int index);
 
     /**
      * Get the prototype of the object.
      *
      * @return the prototype
      */
-    public Scriptable getPrototype();
+    Scriptable getPrototype();
 
     /**
      * Set the prototype of the object.
      *
      * @param prototype the prototype to set
      */
-    public void setPrototype(Scriptable prototype);
+    void setPrototype(Scriptable prototype);
 
     /**
      * Get the parent scope of the object.
      *
      * @return the parent scope
      */
-    public Scriptable getParentScope();
+    Scriptable getParentScope();
 
     /**
      * Set the parent scope of the object.
      *
      * @param parent the parent scope to set
      */
-    public void setParentScope(Scriptable parent);
+    void setParentScope(Scriptable parent);
 
     /**
      * Get an array of property ids.
@@ -266,7 +266,7 @@ public interface Scriptable {
      * @return an array of Objects. Each entry in the array is either a java.lang.String or a
      *     java.lang.Number
      */
-    public Object[] getIds();
+    Object[] getIds();
 
     /**
      * Get the default value of the object with a given hint. The hints are String.class for type
@@ -280,7 +280,7 @@ public interface Scriptable {
      * @param hint the type hint
      * @return the default value
      */
-    public Object getDefaultValue(Class<?> hint);
+    Object getDefaultValue(Class<?> hint);
 
     /**
      * The instanceof operator.
@@ -295,5 +295,81 @@ public interface Scriptable {
      * @param instance The value that appeared on the LHS of the instanceof operator
      * @return an implementation dependent value
      */
-    public boolean hasInstance(Scriptable instance);
+    boolean hasInstance(Scriptable instance);
+
+    /**
+     * Gets a named property from an object or any object in its prototype chain.
+     *
+     * <p>Searches the prototype chain for a property named <code>name</code>.
+     *
+     * <p>
+     *
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
+     *     object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
+     * @since 1.7.16
+     */
+    static Object getProperty(Scriptable obj, String name) {
+        final Scriptable start = obj;
+        Object result;
+        do {
+            result = obj.get(name, start);
+            if (result != Scriptable.NOT_FOUND) break;
+            obj = obj.getPrototype();
+        } while (obj != null);
+        return result;
+    }
+    /**
+     * Gets an indexed property from an object or any object in its prototype chain.
+     *
+     * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
+     * that if you wish to look for properties with numerical but non-integral indices, you should
+     * use getProperty(Scriptable,String) with the string value of the index.
+     *
+     * <p>
+     *
+     * @param obj a JavaScript object
+     * @param index an integral index
+     * @return the value of a property with index <code>index</code> found in <code>obj</code> or
+     *     any object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
+     * @since 1.7.16
+     */
+    public static Object getProperty(Scriptable obj, int index) {
+        final Scriptable start = obj;
+        Object result;
+        do {
+            result = obj.get(index, start);
+            if (result != Scriptable.NOT_FOUND) break;
+            obj = obj.getPrototype();
+        } while (obj != null);
+        return result;
+    }
+
+    /**
+     * Gets a symbol property from an object or any object in its prototype chain.
+     *
+     * <p>Searches the prototype chain for a property with key {@code symbolKey}. Scriptable {@code
+     * obj} and any other objects in the prototype chain which are searched will return {@link
+     * Scriptable#NOT_FOUND} if they do not implement {@link SymbolScriptable}.
+     *
+     * @param obj a JavaScript object
+     * @param symbolKey a symbol property key
+     * @return the value of a property with key {@code symbolKey} found in {@code obj} or any object
+     *     in its prototype chain, or {@link Scriptable#NOT_FOUND} if not found
+     * @since 1.7.16
+     */
+    static Object getProperty(Scriptable obj, Symbol symbolKey) {
+        final Scriptable start = obj;
+        Object result;
+        do {
+            result =
+                    obj instanceof SymbolScriptable
+                            ? ((SymbolScriptable) obj).get(symbolKey, start)
+                            : Scriptable.NOT_FOUND;
+            if (result != Scriptable.NOT_FOUND) break;
+            obj = obj.getPrototype();
+        } while (obj != null);
+        return result;
+    }
 }

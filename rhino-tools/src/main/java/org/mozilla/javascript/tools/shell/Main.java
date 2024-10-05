@@ -648,7 +648,7 @@ public class Main {
             Object result = unhandled.get(0);
             String msg = "Unhandled rejected promise: " + Context.toString(result);
             if (result instanceof Scriptable) {
-                Object stack = ScriptableObject.getProperty((Scriptable) result, "stack");
+                Object stack = Scriptable.getProperty((Scriptable) result, "stack");
                 if (stack != null && stack != Scriptable.NOT_FOUND) {
                     msg += '\n' + Context.toString(stack);
                 }

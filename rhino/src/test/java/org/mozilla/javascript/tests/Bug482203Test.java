@@ -12,7 +12,6 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 public class Bug482203Test {
 
@@ -27,7 +26,7 @@ public class Bug482203Test {
             script.exec(cx, scope);
             int counter = 0;
             for (; ; ) {
-                Object cont = ScriptableObject.getProperty(scope, "c");
+                Object cont = Scriptable.getProperty(scope, "c");
                 if (cont == null) {
                     break;
                 }
@@ -35,7 +34,7 @@ public class Bug482203Test {
                 ((Callable) cont).call(cx, scope, scope, new Object[] {null});
             }
             assertEquals(counter, 5);
-            assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
+            assertEquals(Double.valueOf(3), Scriptable.getProperty(scope, "result"));
         }
     }
 
@@ -50,7 +49,7 @@ public class Bug482203Test {
             cx.executeScriptWithContinuations(script, scope);
             int counter = 0;
             for (; ; ) {
-                Object cont = ScriptableObject.getProperty(scope, "c");
+                Object cont = Scriptable.getProperty(scope, "c");
                 if (cont == null) {
                     break;
                 }
@@ -58,7 +57,7 @@ public class Bug482203Test {
                 cx.resumeContinuation(cont, scope, null);
             }
             assertEquals(counter, 5);
-            assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
+            assertEquals(Double.valueOf(3), Scriptable.getProperty(scope, "result"));
         }
     }
 }

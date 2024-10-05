@@ -177,9 +177,9 @@ public class ArrayLikeAbstractOperations {
     // same as NativeArray::getElem, but without converting NOT_FOUND to undefined
     static Object getRawElem(Scriptable target, long index) {
         if (index > Integer.MAX_VALUE) {
-            return ScriptableObject.getProperty(target, Long.toString(index));
+            return Scriptable.getProperty(target, Long.toString(index));
         }
-        return ScriptableObject.getProperty(target, (int) index);
+        return Scriptable.getProperty(target, (int) index);
     }
 
     public static long toSliceIndex(double value, long length) {

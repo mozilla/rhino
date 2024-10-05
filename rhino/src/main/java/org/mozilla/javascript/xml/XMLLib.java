@@ -46,7 +46,7 @@ public abstract class XMLLib {
 
         // Ensure lazily initialization of real XML library instance
         // which is done on first access to XML property
-        ScriptableObject.getProperty(so, "XML");
+        Scriptable.getProperty(so, "XML");
 
         return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
     }

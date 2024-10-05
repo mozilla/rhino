@@ -947,7 +947,7 @@ public class NativeArray extends IdScriptableObject implements List {
             }
         }
 
-        Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
+        Object iteratorProp = Scriptable.getProperty(items, SymbolKey.ITERATOR);
         if (!(items instanceof NativeArray)
                 && (iteratorProp != Scriptable.NOT_FOUND)
                 && !Undefined.isUndefined(iteratorProp)) {
@@ -1116,7 +1116,7 @@ public class NativeArray extends IdScriptableObject implements List {
             return ((Number) lengthFunc.call(cx, obj, obj, ScriptRuntime.emptyArgs)).longValue();
         }
 
-        Object len = ScriptableObject.getProperty(obj, "length");
+        Object len = Scriptable.getProperty(obj, "length");
         if (len == Scriptable.NOT_FOUND) {
             // toUint32(undefined) == 0
             return 0;
@@ -1708,7 +1708,7 @@ public class NativeArray extends IdScriptableObject implements List {
         // First, look for the new @@isConcatSpreadable test as per ECMAScript 6 and up
         if (val instanceof Scriptable) {
             final Object spreadable =
-                    ScriptableObject.getProperty((Scriptable) val, SymbolKey.IS_CONCAT_SPREADABLE);
+                    Scriptable.getProperty((Scriptable) val, SymbolKey.IS_CONCAT_SPREADABLE);
             if ((spreadable != Scriptable.NOT_FOUND) && !Undefined.isUndefined(spreadable)) {
                 // If @@isConcatSpreadable was undefined, we have to fall back to testing for an
                 // array.
@@ -1872,7 +1872,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 for (int i = (int) start; i < length; i++) {
                     Object val = na.dense[i];
                     if (val == NOT_FOUND && proto != null) {
-                        val = ScriptableObject.getProperty(proto, i);
+                        val = Scriptable.getProperty(proto, i);
                     }
                     if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                         return Long.valueOf(i);
@@ -1924,7 +1924,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 for (int i = (int) start; i >= 0; i--) {
                     Object val = na.dense[i];
                     if (val == NOT_FOUND && proto != null) {
-                        val = ScriptableObject.getProperty(proto, i);
+                        val = Scriptable.getProperty(proto, i);
                     }
                     if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                         return Long.valueOf(i);
@@ -1950,7 +1950,8 @@ public class NativeArray extends IdScriptableObject implements List {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = ScriptRuntime.toLength(new Object[] {getProperty(thisObj, "length")}, 0);
+        long len =
+                ScriptRuntime.toLength(new Object[] {Scriptable.getProperty(thisObj, "length")}, 0);
         if (len == 0) return Boolean.FALSE;
 
         long k;
@@ -1971,7 +1972,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 for (int i = (int) k; i < len; i++) {
                     Object elementK = na.dense[i];
                     if (elementK == NOT_FOUND && proto != null) {
-                        elementK = ScriptableObject.getProperty(proto, i);
+                        elementK = Scriptable.getProperty(proto, i);
                     }
                     if (elementK == NOT_FOUND) {
                         elementK = Undefined.instance;
