@@ -25,20 +25,11 @@ public class NativeStringTest {
      */
     @Test
     public void toLowerCaseApply() {
-        assertEvaluates("hello", "var x = String.toLowerCase; x.apply('HELLO')");
-        assertEvaluates(
+        Utils.assertWithAllOptimizationLevels(
+                "hello", "var x = String.toLowerCase; x.apply('HELLO')");
+        Utils.assertWithAllOptimizationLevels(
                 "hello",
                 "String.toLowerCase('HELLO')"); // first patch proposed to #492359 was breaking this
-    }
-
-    private static void assertEvaluates(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                    assertEquals(expected, rep);
-                    return null;
-                });
     }
 
     @Test

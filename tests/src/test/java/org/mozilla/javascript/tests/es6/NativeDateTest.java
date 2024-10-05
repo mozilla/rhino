@@ -261,28 +261,14 @@ public class NativeDateTest {
 
     @Test
     public void ctorInt() {
-        final String js = "new Date(951782399000).toISOString()";
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
-                    assertEquals("2000-02-28T23:59:59.000Z", res);
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(
+                "2000-02-28T23:59:59.000Z", "new Date(951782399000).toISOString()");
     }
 
     @Test
     public void ctorDouble() {
-        final String js = "new Date(208e10).toISOString()";
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
-                    assertEquals("2035-11-30T01:46:40.000Z", res);
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(
+                "2035-11-30T01:46:40.000Z", "new Date(208e10).toISOString()");
     }
 
     @Test
