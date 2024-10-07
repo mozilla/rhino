@@ -167,7 +167,7 @@ class DefaultLinker implements GuardingDynamicLinker {
     }
 
     /** If the operation is a named operation, then return the name, */
-    private static String getName(Operation op) {
+    static String getName(Operation op) {
         Object nameObj = NamedOperation.getName(op);
         if (nameObj instanceof String) {
             return (String) nameObj;
