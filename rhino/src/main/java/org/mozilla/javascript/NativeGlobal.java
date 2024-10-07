@@ -20,7 +20,7 @@ import org.mozilla.javascript.xml.XMLLib;
  *
  * @author Mike Shaver
  */
-public class NativeGlobal implements Serializable, IdFunctionCall {
+public class NativeGlobal implements Serializable, IdFunctionCall, EqualObjectGraphs.Stateless {
     static final long serialVersionUID = 6080442165748707530L;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {

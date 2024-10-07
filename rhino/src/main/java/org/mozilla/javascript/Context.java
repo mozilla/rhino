@@ -34,6 +34,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
+import org.mozilla.javascript.lc.NativeJavaObject;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -638,7 +639,7 @@ public class Context implements Closeable {
     }
 
     @SuppressWarnings("DoNotCallSuggester")
-    static void onSealedMutation() {
+    public static void onSealedMutation() {
         throw new IllegalStateException();
     }
 
@@ -950,7 +951,7 @@ public class Context implements Closeable {
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
-    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+    public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }
@@ -1750,7 +1751,8 @@ public class Context implements Closeable {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
-                || value instanceof Scriptable) {
+                || value instanceof Scriptable
+                || value instanceof Undefined) {
             return value;
         } else if (value instanceof Character) {
             return String.valueOf(((Character) value).charValue());
@@ -1758,6 +1760,9 @@ public class Context implements Closeable {
             if (cx == null) {
                 cx = Context.getContext();
             }
+			if (cx.getWrapFactory() == null) {
+				throw new UnsupportedOperationException("Cannot convert java value " + value + "(" + (value == null ? "null" : value.getClass()) + ") to javascript");
+			}
             return cx.getWrapFactory().wrap(cx, scope, value, null);
         }
     }
@@ -2047,7 +2052,7 @@ public class Context implements Closeable {
         hasClassShutter = true;
     }
 
-    final synchronized ClassShutter getClassShutter() {
+    public final synchronized ClassShutter getClassShutter() {
         return classShutter;
     }
 
@@ -2120,14 +2125,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * @deprecated
-     * @see ClassCache#get(Scriptable)
-     * @see ClassCache#setCachingEnabled(boolean)
-     */
-    @Deprecated
-    public static void setCachingEnabled(boolean cachingEnabled) {}
-
-    /**
      * Set a WrapFactory for this Context.
      *
      * <p>The WrapFactory allows custom object wrapping behavior for Java object manipulated with
@@ -2149,9 +2146,6 @@ public class Context implements Closeable {
      * @since 1.5 Release 4
      */
     public final WrapFactory getWrapFactory() {
-        if (wrapFactory == null) {
-            wrapFactory = new WrapFactory();
-        }
         return wrapFactory;
     }
 
@@ -2408,7 +2402,7 @@ public class Context implements Closeable {
     /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
-    static Context getContext() {
+    public static Context getContext() {
         Context cx = getCurrentContext();
         if (cx == null) {
             throw new RuntimeException("No Context associated with current Thread");

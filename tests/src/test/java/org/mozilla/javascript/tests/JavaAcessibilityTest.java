@@ -12,9 +12,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.lc.JavaWrapFactory;
+import org.mozilla.javascript.lc.NativeJavaObject;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
@@ -163,6 +164,7 @@ public class JavaAcessibilityTest {
     private Object runScript(final String scriptSourceText) {
         return contextFactory.call(
                 context -> {
+                    context.setWrapFactory(new JavaWrapFactory());
                     Script script = context.compileString(scriptSourceText, "", 1, null);
                     return script.exec(context, global);
                 });
