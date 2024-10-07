@@ -126,4 +126,27 @@ public class OptionalChainingOperatorTests {
                     return null;
                 });
     }
+
+    @Test
+    public void expressionsInOptionalChaining() {
+        Utils.assertWithAllOptimizationLevelsES6(true, "o = {a: true}; o?.['a']");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "o = null; o?.['a']");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "o = undefined; o?.['a']");
+    }
+
+    @Test
+    public void expressionsInOptionalChainingAreNotEvaluatedIfUnnecessary() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                1,
+                "c = 0;\n"
+                        + "function f() { ++c; return 0; }\n"
+                        + "o = {}\n"
+                        + "o?.[f()];\n"
+                        + "c\n");
+        Utils.assertWithAllOptimizationLevelsES6(
+                0, "c = 0;\n" + "function f() { ++c; return 0; }\n" + "null?.[f()];\n" + "c\n");
+        Utils.assertWithAllOptimizationLevelsES6(
+                0,
+                "c = 0;\n" + "function f() { ++c; return 0; }\n" + "undefined?.[f()];\n" + "c\n");
+    }
 }
