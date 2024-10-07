@@ -1,31 +1,10 @@
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tests.Utils;
 
 /** Test for NativeArray. */
 public class NativeArray2Test {
-
-    private Context cx;
-    private ScriptableObject scope;
-
-    @Before
-    public void setUp() {
-        cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        scope = cx.initStandardObjects();
-    }
-
-    @After
-    public void tearDown() {
-        Context.exit();
-    }
 
     @Test
     public void concatLimitSpreadable() {
@@ -39,8 +18,9 @@ public class NativeArray2Test {
                         + " '' + e;\n"
                         + "};";
 
-        String result = (String) cx.evaluateString(scope, js, "test", 1, null);
-        assertTrue(result.endsWith("exceeds supported capacity limit."));
+        Utils.assertWithAllOptimizationLevelsES6(
+                "TypeError: Array length 9,007,199,254,740,992 exceeds supported capacity limit.",
+                js);
     }
 
     @Test
@@ -59,7 +39,6 @@ public class NativeArray2Test {
                         + " '' + e;\n"
                         + "};";
 
-        String result = (String) cx.evaluateString(scope, js, "test", 1, null);
-        assertEquals(result, "Error: get failed", result);
+        Utils.assertWithAllOptimizationLevelsES6("Error: get failed", js);
     }
 }
