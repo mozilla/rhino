@@ -115,9 +115,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
-        if (prototype == null || members.has(name, false))
+        if (prototype == null || members.has(name, false)) {
+            if (checkFrozen(name) == FrozenCheckResult.SILENTLY_IGNORE) return;
+
             members.put(this, name, javaObject, value, false);
-        else prototype.put(name, prototype, value);
+        } else {
+            prototype.put(name, prototype, value);
+        }
     }
 
     @Override
@@ -127,6 +131,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
         if (prototype == null || members.has(name, false)) {
+            if (checkFrozen(symbol.toString()) == FrozenCheckResult.SILENTLY_IGNORE) return;
+
             members.put(this, name, javaObject, value, false);
         } else if (prototype instanceof SymbolScriptable) {
             ((SymbolScriptable) prototype).put(symbol, prototype, value);
@@ -247,6 +253,38 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             }
         }
         return value;
+    }
+
+    /**
+     * Freeze this object, preventing changes to the values of existing properties. It is already
+     * not possible to defined new properties on this class, so we do not need to distinguish like
+     * {@link ScriptableObject#isExtensible} and {@link ScriptableObject#isSealed}.
+     */
+    public void freezeObject() {
+        this.isFrozen = true;
+    }
+
+    /**
+     * Checks whether the object is frozen or not. Can either throw an exception (in strict mode) or
+     * return whether we should perform or silently ignore the assignment.
+     */
+    protected FrozenCheckResult checkFrozen(String id) {
+        if (isFrozen) {
+            // In strict mode, we throw an error. In non-strict mode, we silently ignore the
+            // assignment
+            if (Context.isCurrentContextStrict()) {
+                String msg = "Assignment to \"" + id + "\" on frozen object in strict mode";
+                throw ScriptRuntime.constructError("ReferenceError", msg);
+            } else return FrozenCheckResult.SILENTLY_IGNORE;
+        }
+
+        // Go ahead!
+        return FrozenCheckResult.PERFORM_ASSIGNMENT;
+    }
+
+    protected enum FrozenCheckResult {
+        SILENTLY_IGNORE,
+        PERFORM_ASSIGNMENT,
     }
 
     /**
@@ -958,6 +996,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected Scriptable parent;
 
     protected transient Object javaObject;
+    protected transient boolean isFrozen = false;
 
     protected transient Class<?> staticType;
     protected transient JavaMembers members;
