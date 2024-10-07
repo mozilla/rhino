@@ -255,6 +255,10 @@ final class NativeDate extends IdScriptableObject {
                 arity = 1;
                 s = "toJSON";
                 break;
+            case SymbolId_toPrimitive:
+                initPrototypeMethod(
+                        DATE_TAG, id, SymbolKey.TO_PRIMITIVE, "[Symbol.toPrimitive]", 1);
+                return;
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -322,6 +326,25 @@ final class NativeDate extends IdScriptableObject {
                                 ScriptRuntime.toString(result));
                     }
                     return result;
+                }
+            case SymbolId_toPrimitive:
+                {
+                    Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+                    final Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
+                    final String hint = (arg0 instanceof CharSequence) ? arg0.toString() : null;
+                    Class<?> typeHint = null;
+                    if ("string".equals(hint) || "default".equals(hint)) {
+                        typeHint = ScriptRuntime.StringClass;
+                    } else if ("number".equals(hint)) {
+                        typeHint = ScriptRuntime.NumberClass;
+                    }
+                    if (typeHint == null) {
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.invalid.toprimitive.hint", ScriptRuntime.toString(arg0));
+                    }
+                    ;
+
+                    return ScriptableObject.getDefaultValue(o, typeHint);
                 }
         }
 
@@ -1898,6 +1921,14 @@ final class NativeDate extends IdScriptableObject {
         return id;
     }
 
+    @Override
+    protected int findPrototypeId(Symbol key) {
+        if (SymbolKey.TO_PRIMITIVE.equals(key)) {
+            return SymbolId_toPrimitive;
+        }
+        return 0;
+    }
+
     private static final int ConstructorId_now = -3,
             ConstructorId_parse = -2,
             ConstructorId_UTC = -1,
@@ -1948,7 +1979,8 @@ final class NativeDate extends IdScriptableObject {
             Id_setYear = 45,
             Id_toISOString = 46,
             Id_toJSON = 47,
-            MAX_PROTOTYPE_ID = Id_toJSON;
+            SymbolId_toPrimitive = 48,
+            MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
 
     private static final int Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
 

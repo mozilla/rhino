@@ -3038,8 +3038,10 @@ public class ScriptRuntime {
         if (lval instanceof BigInteger && rval instanceof BigInteger) {
             return ((BigInteger) lval).add((BigInteger) rval);
         }
-        if (lval instanceof Number && !(lval instanceof BigInteger)
-                && rval instanceof Number && !(rval instanceof BigInteger)) {
+        if (lval instanceof Number
+                && !(lval instanceof BigInteger)
+                && rval instanceof Number
+                && !(rval instanceof BigInteger)) {
             return wrapNumber(((Number) lval).doubleValue() + ((Number) rval).doubleValue());
         }
 
@@ -3048,10 +3050,10 @@ public class ScriptRuntime {
         final Object lprim = toPrimitive(lval);
         final Object rprim = toPrimitive(rval);
         if (lprim instanceof CharSequence || rprim instanceof CharSequence) {
-            final CharSequence lstr = (lprim instanceof CharSequence)
-                    ? (CharSequence) lprim : toString(lprim);
-            final CharSequence rstr = (rprim instanceof CharSequence)
-                    ? (CharSequence) rprim : toString(rprim);
+            final CharSequence lstr =
+                    (lprim instanceof CharSequence) ? (CharSequence) lprim : toString(lprim);
+            final CharSequence rstr =
+                    (rprim instanceof CharSequence) ? (CharSequence) rprim : toString(rprim);
             return new ConsString(lstr, rstr);
         }
         // e4x extension start
