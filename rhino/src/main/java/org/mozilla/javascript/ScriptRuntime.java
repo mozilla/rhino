@@ -3045,17 +3045,6 @@ public class ScriptRuntime {
             return wrapNumber(((Number) lval).doubleValue() + ((Number) rval).doubleValue());
         }
 
-        // spec starts here for abstract operation ApplyStringOrNumericBinaryOperator
-        // where opText is "+".
-        final Object lprim = toPrimitive(lval);
-        final Object rprim = toPrimitive(rval);
-        if (lprim instanceof CharSequence || rprim instanceof CharSequence) {
-            final CharSequence lstr =
-                    (lprim instanceof CharSequence) ? (CharSequence) lprim : toString(lprim);
-            final CharSequence rstr =
-                    (rprim instanceof CharSequence) ? (CharSequence) rprim : toString(rprim);
-            return new ConsString(lstr, rstr);
-        }
         // e4x extension start
         if (lval instanceof XMLObject) {
             Object test = ((XMLObject) lval).addValues(cx, true, rval);
@@ -3070,6 +3059,18 @@ public class ScriptRuntime {
             }
         }
         // e4x extension end
+
+        // spec starts here for abstract operation ApplyStringOrNumericBinaryOperator
+        // where opText is "+".
+        final Object lprim = toPrimitive(lval);
+        final Object rprim = toPrimitive(rval);
+        if (lprim instanceof CharSequence || rprim instanceof CharSequence) {
+            final CharSequence lstr =
+                    (lprim instanceof CharSequence) ? (CharSequence) lprim : toString(lprim);
+            final CharSequence rstr =
+                    (rprim instanceof CharSequence) ? (CharSequence) rprim : toString(rprim);
+            return new ConsString(lstr, rstr);
+        }
 
         // Skipping (lval = lprim, rval = rprim) and using xprim values directly.
         final Number lnum = toNumeric(lprim);
