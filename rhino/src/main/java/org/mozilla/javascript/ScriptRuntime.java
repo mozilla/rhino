@@ -3603,8 +3603,7 @@ public class ScriptRuntime {
                 && !Undefined.isUndefined(exoticToPrim)) {
             throw notFunctionError(exoticToPrim);
         }
-        final Class<?> defaultValueHint = preferredType == null ? NumberClass : preferredType;
-        final Object result = s.getDefaultValue(defaultValueHint);
+        final Object result = s.getDefaultValue(preferredType);
         if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeErrorById("msg.bad.default.value");
         return result;
