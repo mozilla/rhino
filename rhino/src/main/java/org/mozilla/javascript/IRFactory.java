@@ -141,7 +141,6 @@ public final class IRFactory {
                 return transformBlock(node);
             case Token.BREAK:
                 return transformBreak((BreakStatement) node);
-            case Token.CALL_OPTIONAL:
             case Token.CALL:
                 return transformFunctionCall((FunctionCall) node);
             case Token.CONTINUE:
@@ -162,7 +161,6 @@ public final class IRFactory {
                 return transformGenExpr((GeneratorExpression) node);
             case Token.GETELEM:
                 return transformElementGet((ElementGet) node);
-            case Token.QUESTION_DOT:
             case Token.GETPROP:
                 return transformPropertyGet((PropertyGet) node);
             case Token.HOOK:
@@ -349,8 +347,7 @@ public final class IRFactory {
         Node call =
                 createCallOrNew(
                         Token.CALL,
-                        createPropertyGet(
-                                parser.createName(arrayName), null, "push", 0, node.type));
+                        createPropertyGet(parser.createName(arrayName), null, "push", 0));
 
         Node body = new Node(Token.EXPR_VOID, call, lineno);
 
@@ -644,10 +641,7 @@ public final class IRFactory {
     }
 
     private Node transformFunctionCall(FunctionCall node) {
-        Node call =
-                createCallOrNew(
-                        node.type == Token.CALL_OPTIONAL ? Token.CALL_OPTIONAL : Token.CALL,
-                        transform(node.getTarget()));
+        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
         call.setLineno(node.getLineno());
         List<AstNode> args = node.getArguments();
         for (int i = 0; i < args.size(); i++) {
@@ -944,7 +938,7 @@ public final class IRFactory {
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
-        return createPropertyGet(target, null, name, 0, node.type);
+        return createPropertyGet(target, null, name, 0);
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {
@@ -1268,7 +1262,7 @@ public final class IRFactory {
         String ns = namespace != null ? namespace.getIdentifier() : null;
         if (node instanceof XmlPropRef) {
             String name = ((XmlPropRef) node).getPropName().getIdentifier();
-            return createPropertyGet(pn, ns, name, memberTypeFlags, node.type);
+            return createPropertyGet(pn, ns, name, memberTypeFlags);
         }
         Node expr = transform(((XmlElemRef) node).getExpression());
         return createElementGet(pn, ns, expr, memberTypeFlags);
@@ -1903,27 +1897,19 @@ public final class IRFactory {
     }
 
     private Node createPropertyGet(
-            Node target, String namespace, String name, int memberTypeFlags, int type) {
+            Node target, String namespace, String name, int memberTypeFlags) {
         if (namespace == null && memberTypeFlags == 0) {
             if (target == null) {
                 return parser.createName(name);
             }
             parser.checkActivationName(name, Token.GETPROP);
             if (ScriptRuntime.isSpecialProperty(name)) {
-                Node ref =
-                        new Node(
-                                type == Token.QUESTION_DOT
-                                        ? Token.REF_SPECIAL_OPTIONAL
-                                        : Token.REF_SPECIAL,
-                                target);
+                Node ref = new Node(Token.REF_SPECIAL, target);
                 ref.putProp(Node.NAME_PROP, name);
                 return new Node(Token.GET_REF, ref);
             }
 
-            return new Node(
-                    type == Token.QUESTION_DOT ? Token.GETPROP_OPTIONAL : Token.GETPROP,
-                    target,
-                    Node.newString(name));
+            return new Node(Token.GETPROP, target, Node.newString(name));
         }
         Node elem = Node.newString(name);
         memberTypeFlags |= Node.PROPERTY_FLAG;

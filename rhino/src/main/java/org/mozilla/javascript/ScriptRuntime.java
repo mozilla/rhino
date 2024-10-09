@@ -1749,22 +1749,6 @@ public class ScriptRuntime {
         return getObjectProp(sobj, property, cx);
     }
 
-    public static Object getObjectPropOptional(
-            Object obj, String property, Context cx, Scriptable scope) {
-        if (obj == null || Undefined.isUndefined(obj)) {
-            return Undefined.instance;
-        }
-        return getObjectProp(obj, property, cx, scope);
-    }
-
-    public static Object getObjectPropOptional(
-            Scriptable obj, String property, Context cx, Scriptable scope) {
-        if (obj == null || Undefined.isUndefined(obj)) {
-            return Undefined.instance;
-        }
-        return getObjectProp(obj, property, cx);
-    }
-
     public static Object getObjectProp(Scriptable obj, String property, Context cx) {
 
         Object result = ScriptableObject.getProperty(obj, property);
@@ -2001,11 +1985,6 @@ public class ScriptRuntime {
 
     public static Ref specialRef(Object obj, String specialProperty, Context cx, Scriptable scope) {
         return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
-    }
-
-    public static Ref optionalSpecialRef(
-            Object obj, String specialProperty, Context cx, Scriptable scope) {
-        return SpecialOptionalRef.create(cx, scope, obj, specialProperty);
     }
 
     /**
@@ -2658,20 +2637,6 @@ public class ScriptRuntime {
 
         storeScriptable(cx, thisObj);
         return (Callable) value;
-    }
-
-    public static Callable getPropFunctionAndThisOptional(
-            Object obj, String property, Context cx, Scriptable scope) {
-
-        Scriptable thisObj = toObjectOrNull(cx, obj, scope);
-        if (thisObj == null) {
-            throw undefCallError(obj, property);
-        }
-
-        Object value = ScriptableObject.getProperty(thisObj, property);
-        if (Scriptable.NOT_FOUND == value || Undefined.isUndefined(value) || value == null)
-            return (cx1, scope1, thisObj2, args) -> Undefined.instance;
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
     }
 
     /**

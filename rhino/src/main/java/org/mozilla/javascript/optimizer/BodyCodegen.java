@@ -991,7 +991,6 @@ class BodyCodegen {
                 break;
 
             case Token.CALL:
-            case Token.CALL_OPTIONAL:
             case Token.NEW:
                 {
                     int specialType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
@@ -1001,7 +1000,7 @@ class BodyCodegen {
 
                         if (target != null) {
                             visitOptimizedCall(node, target, type, child);
-                        } else if (type == Token.CALL || type == Token.CALL_OPTIONAL) {
+                        } else if (type == Token.CALL) {
                             visitStandardCall(node, child);
                         } else {
                             visitStandardNew(node, child);
@@ -1354,9 +1353,6 @@ class BodyCodegen {
             case Token.GETPROPNOWARN:
                 visitGetProp(node, child);
                 break;
-            case Token.GETPROP_OPTIONAL:
-                visitGetPropOptional(node, child);
-                break;
 
             case Token.GETELEM:
                 generateExpression(child, node); // object
@@ -1492,22 +1488,6 @@ class BodyCodegen {
                     cfw.addALoad(variableObjectLocal);
                     addScriptRuntimeInvoke(
                             "specialRef",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Lorg/mozilla/javascript/Ref;");
-                }
-                break;
-            case Token.REF_SPECIAL_OPTIONAL:
-                {
-                    String special = (String) node.getProp(Node.NAME_PROP);
-                    generateExpression(child, node);
-                    cfw.addPush(special);
-                    cfw.addALoad(contextLocal);
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "optionalSpecialRef",
                             "(Ljava/lang/Object;"
                                     + "Ljava/lang/String;"
                                     + "Lorg/mozilla/javascript/Context;"
@@ -2306,8 +2286,7 @@ class BodyCodegen {
     }
 
     private void visitStandardCall(Node node, Node child) {
-        if (node.getType() != Token.CALL && node.getType() != Token.CALL_OPTIONAL)
-            throw Codegen.badTree();
+        if (node.getType() != Token.CALL) throw Codegen.badTree();
 
         Node firstArgChild = child.getNext();
         int childType = child.getType();
@@ -2326,14 +2305,14 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + ")Ljava/lang/Object;";
-            } else if (childType == Token.GETPROP || childType == Token.GETPROP_OPTIONAL) {
+            } else if (childType == Token.GETPROP) {
                 // x.name() call
                 Node propTarget = child.getFirstChild();
                 generateExpression(propTarget, node);
                 Node id = propTarget.getNext();
                 String property = id.getString();
                 cfw.addPush(property);
-                methodName = childType == Token.GETPROP ? "callProp0" : "callProp0Optional";
+                methodName = "callProp0";
                 signature =
                         "(Ljava/lang/Object;"
                                 + "Ljava/lang/String;"
@@ -4001,36 +3980,6 @@ class BodyCodegen {
             addDynamicInvoke("PROP:GETNOWARN:" + nameChild.getString(), Signatures.PROP_GET_NOWARN);
         } else {
             addDynamicInvoke("PROP:GET:" + nameChild.getString(), Signatures.PROP_GET);
-        }
-    }
-
-    private void visitGetPropOptional(Node node, Node child) {
-        generateExpression(child, node); // object
-        Node nameChild = child.getNext();
-        generateExpression(nameChild, node); // the name
-        /*
-            for 'this.foo' we call getObjectPropOptional(Scriptable...) which can
-            skip some casting overhead.
-        */
-        int childType = child.getType();
-        if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
-            cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectPropOptional",
-                    "(Lorg/mozilla/javascript/Scriptable;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + ")Ljava/lang/Object;");
-        } else {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectPropOptional",
-                    "(Ljava/lang/Object;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + ")Ljava/lang/Object;");
         }
     }
 

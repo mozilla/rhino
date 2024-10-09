@@ -126,7 +126,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_BITXOR, "^=");
         operatorNames.put(Token.ASSIGN_EXP, "**=");
         operatorNames.put(Token.VOID, "void");
-        operatorNames.put(Token.QUESTION_DOT, "?.");
 
         StringBuilder sb = new StringBuilder();
         INDENTATIONS[0] = sb.toString();

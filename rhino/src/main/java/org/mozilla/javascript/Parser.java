@@ -2439,8 +2439,6 @@ public class Parser {
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
-            if (isNotValidSimpleAssignmentTarget(pn))
-                reportError("msg.syntax.invalid.assignment.lhs");
 
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
@@ -2461,12 +2459,6 @@ public class Parser {
             reportError("msg.syntax");
         }
         return pn;
-    }
-
-    private static boolean isNotValidSimpleAssignmentTarget(AstNode pn) {
-        if (pn.getType() == Token.GETPROP)
-            return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
-        return pn.getType() == Token.QUESTION_DOT;
     }
 
     private AstNode condExpr() throws IOException {
@@ -2895,7 +2887,6 @@ public class Parser {
             int tt = peekToken();
             switch (tt) {
                 case Token.DOT:
-                case Token.QUESTION_DOT:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
                     pn = propertyAccess(tt, pn);
@@ -3026,27 +3017,6 @@ public class Parser {
 
         AstNode ref = null; // right side of . or .. operator
         int token = nextToken();
-        if (token == Token.LP && tt == Token.QUESTION_DOT) {
-            // optional chaining operator method call, o.func?.()
-            var pos = pn.getPosition();
-            pn.setType(Token.QUESTION_DOT);
-            consumeToken();
-            checkCallRequiresActivation(pn);
-            FunctionCall f = new FunctionCall(pos);
-            f.setTarget(pn);
-            // Assign the line number for the function call to where
-            // the paren appeared, not where the name expression started.
-            f.setLineno(lineno);
-            f.setLp(ts.tokenBeg - pos);
-            List<AstNode> args = argumentList();
-            if (args != null && args.size() > ARGC_LIMIT) reportError("msg.too.many.function.args");
-            f.setArguments(args);
-            f.setRp(ts.tokenBeg - pos);
-            f.setLength(ts.tokenEnd - pos);
-            f.setType(Token.CALL_OPTIONAL);
-            return f;
-        }
-
         switch (token) {
             case Token.THROW:
                 // needed for generator.throw();
@@ -3102,10 +3072,6 @@ public class Parser {
         result.setLineno(pn.getLineno());
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
-
-        if (tt == Token.QUESTION_DOT && result instanceof PropertyGet) {
-            result.setType(Token.QUESTION_DOT);
-        }
         return result;
     }
 
