@@ -1147,9 +1147,6 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case ',':
                     return Token.COMMA;
                 case '?':
-                    if (matchChar('.')) {
-                        return Token.QUESTION_DOT;
-                    }
                     if (matchChar('?')) {
                         return Token.NULLISH_COALESCING;
                     }
