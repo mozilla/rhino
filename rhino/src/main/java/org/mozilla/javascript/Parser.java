@@ -3078,6 +3078,29 @@ public class Parser {
                     ref = propertyName(-1, memberTypeFlags);
                     break;
                 }
+
+            case Token.LB:
+                {
+                    if (tt == Token.QUESTION_DOT) {
+                        consumeToken();
+                        ref = expr(true);
+                        mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+
+                        ElementGet result = new ElementGet();
+                        int pos = pn.getPosition();
+                        result.setPosition(pos);
+                        result.setLength(getNodeEnd(ref) - pos);
+                        result.setLineno(pn.getLineno());
+                        result.setTarget(pn);
+                        result.setElement(ref);
+                        result.setType(Token.QUESTION_DOT);
+                        return result;
+                    } else {
+                        reportError("msg.no.name.after.dot");
+                        return makeErrorNode();
+                    }
+                }
+
             default:
                 if (compilerEnv.isReservedKeywordAsIdentifier()) {
                     // allow keywords as property names, e.g. ({if: 1})

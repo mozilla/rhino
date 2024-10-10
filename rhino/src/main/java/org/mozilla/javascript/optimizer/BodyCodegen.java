@@ -1370,6 +1370,50 @@ class BodyCodegen {
                 }
                 break;
 
+            case Token.GETELEM_OPTIONAL:
+                {
+                    generateExpression(child, node); // object
+
+                    int getExpr = cfw.acquireLabel();
+                    int putUndefined = cfw.acquireLabel();
+                    int after = cfw.acquireLabel();
+
+                    // if (object == null) goto putUndefined
+                    cfw.add(ByteCode.DUP);
+                    ++maxStack;
+                    cfw.add(ByteCode.IFNULL, putUndefined);
+
+                    // if (!Undefined.isUndefined(object)) goto getExpr
+                    cfw.add(ByteCode.DUP); // No need to increase maxStack again!
+                    cfw.addInvoke(
+                            ByteCode.INVOKESTATIC,
+                            "org.mozilla.javascript.Undefined",
+                            "isUndefined",
+                            "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, getExpr);
+
+                    cfw.markLabel(putUndefined);
+                    cfw.add(ByteCode.POP); // Remove object
+                    cfw.add(
+                            ByteCode.GETSTATIC,
+                            "org/mozilla/javascript/Undefined",
+                            "instance",
+                            "Ljava/lang/Object;");
+                    cfw.add(ByteCode.GOTO, after);
+
+                    cfw.markLabel(getExpr);
+                    generateExpression(child.getNext(), node); // id
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                        addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+                    } else {
+                        addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+                    }
+                    cfw.markLabel(after);
+                    break;
+                }
+
             case Token.GET_REF:
                 generateExpression(child, node); // reference
                 cfw.addALoad(contextLocal);

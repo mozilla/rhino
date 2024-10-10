@@ -163,6 +163,11 @@ public final class IRFactory {
             case Token.GETELEM:
                 return transformElementGet((ElementGet) node);
             case Token.QUESTION_DOT:
+                if (node instanceof ElementGet) {
+                    return transformElementGet((ElementGet) node);
+                } else {
+                    return transformPropertyGet((PropertyGet) node);
+                }
             case Token.GETPROP:
                 return transformPropertyGet((PropertyGet) node);
             case Token.HOOK:
@@ -521,7 +526,10 @@ public final class IRFactory {
         // iff elem is string that can not be number
         Node target = transform(node.getTarget());
         Node element = transform(node.getElement());
-        return new Node(Token.GETELEM, target, element);
+        return new Node(
+                node.type == Token.QUESTION_DOT ? Token.GETELEM_OPTIONAL : Token.GETELEM,
+                target,
+                element);
     }
 
     private Node transformExprStmt(ExpressionStatement node) {

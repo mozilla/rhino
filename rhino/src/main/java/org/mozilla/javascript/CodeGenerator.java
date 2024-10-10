@@ -742,6 +742,34 @@ class CodeGenerator extends Icode {
                 stackChange(-1);
                 break;
 
+            case Token.GETELEM_OPTIONAL:
+                visitExpression(child, 0);
+
+                // If object == null (shallow eq)
+                addIcode(Icode_DUP);
+                stackChange(1);
+                addToken(Token.NULL);
+                stackChange(1);
+                addToken(Token.EQ);
+                stackChange(-1);
+                int getExpr = iCodeTop;
+                addGotoOp(Token.IFNE);
+                stackChange(-1);
+
+                // Put undefined
+                addStringOp(Token.NAME, "undefined");
+                int after = iCodeTop;
+                addGotoOp(Token.GOTO);
+
+                // Else: get property key and do a GETELEM
+                resolveForwardGoto(getExpr);
+                child = child.getNext();
+                visitExpression(child, 0);
+                addToken(Token.GETELEM);
+                stackChange(-1);
+                resolveForwardGoto(after);
+                break;
+
             case Token.POS:
             case Token.NEG:
             case Token.NOT:
