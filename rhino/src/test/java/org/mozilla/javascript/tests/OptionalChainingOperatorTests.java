@@ -130,6 +130,7 @@ public class OptionalChainingOperatorTests {
     @Test
     public void expressionsInOptionalChaining() {
         Utils.assertWithAllOptimizationLevelsES6(true, "o = {a: true}; o?.['a']");
+        Utils.assertWithAllOptimizationLevelsES6(true, "o = {[42]: true}; o?.[42]");
         Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "o = null; o?.['a']");
         Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "o = undefined; o?.['a']");
     }
