@@ -3030,55 +3030,58 @@ public class ScriptRuntime {
     // implement the '~' operator inline in the caller
     // as "~toInt32(val)"
 
-    public static Object add(Object val1, Object val2, Context cx) {
-        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
-            return ((BigInteger) val1).add((BigInteger) val2);
+    public static Object add(Object lval, Object rval, Context cx) {
+        // if lval and rval are primitive numerics of the same type, give them priority
+        if (lval instanceof Integer && rval instanceof Integer) {
+            return add((Integer) lval, (Integer) rval);
         }
-        if ((val1 instanceof Number && val2 instanceof BigInteger)
-                || (val1 instanceof BigInteger && val2 instanceof Number)) {
+        if (lval instanceof BigInteger && rval instanceof BigInteger) {
+            return ((BigInteger) lval).add((BigInteger) rval);
+        }
+        if (lval instanceof Number
+                && !(lval instanceof BigInteger)
+                && rval instanceof Number
+                && !(rval instanceof BigInteger)) {
+            return wrapNumber(((Number) lval).doubleValue() + ((Number) rval).doubleValue());
+        }
+
+        // e4x extension start
+        if (lval instanceof XMLObject) {
+            Object test = ((XMLObject) lval).addValues(cx, true, rval);
+            if (test != Scriptable.NOT_FOUND) {
+                return test;
+            }
+        }
+        if (rval instanceof XMLObject) {
+            Object test = ((XMLObject) rval).addValues(cx, false, lval);
+            if (test != Scriptable.NOT_FOUND) {
+                return test;
+            }
+        }
+        // e4x extension end
+
+        // spec starts here for abstract operation ApplyStringOrNumericBinaryOperator
+        // where opText is "+".
+        final Object lprim = toPrimitive(lval);
+        final Object rprim = toPrimitive(rval);
+        if (lprim instanceof CharSequence || rprim instanceof CharSequence) {
+            final CharSequence lstr =
+                    (lprim instanceof CharSequence) ? (CharSequence) lprim : toString(lprim);
+            final CharSequence rstr =
+                    (rprim instanceof CharSequence) ? (CharSequence) rprim : toString(rprim);
+            return new ConsString(lstr, rstr);
+        }
+
+        // Skipping (lval = lprim, rval = rprim) and using xprim values directly.
+        final Number lnum = toNumeric(lprim);
+        final Number rnum = toNumeric(rprim);
+        if (lnum instanceof BigInteger && rnum instanceof BigInteger) {
+            return ((BigInteger) lnum).add((BigInteger) rnum);
+        }
+        if (lnum instanceof BigInteger || rnum instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         }
-        if (val1 instanceof Integer && val2 instanceof Integer) {
-            return add((Integer) val1, (Integer) val2);
-        }
-        if (val1 instanceof Number && val2 instanceof Number) {
-            return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
-        }
-        if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-            // If we let this happen later, then the "getDefaultValue" logic
-            // undoes many optimizations
-            return new ConsString((CharSequence) val1, (CharSequence) val2);
-        }
-        if (val1 instanceof XMLObject) {
-            Object test = ((XMLObject) val1).addValues(cx, true, val2);
-            if (test != Scriptable.NOT_FOUND) {
-                return test;
-            }
-        }
-        if (val2 instanceof XMLObject) {
-            Object test = ((XMLObject) val2).addValues(cx, false, val1);
-            if (test != Scriptable.NOT_FOUND) {
-                return test;
-            }
-        }
-        if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-            throw typeErrorById("msg.not.a.number");
-        }
-        if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
-        if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(null);
-        if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence)) {
-            Number num1 = val1 instanceof Number ? (Number) val1 : toNumeric(val1);
-            Number num2 = val2 instanceof Number ? (Number) val2 : toNumeric(val2);
-
-            if (num1 instanceof BigInteger && num2 instanceof BigInteger) {
-                return ((BigInteger) num1).add((BigInteger) num2);
-            }
-            if (num1 instanceof BigInteger || num2 instanceof BigInteger) {
-                throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
-            }
-            return num1.doubleValue() + num2.doubleValue();
-        }
-        return new ConsString(toCharSequence(val1), toCharSequence(val2));
+        return lnum.doubleValue() + rnum.doubleValue();
     }
 
     /**
@@ -3600,8 +3603,7 @@ public class ScriptRuntime {
                 && !Undefined.isUndefined(exoticToPrim)) {
             throw notFunctionError(exoticToPrim);
         }
-        final Class<?> defaultValueHint = preferredType == null ? NumberClass : preferredType;
-        final Object result = s.getDefaultValue(defaultValueHint);
+        final Object result = s.getDefaultValue(preferredType);
         if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeErrorById("msg.bad.default.value");
         return result;
