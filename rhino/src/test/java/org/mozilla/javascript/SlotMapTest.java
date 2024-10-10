@@ -49,6 +49,7 @@ public class SlotMapTest {
                         () -> SlotMapOwner.EMPTY_SLOT_MAP,
                         () -> new SlotMapOwner.SingleEntrySlotMap(new Slot(new Object(), 0, 0)),
                         () -> new EmbeddedSlotMap(),
+                        () -> new OrderedSlotMap(),
                         () -> new HashSlotMap(),
                         () -> SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
                         () ->
