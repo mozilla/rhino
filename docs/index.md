@@ -4,12 +4,28 @@
 
 Rhino is an implementation of JavaScript in Java.
 
+## Documentation
+
+### How to Embed Rhino
+
+* [Embedding guide](./embedding.md)
+* [Accessing Java from Rhino](./scripting.md)
+* [Basics of scopes and contexts](./scopes-and-contexts.md)
+
+### Instructions on Rhino's Command-Line Tools
+
+* The [Rhino shell](./shell.md)
+* The [command-line compiler](./compiler.md)
+* The [Rhino debugger](./debugger.md)
+
+### Miscellaneous Docs
+
+* [Optimization hints](./optimizations.md) (Very old, unfortunately, and not always relevant.)
+* [Rhino history](./history.md)
+
 ## Links
 
-[Readme](https://github.com/mozilla/rhino)
-
-[Release Notes](https://github.com/mozilla/rhino/blob/master/RELEASE-NOTES.md)
-
-[Compatibility Table](./compat/engines.html)
-
-[JavaDoc](https://javadoc.io/doc/org.mozilla/rhino)
+* [Readme](https://github.com/mozilla/rhino)
+* [Release Notes](https://github.com/mozilla/rhino/blob/master/RELEASE-NOTES.md)
+* [Compatibility Table](./compat/engines.html)
+* [JavaDoc](https://javadoc.io/doc/org.mozilla/rhino)

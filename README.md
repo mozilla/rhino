@@ -38,6 +38,11 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 ## Documentation
 
+[Rhino Documentation](./docs/index.md) is here on GitHub.
+
+The most helpful docs are the [embedding guide](./docs/embedding.md) and the basics
+of [how scopes and contexts work](./docs/scopes-and-contexts.md) (which are a little different from other JavaScript engines).
+
 Information for script builders and embedders:
 
 [Archived](http://web.archive.org/web/20210304081342/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
@@ -80,11 +85,18 @@ building with, you can test on another Java version using the RHINO_TEST_JAVA_VE
 
 ### How to Build
 
-For normal development, you can build the code, run the static checks, and run all the tests like this:
+For normal development on Linux or Mac, you can build the code, run the static checks,
+and run all the tests like this. THe only prerequisite is to have Java in your path:
 
     git submodule init
     git submodule update
     ./gradlew check
+
+On Windows the syntax is slightly different but not by much:
+
+    git submodule init
+    git submodule update
+    gradlew check
 
 To just run the Rhino shell, you can do this from the top-level directory:
 
@@ -130,7 +142,7 @@ To see an aggregated coverage report for everything, which is probably what you 
 The result is in:
     ./tests/build/reports/jacoco/testCodeCoverageReport/html
 
-## Releasing and publishing new version
+## Releasing and publishing a new version
 
 1. Ensure all tests are passing
 2. Remove `-SNAPSHOT` from version in `gradle.properties` in project root folder
