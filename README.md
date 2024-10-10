@@ -43,10 +43,6 @@ features from ES6, and ES2016+ are implemented in Rhino.
 The most helpful docs are the [embedding guide](./docs/embedding.md) and the basics
 of [how scopes and contexts work](./docs/scopes-and-contexts.md) (which are a little different from other JavaScript engines).
 
-Information for script builders and embedders:
-
-[Archived](http://web.archive.org/web/20210304081342/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
-
 JavaDoc for all the APIs:
 
 [https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)

@@ -20,7 +20,8 @@ Rhino is an implementation of JavaScript in Java.
 
 ### Miscellaneous Docs
 
-* [Optimization hints](./optimizations.md) (Very old, unfortunately, and not always relevant.)
+* [Performance hints](./performance.md) (Very old, unfortunately, and not always relevant.)
+* [Optimizer information](./optimizations.md) (Also old but still mostly right.)
 * [Rhino history](./history.md)
 
 ## Links
