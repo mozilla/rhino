@@ -342,7 +342,6 @@ final class NativeDate extends IdScriptableObject {
                         throw ScriptRuntime.typeErrorById(
                                 "msg.invalid.toprimitive.hint", ScriptRuntime.toString(arg0));
                     }
-                    ;
 
                     return ScriptableObject.getDefaultValue(o, typeHint);
                 }
