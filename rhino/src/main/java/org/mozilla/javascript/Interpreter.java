@@ -671,6 +671,30 @@ public final class Interpreter extends Icode implements Evaluator {
                         pc += 4;
                         break;
                     }
+                case Icode_REG_STR_C0:
+                    {
+                        String str = strings[0];
+                        out.println(tname + " \"" + str + '"');
+                        break;
+                    }
+                case Icode_REG_STR_C1:
+                    {
+                        String str = strings[1];
+                        out.println(tname + " \"" + str + '"');
+                        break;
+                    }
+                case Icode_REG_STR_C2:
+                    {
+                        String str = strings[2];
+                        out.println(tname + " \"" + str + '"');
+                        break;
+                    }
+                case Icode_REG_STR_C3:
+                    {
+                        String str = strings[3];
+                        out.println(tname + " \"" + str + '"');
+                        break;
+                    }
                 case Icode_REG_IND_C0:
                     indexReg = 0;
                     out.println(tname);
