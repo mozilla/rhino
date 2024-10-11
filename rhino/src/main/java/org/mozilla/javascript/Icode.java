@@ -145,9 +145,9 @@ abstract class Icode {
 
             // Jump if stack head is null or undefined
             Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
-
+            Icode_IF_NOT_NULL_UNDEF = Icode_IF_NULL_UNDEF - 1,
             // Last icode
-            MIN_ICODE = Icode_IF_NULL_UNDEF;
+            MIN_ICODE = Icode_IF_NOT_NULL_UNDEF;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -315,6 +315,8 @@ abstract class Icode {
                 return "LITERAL_KEY_SET";
             case Icode_IF_NULL_UNDEF:
                 return "IF_NULL_UNDEF";
+            case Icode_IF_NOT_NULL_UNDEF:
+                return "IF_NOT_NULL_UNDEF";
         }
 
         // icode without name

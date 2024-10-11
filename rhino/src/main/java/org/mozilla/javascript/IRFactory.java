@@ -807,35 +807,7 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        return (node.getType() == Token.NULLISH_COALESCING)
-                ? transformNullishCoalescing(left, right, node)
-                : createBinary(node.getType(), left, right);
-    }
-
-    private Node transformNullishCoalescing(Node left, Node right, Node parent) {
-        String tempName = parser.currentScriptOrFn.getNextTempName();
-
-        Node nullNode = new Node(Token.NULL);
-        Node undefinedNode = new Name(0, "undefined");
-
-        Node conditional =
-                new Node(
-                        Token.OR,
-                        new Node(Token.SHEQ, nullNode, parser.createName(tempName)),
-                        new Node(Token.SHEQ, undefinedNode, parser.createName(tempName)));
-
-        Node hookNode =
-                new Node(
-                        Token.HOOK,
-                        /* left= */ conditional,
-                        /* mid= */ right,
-                        /* right= */ parser.createName(tempName));
-
-        parser.defineSymbol(Token.LP, tempName, true);
-        return createBinary(
-                Token.COMMA,
-                createAssignment(Token.ASSIGN, parser.createName(tempName), left),
-                hookNode);
+        return createBinary(node.getType(), left, right);
     }
 
     private Node transformLabeledStatement(LabeledStatement ls) {

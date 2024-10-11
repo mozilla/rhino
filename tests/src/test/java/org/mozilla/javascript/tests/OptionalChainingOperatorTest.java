@@ -89,4 +89,10 @@ public class OptionalChainingOperatorTest {
                         + "f()?.length;\n"
                         + "counter\n");
     }
+
+    @Test
+    public void doesNotLeakVariables() {
+        String script = "$0 = false; o = {}; o?.x; $0";
+        Utils.assertWithAllOptimizationLevelsES6(false, script);
+    }
 }
