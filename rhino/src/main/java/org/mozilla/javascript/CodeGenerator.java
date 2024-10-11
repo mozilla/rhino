@@ -1115,6 +1115,25 @@ class CodeGenerator extends Icode {
                 visitTemplateLiteral(node);
                 break;
 
+            case Token.NULLISH_COALESCING:
+                {
+                    visitExpression(child, 0);
+                    child = child.getNext();
+
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+                    int end = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NOT_NULL_UNDEF);
+                    stackChange(-1);
+
+                    addIcode(Icode_POP);
+                    visitExpression(child, 0);
+                    stackChange(-1);
+
+                    resolveForwardGoto(end);
+                    break;
+                }
+
             default:
                 throw badTree(node);
         }
