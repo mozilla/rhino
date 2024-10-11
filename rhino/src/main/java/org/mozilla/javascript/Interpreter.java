@@ -551,6 +551,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Token.IFEQ:
                 case Token.IFNE:
                 case Icode_IFEQ_POP:
+                case Icode_IF_NULL_UNDEF:
                 case Icode_LEAVEDQ:
                     {
                         int newPC = pc + getShort(iCode, pc) - 1;
@@ -821,6 +822,7 @@ public final class Interpreter extends Icode implements Evaluator {
             case Token.IFEQ:
             case Token.IFNE:
             case Icode_IFEQ_POP:
+            case Icode_IF_NULL_UNDEF:
             case Icode_LEAVEDQ:
                 // target pc offset
                 return 1 + 2;
@@ -1434,6 +1436,16 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                                 stack[stackTop--] = null;
                                 break jumplessRun;
+                            case Icode_IF_NULL_UNDEF:
+                                {
+                                    Object val = frame.stack[stackTop];
+                                    --stackTop;
+                                    if (val != null && !Undefined.isUndefined(val)) {
+                                        frame.pc += 2;
+                                        continue Loop;
+                                    }
+                                    break jumplessRun;
+                                }
                             case Token.GOTO:
                                 break jumplessRun;
                             case Icode_GOSUB:

@@ -255,6 +255,10 @@ public final class OptRuntime extends ScriptRuntime {
         return (rgs.returnValue == null ? Undefined.instance : rgs.returnValue);
     }
 
+    public static boolean isNullOrUndefined(Object obj) {
+        return obj == null || Undefined.isUndefined(obj);
+    }
+
     public static class GeneratorState {
         static final String CLASS_NAME =
                 "org/mozilla/javascript/optimizer/OptRuntime$GeneratorState";
