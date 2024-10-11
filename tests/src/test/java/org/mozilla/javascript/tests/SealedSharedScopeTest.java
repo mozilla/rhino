@@ -21,6 +21,7 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
 
@@ -40,12 +41,10 @@ public class SealedSharedScopeTest {
         }
 
         ctx = Context.enter();
-        scope1 = ctx.newObject(sharedScope);
+        scope1 = new NativeObject();
         scope1.setPrototype(sharedScope);
-        scope1.setParentScope(null);
-        scope2 = ctx.newObject(sharedScope);
+        scope2 = new NativeObject();
         scope2.setPrototype(sharedScope);
-        scope2.setParentScope(null);
     }
 
     @After
