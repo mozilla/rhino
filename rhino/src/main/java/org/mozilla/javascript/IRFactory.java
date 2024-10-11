@@ -163,6 +163,12 @@ public final class IRFactory {
                 return transformElementGet((ElementGet) node);
             case Token.GETPROP:
                 return transformPropertyGet((PropertyGet) node);
+            case Token.QUESTION_DOT:
+                if (node instanceof ElementGet) {
+                    return transformElementGet((ElementGet) node);
+                } else {
+                    return transformPropertyGet((PropertyGet) node);
+                }
             case Token.HOOK:
                 return transformCondExpr((ConditionalExpression) node);
             case Token.IF:
@@ -347,7 +353,8 @@ public final class IRFactory {
         Node call =
                 createCallOrNew(
                         Token.CALL,
-                        createPropertyGet(parser.createName(arrayName), null, "push", 0));
+                        createPropertyGet(
+                                parser.createName(arrayName), null, "push", 0, node.type));
 
         Node body = new Node(Token.EXPR_VOID, call, lineno);
 
@@ -518,7 +525,11 @@ public final class IRFactory {
         // iff elem is string that can not be number
         Node target = transform(node.getTarget());
         Node element = transform(node.getElement());
-        return new Node(Token.GETELEM, target, element);
+        Node getElem = new Node(Token.GETELEM, target, element);
+        if (node.type == Token.QUESTION_DOT) {
+            getElem.putIntProp(Node.OPTIONAL_CHAINING, 1);
+        }
+        return getElem;
     }
 
     private Node transformExprStmt(ExpressionStatement node) {
@@ -938,7 +949,7 @@ public final class IRFactory {
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
-        return createPropertyGet(target, null, name, 0);
+        return createPropertyGet(target, null, name, 0, node.type);
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {
@@ -1262,7 +1273,7 @@ public final class IRFactory {
         String ns = namespace != null ? namespace.getIdentifier() : null;
         if (node instanceof XmlPropRef) {
             String name = ((XmlPropRef) node).getPropName().getIdentifier();
-            return createPropertyGet(pn, ns, name, memberTypeFlags);
+            return createPropertyGet(pn, ns, name, memberTypeFlags, node.type);
         }
         Node expr = transform(((XmlElemRef) node).getExpression());
         return createElementGet(pn, ns, expr, memberTypeFlags);
@@ -1897,7 +1908,7 @@ public final class IRFactory {
     }
 
     private Node createPropertyGet(
-            Node target, String namespace, String name, int memberTypeFlags) {
+            Node target, String namespace, String name, int memberTypeFlags, int type) {
         if (namespace == null && memberTypeFlags == 0) {
             if (target == null) {
                 return parser.createName(name);
@@ -1906,10 +1917,19 @@ public final class IRFactory {
             if (ScriptRuntime.isSpecialProperty(name)) {
                 Node ref = new Node(Token.REF_SPECIAL, target);
                 ref.putProp(Node.NAME_PROP, name);
-                return new Node(Token.GET_REF, ref);
+                Node getRef = new Node(Token.GET_REF, ref);
+                if (type == Token.QUESTION_DOT) {
+                    ref.putIntProp(Node.OPTIONAL_CHAINING, 1);
+                    getRef.putIntProp(Node.OPTIONAL_CHAINING, 1);
+                }
+                return getRef;
             }
 
-            return new Node(Token.GETPROP, target, Node.newString(name));
+            Node node = new Node(Token.GETPROP, target, Node.newString(name));
+            if (type == Token.QUESTION_DOT) {
+                node.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            return node;
         }
         Node elem = Node.newString(name);
         memberTypeFlags |= Node.PROPERTY_FLAG;

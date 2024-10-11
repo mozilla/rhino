@@ -1356,24 +1356,49 @@ class BodyCodegen {
 
             case Token.GETELEM:
                 generateExpression(child, node); // object
-                generateExpression(child.getNext(), node); // id
-                cfw.addALoad(contextLocal);
-                cfw.addALoad(variableObjectLocal);
-                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                    addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    int getElem = cfw.acquireLabel();
+                    int after = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, getElem);
+
+                    cfw.add(ByteCode.POP);
+                    cfw.add(
+                            ByteCode.GETSTATIC,
+                            "org/mozilla/javascript/Undefined",
+                            "instance",
+                            "Ljava/lang/Object;");
+                    cfw.add(ByteCode.GOTO, after);
+
+                    cfw.markLabel(getElem);
+                    finishGetElemGeneration(node, child);
+                    cfw.markLabel(after);
                 } else {
-                    addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+                    finishGetElemGeneration(node, child);
                 }
                 break;
 
             case Token.GET_REF:
                 generateExpression(child, node); // reference
-                cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "refGet",
-                        "(Lorg/mozilla/javascript/Ref;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/Object;");
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    int getRef = cfw.acquireLabel();
+                    int after = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, getRef);
+                    cfw.add(ByteCode.GOTO, after);
+
+                    cfw.markLabel(getRef);
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Ref");
+                    finishGetRefGeneration();
+                    cfw.markLabel(after);
+                } else {
+                    finishGetRefGeneration();
+                }
                 break;
 
             case Token.GETVAR:
@@ -1481,18 +1506,30 @@ class BodyCodegen {
 
             case Token.REF_SPECIAL:
                 {
-                    String special = (String) node.getProp(Node.NAME_PROP);
                     generateExpression(child, node);
-                    cfw.addPush(special);
-                    cfw.addALoad(contextLocal);
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "specialRef",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Lorg/mozilla/javascript/Ref;");
+                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                        int getExpr = cfw.acquireLabel();
+                        int after = cfw.acquireLabel();
+
+                        cfw.add(ByteCode.DUP);
+
+                        addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                        cfw.add(ByteCode.IFEQ, getExpr);
+
+                        cfw.add(ByteCode.POP);
+                        cfw.add(
+                                ByteCode.GETSTATIC,
+                                "org/mozilla/javascript/Undefined",
+                                "instance",
+                                "Ljava/lang/Object;");
+                        cfw.add(ByteCode.GOTO, after);
+
+                        cfw.markLabel(getExpr);
+                        finishRefSpecialGeneration(node);
+                        cfw.markLabel(after);
+                    } else {
+                        finishRefSpecialGeneration(node);
+                    }
                 }
                 break;
             case Token.REF_MEMBER:
@@ -1618,9 +1655,58 @@ class BodyCodegen {
                 visitTemplateLiteral(node);
                 break;
 
+            case Token.NULLISH_COALESCING:
+                {
+                    generateExpression(child, node); // left-hand side
+                    int end = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, end);
+
+                    cfw.add(ByteCode.POP);
+                    generateExpression(child.getNext(), node); // right-hand side
+                    cfw.markLabel(end);
+                    break;
+                }
+
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
+    }
+
+    private void finishGetElemGeneration(Node node, Node child) {
+        generateExpression(child.getNext(), node); // id
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+            addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+        } else {
+            addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+        }
+    }
+
+    private void finishGetRefGeneration() {
+        cfw.addALoad(contextLocal);
+        addScriptRuntimeInvoke(
+                "refGet",
+                "(Lorg/mozilla/javascript/Ref;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + ")Ljava/lang/Object;");
+    }
+
+    private void finishRefSpecialGeneration(Node node) {
+        String special = (String) node.getProp(Node.NAME_PROP);
+        cfw.addPush(special);
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        addScriptRuntimeInvoke(
+                "specialRef",
+                "(Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")Lorg/mozilla/javascript/Ref;");
     }
 
     // Descend down the tree and return the first child that represents a yield
@@ -3972,6 +4058,31 @@ class BodyCodegen {
 
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            int getExpr = cfw.acquireLabel();
+            int after = cfw.acquireLabel();
+
+            cfw.add(ByteCode.DUP);
+            addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+            cfw.add(ByteCode.IFEQ, getExpr);
+
+            cfw.add(ByteCode.POP);
+            cfw.add(
+                    ByteCode.GETSTATIC,
+                    "org/mozilla/javascript/Undefined",
+                    "instance",
+                    "Ljava/lang/Object;");
+            cfw.add(ByteCode.GOTO, after);
+
+            cfw.markLabel(getExpr);
+            finishGetPropGeneration(node, child);
+            cfw.markLabel(after);
+        } else {
+            finishGetPropGeneration(node, child);
+        }
+    }
+
+    private void finishGetPropGeneration(Node node, Node child) {
         Node nameChild = child.getNext();
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);

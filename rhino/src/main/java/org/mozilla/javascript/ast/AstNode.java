@@ -83,6 +83,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.COLON, ":");
         operatorNames.put(Token.OR, "||");
         operatorNames.put(Token.NULLISH_COALESCING, "??");
+        operatorNames.put(Token.QUESTION_DOT, "?.");
         operatorNames.put(Token.AND, "&&");
         operatorNames.put(Token.INC, "++");
         operatorNames.put(Token.DEC, "--");

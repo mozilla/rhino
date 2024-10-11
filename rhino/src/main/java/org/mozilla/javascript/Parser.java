@@ -2439,6 +2439,8 @@ public class Parser {
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
+            if (isNotValidSimpleAssignmentTarget(pn))
+                reportError("msg.syntax.invalid.assignment.lhs");
 
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
@@ -2459,6 +2461,12 @@ public class Parser {
             reportError("msg.syntax");
         }
         return pn;
+    }
+
+    private static boolean isNotValidSimpleAssignmentTarget(AstNode pn) {
+        if (pn.getType() == Token.GETPROP)
+            return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
+        return pn.getType() == Token.QUESTION_DOT;
     }
 
     private AstNode condExpr() throws IOException {
@@ -2887,6 +2895,7 @@ public class Parser {
             int tt = peekToken();
             switch (tt) {
                 case Token.DOT:
+                case Token.QUESTION_DOT:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
                     pn = propertyAccess(tt, pn);
@@ -2916,20 +2925,8 @@ public class Parser {
 
                 case Token.LB:
                     consumeToken();
-                    int lb = ts.tokenBeg, rb = -1;
                     lineno = ts.lineno;
-                    AstNode expr = expr(false);
-                    end = getNodeEnd(expr);
-                    if (mustMatchToken(Token.RB, "msg.no.bracket.index", true)) {
-                        rb = ts.tokenBeg;
-                        end = ts.tokenEnd;
-                    }
-                    ElementGet g = new ElementGet(pos, end - pos);
-                    g.setTarget(pn);
-                    g.setElement(expr);
-                    g.setParens(lb, rb);
-                    g.setLineno(lineno);
-                    pn = g;
+                    pn = makeElemGet(pn, ts.tokenBeg, lineno);
                     break;
 
                 case Token.LP:
@@ -3048,6 +3045,19 @@ public class Parser {
                     ref = propertyName(-1, memberTypeFlags);
                     break;
                 }
+
+            case Token.LB:
+                if (tt == Token.QUESTION_DOT) {
+                    // a ?.[ expr ]
+                    consumeToken();
+                    ElementGet g = makeElemGet(pn, ts.tokenBeg, ts.lineno);
+                    g.setType(Token.QUESTION_DOT);
+                    return g;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
+
             default:
                 if (compilerEnv.isReservedKeywordAsIdentifier()) {
                     // allow keywords as property names, e.g. ({if: 1})
@@ -3065,6 +3075,7 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
+        if (!xml && tt == Token.QUESTION_DOT) result.setType(Token.QUESTION_DOT);
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
@@ -3073,6 +3084,23 @@ public class Parser {
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
         return result;
+    }
+
+    private ElementGet makeElemGet(AstNode pn, int lb, int lineno) throws IOException {
+        int pos = pn.getPosition();
+        AstNode expr = expr(false);
+        int end = getNodeEnd(expr);
+        int rb = -1;
+        if (mustMatchToken(Token.RB, "msg.no.bracket.index", true)) {
+            rb = ts.tokenBeg;
+            end = ts.tokenEnd;
+        }
+        ElementGet g = new ElementGet(pos, end - pos);
+        g.setTarget(pn);
+        g.setElement(expr);
+        g.setParens(lb, rb);
+        g.setLineno(lineno);
+        return g;
     }
 
     /**

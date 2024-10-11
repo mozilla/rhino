@@ -1,8 +1,24 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertThrows;
+
 import org.junit.Test;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Scriptable;
 
 public class NullishCoalescingOpTest {
+    @Test
+    public void testNullishCoalescingOperatorRequiresEs6() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects();
+                    assertThrows(
+                            EvaluatorException.class,
+                            () -> cx.evaluateString(scope, "true ?? false", "test.js", 0, null));
+                    return null;
+                });
+    }
+
     @Test
     public void testNullishColascingBasic() {
         Utils.assertWithAllOptimizationLevelsES6("default string", "null ?? 'default string'");
