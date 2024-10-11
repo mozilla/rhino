@@ -5,6 +5,7 @@
 /** */
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
@@ -13,7 +14,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.NativeJavaClass;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -67,6 +73,25 @@ public class ImportClassTest {
         assertTrue(Context.jsToJava(result, UUID.class) instanceof UUID);
         result = runScript("importClass(java.util.UUID);UUID.randomUUID();");
         assertTrue(Context.jsToJava(result, UUID.class) instanceof UUID);
+    }
+
+    @Test
+    public void importMultipleTimes() {
+        Utils.runWithAllOptimizationLevels(cx -> {
+            ScriptableObject sharedScope = cx.initStandardObjects();
+            //sharedScope.sealObject(); code below will try to modify sealed object
+
+            Script script = cx.compileString("importClass(java.util.UUID);true", "TestScript", 1, null);
+
+            for (int i = 0; i < 3; i++) {
+                Scriptable scope = new ImporterTopLevel(cx);
+                scope.setParentScope(sharedScope);
+                script.exec(cx, scope);
+                assertEquals(UniqueTag.NOT_FOUND, sharedScope.get("UUID", sharedScope));
+                assertTrue(scope.get("UUID", scope) instanceof NativeJavaClass);
+            }
+            return null;
+        });
     }
 
     private Object runScript(final String scriptSourceText) {
