@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,17 +26,28 @@ public class NativeJavaMap extends NativeJavaObject {
 
     private static final long serialVersionUID = -3786257752907047381L;
 
-    private Map<Object, Object> map;
+    private final Map<Object, Object> map;
+
+    private transient Class<?> keyType;
+
+    private transient Class<?> valueType;
 
     static void init(ScriptableObject scope, boolean sealed) {
         NativeJavaMapIterator.init(scope, sealed);
     }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaMap(Scriptable scope, Object map) {
-        super(scope, map, map.getClass());
+    public NativeJavaMap(Scriptable scope, Object map, Type staticType) {
+        super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
+    }
+
+    @Override
+    protected void initMembers() {
+        super.initMembers();
+        this.keyType = typeResolver.resolve(Map.class, 0);
+        this.valueType = typeResolver.resolve(Map.class, 1);
     }
 
     @Override
@@ -58,7 +70,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public boolean has(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            if (map.containsKey(Integer.valueOf(index))) {
+            if (map.containsKey(Integer.valueOf(index)) || map.containsKey(String.valueOf(index))) {
                 return true;
             }
         }
@@ -89,10 +101,17 @@ public class NativeJavaMap extends NativeJavaObject {
     public Object get(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            if (map.containsKey(Integer.valueOf(index))) {
-                Object obj = map.get(Integer.valueOf(index));
+            Object key = Integer.valueOf(index);
+            if (map.containsKey(key)) {
+                Object obj = map.get(key);
                 return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
+            key = String.valueOf(index); // try again with String
+            if (map.containsKey(key)) {
+                Object obj = map.get(key);
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+            }
+            return Scriptable.NOT_FOUND; // do not report "memberNotFound" in this case.
         }
         return super.get(index, start);
     }
@@ -109,7 +128,11 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(String name, Scriptable start, Object value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            map.put(name, Context.jsToJava(value, Object.class));
+            if (keyType.isAssignableFrom(String.class)) {
+                map.put(name, Context.jsToJava(value, valueType));
+            } else {
+                reportConversionError(name, keyType);
+            }
         } else {
             super.put(name, start, value);
         }
@@ -119,7 +142,13 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(int index, Scriptable start, Object value) {
         Context cx = Context.getContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
+            if (keyType.isAssignableFrom(Integer.class)) {
+                map.put(Integer.valueOf(index), Context.jsToJava(value, valueType));
+            } else if (keyType.isAssignableFrom(String.class)) {
+                map.put(String.valueOf(index), Context.jsToJava(value, valueType));
+            } else {
+                reportConversionError(index, keyType);
+            }
         } else {
             super.put(index, start, value);
         }
@@ -133,9 +162,9 @@ public class NativeJavaMap extends NativeJavaObject {
             for (Object key : map.keySet()) {
                 if (key instanceof Integer) {
                     ids.add(key);
-                } else {
-                    ids.add(ScriptRuntime.toString(key));
-                }
+                } else if (key instanceof String) {
+                    ids.add(key);
+                } // else skip all other types, as you may not able to access them
             }
             return ids.toArray();
         }
