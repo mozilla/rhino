@@ -98,7 +98,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
         boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {

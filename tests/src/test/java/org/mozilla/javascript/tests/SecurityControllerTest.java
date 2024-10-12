@@ -21,6 +21,7 @@ import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.JavaPolicySecurity;
 
@@ -130,6 +131,7 @@ public class SecurityControllerTest {
     private void runScript(String scriptSourceText, ProtectionDomain pd) {
         Utils.runWithAllOptimizationLevels(
                 context -> {
+                    context.setWrapFactory(new JavaWrapFactory());
                     context.setClassShutter(new PolicyClassShutter());
                     Scriptable scope = context.initStandardObjects(global);
 

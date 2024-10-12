@@ -5,6 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -96,6 +97,7 @@ public class CovariantReturnTypeTest {
     public void checkIt() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
+                    cx.setWrapFactory(new JavaWrapFactory());
                     final Global scope = new Global();
                     scope.init(cx);
                     scope.put("obj", scope, new B());

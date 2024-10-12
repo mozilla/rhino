@@ -4,12 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * Cache of generated classes and data structures to access Java runtime from JavaScript.
@@ -177,11 +179,11 @@ public class ClassCache implements Serializable {
         return ++generatedClassSerial;
     }
 
-    Object getInterfaceAdapter(Class<?> cl) {
+    public Object getInterfaceAdapter(Class<?> cl) {
         return interfaceAdapterCache == null ? null : interfaceAdapterCache.get(cl);
     }
 
-    synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
+    public synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
                 interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);

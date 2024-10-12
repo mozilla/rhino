@@ -36,7 +36,7 @@ import org.mozilla.javascript.debug.DebuggableObject;
  * comparing cyclic data structures that can memoize false equalities if two cyclic data structures
  * end up being unequal.
  */
-final class EqualObjectGraphs {
+public final class EqualObjectGraphs {
     private static final ThreadLocal<EqualObjectGraphs> instance = new ThreadLocal<>();
 
     private static final Set<Class<?>> valueClasses =
@@ -142,9 +142,9 @@ final class EqualObjectGraphs {
         if (o1 instanceof Wrapper) {
             return o2 instanceof Wrapper
                     && equalGraphs(((Wrapper) o1).unwrap(), ((Wrapper) o2).unwrap());
-        } else if (o1 instanceof NativeJavaTopPackage) {
+        } else if (o1 instanceof Stateless) {
             // stateless objects, must check before Scriptable
-            return o2 instanceof NativeJavaTopPackage;
+            return o2 instanceof Stateless && o1.getClass() == o2.getClass();
         } else if (o1 instanceof Scriptable) {
             return o2 instanceof Scriptable && equalScriptables((Scriptable) o1, (Scriptable) o2);
         } else if (o1 instanceof SymbolKey) {
@@ -160,10 +160,6 @@ final class EqualObjectGraphs {
             return o2 instanceof Map<?, ?> && equalMaps((Map<?, ?>) o1, (Map<?, ?>) o2);
         } else if (o1 instanceof Set<?>) {
             return o2 instanceof Set<?> && equalSets((Set<?>) o1, (Set<?>) o2);
-        } else if (o1 instanceof NativeGlobal) {
-            return o2 instanceof NativeGlobal; // stateless objects
-        } else if (o1 instanceof JavaAdapter) {
-            return o2 instanceof JavaAdapter; // stateless objects
         }
 
         // Fallback case for everything else.
@@ -193,7 +189,7 @@ final class EqualObjectGraphs {
             return s2 instanceof NativeContinuation
                     && NativeContinuation.equalImplementations(
                             (NativeContinuation) s1, (NativeContinuation) s2);
-        } else if (s1 instanceof NativeJavaPackage) {
+        } else if (s1 instanceof JavaEquals) {
             return s1.equals(s2); // Overridden appropriately
         } else if (s1 instanceof IdFunctionObject) {
             return s2 instanceof IdFunctionObject
@@ -359,4 +355,13 @@ final class EqualObjectGraphs {
             throw new ClassCastException();
         }
     }
+
+    /**
+     * marker interface, that object is stateless and two objects are equal. if they have the same
+     * class
+     */
+    public interface Stateless {}
+
+    /** marker interface, that equality is checked with java equals method */
+    public interface JavaEquals {}
 }
