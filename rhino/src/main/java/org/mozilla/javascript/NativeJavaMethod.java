@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -424,7 +425,7 @@ public class NativeJavaMethod extends BaseFunction {
                 bestFitIndex = extraBestFits[j];
             }
             buf.append("\n    ");
-            buf.append(methodsOrCtors[bestFitIndex].toJavaDeclaration());
+            buf.append(toJavaDeclaration(methodsOrCtors[bestFitIndex]));
         }
 
         MemberBox firstFitMember = methodsOrCtors[firstBestFit];
@@ -441,6 +442,26 @@ public class NativeJavaMethod extends BaseFunction {
                 memberName,
                 scriptSignature(args),
                 buf.toString());
+    }
+
+    private static String toJavaDeclaration(MemberBox memberBox) {
+        StringBuilder sb = new StringBuilder();
+        if (memberBox.isMethod()) {
+            Method method = memberBox.method();
+            sb.append(method.getReturnType());
+            sb.append(' ');
+            sb.append(method.getName());
+        } else {
+            Constructor<?> ctor = memberBox.ctor();
+            String name = ctor.getDeclaringClass().getName();
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot >= 0) {
+                name = name.substring(lastDot + 1);
+            }
+            sb.append(name);
+        }
+        sb.append(JavaMembers.liveConnectSignature(memberBox.argTypes));
+        return sb.toString();
     }
 
     /** Types are equal */
