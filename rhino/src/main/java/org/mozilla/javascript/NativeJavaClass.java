@@ -94,6 +94,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
     @Override
     public void put(String name, Scriptable start, Object value) {
+        if (super.checkFrozen(name) == FrozenCheckResult.SILENTLY_IGNORE) return;
         members.put(this, name, javaObject, value, true);
     }
 
