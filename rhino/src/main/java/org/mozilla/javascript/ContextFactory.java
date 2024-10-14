@@ -10,6 +10,10 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -114,6 +118,13 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
+    private List<Plugin> plugins = getPluginsFromServiceLoader();
+
+    private List<Plugin> getPluginsFromServiceLoader() {
+        List<Plugin> result = new ArrayList<Plugin>();
+        ServiceLoader.load(Plugin.class).forEach(result::add);
+        return Collections.unmodifiableList(result);
+    }
 
     /** Listener of {@link Context} creation and release events. */
     public interface Listener {
@@ -293,42 +304,6 @@ public class ContextFactory {
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
-    }
-
-    private static boolean isDom3Present() {
-        Class<?> nodeClass = Kit.classOrNull("org.w3c.dom.Node");
-        if (nodeClass == null) return false;
-        // Check to see whether DOM3 is present; use a new method defined in
-        // DOM3 that is vital to our implementation
-        try {
-            nodeClass.getMethod("getUserData", String.class);
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Provides a default {@link org.mozilla.javascript.xml.XMLLib.Factory XMLLib.Factory} to be
-     * used by the <code>Context</code> instances produced by this factory. See {@link
-     * Context#getE4xImplementationFactory} for details.
-     *
-     * <p>May return null, in which case E4X functionality is not supported in Rhino.
-     *
-     * <p>The default implementation now prefers the DOM3 E4X implementation.
-     */
-    protected org.mozilla.javascript.xml.XMLLib.Factory getE4xImplementationFactory() {
-        // Must provide default implementation, rather than abstract method,
-        // so that past implementors of ContextFactory do not fail at runtime
-        // upon invocation of this method.
-        // Note that the default implementation returns null if we
-        // neither have XMLBeans nor a DOM3 implementation present.
-
-        if (isDom3Present()) {
-            return org.mozilla.javascript.xml.XMLLib.Factory.create(
-                    "org.mozilla.javascript.xmlimpl.XMLLibImpl");
-        }
-        return null;
     }
 
     /**
@@ -551,5 +526,21 @@ public class ContextFactory {
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);
+    }
+
+    /** Returns a list of plugins. */
+    public List<Plugin> getPlugins() {
+        return plugins;
+    }
+
+    /**
+     * Sets a list of plugins, that are used by this factory. Note: by default, the plugins are
+     * loaded by ServiceLoader.
+     */
+    public void setPlugins(List<Plugin> plugins) {
+        checkNotSealed();
+        synchronized (plugins) {
+            this.plugins = Collections.unmodifiableList(plugins);
+        }
     }
 }

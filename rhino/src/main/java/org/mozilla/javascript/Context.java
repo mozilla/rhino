@@ -2227,20 +2227,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * Returns an object which specifies an E4X implementation to use within this <code>Context
-     * </code>. Note that the XMLLib.Factory interface should be considered experimental.
-     *
-     * <p>The default implementation uses the implementation provided by this <code>Context</code>'s
-     * {@link ContextFactory}.
-     *
-     * @return An XMLLib.Factory. Should not return <code>null</code> if {@link #FEATURE_E4X} is
-     *     enabled. See {@link #hasFeature}.
-     */
-    public XMLLib.Factory getE4xImplementationFactory() {
-        return getFactory().getE4xImplementationFactory();
-    }
-
-    /**
      * Get threshold of executed instructions counter that triggers call to <code>
      * observeInstructionCount()</code>. When the threshold is zero, instruction counting is
      * disabled, otherwise each time the run-time executes at least the threshold value of script
