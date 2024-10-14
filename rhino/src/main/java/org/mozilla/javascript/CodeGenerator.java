@@ -602,10 +602,12 @@ class CodeGenerator extends Icode {
             case Token.CALL:
             case Token.NEW:
                 {
+                    boolean isOptionalChainingCall =
+                            node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
                     if (type == Token.NEW) {
                         visitExpression(child, 0);
                     } else {
-                        generateCallFunAndThis(child);
+                        generateCallFunAndThis(child, isOptionalChainingCall);
                     }
                     int argCount = 0;
                     while ((child = child.getNext()) != null) {
@@ -615,7 +617,11 @@ class CodeGenerator extends Icode {
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
                         // embed line number and source filename
-                        addIndexOp(Icode_CALLSPECIAL, argCount);
+                        addIndexOp(
+                                isOptionalChainingCall
+                                        ? Icode_CALLSPECIAL_OPTIONAL
+                                        : Icode_CALLSPECIAL,
+                                argCount);
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
@@ -629,7 +635,11 @@ class CodeGenerator extends Icode {
                                 && !itsInTryFlag) {
                             type = Icode_TAIL_CALL;
                         }
-                        addIndexOp(type, argCount);
+                        addIndexOp(
+                                type == Token.CALL && isOptionalChainingCall
+                                        ? Icode_CALL_OPTIONAL
+                                        : type,
+                                argCount);
                     }
                     // adjust stack
                     if (type == Token.NEW) {
@@ -1148,7 +1158,7 @@ class CodeGenerator extends Icode {
         stackChange(-1);
     }
 
-    private void generateCallFunAndThis(Node left) {
+    private void generateCallFunAndThis(Node left, boolean isOptionalChainingCall) {
         // Generate code to place on stack function and thisObj
         int type = left.getType();
         switch (type) {
@@ -1156,7 +1166,11 @@ class CodeGenerator extends Icode {
                 {
                     String name = left.getString();
                     // stack: ... -> ... function thisObj
-                    addStringOp(Icode_NAME_AND_THIS, name);
+                    addStringOp(
+                            isOptionalChainingCall
+                                    ? Icode_NAME_AND_THIS_OPTIONAL
+                                    : Icode_NAME_AND_THIS,
+                            name);
                     stackChange(2);
                     break;
                 }
@@ -1169,12 +1183,19 @@ class CodeGenerator extends Icode {
                     if (type == Token.GETPROP) {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
-                        addStringOp(Icode_PROP_AND_THIS, property);
+                        addStringOp(
+                                isOptionalChainingCall
+                                        ? Icode_PROP_AND_THIS_OPTIONAL
+                                        : Icode_PROP_AND_THIS,
+                                property);
                         stackChange(1);
                     } else {
                         visitExpression(id, 0);
                         // stack: ... target id -> ... function thisObj
-                        addIcode(Icode_ELEM_AND_THIS);
+                        addIcode(
+                                isOptionalChainingCall
+                                        ? Icode_ELEM_AND_THIS_OPTIONAL
+                                        : Icode_ELEM_AND_THIS);
                     }
                     break;
                 }
@@ -1182,7 +1203,10 @@ class CodeGenerator extends Icode {
                 // Including Token.GETVAR
                 visitExpression(left, 0);
                 // stack: ... value -> ... function thisObj
-                addIcode(Icode_VALUE_AND_THIS);
+                addIcode(
+                        isOptionalChainingCall
+                                ? Icode_VALUE_AND_THIS_OPTIONAL
+                                : Icode_VALUE_AND_THIS);
                 stackChange(1);
                 break;
         }

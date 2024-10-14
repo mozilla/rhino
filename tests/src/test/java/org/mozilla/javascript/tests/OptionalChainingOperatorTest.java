@@ -102,6 +102,106 @@ public class OptionalChainingOperatorTest {
     }
 
     @Test
+    public void standardFunctionCall() {
+        // Various combination of arguments for compiled mode, where we have special cases for 0, 1,
+        // and 2 args
+
+        Utils.assertWithAllOptimizationLevelsES6(1, "function f() {return 1;} f?.()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = null; f?.()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = undefined; f?.()");
+
+        Utils.assertWithAllOptimizationLevelsES6(1, "function f(x) {return x;} f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = null; f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = undefined; f?.(1)");
+
+        Utils.assertWithAllOptimizationLevelsES6(2, "function f(x, y) {return y;} f?.(1, 2)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = null; f?.(1, 2)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = undefined; f?.(1, 2)");
+
+        Utils.assertWithAllOptimizationLevelsES6(3, "function f(x, y, z) {return z;} f?.(1, 2, 3)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = null; f?.(1, 2, 3)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "f = undefined; f?.(1, 2, 3)");
+    }
+
+    @Test
+    public void standardFunctionCallWithParentScope() {
+        // Needed because there are some special paths in ScriptRuntime when we have a parent scope.
+        // A "with" block is the easiest way to get one.
+        Utils.assertWithAllOptimizationLevelsES6(
+                1, "function f(x) {return x;} x = {}; with (x) { f?.(1) }");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "x = {}; with (x) { f = null; f?.(1) }");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "x = {}; with (x) { f = undefined; f?.(1) }");
+    }
+
+    @Test
+    public void specialFunctionCall() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                1, "a = { __parent__: function(x) {return x;} }; a.__parent__?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = { __parent__: null }; a.__parent__?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = { __parent__: undefined }; a.__parent__?.(1)");
+    }
+
+    @Test
+    public void memberFunctionCall() {
+        Utils.assertWithAllOptimizationLevelsES6(1, "a = { f: function() {return 1;} }; a.f?.()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {f: null}; a.f?.()");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = {f: undefined}; a.f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.f?.()");
+
+        Utils.assertWithAllOptimizationLevelsES6(1, "a = { f: function(x) {return x;} }; a.f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {f: null}; a.f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = {f: undefined}; a.f?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.f?.(1)");
+
+        Utils.assertWithAllOptimizationLevelsES6(
+                2, "a = { f: function(x, y) {return y;} }; a.f?.(1, 2)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {f: null}; a.f?.(1, 2)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = {f: undefined}; a.f?.(1, 2)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.f?.(1, 2)");
+
+        Utils.assertWithAllOptimizationLevelsES6(
+                3, "a = { f: function(x, y, z) {return z;} }; a.f?.(1, 2, 3)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = {f: null}; a.f?.(1, 2, 3)");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "a = {f: undefined}; a.f?.(1, 2, 3)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.f?.(1, 2, 3)");
+    }
+
+    @Test
+    public void expressionFunctionCall() {
+        Utils.assertWithAllOptimizationLevelsES6(1, "a = [ function(x) {return x;} ]; a[0]?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = [null]; a[0]?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = [undefined]; a[0]?.(1)");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = []; a[0]?.(1)");
+    }
+
+    @Test
+    public void specialCall() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                1, "eval = function () { return 1 };\n" + "eval?.()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "eval = null;\n" + "eval?.()");
+        Utils.assertWithAllOptimizationLevelsES6(
+                Undefined.instance, "eval = undefined;\n" + "eval?.()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "delete eval;\n" + "eval?.()");
+    }
+
+    @Test
+    public void toStringOfOptionalChaining() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                "function f() { a?.b }", "function f() { a?.b } f.toString()");
+        Utils.assertWithAllOptimizationLevelsES6(
+                "function f() { a?.() }", "function f() { a?.() } f.toString()");
+    }
+
+    @Test
     public void optionalChainingOperatorFollowedByDigitsIsAHook() {
         Utils.assertWithAllOptimizationLevelsES6(0.5, "true ?.5 : false");
     }

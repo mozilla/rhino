@@ -20,6 +20,7 @@ public class FunctionCall extends AstNode {
     protected List<AstNode> arguments;
     protected int lp = -1;
     protected int rp = -1;
+    protected boolean optionalCall = false;
 
     {
         type = Token.CALL;
@@ -123,11 +124,24 @@ public class FunctionCall extends AstNode {
         this.rp = rp;
     }
 
+    /** Marks that the call is preceded by the optional chaining operator ?. */
+    public void markIsOptionalCall() {
+        this.optionalCall = true;
+    }
+
+    /** Returns whether the call is preceded by the optional chaining operator ?. */
+    public boolean isOptionalCall() {
+        return optionalCall;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append(target.toSource(0));
+        if (optionalCall) {
+            sb.append("?.");
+        }
         sb.append("(");
         if (arguments != null) {
             printList(arguments, sb);

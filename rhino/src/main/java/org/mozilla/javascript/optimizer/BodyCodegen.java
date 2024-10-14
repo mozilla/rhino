@@ -2359,13 +2359,16 @@ class BodyCodegen {
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "I" // call type
                             + "Ljava/lang/String;I" // filename, linenumber
+                            + "Z" // isOptionalChainingCall
                             + ")Ljava/lang/Object;";
+            boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addPush(specialType);
             String sourceName = scriptOrFn.getSourceName();
             cfw.addPush(sourceName == null ? "" : sourceName);
             cfw.addPush(itsLineNumber);
+            cfw.addPush(isOptionalChainingCall);
         }
 
         addOptRuntimeInvoke(methodName, callSignature);
@@ -2376,6 +2379,7 @@ class BodyCodegen {
 
         Node firstArgChild = child.getNext();
         int childType = child.getType();
+        boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
 
         String methodName;
         String signature;
@@ -2385,7 +2389,7 @@ class BodyCodegen {
                 // name() call
                 String name = child.getString();
                 cfw.addPush(name);
-                methodName = "callName0";
+                methodName = isOptionalChainingCall ? "callName0Optional" : "callName0";
                 signature =
                         "(Ljava/lang/String;"
                                 + "Lorg/mozilla/javascript/Context;"
@@ -2398,7 +2402,7 @@ class BodyCodegen {
                 Node id = propTarget.getNext();
                 String property = id.getString();
                 cfw.addPush(property);
-                methodName = "callProp0";
+                methodName = isOptionalChainingCall ? "callProp0Optional" : "callProp0";
                 signature =
                         "(Ljava/lang/Object;"
                                 + "Ljava/lang/String;"
@@ -2409,7 +2413,7 @@ class BodyCodegen {
                 throw Kit.codeBug();
             } else {
                 generateFunctionAndThisObj(child, node);
-                methodName = "call0";
+                methodName = isOptionalChainingCall ? "call0Optional" : "call0";
                 signature =
                         "(Lorg/mozilla/javascript/Callable;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
@@ -2426,7 +2430,7 @@ class BodyCodegen {
             String name = child.getString();
             generateCallArgArray(node, firstArgChild, false);
             cfw.addPush(name);
-            methodName = "callName";
+            methodName = isOptionalChainingCall ? "callNameOptional" : "callName";
             signature =
                     "([Ljava/lang/Object;"
                             + "Ljava/lang/String;"
@@ -2442,7 +2446,7 @@ class BodyCodegen {
             // stack: ... functionObj thisObj
             if (argCount == 1) {
                 generateExpression(firstArgChild, node);
-                methodName = "call1";
+                methodName = isOptionalChainingCall ? "call1Optional" : "call1";
                 signature =
                         "(Lorg/mozilla/javascript/Callable;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
@@ -2453,7 +2457,7 @@ class BodyCodegen {
             } else if (argCount == 2) {
                 generateExpression(firstArgChild, node);
                 generateExpression(firstArgChild.getNext(), node);
-                methodName = "call2";
+                methodName = isOptionalChainingCall ? "call2Optional" : "call2";
                 signature =
                         "(Lorg/mozilla/javascript/Callable;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
@@ -2464,7 +2468,7 @@ class BodyCodegen {
                                 + ")Ljava/lang/Object;";
             } else {
                 generateCallArgArray(node, firstArgChild, false);
-                methodName = "callN";
+                methodName = isOptionalChainingCall ? "callNOptional" : "callN";
                 signature =
                         "(Lorg/mozilla/javascript/Callable;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
@@ -2675,6 +2679,7 @@ class BodyCodegen {
     private void generateFunctionAndThisObj(Node node, Node parent) {
         // Place on stack (function object, function this) pair
         int type = node.getType();
+        boolean isOptionalChainingCall = parent.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
         switch (node.getType()) {
             case Token.GETPROPNOWARN:
                 throw Kit.codeBug();
@@ -2689,14 +2694,22 @@ class BodyCodegen {
                         String property = id.getString();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
-                        addDynamicInvoke("PROP:GETWITHTHIS:" + property, Signatures.PROP_GET_THIS);
+                        String propAccessType =
+                                isOptionalChainingCall ? "GETWITHTHISOPTIONAL" : "GETWITHTHIS";
+                        addDynamicInvoke(
+                                "PROP:" + propAccessType + ":" + property,
+                                Signatures.PROP_GET_THIS);
                     } else {
                         generateExpression(id, node); // id
                         if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) addDoubleWrap();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
+                        String name =
+                                isOptionalChainingCall
+                                        ? "getElemFunctionAndThisOptional"
+                                        : "getElemFunctionAndThis";
                         addScriptRuntimeInvoke(
-                                "getElemFunctionAndThis",
+                                name,
                                 "(Ljava/lang/Object;"
                                         + "Ljava/lang/Object;"
                                         + "Lorg/mozilla/javascript/Context;"
@@ -2711,19 +2724,28 @@ class BodyCodegen {
                     String name = node.getString();
                     cfw.addALoad(variableObjectLocal);
                     cfw.addALoad(contextLocal);
-                    addDynamicInvoke("NAME:GETWITHTHIS:" + name, Signatures.NAME_GET_THIS);
+                    String propAccessType =
+                            isOptionalChainingCall ? "GETWITHTHISOPTIONAL" : "GETWITHTHIS";
+                    addDynamicInvoke(
+                            "NAME:" + propAccessType + ":" + name, Signatures.NAME_GET_THIS);
                     break;
                 }
 
             default: // including GETVAR
-                generateExpression(node, parent);
-                cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "getValueFunctionAndThis",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Lorg/mozilla/javascript/Callable;");
-                break;
+                {
+                    generateExpression(node, parent);
+                    cfw.addALoad(contextLocal);
+                    String name =
+                            isOptionalChainingCall
+                                    ? "getValueFunctionAndThisOptional"
+                                    : "getValueFunctionAndThis";
+                    addScriptRuntimeInvoke(
+                            name,
+                            "(Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + ")Lorg/mozilla/javascript/Callable;");
+                    break;
+                }
         }
         // Get thisObj prepared by get(Name|Prop|Elem|Value)FunctionAndThis
         cfw.addALoad(contextLocal);

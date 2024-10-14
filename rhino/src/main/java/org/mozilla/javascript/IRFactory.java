@@ -661,6 +661,9 @@ public final class IRFactory {
             AstNode arg = args.get(i);
             call.addChildToBack(transform(arg));
         }
+        if (node.isOptionalCall()) {
+            call.putIntProp(Node.OPTIONAL_CHAINING, 1);
+        }
         return call;
     }
 

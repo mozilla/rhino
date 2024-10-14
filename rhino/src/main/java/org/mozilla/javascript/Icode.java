@@ -46,16 +46,22 @@ abstract class Icode {
             Icode_PROP_AND_THIS = Icode_NAME_AND_THIS - 1,
             Icode_ELEM_AND_THIS = Icode_PROP_AND_THIS - 1,
             Icode_VALUE_AND_THIS = Icode_ELEM_AND_THIS - 1,
+            Icode_NAME_AND_THIS_OPTIONAL = Icode_VALUE_AND_THIS - 1,
+            Icode_PROP_AND_THIS_OPTIONAL = Icode_NAME_AND_THIS_OPTIONAL - 1,
+            Icode_ELEM_AND_THIS_OPTIONAL = Icode_PROP_AND_THIS_OPTIONAL - 1,
+            Icode_VALUE_AND_THIS_OPTIONAL = Icode_ELEM_AND_THIS_OPTIONAL - 1,
+            Icode_CALL_OPTIONAL = Icode_VALUE_AND_THIS_OPTIONAL - 1,
 
             // Create closure object for nested functions
-            Icode_CLOSURE_EXPR = Icode_VALUE_AND_THIS - 1,
+            Icode_CLOSURE_EXPR = Icode_CALL_OPTIONAL - 1,
             Icode_CLOSURE_STMT = Icode_CLOSURE_EXPR - 1,
 
             // Special calls
             Icode_CALLSPECIAL = Icode_CLOSURE_STMT - 1,
+            Icode_CALLSPECIAL_OPTIONAL = Icode_CALLSPECIAL - 1,
 
             // To return undefined value
-            Icode_RETUNDEF = Icode_CALLSPECIAL - 1,
+            Icode_RETUNDEF = Icode_CALLSPECIAL_OPTIONAL - 1,
 
             // Exception handling implementation
             Icode_GOSUB = Icode_RETUNDEF - 1,
@@ -163,6 +169,8 @@ abstract class Icode {
         }
 
         switch (bytecode) {
+            case Icode_DELNAME:
+                return "DELNAME";
             case Icode_DUP:
                 return "DUP";
             case Icode_DUP2:
@@ -197,12 +205,24 @@ abstract class Icode {
                 return "ELEM_AND_THIS";
             case Icode_VALUE_AND_THIS:
                 return "VALUE_AND_THIS";
+            case Icode_NAME_AND_THIS_OPTIONAL:
+                return "NAME_AND_THIS_OPTIONAL";
+            case Icode_PROP_AND_THIS_OPTIONAL:
+                return "PROP_AND_THIS_OPTIONAL";
+            case Icode_ELEM_AND_THIS_OPTIONAL:
+                return "ELEM_AND_THIS_OPTIONAL";
+            case Icode_VALUE_AND_THIS_OPTIONAL:
+                return "VALUE_AND_THIS_OPTIONAL";
+            case Icode_CALL_OPTIONAL:
+                return "CALL_OPTIONAL";
             case Icode_CLOSURE_EXPR:
                 return "CLOSURE_EXPR";
             case Icode_CLOSURE_STMT:
                 return "CLOSURE_STMT";
             case Icode_CALLSPECIAL:
                 return "CALLSPECIAL";
+            case Icode_CALLSPECIAL_OPTIONAL:
+                return "CALLSPECIAL_OPTIONAL";
             case Icode_RETUNDEF:
                 return "RETUNDEF";
             case Icode_GOSUB:
