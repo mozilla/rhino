@@ -205,8 +205,9 @@ public class Context implements Closeable {
      * {@link #VERSION_DEFAULT} or is at least {@link #VERSION_1_6}.
      *
      * @since 1.6 Release 1
+     * @deprecated This flag may be removed later.
      */
-    public static final int FEATURE_E4X = 6;
+    @Deprecated public static final int FEATURE_E4X = 6;
 
     /**
      * Control if dynamic scope should be used for name access. If hasFeature(FEATURE_DYNAMIC_SCOPE)

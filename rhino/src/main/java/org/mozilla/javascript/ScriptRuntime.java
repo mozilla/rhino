@@ -316,6 +316,9 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            plugin.initStandardObjects(cx, s, sealed);
+        }
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
