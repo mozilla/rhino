@@ -42,6 +42,7 @@ public class CompilerEnvirons {
 
         // Observer code generation in compiled code :
         generateObserverCount = cx.isGenerateObserverCount();
+
     }
 
     public final ErrorReporter getErrorReporter() {

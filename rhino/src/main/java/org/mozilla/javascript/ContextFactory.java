@@ -10,6 +10,10 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -114,6 +118,13 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
+    private List<Plugin> plugins = getPluginsFromServiceLoader();
+
+    private List<Plugin> getPluginsFromServiceLoader() {
+        List<Plugin> result = new ArrayList<Plugin>();
+        ServiceLoader.load(Plugin.class).forEach(result::add);
+        return Collections.unmodifiableList(result);
+    }
 
     /** Listener of {@link Context} creation and release events. */
     public interface Listener {
@@ -515,5 +526,21 @@ public class ContextFactory {
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);
+    }
+
+    /** Returns a list of plugins. */
+    public List<Plugin> getPlugins() {
+        return plugins;
+    }
+
+    /**
+     * Sets a list of plugins, that are used by this factory. Note: by default, the plugins are
+     * loaded by ServiceLoader.
+     */
+    public void setPlugins(List<Plugin> plugins) {
+        checkNotSealed();
+        synchronized (plugins) {
+            this.plugins = Collections.unmodifiableList(plugins);
+        }
     }
 }

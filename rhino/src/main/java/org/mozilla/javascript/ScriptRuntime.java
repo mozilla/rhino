@@ -201,11 +201,15 @@ public class ScriptRuntime {
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
+
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             XMLLoader loader = loadOneServiceImplementation(XMLLoader.class);
             if (loader != null) {
                 loader.load(scope, sealed);
             }
+        }
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            plugin.initSafeStandardObjects(cx, scope, sealed);
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)

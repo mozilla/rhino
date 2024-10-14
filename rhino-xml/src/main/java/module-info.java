@@ -6,4 +6,7 @@ module org.mozilla.javascript.xml {
 
     requires transitive org.mozilla.rhino;
     requires transitive java.xml;
+
+    provides org.mozilla.javascript.Plugin with
+            org.mozilla.javascript.xmlimpl.XmlPlugin;
 }
