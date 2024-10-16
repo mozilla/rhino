@@ -92,7 +92,12 @@ public class OptionalChainingOperatorTest {
 
     @Test
     public void doesNotLeakVariables() {
-        String script = "$0 = false; o = {}; o?.x; $0";
-        Utils.assertWithAllOptimizationLevelsES6(false, script);
+        Utils.assertWithAllOptimizationLevelsES6(false, "$0 = false; o = {}; o?.x; $0");
+    }
+
+    @Test
+    public void shortCircuits() {
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = undefined; a?.b.c");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.b?.c.d.e");
     }
 }
