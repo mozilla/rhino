@@ -2936,7 +2936,7 @@ public class Parser {
                         break tailLoop;
                     }
                     lineno = ts.lineno;
-                    pn = makeFunctionCall(pn, pos, lineno);
+                    pn = makeFunctionCall(pn, pos, lineno, isOptionalChain);
                     break;
                 case Token.COMMENT:
                     // Ignoring all the comments, because previous statement may not be terminated
@@ -2959,7 +2959,8 @@ public class Parser {
         return pn;
     }
 
-    private FunctionCall makeFunctionCall(AstNode pn, int pos, int lineno) throws IOException {
+    private FunctionCall makeFunctionCall(AstNode pn, int pos, int lineno, boolean isOptionalChain)
+            throws IOException {
         consumeToken();
         checkCallRequiresActivation(pn);
         FunctionCall f = new FunctionCall(pos);
@@ -2973,6 +2974,9 @@ public class Parser {
         f.setArguments(args);
         f.setRp(ts.tokenBeg - pos);
         f.setLength(ts.tokenEnd - pos);
+        if (isOptionalChain) {
+            f.markIsOptionalCall();
+        }
         return f;
     }
 
@@ -3068,9 +3072,7 @@ public class Parser {
             case Token.LP:
                 if (tt == Token.QUESTION_DOT) {
                     // a function call such as f?.()
-                    FunctionCall f = makeFunctionCall(pn, pn.getPosition(), lineno);
-                    f.markIsOptionalCall();
-                    return f;
+                    return makeFunctionCall(pn, pn.getPosition(), lineno, isOptionalChain);
                 } else {
                     reportError("msg.no.name.after.dot");
                     return makeErrorNode();
@@ -3093,7 +3095,9 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
-        if (isOptionalChain) result.setType(Token.QUESTION_DOT);
+        if (isOptionalChain) {
+            result.setType(Token.QUESTION_DOT);
+        }
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);

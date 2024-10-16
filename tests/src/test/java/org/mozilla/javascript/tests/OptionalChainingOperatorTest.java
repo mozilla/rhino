@@ -194,6 +194,12 @@ public class OptionalChainingOperatorTest {
     }
 
     @Test
+    public void shortCircuitsFunctionCalls() {
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = undefined; a?.b()");
+        Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.b?.c().d()");
+    }
+
+    @Test
     public void toStringOfOptionalChaining() {
         Utils.assertWithAllOptimizationLevelsES6(
                 "function f() { a?.b }", "function f() { a?.b } f.toString()");
