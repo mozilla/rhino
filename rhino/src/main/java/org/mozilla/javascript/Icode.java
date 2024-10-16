@@ -50,10 +50,9 @@ abstract class Icode {
             Icode_PROP_AND_THIS_OPTIONAL = Icode_NAME_AND_THIS_OPTIONAL - 1,
             Icode_ELEM_AND_THIS_OPTIONAL = Icode_PROP_AND_THIS_OPTIONAL - 1,
             Icode_VALUE_AND_THIS_OPTIONAL = Icode_ELEM_AND_THIS_OPTIONAL - 1,
-            Icode_CALL_OPTIONAL = Icode_VALUE_AND_THIS_OPTIONAL - 1,
 
             // Create closure object for nested functions
-            Icode_CLOSURE_EXPR = Icode_CALL_OPTIONAL - 1,
+            Icode_CLOSURE_EXPR = Icode_VALUE_AND_THIS_OPTIONAL - 1,
             Icode_CLOSURE_STMT = Icode_CLOSURE_EXPR - 1,
 
             // Special calls
@@ -213,8 +212,6 @@ abstract class Icode {
                 return "ELEM_AND_THIS_OPTIONAL";
             case Icode_VALUE_AND_THIS_OPTIONAL:
                 return "VALUE_AND_THIS_OPTIONAL";
-            case Icode_CALL_OPTIONAL:
-                return "CALL_OPTIONAL";
             case Icode_CLOSURE_EXPR:
                 return "CLOSURE_EXPR";
             case Icode_CLOSURE_STMT:

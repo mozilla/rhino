@@ -200,6 +200,31 @@ public class OptionalChainingOperatorTest {
     }
 
     @Test
+    public void shortCircuitArgumentEvaluation() {
+        Utils.assertWithAllOptimizationLevelsES6(1, "c = 0; f = function(x){}; f?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; f = undefined; f?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; f = null; f?.(c++); c");
+
+        Utils.assertWithAllOptimizationLevelsES6(1, "c = 0; a = {f: function() {}}; a.f?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = {f: undefined}; a.f?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = {f: null}; a.f?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = {}; a.f?.(c++); c");
+
+        Utils.assertWithAllOptimizationLevelsES6(1, "c = 0; a = [function() {}]; a[0]?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = [undefined]; a[0]?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = [null]; a[0]?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = []; a[0]?.(c++); c");
+
+        Utils.assertWithAllOptimizationLevelsES6(
+                1, "c = 0; a = {__parent__: function() {}}; a.__parent__?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(
+                0, "c = 0; a = {__parent__: undefined}; a.__parent__?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(
+                0, "c = 0; a = {__parent__: null}; a.__parent__?.(c++); c");
+        Utils.assertWithAllOptimizationLevelsES6(0, "c = 0; a = {}; a.__parent__.f?.(c++); c");
+    }
+
+    @Test
     public void toStringOfOptionalChaining() {
         Utils.assertWithAllOptimizationLevelsES6(
                 "function f() { a?.b }", "function f() { a?.b } f.toString()");

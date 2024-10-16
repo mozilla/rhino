@@ -609,7 +609,6 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
                 case Token.CALL:
-                case Icode_CALL_OPTIONAL:
                 case Icode_TAIL_CALL:
                 case Token.REF_CALL:
                 case Token.NEW:
@@ -1854,7 +1853,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     continue Loop;
                                 }
                             case Token.CALL:
-                            case Icode_CALL_OPTIONAL:
                             case Icode_TAIL_CALL:
                             case Token.REF_CALL:
                                 {
@@ -2006,10 +2004,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     cx.newArray(calleeScope, elements);
                                             indexReg = 2;
                                         } else if (fun == null) {
-                                            if (op == Icode_CALL_OPTIONAL) {
-                                                stack[stackTop] = Undefined.instance;
-                                                continue Loop;
-                                            }
                                             throw ScriptRuntime.notFunctionError(null, null);
                                         } else {
                                             // Current function is something that we can't reduce
@@ -3582,7 +3576,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static void setCallResult(CallFrame frame, Object callResult, double callResultDbl) {
-        if (frame.savedCallOp == Token.CALL || frame.savedCallOp == Icode_CALL_OPTIONAL) {
+        if (frame.savedCallOp == Token.CALL) {
             frame.stack[frame.savedStackTop] = callResult;
             frame.sDbl[frame.savedStackTop] = callResultDbl;
         } else if (frame.savedCallOp == Token.NEW) {
@@ -3621,7 +3615,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 x.stack[i] = null;
                 x.stackAttributes[i] = ScriptableObject.EMPTY;
             }
-            if (x.savedCallOp == Token.CALL || x.savedCallOp == Icode_CALL_OPTIONAL) {
+            if (x.savedCallOp == Token.CALL) {
                 // the call will always overwrite the stack top with the result
                 x.stack[x.savedStackTop] = null;
             } else {

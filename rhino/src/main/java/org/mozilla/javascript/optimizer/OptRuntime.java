@@ -43,14 +43,6 @@ public final class OptRuntime extends ScriptRuntime {
         return fun.call(cx, scope, thisObj, new Object[] {arg0});
     }
 
-    public static Object call1Optional(
-            Callable fun, Scriptable thisObj, Object arg0, Context cx, Scriptable scope) {
-        if (fun == null) {
-            return Undefined.instance;
-        }
-        return call1(fun, thisObj, arg0, cx, scope);
-    }
-
     /** Implement ....(arg0, arg1) call shrinking optimizer code. */
     public static Object call2(
             Callable fun,
@@ -62,46 +54,15 @@ public final class OptRuntime extends ScriptRuntime {
         return fun.call(cx, scope, thisObj, new Object[] {arg0, arg1});
     }
 
-    public static Object call2Optional(
-            Callable fun,
-            Scriptable thisObj,
-            Object arg0,
-            Object arg1,
-            Context cx,
-            Scriptable scope) {
-        if (fun == null) {
-            return Undefined.instance;
-        }
-        return call2(fun, thisObj, arg0, arg1, cx, scope);
-    }
-
     /** Implement ....(arg0, arg1, ...) call shrinking optimizer code. */
     public static Object callN(
             Callable fun, Scriptable thisObj, Object[] args, Context cx, Scriptable scope) {
         return fun.call(cx, scope, thisObj, args);
     }
 
-    public static Object callNOptional(
-            Callable fun, Scriptable thisObj, Object[] args, Context cx, Scriptable scope) {
-        if (fun == null) {
-            return Undefined.instance;
-        }
-        return callN(fun, thisObj, args, cx, scope);
-    }
-
     /** Implement name(args) call shrinking optimizer code. */
     public static Object callName(Object[] args, String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, thisObj, args);
-    }
-
-    public static Object callNameOptional(
-            Object[] args, String name, Context cx, Scriptable scope) {
-        Callable f = getNameFunctionAndThisOptional(name, cx, scope);
-        if (f == null) {
-            return Undefined.instance;
-        }
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, args);
     }
