@@ -2890,6 +2890,7 @@ public class Parser {
         if (pn == null) codeBug();
         int pos = pn.getPosition();
         int lineno;
+        boolean isOptionalChain = false;
         tailLoop:
         for (; ; ) {
             int tt = peekToken();
@@ -2898,7 +2899,8 @@ public class Parser {
                 case Token.QUESTION_DOT:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
-                    pn = propertyAccess(tt, pn);
+                    isOptionalChain |= (tt == Token.QUESTION_DOT);
+                    pn = propertyAccess(tt, pn, isOptionalChain);
                     pn.setLineno(lineno);
                     break;
 
@@ -2983,9 +2985,11 @@ public class Parser {
      * Handles any construct following a "." or ".." operator.
      *
      * @param pn the left-hand side (target) of the operator. Never null.
+     * @param isOptionalChain whether we are inside an optional chain, i.e. whether a preceding
+     *     property access was done via the {@code ?.} operator
      * @return a PropertyGet, XmlMemberGet, or ErrorNode
      */
-    private AstNode propertyAccess(int tt, AstNode pn) throws IOException {
+    private AstNode propertyAccess(int tt, AstNode pn, boolean isOptionalChain) throws IOException {
         if (pn == null) codeBug();
         int memberTypeFlags = 0, lineno = ts.lineno, dotPos = ts.tokenBeg;
         consumeToken();
@@ -3075,7 +3079,7 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
-        if (!xml && tt == Token.QUESTION_DOT) result.setType(Token.QUESTION_DOT);
+        if (isOptionalChain) result.setType(Token.QUESTION_DOT);
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
