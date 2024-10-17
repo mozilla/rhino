@@ -141,7 +141,6 @@ public final class IRFactory {
                 return transformBlock(node);
             case Token.BREAK:
                 return transformBreak((BreakStatement) node);
-            case Token.CALL_OPTIONAL:
             case Token.CALL:
                 return transformFunctionCall((FunctionCall) node);
             case Token.CONTINUE:
@@ -162,9 +161,14 @@ public final class IRFactory {
                 return transformGenExpr((GeneratorExpression) node);
             case Token.GETELEM:
                 return transformElementGet((ElementGet) node);
-            case Token.QUESTION_DOT:
             case Token.GETPROP:
                 return transformPropertyGet((PropertyGet) node);
+            case Token.QUESTION_DOT:
+                if (node instanceof ElementGet) {
+                    return transformElementGet((ElementGet) node);
+                } else {
+                    return transformPropertyGet((PropertyGet) node);
+                }
             case Token.HOOK:
                 return transformCondExpr((ConditionalExpression) node);
             case Token.IF:
@@ -521,7 +525,11 @@ public final class IRFactory {
         // iff elem is string that can not be number
         Node target = transform(node.getTarget());
         Node element = transform(node.getElement());
-        return new Node(Token.GETELEM, target, element);
+        Node getElem = new Node(Token.GETELEM, target, element);
+        if (node.type == Token.QUESTION_DOT) {
+            getElem.putIntProp(Node.OPTIONAL_CHAINING, 1);
+        }
+        return getElem;
     }
 
     private Node transformExprStmt(ExpressionStatement node) {
@@ -644,10 +652,7 @@ public final class IRFactory {
     }
 
     private Node transformFunctionCall(FunctionCall node) {
-        Node call =
-                createCallOrNew(
-                        node.type == Token.CALL_OPTIONAL ? Token.CALL_OPTIONAL : Token.CALL,
-                        transform(node.getTarget()));
+        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
         call.setLineno(node.getLineno());
         List<AstNode> args = node.getArguments();
         for (int i = 0; i < args.size(); i++) {
@@ -802,35 +807,7 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        return (node.getType() == Token.NULLISH_COALESCING)
-                ? transformNullishCoalescing(left, right, node)
-                : createBinary(node.getType(), left, right);
-    }
-
-    private Node transformNullishCoalescing(Node left, Node right, Node parent) {
-        String tempName = parser.currentScriptOrFn.getNextTempName();
-
-        Node nullNode = new Node(Token.NULL);
-        Node undefinedNode = new Name(0, "undefined");
-
-        Node conditional =
-                new Node(
-                        Token.OR,
-                        new Node(Token.SHEQ, nullNode, parser.createName(tempName)),
-                        new Node(Token.SHEQ, undefinedNode, parser.createName(tempName)));
-
-        Node hookNode =
-                new Node(
-                        Token.HOOK,
-                        /* left= */ conditional,
-                        /* mid= */ right,
-                        /* right= */ parser.createName(tempName));
-
-        parser.defineSymbol(Token.LP, tempName, true);
-        return createBinary(
-                Token.COMMA,
-                createAssignment(Token.ASSIGN, parser.createName(tempName), left),
-                hookNode);
+        return createBinary(node.getType(), left, right);
     }
 
     private Node transformLabeledStatement(LabeledStatement ls) {
@@ -1910,20 +1887,21 @@ public final class IRFactory {
             }
             parser.checkActivationName(name, Token.GETPROP);
             if (ScriptRuntime.isSpecialProperty(name)) {
-                Node ref =
-                        new Node(
-                                type == Token.QUESTION_DOT
-                                        ? Token.REF_SPECIAL_OPTIONAL
-                                        : Token.REF_SPECIAL,
-                                target);
+                Node ref = new Node(Token.REF_SPECIAL, target);
                 ref.putProp(Node.NAME_PROP, name);
-                return new Node(Token.GET_REF, ref);
+                Node getRef = new Node(Token.GET_REF, ref);
+                if (type == Token.QUESTION_DOT) {
+                    ref.putIntProp(Node.OPTIONAL_CHAINING, 1);
+                    getRef.putIntProp(Node.OPTIONAL_CHAINING, 1);
+                }
+                return getRef;
             }
 
-            return new Node(
-                    type == Token.QUESTION_DOT ? Token.GETPROP_OPTIONAL : Token.GETPROP,
-                    target,
-                    Node.newString(name));
+            Node node = new Node(Token.GETPROP, target, Node.newString(name));
+            if (type == Token.QUESTION_DOT) {
+                node.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            return node;
         }
         Node elem = Node.newString(name);
         memberTypeFlags |= Node.PROPERTY_FLAG;

@@ -2890,6 +2890,7 @@ public class Parser {
         if (pn == null) codeBug();
         int pos = pn.getPosition();
         int lineno;
+        boolean isOptionalChain = false;
         tailLoop:
         for (; ; ) {
             int tt = peekToken();
@@ -2898,7 +2899,8 @@ public class Parser {
                 case Token.QUESTION_DOT:
                 case Token.DOTDOT:
                     lineno = ts.lineno;
-                    pn = propertyAccess(tt, pn);
+                    isOptionalChain |= (tt == Token.QUESTION_DOT);
+                    pn = propertyAccess(tt, pn, isOptionalChain);
                     pn.setLineno(lineno);
                     break;
 
@@ -2925,20 +2927,8 @@ public class Parser {
 
                 case Token.LB:
                     consumeToken();
-                    int lb = ts.tokenBeg, rb = -1;
                     lineno = ts.lineno;
-                    AstNode expr = expr(false);
-                    end = getNodeEnd(expr);
-                    if (mustMatchToken(Token.RB, "msg.no.bracket.index", true)) {
-                        rb = ts.tokenBeg;
-                        end = ts.tokenEnd;
-                    }
-                    ElementGet g = new ElementGet(pos, end - pos);
-                    g.setTarget(pn);
-                    g.setElement(expr);
-                    g.setParens(lb, rb);
-                    g.setLineno(lineno);
-                    pn = g;
+                    pn = makeElemGet(pn, ts.tokenBeg, lineno);
                     break;
 
                 case Token.LP:
@@ -2995,9 +2985,11 @@ public class Parser {
      * Handles any construct following a "." or ".." operator.
      *
      * @param pn the left-hand side (target) of the operator. Never null.
+     * @param isOptionalChain whether we are inside an optional chain, i.e. whether a preceding
+     *     property access was done via the {@code ?.} operator
      * @return a PropertyGet, XmlMemberGet, or ErrorNode
      */
-    private AstNode propertyAccess(int tt, AstNode pn) throws IOException {
+    private AstNode propertyAccess(int tt, AstNode pn, boolean isOptionalChain) throws IOException {
         if (pn == null) codeBug();
         int memberTypeFlags = 0, lineno = ts.lineno, dotPos = ts.tokenBeg;
         consumeToken();
@@ -3026,27 +3018,6 @@ public class Parser {
 
         AstNode ref = null; // right side of . or .. operator
         int token = nextToken();
-        if (token == Token.LP && tt == Token.QUESTION_DOT) {
-            // optional chaining operator method call, o.func?.()
-            var pos = pn.getPosition();
-            pn.setType(Token.QUESTION_DOT);
-            consumeToken();
-            checkCallRequiresActivation(pn);
-            FunctionCall f = new FunctionCall(pos);
-            f.setTarget(pn);
-            // Assign the line number for the function call to where
-            // the paren appeared, not where the name expression started.
-            f.setLineno(lineno);
-            f.setLp(ts.tokenBeg - pos);
-            List<AstNode> args = argumentList();
-            if (args != null && args.size() > ARGC_LIMIT) reportError("msg.too.many.function.args");
-            f.setArguments(args);
-            f.setRp(ts.tokenBeg - pos);
-            f.setLength(ts.tokenEnd - pos);
-            f.setType(Token.CALL_OPTIONAL);
-            return f;
-        }
-
         switch (token) {
             case Token.THROW:
                 // needed for generator.throw();
@@ -3078,6 +3049,19 @@ public class Parser {
                     ref = propertyName(-1, memberTypeFlags);
                     break;
                 }
+
+            case Token.LB:
+                if (tt == Token.QUESTION_DOT) {
+                    // a ?.[ expr ]
+                    consumeToken();
+                    ElementGet g = makeElemGet(pn, ts.tokenBeg, ts.lineno);
+                    g.setType(Token.QUESTION_DOT);
+                    return g;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
+
             default:
                 if (compilerEnv.isReservedKeywordAsIdentifier()) {
                     // allow keywords as property names, e.g. ({if: 1})
@@ -3095,6 +3079,7 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
+        if (isOptionalChain) result.setType(Token.QUESTION_DOT);
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
@@ -3102,11 +3087,24 @@ public class Parser {
         result.setLineno(pn.getLineno());
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
-
-        if (tt == Token.QUESTION_DOT && result instanceof PropertyGet) {
-            result.setType(Token.QUESTION_DOT);
-        }
         return result;
+    }
+
+    private ElementGet makeElemGet(AstNode pn, int lb, int lineno) throws IOException {
+        int pos = pn.getPosition();
+        AstNode expr = expr(false);
+        int end = getNodeEnd(expr);
+        int rb = -1;
+        if (mustMatchToken(Token.RB, "msg.no.bracket.index", true)) {
+            rb = ts.tokenBeg;
+            end = ts.tokenEnd;
+        }
+        ElementGet g = new ElementGet(pos, end - pos);
+        g.setTarget(pn);
+        g.setElement(expr);
+        g.setParens(lb, rb);
+        g.setLineno(lineno);
+        return g;
     }
 
     /**

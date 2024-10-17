@@ -66,7 +66,8 @@ public class Node implements Iterable<Node> {
             TEMPLATE_LITERAL_PROP = 27,
             TRAILING_COMMA = 28,
             OBJECT_LITERAL_DESTRUCTURING = 29,
-            LAST_PROP = 29;
+            OPTIONAL_CHAINING = 30,
+            LAST_PROP = OPTIONAL_CHAINING;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -434,6 +435,8 @@ public class Node implements Iterable<Node> {
                     return "template_literal";
                 case TRAILING_COMMA:
                     return "trailing comma";
+                case OPTIONAL_CHAINING:
+                    return "optional_chaining";
 
                 default:
                     Kit.codeBug();
