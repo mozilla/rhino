@@ -100,4 +100,9 @@ public class OptionalChainingOperatorTest {
         Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = undefined; a?.b.c");
         Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "a = {}; a.b?.c.d.e");
     }
+
+    @Test
+    public void optionalChainingOperatorFollowedByDigitsIsAHook() {
+        Utils.assertWithAllOptimizationLevelsES6(0.5, "true ?.5 : false");
+    }
 }

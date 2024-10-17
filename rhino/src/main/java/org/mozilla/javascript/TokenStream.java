@@ -1148,10 +1148,14 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     return Token.COMMA;
                 case '?':
                     if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
-                        if (matchChar('.')) {
-                            return Token.QUESTION_DOT;
-                        }
-                        if (matchChar('?')) {
+                        if (peekChar() == '.') {
+                            // ?.digit is to be treated as ? .num
+                            getChar();
+                            if (!isDigit(peekChar())) {
+                                return Token.QUESTION_DOT;
+                            }
+                            ungetChar('.');
+                        } else if (matchChar('?')) {
                             return Token.NULLISH_COALESCING;
                         }
                     }
