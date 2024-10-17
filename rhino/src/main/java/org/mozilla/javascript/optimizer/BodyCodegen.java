@@ -991,7 +991,6 @@ class BodyCodegen {
                 break;
 
             case Token.CALL:
-            case Token.CALL_OPTIONAL:
             case Token.NEW:
                 {
                     int specialType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
@@ -1001,7 +1000,7 @@ class BodyCodegen {
 
                         if (target != null) {
                             visitOptimizedCall(node, target, type, child);
-                        } else if (type == Token.CALL || type == Token.CALL_OPTIONAL) {
+                        } else if (type == Token.CALL) {
                             visitStandardCall(node, child);
                         } else {
                             visitStandardNew(node, child);
@@ -1014,6 +1013,7 @@ class BodyCodegen {
 
             case Token.REF_CALL:
                 generateFunctionAndThisObj(child, node);
+                pushThisFromLastScriptable();
                 // stack: ... functionObj thisObj
                 child = child.getNext();
                 generateCallArgArray(node, child, false);
@@ -1354,30 +1354,52 @@ class BodyCodegen {
             case Token.GETPROPNOWARN:
                 visitGetProp(node, child);
                 break;
-            case Token.GETPROP_OPTIONAL:
-                visitGetPropOptional(node, child);
-                break;
 
             case Token.GETELEM:
                 generateExpression(child, node); // object
-                generateExpression(child.getNext(), node); // id
-                cfw.addALoad(contextLocal);
-                cfw.addALoad(variableObjectLocal);
-                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                    addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    int getElem = cfw.acquireLabel();
+                    int after = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, getElem);
+
+                    cfw.add(ByteCode.POP);
+                    cfw.add(
+                            ByteCode.GETSTATIC,
+                            "org/mozilla/javascript/Undefined",
+                            "instance",
+                            "Ljava/lang/Object;");
+                    cfw.add(ByteCode.GOTO, after);
+
+                    cfw.markLabel(getElem);
+                    finishGetElemGeneration(node, child);
+                    cfw.markLabel(after);
                 } else {
-                    addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+                    finishGetElemGeneration(node, child);
                 }
                 break;
 
             case Token.GET_REF:
                 generateExpression(child, node); // reference
-                cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "refGet",
-                        "(Lorg/mozilla/javascript/Ref;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/Object;");
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    int getRef = cfw.acquireLabel();
+                    int after = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, getRef);
+                    cfw.add(ByteCode.GOTO, after);
+
+                    cfw.markLabel(getRef);
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Ref");
+                    finishGetRefGeneration();
+                    cfw.markLabel(after);
+                } else {
+                    finishGetRefGeneration();
+                }
                 break;
 
             case Token.GETVAR:
@@ -1485,34 +1507,30 @@ class BodyCodegen {
 
             case Token.REF_SPECIAL:
                 {
-                    String special = (String) node.getProp(Node.NAME_PROP);
                     generateExpression(child, node);
-                    cfw.addPush(special);
-                    cfw.addALoad(contextLocal);
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "specialRef",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Lorg/mozilla/javascript/Ref;");
-                }
-                break;
-            case Token.REF_SPECIAL_OPTIONAL:
-                {
-                    String special = (String) node.getProp(Node.NAME_PROP);
-                    generateExpression(child, node);
-                    cfw.addPush(special);
-                    cfw.addALoad(contextLocal);
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "optionalSpecialRef",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Lorg/mozilla/javascript/Ref;");
+                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                        int getExpr = cfw.acquireLabel();
+                        int after = cfw.acquireLabel();
+
+                        cfw.add(ByteCode.DUP);
+
+                        addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                        cfw.add(ByteCode.IFEQ, getExpr);
+
+                        cfw.add(ByteCode.POP);
+                        cfw.add(
+                                ByteCode.GETSTATIC,
+                                "org/mozilla/javascript/Undefined",
+                                "instance",
+                                "Ljava/lang/Object;");
+                        cfw.add(ByteCode.GOTO, after);
+
+                        cfw.markLabel(getExpr);
+                        finishRefSpecialGeneration(node);
+                        cfw.markLabel(after);
+                    } else {
+                        finishRefSpecialGeneration(node);
+                    }
                 }
                 break;
             case Token.REF_MEMBER:
@@ -1638,9 +1656,58 @@ class BodyCodegen {
                 visitTemplateLiteral(node);
                 break;
 
+            case Token.NULLISH_COALESCING:
+                {
+                    generateExpression(child, node); // left-hand side
+                    int end = cfw.acquireLabel();
+
+                    cfw.add(ByteCode.DUP);
+                    addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                    cfw.add(ByteCode.IFEQ, end);
+
+                    cfw.add(ByteCode.POP);
+                    generateExpression(child.getNext(), node); // right-hand side
+                    cfw.markLabel(end);
+                    break;
+                }
+
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
+    }
+
+    private void finishGetElemGeneration(Node node, Node child) {
+        generateExpression(child.getNext(), node); // id
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+            addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+        } else {
+            addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+        }
+    }
+
+    private void finishGetRefGeneration() {
+        cfw.addALoad(contextLocal);
+        addScriptRuntimeInvoke(
+                "refGet",
+                "(Lorg/mozilla/javascript/Ref;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + ")Ljava/lang/Object;");
+    }
+
+    private void finishRefSpecialGeneration(Node node) {
+        String special = (String) node.getProp(Node.NAME_PROP);
+        cfw.addPush(special);
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        addScriptRuntimeInvoke(
+                "specialRef",
+                "(Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")Lorg/mozilla/javascript/Ref;");
     }
 
     // Descend down the tree and return the first child that represents a yield
@@ -2260,6 +2327,7 @@ class BodyCodegen {
             // stack: ... cx functionObj
         } else {
             generateFunctionAndThisObj(child, node);
+            pushThisFromLastScriptable();
             // stack: ... cx functionObj thisObj
         }
         child = child.getNext();
@@ -2293,47 +2361,51 @@ class BodyCodegen {
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "I" // call type
                             + "Ljava/lang/String;I" // filename, linenumber
+                            + "Z" // isOptionalChainingCall
                             + ")Ljava/lang/Object;";
+            boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addPush(specialType);
             String sourceName = scriptOrFn.getSourceName();
             cfw.addPush(sourceName == null ? "" : sourceName);
             cfw.addPush(itsLineNumber);
+            cfw.addPush(isOptionalChainingCall);
         }
 
         addOptRuntimeInvoke(methodName, callSignature);
     }
 
     private void visitStandardCall(Node node, Node child) {
-        if (node.getType() != Token.CALL && node.getType() != Token.CALL_OPTIONAL)
-            throw Codegen.badTree();
+        if (node.getType() != Token.CALL) throw Codegen.badTree();
 
         Node firstArgChild = child.getNext();
         int childType = child.getType();
+        boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
 
         String methodName;
         String signature;
+        Integer afterLabel = null;
 
         if (firstArgChild == null) {
             if (childType == Token.NAME) {
                 // name() call
                 String name = child.getString();
                 cfw.addPush(name);
-                methodName = "callName0";
+                methodName = isOptionalChainingCall ? "callName0Optional" : "callName0";
                 signature =
                         "(Ljava/lang/String;"
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + ")Ljava/lang/Object;";
-            } else if (childType == Token.GETPROP || childType == Token.GETPROP_OPTIONAL) {
+            } else if (childType == Token.GETPROP) {
                 // x.name() call
                 Node propTarget = child.getFirstChild();
                 generateExpression(propTarget, node);
                 Node id = propTarget.getNext();
                 String property = id.getString();
                 cfw.addPush(property);
-                methodName = childType == Token.GETPROP ? "callProp0" : "callProp0Optional";
+                methodName = isOptionalChainingCall ? "callProp0Optional" : "callProp0";
                 signature =
                         "(Ljava/lang/Object;"
                                 + "Ljava/lang/String;"
@@ -2344,7 +2416,8 @@ class BodyCodegen {
                 throw Kit.codeBug();
             } else {
                 generateFunctionAndThisObj(child, node);
-                methodName = "call0";
+                pushThisFromLastScriptable();
+                methodName = isOptionalChainingCall ? "call0Optional" : "call0";
                 signature =
                         "(Lorg/mozilla/javascript/Callable;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
@@ -2359,15 +2432,59 @@ class BodyCodegen {
             // is not affected by arguments evaluation and currently
             // there are no checks for it
             String name = child.getString();
-            generateCallArgArray(node, firstArgChild, false);
-            cfw.addPush(name);
-            methodName = "callName";
-            signature =
-                    "([Ljava/lang/Object;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + ")Ljava/lang/Object;";
+            if (isOptionalChainingCall) { // name?.()
+                // eval name and this and push name on stack
+                cfw.addPush(name);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "getNameFunctionAndThisOptional",
+                        ""
+                                + "("
+                                + "Ljava/lang/String;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + ")Lorg/mozilla/javascript/Callable;");
+
+                // jump to afterLabel is name is not null and not undefined
+                afterLabel = cfw.acquireLabel();
+                int doCallLabel = cfw.acquireLabel();
+                cfw.add(ByteCode.DUP);
+                addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                cfw.add(ByteCode.IFEQ, doCallLabel);
+
+                // push undefined and jump to end
+                cfw.add(ByteCode.POP);
+                cfw.add(
+                        ByteCode.GETSTATIC,
+                        "org/mozilla/javascript/Undefined",
+                        "instance",
+                        "Ljava/lang/Object;");
+                cfw.add(ByteCode.GOTO, afterLabel);
+
+                // push this, arguments, and do call
+                cfw.markLabel(doCallLabel);
+                pushThisFromLastScriptable();
+                methodName = "callN";
+                generateCallArgArray(node, firstArgChild, false);
+                signature =
+                        "(Lorg/mozilla/javascript/Callable;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + "[Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + ")Ljava/lang/Object;";
+            } else {
+                generateCallArgArray(node, firstArgChild, false);
+                cfw.addPush(name);
+                methodName = "callName";
+                signature =
+                        "([Ljava/lang/Object;"
+                                + "Ljava/lang/String;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + ")Ljava/lang/Object;";
+            }
         } else {
             int argCount = 0;
             for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
@@ -2375,6 +2492,29 @@ class BodyCodegen {
             }
             generateFunctionAndThisObj(child, node);
             // stack: ... functionObj thisObj
+
+            if (isOptionalChainingCall) {
+                // jump to afterLabel is name is not null and not undefined
+                afterLabel = cfw.acquireLabel();
+                int doCallLabel = cfw.acquireLabel();
+                cfw.add(ByteCode.DUP);
+                addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+                cfw.add(ByteCode.IFEQ, doCallLabel);
+
+                // push undefined and jump to end
+                cfw.add(ByteCode.POP);
+                cfw.add(
+                        ByteCode.GETSTATIC,
+                        "org/mozilla/javascript/Undefined",
+                        "instance",
+                        "Ljava/lang/Object;");
+                cfw.add(ByteCode.GOTO, afterLabel);
+
+                cfw.markLabel(doCallLabel);
+                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Callable");
+            }
+
+            pushThisFromLastScriptable();
             if (argCount == 1) {
                 generateExpression(firstArgChild, node);
                 methodName = "call1";
@@ -2385,34 +2525,47 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + ")Ljava/lang/Object;";
-            } else if (argCount == 2) {
-                generateExpression(firstArgChild, node);
-                generateExpression(firstArgChild.getNext(), node);
-                methodName = "call2";
-                signature =
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "Ljava/lang/Object;"
-                                + "Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
             } else {
-                generateCallArgArray(node, firstArgChild, false);
-                methodName = "callN";
-                signature =
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "[Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
+                if (argCount == 2) {
+                    generateExpression(firstArgChild, node);
+                    generateExpression(firstArgChild.getNext(), node);
+                    methodName = "call2";
+                    signature =
+                            "(Lorg/mozilla/javascript/Callable;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Ljava/lang/Object;"
+                                    + "Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + ")Ljava/lang/Object;";
+                } else {
+                    generateCallArgArray(node, firstArgChild, false);
+                    methodName = "callN";
+                    signature =
+                            "(Lorg/mozilla/javascript/Callable;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "[Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + ")Ljava/lang/Object;";
+                }
             }
         }
 
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         addOptRuntimeInvoke(methodName, signature);
+        if (afterLabel != null) {
+            cfw.markLabel(afterLabel);
+        }
+    }
+
+    private void pushThisFromLastScriptable() {
+        // Get thisObj prepared by get(Name|Prop|Elem|Value)FunctionAndThis
+        cfw.addALoad(contextLocal);
+        addScriptRuntimeInvoke(
+                "lastStoredScriptable",
+                "(Lorg/mozilla/javascript/Context;" + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
     private void visitStandardNew(Node node, Node child) {
@@ -2444,6 +2597,7 @@ class BodyCodegen {
             generateExpression(child, node);
         } else {
             generateFunctionAndThisObj(child, node);
+            pushThisFromLastScriptable();
             thisObjLocal = getNewWordLocal();
             cfw.addAStore(thisObjLocal);
         }
@@ -2610,6 +2764,7 @@ class BodyCodegen {
     private void generateFunctionAndThisObj(Node node, Node parent) {
         // Place on stack (function object, function this) pair
         int type = node.getType();
+        boolean isOptionalChainingCall = parent.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
         switch (node.getType()) {
             case Token.GETPROPNOWARN:
                 throw Kit.codeBug();
@@ -2624,14 +2779,22 @@ class BodyCodegen {
                         String property = id.getString();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
-                        addDynamicInvoke("PROP:GETWITHTHIS:" + property, Signatures.PROP_GET_THIS);
+                        String propAccessType =
+                                isOptionalChainingCall ? "GETWITHTHISOPTIONAL" : "GETWITHTHIS";
+                        addDynamicInvoke(
+                                "PROP:" + propAccessType + ":" + property,
+                                Signatures.PROP_GET_THIS);
                     } else {
                         generateExpression(id, node); // id
                         if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) addDoubleWrap();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
+                        String name =
+                                isOptionalChainingCall
+                                        ? "getElemFunctionAndThisOptional"
+                                        : "getElemFunctionAndThis";
                         addScriptRuntimeInvoke(
-                                "getElemFunctionAndThis",
+                                name,
                                 "(Ljava/lang/Object;"
                                         + "Ljava/lang/Object;"
                                         + "Lorg/mozilla/javascript/Context;"
@@ -2646,25 +2809,29 @@ class BodyCodegen {
                     String name = node.getString();
                     cfw.addALoad(variableObjectLocal);
                     cfw.addALoad(contextLocal);
-                    addDynamicInvoke("NAME:GETWITHTHIS:" + name, Signatures.NAME_GET_THIS);
+                    String propAccessType =
+                            isOptionalChainingCall ? "GETWITHTHISOPTIONAL" : "GETWITHTHIS";
+                    addDynamicInvoke(
+                            "NAME:" + propAccessType + ":" + name, Signatures.NAME_GET_THIS);
                     break;
                 }
 
             default: // including GETVAR
-                generateExpression(node, parent);
-                cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "getValueFunctionAndThis",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Lorg/mozilla/javascript/Callable;");
-                break;
+                {
+                    generateExpression(node, parent);
+                    cfw.addALoad(contextLocal);
+                    String name =
+                            isOptionalChainingCall
+                                    ? "getValueFunctionAndThisOptional"
+                                    : "getValueFunctionAndThis";
+                    addScriptRuntimeInvoke(
+                            name,
+                            "(Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + ")Lorg/mozilla/javascript/Callable;");
+                    break;
+                }
         }
-        // Get thisObj prepared by get(Name|Prop|Elem|Value)FunctionAndThis
-        cfw.addALoad(contextLocal);
-        addScriptRuntimeInvoke(
-                "lastStoredScriptable",
-                "(Lorg/mozilla/javascript/Context;" + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
     private void updateLineNumber(Node node) {
@@ -3993,6 +4160,31 @@ class BodyCodegen {
 
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            int getExpr = cfw.acquireLabel();
+            int after = cfw.acquireLabel();
+
+            cfw.add(ByteCode.DUP);
+            addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+            cfw.add(ByteCode.IFEQ, getExpr);
+
+            cfw.add(ByteCode.POP);
+            cfw.add(
+                    ByteCode.GETSTATIC,
+                    "org/mozilla/javascript/Undefined",
+                    "instance",
+                    "Ljava/lang/Object;");
+            cfw.add(ByteCode.GOTO, after);
+
+            cfw.markLabel(getExpr);
+            finishGetPropGeneration(node, child);
+            cfw.markLabel(after);
+        } else {
+            finishGetPropGeneration(node, child);
+        }
+    }
+
+    private void finishGetPropGeneration(Node node, Node child) {
         Node nameChild = child.getNext();
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
@@ -4001,36 +4193,6 @@ class BodyCodegen {
             addDynamicInvoke("PROP:GETNOWARN:" + nameChild.getString(), Signatures.PROP_GET_NOWARN);
         } else {
             addDynamicInvoke("PROP:GET:" + nameChild.getString(), Signatures.PROP_GET);
-        }
-    }
-
-    private void visitGetPropOptional(Node node, Node child) {
-        generateExpression(child, node); // object
-        Node nameChild = child.getNext();
-        generateExpression(nameChild, node); // the name
-        /*
-            for 'this.foo' we call getObjectPropOptional(Scriptable...) which can
-            skip some casting overhead.
-        */
-        int childType = child.getType();
-        if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
-            cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectPropOptional",
-                    "(Lorg/mozilla/javascript/Scriptable;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + ")Ljava/lang/Object;");
-        } else {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                    "getObjectPropOptional",
-                    "(Ljava/lang/Object;"
-                            + "Ljava/lang/String;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + ")Ljava/lang/Object;");
         }
     }
 
