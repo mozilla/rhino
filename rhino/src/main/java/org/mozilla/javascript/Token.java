@@ -121,13 +121,10 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
-            GETPROP_OPTIONAL = BIGINT + 1,
-            REF_SPECIAL_OPTIONAL = GETPROP_OPTIONAL + 1,
-            CALL_OPTIONAL = REF_SPECIAL_OPTIONAL + 1;
+            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = CALL_OPTIONAL,
+    public static final int LAST_BYTECODE_TOKEN = BIGINT,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -151,9 +148,10 @@ public class Token {
             ASSIGN_MUL = ASSIGN_SUB + 1, // *=
             ASSIGN_DIV = ASSIGN_MUL + 1, // /=
             ASSIGN_MOD = ASSIGN_DIV + 1, // %=
-            ASSIGN_EXP = ASSIGN_MOD + 1; // **=
+            ASSIGN_EXP = ASSIGN_MOD + 1, // **=
+            ASSIGN_NULLISH = ASSIGN_EXP + 1; // ??=
     public static final int FIRST_ASSIGN = ASSIGN,
-            LAST_ASSIGN = ASSIGN_EXP,
+            LAST_ASSIGN = ASSIGN_NULLISH,
             HOOK = LAST_ASSIGN + 1, // conditional (?:)
             COLON = HOOK + 1,
             OR = COLON + 1, // logical or (||)
@@ -236,7 +234,7 @@ public class Token {
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
-            LAST_TOKEN = QUESTION_DOT;
+            LAST_TOKEN = QUESTION_DOT + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -471,6 +469,8 @@ public class Token {
                 return "ASSIGN_MOD";
             case ASSIGN_EXP:
                 return "ASSIGN_EXP";
+            case ASSIGN_NULLISH:
+                return "ASSIGN_NULLISH";
             case HOOK:
                 return "HOOK";
             case COLON:
@@ -609,12 +609,6 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
-            case GETPROP_OPTIONAL:
-                return "GETPROP_OPTIONAL";
-            case REF_SPECIAL_OPTIONAL:
-                return "REF_SPECIAL_OPTIONAL";
-            case CALL_OPTIONAL:
-                return "CALL_OPTIONAL";
             case TEMPLATE_LITERAL:
                 return "TEMPLATE_LITERAL";
             case TEMPLATE_CHARS:
@@ -626,7 +620,7 @@ public class Token {
             case DOTDOTDOT:
                 return "DOTDOTDOT";
             case QUESTION_DOT:
-                return "DOT_QUESTION";
+                return "QUESTION_DOT";
         }
 
         // Token without name

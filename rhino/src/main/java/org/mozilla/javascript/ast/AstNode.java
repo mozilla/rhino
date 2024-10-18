@@ -83,6 +83,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.COLON, ":");
         operatorNames.put(Token.OR, "||");
         operatorNames.put(Token.NULLISH_COALESCING, "??");
+        operatorNames.put(Token.QUESTION_DOT, "?.");
         operatorNames.put(Token.AND, "&&");
         operatorNames.put(Token.INC, "++");
         operatorNames.put(Token.DEC, "--");
@@ -125,8 +126,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_MOD, "%=");
         operatorNames.put(Token.ASSIGN_BITXOR, "^=");
         operatorNames.put(Token.ASSIGN_EXP, "**=");
+        operatorNames.put(Token.ASSIGN_NULLISH, "??=");
         operatorNames.put(Token.VOID, "void");
-        operatorNames.put(Token.QUESTION_DOT, "?.");
 
         StringBuilder sb = new StringBuilder();
         INDENTATIONS[0] = sb.toString();
@@ -374,6 +375,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.ASSIGN_RSH:
             case Token.ASSIGN_SUB:
             case Token.ASSIGN_URSH:
+            case Token.ASSIGN_EXP:
+            case Token.ASSIGN_NULLISH:
             case Token.BLOCK:
             case Token.BREAK:
             case Token.CALL:
