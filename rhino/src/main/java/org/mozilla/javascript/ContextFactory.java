@@ -114,6 +114,13 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
+    private java.util.function.Function<Integer, Feature> featureTester;
+
+    public enum Feature {
+        DEFAULT,
+        ENABLED,
+        DISABLED
+    };
 
     /** Listener of {@link Context} creation and release events. */
     public interface Listener {
@@ -207,89 +214,77 @@ public class ContextFactory {
      * {@link Context} without introducing additional subclasses.
      */
     protected boolean hasFeature(Context cx, int featureIndex) {
-        int version;
+        if (featureTester != null) {
+            switch (featureTester.apply(featureIndex)) {
+                case ENABLED:
+                    return true;
+                case DISABLED:
+                    return false;
+                default:
+                    // Fall through
+                    break;
+            }
+        }
+
         switch (featureIndex) {
             case Context.FEATURE_NON_ECMA_GET_YEAR:
-                /*
-                 * During the great date rewrite of 1.3, we tried to track the
-                 * evolving ECMA standard, which then had a definition of
-                 * getYear which always subtracted 1900.  Which we
-                 * implemented, not realizing that it was incompatible with
-                 * the old behavior...  now, rather than thrash the behavior
-                 * yet again, we've decided to leave it with the - 1900
-                 * behavior and point people to the getFullYear method.  But
-                 * we try to protect existing scripts that have specified a
-                 * version...
-                 */
-                version = cx.getLanguageVersion();
-                return (version == Context.VERSION_1_0
-                        || version == Context.VERSION_1_1
-                        || version == Context.VERSION_1_2);
+                {
+                    /*
+                     * During the great date rewrite of 1.3, we tried to track the
+                     * evolving ECMA standard, which then had a definition of
+                     * getYear which always subtracted 1900.  Which we
+                     * implemented, not realizing that it was incompatible with
+                     * the old behavior...  now, rather than thrash the behavior
+                     * yet again, we've decided to leave it with the - 1900
+                     * behavior and point people to the getFullYear method.  But
+                     * we try to protect existing scripts that have specified a
+                     * version...
+                     */
+                    int version = cx.getLanguageVersion();
+                    return (version == Context.VERSION_1_0
+                            || version == Context.VERSION_1_1
+                            || version == Context.VERSION_1_2);
+                }
 
             case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
+            case Context.FEATURE_INTL_402:
+            case Context.FEATURE_ENABLE_JAVA_MAP_ACCESS:
+            case Context.FEATURE_LITTLE_ENDIAN:
+            case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE:
+            case Context.FEATURE_THREAD_SAFE_OBJECTS:
+            case Context.FEATURE_ENHANCED_JAVA_ACCESS:
+            case Context.FEATURE_WARNING_AS_ERROR:
+            case Context.FEATURE_STRICT_MODE:
+            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+            case Context.FEATURE_STRICT_EVAL:
+            case Context.FEATURE_STRICT_VARS:
+            case Context.FEATURE_DYNAMIC_SCOPE:
+            case Context.FEATURE_EXPERIMENTAL_FEATURES:
                 return false;
 
             case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
-                return true;
-
-            case Context.FEATURE_TO_STRING_AS_SOURCE:
-                version = cx.getLanguageVersion();
-                return version == Context.VERSION_1_2;
-
+            case Context.FEATURE_ENABLE_XML_SECURE_PARSING:
+            case Context.FEATURE_V8_EXTENSIONS:
             case Context.FEATURE_PARENT_PROTO_PROPERTIES:
                 return true;
 
+            case Context.FEATURE_TO_STRING_AS_SOURCE:
+                {
+                    int version = cx.getLanguageVersion();
+                    return version == Context.VERSION_1_2;
+                }
+
             case Context.FEATURE_E4X:
-                version = cx.getLanguageVersion();
-                return (version == Context.VERSION_DEFAULT || version >= Context.VERSION_1_6);
-
-            case Context.FEATURE_DYNAMIC_SCOPE:
-                return false;
-
-            case Context.FEATURE_STRICT_VARS:
-                return false;
-
-            case Context.FEATURE_STRICT_EVAL:
-                return false;
-
-            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                return false;
-
-            case Context.FEATURE_STRICT_MODE:
-                return false;
-
-            case Context.FEATURE_WARNING_AS_ERROR:
-                return false;
-
-            case Context.FEATURE_ENHANCED_JAVA_ACCESS:
-                return false;
-
-            case Context.FEATURE_V8_EXTENSIONS:
-                return true;
+                {
+                    int version = cx.getLanguageVersion();
+                    return (version == Context.VERSION_DEFAULT || version >= Context.VERSION_1_6);
+                }
 
             case Context.FEATURE_OLD_UNDEF_NULL_THIS:
                 return cx.getLanguageVersion() <= Context.VERSION_1_7;
 
             case Context.FEATURE_ENUMERATE_IDS_FIRST:
                 return cx.getLanguageVersion() >= Context.VERSION_ES6;
-
-            case Context.FEATURE_THREAD_SAFE_OBJECTS:
-                return false;
-
-            case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE:
-                return false;
-
-            case Context.FEATURE_LITTLE_ENDIAN:
-                return false;
-
-            case Context.FEATURE_ENABLE_XML_SECURE_PARSING:
-                return true;
-
-            case Context.FEATURE_ENABLE_JAVA_MAP_ACCESS:
-                return false;
-
-            case Context.FEATURE_INTL_402:
-                return false;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
@@ -406,6 +401,14 @@ public class ContextFactory {
             if (l == null) break;
             l.contextReleased(cx);
         }
+    }
+
+    /**
+     * Set a function that will be used to check whether a feature is enabled. This is an
+     * alternative to implementing a subclass of this class in order to enable an optional feature.
+     */
+    public void setFeatureTester(java.util.function.Function<Integer, Feature> f) {
+        featureTester = f;
     }
 
     public final void addListener(Listener listener) {
