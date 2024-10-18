@@ -72,4 +72,25 @@ public class NullishCoalescingOpTest {
         String script = "$0 = false; true ?? true; $0";
         Utils.assertWithAllOptimizationLevelsES6(false, script);
     }
+
+    @Test
+    public void testNullishAssignmentRequiresES6() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects();
+                    assertThrows(
+                            EvaluatorException.class,
+                            () ->
+                                    cx.evaluateString(
+                                            scope, "a = true; a ??= false", "test.js", 0, null));
+                    return null;
+                });
+    }
+
+    @Test
+    public void testNullishAssignment() {
+        Utils.assertWithAllOptimizationLevelsES6(true, "a = true; a ??= false; a");
+        Utils.assertWithAllOptimizationLevelsES6(false, "a = undefined; a ??= false; a");
+        Utils.assertWithAllOptimizationLevelsES6(false, "a = null; a ??= false; a");
+    }
 }

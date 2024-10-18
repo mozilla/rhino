@@ -126,6 +126,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_MOD, "%=");
         operatorNames.put(Token.ASSIGN_BITXOR, "^=");
         operatorNames.put(Token.ASSIGN_EXP, "**=");
+        operatorNames.put(Token.ASSIGN_NULLISH, "??=");
         operatorNames.put(Token.VOID, "void");
 
         StringBuilder sb = new StringBuilder();
@@ -374,6 +375,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.ASSIGN_RSH:
             case Token.ASSIGN_SUB:
             case Token.ASSIGN_URSH:
+            case Token.ASSIGN_EXP:
+            case Token.ASSIGN_NULLISH:
             case Token.BLOCK:
             case Token.BREAK:
             case Token.CALL:

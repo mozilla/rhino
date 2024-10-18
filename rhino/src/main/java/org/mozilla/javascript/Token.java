@@ -148,9 +148,10 @@ public class Token {
             ASSIGN_MUL = ASSIGN_SUB + 1, // *=
             ASSIGN_DIV = ASSIGN_MUL + 1, // /=
             ASSIGN_MOD = ASSIGN_DIV + 1, // %=
-            ASSIGN_EXP = ASSIGN_MOD + 1; // **=
+            ASSIGN_EXP = ASSIGN_MOD + 1, // **=
+            ASSIGN_NULLISH = ASSIGN_EXP + 1; // ??=
     public static final int FIRST_ASSIGN = ASSIGN,
-            LAST_ASSIGN = ASSIGN_EXP,
+            LAST_ASSIGN = ASSIGN_NULLISH,
             HOOK = LAST_ASSIGN + 1, // conditional (?:)
             COLON = HOOK + 1,
             OR = COLON + 1, // logical or (||)
@@ -468,6 +469,8 @@ public class Token {
                 return "ASSIGN_MOD";
             case ASSIGN_EXP:
                 return "ASSIGN_EXP";
+            case ASSIGN_NULLISH:
+                return "ASSIGN_NULLISH";
             case HOOK:
                 return "HOOK";
             case COLON:
