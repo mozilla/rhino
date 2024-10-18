@@ -1156,6 +1156,9 @@ class TokenStream implements Parser.CurrentPositionReporter {
                             }
                             ungetChar('.');
                         } else if (matchChar('?')) {
+                            if (matchChar('=')) {
+                                return Token.ASSIGN_NULLISH;
+                            }
                             return Token.NULLISH_COALESCING;
                         }
                     }

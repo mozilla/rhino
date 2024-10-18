@@ -2152,6 +2152,9 @@ public final class IRFactory {
             case Token.ASSIGN_EXP:
                 assignOp = Token.EXP;
                 break;
+            case Token.ASSIGN_NULLISH:
+                assignOp = Token.NULLISH_COALESCING;
+                break;
             default:
                 throw Kit.codeBug();
         }
