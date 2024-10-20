@@ -121,7 +121,7 @@ public class Context implements Closeable {
      * identifier. See ECMAScript-262, section 11.2 for definition of memberExpression. By default
      * {@link #hasFeature(int)} returns false.
      */
-    public static final int FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME = 2;
+    public static final int FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME = FEATURE_NON_ECMA_GET_YEAR + 1;
 
     /**
      * Control if reserved keywords are treated as identifiers. If <code>
@@ -130,7 +130,8 @@ public class Context implements Closeable {
      *
      * <p>By default {@link #hasFeature(int)} returns false.
      */
-    public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
+    public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER =
+            FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME + 1;
 
     /**
      * Control if <code>toString()</code> should returns the same result as <code>toSource()</code>
@@ -143,7 +144,8 @@ public class Context implements Closeable {
      * <p>By default {@link #hasFeature(int)} returns true only if the current JS version is set to
      * {@link #VERSION_1_2}.
      */
-    public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
+    public static final int FEATURE_TO_STRING_AS_SOURCE =
+            FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER + 1;
 
     /**
      * Control if properties <code>__proto__</code> and <code>__parent__</code> are treated
@@ -159,12 +161,13 @@ public class Context implements Closeable {
      *
      * <p>By default {@link #hasFeature(int)} returns true.
      */
-    public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
+    public static final int FEATURE_PARENT_PROTO_PROPERTIES = FEATURE_TO_STRING_AS_SOURCE + 1;
 
     /**
      * @deprecated In previous releases, this name was given to FEATURE_PARENT_PROTO_PROPERTIES.
      */
-    @Deprecated public static final int FEATURE_PARENT_PROTO_PROPRTIES = 5;
+    @Deprecated
+    public static final int FEATURE_PARENT_PROTO_PROPRTIES = FEATURE_PARENT_PROTO_PROPERTIES;
 
     /**
      * Control if support for E4X(ECMAScript for XML) extension is available. If
@@ -175,7 +178,7 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 1
      */
-    public static final int FEATURE_E4X = 6;
+    public static final int FEATURE_E4X = FEATURE_PARENT_PROTO_PROPERTIES + 1;
 
     /**
      * Control if dynamic scope should be used for name access. If hasFeature(FEATURE_DYNAMIC_SCOPE)
@@ -191,7 +194,7 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 1
      */
-    public static final int FEATURE_DYNAMIC_SCOPE = 7;
+    public static final int FEATURE_DYNAMIC_SCOPE = FEATURE_E4X + 1;
 
     /**
      * Control if strict variable mode is enabled. When the feature is on Rhino reports runtime
@@ -202,7 +205,7 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 1
      */
-    public static final int FEATURE_STRICT_VARS = 8;
+    public static final int FEATURE_STRICT_VARS = FEATURE_DYNAMIC_SCOPE + 1;
 
     /**
      * Control if strict eval mode is enabled. When the feature is on Rhino reports runtime errors
@@ -213,7 +216,7 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 1
      */
-    public static final int FEATURE_STRICT_EVAL = 9;
+    public static final int FEATURE_STRICT_EVAL = FEATURE_STRICT_VARS + 1;
 
     /**
      * When the feature is on Rhino will add a "fileName" and "lineNumber" properties to Error
@@ -228,7 +231,7 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 6
      */
-    public static final int FEATURE_LOCATION_INFORMATION_IN_ERROR = 10;
+    public static final int FEATURE_LOCATION_INFORMATION_IN_ERROR = FEATURE_STRICT_EVAL + 1;
 
     /**
      * Controls whether JS 1.5 'strict mode' is enabled. When the feature is on, Rhino reports more
@@ -239,14 +242,14 @@ public class Context implements Closeable {
      *
      * @since 1.6 Release 6
      */
-    public static final int FEATURE_STRICT_MODE = 11;
+    public static final int FEATURE_STRICT_MODE = FEATURE_LOCATION_INFORMATION_IN_ERROR + 1;
 
     /**
      * Controls whether a warning should be treated as an error.
      *
      * @since 1.6 Release 6
      */
-    public static final int FEATURE_WARNING_AS_ERROR = 12;
+    public static final int FEATURE_WARNING_AS_ERROR = FEATURE_STRICT_MODE + 1;
 
     /**
      * Enables enhanced access to Java. Specifically, controls whether private and protected members
@@ -258,7 +261,7 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 1
      */
-    public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
+    public static final int FEATURE_ENHANCED_JAVA_ACCESS = FEATURE_WARNING_AS_ERROR + 1;
 
     /**
      * Enables access to JavaScript features from ECMAscript 6 that are present in JavaScript
@@ -267,7 +270,7 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 3
      */
-    public static final int FEATURE_V8_EXTENSIONS = 14;
+    public static final int FEATURE_V8_EXTENSIONS = FEATURE_ENHANCED_JAVA_ACCESS + 1;
 
     /**
      * Defines how an undefined "this" parameter is handled in certain calls. Previously Rhino would
@@ -276,7 +279,7 @@ public class Context implements Closeable {
      *
      * @since 1.7.7
      */
-    public static final int FEATURE_OLD_UNDEF_NULL_THIS = 15;
+    public static final int FEATURE_OLD_UNDEF_NULL_THIS = FEATURE_V8_EXTENSIONS + 1;
 
     /**
      * If set, then the order of property key enumeration will be first numeric keys in numeric
@@ -285,7 +288,7 @@ public class Context implements Closeable {
      *
      * @since 1.7.7.1
      */
-    public static final int FEATURE_ENUMERATE_IDS_FIRST = 16;
+    public static final int FEATURE_ENUMERATE_IDS_FIRST = FEATURE_OLD_UNDEF_NULL_THIS + 1;
 
     /**
      * If set, then all objects will have a thread-safe property map. (Note that this doesn't make
@@ -296,14 +299,14 @@ public class Context implements Closeable {
      *
      * @since 1.7.8
      */
-    public static final int FEATURE_THREAD_SAFE_OBJECTS = 17;
+    public static final int FEATURE_THREAD_SAFE_OBJECTS = FEATURE_ENUMERATE_IDS_FIRST + 1;
 
     /**
      * If set, then all integer numbers will be returned without decimal place. For instance assume
      * there is a function like this: <code>function foo() {return 5;}</code> 5 will be returned if
      * feature is set, 5.0 otherwise.
      */
-    public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = 18;
+    public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = FEATURE_THREAD_SAFE_OBJECTS + 1;
 
     /**
      * TypedArray buffer uses little/big endian depending on the platform. The default is big endian
@@ -311,7 +314,7 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 11
      */
-    public static final int FEATURE_LITTLE_ENDIAN = 19;
+    public static final int FEATURE_LITTLE_ENDIAN = FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE + 1;
 
     /**
      * Configure the XMLProcessor to parse XML with security features or not. Security features
@@ -319,7 +322,7 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 12
      */
-    public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
+    public static final int FEATURE_ENABLE_XML_SECURE_PARSING = FEATURE_LITTLE_ENDIAN + 1;
 
     /**
      * Configure whether the entries in a Java Map can be accessed by properties.
@@ -344,7 +347,7 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 14
      */
-    public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
+    public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = FEATURE_ENABLE_XML_SECURE_PARSING + 1;
 
     /**
      * Internationalization API implementation (see https://tc39.github.io/ecma402) can be activated
@@ -352,7 +355,18 @@ public class Context implements Closeable {
      *
      * @since 1.7 Release 15
      */
-    public static final int FEATURE_INTL_402 = 22;
+    public static final int FEATURE_INTL_402 = FEATURE_ENABLE_JAVA_MAP_ACCESS + 1;
+
+    /**
+     * Configure whether experimental features are enabled. These will change from release to
+     * release, but this flag will always be used when a new feature is in development, but does not
+     * pass enough conformance tests to be enabled by default. An example would be a large new
+     * JavaScript language feature that has only been partially implemented. When each feature
+     * reaches enough maturity to be defined "feature complete," then the feature will be changed so
+     * that it is always implemented, rather than only when this flag is set. As such, different
+     * Rhino releases will have different behavior when this flag is set.
+     */
+    public static final int FEATURE_EXPERIMENTAL_FEATURES = FEATURE_INTL_402 + 1;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
