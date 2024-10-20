@@ -12,6 +12,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * Test for overloaded varargs/non-varargs methods. See
@@ -24,6 +25,7 @@ public class Bug467396Test {
     @Test
     public void overloadedVarargs() {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
+            cx.setWrapFactory(new JavaWrapFactory());
             Scriptable scope = cx.initStandardObjects();
             Object result =
                     unwrap(

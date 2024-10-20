@@ -20,6 +20,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -91,6 +92,7 @@ public class DoctestsTest {
         ContextFactory factory = ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
             cx.setOptimizationLevel(optimizationLevel);
+            cx.setWrapFactory(new JavaWrapFactory());
             Global global = new Global(cx);
             // global.runDoctest throws an exception on any failure
             int testsPassed = global.runDoctest(cx, global, source, name, 1);

@@ -12,6 +12,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.annotations.*;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -24,7 +25,6 @@ public class BuiltinBenchmark {
             cx = Context.enter();
             cx.setOptimizationLevel(9);
             cx.setLanguageVersion(Context.VERSION_ES6);
-
             scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, AnnotatedClass.class);
             IdClass.init(scope);
