@@ -29,6 +29,14 @@ public final class OptRuntime extends ScriptRuntime {
         return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
+    public static Object call0Optional(
+            Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+        if (fun == null) {
+            return Undefined.instance;
+        }
+        return call0(fun, thisObj, cx, scope);
+    }
+
     /** Implement ....(arg) call shrinking optimizer code. */
     public static Object call1(
             Callable fun, Scriptable thisObj, Object arg0, Context cx, Scriptable scope) {
@@ -66,6 +74,15 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
+    public static Object callName0Optional(String name, Context cx, Scriptable scope) {
+        Callable f = getNameFunctionAndThisOptional(name, cx, scope);
+        if (f == null) {
+            return Undefined.instance;
+        }
+        Scriptable thisObj = lastStoredScriptable(cx);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+    }
+
     /** Implement x.property() call shrinking optimizer code. */
     public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
@@ -73,10 +90,12 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    /** Implement x?.property() call shrinking optimizer code. */
     public static Object callProp0Optional(
             Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThisOptional(value, property, cx, scope);
+        if (f == null) {
+            return Undefined.instance;
+        }
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
@@ -139,9 +158,19 @@ public final class OptRuntime extends ScriptRuntime {
             Scriptable callerThis,
             int callType,
             String fileName,
-            int lineNumber) {
+            int lineNumber,
+            boolean isOptionalChainingCall) {
         return ScriptRuntime.callSpecial(
-                cx, fun, thisObj, args, scope, callerThis, callType, fileName, lineNumber);
+                cx,
+                fun,
+                thisObj,
+                args,
+                scope,
+                callerThis,
+                callType,
+                fileName,
+                lineNumber,
+                isOptionalChainingCall);
     }
 
     public static Object newObjectSpecial(
@@ -261,6 +290,10 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object getGeneratorReturnValue(Object obj) {
         GeneratorState rgs = (GeneratorState) obj;
         return (rgs.returnValue == null ? Undefined.instance : rgs.returnValue);
+    }
+
+    public static boolean isNullOrUndefined(Object obj) {
+        return obj == null || Undefined.isUndefined(obj);
     }
 
     public static class GeneratorState {

@@ -75,6 +75,11 @@ public class Bootstrapper {
                     return RhinoOperation.GETWITHTHIS
                             .withNamespace(StandardNamespace.PROPERTY)
                             .named(getNameSegment(tokens, name, 2));
+                case "GETWITHTHISOPTIONAL":
+                    // Similar to the above, but won't complain if prop is not found
+                    return RhinoOperation.GETWITHTHISOPTIONAL
+                            .withNamespace(StandardNamespace.PROPERTY)
+                            .named(getNameSegment(tokens, name, 2));
                 case "GETELEMENT":
                     // Get the value of an element from a property that is on the stack,\
                     // as if using "[]" notation. Could be a String, number, or Symbol
@@ -109,6 +114,11 @@ public class Bootstrapper {
                 case "GETWITHTHIS":
                     // Same but also return "this" so that it is found by "lastStoredScriptable"
                     return RhinoOperation.GETWITHTHIS
+                            .withNamespace(RhinoNamespace.NAME)
+                            .named(getNameSegment(tokens, name, 2));
+                case "GETWITHTHISOPTIONAL":
+                    // Similar to the above, but won't complain if prop is not found
+                    return RhinoOperation.GETWITHTHISOPTIONAL
                             .withNamespace(RhinoNamespace.NAME)
                             .named(getNameSegment(tokens, name, 2));
                 case "SET":
