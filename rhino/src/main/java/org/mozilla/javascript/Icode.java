@@ -142,9 +142,12 @@ abstract class Icode {
             Icode_TEMPLATE_LITERAL_CALLSITE = Icode_REG_BIGINT4 - 1,
             Icode_LITERAL_KEYS = Icode_TEMPLATE_LITERAL_CALLSITE - 1,
             Icode_LITERAL_KEY_SET = Icode_LITERAL_KEYS - 1,
-            Icode_PROP_AND_THIS_OPTIONAL = Icode_LITERAL_KEY_SET - 1,
+
+            // Jump if stack head is null or undefined
+            Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
+            Icode_IF_NOT_NULL_UNDEF = Icode_IF_NULL_UNDEF - 1,
             // Last icode
-            MIN_ICODE = Icode_PROP_AND_THIS_OPTIONAL;
+            MIN_ICODE = Icode_IF_NOT_NULL_UNDEF;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -190,8 +193,6 @@ abstract class Icode {
                 return "NAME_AND_THIS";
             case Icode_PROP_AND_THIS:
                 return "PROP_AND_THIS";
-            case Icode_PROP_AND_THIS_OPTIONAL:
-                return "PROP_AND_THIS_OPTIONAL";
             case Icode_ELEM_AND_THIS:
                 return "ELEM_AND_THIS";
             case Icode_VALUE_AND_THIS:
@@ -312,6 +313,10 @@ abstract class Icode {
                 return "LITERAL_KEYS";
             case Icode_LITERAL_KEY_SET:
                 return "LITERAL_KEY_SET";
+            case Icode_IF_NULL_UNDEF:
+                return "IF_NULL_UNDEF";
+            case Icode_IF_NOT_NULL_UNDEF:
+                return "IF_NOT_NULL_UNDEF";
         }
 
         // icode without name

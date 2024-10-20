@@ -600,7 +600,6 @@ class CodeGenerator extends Icode {
 
             case Token.REF_CALL:
             case Token.CALL:
-            case Token.CALL_OPTIONAL:
             case Token.NEW:
                 {
                     if (type == Token.NEW) {
@@ -685,17 +684,32 @@ class CodeGenerator extends Icode {
                     resolveForwardGoto(afterElseJumpStart);
                 }
                 break;
-            case Token.GETPROP_OPTIONAL:
-                visitExpression(child, 0);
-                child = child.getNext();
-                addStringOp(type, child.getString());
-                break;
 
             case Token.GETPROP:
             case Token.GETPROPNOWARN:
                 visitExpression(child, 0);
                 child = child.getNext();
-                addStringOp(type, child.getString());
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    // Jump if null or undefined
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+                    int putUndefinedLabel = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    stackChange(-1);
+
+                    // Access property
+                    addStringOp(type, child.getString());
+                    int afterLabel = iCodeTop;
+                    addGotoOp(Token.GOTO);
+
+                    // Put undefined
+                    resolveForwardGoto(putUndefinedLabel);
+                    addIcode(Icode_POP);
+                    addStringOp(Token.NAME, "undefined");
+                    resolveForwardGoto(afterLabel);
+                } else {
+                    addStringOp(type, child.getString());
+                }
                 break;
 
             case Token.DELPROP:
@@ -713,6 +727,30 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.GETELEM:
+                visitExpression(child, 0);
+                child = child.getNext();
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+                    int putUndefinedLabel = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    stackChange(-1);
+
+                    // Infix op
+                    finishGetElemGeneration(child);
+                    int afterLabel = iCodeTop;
+                    addGotoOp(Token.GOTO);
+
+                    // Put undefined
+                    resolveForwardGoto(putUndefinedLabel);
+                    addIcode(Icode_POP);
+                    addStringOp(Token.NAME, "undefined");
+                    resolveForwardGoto(afterLabel);
+                } else {
+                    finishGetElemGeneration(child);
+                }
+                break;
+
             case Token.BITAND:
             case Token.BITOR:
             case Token.BITXOR:
@@ -760,7 +798,23 @@ class CodeGenerator extends Icode {
             case Token.GET_REF:
             case Token.DEL_REF:
                 visitExpression(child, 0);
-                addToken(type);
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    // On the stack we'll have either the Ref or undefined
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+
+                    // If it's null or undefined, just jump ahead
+                    int afterLabel = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    stackChange(-1);
+
+                    // Otherwise do the GET_REF
+                    addToken(type);
+
+                    resolveForwardGoto(afterLabel);
+                } else {
+                    addToken(type);
+                }
                 break;
 
             case Token.SETPROP:
@@ -966,10 +1020,29 @@ class CodeGenerator extends Icode {
                 visitArrayComprehension(node, child, child.getNext());
                 break;
 
-            case Token.REF_SPECIAL_OPTIONAL:
             case Token.REF_SPECIAL:
                 visitExpression(child, 0);
-                addStringOp(type, (String) node.getProp(Node.NAME_PROP));
+                if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                    // Jump if null or undefined
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+                    int putUndefinedLabel = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    stackChange(-1);
+
+                    // Access property
+                    addStringOp(type, (String) node.getProp(Node.NAME_PROP));
+                    int afterLabel = iCodeTop;
+                    addGotoOp(Token.GOTO);
+
+                    // Put undefined
+                    resolveForwardGoto(putUndefinedLabel);
+                    addIcode(Icode_POP);
+                    addStringOp(Token.NAME, "undefined");
+                    resolveForwardGoto(afterLabel);
+                } else {
+                    addStringOp(type, (String) node.getProp(Node.NAME_PROP));
+                }
                 break;
 
             case Token.REF_MEMBER:
@@ -1042,12 +1115,37 @@ class CodeGenerator extends Icode {
                 visitTemplateLiteral(node);
                 break;
 
+            case Token.NULLISH_COALESCING:
+                {
+                    visitExpression(child, 0);
+                    child = child.getNext();
+
+                    addIcode(Icode_DUP);
+                    stackChange(1);
+                    int end = iCodeTop;
+                    addGotoOp(Icode.Icode_IF_NOT_NULL_UNDEF);
+                    stackChange(-1);
+
+                    addIcode(Icode_POP);
+                    visitExpression(child, 0);
+                    stackChange(-1);
+
+                    resolveForwardGoto(end);
+                    break;
+                }
+
             default:
                 throw badTree(node);
         }
         if (savedStackDepth + 1 != stackDepth) {
             Kit.codeBug();
         }
+    }
+
+    private void finishGetElemGeneration(Node child) {
+        visitExpression(child, 0);
+        addToken(Token.GETELEM);
+        stackChange(-1);
     }
 
     private void generateCallFunAndThis(Node left) {
@@ -1062,7 +1160,6 @@ class CodeGenerator extends Icode {
                     stackChange(2);
                     break;
                 }
-            case Token.GETPROP_OPTIONAL:
             case Token.GETPROP:
             case Token.GETELEM:
                 {
@@ -1073,11 +1170,6 @@ class CodeGenerator extends Icode {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
                         addStringOp(Icode_PROP_AND_THIS, property);
-                        stackChange(1);
-                    } else if (type == Token.GETPROP_OPTIONAL) {
-                        String property = id.getString();
-                        // stack: ... target -> ... function thisObj
-                        addStringOp(Icode_PROP_AND_THIS_OPTIONAL, property);
                         stackChange(1);
                     } else {
                         visitExpression(id, 0);
