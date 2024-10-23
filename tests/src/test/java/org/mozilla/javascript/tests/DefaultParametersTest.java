@@ -86,16 +86,82 @@ public class DefaultParametersTest {
     }
 
     @Test
-    @Ignore("defaults-not-supported-in-let-destructuring")
+    @Ignore("destructuring-not-supported-in-for-let-expressions")
     public void letExprDestructuring() throws Exception {
         // JavaScript
         final String script =
-                "function a() {}; (function() { "
-                        + "            for (let {x = a()} = {}; ; ) { "
-                        + "                return 3; "
+                "var a = 12; (function() { "
+                        + "            for (let {x = a} = {}; ; ) { "
+                        + "                return x; "
                         + "            }"
                         + "        })()";
-        Utils.assertWithAllOptimizationLevelsES6(3, script);
+        Utils.assertWithAllOptimizationLevelsES6(12, script);
+    }
+
+    @Test
+    public void normObjectLiteralDestructuringFunCall() throws Exception {
+        // JavaScript
+        final String script = "function a() { return 2;};  let {x = a()} = {x: 12}; x";
+
+        final String script2 = "function a() { return 2;};  let {x = 12} = {x: a()}; x";
+        Utils.assertWithAllOptimizationLevelsES6(12, script);
+        Utils.assertWithAllOptimizationLevelsES6(2, script2);
+    }
+
+    @Test
+    public void normDefaultParametersObjectDestructuringFunCall() throws Exception {
+        // JavaScript
+        final String script =
+                "function a() { return 12;};  function b({x = a()} = {x: 1}) { return x }; b()";
+        final String script2 =
+                "function a() { return 12;};  function b({x = a()} = {}) { return x }; b()";
+        final String script3 =
+                "var a = { p1: { p2: 121}}; function b({x = a.p1.p2} = {}) { return x }; b()";
+        final String script4 =
+                "function a() { return 12;};  function b({x = 1} = {x: a()}) { return x }; b()\n";
+
+        Utils.assertWithAllOptimizationLevelsES6(1, script);
+        Utils.assertWithAllOptimizationLevelsES6(12, script2);
+        Utils.assertWithAllOptimizationLevelsES6(121, script3);
+        Utils.assertWithAllOptimizationLevelsES6(12, script4);
+    }
+
+    @Test
+    public void normDefaultParametersArrayDestructuringFunCall() throws Exception {
+        // JavaScript
+        final String script =
+                "function a() { return 12;};  function b([x = a()] = [1]) { return x }; b()";
+        final String script2 =
+                "function a() { return 12;};  function b([x = a()] = []) { return x }; b()";
+        final String script3 =
+                "var a = { p1: { p2: 121}}; function b([x = a.p1.p2] = []) { return x }; b()";
+        final String script4 =
+                "function a() { return 12;};  function b([x = 1] = [a()]) { return x }; b()\n";
+
+        Utils.assertWithAllOptimizationLevelsES6(1, script);
+        Utils.assertWithAllOptimizationLevelsES6(12, script2);
+        Utils.assertWithAllOptimizationLevelsES6(121, script3);
+        Utils.assertWithAllOptimizationLevelsES6(12, script4);
+    }
+
+    @Test
+    public void normDefaultParametersFunCall() throws Exception {
+        // JavaScript
+        final String script = "function a() { return 12;};  function b(x = a()) { return x }; b()";
+        Utils.assertWithAllOptimizationLevelsES6(12, script);
+    }
+
+    @Test
+    @Ignore("destructuring-not-supported-in-for-let-expressions")
+    public void letExprDestructuringFunCall() throws Exception {
+        // JavaScript
+        final String script =
+                "function a() { return 4; }; (function() { "
+                        + "            for (let {x = a()} = {}; ; ) { "
+                        + "                return x; "
+                        + "            }"
+                        + "        })()";
+        Utils.assertWithAllOptimizationLevelsES6(4, script);
     }
 
     @Test

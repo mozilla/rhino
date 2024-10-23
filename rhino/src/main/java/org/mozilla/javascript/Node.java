@@ -294,6 +294,7 @@ public class Node implements Iterable<Node> {
     }
 
     public void replaceChild(Node child, Node newChild) {
+        if (child == newChild) return;
         newChild.next = child.next;
         if (child == first) {
             first = newChild;

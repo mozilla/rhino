@@ -621,8 +621,10 @@ public final class IRFactory {
             if (dfns != null) {
                 for (var i : dfns) {
                     Node a = i[0];
-                    AstNode b = (AstNode) i[1];
-                    a.replaceChild(b, transform(b));
+                    if (i[1] instanceof AstNode) {
+                        AstNode b = (AstNode) i[1];
+                        a.replaceChild(b, transform(b));
+                    }
                 }
             }
 
