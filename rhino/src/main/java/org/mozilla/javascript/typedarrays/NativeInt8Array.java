@@ -7,9 +7,10 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -37,14 +38,35 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeInt8Array a = new NativeInt8Array();
-        IdFunctionObject constructor = a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-    }
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        3,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        (Context lcx, Scriptable lscope, Object[] args) ->
+                                NativeTypedArrayView.js_constructor(
+                                        lcx, lscope, args, NativeInt8Array::new, 1));
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        NativeTypedArrayView.init(cx, scope, constructor, NativeInt8Array::realThis);
+        constructor.defineProperty(
+                cx,
+                "BYTES_PER_ELEMENT",
+                (Scriptable thisObj) -> 1,
+                null,
+                DONTENUM | READONLY | PERMANENT);
+        constructor.definePrototypeProperty(
+                cx,
+                "BYTES_PER_ELEMENT",
+                (Scriptable thisObj) -> 1,
+                DONTENUM | READONLY | PERMANENT);
 
-    @Override
-    protected NativeInt8Array construct(NativeArrayBuffer ab, int off, int len) {
-        return new NativeInt8Array(ab, off, len);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     @Override
@@ -52,9 +74,8 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         return 1;
     }
 
-    @Override
-    protected NativeInt8Array realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, NativeInt8Array.class, f);
+    private static NativeInt8Array realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeInt8Array.class);
     }
 
     @Override

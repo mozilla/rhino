@@ -349,8 +349,7 @@ for (var t = 0; t < types.length; t++) {
     assertEquals(kElementCount, a.length);
     a.length = 2;
     assertEquals(kElementCount, a.length);
-    // TODO: rhino
-    // assertTrue(delete a.length);
+    assertTrue(delete a.length);
 
     // Make sure bounds checks are handled correctly for external arrays.
   //%PrepareFunctionForOptimization(run_bounds_test);
@@ -536,14 +535,11 @@ assertThrows(function(){ a.subarray.call([], 0) });
 // and .apply. Should fail.
 
 assertThrows(function() { ArrayBuffer(100); }, TypeError);
-// TODO: rhino
-// assertThrows(function() { Int8Array(b, 5, 77); }, TypeError);
+assertThrows(function() { Int8Array(b, 5, 77); }, TypeError);
 assertThrows(function() { ArrayBuffer.call(null, 10); }, TypeError);
-// TODO: rhino
-// assertThrows(function() { Uint16Array.call(null, b, 2, 4); }, TypeError);
+assertThrows(function() { Uint16Array.call(null, b, 2, 4); }, TypeError);
 assertThrows(function() { ArrayBuffer.apply(null, [1000]); }, TypeError);
-// TODO: rhino
-// assertThrows(function() { Float32Array.apply(null, [b, 128, 1]); }, TypeError);
+assertThrows(function() { Float32Array.apply(null, [b, 128, 1]); }, TypeError);
 
 // Test array.set in different combinations.
 var b = new ArrayBuffer(4)

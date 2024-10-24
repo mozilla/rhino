@@ -26,7 +26,23 @@ public class ArrayLikeAbstractOperations {
         REDUCE_RIGHT,
     }
 
-    /** Implements the methods "every", "filter", "forEach", "map", and "some". */
+    /**
+     * Implements the methods "every", "filter", "forEach", "map", and "some" without using an
+     * IdFunctionObject.
+     */
+    public static Object iterativeMethod(
+            Context cx,
+            IterativeOperation operation,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args) {
+        return iterativeMethod(cx, null, operation, scope, thisObj, args, true);
+    }
+
+    /**
+     * Implements the methods "every", "filter", "forEach", "map", and "some" using an
+     * IdFunctionObject.
+     */
     public static Object iterativeMethod(
             Context cx,
             IdFunctionObject fun,
@@ -34,13 +50,26 @@ public class ArrayLikeAbstractOperations {
             Scriptable scope,
             Scriptable thisObj,
             Object[] args) {
+        return iterativeMethod(cx, fun, operation, scope, thisObj, args, false);
+    }
+
+    private static Object iterativeMethod(
+            Context cx,
+            IdFunctionObject fun,
+            IterativeOperation operation,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args,
+            boolean skipCoercibleCheck) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        if (IterativeOperation.FIND == operation
-                || IterativeOperation.FIND_INDEX == operation
-                || IterativeOperation.FIND_LAST == operation
-                || IterativeOperation.FIND_LAST_INDEX == operation) {
-            requireObjectCoercible(cx, o, fun);
+        if (!skipCoercibleCheck) {
+            if (IterativeOperation.FIND == operation
+                    || IterativeOperation.FIND_INDEX == operation
+                    || IterativeOperation.FIND_LAST == operation
+                    || IterativeOperation.FIND_LAST_INDEX == operation) {
+                requireObjectCoercible(cx, o, fun);
+            }
         }
 
         long length = getLengthProperty(cx, o);

@@ -7,10 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -39,14 +40,39 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeInt32Array a = new NativeInt32Array();
-        IdFunctionObject constructor = a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-    }
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        3,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        (Context lcx, Scriptable lscope, Object[] args) ->
+                                NativeTypedArrayView.js_constructor(
+                                        lcx,
+                                        lscope,
+                                        args,
+                                        NativeInt32Array::new,
+                                        BYTES_PER_ELEMENT));
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        NativeTypedArrayView.init(cx, scope, constructor, NativeInt32Array::realThis);
+        constructor.defineProperty(
+                cx,
+                "BYTES_PER_ELEMENT",
+                (Scriptable thisObj) -> BYTES_PER_ELEMENT,
+                null,
+                DONTENUM | READONLY | PERMANENT);
+        constructor.definePrototypeProperty(
+                cx,
+                "BYTES_PER_ELEMENT",
+                (Scriptable thisObj) -> BYTES_PER_ELEMENT,
+                DONTENUM | READONLY | PERMANENT);
 
-    @Override
-    protected NativeInt32Array construct(NativeArrayBuffer ab, int off, int len) {
-        return new NativeInt32Array(ab, off, len);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     @Override
@@ -54,9 +80,8 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
         return BYTES_PER_ELEMENT;
     }
 
-    @Override
-    protected NativeInt32Array realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, NativeInt32Array.class, f);
+    private static NativeInt32Array realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeInt32Array.class);
     }
 
     @Override

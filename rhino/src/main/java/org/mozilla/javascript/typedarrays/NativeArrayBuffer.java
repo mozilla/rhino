@@ -41,7 +41,6 @@ public class NativeArrayBuffer extends ScriptableObject {
                         1,
                         LambdaConstructor.CONSTRUCTOR_NEW,
                         NativeArrayBuffer::js_constructor);
-
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         constructor.defineConstructorMethod(
@@ -58,7 +57,6 @@ public class NativeArrayBuffer extends ScriptableObject {
                 cx, "byteLength", NativeArrayBuffer::js_byteLength, DONTENUM | READONLY);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
-
         if (sealed) {
             constructor.sealObject();
         }
@@ -132,45 +130,6 @@ public class NativeArrayBuffer extends ScriptableObject {
         return newBuf;
     }
 
-    /**
-     * The spec compliant implementation of slice
-     */
-    private NativeArrayBuffer slice(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            LambdaConstructor defaultConstructor,
-            double s,
-            double e) {
-        // Handle negative start as relative to start
-        // Clamp as per the spec to between 0 and length
-        int end =
-                ScriptRuntime.toInt32(
-                        Math.max(0, Math.min(buffer.length, (e < 0 ? buffer.length + e : e))));
-        int start =
-                ScriptRuntime.toInt32(Math.min(end, Math.max(0, (s < 0 ? buffer.length + s : s))));
-        int len = end - start;
-
-        Constructable constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
-        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {len});
-        if (!(newBuf instanceof NativeArrayBuffer)) {
-            throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
-        }
-        NativeArrayBuffer buf = (NativeArrayBuffer) newBuf;
-        if (buf == this) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.same");
-        }
-
-        int actualLength = buf.getLength();
-        if (actualLength < len) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.smaller.len", len, actualLength);
-        }
-
-        System.arraycopy(buffer, start, buf.buffer, 0, len);
-        return buf;
-    }
-
     private static NativeArrayBuffer getSelf(Scriptable thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
@@ -194,7 +153,38 @@ public class NativeArrayBuffer extends ScriptableObject {
         NativeArrayBuffer self = getSelf(thisObj);
         double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
         double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.getLength();
-        return self.slice(cx, scope, thisObj, defaultConstructor, start, end);
+        int endI =
+                ScriptRuntime.toInt32(
+                        Math.max(
+                                0,
+                                Math.min(
+                                        self.getLength(),
+                                        (end < 0 ? self.getLength() + end : end))));
+        int startI =
+                ScriptRuntime.toInt32(
+                        Math.min(
+                                endI, Math.max(0, (start < 0 ? self.getLength() + start : start))));
+        int len = endI - startI;
+
+        Constructable constructor =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {len});
+        if (!(newBuf instanceof NativeArrayBuffer)) {
+            throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
+        }
+        NativeArrayBuffer buf = (NativeArrayBuffer) newBuf;
+
+        if (buf == self) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.same");
+        }
+
+        int actualLength = buf.getLength();
+        if (actualLength < len) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.smaller.len", len, actualLength);
+        }
+
+        System.arraycopy(self.buffer, startI, buf.buffer, 0, len);
+        return buf;
     }
 
     private static Object js_byteLength(Scriptable thisObj) {
