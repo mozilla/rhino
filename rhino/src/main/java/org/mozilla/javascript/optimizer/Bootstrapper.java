@@ -35,9 +35,8 @@ public class Bootstrapper {
     static {
         // Set up the linkers
         DynamicLinkerFactory factory = new DynamicLinkerFactory();
-        // Check the list of type-based linkers first, and fall back to the
-        // default linker, which will always work by falling back to
-        // generic ScriptRuntime methods.
+        // The const-aware-linker will only bind a few operations, and everything
+        // else will fall back to the default linker, which will always bind.
         factory.setPrioritizedLinkers(new ConstAwareLinker(), new DefaultLinker());
         linker = factory.createLinker();
     }
@@ -45,7 +44,7 @@ public class Bootstrapper {
     /** This is the method called by every call site in the bytecode to map it to a function. */
     @SuppressWarnings("unused")
     public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType mType)
-            throws NoSuchMethodException, IllegalAccessException {
+            throws NoSuchMethodException {
         Operation op = parseOperation(name);
         // ChainedCallSite lets a call site have a few options for complex situations
         return linker.link(new ChainedCallSite(new CallSiteDescriptor(lookup, op, mType)));
