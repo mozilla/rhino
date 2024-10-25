@@ -33,8 +33,11 @@ public class Bootstrapper {
     private static final DynamicLinker linker;
 
     static {
-        // Set up the linkers that will be invoked whenever a call site needs to be resolved.
+        // Set up the linkers
         DynamicLinkerFactory factory = new DynamicLinkerFactory();
+        // Check the list of type-based linkers first, and fall back to the
+        // default linker, which will always work by falling back to
+        // generic ScriptRuntime methods.
         factory.setPrioritizedLinkers(new ConstAwareLinker(), new DefaultLinker());
         linker = factory.createLinker();
     }
@@ -44,7 +47,7 @@ public class Bootstrapper {
     public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType mType)
             throws NoSuchMethodException, IllegalAccessException {
         Operation op = parseOperation(name);
-        // For now, use a very simple call site.
+        // ChainedCallSite lets a call site have a few options for complex situations
         return linker.link(new ChainedCallSite(new CallSiteDescriptor(lookup, op, mType)));
     }
 
@@ -136,6 +139,34 @@ public class Bootstrapper {
                     return RhinoOperation.SETCONST
                             .withNamespace(RhinoNamespace.NAME)
                             .named(getNameSegment(tokens, name, 2));
+            }
+
+        } else if ("MATH".equals(namespaceName)) {
+            switch (opName) {
+                case "ADD":
+                    return RhinoOperation.ADD.withNamespace(RhinoNamespace.MATH);
+                case "TOBOOLEAN":
+                    return RhinoOperation.TOBOOLEAN.withNamespace(RhinoNamespace.MATH);
+                case "TOINT32":
+                    return RhinoOperation.TOINT32.withNamespace(RhinoNamespace.MATH);
+                case "TOUINT32":
+                    return RhinoOperation.TOUINT32.withNamespace(RhinoNamespace.MATH);
+                case "EQ":
+                    return RhinoOperation.EQ.withNamespace(RhinoNamespace.MATH);
+                case "SHALLOWEQ":
+                    return RhinoOperation.SHALLOWEQ.withNamespace(RhinoNamespace.MATH);
+                case "TONUMBER":
+                    return RhinoOperation.TONUMBER.withNamespace(RhinoNamespace.MATH);
+                case "TONUMERIC":
+                    return RhinoOperation.TONUMERIC.withNamespace(RhinoNamespace.MATH);
+                case "COMPAREGT":
+                    return RhinoOperation.COMPARE_GT.withNamespace(RhinoNamespace.MATH);
+                case "COMPARELT":
+                    return RhinoOperation.COMPARE_LT.withNamespace(RhinoNamespace.MATH);
+                case "COMPAREGE":
+                    return RhinoOperation.COMPARE_GE.withNamespace(RhinoNamespace.MATH);
+                case "COMPARELE":
+                    return RhinoOperation.COMPARE_LE.withNamespace(RhinoNamespace.MATH);
             }
         }
 
