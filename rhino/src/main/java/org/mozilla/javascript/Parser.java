@@ -2936,21 +2936,7 @@ public class Parser {
                         break tailLoop;
                     }
                     lineno = ts.lineno;
-                    consumeToken();
-                    checkCallRequiresActivation(pn);
-                    FunctionCall f = new FunctionCall(pos);
-                    f.setTarget(pn);
-                    // Assign the line number for the function call to where
-                    // the paren appeared, not where the name expression started.
-                    f.setLineno(lineno);
-                    f.setLp(ts.tokenBeg - pos);
-                    List<AstNode> args = argumentList();
-                    if (args != null && args.size() > ARGC_LIMIT)
-                        reportError("msg.too.many.function.args");
-                    f.setArguments(args);
-                    f.setRp(ts.tokenBeg - pos);
-                    f.setLength(ts.tokenEnd - pos);
-                    pn = f;
+                    pn = makeFunctionCall(pn, pos, lineno, isOptionalChain);
                     break;
                 case Token.COMMENT:
                     // Ignoring all the comments, because previous statement may not be terminated
@@ -2971,6 +2957,27 @@ public class Parser {
             }
         }
         return pn;
+    }
+
+    private FunctionCall makeFunctionCall(AstNode pn, int pos, int lineno, boolean isOptionalChain)
+            throws IOException {
+        consumeToken();
+        checkCallRequiresActivation(pn);
+        FunctionCall f = new FunctionCall(pos);
+        f.setTarget(pn);
+        // Assign the line number for the function call to where
+        // the paren appeared, not where the name expression started.
+        f.setLineno(lineno);
+        f.setLp(ts.tokenBeg - pos);
+        List<AstNode> args = argumentList();
+        if (args != null && args.size() > ARGC_LIMIT) reportError("msg.too.many.function.args");
+        f.setArguments(args);
+        f.setRp(ts.tokenBeg - pos);
+        f.setLength(ts.tokenEnd - pos);
+        if (isOptionalChain) {
+            f.markIsOptionalCall();
+        }
+        return f;
     }
 
     private AstNode taggedTemplateLiteral(AstNode pn) throws IOException {
@@ -3062,6 +3069,15 @@ public class Parser {
                     return makeErrorNode();
                 }
 
+            case Token.LP:
+                if (tt == Token.QUESTION_DOT) {
+                    // a function call such as f?.()
+                    return makeFunctionCall(pn, pn.getPosition(), lineno, isOptionalChain);
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
+
             default:
                 if (compilerEnv.isReservedKeywordAsIdentifier()) {
                     // allow keywords as property names, e.g. ({if: 1})
@@ -3079,7 +3095,9 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
-        if (isOptionalChain) result.setType(Token.QUESTION_DOT);
+        if (isOptionalChain) {
+            result.setType(Token.QUESTION_DOT);
+        }
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);

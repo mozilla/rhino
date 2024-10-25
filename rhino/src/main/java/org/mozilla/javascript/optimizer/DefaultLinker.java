@@ -101,6 +101,15 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh =
                     bindStringParameter(
                             lookup, mType, ScriptRuntime.class, "getPropFunctionAndThis", 1, name);
+        } else if (RhinoOperation.GETWITHTHISOPTIONAL.equals(op)) {
+            mh =
+                    bindStringParameter(
+                            lookup,
+                            mType,
+                            ScriptRuntime.class,
+                            "getPropFunctionAndThisOptional",
+                            1,
+                            name);
         } else if (StandardOperation.SET.equals(op)) {
             mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setObjectProp", 1, name);
         } else if (RhinoOperation.GETELEMENT.equals(op)) {
@@ -150,6 +159,13 @@ class DefaultLinker implements GuardingDynamicLinker {
                     MethodType.methodType(
                             Callable.class, String.class, Context.class, Scriptable.class);
             mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThis", tt);
+            mh = MethodHandles.insertArguments(mh, 0, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
+        } else if (RhinoOperation.GETWITHTHISOPTIONAL.equals(op)) {
+            tt =
+                    MethodType.methodType(
+                            Callable.class, String.class, Context.class, Scriptable.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThisOptional", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (StandardOperation.SET.equals(op)) {

@@ -602,10 +602,17 @@ class CodeGenerator extends Icode {
             case Token.CALL:
             case Token.NEW:
                 {
+                    boolean isOptionalChainingCall =
+                            node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
+                    CompleteOptionalCallJump completeOptionalCallJump = null;
                     if (type == Token.NEW) {
                         visitExpression(child, 0);
                     } else {
-                        generateCallFunAndThis(child);
+                        completeOptionalCallJump =
+                                generateCallFunAndThis(child, isOptionalChainingCall);
+                        if (completeOptionalCallJump != null) {
+                            resolveForwardGoto(completeOptionalCallJump.putArgsAndDoCallLabel);
+                        }
                     }
                     int argCount = 0;
                     while ((child = child.getNext()) != null) {
@@ -642,6 +649,10 @@ class CodeGenerator extends Icode {
                     }
                     if (argCount > itsData.itsMaxCalleeArgs) {
                         itsData.itsMaxCalleeArgs = argCount;
+                    }
+
+                    if (completeOptionalCallJump != null) {
+                        resolveForwardGoto(completeOptionalCallJump.afterLabel);
                     }
                 }
                 break;
@@ -1148,7 +1159,8 @@ class CodeGenerator extends Icode {
         stackChange(-1);
     }
 
-    private void generateCallFunAndThis(Node left) {
+    private CompleteOptionalCallJump generateCallFunAndThis(
+            Node left, boolean isOptionalChainingCall) {
         // Generate code to place on stack function and thisObj
         int type = left.getType();
         switch (type) {
@@ -1156,8 +1168,14 @@ class CodeGenerator extends Icode {
                 {
                     String name = left.getString();
                     // stack: ... -> ... function thisObj
-                    addStringOp(Icode_NAME_AND_THIS, name);
-                    stackChange(2);
+                    if (isOptionalChainingCall) {
+                        addStringOp(Icode_NAME_AND_THIS_OPTIONAL, name);
+                        stackChange(2);
+                        return completeOptionalCallJump();
+                    } else {
+                        addStringOp(Icode_NAME_AND_THIS, name);
+                        stackChange(2);
+                    }
                     break;
                 }
             case Token.GETPROP:
@@ -1169,12 +1187,23 @@ class CodeGenerator extends Icode {
                     if (type == Token.GETPROP) {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
-                        addStringOp(Icode_PROP_AND_THIS, property);
-                        stackChange(1);
+                        if (isOptionalChainingCall) {
+                            addStringOp(Icode_PROP_AND_THIS_OPTIONAL, property);
+                            stackChange(1);
+                            return completeOptionalCallJump();
+                        } else {
+                            addStringOp(Icode_PROP_AND_THIS, property);
+                            stackChange(1);
+                        }
                     } else {
                         visitExpression(id, 0);
                         // stack: ... target id -> ... function thisObj
-                        addIcode(Icode_ELEM_AND_THIS);
+                        if (isOptionalChainingCall) {
+                            addIcode(Icode_ELEM_AND_THIS_OPTIONAL);
+                            return completeOptionalCallJump();
+                        } else {
+                            addIcode(Icode_ELEM_AND_THIS);
+                        }
                     }
                     break;
                 }
@@ -1182,10 +1211,35 @@ class CodeGenerator extends Icode {
                 // Including Token.GETVAR
                 visitExpression(left, 0);
                 // stack: ... value -> ... function thisObj
-                addIcode(Icode_VALUE_AND_THIS);
-                stackChange(1);
+                if (isOptionalChainingCall) {
+                    addIcode(Icode_VALUE_AND_THIS_OPTIONAL);
+                    stackChange(1);
+                    return completeOptionalCallJump();
+                } else {
+                    addIcode(Icode_VALUE_AND_THIS);
+                    stackChange(1);
+                }
                 break;
         }
+        return null;
+    }
+
+    private CompleteOptionalCallJump completeOptionalCallJump() {
+        // If it's null or undefined, pop undefined and skip the arguments and call
+        addIcode(Icode_DUP);
+        stackChange(1);
+        int putArgsAndDoCallLabel = iCodeTop;
+        addGotoOp(Icode.Icode_IF_NOT_NULL_UNDEF);
+        stackChange(-1);
+
+        // Put undefined
+        addIcode(Icode_POP);
+        addIcode(Icode_POP);
+        addStringOp(Token.NAME, "undefined");
+        int afterLabel = iCodeTop;
+        addGotoOp(Token.GOTO);
+
+        return new CompleteOptionalCallJump(putArgsAndDoCallLabel, afterLabel);
     }
 
     private void visitIncDec(Node node, Node child) {
@@ -1694,5 +1748,15 @@ class CodeGenerator extends Icode {
     private void releaseLocal(int localSlot) {
         --localTop;
         if (localSlot != localTop) Kit.codeBug();
+    }
+
+    private static final class CompleteOptionalCallJump {
+        private final int putArgsAndDoCallLabel;
+        private final int afterLabel;
+
+        public CompleteOptionalCallJump(int putArgsAndDoCallLabel, int afterLabel) {
+            this.putArgsAndDoCallLabel = putArgsAndDoCallLabel;
+            this.afterLabel = afterLabel;
+        }
     }
 }

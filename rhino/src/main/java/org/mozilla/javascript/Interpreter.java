@@ -573,6 +573,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     }
 
                 case Icode_CALLSPECIAL:
+                case Icode_CALLSPECIAL_OPTIONAL:
                     {
                         int callType = iCode[pc] & 0xFF;
                         boolean isNew = (iCode[pc + 1] != 0);
@@ -830,6 +831,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 return 1 + 2;
 
             case Icode_CALLSPECIAL:
+            case Icode_CALLSPECIAL_OPTIONAL:
                 // call type
                 // is new
                 // line number
@@ -1742,6 +1744,15 @@ public final class Interpreter extends Icode implements Evaluator {
                                 ++stackTop;
                                 stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
                                 continue Loop;
+                            case Icode_NAME_AND_THIS_OPTIONAL:
+                                // stringReg: name
+                                ++stackTop;
+                                stack[stackTop] =
+                                        ScriptRuntime.getNameFunctionAndThisOptional(
+                                                stringReg, cx, frame.scope);
+                                ++stackTop;
+                                stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+                                continue Loop;
                             case Icode_PROP_AND_THIS:
                                 {
                                     Object obj = stack[stackTop];
@@ -1750,6 +1761,19 @@ public final class Interpreter extends Icode implements Evaluator {
                                     // stringReg: property
                                     stack[stackTop] =
                                             ScriptRuntime.getPropFunctionAndThis(
+                                                    obj, stringReg, cx, frame.scope);
+                                    ++stackTop;
+                                    stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+                                    continue Loop;
+                                }
+                            case Icode_PROP_AND_THIS_OPTIONAL:
+                                {
+                                    Object obj = stack[stackTop];
+                                    if (obj == DBL_MRK)
+                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    // stringReg: property
+                                    stack[stackTop] =
+                                            ScriptRuntime.getPropFunctionAndThisOptional(
                                                     obj, stringReg, cx, frame.scope);
                                     ++stackTop;
                                     stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
@@ -1769,6 +1793,20 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
                                     continue Loop;
                                 }
+                            case Icode_ELEM_AND_THIS_OPTIONAL:
+                                {
+                                    Object obj = stack[stackTop - 1];
+                                    if (obj == DBL_MRK)
+                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
+                                    Object id = stack[stackTop];
+                                    if (id == DBL_MRK)
+                                        id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    stack[stackTop - 1] =
+                                            ScriptRuntime.getElemFunctionAndThisOptional(
+                                                    obj, id, cx, frame.scope);
+                                    stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+                                    continue Loop;
+                                }
                             case Icode_VALUE_AND_THIS:
                                 {
                                     Object value = stack[stackTop];
@@ -1776,6 +1814,18 @@ public final class Interpreter extends Icode implements Evaluator {
                                         value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                     stack[stackTop] =
                                             ScriptRuntime.getValueFunctionAndThis(value, cx);
+                                    ++stackTop;
+                                    stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+                                    continue Loop;
+                                }
+                            case Icode_VALUE_AND_THIS_OPTIONAL:
+                                {
+                                    Object value = stack[stackTop];
+                                    if (value == DBL_MRK)
+                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    stack[stackTop] =
+                                            ScriptRuntime.getValueFunctionAndThisOptional(
+                                                    value, cx);
                                     ++stackTop;
                                     stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
                                     continue Loop;
@@ -1788,7 +1838,18 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop =
                                             doCallSpecial(
                                                     cx, frame, stack, sDbl, stackTop, iCode,
-                                                    indexReg);
+                                                    indexReg, false);
+                                    continue Loop;
+                                }
+                            case Icode_CALLSPECIAL_OPTIONAL:
+                                {
+                                    if (instructionCounting) {
+                                        cx.instructionCount += INVOCATION_COST;
+                                    }
+                                    stackTop =
+                                            doCallSpecial(
+                                                    cx, frame, stack, sDbl, stackTop, iCode,
+                                                    indexReg, true);
                                     continue Loop;
                                 }
                             case Token.CALL:
@@ -2968,7 +3029,8 @@ public final class Interpreter extends Icode implements Evaluator {
             double[] sDbl,
             int stackTop,
             byte[] iCode,
-            int indexReg) {
+            int indexReg,
+            boolean isOptionalChainingCall) {
         int callType = iCode[frame.pc] & 0xFF;
         boolean isNew = (iCode[frame.pc + 1] != 0);
         int sourceLine = getIndex(iCode, frame.pc + 2);
@@ -3002,7 +3064,8 @@ public final class Interpreter extends Icode implements Evaluator {
                             frame.thisObj,
                             callType,
                             frame.idata.itsSourceFile,
-                            sourceLine);
+                            sourceLine,
+                            isOptionalChainingCall);
         }
         frame.pc += 4;
         return stackTop;
