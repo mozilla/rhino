@@ -49,17 +49,9 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
                                         lcx, lscope, args, NativeInt8Array::new, 1));
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         NativeTypedArrayView.init(cx, scope, constructor, NativeInt8Array::realThis);
-        constructor.defineProperty(
-                cx,
-                "BYTES_PER_ELEMENT",
-                (Scriptable thisObj) -> 1,
-                null,
-                DONTENUM | READONLY | PERMANENT);
+        constructor.defineProperty("BYTES_PER_ELEMENT", 1, DONTENUM | READONLY | PERMANENT);
         constructor.definePrototypeProperty(
-                cx,
-                "BYTES_PER_ELEMENT",
-                (Scriptable thisObj) -> 1,
-                DONTENUM | READONLY | PERMANENT);
+                "BYTES_PER_ELEMENT", 1, DONTENUM | READONLY | PERMANENT);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 

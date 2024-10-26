@@ -56,16 +56,9 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         NativeTypedArrayView.init(cx, scope, constructor, NativeInt32Array::realThis);
         constructor.defineProperty(
-                cx,
-                "BYTES_PER_ELEMENT",
-                (Scriptable thisObj) -> BYTES_PER_ELEMENT,
-                null,
-                DONTENUM | READONLY | PERMANENT);
+                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
         constructor.definePrototypeProperty(
-                cx,
-                "BYTES_PER_ELEMENT",
-                (Scriptable thisObj) -> BYTES_PER_ELEMENT,
-                DONTENUM | READONLY | PERMANENT);
+                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 

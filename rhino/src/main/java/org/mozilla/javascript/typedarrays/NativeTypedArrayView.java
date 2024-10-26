@@ -376,30 +376,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 scope,
                 "set",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    if (args.length > 0) {
-                        if (args[0] instanceof NativeTypedArrayView) {
-                            int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                            NativeTypedArrayView<?> nativeView = (NativeTypedArrayView<?>) args[0];
-                            self.setRange(nativeView, offset);
-                            return Undefined.instance;
-                        }
-                        if (args[0] instanceof NativeArray) {
-                            int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                            self.setRange((NativeArray) args[0], offset);
-                            return Undefined.instance;
-                        }
-                        if (args[0] instanceof Scriptable) {
-                            // Tests show that we need to ignore a non-array object
-                            return Undefined.instance;
-                        }
-                        if (isArg(args, 2)) {
-                            return self.js_set(ScriptRuntime.toInt32(args[0]), args[1]);
-                        }
-                    }
-                    throw ScriptRuntime.constructError("Error", "invalid arguments");
-                },
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        js_set(lcx, lscope, thisObj, args, realThis),
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
@@ -1002,6 +980,32 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
 
         return self;
+    }
+
+    private static Object js_set(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
+        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+        if (args.length > 0) {
+            if (args[0] instanceof NativeTypedArrayView) {
+                int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
+                NativeTypedArrayView<?> nativeView = (NativeTypedArrayView<?>) args[0];
+                self.setRange(nativeView, offset);
+                return Undefined.instance;
+            }
+            if (args[0] instanceof NativeArray) {
+                int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
+                self.setRange((NativeArray) args[0], offset);
+                return Undefined.instance;
+            }
+            if (args[0] instanceof Scriptable) {
+                // Tests show that we need to ignore a non-array object
+                return Undefined.instance;
+            }
+            if (isArg(args, 2)) {
+                return self.js_set(ScriptRuntime.toInt32(args[0]), args[1]);
+            }
+        }
+        throw ScriptRuntime.constructError("Error", "invalid arguments");
     }
 
     private static Object js_subarray(
