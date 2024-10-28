@@ -118,12 +118,24 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
-    private List<Plugin> plugins = getPluginsFromServiceLoader();
+    private final List<Plugin> plugins;
 
-    private List<Plugin> getPluginsFromServiceLoader() {
+    /** returns a list of plugins found by the ServiceLoader */
+    public static List<Plugin> getDefaultPluginsFromServiceLoader() {
         List<Plugin> result = new ArrayList<Plugin>();
-        ServiceLoader.load(Plugin.class).forEach(result::add);
-        return Collections.unmodifiableList(result);
+        ServiceLoader.load(Plugin.class)
+                .forEach(
+                        plugin -> {
+                            String disabled =
+                                    SecurityUtilities.getSystemProperty(
+                                            "rhino.plugin." + plugin.getName() + ".disabled");
+                            if ("1".equals(disabled) || "true".equals(disabled)) {
+                                // the plugin is disabled
+                            } else {
+                                result.add(plugin);
+                            }
+                        });
+        return result;
     }
 
     /** Listener of {@link Context} creation and release events. */
@@ -136,6 +148,16 @@ public class ContextFactory {
          * current thread.
          */
         public void contextReleased(Context cx);
+    }
+
+    /** Constructs a new ContextFactory with the plugins found by serviceLoader. */
+    public ContextFactory() {
+        this(getDefaultPluginsFromServiceLoader());
+    }
+
+    /** Constructs a new ContextFactory with a given list of plugins. */
+    public ContextFactory(List<Plugin> plugins) {
+        this.plugins = Collections.unmodifiableList(plugins);
     }
 
     /**
@@ -531,16 +553,5 @@ public class ContextFactory {
     /** Returns a list of plugins. */
     public List<Plugin> getPlugins() {
         return plugins;
-    }
-
-    /**
-     * Sets a list of plugins, that are used by this factory. Note: by default, the plugins are
-     * loaded by ServiceLoader.
-     */
-    public void setPlugins(List<Plugin> plugins) {
-        checkNotSealed();
-        synchronized (plugins) {
-            this.plugins = Collections.unmodifiableList(plugins);
-        }
     }
 }
