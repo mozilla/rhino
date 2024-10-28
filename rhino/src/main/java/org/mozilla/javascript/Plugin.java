@@ -7,6 +7,9 @@ package org.mozilla.javascript;
  */
 public interface Plugin {
 
+    /** The name of the plugin. */
+    String getName();
+
     /** Initializes the safe standard objects. */
     default void initSafeStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {}
 

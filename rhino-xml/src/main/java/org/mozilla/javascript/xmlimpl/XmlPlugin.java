@@ -14,6 +14,11 @@ import org.mozilla.javascript.ScriptableObject;
 public class XmlPlugin implements Plugin {
 
     @Override
+    public String getName() {
+        return "xml";
+    }
+
+    @Override
     public void initSafeStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             String xmlImpl = XMLLibImpl.class.getName();
