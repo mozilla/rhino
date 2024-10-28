@@ -7,10 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -39,14 +40,32 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeFloat64Array a = new NativeFloat64Array();
-        IdFunctionObject constructor = a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-    }
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        3,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        (Context lcx, Scriptable lscope, Object[] args) ->
+                                NativeTypedArrayView.js_constructor(
+                                        lcx,
+                                        lscope,
+                                        args,
+                                        NativeFloat64Array::new,
+                                        BYTES_PER_ELEMENT));
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        NativeTypedArrayView.init(cx, scope, constructor, NativeFloat64Array::realThis);
+        constructor.defineProperty(
+                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
+        constructor.definePrototypeProperty(
+                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
 
-    @Override
-    protected NativeFloat64Array construct(NativeArrayBuffer ab, int off, int len) {
-        return new NativeFloat64Array(ab, off, len);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     @Override
@@ -54,9 +73,8 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
         return BYTES_PER_ELEMENT;
     }
 
-    @Override
-    protected NativeFloat64Array realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, NativeFloat64Array.class, f);
+    private static NativeFloat64Array realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeFloat64Array.class);
     }
 
     @Override

@@ -7,9 +7,8 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdScriptableObject;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -19,7 +18,7 @@ import org.mozilla.javascript.Undefined;
  * NativeArrayBuffer. Many views may simultaneously share the same buffer, and changes to one will
  * affect all.
  */
-public abstract class NativeArrayBufferView extends IdScriptableObject {
+public abstract class NativeArrayBufferView extends ScriptableObject {
     private static final long serialVersionUID = 6884475582973958419L;
 
     private static Boolean useLittleEndian = null;
@@ -76,64 +75,6 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
         return ((args.length > i) && !Undefined.instance.equals(args[i]));
     }
 
-    // Property dispatcher
-
-    @Override
-    protected int getMaxInstanceId() {
-        return MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected String getInstanceIdName(int id) {
-        switch (id) {
-            case Id_buffer:
-                return "buffer";
-            case Id_byteOffset:
-                return "byteOffset";
-            case Id_byteLength:
-                return "byteLength";
-            default:
-                return super.getInstanceIdName(id);
-        }
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        switch (id) {
-            case Id_buffer:
-                return arrayBuffer;
-            case Id_byteOffset:
-                return ScriptRuntime.wrapInt(offset);
-            case Id_byteLength:
-                return ScriptRuntime.wrapInt(byteLength);
-            default:
-                return super.getInstanceIdValue(id);
-        }
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        int id;
-        switch (s) {
-            case "buffer":
-                id = Id_buffer;
-                break;
-            case "byteOffset":
-                id = Id_byteOffset;
-                break;
-            case "byteLength":
-                id = Id_byteLength;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        if (id == 0) {
-            return super.findInstanceIdInfo(s);
-        }
-        return instanceIdInfo(READONLY | PERMANENT, id);
-    }
-
     @Override
     public Object get(Symbol key, Scriptable start) {
         if (SymbolKey.TO_STRING_TAG.equals(key)) {
@@ -141,9 +82,4 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
         }
         return super.get(key, start);
     }
-
-    private static final int Id_buffer = 1, Id_byteOffset = 2, Id_byteLength = 3;
-
-    // to be visible by subclasses
-    protected static final int MAX_INSTANCE_ID = Id_byteLength;
 }

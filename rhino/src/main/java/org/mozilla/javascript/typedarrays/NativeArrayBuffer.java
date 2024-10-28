@@ -6,18 +6,20 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.AbstractEcmaObjectOperations;
+import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
  * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code, it
  * implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
  */
-public class NativeArrayBuffer extends IdScriptableObject {
+public class NativeArrayBuffer extends ScriptableObject {
     private static final long serialVersionUID = 3110411773054879549L;
 
     public static final String CLASS_NAME = "ArrayBuffer";
@@ -32,8 +34,32 @@ public class NativeArrayBuffer extends IdScriptableObject {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeArrayBuffer na = new NativeArrayBuffer();
-        na.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        "ArrayBuffer",
+                        1,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        NativeArrayBuffer::js_constructor);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+
+        constructor.defineConstructorMethod(
+                scope, "isView", 1, NativeArrayBuffer::js_isView, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "slice",
+                2,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        js_slice(lcx, lscope, thisObj, constructor, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeProperty(
+                cx, "byteLength", NativeArrayBuffer::js_byteLength, DONTENUM | READONLY);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     /** Create an empty buffer. */
@@ -79,8 +105,6 @@ public class NativeArrayBuffer extends IdScriptableObject {
         return buffer;
     }
 
-    // Actual implementations of actual code
-
     /**
      * Return a new buffer that represents a slice of this buffer's content, starting at position
      * "start" and ending at position "end". Both values will be "clamped" as per the JavaScript
@@ -106,120 +130,68 @@ public class NativeArrayBuffer extends IdScriptableObject {
         return newBuf;
     }
 
-    // Function-calling dispatcher
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(CLASS_NAME)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-        switch (id) {
-            case ConstructorId_isView:
-                return Boolean.valueOf(
-                        (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
-
-            case Id_constructor:
-                double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-                return new NativeArrayBuffer(length);
-
-            case Id_slice:
-                NativeArrayBuffer self = realThis(thisObj, f);
-                double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-                double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.buffer.length;
-                return self.slice(start, end);
-        }
-        throw new IllegalArgumentException(String.valueOf(id));
+    private static NativeArrayBuffer getSelf(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
-    private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, NativeArrayBuffer.class, f);
+    private static NativeArrayBuffer js_constructor(Context cx, Scriptable scope, Object[] args) {
+        double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
+        return new NativeArrayBuffer(length);
+    }
+
+    private static Boolean js_isView(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
+    }
+
+    private static NativeArrayBuffer js_slice(
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            LambdaConstructor defaultConstructor,
+            Object[] args) {
+        NativeArrayBuffer self = getSelf(thisObj);
+        double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
+        double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.getLength();
+        int endI =
+                ScriptRuntime.toInt32(
+                        Math.max(
+                                0,
+                                Math.min(
+                                        self.getLength(),
+                                        (end < 0 ? self.getLength() + end : end))));
+        int startI =
+                ScriptRuntime.toInt32(
+                        Math.min(
+                                endI, Math.max(0, (start < 0 ? self.getLength() + start : start))));
+        int len = endI - startI;
+
+        Constructable constructor =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {len});
+        if (!(newBuf instanceof NativeArrayBuffer)) {
+            throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
+        }
+        NativeArrayBuffer buf = (NativeArrayBuffer) newBuf;
+
+        if (buf == self) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.same");
+        }
+
+        int actualLength = buf.getLength();
+        if (actualLength < len) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.smaller.len", len, actualLength);
+        }
+
+        System.arraycopy(self.buffer, startI, buf.buffer, 0, len);
+        return buf;
+    }
+
+    private static Object js_byteLength(Scriptable thisObj) {
+        return getSelf(thisObj).getLength();
     }
 
     private static boolean isArg(Object[] args, int i) {
         return ((args.length > i) && !Undefined.instance.equals(args[i]));
     }
-
-    @Override
-    protected void initPrototypeId(int id) {
-        String s;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 1;
-                s = "constructor";
-                break;
-            case Id_slice:
-                arity = 2;
-                s = "slice";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(CLASS_NAME, id, s, arity);
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "slice":
-                id = Id_slice;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    // Table of all functions
-    private static final int Id_constructor = 1, Id_slice = 2, MAX_PROTOTYPE_ID = Id_slice;
-
-    // Constructor (aka static) functions here
-
-    private static final int ConstructorId_isView = -1;
-
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor) {
-        addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_isView, "isView", 1);
-    }
-
-    // Properties here
-
-    @Override
-    protected int getMaxInstanceId() {
-        return MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected String getInstanceIdName(int id) {
-        if (id == Id_byteLength) {
-            return "byteLength";
-        }
-        return super.getInstanceIdName(id);
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        if (id == Id_byteLength) {
-            return ScriptRuntime.wrapInt(buffer.length);
-        }
-        return super.getInstanceIdValue(id);
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        if ("byteLength".equals(s)) {
-            return instanceIdInfo(READONLY | PERMANENT, Id_byteLength);
-        }
-        return super.findInstanceIdInfo(s);
-    }
-
-    // Table of all properties
-    private static final int Id_byteLength = 1, MAX_INSTANCE_ID = Id_byteLength;
 }
