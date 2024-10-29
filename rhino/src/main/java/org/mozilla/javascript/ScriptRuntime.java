@@ -3044,7 +3044,11 @@ public class ScriptRuntime {
         Script script = cx.compileString(x.toString(), evaluator, reporter, sourceName, 1, null);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable) script;
-        return c.call(cx, scope, (Scriptable) thisArg, ScriptRuntime.emptyArgs);
+        Scriptable thisObject =
+                thisArg == Undefined.instance
+                        ? Undefined.SCRIPTABLE_UNDEFINED
+                        : (Scriptable) thisArg;
+        return c.call(cx, scope, thisObject, ScriptRuntime.emptyArgs);
     }
 
     /** The typeof operator */
