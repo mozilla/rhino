@@ -9,4 +9,5 @@ import jdk.dynalink.Namespace;
 @SuppressWarnings("AndroidJdkLibsChecker")
 public enum RhinoNamespace implements Namespace {
     NAME,
+    MATH,
 }

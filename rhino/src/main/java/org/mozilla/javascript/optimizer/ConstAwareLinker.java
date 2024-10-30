@@ -3,9 +3,6 @@ package org.mozilla.javascript.optimizer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import jdk.dynalink.NamedOperation;
-import jdk.dynalink.NamespaceOperation;
-import jdk.dynalink.Operation;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
@@ -20,29 +17,19 @@ import org.mozilla.javascript.ScriptableObject;
 @SuppressWarnings("AndroidJdkLibsChecker")
 class ConstAwareLinker implements GuardingDynamicLinker {
     @Override
-    public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc)
-            throws Exception {
+    public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc) {
         if (req.isCallSiteUnstable()) {
-            if (DefaultLinker.DEBUG) {
-                System.out.println(
-                        req.getCallSiteDescriptor().getOperation() + ": unstable call site");
-            }
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Operation rootOp = req.getCallSiteDescriptor().getOperation();
         MethodType mType = req.getCallSiteDescriptor().getMethodType();
-        String name = DefaultLinker.getName(rootOp);
-        Operation op = NamedOperation.getBaseOperation(rootOp);
+        ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         Object target = req.getReceiver();
 
-        if (NamespaceOperation.contains(op, StandardOperation.GET, RhinoNamespace.NAME)
-                || NamespaceOperation.contains(
-                        op, StandardOperation.GET, StandardNamespace.PROPERTY)
-                || NamespaceOperation.contains(
-                        op, RhinoOperation.GETNOWARN, StandardNamespace.PROPERTY)) {
-            Object constValue = getConstValue(target, name);
+        if ((op.isNamespace(RhinoNamespace.NAME) && op.isOperation(StandardOperation.GET))
+                || (op.isNamespace(StandardNamespace.PROPERTY)
+                        && op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN))) {
+            Object constValue = getConstValue(target, op.getName());
             if (constValue != null) {
                 // The guard returns boolean and compares the first argument to the
                 // target here. This works because the target is always our first argument.
@@ -55,7 +42,7 @@ class ConstAwareLinker implements GuardingDynamicLinker {
                                 0,
                                 mType.parameterList());
                 if (DefaultLinker.DEBUG) {
-                    System.out.println(rootOp + " constant");
+                    System.out.println(op + ": constant");
                 }
                 return new GuardedInvocation(mh, guard);
             }

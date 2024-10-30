@@ -104,7 +104,9 @@ interface Signatures {
     /**
      * NAME:GETWITHTHIS:{name}: Looks up a name in the scope like NAME:GET, and sets "this" in the
      * "last stored scriptable." Falls back to ScriptRuntime.getNameFunctionAndThis. Also, this
-     * version of the signature makes the scope the first argument, as described above.
+     * version of the signature makes the scope the first argument, as described above. Also,
+     * NAME:GETWITHTHISOPTIONAL:{name} has different semantics for an optional function call, but it
+     * uses this same signature.
      */
     String NAME_GET_THIS =
             "(Lorg/mozilla/javascript/Scriptable;"
@@ -150,4 +152,47 @@ interface Signatures {
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";
+
+    /**
+     * MATH:ADD: Add the first two arguments on the stack, which could be numbers, strings, or
+     * really just about anything.
+     */
+    String MATH_ADD =
+            "(Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + ")Ljava/lang/Object;";
+
+    /** MATH:TOBOOLEAN: Make the object into a primitive boolean. */
+    String MATH_TO_BOOLEAN = "(Ljava/lang/Object;)Z";
+
+    /** MATH:EQ: Are the two arguments equal? */
+    String MATH_EQ = "(Ljava/lang/Object;Ljava/lang/Object;)Z";
+
+    /** MATH:SHALLOWEQ: Like EQ but not. */
+    String MATH_SHALLOW_EQ = MATH_EQ;
+
+    /**
+     * A list of four possible compare operations, that all share the same signature:
+     *
+     * <ul>
+     *   <li>MATH:COMPAREGT
+     *   <li>MATH:COMPARELT
+     *   <li>MATH:COMPAREGE
+     *   <li>MATH:COMPARELE
+     * </ul>
+     */
+    String MATH_COMPARE = "(Ljava/lang/Object;Ljava/lang/Object;)Z";
+
+    /** MATH:TONUMBER: Convert the object to a Java "double". */
+    String MATH_TO_NUMBER = "(Ljava/lang/Object;)D";
+
+    /** MATH:TONUMERIC: Convert the object to a Java "Number". */
+    String MATH_TO_NUMERIC = "(Ljava/lang/Object;)Ljava/lang/Number;";
+
+    /** MATH:TOINT32: Convert the object to a Java "int". */
+    String MATH_TO_INT32 = "(Ljava/lang/Object;)I";
+
+    /** MATH:TOUINT32: Convert the object to a Java "long" that represents an unsigned integer. */
+    String MATH_TO_UINT32 = "(Ljava/lang/Object;)J";
 }
