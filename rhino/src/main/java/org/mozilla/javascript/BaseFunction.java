@@ -509,7 +509,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return prototypeProperty != null || this instanceof NativeFunction;
     }
 
-    protected Object getPrototypeProperty() {
+    public Object getPrototypeProperty() {
         Object result = prototypeProperty;
         if (result == null) {
             // only create default prototype on native JavaScript functions,

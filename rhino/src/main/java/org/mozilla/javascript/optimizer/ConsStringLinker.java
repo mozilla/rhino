@@ -3,23 +3,18 @@ package org.mozilla.javascript.optimizer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.Objects;
-import jdk.dynalink.StandardNamespace;
-import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
-import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 
 @SuppressWarnings("AndroidJdkLibsChecker")
-class StringLinker implements TypeBasedGuardingDynamicLinker {
+class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
     @Override
     public boolean canLinkType(Class<?> type) {
-        return String.class.equals(type);
+        return ConsString.class.equals(type);
     }
 
     @Override
@@ -43,26 +38,16 @@ class StringLinker implements TypeBasedGuardingDynamicLinker {
             if (op.isOperation(RhinoOperation.ADD)) {
                 MethodType guardType = mType.changeReturnType(Boolean.TYPE);
                 if (arg2 instanceof CharSequence) {
-                    mh = lookup.findStatic(StringLinker.class, "add", mType);
-                    guard = lookup.findStatic(StringLinker.class, "testAdd", guardType);
+                    mh = lookup.findStatic(ConsStringLinker.class, "add", mType);
+                    guard = lookup.findStatic(ConsStringLinker.class, "testAdd", guardType);
                 }
-            } else if (op.isOperation(RhinoOperation.EQ, RhinoOperation.SHALLOWEQ)
-                    && (arg2 instanceof String)) {
-                mh = lookup.findStatic(StringLinker.class, "eq", mType);
-                guard = lookup.findStatic(StringLinker.class, "testEq", mType);
-            }
-        } else if (op.isNamespace(StandardNamespace.PROPERTY)) {
-            if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
-                    && "length".equals(op.getName())) {
-                mh = lookup.findStatic(StringLinker.class, "getLength", mType);
-                guard = Guards.getInstanceOfGuard(String.class);
             }
         }
 
         if (mh != null) {
             assert guard != null;
             if (DefaultLinker.DEBUG) {
-                System.out.println(op + " string operation");
+                System.out.println(op + " ConsString operation");
             }
             return new GuardedInvocation(mh, guard);
         }
@@ -72,26 +57,11 @@ class StringLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static boolean testAdd(Object lval, Object rval, Context cx) {
-        return lval instanceof String && rval instanceof CharSequence;
+        return lval instanceof ConsString && rval instanceof CharSequence;
     }
 
     @SuppressWarnings("unused")
     private static Object add(Object lval, Object rval, Context cx) {
-        return new ConsString((String) lval, ((CharSequence) rval).toString());
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean testEq(Object lVal, Object rval) {
-        return lVal instanceof String && rval instanceof String;
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean eq(Object lVal, Object rval) {
-        return Objects.equals(lVal, rval);
-    }
-
-    @SuppressWarnings("unused")
-    private static Object getLength(Object o, Context cx, Scriptable scope) {
-        return Integer.valueOf(((String) o).length());
+        return new ConsString((ConsString) lval, ((CharSequence) rval).toString());
     }
 }

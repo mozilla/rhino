@@ -139,7 +139,7 @@ class DoubleLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static boolean eq(Object lval, Object rval) {
-        return ((Double)lval).doubleValue() == ((Double)rval).doubleValue();
+        return ((Double) lval).doubleValue() == ((Double) rval).doubleValue();
     }
 
     @SuppressWarnings("unused")

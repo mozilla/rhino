@@ -18,8 +18,8 @@ import org.mozilla.javascript.ScriptableObject;
 class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     @Override
     public boolean canLinkType(Class<?> type) {
-        return ScriptableObject.class.isAssignableFrom(type) ||
-                NativeWith.class.isAssignableFrom(type);
+        return ScriptableObject.class.isAssignableFrom(type)
+                || NativeWith.class.isAssignableFrom(type);
     }
 
     @Override

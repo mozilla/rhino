@@ -42,9 +42,16 @@ public class Bootstrapper {
         // still be prioritized, so we prioritize this list in terms of the
         // amount it will help performance.
         CompositeTypeBasedGuardingDynamicLinker typeLinker =
-                new CompositeTypeBasedGuardingDynamicLinker(Arrays.asList(new ConstAwareLinker(),
-                        new BooleanLinker(), new IntegerLinker(),
-                        new DoubleLinker(), new StringLinker()));
+                new CompositeTypeBasedGuardingDynamicLinker(
+                        Arrays.asList(
+                                new ConstAwareLinker(),
+                                new BooleanLinker(),
+                                new IntegerLinker(),
+                                new DoubleLinker(),
+                                new StringLinker(),
+                                new ConsStringLinker(),
+                                new NativeArrayLinker(),
+                                new BaseFunctionLinker()));
         factory.setPrioritizedLinkers(typeLinker, new DefaultLinker());
         linker = factory.createLinker();
     }
