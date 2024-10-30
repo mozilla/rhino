@@ -6,16 +6,22 @@ import java.lang.invoke.MethodType;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
-import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
+import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
 @SuppressWarnings("AndroidJdkLibsChecker")
-class ConstAwareLinker implements GuardingDynamicLinker {
+class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
+    @Override
+    public boolean canLinkType(Class<?> type) {
+        return ScriptableObject.class.isAssignableFrom(type) ||
+                NativeWith.class.isAssignableFrom(type);
+    }
+
     @Override
     public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc) {
         if (req.isCallSiteUnstable()) {
@@ -61,9 +67,7 @@ class ConstAwareLinker implements GuardingDynamicLinker {
             // Support constants referenced from inside functions
             return getConstValue(((NativeWith) t).getPrototype(), name);
         }
-        if (!(t instanceof ScriptableObject)) {
-            return null;
-        }
+        assert t instanceof ScriptableObject;
         try {
             ScriptableObject target = (ScriptableObject) t;
             // Just look in the root of the object -- don't mess around with

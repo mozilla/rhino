@@ -3,6 +3,7 @@ package org.mozilla.javascript.optimizer;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import jdk.dynalink.CallSiteDescriptor;
 import jdk.dynalink.DynamicLinker;
@@ -10,6 +11,7 @@ import jdk.dynalink.DynamicLinkerFactory;
 import jdk.dynalink.Operation;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
+import jdk.dynalink.linker.support.CompositeTypeBasedGuardingDynamicLinker;
 import jdk.dynalink.support.ChainedCallSite;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
@@ -35,9 +37,15 @@ public class Bootstrapper {
     static {
         // Set up the linkers
         DynamicLinkerFactory factory = new DynamicLinkerFactory();
-        // The const-aware-linker will only bind a few operations, and everything
-        // else will fall back to the default linker, which will always bind.
-        factory.setPrioritizedLinkers(new ConstAwareLinker(), new DefaultLinker());
+        // This composite linker will cache type names and invoke only the linkers
+        // that are compatible with each type. Linkers higher in the order will
+        // still be prioritized, so we prioritize this list in terms of the
+        // amount it will help performance.
+        CompositeTypeBasedGuardingDynamicLinker typeLinker =
+                new CompositeTypeBasedGuardingDynamicLinker(Arrays.asList(new ConstAwareLinker(),
+                        new BooleanLinker(), new IntegerLinker(),
+                        new DoubleLinker(), new StringLinker()));
+        factory.setPrioritizedLinkers(typeLinker, new DefaultLinker());
         linker = factory.createLinker();
     }
 
