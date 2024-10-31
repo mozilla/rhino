@@ -50,7 +50,7 @@ class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
             if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
                     && "length".equals(op.getName())) {
                 mh = lookup.findStatic(ConsStringLinker.class, "getLength", mType);
-                guard = Guards.getInstanceOfGuard(String.class);
+                guard = Guards.getInstanceOfGuard(ConsString.class);
             }
         }
 
