@@ -55,6 +55,6 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object getPrototype(Object o, Context cx, Scriptable scope) {
-        return ((BaseFunction)o).getPrototypeProperty();
+        return ((BaseFunction) o).getPrototypeProperty();
     }
 }

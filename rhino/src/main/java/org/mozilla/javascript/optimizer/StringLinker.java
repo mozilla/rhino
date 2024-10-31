@@ -92,6 +92,6 @@ class StringLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object getLength(Object o, Context cx, Scriptable scope) {
-        return Integer.valueOf(((String) o).length());
+        return ((String) o).length();
     }
 }

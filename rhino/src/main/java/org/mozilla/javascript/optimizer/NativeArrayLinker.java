@@ -59,6 +59,6 @@ class NativeArrayLinker implements TypeBasedGuardingDynamicLinker {
         if (length < Integer.MAX_VALUE) {
             return Integer.valueOf((int) length);
         }
-        return Double.valueOf((double)length);
+        return Double.valueOf((double) length);
     }
 }

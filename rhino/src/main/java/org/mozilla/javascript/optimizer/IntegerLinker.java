@@ -123,8 +123,7 @@ class IntegerLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object addDouble(Object lval, Object rval, Context cx) {
-        double r = ((Integer) lval).doubleValue() + (Double) rval;
-        return Double.valueOf(r);
+        return ((Integer) lval).doubleValue() + (Double) rval;
     }
 
     @SuppressWarnings("unused")

@@ -112,8 +112,7 @@ class DoubleLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object add(Object lval, Object rval, Context cx) {
-        double r = ((Double) lval) + ((Double) rval);
-        return Double.valueOf(r);
+        return ((Double) lval) + ((Double) rval);
     }
 
     @SuppressWarnings("unused")
@@ -123,8 +122,7 @@ class DoubleLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object addInt(Object lval, Object rval, Context cx) {
-        double r = (Double) lval + (Integer) rval;
-        return Double.valueOf(r);
+        return (Double) lval + (Integer) rval;
     }
 
     @SuppressWarnings("unused")

@@ -64,6 +64,6 @@ class BooleanLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static boolean toBoolean(Object raw) {
-        return ((Boolean) raw).booleanValue();
+        return ((Boolean) raw);
     }
 }

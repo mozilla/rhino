@@ -3,12 +3,16 @@ package org.mozilla.javascript.optimizer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import jdk.dynalink.StandardNamespace;
+import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
+import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 
 @SuppressWarnings("AndroidJdkLibsChecker")
 class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
@@ -42,6 +46,12 @@ class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
                     guard = lookup.findStatic(ConsStringLinker.class, "testAdd", guardType);
                 }
             }
+        } else if (op.isNamespace(StandardNamespace.PROPERTY)) {
+            if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
+                    && "length".equals(op.getName())) {
+                mh = lookup.findStatic(ConsStringLinker.class, "getLength", mType);
+                guard = Guards.getInstanceOfGuard(String.class);
+            }
         }
 
         if (mh != null) {
@@ -63,5 +73,10 @@ class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
     @SuppressWarnings("unused")
     private static Object add(Object lval, Object rval, Context cx) {
         return new ConsString((ConsString) lval, ((CharSequence) rval).toString());
+    }
+
+    @SuppressWarnings("unused")
+    private static Object getLength(Object o, Context cx, Scriptable scope) {
+        return ((ConsString) o).length();
     }
 }
