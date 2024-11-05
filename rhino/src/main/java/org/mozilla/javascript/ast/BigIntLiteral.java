@@ -42,6 +42,12 @@ public class BigIntLiteral extends AstNode {
         setBigInt(bigInt);
     }
 
+    /** Constructor. Sets the length to the length of the {@code value} string. */
+    public BigIntLiteral(int pos, String value, BigInteger bigInt, int column) {
+        this(pos, value, bigInt);
+        super.setColumn(column);
+    }
+
     /** Returns the node's string value (the original source token) */
     public String getValue() {
         return value;

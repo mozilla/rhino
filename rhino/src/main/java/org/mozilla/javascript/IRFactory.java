@@ -534,7 +534,9 @@ public final class IRFactory {
 
     private Node transformExprStmt(ExpressionStatement node) {
         Node expr = transform(node.getExpression());
-        return new Node(node.getType(), expr, node.getLineno());
+        Node exprStatementNode = new Node(node.getType(), expr, node.getLineno());
+        if (node.wasColumnAssigned()) exprStatementNode.setColumn(node.column());
+        return exprStatementNode;
     }
 
     private Node transformForInLoop(ForInLoop loop) {
@@ -812,7 +814,20 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        return createBinary(node.getType(), left, right);
+        Node binaryNode = createBinary(node.getType(), left, right);
+
+        // Since we are transforming InfixExpression -> Node, we need to copy over the column and
+        // line, but only for newly created nodes which have no column information set.
+        // createBinary() may return a Node reference with the correct line/column.
+        // Example: `true && <other_expr>` would return the `<other_expr>` reference from
+        // createBinary
+        boolean nodeCreated = (binaryNode != left) && (binaryNode != right);
+        if (nodeCreated && node.wasColumnAssigned()) {
+            binaryNode.setColumn(node.column());
+            binaryNode.setLineno(node.getLineno());
+        }
+
+        return binaryNode;
     }
 
     private Node transformLabeledStatement(LabeledStatement ls) {
@@ -878,6 +893,8 @@ public final class IRFactory {
         // stages don't need to know about object literals.
         List<ObjectProperty> elems = node.getElements();
         Node object = new Node(Token.OBJECTLIT);
+        object.setColumn(node.column());
+        object.setLineno(node.getLineno());
         Object[] properties;
         if (elems.isEmpty()) {
             properties = ScriptRuntime.emptyArgs;
@@ -992,7 +1009,10 @@ public final class IRFactory {
     }
 
     private Node transformString(StringLiteral node) {
-        return Node.newString(node.getValue());
+        Node stringNode = Node.newString(node.getValue());
+        stringNode.setColumn(node.column());
+        stringNode.setLineno(node.getLineno());
+        return stringNode;
     }
 
     private Node transformSwitch(SwitchStatement node) {
@@ -1063,7 +1083,10 @@ public final class IRFactory {
 
     private Node transformThrow(ThrowStatement node) {
         Node value = transform(node.getExpression());
-        return new Node(Token.THROW, value, node.getLineno());
+        value.setColumn(node.columnOrDefault());
+        Node nx = new Node(Token.THROW, value, node.getLineno());
+        nx.setColumn(node.columnOrDefault());
+        return nx;
     }
 
     private Node transformTry(TryStatement node) {
@@ -1751,6 +1774,11 @@ public final class IRFactory {
             result.addChildToBack(endTarget);
         } else {
             result.addChildToBack(ifNotTarget);
+        }
+
+        if (cond.getFirstChild() != null) {
+            Node conditionalChild = cond.getFirstChild();
+            if (conditionalChild.wasColumnAssigned()) result.setColumn(conditionalChild.column());
         }
 
         return result;

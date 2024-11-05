@@ -54,6 +54,11 @@ public class Name extends AstNode {
         setLength(name.length());
     }
 
+    public Name(int pos, String name, int column) {
+        this(pos, name);
+        super.setColumn(column);
+    }
+
     /** Returns the node's identifier */
     public String getIdentifier() {
         return identifier;

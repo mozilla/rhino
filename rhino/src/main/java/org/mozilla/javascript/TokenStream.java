@@ -2180,6 +2180,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 }
                 lineEndChar = -1;
                 lineStart = sourceCursor - 1;
+                lastLineEnd = tokenEnd;
                 lineno++;
             }
 
@@ -2432,6 +2433,18 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return tokenEnd - tokenBeg;
     }
 
+    public int getTokenColumn() {
+        return getTokenColumn(tokenBeg);
+    }
+
+    /**
+     * @param tokenPosition absolute start of the token position
+     * @return the 1-indexed column
+     */
+    public int getTokenColumn(int tokenPosition) {
+        return tokenPosition - lastLineEnd + 1;
+    }
+
     // stuff other than whitespace since start of line
     private boolean dirtyLine;
 
@@ -2483,6 +2496,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
     // Record start and end positions of last scanned token.
     int tokenBeg;
     int tokenEnd;
+
+    private int lastLineEnd;
 
     // Type of last comment scanned.
     Token.CommentType commentType;

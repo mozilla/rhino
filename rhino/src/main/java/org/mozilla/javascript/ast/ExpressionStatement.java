@@ -68,6 +68,7 @@ public class ExpressionStatement extends AstNode {
     public ExpressionStatement(int pos, int len, AstNode expr) {
         super(pos, len);
         setExpression(expr);
+        if (expr.wasColumnAssigned()) super.setColumn(expr.column());
     }
 
     /** Returns the wrapped expression */
