@@ -121,7 +121,8 @@ public final class Interpreter extends Icode implements Evaluator {
                 Object[] args,
                 double[] argsDbl,
                 int argShift,
-                int argCount) {
+                int argCount,
+                Scriptable homeObject) {
             if (useActivation) {
                 // Copy args to new array to pass to enterActivationFunction
                 // or debuggerFrame.onEnter
@@ -144,7 +145,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                         scope,
                                         args,
                                         idata.isStrict,
-                                        idata.argsHasRest);
+                                        idata.argsHasRest,
+                                        homeObject);
                     } else {
                         scope =
                                 ScriptRuntime.createFunctionActivation(
@@ -153,7 +155,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                         scope,
                                         args,
                                         idata.isStrict,
-                                        idata.argsHasRest);
+                                        idata.argsHasRest,
+                                        homeObject);
                     }
                 }
             } else {
@@ -609,6 +612,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
                 case Token.CALL:
+                case Icode_CALL_ON_SUPER:
                 case Icode_TAIL_CALL:
                 case Token.REF_CALL:
                 case Token.NEW:
@@ -1132,7 +1136,18 @@ public final class Interpreter extends Icode implements Evaluator {
             }
         }
 
-        CallFrame frame = initFrame(cx, scope, thisObj, args, null, 0, args.length, ifun, null);
+        CallFrame frame =
+                initFrame(
+                        cx,
+                        scope,
+                        thisObj,
+                        ifun.getHomeObject(),
+                        args,
+                        null,
+                        0,
+                        args.length,
+                        ifun,
+                        null);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
 
@@ -1648,6 +1663,21 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     lhs, stringReg, cx, frame.scope);
                                     continue Loop;
                                 }
+                            case Token.GETPROP_SUPER:
+                            case Token.GETPROPNOWARN_SUPER:
+                                {
+                                    Object superObject = stack[stackTop];
+                                    if (superObject == DBL_MRK) Kit.codeBug();
+                                    stack[stackTop] =
+                                            ScriptRuntime.getSuperProp(
+                                                    superObject,
+                                                    stringReg,
+                                                    cx,
+                                                    frame.scope,
+                                                    frame.thisObj,
+                                                    op == Token.GETPROPNOWARN_SUPER);
+                                    continue Loop;
+                                }
                             case Token.SETPROP:
                                 {
                                     Object rhs = stack[stackTop];
@@ -1660,6 +1690,24 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stack[stackTop] =
                                             ScriptRuntime.setObjectProp(
                                                     lhs, stringReg, rhs, cx, frame.scope);
+                                    continue Loop;
+                                }
+                            case Token.SETPROP_SUPER:
+                                {
+                                    Object rhs = stack[stackTop];
+                                    if (rhs == DBL_MRK)
+                                        rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+                                    --stackTop;
+                                    Object superObject = stack[stackTop];
+                                    if (superObject == DBL_MRK) Kit.codeBug();
+                                    stack[stackTop] =
+                                            ScriptRuntime.setSuperProp(
+                                                    superObject,
+                                                    stringReg,
+                                                    rhs,
+                                                    cx,
+                                                    frame.scope,
+                                                    frame.thisObj);
                                     continue Loop;
                                 }
                             case Icode_PROP_INC_DEC:
@@ -1682,9 +1730,19 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop = doGetElem(cx, frame, stack, sDbl, stackTop);
                                     continue Loop;
                                 }
+                            case Token.GETELEM_SUPER:
+                                {
+                                    stackTop = doGetElemSuper(cx, frame, stack, sDbl, stackTop);
+                                    continue Loop;
+                                }
                             case Token.SETELEM:
                                 {
                                     stackTop = doSetElem(cx, frame, stack, sDbl, stackTop);
+                                    continue Loop;
+                                }
+                            case Token.SETELEM_SUPER:
+                                {
+                                    stackTop = doSetElemSuper(cx, frame, stack, sDbl, stackTop);
                                     continue Loop;
                                 }
                             case Icode_ELEM_INC_DEC:
@@ -1853,6 +1911,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     continue Loop;
                                 }
                             case Token.CALL:
+                            case Icode_CALL_ON_SUPER:
                             case Icode_TAIL_CALL:
                             case Token.REF_CALL:
                                 {
@@ -1867,6 +1926,18 @@ public final class Interpreter extends Icode implements Evaluator {
                                     // are already Scriptable and Callable objects respectively
                                     Callable fun = (Callable) stack[stackTop];
                                     Scriptable funThisObj = (Scriptable) stack[stackTop + 1];
+                                    Scriptable funHomeObj =
+                                            (fun instanceof BaseFunction)
+                                                    ? ((BaseFunction) fun).getHomeObject()
+                                                    : null;
+                                    if (op == Icode_CALL_ON_SUPER) {
+                                        // funThisObj would have been the "super" object, which we
+                                        // used to lookup the function. Now that that's done, we
+                                        // discard it and invoke the function with the current
+                                        // "this".
+                                        funThisObj = frame.thisObj;
+                                    }
+
                                     if (op == Token.REF_CALL) {
                                         Object[] outArgs =
                                                 getArgsArray(stack, sDbl, stackTop + 2, indexReg);
@@ -1893,6 +1964,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ArrowFunction afun = (ArrowFunction) fun;
                                             fun = afun.getTargetFunction();
                                             funThisObj = afun.getCallThis(cx);
+                                            funHomeObj = afun.getBoundHomeObject();
                                         } else if (fun instanceof LambdaConstructor) {
                                             break;
                                         } else if (fun instanceof LambdaFunction) {
@@ -2046,6 +2118,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                                             cx,
                                                             calleeScope,
                                                             funThisObj,
+                                                            funHomeObj,
                                                             stack,
                                                             sDbl,
                                                             stackTop + 2,
@@ -2124,6 +2197,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     initFrame(
                                                             cx,
                                                             frame.scope,
+                                                            newInstance,
                                                             newInstance,
                                                             stack,
                                                             sDbl,
@@ -2273,6 +2347,28 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Token.THIS:
                                 stack[++stackTop] = frame.thisObj;
                                 continue Loop;
+                            case Token.SUPER:
+                                {
+                                    // See 9.1.1.3.5 GetSuperBase
+
+                                    // If we are referring to "super", then we always have an
+                                    // activation
+                                    // (this is done in IrFactory). The home object is stored as
+                                    // part of the
+                                    // activation frame to propagate it correctly for nested
+                                    // functions.
+                                    Scriptable homeObject = getCurrentFrameHomeObject(frame);
+                                    if (homeObject == null) {
+                                        // This if is specified in the spec, but I cannot imagine
+                                        // how the home object will ever be null since `super` is
+                                        // legal _only_ in method definitions, where we do have a
+                                        // home object!
+                                        stack[++stackTop] = Undefined.instance;
+                                    } else {
+                                        stack[++stackTop] = homeObject.getPrototype();
+                                    }
+                                    continue Loop;
+                                }
                             case Token.THISFN:
                                 stack[++stackTop] = frame.fnOrScript;
                                 continue Loop;
@@ -2411,12 +2507,23 @@ public final class Interpreter extends Icode implements Evaluator {
                                         InterpretedFunction.createFunction(
                                                 cx, frame.scope, frame.fnOrScript, indexReg);
                                 if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
+                                    Scriptable homeObject = getCurrentFrameHomeObject(frame);
                                     stack[++stackTop] =
-                                            new ArrowFunction(cx, frame.scope, fn, frame.thisObj);
+                                            new ArrowFunction(
+                                                    cx, frame.scope, fn, frame.thisObj, homeObject);
                                 } else {
                                     stack[++stackTop] = fn;
                                 }
                                 continue Loop;
+                            case ICode_FN_STORE_HOME_OBJECT:
+                                {
+                                    // Stack contains: [object, keysArray, flagsArray, valuesArray,
+                                    // function]
+                                    InterpretedFunction fun = (InterpretedFunction) stack[stackTop];
+                                    Scriptable homeObject = (Scriptable) stack[stackTop - 4];
+                                    fun.setHomeObject(homeObject);
+                                    continue Loop;
+                                }
                             case Icode_CLOSURE_STMT:
                                 initFunction(cx, frame.scope, frame.fnOrScript, indexReg);
                                 continue Loop;
@@ -2866,6 +2973,14 @@ public final class Interpreter extends Icode implements Evaluator {
                 : ScriptRuntime.wrapNumber(interpreterResultDbl);
     }
 
+    private static Scriptable getCurrentFrameHomeObject(CallFrame frame) {
+        if (frame.scope instanceof NativeCall) {
+            return ((NativeCall) frame.scope).getHomeObject();
+        } else {
+            return null;
+        }
+    }
+
     private static int doInOrInstanceof(
             Context cx, int op, Object[] stack, double[] sDbl, int stackTop) {
         Object rhs = stack[stackTop];
@@ -2988,6 +3103,23 @@ public final class Interpreter extends Icode implements Evaluator {
         return stackTop;
     }
 
+    private static int doGetElemSuper(
+            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
+        --stackTop;
+        Object superObject = stack[stackTop];
+        if (superObject == DOUBLE_MARK) Kit.codeBug();
+        Object value;
+        Object id = stack[stackTop + 1];
+        if (id != DOUBLE_MARK) {
+            value = ScriptRuntime.getSuperElem(superObject, id, cx, frame.scope, frame.thisObj);
+        } else {
+            double d = sDbl[stackTop + 1];
+            value = ScriptRuntime.getSuperIndex(superObject, d, cx, frame.scope, frame.thisObj);
+        }
+        stack[stackTop] = value;
+        return stackTop;
+    }
+
     private static int doSetElem(
             Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
         stackTop -= 2;
@@ -3006,6 +3138,31 @@ public final class Interpreter extends Icode implements Evaluator {
         } else {
             double d = sDbl[stackTop + 1];
             value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx, frame.scope);
+        }
+        stack[stackTop] = value;
+        return stackTop;
+    }
+
+    private static int doSetElemSuper(
+            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
+        stackTop -= 2;
+        Object rhs = stack[stackTop + 2];
+        if (rhs == DOUBLE_MARK) {
+            rhs = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
+        }
+        Object superObject = stack[stackTop];
+        if (superObject == DOUBLE_MARK) Kit.codeBug();
+        Object value;
+        Object id = stack[stackTop + 1];
+        if (id != DOUBLE_MARK) {
+            value =
+                    ScriptRuntime.setSuperElem(
+                            superObject, id, rhs, cx, frame.scope, frame.thisObj);
+        } else {
+            double d = sDbl[stackTop + 1];
+            value =
+                    ScriptRuntime.setSuperIndex(
+                            superObject, d, rhs, cx, frame.scope, frame.thisObj);
         }
         stack[stackTop] = value;
         return stackTop;
@@ -3487,6 +3644,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx,
             Scriptable callerScope,
             Scriptable thisObj,
+            Scriptable homeObj,
             Object[] args,
             double[] argsDbl,
             int argShift,
@@ -3494,7 +3652,7 @@ public final class Interpreter extends Icode implements Evaluator {
             InterpretedFunction fnOrScript,
             CallFrame parentFrame) {
         CallFrame frame = new CallFrame(cx, thisObj, fnOrScript, parentFrame);
-        frame.initializeArgs(cx, callerScope, args, argsDbl, argShift, argCount);
+        frame.initializeArgs(cx, callerScope, args, argsDbl, argShift, argCount, homeObj);
         enterFrame(cx, frame, args, false);
         return frame;
     }
@@ -3582,7 +3740,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static void setCallResult(CallFrame frame, Object callResult, double callResultDbl) {
-        if (frame.savedCallOp == Token.CALL) {
+        if (frame.savedCallOp == Token.CALL || frame.savedCallOp == Icode_CALL_ON_SUPER) {
             frame.stack[frame.savedStackTop] = callResult;
             frame.sDbl[frame.savedStackTop] = callResultDbl;
         } else if (frame.savedCallOp == Token.NEW) {
@@ -3621,7 +3779,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 x.stack[i] = null;
                 x.stackAttributes[i] = ScriptableObject.EMPTY;
             }
-            if (x.savedCallOp == Token.CALL) {
+            if (x.savedCallOp == Token.CALL || x.savedCallOp == Icode_CALL_ON_SUPER) {
                 // the call will always overwrite the stack top with the result
                 x.stack[x.savedStackTop] = null;
             } else {

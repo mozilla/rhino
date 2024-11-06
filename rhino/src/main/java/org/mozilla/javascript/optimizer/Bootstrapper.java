@@ -72,6 +72,11 @@ public class Bootstrapper {
                     return RhinoOperation.GETNOWARN
                             .withNamespace(StandardNamespace.PROPERTY)
                             .named(getNameSegment(tokens, name, 2));
+                case "GETSUPER":
+                    // Get an object property from super with a constant name
+                    return RhinoOperation.GETSUPER
+                            .withNamespace(StandardNamespace.PROPERTY)
+                            .named(getNameSegment(tokens, name, 2));
                 case "GETWITHTHIS":
                     // Same but also return "this" so that it is found by "lastStoredScriptable"
                     return RhinoOperation.GETWITHTHIS
@@ -86,20 +91,38 @@ public class Bootstrapper {
                     // Get the value of an element from a property that is on the stack,\
                     // as if using "[]" notation. Could be a String, number, or Symbol
                     return RhinoOperation.GETELEMENT.withNamespace(StandardNamespace.PROPERTY);
+                case "GETELEMENTSUPER":
+                    // Get the value of an element from a property that is on the stack,\
+                    // as if using "[]" notation. Could be a String, number, or Symbol
+                    return RhinoOperation.GETELEMENTSUPER.withNamespace(StandardNamespace.PROPERTY);
                 case "GETINDEX":
                     // Same but the value is definitely a numeric index
                     return RhinoOperation.GETINDEX.withNamespace(StandardNamespace.PROPERTY);
+                case "GETINDEXSUPER":
+                    // Same but the value is definitely a numeric index
+                    return RhinoOperation.GETINDEXSUPER.withNamespace(StandardNamespace.PROPERTY);
                 case "SET":
                     // Set an object property with a constant name
                     return StandardOperation.SET
                             .withNamespace(StandardNamespace.PROPERTY)
                             .named(getNameSegment(tokens, name, 2));
+                case "SETSUPER":
+                    // Set an object property in super with a constant name
+                    return RhinoOperation.SETSUPER
+                            .withNamespace(StandardNamespace.PROPERTY)
+                            .named(getNameSegment(tokens, name, 2));
                 case "SETELEMENT":
                     // Set an object property as if by "[]", with a property on the stack
                     return RhinoOperation.SETELEMENT.withNamespace(StandardNamespace.PROPERTY);
+                case "SETELEMENTSUPER":
+                    // Set an object property in super as if by "[]", with a property on the stack
+                    return RhinoOperation.SETELEMENTSUPER.withNamespace(StandardNamespace.PROPERTY);
                 case "SETINDEX":
                     // Same but the property name is definitely a number
                     return RhinoOperation.SETINDEX.withNamespace(StandardNamespace.PROPERTY);
+                case "SETINDEXSUPER":
+                    // Same but the property name is definitely a number
+                    return RhinoOperation.SETINDEXSUPER.withNamespace(StandardNamespace.PROPERTY);
             }
         } else if ("NAME".equals(namespaceName)) {
             switch (opName) {

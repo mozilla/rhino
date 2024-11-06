@@ -29,6 +29,18 @@ interface Signatures {
                     + "Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;";
 
     /**
+     * PROP:GET_SUPER:{name}: Looks up the super property named "name". Falls back to
+     * ScriptRuntime.getSuperProp.
+     */
+    String PROP_GET_SUPER =
+            "(Ljava/lang/Object;" // superObj
+                    + "Lorg/mozilla/javascript/Context;" // cx
+                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Ljava/lang/Object;" // thisObj
+                    + "Z" // noWarn
+                    + ")Ljava/lang/Object;";
+
+    /**
      * PROP:GETWITHTHIS:{name}: Looks up an object property like PROP:GET, and sets "this" in the
      * "last stored scriptable." Falls back to ScriptRuntime.getPropFunctionAndThis.
      */
@@ -43,9 +55,23 @@ interface Signatures {
      * ScriptRuntime.getObjectIndex.
      */
     String PROP_GET_INDEX =
-            "(Ljava/lang/Object;D"
+            "(Ljava/lang/Object;"
+                    + "D"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;";
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+
+    /**
+     * PROP:GETINDEXSUPER: Get a property from super based on a numeric index. Falls back to
+     * ScriptRuntime.getSuperIndex.
+     */
+    String PROP_GET_INDEX_SUPER =
+            "(Ljava/lang/Object;"
+                    + "D"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + ")Ljava/lang/Object;";
 
     /**
      * PROP:GETELEMENT: Get a property from an object based on an element ID, which could be a
@@ -59,12 +85,37 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
+     * PROP:GETELEMENTSUPER: Get a property from super based on an element ID, which could be a
+     * string, number, or symbol. Falls back to ScriptRuntime.getSuperElem.
+     */
+    String PROP_GET_ELEMENT_SUPER =
+            "(Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + ")Ljava/lang/Object;";
+
+    /**
      * PROP:SET:{name}: Sets the named property on an object. Falls back to
      * ScriptRuntime.setObjectProp.
      */
     String PROP_SET =
             "(Ljava/lang/Object;Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;";
+
+    /**
+     * PROP:SETSUPER:{name}: Sets the named property on super. Falls back to
+     * ScriptRuntime.setSuperProp.
+     */
+    String PROP_SET_SUPER =
+            "("
+                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + ")Ljava/lang/Object;";
 
     /**
      * PROP:SETINDEX: Set a property on an object based on a numeric index. Falls back to
@@ -79,6 +130,19 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
+     * PROP:SETINDEXSUPER: Set a property on super based on a numeric index. Falls back to
+     * ScriptRuntime.setSuperIndex.
+     */
+    String PROP_SET_INDEX_SUPER =
+            "(Ljava/lang/Object;"
+                    + "D"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + ")Ljava/lang/Object;";
+
+    /**
      * PROP:SETELEMENT: Set a property on an object based on an identifier. Falls back to
      * ScriptRuntime.setObjectElem.
      */
@@ -88,6 +152,19 @@ interface Signatures {
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+
+    /**
+     * PROP:SETELEMENT_SUPER: Set a property on super based on an identifier. Falls back to
+     * ScriptRuntime.setSuperElem.
+     */
+    String PROP_SET_ELEMENT_SUPER =
+            "(Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
                     + ")Ljava/lang/Object;";
 
     /**

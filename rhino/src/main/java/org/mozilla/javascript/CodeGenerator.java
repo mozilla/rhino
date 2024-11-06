@@ -566,6 +566,9 @@ class CodeGenerator extends Icode {
                         throw Kit.codeBug();
                     }
                     addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                    if (fn.isMethodDefinition()) {
+                        addIcode(ICode_FN_STORE_HOME_OBJECT);
+                    }
                     stackChange(1);
                 }
                 break;
@@ -626,6 +629,8 @@ class CodeGenerator extends Icode {
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
+                    } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                        addIndexOp(Icode_CALL_ON_SUPER, argCount);
                     } else {
                         // Only use the tail call optimization if we're not in a try
                         // or we're not generating debug info (since the
@@ -718,6 +723,10 @@ class CodeGenerator extends Icode {
                     addIcode(Icode_POP);
                     addStringOp(Token.NAME, "undefined");
                     resolveForwardGoto(afterLabel);
+                } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                    addStringOp(
+                            type == Token.GETPROP ? Token.GETPROP_SUPER : Token.GETPROPNOWARN_SUPER,
+                            child.getString());
                 } else {
                     addStringOp(type, child.getString());
                 }
@@ -757,6 +766,10 @@ class CodeGenerator extends Icode {
                     addIcode(Icode_POP);
                     addStringOp(Token.NAME, "undefined");
                     resolveForwardGoto(afterLabel);
+                } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                    visitExpression(child, 0);
+                    addToken(Token.GETELEM_SUPER);
+                    stackChange(-1);
                 } else {
                     finishGetElemGeneration(child);
                 }
@@ -843,7 +856,11 @@ class CodeGenerator extends Icode {
                         stackChange(-1);
                     }
                     visitExpression(child, 0);
-                    addStringOp(Token.SETPROP, property);
+                    addStringOp(
+                            node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
+                                    ? Token.SETPROP_SUPER
+                                    : Token.SETPROP,
+                            property);
                     stackChange(-1);
                 }
                 break;
@@ -863,7 +880,10 @@ class CodeGenerator extends Icode {
                     stackChange(-1);
                 }
                 visitExpression(child, 0);
-                addToken(Token.SETELEM);
+                addToken(
+                        node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
+                                ? Token.SETELEM_SUPER
+                                : Token.SETELEM);
                 stackChange(-2);
                 break;
 
@@ -996,6 +1016,7 @@ class CodeGenerator extends Icode {
 
             case Token.NULL:
             case Token.THIS:
+            case Token.SUPER:
             case Token.THISFN:
             case Token.FALSE:
             case Token.TRUE:

@@ -71,10 +71,15 @@ public class Token {
             TYPEOF = DELPROP + 1,
             GETPROP = TYPEOF + 1,
             GETPROPNOWARN = GETPROP + 1,
-            SETPROP = GETPROPNOWARN + 1,
-            GETELEM = SETPROP + 1,
-            SETELEM = GETELEM + 1,
-            CALL = SETELEM + 1,
+            GETPROP_SUPER = GETPROPNOWARN + 1,
+            GETPROPNOWARN_SUPER = GETPROP_SUPER + 1,
+            SETPROP = GETPROPNOWARN_SUPER + 1,
+            SETPROP_SUPER = SETPROP + 1,
+            GETELEM = SETPROP_SUPER + 1,
+            GETELEM_SUPER = GETELEM + 1,
+            SETELEM = GETELEM_SUPER + 1,
+            SETELEM_SUPER = SETELEM + 1,
+            CALL = SETELEM_SUPER + 1,
             NAME = CALL + 1,
             NUMBER = NAME + 1,
             STRING = NUMBER + 1,
@@ -110,7 +115,8 @@ public class Token {
             REF_CALL = DEL_REF + 1, // f(args)    = something or f(args)++
             REF_SPECIAL = REF_CALL + 1, // reference for special properties like __proto
             YIELD = REF_SPECIAL + 1, // JS 1.7 yield pseudo keyword
-            STRICT_SETNAME = YIELD + 1,
+            SUPER = YIELD + 1, // ES6 super keyword
+            STRICT_SETNAME = SUPER + 1,
             EXP = STRICT_SETNAME + 1, // Exponentiation Operator
 
             // For XML support:
@@ -331,12 +337,22 @@ public class Token {
                 return "GETPROP";
             case GETPROPNOWARN:
                 return "GETPROPNOWARN";
+            case GETPROP_SUPER:
+                return "GETPROP_SUPER";
+            case GETPROPNOWARN_SUPER:
+                return "GETPROPNOWARN_SUPER";
             case SETPROP:
                 return "SETPROP";
+            case SETPROP_SUPER:
+                return "SETPROP_SUPER";
             case GETELEM:
                 return "GETELEM";
+            case GETELEM_SUPER:
+                return "GETELEM_SUPER";
             case SETELEM:
                 return "SETELEM";
+            case SETELEM_SUPER:
+                return "SETELEM_SUPER";
             case CALL:
                 return "CALL";
             case NAME:
@@ -581,6 +597,8 @@ public class Token {
                 return "LET";
             case YIELD:
                 return "YIELD";
+            case SUPER:
+                return "SUPER";
             case EXP:
                 return "EXP";
             case CONST:
@@ -686,6 +704,8 @@ public class Token {
                 return "with";
             case Token.YIELD:
                 return "yield";
+            case Token.SUPER:
+                return "super";
             case Token.CATCH:
                 return "catch";
             case Token.CONST:
