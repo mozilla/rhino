@@ -120,6 +120,12 @@ class BodyCodegen {
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addPush(scriptOrFn.hasRestParameter());
+        cfw.addLoadThis();
+        cfw.addInvoke(
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/BaseFunction",
+                "getHomeObject",
+                "()Lorg/mozilla/javascript/Scriptable;");
         addScriptRuntimeInvoke(
                 "createFunctionActivation",
                 "(Lorg/mozilla/javascript/NativeFunction;"
@@ -128,6 +134,7 @@ class BodyCodegen {
                         + "[Ljava/lang/Object;"
                         + "Z"
                         + "Z"
+                        + "Lorg/mozilla/javascript/Scriptable;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(variableObjectLocal);
 
@@ -207,6 +214,7 @@ class BodyCodegen {
         epilogueLabel = -1;
         enterAreaStartLabel = -1;
         generatorStateLocal = -1;
+        savedHomeObjectLocal = -1;
     }
 
     /** Generate the prologue for a function or script. */
@@ -424,6 +432,39 @@ class BodyCodegen {
             cfw.addALoad(argsLocal);
             cfw.addPush(scriptOrFn.isInStrictMode());
             cfw.addPush(scriptOrFn.hasRestParameter());
+
+            if (!isArrow) {
+                // Just pass the home object of the function
+                cfw.addLoadThis();
+                cfw.addInvoke(
+                        ByteCode.INVOKEVIRTUAL,
+                        "org/mozilla/javascript/BaseFunction",
+                        "getHomeObject",
+                        "()Lorg/mozilla/javascript/Scriptable;");
+            } else {
+                // Propagate the home object from the activation scope (i.e. the NativeCall)
+                int putNull = cfw.acquireLabel();
+                int after = cfw.acquireLabel();
+
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.INSTANCEOF, "org/mozilla/javascript/NativeCall");
+                cfw.add(ByteCode.IFEQ, putNull);
+
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NativeCall");
+                cfw.addInvoke(
+                        ByteCode.INVOKEVIRTUAL,
+                        "org/mozilla/javascript/NativeCall",
+                        "getHomeObject",
+                        "()Lorg/mozilla/javascript/Scriptable;");
+                cfw.add(ByteCode.GOTO, after);
+
+                cfw.markLabel(putNull);
+                cfw.add(ByteCode.ACONST_NULL);
+
+                cfw.markLabel(after);
+            }
+
             String methodName =
                     isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
             addScriptRuntimeInvoke(
@@ -434,6 +475,7 @@ class BodyCodegen {
                             + "[Ljava/lang/Object;"
                             + "Z"
                             + "Z"
+                            + "Lorg/mozilla/javascript/Scriptable;"
                             + ")Lorg/mozilla/javascript/Scriptable;");
             cfw.addAStore(variableObjectLocal);
             cfw.addALoad(contextLocal);
@@ -1064,6 +1106,46 @@ class BodyCodegen {
                 cfw.addALoad(thisObjLocal);
                 break;
 
+            case Token.SUPER:
+                {
+                    // See 9.1.1.3.5 GetSuperBase
+
+                    // Read home object from activation, which we know we'll always have because we
+                    // set "requiresActivation" to any function that mentions "super" in IRFactory
+                    cfw.addALoad(variableObjectLocal);
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NativeCall");
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/NativeCall",
+                            "getHomeObject",
+                            "()Lorg/mozilla/javascript/Scriptable;");
+
+                    // If null, then put undefined
+                    int after = cfw.acquireLabel();
+                    int putPrototype = cfw.acquireLabel();
+                    cfw.add(ByteCode.DUP);
+                    cfw.add(ByteCode.IFNONNULL, putPrototype);
+
+                    cfw.add(ByteCode.POP);
+                    cfw.add(
+                            ByteCode.GETSTATIC,
+                            "org/mozilla/javascript/Undefined",
+                            "instance",
+                            "Ljava/lang/Object;");
+                    cfw.add(ByteCode.GOTO, after);
+
+                    // Otherwise put the prototype
+                    cfw.markLabel(putPrototype);
+                    cfw.addInvoke(
+                            ByteCode.INVOKEINTERFACE,
+                            "org/mozilla/javascript/Scriptable",
+                            "getPrototype",
+                            "()Lorg/mozilla/javascript/Scriptable;");
+
+                    cfw.markLabel(after);
+                    break;
+                }
+
             case Token.THISFN:
                 cfw.add(ByteCode.ALOAD_0);
                 break;
@@ -1675,10 +1757,20 @@ class BodyCodegen {
         generateExpression(child.getNext(), node); // id
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-            addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+
+        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            cfw.addALoad(thisObjLocal);
+            if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                addDynamicInvoke("PROP:GETINDEXSUPER", Signatures.PROP_GET_INDEX_SUPER);
+            } else {
+                addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
+            }
         } else {
-            addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+            if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+            } else {
+                addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+            }
         }
     }
 
@@ -1956,6 +2048,16 @@ class BodyCodegen {
                             + ")Lorg/mozilla/javascript/Function;");
         }
 
+        if (ofn.fnode.isMethodDefinition()) {
+            cfw.add(ByteCode.DUP);
+            cfw.addALoad(savedHomeObjectLocal);
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "org/mozilla/javascript/BaseFunction",
+                    "setHomeObject",
+                    "(Lorg/mozilla/javascript/Scriptable;)V");
+        }
+
         if (functionType == FunctionNode.FUNCTION_EXPRESSION
                 || functionType == FunctionNode.ARROW_FUNCTION) {
             // Leave closure object on stack and do not pass it to
@@ -2054,10 +2156,7 @@ class BodyCodegen {
     }
 
     private void visitArrayLiteral(Node node, Node child, boolean topLevel) {
-        int count = 0;
-        for (Node cursor = child; cursor != null; cursor = cursor.getNext()) {
-            ++count;
-        }
+        int count = countArguments(child);
 
         // If code budget is tight swap out literals into separate method
         if (!topLevel
@@ -2274,6 +2373,9 @@ class BodyCodegen {
                 "newObject",
                 "(Lorg/mozilla/javascript/Scriptable;)Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.DUP);
+        savedHomeObjectLocal = getNewWordLocal();
+        cfw.addAStore(savedHomeObjectLocal);
+        cfw.add(ByteCode.DUP);
 
         addLoadProperty(node, child, properties, count);
 
@@ -2393,7 +2495,43 @@ class BodyCodegen {
         String signature;
         Integer afterLabel = null;
 
-        if (firstArgChild == null) {
+        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            // Just one general case, non optimized depending on the number of arguments
+
+            int argCount = countArguments(firstArgChild);
+            generateFunctionAndThisObj(child, node);
+
+            // stack: ... functionObj, superObj is stored on scratch last scriptable
+            // We discard the last scriptable, and then push the thisObj. So we have resolved the
+            // function on the super object, but we invoke it with the current this.
+            cfw.addALoad(contextLocal);
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    "org/mozilla/javascript/ScriptRuntime",
+                    "discardLastStoredScriptable",
+                    "(Lorg/mozilla/javascript/Context;)V");
+            cfw.addALoad(thisObjLocal);
+
+            if (argCount == 0) {
+                methodName = "call0";
+                signature = SIGNATURE_CALL0;
+            } else if (argCount == 1) {
+                generateExpression(firstArgChild, node);
+                methodName = "call1";
+                signature = SIGNATURE_CALL1;
+            } else {
+                if (argCount == 2) {
+                    generateExpression(firstArgChild, node);
+                    generateExpression(firstArgChild.getNext(), node);
+                    methodName = "call2";
+                    signature = SIGNATURE_CALL2;
+                } else {
+                    generateCallArgArray(node, firstArgChild, false);
+                    methodName = "callN";
+                    signature = SIGNATURE_CALLN;
+                }
+            }
+        } else if (firstArgChild == null) {
             if (childType == Token.NAME) {
                 // name() call
                 String name = child.getString();
@@ -2424,12 +2562,7 @@ class BodyCodegen {
                 generateFunctionAndThisObj(child, node);
                 pushThisFromLastScriptable();
                 methodName = isOptionalChainingCall ? "call0Optional" : "call0";
-                signature =
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
+                signature = SIGNATURE_CALL0;
             }
 
         } else if (childType == Token.NAME) {
@@ -2466,13 +2599,7 @@ class BodyCodegen {
                 pushThisFromLastScriptable();
                 methodName = "callN";
                 generateCallArgArray(node, firstArgChild, false);
-                signature =
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "[Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
+                signature = SIGNATURE_CALLN;
             } else {
                 generateCallArgArray(node, firstArgChild, false);
                 cfw.addPush(name);
@@ -2485,12 +2612,9 @@ class BodyCodegen {
                                 + ")Ljava/lang/Object;";
             }
         } else {
-            int argCount = 0;
-            for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
-                ++argCount;
-            }
+            int argCount = countArguments(firstArgChild);
             generateFunctionAndThisObj(child, node);
-            // stack: ... functionObj thisObj
+            // stack: ... functionObj, thisObj is stored on scratch last scriptable
 
             if (isOptionalChainingCall) {
                 // jump to afterLabel is name is not null and not undefined
@@ -2517,36 +2641,17 @@ class BodyCodegen {
             if (argCount == 1) {
                 generateExpression(firstArgChild, node);
                 methodName = "call1";
-                signature =
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
+                signature = SIGNATURE_CALL1;
             } else {
                 if (argCount == 2) {
                     generateExpression(firstArgChild, node);
                     generateExpression(firstArgChild.getNext(), node);
                     methodName = "call2";
-                    signature =
-                            "(Lorg/mozilla/javascript/Callable;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/Object;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Ljava/lang/Object;";
+                    signature = SIGNATURE_CALL2;
                 } else {
                     generateCallArgArray(node, firstArgChild, false);
                     methodName = "callN";
-                    signature =
-                            "(Lorg/mozilla/javascript/Callable;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "[Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Ljava/lang/Object;";
+                    signature = SIGNATURE_CALLN;
                 }
             }
         }
@@ -2557,6 +2662,14 @@ class BodyCodegen {
         if (afterLabel != null) {
             cfw.markLabel(afterLabel);
         }
+    }
+
+    private static int countArguments(Node firstArgChild) {
+        int argCount = 0;
+        for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
+            ++argCount;
+        }
+        return argCount;
     }
 
     private void pushThisFromLastScriptable() {
@@ -2588,6 +2701,10 @@ class BodyCodegen {
     }
 
     private void visitOptimizedCall(Node node, OptFunctionNode target, int type, Node child) {
+        // Only calls to top-level functions (i.e. non member functions) can be optimized, so they
+        // cannot be a super.foo() call
+        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) Kit.codeBug();
+
         Node firstArgChild = child.getNext();
         String className = codegen.mainClassName;
 
@@ -2701,10 +2818,7 @@ class BodyCodegen {
     }
 
     private void generateCallArgArray(Node node, Node argChild, boolean directCall) {
-        int argCount = 0;
-        for (Node child = argChild; child != null; child = child.getNext()) {
-            ++argCount;
-        }
+        int argCount = countArguments(argChild);
         // load array object to set arguments
         if (argCount == 1 && itsOneArgArray >= 0) {
             cfw.addALoad(itsOneArgArray);
@@ -4176,19 +4290,22 @@ class BodyCodegen {
             cfw.add(ByteCode.GOTO, after);
 
             cfw.markLabel(getExpr);
-            finishGetPropGeneration(node, child);
+            finishGetPropGeneration(node, child.getNext());
             cfw.markLabel(after);
         } else {
-            finishGetPropGeneration(node, child);
+            finishGetPropGeneration(node, child.getNext());
         }
     }
 
-    private void finishGetPropGeneration(Node node, Node child) {
-        Node nameChild = child.getNext();
+    private void finishGetPropGeneration(Node node, Node nameChild) {
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
 
-        if (node.getType() == Token.GETPROPNOWARN) {
+        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            cfw.addALoad(thisObjLocal);
+            cfw.addLoadConstant(node.getType() == Token.GETPROPNOWARN ? 1 : 0);
+            addDynamicInvoke("PROP:GETSUPER:" + nameChild.getString(), Signatures.PROP_GET_SUPER);
+        } else if (node.getType() == Token.GETPROPNOWARN) {
             addDynamicInvoke("PROP:GETNOWARN:" + nameChild.getString(), Signatures.PROP_GET_NOWARN);
         } else {
             addDynamicInvoke("PROP:GET:" + nameChild.getString(), Signatures.PROP_GET);
@@ -4201,15 +4318,18 @@ class BodyCodegen {
         Node nameChild = child;
         if (type == Token.SETPROP_OP) {
             cfw.add(ByteCode.DUP);
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addDynamicInvoke("PROP:GET:" + nameChild.getString(), Signatures.PROP_GET);
+            finishGetPropGeneration(node, nameChild);
         }
         child = child.getNext();
         generateExpression(child, node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        addDynamicInvoke("PROP:SET:" + nameChild.getString(), Signatures.PROP_SET);
+        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            cfw.addALoad(thisObjLocal);
+            addDynamicInvoke("PROP:SETSUPER:" + nameChild.getString(), Signatures.PROP_SET_SUPER);
+        } else {
+            addDynamicInvoke("PROP:SET:" + nameChild.getString(), Signatures.PROP_SET);
+        }
     }
 
     private void visitSetElem(int type, Node node, Node child) {
@@ -4221,6 +4341,7 @@ class BodyCodegen {
         generateExpression(child, node);
         child = child.getNext();
         boolean indexIsNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
+        boolean isSuper = node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1;
         if (type == Token.SETELEM_OP) {
             if (indexIsNumber) {
                 // stack: ... object object number
@@ -4228,23 +4349,42 @@ class BodyCodegen {
                 cfw.add(ByteCode.DUP2_X1);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+                if (isSuper) {
+                    cfw.addALoad(thisObjLocal);
+                    addDynamicInvoke("PROP:GETINDEXSUPER", Signatures.PROP_GET_INDEX_SUPER);
+                } else {
+                    addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
+                }
             } else {
                 // stack: ... object object indexObject
                 //        -> ... object indexObject object indexObject
                 cfw.add(ByteCode.DUP_X1);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+                if (isSuper) {
+                    cfw.addALoad(thisObjLocal);
+                    addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
+                } else {
+                    addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
+                }
             }
         }
         generateExpression(child, node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        if (indexIsNumber) {
-            addDynamicInvoke("PROP:SETINDEX", Signatures.PROP_SET_INDEX);
+        if (isSuper) {
+            cfw.addALoad(thisObjLocal);
+            if (indexIsNumber) {
+                addDynamicInvoke("PROP:SETINDEXSUPER", Signatures.PROP_SET_INDEX_SUPER);
+            } else {
+                addDynamicInvoke("PROP:SETELEMENTSUPER", Signatures.PROP_SET_ELEMENT_SUPER);
+            }
         } else {
-            addDynamicInvoke("PROP:SETELEMENT", Signatures.PROP_SET_ELEMENT);
+            if (indexIsNumber) {
+                addDynamicInvoke("PROP:SETINDEX", Signatures.PROP_SET_INDEX);
+            } else {
+                addDynamicInvoke("PROP:SETELEMENT", Signatures.PROP_SET_ELEMENT);
+            }
         }
     }
 
@@ -4460,6 +4600,35 @@ class BodyCodegen {
         locals[local] = 0;
     }
 
+    private static final String SIGNATURE_CALL1 =
+            "(Lorg/mozilla/javascript/Callable;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+    private static final String SIGNATURE_CALL2 =
+            "(Lorg/mozilla/javascript/Callable;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+    private static final String SIGNATURE_CALLN =
+            "(Lorg/mozilla/javascript/Callable;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "[Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+    private static final String SIGNATURE_CALL0 =
+            "(Lorg/mozilla/javascript/Callable;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+
     static final int GENERATOR_TERMINATE = -1;
     static final int GENERATOR_START = 0;
     static final int GENERATOR_YIELD_START = 1;
@@ -4500,6 +4669,7 @@ class BodyCodegen {
     private int itsZeroArgArray;
     private int itsOneArgArray;
     private int generatorStateLocal;
+    private int savedHomeObjectLocal;
 
     private boolean isGenerator;
     private int generatorSwitch;

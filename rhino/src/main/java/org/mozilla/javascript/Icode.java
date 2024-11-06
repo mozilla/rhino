@@ -78,9 +78,10 @@ abstract class Icode {
             Icode_LITERAL_NEW_OBJECT = Icode_INTNUMBER - 1,
             Icode_LITERAL_NEW_ARRAY = Icode_LITERAL_NEW_OBJECT - 1,
             Icode_LITERAL_SET = Icode_LITERAL_NEW_ARRAY - 1,
+            ICode_FN_STORE_HOME_OBJECT = Icode_LITERAL_SET - 1,
 
             // Array literal with skipped index like [1,,2]
-            Icode_SPARE_ARRAYLIT = Icode_LITERAL_SET - 1,
+            Icode_SPARE_ARRAYLIT = ICode_FN_STORE_HOME_OBJECT - 1,
 
             // Load index register to prepare for the following index operation
             Icode_REG_IND_C0 = Icode_SPARE_ARRAYLIT - 1,
@@ -151,8 +152,12 @@ abstract class Icode {
             // Jump if stack head is null or undefined
             Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
             Icode_IF_NOT_NULL_UNDEF = Icode_IF_NULL_UNDEF - 1,
+
+            // Call a method on the super object, i.e. super.foo()
+            Icode_CALL_ON_SUPER = Icode_IF_NOT_NULL_UNDEF - 1,
+
             // Last icode
-            MIN_ICODE = Icode_IF_NOT_NULL_UNDEF;
+            MIN_ICODE = Icode_CALL_ON_SUPER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -240,6 +245,8 @@ abstract class Icode {
                 return "LITERAL_NEW_ARRAY";
             case Icode_LITERAL_SET:
                 return "LITERAL_SET";
+            case ICode_FN_STORE_HOME_OBJECT:
+                return "FN_STORE_HOME_OBJECT";
             case Icode_SPARE_ARRAYLIT:
                 return "SPARE_ARRAYLIT";
             case Icode_REG_IND_C0:
@@ -334,6 +341,8 @@ abstract class Icode {
                 return "IF_NULL_UNDEF";
             case Icode_IF_NOT_NULL_UNDEF:
                 return "IF_NOT_NULL_UNDEF";
+            case Icode_CALL_ON_SUPER:
+                return "CALL_ON_SUPER";
         }
 
         // icode without name

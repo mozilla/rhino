@@ -9,9 +9,10 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for keyword literals: currently, {@code this}, {@code null}, {@code true}, {@code
- * false}, and {@code debugger}. Node type is one of {@link Token#THIS}, {@link Token#NULL}, {@link
- * Token#TRUE}, {@link Token#FALSE}, or {@link Token#DEBUGGER}.
+ * AST node for keyword literals: currently, {@code this}, {@code super}, {@code null}, {@code
+ * true}, {@code false}, and {@code debugger}. Node type is one of {@link Token#THIS}, {@link
+ * Token#SUPER}, {@link Token#NULL}, {@link Token#TRUE}, {@link Token#FALSE}, or {@link
+ * Token#DEBUGGER}.
  */
 public class KeywordLiteral extends AstNode {
 
@@ -43,6 +44,7 @@ public class KeywordLiteral extends AstNode {
     @Override
     public KeywordLiteral setType(int nodeType) {
         if (!(nodeType == Token.THIS
+                || nodeType == Token.SUPER
                 || nodeType == Token.NULL
                 || nodeType == Token.TRUE
                 || nodeType == Token.FALSE
@@ -64,6 +66,9 @@ public class KeywordLiteral extends AstNode {
         switch (getType()) {
             case Token.THIS:
                 sb.append("this");
+                break;
+            case Token.SUPER:
+                sb.append("super");
                 break;
             case Token.NULL:
                 sb.append("null");
