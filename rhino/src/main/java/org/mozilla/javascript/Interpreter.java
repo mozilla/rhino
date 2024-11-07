@@ -2437,6 +2437,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     boolean copyArray = iCode[frame.pc] != 0;
                                     ++frame.pc;
                                     ++stackTop;
+                                    stack[stackTop] = cx.newObject(frame.scope);
+                                    ++stackTop;
                                     stack[stackTop] =
                                             copyArray ? Arrays.copyOf(ids, ids.length) : ids;
                                     ++stackTop;
@@ -2499,15 +2501,15 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                             case Token.OBJECTLIT:
                                 {
-                                    Object[] data = (Object[]) stack[stackTop];
+                                    Object[] values = (Object[]) stack[stackTop];
                                     --stackTop;
                                     int[] getterSetters = (int[]) stack[stackTop];
                                     --stackTop;
-                                    Object[] ids = (Object[]) stack[stackTop];
-                                    Object val =
-                                            ScriptRuntime.newObjectLiteral(
-                                                    ids, data, getterSetters, cx, frame.scope);
-                                    stack[stackTop] = val;
+                                    Object[] keys = (Object[]) stack[stackTop];
+                                    --stackTop;
+                                    Scriptable object = (Scriptable) stack[stackTop];
+                                    ScriptRuntime.fillObjectLiteral(
+                                            object, keys, values, getterSetters, cx, frame.scope);
                                     continue Loop;
                                 }
                             case Token.ARRAYLIT:

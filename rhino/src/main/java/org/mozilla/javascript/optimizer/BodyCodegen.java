@@ -2266,6 +2266,15 @@ class BodyCodegen {
             return;
         }
 
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        cfw.addInvoke(
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/Context",
+                "newObject",
+                "(Lorg/mozilla/javascript/Scriptable;)Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.DUP);
+
         addLoadProperty(node, child, properties, count);
 
         // check if object literal actually has any getters or setters
@@ -2305,13 +2314,15 @@ class BodyCodegen {
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
-                "newObjectLiteral",
-                "([Ljava/lang/Object;"
+                "fillObjectLiteral",
+                "("
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "[Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "[I"
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+                        + ")V");
     }
 
     private void visitSpecialCall(Node node, int type, int specialType, Node child) {

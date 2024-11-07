@@ -1321,7 +1321,7 @@ class CodeGenerator extends Icode {
 
         addIndexOp(Icode_LITERAL_NEW_OBJECT, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
-        stackChange(3);
+        stackChange(4);
 
         int i = 0;
         while (child != null) {
@@ -1343,7 +1343,7 @@ class CodeGenerator extends Icode {
 
         addToken(Token.OBJECTLIT);
 
-        stackChange(-2);
+        stackChange(-3);
     }
 
     private void visitArrayLiteral(Node node, Node child) {
