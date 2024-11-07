@@ -3934,34 +3934,18 @@ class BodyCodegen {
         int type = node.getType();
         Node rChild = child.getNext();
 
-        // Optimize if one of operands is null
-        if (child.getType() == Token.NULL || rChild.getType() == Token.NULL) {
+        // Optimize if one of operands is null; but we can't do this
+        // for EQ/NEQ because a ScripableObject might overwrite equivalentValues()
+        if (type != Token.EQ
+                && type != Token.NE
+                && (child.getType() == Token.NULL || rChild.getType() == Token.NULL)) {
             // eq is symmetric in this case
             if (child.getType() == Token.NULL) {
                 child = rChild;
             }
             generateExpression(child, node);
-            if (type == Token.SHEQ || type == Token.SHNE) {
-                int testCode = (type == Token.SHEQ) ? ByteCode.IFNULL : ByteCode.IFNONNULL;
-                cfw.add(testCode, trueGOTO);
-            } else {
-                if (type != Token.EQ) {
-                    // swap false/true targets for !=
-                    if (type != Token.NE) throw Codegen.badTree();
-                    int tmp = trueGOTO;
-                    trueGOTO = falseGOTO;
-                    falseGOTO = tmp;
-                }
-                cfw.add(ByteCode.DUP);
-                int undefCheckLabel = cfw.acquireLabel();
-                cfw.add(ByteCode.IFNONNULL, undefCheckLabel);
-                int stack = cfw.getStackTop();
-                cfw.add(ByteCode.POP);
-                cfw.add(ByteCode.GOTO, trueGOTO);
-                cfw.markLabel(undefCheckLabel, stack);
-                Codegen.pushUndefined(cfw);
-                cfw.add(ByteCode.IF_ACMPEQ, trueGOTO);
-            }
+            int testCode = (type == Token.SHEQ) ? ByteCode.IFNULL : ByteCode.IFNONNULL;
+            cfw.add(testCode, trueGOTO);
             cfw.add(ByteCode.GOTO, falseGOTO);
         } else {
             int child_dcp_register = nodeIsDirectCallParameter(child);

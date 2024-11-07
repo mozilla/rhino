@@ -3737,7 +3737,15 @@ public class ScriptRuntime {
             if (isSymbol(y) && isObject(x)) {
                 return eq(toPrimitive(x), y);
             }
-            if (y instanceof Scriptable) {
+            if (y == null || Undefined.isUndefined(y)) {
+                if (x instanceof ScriptableObject) {
+                    Object test = ((ScriptableObject) x).equivalentValues(y);
+                    if (test != Scriptable.NOT_FOUND) {
+                        return ((Boolean) test).booleanValue();
+                    }
+                }
+                return false;
+            } else if (y instanceof Scriptable) {
                 if (x instanceof ScriptableObject) {
                     Object test = ((ScriptableObject) x).equivalentValues(y);
                     if (test != Scriptable.NOT_FOUND) {
