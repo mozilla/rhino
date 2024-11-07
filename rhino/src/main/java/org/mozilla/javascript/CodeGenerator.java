@@ -1319,9 +1319,8 @@ class CodeGenerator extends Icode {
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
 
-        addIndexOp(Icode_LITERAL_KEYS, nextLiteralIndex);
+        addIndexOp(Icode_LITERAL_NEW_OBJECT, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
-        addIndexOp(Icode_LITERAL_NEW, count);
         stackChange(3);
 
         int i = 0;
@@ -1352,7 +1351,7 @@ class CodeGenerator extends Icode {
         for (Node n = child; n != null; n = n.getNext()) {
             ++count;
         }
-        addIndexOp(Icode_LITERAL_NEW, count);
+        addIndexOp(Icode_LITERAL_NEW_ARRAY, count);
         stackChange(2);
         while (child != null) {
             visitLiteralValue(child);

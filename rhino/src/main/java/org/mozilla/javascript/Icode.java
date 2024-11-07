@@ -75,8 +75,9 @@ abstract class Icode {
             Icode_INTNUMBER = Icode_SHORTNUMBER - 1,
 
             // To create and populate array to hold values for [] and {} literals
-            Icode_LITERAL_NEW = Icode_INTNUMBER - 1,
-            Icode_LITERAL_SET = Icode_LITERAL_NEW - 1,
+            Icode_LITERAL_NEW_OBJECT = Icode_INTNUMBER - 1,
+            Icode_LITERAL_NEW_ARRAY = Icode_LITERAL_NEW_OBJECT - 1,
+            Icode_LITERAL_SET = Icode_LITERAL_NEW_ARRAY - 1,
 
             // Array literal with skipped index like [1,,2]
             Icode_SPARE_ARRAYLIT = Icode_LITERAL_SET - 1,
@@ -145,8 +146,7 @@ abstract class Icode {
 
             // Call to GetTemplateLiteralCallSite
             Icode_TEMPLATE_LITERAL_CALLSITE = Icode_REG_BIGINT4 - 1,
-            Icode_LITERAL_KEYS = Icode_TEMPLATE_LITERAL_CALLSITE - 1,
-            Icode_LITERAL_KEY_SET = Icode_LITERAL_KEYS - 1,
+            Icode_LITERAL_KEY_SET = Icode_TEMPLATE_LITERAL_CALLSITE - 1,
 
             // Jump if stack head is null or undefined
             Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
@@ -234,8 +234,10 @@ abstract class Icode {
                 return "SHORTNUMBER";
             case Icode_INTNUMBER:
                 return "INTNUMBER";
-            case Icode_LITERAL_NEW:
-                return "LITERAL_NEW";
+            case Icode_LITERAL_NEW_OBJECT:
+                return "LITERAL_NEW_OBJECT";
+            case Icode_LITERAL_NEW_ARRAY:
+                return "LITERAL_NEW_ARRAY";
             case Icode_LITERAL_SET:
                 return "LITERAL_SET";
             case Icode_SPARE_ARRAYLIT:
@@ -326,8 +328,6 @@ abstract class Icode {
                 return "LOAD_BIGINT4";
             case Icode_TEMPLATE_LITERAL_CALLSITE:
                 return "TEMPLATE_LITERAL_CALLSITE";
-            case Icode_LITERAL_KEYS:
-                return "LITERAL_KEYS";
             case Icode_LITERAL_KEY_SET:
                 return "LITERAL_KEY_SET";
             case Icode_IF_NULL_UNDEF:
