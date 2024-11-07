@@ -2490,7 +2490,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                         key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                     --stackTop;
                                     Object[] ids = (Object[]) stack[stackTop - 2];
-                                    ids[indexReg] = key;
+                                    int i = (int) sDbl[stackTop];
+                                    ids[i] = key;
                                     continue Loop;
                                 }
                             case Token.OBJECTLIT:

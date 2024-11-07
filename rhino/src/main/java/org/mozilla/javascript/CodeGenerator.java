@@ -1332,7 +1332,7 @@ class CodeGenerator extends Icode {
                 // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
                 Node computedPropertyNode = (Node) propertyId;
                 visitExpression(computedPropertyNode.first, 0);
-                addIndexOp(Icode_LITERAL_KEY_SET, i);
+                addIcode(Icode_LITERAL_KEY_SET);
                 stackChange(-1);
             }
 
