@@ -32,6 +32,7 @@ import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.RhinoConfig;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -132,7 +133,7 @@ public class Main {
      */
     public static void main(String args[]) {
         try {
-            if (Boolean.getBoolean("rhino.use_java_policy_security")) {
+            if (RhinoConfig.getBoolean("rhino.use_java_policy_security")) {
                 initJavaPolicySecuritySupport();
             }
         } catch (SecurityException ex) {
