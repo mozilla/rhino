@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Assignment;
@@ -151,7 +153,7 @@ public class ParserTest {
 
         assertTrue(n instanceof Assignment);
         assertEquals(Token.ASSIGN, n.getType());
-        assertEquals(2, n.getLineno());
+        assertLineColumnAre(2, 1, n);
     }
 
     @Test
@@ -162,7 +164,7 @@ public class ParserTest {
 
         assertTrue(n instanceof FunctionCall);
         assertEquals(Token.CALL, n.getType());
-        assertEquals(1, n.getLineno());
+        assertLineColumnAre(1, 1, n);
     }
 
     @Test
@@ -173,14 +175,14 @@ public class ParserTest {
 
         assertTrue(n instanceof PropertyGet);
         assertEquals(Token.GETPROP, n.getType());
-        assertEquals(1, n.getLineno());
+        assertLineColumnAre(1, 1, n);
 
         PropertyGet getprop = (PropertyGet) n;
         AstNode m = getprop.getRight();
 
         assertTrue(m instanceof Name);
         assertEquals(Token.NAME, m.getType()); // used to be Token.STRING!
-        assertEquals(1, m.getLineno());
+        assertLineColumnAre(1, 5, m);
     }
 
     @Test
@@ -191,7 +193,7 @@ public class ParserTest {
 
         assertTrue(n instanceof ElementGet);
         assertEquals(Token.GETELEM, n.getType());
-        assertEquals(1, n.getLineno());
+        assertLineColumnAre(1, 1, n);
     }
 
     @Test
@@ -199,7 +201,7 @@ public class ParserTest {
         AstRoot root = parse("\n/** a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(1, root.getComments().first().getLineno());
+        assertLineColumnAre(1, 1, root.getComments().first());
     }
 
     @Test
@@ -207,7 +209,7 @@ public class ParserTest {
         AstRoot root = parse("\n/**\n\n a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(1, root.getComments().first().getLineno());
+        assertLineColumnAre(1, 1, root.getComments().first());
     }
 
     @Test
@@ -215,7 +217,7 @@ public class ParserTest {
         AstRoot root = parse("\n  \n\n/**\n\n a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(3, root.getComments().first().getLineno());
+        assertLineColumnAre(3, 1, root.getComments().first());
     }
 
     @Test
@@ -223,7 +225,7 @@ public class ParserTest {
         AstRoot root = parse("\n  \n\n  /**\n\n a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(3, root.getComments().first().getLineno());
+        assertLineColumnAre(3, 3, root.getComments().first());
     }
 
     @Test
@@ -231,7 +233,7 @@ public class ParserTest {
         AstRoot root = parse("  /**\n* a.\n* b.\n* c.*/\n");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(0, root.getComments().first().getLineno());
+        assertLineColumnAre(0, 3, root.getComments().first());
     }
 
     @Test
@@ -239,7 +241,7 @@ public class ParserTest {
         AstRoot root = parse("  \n/**\n* a.\n* b.\n* c.*/\n");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(1, root.getComments().first().getLineno());
+        assertLineColumnAre(1, 1, root.getComments().first());
     }
 
     @Test
@@ -247,7 +249,7 @@ public class ParserTest {
         AstRoot root = parse("var x;\n/**\n\n a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(1, root.getComments().first().getLineno());
+        assertLineColumnAre(1, 1, root.getComments().first());
     }
 
     @Test
@@ -255,7 +257,7 @@ public class ParserTest {
         AstRoot root = parse("\nvar x;/**\n\n a */");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
-        assertEquals(1, root.getComments().first().getLineno());
+        assertLineColumnAre(1, 7, root.getComments().first());
     }
 
     @Test
@@ -303,11 +305,11 @@ public class ParserTest {
         Name fifthVarName = (Name) fifthVar.getTarget();
         AstNode fifthVarLiteral = fifthVar.getInitializer();
 
-        assertEquals(2, firstVarLiteral.getLineno());
-        assertEquals(4, secondVarLiteral.getLineno());
-        assertEquals(6, thirdVarLiteral.getLineno());
-        assertEquals(8, fourthVarLiteral.getLineno());
-        assertEquals(10, fifthVarLiteral.getLineno());
+        assertLineColumnAre(2, 5, firstVarLiteral);
+        assertLineColumnAre(4, 5, secondVarLiteral);
+        assertLineColumnAre(6, 5, thirdVarLiteral);
+        assertLineColumnAre(8, 5, fourthVarLiteral);
+        assertLineColumnAre(10, 5, fifthVarLiteral);
     }
 
     @Test
@@ -337,15 +339,15 @@ public class ParserTest {
         AstNode defaultCase = cases.get(2);
         AstNode returnStmt = (AstNode) switchStmt.getNext();
 
-        assertEquals(1, switchStmt.getLineno());
-        assertEquals(1, switchVar.getLineno());
-        assertEquals(2, firstCase.getLineno());
-        assertEquals(3, caseArg.getLineno());
-        assertEquals(4, exprStmt.getLineno());
-        assertEquals(4, incrExpr.getLineno());
-        assertEquals(4, incrVar.getLineno());
-        assertEquals(5, secondCase.getLineno());
-        assertEquals(6, defaultCase.getLineno());
+        assertLineColumnAre(1, 1, switchStmt);
+        assertLineColumnAre(1, 9, switchVar);
+        assertLineColumnAre(2, 4, firstCase);
+        assertLineColumnAre(3, 6, caseArg);
+        assertLineColumnAre(4, 6, exprStmt);
+        assertLineColumnAre(4, 6, incrExpr);
+        assertLineColumnAre(4, 6, incrVar);
+        assertLineColumnAre(5, 4, secondCase);
+        assertLineColumnAre(6, 4, defaultCase);
     }
 
     @Test
@@ -367,12 +369,12 @@ public class ParserTest {
         AstNode param2 = params.get(1);
         AstNode param3 = params.get(2);
 
-        assertEquals(1, function.getLineno());
-        assertEquals(2, functionName.getLineno());
-        assertEquals(3, param1.getLineno());
-        assertEquals(4, param2.getLineno());
-        assertEquals(5, param3.getLineno());
-        assertEquals(5, body.getLineno());
+        assertLineColumnAre(1, 1, function);
+        assertLineColumnAre(2, 5, functionName);
+        assertLineColumnAre(3, 5, param1);
+        assertLineColumnAre(4, 5, param2);
+        assertLineColumnAre(5, 5, param3);
+        assertLineColumnAre(5, 8, body);
     }
 
     @Test
@@ -385,10 +387,10 @@ public class ParserTest {
         AstNode declName = init.getTarget();
         AstNode expr = init.getInitializer();
 
-        assertEquals(1, decl.getLineno());
-        assertEquals(2, init.getLineno());
-        assertEquals(2, declName.getLineno());
-        assertEquals(3, expr.getLineno());
+        assertLineColumnAre(1, 1, decl);
+        assertLineColumnAre(2, 5, init);
+        assertLineColumnAre(2, 5, declName);
+        assertLineColumnAre(3, 5, expr);
     }
 
     @Test
@@ -411,9 +413,9 @@ public class ParserTest {
         ExpressionStatement exprStmt = (ExpressionStatement) returnStmt.getNext();
         AstNode returnVal = exprStmt.getExpression();
 
-        assertEquals(6, returnStmt.getLineno());
-        assertEquals(7, exprStmt.getLineno());
-        assertEquals(7, returnVal.getLineno());
+        assertLineColumnAre(6, 5, returnStmt);
+        assertLineColumnAre(7, 5, exprStmt);
+        assertLineColumnAre(7, 5, returnVal);
     }
 
     @Test
@@ -425,10 +427,10 @@ public class ParserTest {
         AstNode condClause = forLoop.getCondition();
         AstNode incrClause = forLoop.getIncrement();
 
-        assertEquals(1, forLoop.getLineno());
-        assertEquals(2, initClause.getLineno());
-        assertEquals(3, condClause.getLineno());
-        assertEquals(4, incrClause.getLineno());
+        assertLineColumnAre(1, 1, forLoop);
+        assertLineColumnAre(2, 1, initClause);
+        assertLineColumnAre(3, 1, condClause);
+        assertLineColumnAre(4, 1, incrClause);
     }
 
     @Test
@@ -439,9 +441,9 @@ public class ParserTest {
                                 + "    + \n"
                                 + "    b;\n"
                                 + "var\n"
-                                + "    e =\n"
+                                + "   e =\n"
                                 + "    a +\n"
-                                + "    c;\n"
+                                + "     c;\n"
                                 + "var f = b\n"
                                 + "    / c;\n");
 
@@ -465,25 +467,25 @@ public class ParserTest {
 
         ReturnStatement returnStmt = (ReturnStatement) stmt3.getNext();
 
-        assertEquals(1, var1.getLineno());
-        assertEquals(1, firstVarName.getLineno());
-        assertEquals(1, var1Add.getLineno());
-        assertEquals(1, var1Add.getLeft().getLineno());
-        assertEquals(3, var1Add.getRight().getLineno());
+        assertLineColumnAre(1, 5, var1);
+        assertLineColumnAre(1, 5, firstVarName);
+        assertLineColumnAre(1, 9, var1Add);
+        assertLineColumnAre(1, 9, var1Add.getLeft());
+        assertLineColumnAre(3, 5, var1Add.getRight());
 
         // var directive with name on next line wrong --
         // should be 6.
-        assertEquals(5, var2.getLineno());
-        assertEquals(5, secondVarName.getLineno());
-        assertEquals(6, var2Add.getLineno());
-        assertEquals(6, var2Add.getLeft().getLineno());
-        assertEquals(7, var2Add.getRight().getLineno());
+        assertLineColumnAre(5, 4, var2);
+        assertLineColumnAre(5, 4, secondVarName);
+        assertLineColumnAre(6, 5, var2Add);
+        assertLineColumnAre(6, 5, var2Add.getLeft());
+        assertLineColumnAre(7, 6, var2Add.getRight());
 
-        assertEquals(8, var3.getLineno());
-        assertEquals(8, thirdVarName.getLineno());
-        assertEquals(8, thirdVarDiv.getLineno());
-        assertEquals(8, thirdVarDiv.getLeft().getLineno());
-        assertEquals(9, thirdVarDiv.getRight().getLineno());
+        assertLineColumnAre(8, 5, var3);
+        assertLineColumnAre(8, 5, thirdVarName);
+        assertLineColumnAre(8, 9, thirdVarDiv);
+        assertLineColumnAre(8, 9, thirdVarDiv.getLeft());
+        assertLineColumnAre(9, 7, thirdVarDiv.getRight());
     }
 
     @Test
@@ -497,10 +499,10 @@ public class ParserTest {
         AstNode firstVarRef = firstOp.getOperand();
         AstNode secondVarRef = secondOp.getOperand();
 
-        assertEquals(1, firstOp.getLineno());
-        assertEquals(2, secondOp.getLineno());
-        assertEquals(1, firstVarRef.getLineno());
-        assertEquals(3, secondVarRef.getLineno());
+        assertLineColumnAre(1, 1, firstOp);
+        assertLineColumnAre(2, 4, secondOp);
+        assertLineColumnAre(1, 1, firstVarRef);
+        assertLineColumnAre(3, 4, secondVarRef);
     }
 
     @Test
@@ -522,10 +524,10 @@ public class ParserTest {
         AstNode thenClause = ifStmt.getThenPart();
         AstNode elseClause = ifStmt.getElsePart();
 
-        assertEquals(1, ifStmt.getLineno());
-        assertEquals(2, condClause.getLineno());
-        assertEquals(3, thenClause.getLineno());
-        assertEquals(7, elseClause.getLineno());
+        assertLineColumnAre(1, 1, ifStmt);
+        assertLineColumnAre(2, 5, condClause);
+        assertLineColumnAre(3, 4, thenClause);
+        assertLineColumnAre(7, 4, elseClause);
     }
 
     @Test
@@ -550,13 +552,13 @@ public class ParserTest {
         AstNode finallyBlock = tryStmt.getFinallyBlock();
         AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
 
-        assertEquals(1, tryStmt.getLineno());
-        assertEquals(1, tryBlock.getLineno());
-        assertEquals(5, catchVarBlock.getLineno());
-        assertEquals(4, catchVar.getLineno());
-        assertEquals(3, catchClause.getLineno());
-        assertEquals(6, finallyBlock.getLineno());
-        assertEquals(7, finallyStmt.getLineno());
+        assertLineColumnAre(1, 1, tryStmt);
+        assertLineColumnAre(1, 5, tryBlock);
+        assertLineColumnAre(5, 1, catchVarBlock);
+        assertLineColumnAre(4, 6, catchVar);
+        assertLineColumnAre(3, 3, catchClause);
+        assertLineColumnAre(6, 11, finallyBlock);
+        assertLineColumnAre(7, 5, finallyStmt);
     }
 
     @Test
@@ -569,10 +571,10 @@ public class ParserTest {
         AstNode thenExpr = hook.getTrueExpression();
         AstNode elseExpr = hook.getFalseExpression();
 
-        assertEquals(2, hook.getLineno());
-        assertEquals(1, condExpr.getLineno());
-        assertEquals(3, thenExpr.getLineno());
-        assertEquals(5, elseExpr.getLineno());
+        assertLineColumnAre(1, 1, hook);
+        assertLineColumnAre(1, 1, condExpr);
+        assertLineColumnAre(3, 5, thenExpr);
+        assertLineColumnAre(5, 5, elseExpr);
     }
 
     @Test
@@ -582,8 +584,8 @@ public class ParserTest {
         LabeledStatement firstStmt = (LabeledStatement) root.getFirstChild();
         LabeledStatement secondStmt = (LabeledStatement) firstStmt.getNext();
 
-        assertEquals(1, firstStmt.getLineno());
-        assertEquals(3, secondStmt.getLineno());
+        assertLineColumnAre(1, 1, firstStmt);
+        assertLineColumnAre(3, 1, secondStmt);
     }
 
     @Test
@@ -595,9 +597,9 @@ public class ParserTest {
         AstNode lhs = compare.getLeft();
         AstNode rhs = compare.getRight();
 
-        assertEquals(1, lhs.getLineno());
-        assertEquals(1, compare.getLineno());
-        assertEquals(3, rhs.getLineno());
+        assertLineColumnAre(1, 1, lhs);
+        assertLineColumnAre(1, 1, compare);
+        assertLineColumnAre(3, 1, rhs);
     }
 
     @Test
@@ -608,9 +610,9 @@ public class ParserTest {
         AstNode lhs = compare.getLeft();
         AstNode rhs = compare.getRight();
 
-        assertEquals(1, lhs.getLineno());
-        assertEquals(1, compare.getLineno());
-        assertEquals(3, rhs.getLineno());
+        assertLineColumnAre(1, 1, lhs);
+        assertLineColumnAre(1, 1, compare);
+        assertLineColumnAre(3, 1, rhs);
     }
 
     @Test
@@ -621,14 +623,14 @@ public class ParserTest {
         AstNode lhs = assign.getLeft();
         AstNode rhs = assign.getRight();
 
-        assertEquals(1, lhs.getLineno());
-        assertEquals(1, assign.getLineno());
-        assertEquals(3, rhs.getLineno());
+        assertLineColumnAre(1, 1, lhs);
+        assertLineColumnAre(1, 1, assign);
+        assertLineColumnAre(3, 1, rhs);
     }
 
     @Test
     public void linenoComma() {
-        AstRoot root = parse("\na,\n" + "    b,\n" + "    c;\n");
+        AstRoot root = parse("\na,\n" + "    b,\n" + "   c;\n");
 
         ExpressionStatement stmt = (ExpressionStatement) root.getFirstChild();
         InfixExpression comma1 = (InfixExpression) stmt.getExpression();
@@ -637,11 +639,11 @@ public class ParserTest {
         AstNode aRef = comma2.getLeft();
         AstNode bRef = comma2.getRight();
 
-        assertEquals(1, comma1.getLineno());
-        assertEquals(1, comma2.getLineno());
-        assertEquals(1, aRef.getLineno());
-        assertEquals(2, bRef.getLineno());
-        assertEquals(3, cRef.getLineno());
+        assertLineColumnAre(1, 1, comma1);
+        assertLineColumnAre(1, 1, comma2);
+        assertLineColumnAre(1, 1, aRef);
+        assertLineColumnAre(2, 5, bRef);
+        assertLineColumnAre(3, 4, cRef);
     }
 
     @Test
@@ -658,16 +660,16 @@ public class ParserTest {
         RegExpLiteral regexObject = (RegExpLiteral) args.get(0);
         AstNode aString = args.get(1);
 
-        assertEquals(1, firstVarDecl.getLineno());
-        assertEquals(1, firstVarName.getLineno());
-        assertEquals(2, callNode.getLineno());
-        assertEquals(2, fnName.getLineno());
-        assertEquals(3, regexObject.getLineno());
-        assertEquals(3, aString.getLineno());
+        assertLineColumnAre(1, 1, firstVarDecl);
+        assertLineColumnAre(1, 5, firstVarName);
+        assertLineColumnAre(2, 7, callNode);
+        assertLineColumnAre(2, 7, fnName);
+        assertLineColumnAre(3, 1, regexObject);
+        assertLineColumnAre(3, 6, aString);
     }
 
     @Test
-    public void mestedOr() {
+    public void nestedOr() {
         AstNode root =
                 parse(
                         "\nif (a && \n"
@@ -681,10 +683,10 @@ public class ParserTest {
         InfixExpression andClause = (InfixExpression) orClause.getLeft();
         AstNode cName = orClause.getRight();
 
-        assertEquals(1, ifStmt.getLineno());
-        assertEquals(1, orClause.getLineno());
-        assertEquals(1, andClause.getLineno());
-        assertEquals(4, cName.getLineno());
+        assertLineColumnAre(1, 1, ifStmt);
+        assertLineColumnAre(1, 5, orClause);
+        assertLineColumnAre(1, 5, andClause);
+        assertLineColumnAre(4, 5, cName);
     }
 
     @Test
@@ -708,7 +710,7 @@ public class ParserTest {
                                 + "{ \n"
                                 + "'A' : 'A', \n"
                                 + "'B' : 'B', \n"
-                                + "'C' : \n"
+                                + " 'C' : \n"
                                 + "      'C' \n"
                                 + "};\n");
 
@@ -730,17 +732,17 @@ public class ParserTest {
         AstNode thirdKey = thirdObjectLit.getLeft();
         AstNode thirdValue = thirdObjectLit.getRight();
 
-        assertEquals(1, firstVarName.getLineno());
-        assertEquals(2, objectLiteral.getLineno());
-        assertEquals(3, firstObjectLit.getLineno());
-        assertEquals(3, firstKey.getLineno());
-        assertEquals(3, firstValue.getLineno());
+        assertLineColumnAre(1, 5, firstVarName);
+        assertLineColumnAre(2, 1, objectLiteral);
+        assertLineColumnAre(3, 1, firstObjectLit);
+        assertLineColumnAre(3, 1, firstKey);
+        assertLineColumnAre(3, 7, firstValue);
 
-        assertEquals(4, secondKey.getLineno());
-        assertEquals(4, secondValue.getLineno());
+        assertLineColumnAre(4, 1, secondKey);
+        assertLineColumnAre(4, 7, secondValue);
 
-        assertEquals(5, thirdKey.getLineno());
-        assertEquals(6, thirdValue.getLineno());
+        assertLineColumnAre(5, 2, thirdKey);
+        assertLineColumnAre(6, 7, thirdValue);
     }
 
     @Test
@@ -754,10 +756,10 @@ public class ParserTest {
         Scope finallyBlock = (Scope) tryStmt.getFinallyBlock();
         AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
 
-        assertEquals(1, tryStmt.getLineno());
-        assertEquals(1, tryBlock.getLineno());
-        assertEquals(3, finallyBlock.getLineno());
-        assertEquals(4, finallyStmt.getLineno());
+        assertLineColumnAre(1, 1, tryStmt);
+        assertLineColumnAre(1, 5, tryBlock);
+        assertLineColumnAre(3, 11, finallyBlock);
+        assertLineColumnAre(4, 3, finallyStmt);
     }
 
     @Test
@@ -778,12 +780,12 @@ public class ParserTest {
         AstNode exceptionVar = catchClause.getVarName();
         AstNode varDecl = (AstNode) catchStmt.getFirstChild();
 
-        assertEquals(1, tryStmt.getLineno());
-        assertEquals(1, tryBlock.getLineno());
-        assertEquals(3, catchClause.getLineno());
-        assertEquals(3, catchStmt.getLineno());
-        assertEquals(3, exceptionVar.getLineno());
-        assertEquals(4, varDecl.getLineno());
+        assertLineColumnAre(1, 1, tryStmt);
+        assertLineColumnAre(1, 5, tryBlock);
+        assertLineColumnAre(3, 3, catchClause);
+        assertLineColumnAre(3, 14, catchStmt);
+        assertLineColumnAre(3, 10, exceptionVar);
+        assertLineColumnAre(4, 3, varDecl);
     }
 
     @Test
@@ -805,14 +807,14 @@ public class ParserTest {
         AstNode aTest = andTest.getLeft();
         AstNode bTest = andTest.getRight();
 
-        assertEquals(1, ifStmt.getLineno());
-        assertEquals(2, orTest.getLineno());
-        assertEquals(2, andTest.getLineno());
-        assertEquals(2, aTest.getLineno());
-        assertEquals(4, bTest.getLineno());
-        assertEquals(5, cTest.getLineno());
-        assertEquals(5, cTestParen.getLineno());
-        assertEquals(2, andTestParen.getLineno());
+        assertLineColumnAre(1, 1, ifStmt);
+        assertLineColumnAre(2, 6, orTest);
+        assertLineColumnAre(2, 7, andTest);
+        assertLineColumnAre(2, 7, aTest);
+        assertLineColumnAre(4, 3, bTest);
+        assertLineColumnAre(5, 3, cTest);
+        assertLineColumnAre(5, 2, cTestParen);
+        assertLineColumnAre(2, 6, andTestParen);
     }
 
     @Test
@@ -851,22 +853,22 @@ public class ParserTest {
         InfixExpression bitXorTest = (InfixExpression) test3Expr.getExpression();
         InfixExpression bitShiftTest = (InfixExpression) test4Expr.getExpression();
 
-        assertEquals(1, ifStmt.getLineno());
+        assertLineColumnAre(1, 1, ifStmt);
 
-        assertEquals(2, bigLHSExpr.getLineno());
-        assertEquals(7, bigRHSExpr.getLineno());
-        assertEquals(2, eqTest.getLineno());
-        assertEquals(7, notEqTest.getLineno());
+        assertLineColumnAre(2, 7, bigLHSExpr);
+        assertLineColumnAre(7, 7, bigRHSExpr);
+        assertLineColumnAre(2, 8, eqTest);
+        assertLineColumnAre(7, 8, notEqTest);
 
-        assertEquals(2, test1Expr.getLineno());
-        assertEquals(5, test2Expr.getLineno());
-        assertEquals(7, test3Expr.getLineno());
-        assertEquals(10, test4Expr.getLineno());
+        assertLineColumnAre(2, 8, test1Expr);
+        assertLineColumnAre(5, 8, test2Expr);
+        assertLineColumnAre(7, 8, test3Expr);
+        assertLineColumnAre(10, 8, test4Expr);
 
-        assertEquals(2, bitOrTest.getLineno());
-        assertEquals(5, bitAndTest.getLineno());
-        assertEquals(7, bitXorTest.getLineno());
-        assertEquals(10, bitShiftTest.getLineno());
+        assertLineColumnAre(2, 9, bitOrTest);
+        assertLineColumnAre(5, 9, bitAndTest);
+        assertLineColumnAre(7, 9, bitXorTest);
+        assertLineColumnAre(10, 9, bitShiftTest);
     }
 
     @Test
@@ -876,7 +878,7 @@ public class ParserTest {
         ExpressionStatement stmt = (ExpressionStatement) root.getFirstChild();
         FunctionCall fc = (FunctionCall) stmt.getExpression();
         // Line number should get closest to the actual paren.
-        assertEquals(3, fc.getLineno());
+        assertLineColumnAre(1, 1, fc);
     }
 
     @Test
@@ -888,8 +890,8 @@ public class ParserTest {
         ExpressionStatement bExprStmt = (ExpressionStatement) exprStmt.getNext();
         AstNode bRef = bExprStmt.getExpression();
 
-        assertEquals(1, aRef.getLineno());
-        assertEquals(2, bRef.getLineno());
+        assertLineColumnAre(1, 1, aRef);
+        assertLineColumnAre(2, 1, bRef);
     }
 
     @Test
@@ -903,11 +905,11 @@ public class ParserTest {
         AstNode bName = aDotbName.getRight();
         FunctionNode fnNode = (FunctionNode) fnAssignment.getRight();
 
-        assertEquals(1, fnAssignment.getLineno());
-        assertEquals(1, aDotbName.getLineno());
-        assertEquals(1, aName.getLineno());
-        assertEquals(2, bName.getLineno());
-        assertEquals(3, fnNode.getLineno());
+        assertLineColumnAre(1, 1, fnAssignment);
+        assertLineColumnAre(1, 1, aDotbName);
+        assertLineColumnAre(1, 1, aName);
+        assertLineColumnAre(2, 1, bName);
+        assertLineColumnAre(3, 1, fnNode);
     }
 
     @Test
@@ -1181,8 +1183,8 @@ public class ParserTest {
         assertEquals(2, root.getComments().size());
         Comment[] comments = new Comment[2];
         comments = root.getComments().toArray(comments);
-        assertEquals(0, comments[0].getLineno());
-        assertEquals(3, comments[1].getLineno());
+        assertLineColumnAre(0, 1, comments[0]);
+        assertLineColumnAre(3, 1, comments[1]);
     }
 
     @Test
@@ -1488,5 +1490,10 @@ public class ParserTest {
         assertTrue(testErrorReporter.hasEncounteredAllWarnings());
 
         return script;
+    }
+
+    private void assertLineColumnAre(int line, int column, Node node) {
+        Assertions.assertEquals(line, node.getLineno(), "line number mismatch");
+        Assertions.assertEquals(column, node.getColumn(), "column number mismatch");
     }
 }

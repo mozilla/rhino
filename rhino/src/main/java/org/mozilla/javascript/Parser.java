@@ -154,6 +154,9 @@ public class Parser {
     private int prevNameTokenStart;
     private String prevNameTokenString = "";
     private int prevNameTokenLineno;
+    private int prevNameTokenColumn;
+    private int lastTokenLineno = -1;
+    private int lastTokenColumn = -1;
 
     private boolean defaultUseStrictDirective;
 
@@ -332,7 +335,7 @@ public class Parser {
         return n.getPosition() + n.getLength();
     }
 
-    private void recordComment(int lineno, String comment) {
+    private void recordComment(int lineno, int column, String comment) {
         if (scannedComments == null) {
             scannedComments = new ArrayList<>();
         }
@@ -342,9 +345,9 @@ public class Parser {
                 && compilerEnv.isRecordingLocalJsDocComments()) {
             currentJsDocComment =
                     new Comment(ts.tokenBeg, ts.getTokenLength(), ts.commentType, comment);
-            currentJsDocComment.setLineno(lineno);
+            currentJsDocComment.setLineColumnNumber(lineno, column);
         }
-        commentNode.setLineno(lineno);
+        commentNode.setLineColumnNumber(lineno, column);
         scannedComments.add(commentNode);
     }
 
@@ -376,20 +379,18 @@ public class Parser {
             return currentToken;
         }
 
-        int lineno = ts.getLineno();
         int tt = ts.getToken();
         boolean sawEOL = false;
 
         // process comments and whitespace
         while (tt == Token.EOL || tt == Token.COMMENT) {
             if (tt == Token.EOL) {
-                lineno++;
                 sawEOL = true;
                 tt = ts.getToken();
             } else {
                 if (compilerEnv.isRecordingComments()) {
                     String comment = ts.getAndResetCurrentComment();
-                    recordComment(lineno, comment);
+                    recordComment(ts.getTokenStartLineno(), ts.getTokenColumn(), comment);
                     break;
                 }
                 tt = ts.getToken();
@@ -401,6 +402,14 @@ public class Parser {
         return currentToken; // return unflagged token
     }
 
+    private int lineNumber() {
+        return lastTokenLineno;
+    }
+
+    private int columnNumber() {
+        return lastTokenColumn;
+    }
+
     private int peekFlaggedToken() throws IOException {
         peekToken();
         return currentFlaggedToken;
@@ -408,6 +417,8 @@ public class Parser {
 
     private void consumeToken() {
         currentFlaggedToken = Token.EOF;
+        lastTokenLineno = ts.getTokenStartLineno();
+        lastTokenColumn = ts.getTokenColumn();
     }
 
     private int nextToken() throws IOException {
@@ -580,6 +591,8 @@ public class Parser {
         currentScope = currentScriptOrFn = root;
 
         int baseLineno = ts.lineno; // line number where source starts
+        prevNameTokenLineno = ts.getLineno();
+        prevNameTokenColumn = ts.getTokenColumn();
         int end = pos; // in case source is empty
 
         boolean inDirectivePrologue = true;
@@ -631,7 +644,7 @@ public class Parser {
         } catch (StackOverflowError ex) {
             String msg = lookupMessage("msg.too.deep.parser.recursion");
             if (!compilerEnv.isIdeMode())
-                throw Context.reportRuntimeError(msg, sourceURI, ts.lineno, null, 0);
+                throw Context.reportRuntimeError(msg, sourceURI, lineNumber(), null, 0);
         } finally {
             inUseStrictDirective = savedStrictMode;
         }
@@ -652,7 +665,7 @@ public class Parser {
         root.setLength(end - pos);
         root.setSourceName(sourceURI);
         root.setBaseLineno(baseLineno);
-        root.setEndLineno(ts.lineno);
+        root.setEndLineno(ts.getLineno());
         return root;
     }
 
@@ -670,7 +683,6 @@ public class Parser {
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
         Block pn = new Block(pos); // starts at LC position
-        pn.setColumn(ts.getTokenColumn());
 
         // Function code that is supplied as the arguments to the built-in
         // Function, Generator, and AsyncFunction constructors is strict mode code
@@ -680,7 +692,7 @@ public class Parser {
         boolean savedStrictMode = inUseStrictDirective;
         inUseStrictDirective = false;
 
-        pn.setLineno(ts.lineno);
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         try {
             if (isExpressionClosure) {
                 AstNode returnValue = assignExpr();
@@ -689,6 +701,7 @@ public class Parser {
                                 returnValue.getPosition(), returnValue.getLength(), returnValue);
                 // expression closure flag is required on both nodes
                 n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
+                n.setLineColumnNumber(returnValue.getLineno(), returnValue.getColumn());
                 pn.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
                 if (isArrow) {
                     n.putProp(Node.ARROW_FUNCTION_PROP, Boolean.TRUE);
@@ -828,6 +841,7 @@ public class Parser {
                 }
             } else {
                 boolean wasRest = false;
+                int restStartLineno = -1, restStartColumn = -1;
                 if (tt == Token.DOTDOTDOT) {
                     if (fnNode.hasRestParameter()) {
                         // Error: parameter after rest parameter
@@ -837,6 +851,8 @@ public class Parser {
                     fnNode.setHasRestParameter(true);
                     wasRest = true;
                     consumeToken();
+                    restStartLineno = lineNumber();
+                    restStartColumn = columnNumber();
                 }
 
                 if (mustMatchToken(Token.NAME, "msg.no.parm", true)) {
@@ -846,6 +862,9 @@ public class Parser {
                     }
 
                     Name paramNameNode = createNameNode();
+                    if (wasRest) {
+                        paramNameNode.setLineColumnNumber(restStartLineno, restStartColumn);
+                    }
                     Comment jsdocNodeForName = getAndResetJsDoc();
                     if (jsdocNodeForName != null) {
                         paramNameNode.setJsDocNode(jsdocNodeForName);
@@ -902,8 +921,9 @@ public class Parser {
     private FunctionNode function(int type) throws IOException {
         boolean isGenerator = false;
         int syntheticType = type;
-        int baseLineno = ts.lineno; // line number where source starts
+        int baseLineno = lineNumber(); // line number where source starts
         int functionSourceStart = ts.tokenBeg; // start of "function" kwd
+        int functionStartColumn = columnNumber();
         Name name = null;
         AstNode memberExprNode = null;
 
@@ -956,7 +976,6 @@ public class Parser {
         }
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
-        fnNode.setColumn(ts.getTokenColumn(functionSourceStart));
         fnNode.setFunctionType(type);
         if (isGenerator) {
             fnNode.setIsES6Generator();
@@ -1001,8 +1020,8 @@ public class Parser {
         }
 
         fnNode.setSourceName(sourceURI);
-        fnNode.setBaseLineno(baseLineno);
-        fnNode.setEndLineno(ts.lineno);
+        fnNode.setLineColumnNumber(baseLineno, functionStartColumn);
+        fnNode.setEndLineno(lineNumber());
 
         // Set the parent scope.  Needed for finding undeclared vars.
         // Have to wait until after parsing the function to set its parent
@@ -1014,8 +1033,9 @@ public class Parser {
         return fnNode;
     }
 
-    private AstNode arrowFunction(AstNode params) throws IOException {
-        int baseLineno = ts.lineno; // line number where source starts
+    private AstNode arrowFunction(AstNode params, int startLine, int startColumn)
+            throws IOException {
+        int baseLineno = lineNumber(); // line number where source starts
         int functionSourceStart =
                 params != null ? params.getPosition() : -1; // start of "function" kwd
 
@@ -1080,7 +1100,8 @@ public class Parser {
 
         fnNode.setSourceName(sourceURI);
         fnNode.setBaseLineno(baseLineno);
-        fnNode.setEndLineno(ts.lineno);
+        fnNode.setEndLineno(lineNumber());
+        fnNode.setLineColumnNumber(startLine, startColumn);
 
         return fnNode;
     }
@@ -1168,8 +1189,7 @@ public class Parser {
                 && !compilerEnv.isIdeMode()) codeBug();
         int pos = ts.tokenBeg;
         AstNode block = parent != null ? parent : new Block(pos);
-        block.setLineno(ts.lineno);
-        block.setColumn(ts.getTokenColumn());
+        block.setLineColumnNumber(lineNumber(), columnNumber());
 
         int tt;
         while ((tt = peekToken()) > Token.EOF && tt != Token.RC) {
@@ -1265,6 +1285,7 @@ public class Parser {
 
         AstNode pn = null;
         int tt = peekToken(), pos = ts.tokenBeg;
+        int lineno, column;
 
         switch (tt) {
             case Token.IF:
@@ -1306,9 +1327,10 @@ public class Parser {
             case Token.CONST:
             case Token.VAR:
                 consumeToken();
-                int lineno = ts.lineno;
+                lineno = lineNumber();
+                column = columnNumber();
                 pn = variables(currentToken, ts.tokenBeg, true);
-                pn.setLineno(lineno);
+                pn.setLineColumnNumber(lineno, column);
                 break;
 
             case Token.LET:
@@ -1324,7 +1346,7 @@ public class Parser {
             case Token.DEBUGGER:
                 consumeToken();
                 pn = new KeywordLiteral(ts.tokenBeg, ts.tokenEnd - ts.tokenBeg, tt);
-                pn.setLineno(ts.lineno);
+                pn.setLineColumnNumber(lineNumber(), columnNumber());
                 break;
 
             case Token.LC:
@@ -1338,7 +1360,7 @@ public class Parser {
                 consumeToken();
                 pos = ts.tokenBeg;
                 pn = new EmptyStatement(pos, ts.tokenEnd - pos);
-                pn.setLineno(ts.lineno);
+                pn.setLineColumnNumber(lineNumber(), columnNumber());
                 return pn;
 
             case Token.FUNCTION:
@@ -1358,9 +1380,12 @@ public class Parser {
                 pn = scannedComments.get(scannedComments.size() - 1);
                 return pn;
             default:
-                lineno = ts.lineno;
+                // Intentionally not calling lineNumber/columnNumber here!
+                // We have not consumed any token yet, so the position would be invalid
+                lineno = ts.getLineno();
+                column = ts.getTokenColumn();
                 pn = new ExpressionStatement(expr(false), !insideFunction());
-                pn.setLineno(lineno);
+                pn.setLineColumnNumber(lineno, column);
                 break;
         }
 
@@ -1400,7 +1425,7 @@ public class Parser {
     private IfStatement ifStatement() throws IOException {
         if (currentToken != Token.IF) codeBug();
         consumeToken();
-        int pos = ts.tokenBeg, lineno = ts.lineno, elsePos = -1;
+        int pos = ts.tokenBeg, lineno = lineNumber(), elsePos = -1, column = columnNumber();
         IfStatement pn = new IfStatement(pos);
         ConditionData data = condition();
         AstNode ifTrue = getNextStatementAfterInlineComments(pn), ifFalse = null;
@@ -1420,12 +1445,7 @@ public class Parser {
         pn.setThenPart(ifTrue);
         pn.setElsePart(ifFalse);
         pn.setElsePosition(elsePos);
-        pn.setLineno(lineno);
-        if (pn.getCondition() != null) {
-            AstNode condition = pn.getCondition();
-            if (condition.wasColumnAssigned()) pn.setColumn(condition.column());
-        }
-
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -1435,9 +1455,8 @@ public class Parser {
         int pos = ts.tokenBeg;
 
         SwitchStatement pn = new SwitchStatement(pos);
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         if (mustMatchToken(Token.LP, "msg.no.paren.switch", true)) pn.setLp(ts.tokenBeg - pos);
-        pn.setLineno(ts.lineno);
-        pn.setColumn(ts.getTokenColumn(pos));
 
         AstNode discriminant = expr(false);
         pn.setExpression(discriminant);
@@ -1455,7 +1474,7 @@ public class Parser {
             for (; ; ) {
                 tt = nextToken();
                 int casePos = ts.tokenBeg;
-                int caseLineno = ts.lineno;
+                int caseLineno = lineNumber(), caseColumn = columnNumber();
                 AstNode caseExpression = null;
                 switch (tt) {
                     case Token.RC:
@@ -1486,8 +1505,7 @@ public class Parser {
                 SwitchCase caseNode = new SwitchCase(casePos);
                 caseNode.setExpression(caseExpression);
                 caseNode.setLength(ts.tokenEnd - pos); // include colon
-                caseNode.setLineno(caseLineno);
-                caseNode.setColumn(ts.getTokenColumn(casePos));
+                caseNode.setLineColumnNumber(caseLineno, caseColumn);
 
                 while ((tt = peekToken()) != Token.RC
                         && tt != Token.CASE
@@ -1520,8 +1538,7 @@ public class Parser {
         consumeToken();
         int pos = ts.tokenBeg;
         WhileLoop pn = new WhileLoop(pos);
-        pn.setLineno(ts.lineno);
-        pn.setColumn(ts.getTokenColumn(pos));
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         enterLoop(pn);
         try {
             ConditionData data = condition();
@@ -1542,8 +1559,7 @@ public class Parser {
         consumeToken();
         int pos = ts.tokenBeg, end;
         DoLoop pn = new DoLoop(pos);
-        pn.setLineno(ts.lineno);
-        pn.setColumn(ts.getTokenColumn(pos));
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         enterLoop(pn);
         try {
             AstNode body = getNextStatementAfterInlineComments(pn);
@@ -1593,7 +1609,7 @@ public class Parser {
     private Loop forLoop() throws IOException {
         if (currentToken != Token.FOR) codeBug();
         consumeToken();
-        int forPos = ts.tokenBeg, lineno = ts.lineno;
+        int forPos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         boolean isForEach = false, isForIn = false, isForOf = false;
         int eachPos = -1, inPos = -1, lp = -1, rp = -1;
         AstNode init = null; // init is also foo in 'foo in object'
@@ -1635,7 +1651,8 @@ public class Parser {
                 if (peekToken() == Token.SEMI) {
                     // no loop condition
                     cond = new EmptyExpression(ts.tokenBeg, 1);
-                    cond.setLineno(ts.lineno);
+                    // We haven't consumed the token, so we need the CURRENT lexer position
+                    cond.setLineColumnNumber(ts.getLineno(), ts.getTokenColumn());
                 } else {
                     cond = expr(false);
                 }
@@ -1644,7 +1661,8 @@ public class Parser {
                 int tmpPos = ts.tokenEnd;
                 if (peekToken() == Token.RP) {
                     incr = new EmptyExpression(tmpPos, 1);
-                    incr.setLineno(ts.lineno);
+                    // We haven't consumed the token, so we need the CURRENT lexer position
+                    incr.setLineColumnNumber(ts.getLineno(), ts.getTokenColumn());
                 } else {
                     incr = expr(false);
                 }
@@ -1701,7 +1719,7 @@ public class Parser {
             }
         }
         pn.setParens(lp, rp);
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -1711,7 +1729,8 @@ public class Parser {
             AstNode init = null;
             if (tt == Token.SEMI) {
                 init = new EmptyExpression(ts.tokenBeg, 1);
-                init.setLineno(ts.lineno);
+                // We haven't consumed the token, so we need the CURRENT lexer position
+                init.setLineColumnNumber(ts.getLineno(), ts.getTokenColumn());
             } else if (tt == Token.VAR || tt == Token.LET) {
                 consumeToken();
                 init = variables(tt, ts.tokenBeg, false);
@@ -1731,7 +1750,7 @@ public class Parser {
         // Pull out JSDoc info and reset it before recursing.
         Comment jsdocNode = getAndResetJsDoc();
 
-        int tryPos = ts.tokenBeg, lineno = ts.lineno, finallyPos = -1;
+        int tryPos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber(), finallyPos = -1;
 
         TryStatement pn = new TryStatement(tryPos);
         // Hnadled comment here because there should not be try without LC
@@ -1760,11 +1779,16 @@ public class Parser {
         }
         if (peek == Token.CATCH) {
             while (matchToken(Token.CATCH, true)) {
-                int catchLineNum = ts.lineno;
+                int catchLineNum = lineNumber();
                 if (sawDefaultCatch) {
                     reportError("msg.catch.unreachable");
                 }
-                int catchPos = ts.tokenBeg, lp = -1, rp = -1, guardPos = -1;
+                int catchPos = ts.tokenBeg,
+                        lp = -1,
+                        rp = -1,
+                        guardPos = -1,
+                        catchLine = lineNumber(),
+                        catchColumn = columnNumber();
                 Name varName = null;
                 AstNode catchCond = null;
 
@@ -1815,7 +1839,7 @@ public class Parser {
 
                 Scope catchScope = new Scope(catchPos);
                 CatchClause catchNode = new CatchClause(catchPos);
-                catchNode.setLineno(ts.lineno);
+                catchNode.setLineColumnNumber(catchLine, catchColumn);
                 pushScope(catchScope);
                 try {
                     statements(catchScope);
@@ -1831,7 +1855,6 @@ public class Parser {
                     catchNode.setIfPosition(guardPos - catchPos);
                 }
                 catchNode.setParens(lp, rp);
-                catchNode.setLineno(catchLineNum);
 
                 if (mustMatchToken(Token.RC, "msg.no.brace.after.body", true)) tryEnd = ts.tokenEnd;
                 catchNode.setLength(tryEnd - catchPos);
@@ -1856,7 +1879,7 @@ public class Parser {
         if (finallyPos != -1) {
             pn.setFinallyPosition(finallyPos - tryPos);
         }
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
 
         if (jsdocNode != null) {
             pn.setJsDocNode(jsdocNode);
@@ -1868,7 +1891,7 @@ public class Parser {
     private ThrowStatement throwStatement() throws IOException {
         if (currentToken != Token.THROW) codeBug();
         consumeToken();
-        int pos = ts.tokenBeg, lineno = ts.lineno;
+        int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         if (peekTokenOrEOL() == Token.EOL) {
             // ECMAScript does not allow new lines before throw expression,
             // see bug 256617
@@ -1876,8 +1899,7 @@ public class Parser {
         }
         AstNode expr = expr(false);
         ThrowStatement pn = new ThrowStatement(pos, expr);
-        pn.setLineno(lineno);
-        pn.setColumn(ts.getTokenColumn(pos));
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -1906,7 +1928,7 @@ public class Parser {
     private BreakStatement breakStatement() throws IOException {
         if (currentToken != Token.BREAK) codeBug();
         consumeToken();
-        int lineno = ts.lineno, pos = ts.tokenBeg, end = ts.tokenEnd;
+        int lineno = lineNumber(), pos = ts.tokenBeg, end = ts.tokenEnd, column = columnNumber();
         Name breakLabel = null;
         if (peekTokenOrEOL() == Token.NAME) {
             breakLabel = createNameNode();
@@ -1926,18 +1948,22 @@ public class Parser {
             }
         }
 
+        if (breakLabel != null) {
+            breakLabel.setLineColumnNumber(lineNumber(), columnNumber());
+        }
+
         BreakStatement pn = new BreakStatement(pos, end - pos);
         pn.setBreakLabel(breakLabel);
         // can be null if it's a bad break in error-recovery mode
         if (breakTarget != null) pn.setBreakTarget(breakTarget);
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
     private ContinueStatement continueStatement() throws IOException {
         if (currentToken != Token.CONTINUE) codeBug();
         consumeToken();
-        int lineno = ts.lineno, pos = ts.tokenBeg, end = ts.tokenEnd;
+        int lineno = lineNumber(), pos = ts.tokenBeg, end = ts.tokenEnd, column = columnNumber();
         Name label = null;
         if (peekTokenOrEOL() == Token.NAME) {
             label = createNameNode();
@@ -1960,11 +1986,15 @@ public class Parser {
             target = labels == null ? null : (Loop) labels.getStatement();
         }
 
+        if (label != null) {
+            label.setLineColumnNumber(lineNumber(), columnNumber());
+        }
+
         ContinueStatement pn = new ContinueStatement(pos, end - pos);
         if (target != null) // can be null in error-recovery mode
         pn.setTarget(target);
         pn.setLabel(label);
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -1974,7 +2004,7 @@ public class Parser {
 
         Comment withComment = getAndResetJsDoc();
 
-        int lineno = ts.lineno, pos = ts.tokenBeg, lp = -1, rp = -1;
+        int lineno = lineNumber(), column = columnNumber(), pos = ts.tokenBeg, lp = -1, rp = -1;
         if (mustMatchToken(Token.LP, "msg.no.paren.with", true)) lp = ts.tokenBeg;
 
         AstNode obj = expr(false);
@@ -1988,21 +2018,21 @@ public class Parser {
         pn.setExpression(obj);
         pn.setStatement(body);
         pn.setParens(lp, rp);
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
     private AstNode letStatement() throws IOException {
         if (currentToken != Token.LET) codeBug();
         consumeToken();
-        int lineno = ts.lineno, pos = ts.tokenBeg;
+        int lineno = lineNumber(), pos = ts.tokenBeg, column = columnNumber();
         AstNode pn;
         if (peekToken() == Token.LP) {
             pn = let(true, pos);
         } else {
             pn = variables(Token.LET, pos, true); // else, e.g.: let x=6, y=7;
         }
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -2023,7 +2053,7 @@ public class Parser {
             reportError(tt == Token.RETURN ? "msg.bad.return" : "msg.bad.yield");
         }
         consumeToken();
-        int lineno = ts.lineno, pos = ts.tokenBeg, end = ts.tokenEnd;
+        int lineno = lineNumber(), column = columnNumber(), pos = ts.tokenBeg, end = ts.tokenEnd;
 
         boolean yieldStar = false;
         if ((tt == Token.YIELD)
@@ -2072,6 +2102,7 @@ public class Parser {
             setRequiresActivation();
             setIsGenerator();
             if (!exprContext) {
+                ret.setLineColumnNumber(lineno, column);
                 ret = new ExpressionStatement(ret);
             }
         }
@@ -2090,7 +2121,7 @@ public class Parser {
             }
         }
 
-        ret.setLineno(lineno);
+        ret.setLineColumnNumber(lineno, column);
         return ret;
     }
 
@@ -2099,7 +2130,7 @@ public class Parser {
         consumeToken();
         int pos = ts.tokenBeg;
         Scope block = new Scope(pos);
-        block.setLineno(ts.lineno);
+        block.setLineColumnNumber(lineNumber(), columnNumber());
         pushScope(block);
         try {
             statements(block);
@@ -2116,7 +2147,7 @@ public class Parser {
         consumeToken();
         mustHaveXML();
         setRequiresActivation();
-        int lineno = ts.lineno, pos = ts.tokenBeg;
+        int lineno = lineNumber(), column = columnNumber(), pos = ts.tokenBeg;
 
         if (!(matchToken(Token.NAME, true) && "xml".equals(ts.getString()))) {
             reportError("msg.bad.namespace");
@@ -2132,7 +2163,7 @@ public class Parser {
         UnaryExpression dxmln = new UnaryExpression(pos, getNodeEnd(e) - pos);
         dxmln.setOperator(Token.DEFAULTNAMESPACE);
         dxmln.setOperand(e);
-        dxmln.setLineno(lineno);
+        dxmln.setLineColumnNumber(lineno, column);
 
         ExpressionStatement es = new ExpressionStatement(dxmln, true);
         return es;
@@ -2174,13 +2205,13 @@ public class Parser {
 
         if (expr.getType() != Token.LABEL) {
             AstNode n = new ExpressionStatement(expr, !insideFunction());
-            n.lineno = expr.lineno;
+            n.setLineColumnNumber(expr.getLineno(), expr.getColumn());
             return n;
         }
 
         LabeledStatement bundle = new LabeledStatement(pos);
         recordLabel((Label) expr, bundle);
-        bundle.setLineno(ts.lineno);
+        bundle.setLineColumnNumber(expr.getLineno(), expr.getColumn());
         // look for more labels
         AstNode stmt = null;
         while (peekToken() == Token.NAME) {
@@ -2236,8 +2267,7 @@ public class Parser {
         int end;
         VariableDeclaration pn = new VariableDeclaration(pos);
         pn.setType(declType);
-        pn.setLineno(ts.lineno);
-        pn.setColumn(ts.getTokenColumn());
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         Comment varjsdocNode = getAndResetJsDoc();
         if (varjsdocNode != null) {
             pn.setJsDocNode(varjsdocNode);
@@ -2266,7 +2296,7 @@ public class Parser {
                 // Simple variable name
                 mustMatchToken(Token.NAME, "msg.bad.var", true);
                 name = createNameNode();
-                name.setLineno(ts.getLineno());
+                name.setLineColumnNumber(lineNumber(), columnNumber());
                 if (inUseStrictDirective) {
                     String id = ts.getString();
                     if ("eval".equals(id) || "arguments".equals(ts.getString())) {
@@ -2276,7 +2306,7 @@ public class Parser {
                 defineSymbol(declType, ts.getString(), inForInit);
             }
 
-            int lineno = ts.lineno;
+            int lineno = lineNumber(), column = columnNumber();
 
             Comment jsdocNode = getAndResetJsDoc();
 
@@ -2287,7 +2317,6 @@ public class Parser {
             }
 
             VariableInitializer vi = new VariableInitializer(kidPos, end - kidPos);
-            vi.setColumn(ts.getTokenColumn(kidPos));
             if (destructuring != null) {
                 if (init == null && !inForInit) {
                     reportError("msg.destruct.assign.no.init");
@@ -2299,7 +2328,7 @@ public class Parser {
             vi.setInitializer(init);
             vi.setType(declType);
             vi.setJsDocNode(jsdocNode);
-            vi.setLineno(lineno);
+            vi.setLineColumnNumber(lineno, column);
             pn.addVariable(vi);
 
             if (!matchToken(Token.COMMA, true)) break;
@@ -2312,7 +2341,7 @@ public class Parser {
     // have to pass in 'let' kwd position to compute kid offsets properly
     private AstNode let(boolean isStatement, int pos) throws IOException {
         LetNode pn = new LetNode(pos);
-        pn.setLineno(ts.lineno);
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         if (mustMatchToken(Token.LP, "msg.no.paren.after.let", true)) pn.setLp(ts.tokenBeg - pos);
         pushScope(pn);
         try {
@@ -2339,7 +2368,7 @@ public class Parser {
                 if (isStatement) {
                     // let expression in statement context
                     ExpressionStatement es = new ExpressionStatement(pn, !insideFunction());
-                    es.setLineno(pn.getLineno());
+                    es.setLineColumnNumber(pn.getLineno(), pn.getColumn());
                     return es;
                 }
             }
@@ -2439,6 +2468,11 @@ public class Parser {
         if (tt == Token.YIELD) {
             return returnOrYield(tt, true);
         }
+
+        // Intentionally not calling lineNumber/columnNumber here!
+        // We have not consumed any token yet, so the position would be invalid
+        int startLine = ts.lineno, startColumn = ts.getTokenColumn();
+
         AstNode pn = condExpr();
         boolean hasEOL = false;
         tt = peekTokenOrEOL();
@@ -2457,9 +2491,7 @@ public class Parser {
             if (isNotValidSimpleAssignmentTarget(pn))
                 reportError("msg.syntax.invalid.assignment.lhs");
 
-            Node left = pn;
             pn = new Assignment(tt, pn, assignExpr(), opPos);
-            if (left.wasColumnAssigned()) pn.setColumn(left.column());
 
             if (jsdocNode != null) {
                 pn.setJsDocNode(jsdocNode);
@@ -2472,7 +2504,7 @@ public class Parser {
             }
         } else if (!hasEOL && tt == Token.ARROW) {
             consumeToken();
-            pn = arrowFunction(pn);
+            pn = arrowFunction(pn, startLine, startColumn);
         } else if (pn.getIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 0) == 1
                 && !inDestructuringAssignment) {
             reportError("msg.syntax");
@@ -2489,7 +2521,6 @@ public class Parser {
     private AstNode condExpr() throws IOException {
         AstNode pn = nullishCoalescingExpr();
         if (matchToken(Token.HOOK, true)) {
-            int line = ts.lineno;
             int qmarkPos = ts.tokenBeg, colonPos = -1;
             /*
              * Always accept the 'in' operator in the middle clause of a ternary,
@@ -2508,7 +2539,7 @@ public class Parser {
             AstNode ifFalse = assignExpr();
             int beg = pn.getPosition(), len = getNodeEnd(ifFalse) - beg;
             ConditionalExpression ce = new ConditionalExpression(beg, len);
-            ce.setLineno(line);
+            ce.setLineColumnNumber(pn.getLineno(), pn.getColumn());
             ce.setTestExpression(pn);
             ce.setTrueExpression(ifTrue);
             ce.setFalseExpression(ifFalse);
@@ -2705,7 +2736,7 @@ public class Parser {
             consumeToken();
             tt = peekUntilNonComment(tt);
         }
-        int line = ts.lineno;
+        int line, column;
 
         switch (tt) {
             case Token.VOID:
@@ -2713,41 +2744,46 @@ public class Parser {
             case Token.BITNOT:
             case Token.TYPEOF:
                 consumeToken();
+                line = lineNumber();
+                column = columnNumber();
                 node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
-                node.setLineno(line);
-                node.setColumn(ts.getTokenColumn());
+                node.setLineColumnNumber(line, column);
                 return node;
 
             case Token.ADD:
                 consumeToken();
+                line = lineNumber();
+                column = columnNumber();
                 // Convert to special POS token in parse tree
                 node = new UnaryExpression(Token.POS, ts.tokenBeg, unaryExpr());
-                node.setLineno(line);
-                node.setColumn(ts.getTokenColumn());
+                node.setLineColumnNumber(line, column);
                 return node;
 
             case Token.SUB:
                 consumeToken();
+                line = lineNumber();
+                column = columnNumber();
                 // Convert to special NEG token in parse tree
                 node = new UnaryExpression(Token.NEG, ts.tokenBeg, unaryExpr());
-                node.setLineno(line);
-                node.setColumn(ts.getTokenColumn());
+                node.setLineColumnNumber(line, column);
                 return node;
 
             case Token.INC:
             case Token.DEC:
                 consumeToken();
+                line = lineNumber();
+                column = columnNumber();
                 UpdateExpression expr = new UpdateExpression(tt, ts.tokenBeg, memberExpr(true));
-                expr.setLineno(line);
-                expr.setColumn(ts.getTokenColumn());
+                expr.setLineColumnNumber(line, column);
                 checkBadIncDec(expr);
                 return expr;
 
             case Token.DELPROP:
                 consumeToken();
+                line = lineNumber();
+                column = columnNumber();
                 node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
-                node.setLineno(line);
-                node.setColumn(ts.getTokenColumn());
+                node.setLineColumnNumber(line, column);
                 return node;
 
             case Token.ERROR:
@@ -2771,8 +2807,7 @@ public class Parser {
                 }
                 consumeToken();
                 UpdateExpression uexpr = new UpdateExpression(tt, ts.tokenBeg, pn, true);
-                uexpr.setLineno(line);
-                uexpr.setColumn(ts.getTokenColumn());
+                uexpr.setLineColumnNumber(pn.getLineno(), pn.getColumn());
                 checkBadIncDec(uexpr);
                 return uexpr;
         }
@@ -2787,7 +2822,7 @@ public class Parser {
         }
 
         XmlLiteral pn = new XmlLiteral(pos);
-        pn.setLineno(ts.lineno);
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
 
         for (; ; tt = ts.getNextXMLToken()) {
             switch (tt) {
@@ -2857,20 +2892,20 @@ public class Parser {
      * @param allowCallSyntax passed down to {@link #memberExprTail}
      */
     private AstNode memberExpr(boolean allowCallSyntax) throws IOException {
-        int tt = peekToken(), lineno = ts.lineno;
+        int tt = peekToken();
         AstNode pn;
 
         if (tt != Token.NEW) {
             pn = primaryExpr();
         } else {
             consumeToken();
-            int pos = ts.tokenBeg;
+            int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
             NewExpression nx = new NewExpression(pos);
-            nx.setColumn(ts.getTokenColumn());
 
             AstNode target = memberExpr(false);
             int end = getNodeEnd(target);
             nx.setTarget(target);
+            nx.setLineColumnNumber(lineno, column);
 
             int lp = -1;
             if (matchToken(Token.LP, true)) {
@@ -2896,9 +2931,7 @@ public class Parser {
             nx.setLength(end - pos);
             pn = nx;
         }
-        pn.setLineno(lineno);
-        AstNode tail = memberExprTail(allowCallSyntax, pn);
-        return tail;
+        return memberExprTail(allowCallSyntax, pn);
     }
 
     /**
@@ -2913,25 +2946,24 @@ public class Parser {
         // we no longer return null for errors, so this won't be null
         if (pn == null) codeBug();
         int pos = pn.getPosition();
-        int lineno;
+        int lineno, column;
         boolean isOptionalChain = false;
         tailLoop:
         for (; ; ) {
+            lineno = lineNumber();
+            column = columnNumber();
             int tt = peekToken();
             switch (tt) {
                 case Token.DOT:
                 case Token.QUESTION_DOT:
                 case Token.DOTDOT:
-                    lineno = ts.lineno;
                     isOptionalChain |= (tt == Token.QUESTION_DOT);
                     pn = propertyAccess(tt, pn, isOptionalChain);
-                    pn.setLineno(lineno);
                     break;
 
                 case Token.DOTQUERY:
                     consumeToken();
                     int opPos = ts.tokenBeg, rp = -1;
-                    lineno = ts.lineno;
                     mustHaveXML();
                     setRequiresActivation();
                     AstNode filter = expr(false);
@@ -2945,22 +2977,20 @@ public class Parser {
                     q.setRight(filter);
                     q.setOperatorPosition(opPos);
                     q.setRp(rp - pos);
-                    q.setLineno(lineno);
+                    q.setLineColumnNumber(lineno, column);
                     pn = q;
                     break;
 
                 case Token.LB:
                     consumeToken();
-                    lineno = ts.lineno;
-                    pn = makeElemGet(pn, ts.tokenBeg, lineno);
+                    pn = makeElemGet(pn, ts.tokenBeg);
                     break;
 
                 case Token.LP:
                     if (!allowCallSyntax) {
                         break tailLoop;
                     }
-                    lineno = ts.lineno;
-                    pn = makeFunctionCall(pn, pos, lineno, isOptionalChain);
+                    pn = makeFunctionCall(pn, pos, isOptionalChain);
                     break;
                 case Token.COMMENT:
                     // Ignoring all the comments, because previous statement may not be terminated
@@ -2983,16 +3013,12 @@ public class Parser {
         return pn;
     }
 
-    private FunctionCall makeFunctionCall(AstNode pn, int pos, int lineno, boolean isOptionalChain)
+    private FunctionCall makeFunctionCall(AstNode pn, int pos, boolean isOptionalChain)
             throws IOException {
         consumeToken();
         checkCallRequiresActivation(pn);
         FunctionCall f = new FunctionCall(pos);
         f.setTarget(pn);
-        // Assign the line number for the function call to where
-        // the paren appeared, not where the name expression started.
-        f.setLineno(lineno);
-        f.setColumn(ts.getTokenColumn());
         f.setLp(ts.tokenBeg - pos);
         List<AstNode> args = argumentList();
         if (args != null && args.size() > ARGC_LIMIT) reportError("msg.too.many.function.args");
@@ -3010,6 +3036,7 @@ public class Parser {
         TaggedTemplateLiteral tagged = new TaggedTemplateLiteral();
         tagged.setTarget(pn);
         tagged.setTemplateLiteral(templateLiteral);
+        tagged.setLineColumnNumber(pn.getLineno(), pn.getColumn());
         return tagged;
     }
 
@@ -3023,7 +3050,10 @@ public class Parser {
      */
     private AstNode propertyAccess(int tt, AstNode pn, boolean isOptionalChain) throws IOException {
         if (pn == null) codeBug();
-        int memberTypeFlags = 0, lineno = ts.lineno, dotPos = ts.tokenBeg;
+        int memberTypeFlags = 0,
+                lineno = lineNumber(),
+                dotPos = ts.tokenBeg,
+                column = columnNumber();
         consumeToken();
 
         if (tt == Token.DOTDOT) {
@@ -3044,7 +3074,7 @@ public class Parser {
 
             Name name = createNameNode(true, Token.GETPROP);
             PropertyGet pg = new PropertyGet(pn, name, dotPos);
-            pg.setLineno(lineno);
+            pg.setLineColumnNumber(lineno, column);
             return pg;
         }
 
@@ -3053,7 +3083,7 @@ public class Parser {
         switch (token) {
             case Token.THROW:
                 // needed for generator.throw();
-                saveNameTokenData(ts.tokenBeg, "throw", ts.lineno);
+                saveNameTokenData(ts.tokenBeg, "throw", lineNumber(), columnNumber());
                 ref = propertyName(-1, memberTypeFlags);
                 break;
 
@@ -3064,7 +3094,7 @@ public class Parser {
 
             case Token.MUL:
                 // handles: *, *::name, *::*, *::[expr]
-                saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
+                saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
                 ref = propertyName(-1, memberTypeFlags);
                 break;
 
@@ -3077,7 +3107,7 @@ public class Parser {
             case Token.RESERVED:
                 {
                     String name = ts.getString();
-                    saveNameTokenData(ts.tokenBeg, name, ts.lineno);
+                    saveNameTokenData(ts.tokenBeg, name, lineNumber(), columnNumber());
                     ref = propertyName(-1, memberTypeFlags);
                     break;
                 }
@@ -3086,7 +3116,7 @@ public class Parser {
                 if (tt == Token.QUESTION_DOT) {
                     // a ?.[ expr ]
                     consumeToken();
-                    ElementGet g = makeElemGet(pn, ts.tokenBeg, ts.lineno);
+                    ElementGet g = makeElemGet(pn, ts.tokenBeg);
                     g.setType(Token.QUESTION_DOT);
                     return g;
                 } else {
@@ -3097,7 +3127,7 @@ public class Parser {
             case Token.LP:
                 if (tt == Token.QUESTION_DOT) {
                     // a function call such as f?.()
-                    return makeFunctionCall(pn, pn.getPosition(), lineno, isOptionalChain);
+                    return makeFunctionCall(pn, pn.getPosition(), isOptionalChain);
                 } else {
                     reportError("msg.no.name.after.dot");
                     return makeErrorNode();
@@ -3108,7 +3138,7 @@ public class Parser {
                     // allow keywords as property names, e.g. ({if: 1})
                     String name = Token.keywordToName(token);
                     if (name != null) {
-                        saveNameTokenData(ts.tokenBeg, name, ts.lineno);
+                        saveNameTokenData(ts.tokenBeg, name, lineNumber(), columnNumber());
                         ref = propertyName(-1, memberTypeFlags);
                         break;
                     }
@@ -3127,13 +3157,13 @@ public class Parser {
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
         result.setOperatorPosition(dotPos - pos);
-        result.setLineno(pn.getLineno());
+        result.setLineColumnNumber(lineno, column);
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
         return result;
     }
 
-    private ElementGet makeElemGet(AstNode pn, int lb, int lineno) throws IOException {
+    private ElementGet makeElemGet(AstNode pn, int lb) throws IOException {
         int pos = pn.getPosition();
         AstNode expr = expr(false);
         int end = getNodeEnd(expr);
@@ -3146,8 +3176,6 @@ public class Parser {
         g.setTarget(pn);
         g.setElement(expr);
         g.setParens(lb, rb);
-        g.setLineno(lineno);
-        g.setColumn(ts.getTokenColumn());
         return g;
     }
 
@@ -3169,7 +3197,7 @@ public class Parser {
 
             // handles: @*, @*::name, @*::*, @*::[expr]
             case Token.MUL:
-                saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
+                saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
                 return propertyName(atPos, 0);
 
             // handles @[expr]
@@ -3192,7 +3220,7 @@ public class Parser {
      *     malformed XML expressions. (For now - might change to return a partial XmlRef.)
      */
     private AstNode propertyName(int atPos, int memberTypeFlags) throws IOException {
-        int pos = atPos != -1 ? atPos : ts.tokenBeg, lineno = ts.lineno;
+        int pos = atPos != -1 ? atPos : ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         int colonPos = -1;
         Name name = createNameNode(true, currentToken);
         Name ns = null;
@@ -3209,7 +3237,7 @@ public class Parser {
 
                 // handles name::*
                 case Token.MUL:
-                    saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
+                    saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
                     name = createNameNode(false, -1);
                     break;
 
@@ -3232,7 +3260,7 @@ public class Parser {
         ref.setNamespace(ns);
         ref.setColonPos(colonPos);
         ref.setPropName(name);
-        ref.setLineno(lineno);
+        ref.setLineColumnNumber(lineno, column);
         return ref;
     }
 
@@ -3329,7 +3357,7 @@ public class Parser {
                 RegExpLiteral re = new RegExpLiteral(pos, end - pos);
                 re.setValue(ts.getString());
                 re.setFlags(ts.readAndClearRegExpFlags());
-                re.setColumn(ts.getTokenColumn());
+                re.setLineColumnNumber(lineNumber(), columnNumber());
                 return re;
 
             case Token.NULL:
@@ -3339,7 +3367,9 @@ public class Parser {
                 consumeToken();
                 pos = ts.tokenBeg;
                 end = ts.tokenEnd;
-                return new KeywordLiteral(pos, end - pos, tt, ts.getTokenColumn(pos));
+                KeywordLiteral keywordLiteral = new KeywordLiteral(pos, end - pos, tt);
+                keywordLiteral.setLineColumnNumber(lineNumber(), columnNumber());
+                return keywordLiteral;
 
             case Token.TEMPLATE_LITERAL:
                 consumeToken();
@@ -3375,7 +3405,7 @@ public class Parser {
         inForInit = false;
         try {
             Comment jsdocNode = getAndResetJsDoc();
-            int lineno = ts.lineno;
+            int lineno = lineNumber(), column = columnNumber();
             int begin = ts.tokenBeg;
             AstNode e = (peekToken() == Token.RP ? new EmptyExpression(begin) : expr(true));
             if (peekToken() == Token.FOR) {
@@ -3395,7 +3425,7 @@ public class Parser {
             }
 
             ParenthesizedExpression pn = new ParenthesizedExpression(begin, length, e);
-            pn.setLineno(lineno);
+            pn.setLineColumnNumber(lineno, column);
             if (jsdocNode == null) {
                 jsdocNode = getAndResetJsDoc();
             }
@@ -3413,19 +3443,19 @@ public class Parser {
 
     private AstNode name(int ttFlagged, int tt) throws IOException {
         String nameString = ts.getString();
-        int namePos = ts.tokenBeg, nameLineno = ts.lineno;
+        int namePos = ts.tokenBeg, nameLineno = lineNumber(), nameColumn = columnNumber();
         if (0 != (ttFlagged & TI_CHECK_LABEL) && peekToken() == Token.COLON) {
             // Do not consume colon.  It is used as an unwind indicator
             // to return to statementHelper.
             Label label = new Label(namePos, ts.tokenEnd - namePos);
             label.setName(nameString);
-            label.setLineno(ts.lineno);
+            label.setLineColumnNumber(lineNumber(), columnNumber());
             return label;
         }
         // Not a label.  Unfortunately peeking the next token to check for
         // a colon has biffed ts.tokenBeg, ts.tokenEnd.  We store the name's
         // bounds in instance vars and createNameNode uses them.
-        saveNameTokenData(namePos, nameString, nameLineno);
+        saveNameTokenData(namePos, nameString, nameLineno, nameColumn);
 
         if (compilerEnv.isXmlAvailable()) {
             return propertyName(-1, 0);
@@ -3436,7 +3466,7 @@ public class Parser {
     /** May return an {@link ArrayLiteral} or {@link ArrayComprehension}. */
     private AstNode arrayLiteral() throws IOException {
         if (currentToken != Token.LB) codeBug();
-        int pos = ts.tokenBeg, end = ts.tokenEnd;
+        int pos = ts.tokenBeg, end = ts.tokenEnd, lineno = lineNumber(), column = columnNumber();
         List<AstNode> elements = new ArrayList<>();
         ArrayLiteral pn = new ArrayLiteral(pos);
         boolean after_lb_or_comma = true;
@@ -3485,6 +3515,7 @@ public class Parser {
             pn.addElement(e);
         }
         pn.setLength(end - pos);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -3684,7 +3715,7 @@ public class Parser {
     private static final int METHOD_ENTRY = 8;
 
     private ObjectLiteral objectLiteral() throws IOException {
-        int pos = ts.tokenBeg, lineno = ts.lineno;
+        int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         int afterComma = -1;
         List<ObjectProperty> elems = new ArrayList<>();
         Set<String> getterNames = null;
@@ -3716,6 +3747,10 @@ public class Parser {
                 propertyName = ts.getString();
                 int ppos = ts.tokenBeg;
                 consumeToken();
+                if (pname instanceof Name || pname instanceof StringLiteral) {
+                    // For complicated reasons, parsing a name does not advance the token
+                    pname.setLineColumnNumber(lineNumber(), columnNumber());
+                }
 
                 // This code path needs to handle both destructuring object
                 // literals like:
@@ -3810,7 +3845,6 @@ public class Parser {
 
         mustMatchToken(Token.RC, "msg.no.brace.prop", true);
         ObjectLiteral pn = new ObjectLiteral(pos, ts.tokenEnd - pos);
-        pn.setColumn(ts.getTokenColumn());
         if (objectLiteralDestructuringDefault) {
             pn.putIntProp(Node.OBJECT_LITERAL_DESTRUCTURING, 1);
         }
@@ -3818,7 +3852,7 @@ public class Parser {
             pn.setJsDocNode(objJsdocNode);
         }
         pn.setElements(elems);
-        pn.setLineno(lineno);
+        pn.setLineColumnNumber(lineno, column);
         return pn;
     }
 
@@ -3842,9 +3876,9 @@ public class Parser {
             case Token.LB:
                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                     int pos = ts.tokenBeg;
-                    int lineno = ts.lineno;
-                    int col = ts.tokenBeg;
                     nextToken();
+                    int lineno = lineNumber();
+                    int column = columnNumber();
                     AstNode expr = assignExpr();
                     if (peekToken() != Token.RB) {
                         reportError("msg.bad.prop");
@@ -3852,8 +3886,7 @@ public class Parser {
                     nextToken();
 
                     pname = new ComputedPropertyKey(pos, ts.tokenEnd - pos);
-                    pname.setLineno(lineno);
-                    pname.setColumn(col);
+                    pname.setLineColumnNumber(lineno, column);
                     ((ComputedPropertyKey) pname).setExpression(expr);
                 } else {
                     reportError("msg.bad.prop");
@@ -3952,14 +3985,17 @@ public class Parser {
     private Name createNameNode(boolean checkActivation, int token) {
         int beg = ts.tokenBeg;
         String s = ts.getString();
-        int lineno = ts.lineno;
+        int lineno = lineNumber();
+        int column = columnNumber();
         if (!"".equals(prevNameTokenString)) {
             beg = prevNameTokenStart;
             s = prevNameTokenString;
             lineno = prevNameTokenLineno;
+            column = prevNameTokenColumn;
             prevNameTokenStart = 0;
             prevNameTokenString = "";
             prevNameTokenLineno = 0;
+            prevNameTokenColumn = 0;
         }
         if (s == null) {
             if (compilerEnv.isIdeMode()) {
@@ -3968,8 +4004,8 @@ public class Parser {
                 codeBug();
             }
         }
-        Name name = new Name(beg, s, ts.getTokenColumn(beg));
-        name.setLineno(lineno);
+        Name name = new Name(beg, s);
+        name.setLineColumnNumber(lineno, column);
         if (checkActivation) {
             checkActivationName(s, token);
         }
@@ -3979,8 +4015,7 @@ public class Parser {
     private StringLiteral createStringLiteral() {
         int pos = ts.tokenBeg, end = ts.tokenEnd;
         StringLiteral s = new StringLiteral(pos, end - pos);
-        s.setLineno(ts.lineno);
-        s.setColumn(ts.getTokenColumn());
+        s.setLineColumnNumber(lineNumber(), columnNumber());
         s.setValue(ts.getString());
         s.setQuoteCharacter(ts.getQuoteChar());
         return s;
@@ -3988,7 +4023,7 @@ public class Parser {
 
     private AstNode templateLiteral(boolean isTaggedLiteral) throws IOException {
         if (currentToken != Token.TEMPLATE_LITERAL) codeBug();
-        int pos = ts.tokenBeg, end = ts.tokenEnd;
+        int pos = ts.tokenBeg, end = ts.tokenEnd, lineno = lineNumber(), column = columnNumber();
         List<AstNode> elements = new ArrayList<>();
         TemplateLiteral pn = new TemplateLiteral(pos);
 
@@ -4009,6 +4044,7 @@ public class Parser {
         end = ts.tokenEnd;
         pn.setElements(elements);
         pn.setLength(end - pos);
+        pn.setLineColumnNumber(lineno, column);
 
         return pn;
     }
@@ -4042,11 +4078,15 @@ public class Parser {
                 s = "0x" + s;
             }
         }
+
+        AstNode result;
         if (tt == Token.BIGINT) {
-            return new BigIntLiteral(ts.tokenBeg, s + "n", ts.getBigInt(), ts.getTokenColumn());
+            result = new BigIntLiteral(ts.tokenBeg, s + "n", ts.getBigInt());
         } else {
-            return new NumberLiteral(ts.tokenBeg, s, ts.getNumber(), ts.getTokenColumn());
+            result = new NumberLiteral(ts.tokenBeg, s, ts.getNumber());
         }
+        result.setLineColumnNumber(lineNumber(), columnNumber());
+        return result;
     }
 
     protected void checkActivationName(String name, int token) {
@@ -4106,8 +4146,7 @@ public class Parser {
 
     private ErrorNode makeErrorNode() {
         ErrorNode pn = new ErrorNode(ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
-        pn.setLineno(ts.lineno);
-        pn.setColumn(ts.getTokenColumn());
+        pn.setLineColumnNumber(lineNumber(), columnNumber());
         return pn;
     }
 
@@ -4116,10 +4155,11 @@ public class Parser {
         return node.getPosition() + node.getLength();
     }
 
-    private void saveNameTokenData(int pos, String name, int lineno) {
+    private void saveNameTokenData(int pos, String name, int lineno, int column) {
         prevNameTokenStart = pos;
         prevNameTokenString = name;
         prevNameTokenLineno = lineno;
+        prevNameTokenColumn = column;
     }
 
     /**
@@ -4267,7 +4307,7 @@ public class Parser {
             String tempName,
             AstNode defaultValue,
             Transformer transformer) {
-        Scope result = createScopeNode(Token.LETEXPR, left.getLineno());
+        Scope result = createScopeNode(Token.LETEXPR, left.getLineno(), left.getColumn());
         result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
         try {
             pushScope(result);
@@ -4486,12 +4526,13 @@ public class Parser {
         boolean defaultValuesSetup = false;
 
         for (ObjectProperty prop : node.getElements()) {
-            int lineno = 0;
+            int lineno = 0, column = 0;
             // This function is sometimes called from the IRFactory
             // when executing regression tests, and in those cases the
             // tokenStream isn't set.  Deal with it.
             if (ts != null) {
-                lineno = ts.lineno;
+                lineno = lineNumber();
+                column = columnNumber();
             }
             AstNode id = prop.getLeft();
 
@@ -4512,7 +4553,7 @@ public class Parser {
                 throw codeBug();
             }
 
-            rightElem.setLineno(lineno);
+            rightElem.setLineColumnNumber(lineno, column);
             if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
                 defaultValuesSetup = true;
@@ -4575,10 +4616,10 @@ public class Parser {
      * @param lineno line number of source
      * @return the created node
      */
-    protected Scope createScopeNode(int token, int lineno) {
+    protected Scope createScopeNode(int token, int lineno, int column) {
         Scope scope = new Scope();
         scope.setType(token);
-        scope.setLineno(lineno);
+        scope.setLineColumnNumber(lineno, column);
         return scope;
     }
 
@@ -4616,9 +4657,7 @@ public class Parser {
                     reportError("msg.bad.id.strict", name);
                 }
                 left.setType(Token.BINDNAME);
-                Node node = new Node(Token.SETNAME, left, right);
-                if (left.wasColumnAssigned()) node.setColumn(left.column());
-                return node;
+                return new Node(Token.SETNAME, left, right);
 
             case Token.GETPROP:
             case Token.GETELEM:

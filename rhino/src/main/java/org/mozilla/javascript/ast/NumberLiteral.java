@@ -41,11 +41,6 @@ public class NumberLiteral extends AstNode {
         setDouble(number);
     }
 
-    public NumberLiteral(int pos, String value, double number, int column) {
-        this(pos, value, number);
-        super.setColumn(column);
-    }
-
     public NumberLiteral(double number) {
         setDouble(number);
         setValue(Double.toString(number));

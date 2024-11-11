@@ -84,8 +84,6 @@ public class Node implements Iterable<Node> {
             ATTRIBUTE_FLAG = 0x2, // x.@y or x..@y
             DESCENDANTS_FLAG = 0x4; // x..y or x..@i
 
-    protected static final int DEFAULT_COLUMN = 1;
-
     private static class PropListItem {
         PropListItem next;
         int type;
@@ -120,24 +118,24 @@ public class Node implements Iterable<Node> {
         right.next = null;
     }
 
-    public Node(int nodeType, int line) {
+    public Node(int nodeType, int line, int column) {
         type = nodeType;
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node child, int line) {
+    public Node(int nodeType, Node child, int line, int column) {
         this(nodeType, child);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node left, Node right, int line) {
+    public Node(int nodeType, Node left, Node right, int line, int column) {
         this(nodeType, left, right);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node left, Node mid, Node right, int line) {
+    public Node(int nodeType, Node left, Node mid, Node right, int line, int column) {
         this(nodeType, left, mid, right);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
     public static Node newNumber(double number) {
@@ -533,8 +531,9 @@ public class Node implements Iterable<Node> {
         return lineno;
     }
 
-    public void setLineno(int lineno) {
+    public void setLineColumnNumber(int lineno, int column) {
         this.lineno = lineno;
+        this.column = column;
     }
 
     /** Can only be called when <code>getType() == Token.NUMBER</code> */
@@ -1255,34 +1254,13 @@ public class Node implements Iterable<Node> {
         }
     }
 
-    protected void setColumn(int column) {
-        fColumn = column;
-    }
-
     /**
      * @return the column of where a Node is defined in source. If the column is -1, it was never
-     *     initialized.
+     *     initialized. One-based.
      *     <p>May be overridden by sub classes
      */
-    public int column() {
-        return fColumn;
-    }
-
-    /**
-     * This is a safe retrieval of the column number assigned to a node with the intent of being
-     * used by ISourceMapper.
-     *
-     * <p>Worst case the mapping is off by the number of lines a transpiler has compacted from
-     * source. In practice, this should be no more than a few lines.
-     *
-     * @return DEFAULT_COLUMN if column was never initialized, else the actual column
-     */
-    public int columnOrDefault() {
-        return wasColumnAssigned() ? fColumn : DEFAULT_COLUMN;
-    }
-
-    public boolean wasColumnAssigned() {
-        return fColumn > 0;
+    public int getColumn() {
+        return column;
     }
 
     protected int type = Token.ERROR; // type of the node, e.g. Token.NAME
@@ -1290,7 +1268,7 @@ public class Node implements Iterable<Node> {
     protected Node first; // first element of a linked list of children
     protected Node last; // last element of a linked list of children
     protected int lineno = -1;
-    private int fColumn = -1;
+    private int column = -1;
 
     /**
      * Linked list of properties. Since vast majority of nodes would have no more then 2 properties,

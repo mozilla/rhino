@@ -35,11 +35,6 @@ public class KeywordLiteral extends AstNode {
         setType(nodeType);
     }
 
-    public KeywordLiteral(int pos, int len, int nodeType, int column) {
-        this(pos, len, nodeType);
-        super.setColumn(column);
-    }
-
     /**
      * Sets node token type
      *

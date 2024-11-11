@@ -48,7 +48,6 @@ public class InfixExpression extends AstNode {
         setType(operator);
         setOperatorPosition(operatorPos - left.getPosition());
         setLeftAndRight(left, right);
-        if (left.wasColumnAssigned()) setColumn(left.column());
     }
 
     public void setLeftAndRight(AstNode left, AstNode right) {
@@ -95,8 +94,8 @@ public class InfixExpression extends AstNode {
     public void setLeft(AstNode left) {
         assertNotNull(left);
         this.left = left;
-        // line number should agree with source position
-        setLineno(left.getLineno());
+        // line and column number should agree with source position
+        setLineColumnNumber(left.getLineno(), left.getColumn());
         left.setParent(this);
     }
 
