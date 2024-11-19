@@ -20,6 +20,7 @@ public class SymbolKey implements Symbol, Serializable {
     public static final SymbolKey IS_REGEXP = new SymbolKey("Symbol.isRegExp");
     public static final SymbolKey TO_PRIMITIVE = new SymbolKey("Symbol.toPrimitive");
     public static final SymbolKey MATCH = new SymbolKey("Symbol.match");
+    public static final SymbolKey MATCH_ALL = new SymbolKey("Symbol.matchAll");
     public static final SymbolKey REPLACE = new SymbolKey("Symbol.replace");
     public static final SymbolKey SEARCH = new SymbolKey("Symbol.search");
     public static final SymbolKey SPLIT = new SymbolKey("Symbol.split");

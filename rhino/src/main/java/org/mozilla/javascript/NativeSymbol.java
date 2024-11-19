@@ -72,6 +72,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         createStandardSymbol(cx, scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
         createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
         createStandardSymbol(cx, scope, ctor, "match", SymbolKey.MATCH);
+        createStandardSymbol(cx, scope, ctor, "matchAll", SymbolKey.MATCH_ALL);
         createStandardSymbol(cx, scope, ctor, "replace", SymbolKey.REPLACE);
         createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
         createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);

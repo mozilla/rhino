@@ -240,6 +240,10 @@ final class NativeString extends IdScriptableObject {
                 arity = 1;
                 s = "match";
                 break;
+            case Id_matchAll:
+                arity = 1;
+                s = "matchAll";
+                break;
             case Id_search:
                 arity = 1;
                 s = "search";
@@ -859,6 +863,60 @@ final class NativeString extends IdScriptableObject {
 
                 case SymbolId_iterator:
                     return new NativeStringIterator(scope, requireObjectCoercible(cx, thisObj, f));
+
+                case Id_matchAll:
+                    {
+                        // See ECMAScript spec 22.1.3.14
+                        Object o = requireObjectCoercible(cx, thisObj, f);
+                        Object regexp = args.length > 0 ? args[0] : Undefined.instance;
+                        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
+                        if (regexp != null && !Undefined.isUndefined(regexp)) {
+                            boolean isRegExp =
+                                    regexp instanceof Scriptable
+                                            && regExpProxy.isRegExp((Scriptable) regexp);
+                            if (isRegExp) {
+                                Object flags =
+                                        ScriptRuntime.getObjectProp(regexp, "flags", cx, scope);
+                                requireObjectCoercible(cx, flags, f);
+                                String flagsStr = ScriptRuntime.toString(flags);
+                                if (!flagsStr.contains("g")) {
+                                    throw ScriptRuntime.typeErrorById(
+                                            "msg.str.match.all.no.global.flag");
+                                }
+                            }
+
+                            Object matcher =
+                                    ScriptRuntime.getObjectElem(
+                                            regexp, SymbolKey.MATCH_ALL, cx, scope);
+                            // If method is not undefined, it should be a Callable
+                            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                                if (!(matcher instanceof Callable)) {
+                                    throw ScriptRuntime.notFunctionError(
+                                            regexp, matcher, SymbolKey.MATCH_ALL.getName());
+                                }
+                                return ((Callable) matcher)
+                                        .call(
+                                                cx,
+                                                scope,
+                                                ScriptRuntime.toObject(scope, regexp),
+                                                new Object[] {o});
+                            }
+                        }
+
+                        String s = ScriptRuntime.toString(o);
+                        String regexpToString =
+                                Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+                        Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, "g");
+                        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+
+                        Object method =
+                                ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH_ALL, cx, scope);
+                        if (!(method instanceof Callable)) {
+                            throw ScriptRuntime.notFunctionError(
+                                    rx, method, SymbolKey.MATCH_ALL.getName());
+                        }
+                        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+                    }
             }
             throw new IllegalArgumentException(
                     "String.prototype has no method: " + f.getFunctionName());
@@ -1382,6 +1440,9 @@ final class NativeString extends IdScriptableObject {
             case "match":
                 id = Id_match;
                 break;
+            case "matchAll":
+                id = Id_matchAll;
+                break;
             case "search":
                 id = Id_search;
                 break;
@@ -1512,7 +1573,8 @@ final class NativeString extends IdScriptableObject {
             Id_at = 52,
             Id_isWellFormed = 53,
             Id_toWellFormed = 54,
-            MAX_PROTOTYPE_ID = Id_toWellFormed;
+            Id_matchAll = 55,
+            MAX_PROTOTYPE_ID = Id_matchAll;
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
             ConstructorId_indexOf = -Id_indexOf,

@@ -188,6 +188,7 @@ public class ScriptRuntime {
 
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
+        getRegExpProxy(cx).register(scope, sealed);
 
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
@@ -196,8 +197,6 @@ public class ScriptRuntime {
                 cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 
         // define lazy-loaded properties using their class name
-        new LazilyLoadedCtor(
-                scope, "RegExp", "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
@@ -1388,6 +1387,14 @@ public class ScriptRuntime {
         return (long) Math.min(len, NativeNumber.MAX_SAFE_INTEGER);
     }
 
+    public static long toLength(Object value) {
+        double len = toInteger(value);
+        if (len <= 0.0) {
+            return 0;
+        }
+        return (long) Math.min(len, NativeNumber.MAX_SAFE_INTEGER);
+    }
+
     /** See ECMA 9.5. */
     public static int toInt32(Object val) {
         // short circuit for common integer values
@@ -1442,6 +1449,20 @@ public class ScriptRuntime {
             return Optional.of(num);
         }
         return Optional.empty();
+    }
+
+    /** Implements the abstract operation AdvanceStringIndex. See ECMAScript spec 22.2.7.3 */
+    public static long advanceStringIndex(String string, long index, boolean unicode) {
+        if (index >= NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
+        if (!unicode) {
+            return index + 1;
+        }
+        int length = string.length();
+        if (index + 1 > length) {
+            return index + 1;
+        }
+        int cp = string.codePointAt((int) index);
+        return index + Character.charCount(cp);
     }
 
     // XXX: this is until setDefaultNamespace will learn how to store NS

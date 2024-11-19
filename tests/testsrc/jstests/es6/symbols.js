@@ -443,10 +443,19 @@ TestGetOwnPropertySymbolsWithProto()
 
 function TestWellKnown() {
   var symbols = [
+    "iterator",
+    "species",
+    "toStringTag",
     "hasInstance",
-    // TODO(rossberg): reactivate once implemented.
-    // "isConcatSpreadable", "isRegExp",
-    "iterator", /* "toStringTag", */ "unscopables"
+    "isConcatSpreadable",
+    "isRegExp",
+    "toPrimitive",
+    "match",
+    "matchAll",
+    "replace",
+    "search",
+    "split",
+    "unscopables",
   ]
 
   for (var i in symbols) {
