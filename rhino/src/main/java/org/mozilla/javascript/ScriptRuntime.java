@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -3229,7 +3230,25 @@ public class ScriptRuntime {
 
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        Script script = cx.compileString(x.toString(), evaluator, reporter, sourceName, 1, null);
+        Consumer<CompilerEnvirons> compilerEnvironsProcessor =
+                compilerEnvs -> {
+                    // If we are inside a method, we need to allow super. Methods have the home
+                    // object set and propagated via the activation (i.e. the NativeCall),
+                    // but non-methods will have the home object set to null.
+                    boolean isInsideMethod =
+                            scope instanceof NativeCall
+                                    && ((NativeCall) scope).getHomeObject() != null;
+                    compilerEnvs.setAllowSuper(isInsideMethod);
+                };
+        Script script =
+                cx.compileString(
+                        x.toString(),
+                        evaluator,
+                        reporter,
+                        sourceName,
+                        1,
+                        null,
+                        compilerEnvironsProcessor);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable) script;
         Scriptable thisObject =

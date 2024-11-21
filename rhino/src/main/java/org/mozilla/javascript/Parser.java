@@ -3402,7 +3402,8 @@ public class Parser {
                 }
 
             case Token.SUPER:
-                if ((insideFunctionParams() || insideFunctionBody()) && insideMethod) {
+                if (((insideFunctionParams() || insideFunctionBody()) && insideMethod)
+                        || compilerEnv.isAllowSuper()) {
                     consumeToken();
                     pos = ts.tokenBeg;
                     end = ts.tokenEnd;

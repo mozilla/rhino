@@ -29,7 +29,7 @@ class SuperTest {
         }
 
         @Test
-        void isSyntaxErrorIfHasDirectSuperOfMethodDefinitionIsTrue() {
+        void isSyntaxErrorIfHasSuperCall() {
             assertIsSyntaxErrorES6(
                     "({ method() { super(); }});",
                     "super should be inside a shorthand function (test#1)");
@@ -61,6 +61,13 @@ class SuperTest {
             assertIsSyntaxErrorES6(
                     "var o = { f() { super?.x } }",
                     "super is not allowed in an optional chaining expression (test#1)");
+        }
+
+        @Test
+        void superNestedInAFunctionInsideAMethodIsNotAllowed() {
+            assertIsSyntaxErrorES6(
+                    "var o = { f() {\n" + "  (function() { super.x; })() \n" + "} }",
+                    "super should be inside a shorthand function (test#2)");
         }
 
         private void assertIsSyntaxErrorES6(String source, String expected) {
@@ -1055,6 +1062,128 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
             Utils.assertWithAllOptimizationLevelsES6("a", script);
+        }
+    }
+
+    @Nested
+    class Eval {
+        @Test
+        void evalInsideMethodCanAccessSuper() {
+            String script =
+                    ""
+                            + "var proto = {\n"
+                            + "  x: 'proto'\n"
+                            + "};\n"
+                            + "var object = {\n"
+                            + "   x: 'object',\n"
+                            + "   f() {\n"
+                            + "    return eval('super.x');\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();";
+            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+        }
+
+        @Test
+        void evalFromLambdaInMethodCanAccessSuper() {
+            String script =
+                    ""
+                            + "var proto = {\n"
+                            + "  x: 'proto'\n"
+                            + "};\n"
+                            + "var object = {\n"
+                            + "   x: 'object',\n"
+                            + "   f() {\n"
+                            + "    return () => eval('super.x');\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f()();";
+            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+        }
+
+        @Test
+        void superCannotBeUsedAsMethodInEval() {
+            String script =
+                    ""
+                            + "o = {\n"
+                            + "  f() {\n"
+                            + "    eval('super(42)')"
+                            + "  }\n"
+                            + "};"
+                            + "o.f();";
+            Utils.runWithAllOptimizationLevels(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_ES6);
+                        EcmaError error =
+                                assertThrows(
+                                        EcmaError.class,
+                                        () ->
+                                                cx.evaluateString(
+                                                        cx.initStandardObjects(),
+                                                        script,
+                                                        "test",
+                                                        1,
+                                                        null));
+                        assertEquals(
+                                "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
+                                error.getMessage());
+                        return null;
+                    });
+        }
+
+        @Test
+        void evalOutsideMethodCannotAccessSuper() {
+            String script = "eval('super.x')";
+            Utils.runWithAllOptimizationLevels(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_ES6);
+                        EcmaError error =
+                                assertThrows(
+                                        EcmaError.class,
+                                        () ->
+                                                cx.evaluateString(
+                                                        cx.initStandardObjects(),
+                                                        script,
+                                                        "test",
+                                                        1,
+                                                        null));
+                        assertEquals(
+                                "SyntaxError: super should be inside a shorthand function (test#1(eval)#1)",
+                                error.getMessage());
+                        return null;
+                    });
+        }
+
+        @Test
+        void evalInFunctionInsideMethodDoesNotAllowSuper() {
+            String script =
+                    ""
+                            + "o = {\n"
+                            + "  f() {\n"
+                            + "    (function() { eval('super(42)') })();"
+                            + "  }\n"
+                            + "};"
+                            + "o.f();";
+            Utils.runWithAllOptimizationLevels(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_ES6);
+                        EcmaError error =
+                                assertThrows(
+                                        EcmaError.class,
+                                        () ->
+                                                cx.evaluateString(
+                                                        cx.initStandardObjects(),
+                                                        script,
+                                                        "test",
+                                                        1,
+                                                        null));
+                        assertEquals(
+                                "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
+                                error.getMessage());
+                        return null;
+                    });
         }
     }
 }
