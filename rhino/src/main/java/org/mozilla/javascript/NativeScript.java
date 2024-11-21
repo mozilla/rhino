@@ -162,7 +162,7 @@ class NativeScript extends BaseFunction {
         }
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
-        return cx.compileString(source, null, reporter, filename, linep[0], null);
+        return cx.compileString(source, null, reporter, filename, linep[0], null, null);
     }
 
     @Override

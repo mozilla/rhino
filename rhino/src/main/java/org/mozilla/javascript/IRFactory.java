@@ -889,9 +889,9 @@ public final class IRFactory {
 
     private Node transformLiteral(AstNode node) {
         // Trying to call super as a function. See 15.4.2 Static Semantics: HasDirectSuper
-        if (node.getParent() instanceof FunctionCall
-                && node.getType() == Token.SUPER
-                && parser.currentScriptOrFn.isMethodDefinition())
+        // Note that this will need to change when classes are implemented, because in a class
+        // constructor calling "super()" _is_ allowed.
+        if (node.getParent() instanceof FunctionCall && node.getType() == Token.SUPER)
             parser.reportError("msg.super.shorthand.function");
         return node;
     }
