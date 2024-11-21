@@ -31,7 +31,10 @@ public class BaseFunction extends IdScriptableObject implements Function {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             obj.setStandardPropertyAttributes(READONLY | DONTENUM);
         }
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        IdFunctionObject constructor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ScriptRuntimeES6.addSymbolHasInstance(cx, scope, constructor);
+        }
     }
 
     /**
@@ -80,7 +83,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
     /**
      * Gets the value returned by calling the typeof operator on this object.
      *
-     * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
+     * @see ScriptableObject#getTypeOf()
      * @return "function" or "undefined" if {@link #avoidObjectDetection()} returns <code>true
      *     </code>
      */
@@ -156,6 +159,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
     @Override
     protected String getInstanceIdName(int id) {
         switch (id) {
+            case SymbolId_hasInstance:
+                return "SymbolId_hasInstance";
             case Id_length:
                 return "length";
             case Id_arity:
@@ -265,6 +270,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
     @Override
     protected void initPrototypeId(int id) {
+        if (id == SymbolId_hasInstance) {
+            initPrototypeValue(id, SymbolKey.HAS_INSTANCE, makeHasInstance(), CONST | DONTENUM);
+            return;
+        }
+
         String s;
         int arity;
         switch (id) {
@@ -311,6 +321,52 @@ public class BaseFunction extends IdScriptableObject implements Function {
             }
         }
         return false;
+    }
+
+    private Object makeHasInstance() {
+        Context cx = Context.getCurrentContext();
+        ScriptableObject obj = null;
+
+        if (cx != null) {
+            Scriptable scope = this.getParentScope();
+            obj =
+                    new LambdaFunction(
+                            scope,
+                            0,
+                            new Callable() {
+                                @Override
+                                public Object call(
+                                        Context cx,
+                                        Scriptable scope,
+                                        Scriptable thisObj,
+                                        Object[] args) {
+                                    if (thisObj != null
+                                            && args.length == 1
+                                            && args[0] instanceof Scriptable) {
+                                        Scriptable obj = (Scriptable) args[0];
+                                        Object protoProp = null;
+                                        if (thisObj instanceof BoundFunction)
+                                            protoProp =
+                                                    ((NativeFunction)
+                                                                    ((BoundFunction) thisObj)
+                                                                            .getTargetFunction())
+                                                            .getPrototypeProperty();
+                                        else
+                                            protoProp =
+                                                    ScriptableObject.getProperty(
+                                                            thisObj, "prototype");
+                                        if (protoProp instanceof IdScriptableObject) {
+                                            return ScriptRuntime.jsDelegatesTo(
+                                                    obj, (Scriptable) protoProp);
+                                        }
+                                        throw ScriptRuntime.typeErrorById(
+                                                "msg.instanceof.bad.prototype", getFunctionName());
+                                    }
+                                    return false; // NOT_FOUND, null etc.
+                                }
+                            });
+        }
+        return obj;
     }
 
     @Override
@@ -633,6 +689,12 @@ public class BaseFunction extends IdScriptableObject implements Function {
     }
 
     @Override
+    protected int findPrototypeId(Symbol k) {
+        if (SymbolKey.HAS_INSTANCE.equals(k)) return SymbolId_hasInstance;
+        return 0;
+    }
+
+    @Override
     protected int findPrototypeId(String s) {
         int id;
         switch (s) {
@@ -675,7 +737,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
             Id_apply = 4,
             Id_call = 5,
             Id_bind = 6,
-            MAX_PROTOTYPE_ID = Id_bind;
+            SymbolId_hasInstance = 7,
+            MAX_PROTOTYPE_ID = SymbolId_hasInstance;
 
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;
