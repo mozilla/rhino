@@ -135,19 +135,37 @@ public abstract class ScriptableObject
 
     protected static ScriptableObject buildDataDescriptor(
             Scriptable scope, Object value, int attributes) {
+        return buildDataDescriptor(scope, value, attributes, null, -1);
+    }
+
+    protected static ScriptableObject buildDataDescriptor(
+            Scriptable scope, Object value, int attributes, String name, int length) {
         ScriptableObject desc = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
         desc.defineProperty("value", value, EMPTY);
-        desc.setCommonDescriptorProperties(attributes, true);
+        desc.setCommonDescriptorProperties(attributes, true, name, length);
         return desc;
     }
 
-    protected void setCommonDescriptorProperties(int attributes, boolean defineWritable) {
+    protected void setCommonDescriptorProperties(
+            int attributes, boolean defineWritable, String name, int length) {
+        if (name != null) {
+            defineProperty("name", "[Symbol.hasInstance]", attributes);
+        }
+
+        if (length != -1) {
+            defineProperty("length", length, attributes);
+        }
+
         if (defineWritable) {
             defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
         }
         defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
         defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+    }
+
+    protected void setCommonDescriptorProperties(int attributes, boolean defineWritable) {
+        setCommonDescriptorProperties(attributes, defineWritable, null, -1);
     }
 
     static void checkValidAttributes(int attributes) {
@@ -831,6 +849,12 @@ public abstract class ScriptableObject
         // chasing. This will be overridden in NativeFunction and non-JS
         // objects.
 
+        Context cx = Context.getCurrentContext();
+        Object hasInstance = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
+        if (hasInstance instanceof Callable) {
+            return (boolean)
+                    ((Callable) hasInstance).call(cx, getParentScope(), this, new Object[] {this});
+        }
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
 
