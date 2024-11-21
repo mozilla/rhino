@@ -864,6 +864,12 @@ public abstract class ScriptableObject
         // chasing. This will be overridden in NativeFunction and non-JS
         // objects.
 
+        Context cx = Context.getCurrentContext();
+        Object hasInstance = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
+        if (hasInstance instanceof Callable) {
+            return (boolean)
+                    ((Callable) hasInstance).call(cx, getParentScope(), this, new Object[] {this});
+        }
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
 
