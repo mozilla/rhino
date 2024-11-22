@@ -3577,6 +3577,12 @@ class BodyCodegen {
     private void visitIncDec(Node node) {
         int incrDecrMask = node.getExistingIntProp(Node.INCRDECR_PROP);
         Node child = node.getFirstChild();
+
+        if (child.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            visitSuperIncDec(node, child, incrDecrMask);
+            return;
+        }
+
         switch (child.getType()) {
             case Token.GETVAR:
                 if (!hasVarsInRegs) Kit.codeBug();
@@ -3738,6 +3744,84 @@ class BodyCodegen {
                 }
             default:
                 Codegen.badTree();
+        }
+    }
+
+    // Handles super.x++ and variants thereof. We don't want to create new icode in the interpreter
+    // for this edge case, so we will transform this into something like super.x = super.x + 1
+    private void visitSuperIncDec(Node node, Node child, int incrDecrMask) {
+        Node object = child.getFirstChild();
+
+        // Push the old value on the stack
+        generateExpression(object, node); // [super]
+        cfw.add(ByteCode.DUP); // [super, super]
+        switch (child.getType()) {
+            case Token.GETPROP:
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(thisObjLocal);
+                cfw.addLoadConstant(0); // no_warn flag
+                addDynamicInvoke(
+                        "PROP:GETSUPER:" + child.getFirstChild().getNext().getString(),
+                        Signatures.PROP_GET_SUPER);
+                break;
+
+            case Token.GETELEM:
+                generateExpression(object.getNext(), node);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(thisObjLocal);
+                addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
+                break;
+
+            default:
+                Codegen.badTree();
+        }
+
+        // stack: [super, p]
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            // For postfix we want a copy of the old value on the stack
+            cfw.add(ByteCode.SWAP); // [p, super]
+            cfw.add(ByteCode.DUP2); // [p, super, p, super]
+            cfw.add(ByteCode.POP); // [p, super, p]
+        }
+
+        // Increment or decrement the value
+        addObjectToDouble(); // Unbox
+        cfw.addPush(1.0);
+        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+            cfw.add(ByteCode.DADD);
+        } else {
+            cfw.add(ByteCode.DSUB);
+        }
+        addDoubleWrap(); // Box back
+
+        // Assign the new value to the property
+        // Now stack is for prefix: [super, p+-1] and for postfix: [p, super, p+-1]
+        switch (child.getType()) {
+            case Token.GETPROP:
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(thisObjLocal);
+                addDynamicInvoke(
+                        "PROP:SETSUPER:" + child.getFirstChild().getNext().getString(),
+                        Signatures.PROP_SET_SUPER);
+                break;
+
+            case Token.GETELEM:
+                generateExpression(object.getNext(), node); // [..., super, p+-1, elem]
+                cfw.add(ByteCode.SWAP); // [..., super, elem, p+-1]
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(thisObjLocal);
+                addDynamicInvoke("PROP:SETELEMENTSUPER", Signatures.PROP_SET_ELEMENT_SUPER);
+                break;
+        }
+        // Now stack is for prefix: [p+-1] and for postfix: [p, p+-1]
+
+        // If it was a postfix, just drop the new value
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            cfw.add(ByteCode.POP);
         }
     }
 

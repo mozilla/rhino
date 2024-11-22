@@ -754,6 +754,7 @@ class SuperTest {
 
         @Test
         void modifyOperatorByName() {
+            // Equivalent to `super.x = super.x + 1`, so reads from super, writes in this
             String script =
                     ""
                             + "var proto = { x: 'proto' };"
@@ -810,6 +811,66 @@ class SuperTest {
                             + "object.f();\n"
                             + "catchHit + ':' + gCalled";
             Utils.assertWithAllOptimizationLevelsES6("true:true", script);
+        }
+
+        @Test
+        void memberIncrementPostfix() {
+            String script =
+                    ""
+                            + "var proto = { x: 1 };"
+                            + "var object = {\n"
+                            + "  x: 42,\n"
+                            + "  f() { return super.x++; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();"
+                            + "f + ':' + object.x + ':' + proto.x";
+            Utils.assertWithAllOptimizationLevelsES6("1:2:1", script);
+        }
+
+        @Test
+        void memberIncrementPrefix() {
+            String script =
+                    ""
+                            + "var proto = { x: 1 };"
+                            + "var object = {\n"
+                            + "  x: 42,\n"
+                            + "  f() { return ++super.x; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();"
+                            + "f + ':' + object.x + ':' + proto.x";
+            Utils.assertWithAllOptimizationLevelsES6("2:2:1", script);
+        }
+
+        @Test
+        void elementDecrementPostfix() {
+            String script =
+                    ""
+                            + "var proto = { 0: 1 };"
+                            + "var object = {\n"
+                            + "  0: 42,\n"
+                            + "  f() { return super[0]--; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();"
+                            + "f + ':' + object[0] + ':' + proto[0]";
+            Utils.assertWithAllOptimizationLevelsES6("1:0:1", script);
+        }
+
+        @Test
+        void elementDecrementPrefix() {
+            String script =
+                    ""
+                            + "var proto = { 0: 1 };"
+                            + "var object = {\n"
+                            + "  0: 42,\n"
+                            + "  f() { return --super[0]; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();"
+                            + "f + ':' + object[0] + ':' + proto[0]";
+            Utils.assertWithAllOptimizationLevelsES6("0:0:1", script);
         }
     }
 

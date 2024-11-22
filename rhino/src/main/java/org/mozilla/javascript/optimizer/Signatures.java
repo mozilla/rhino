@@ -89,11 +89,11 @@ interface Signatures {
      * string, number, or symbol. Falls back to ScriptRuntime.getSuperElem.
      */
     String PROP_GET_ELEMENT_SUPER =
-            "(Ljava/lang/Object;"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
+            "(Ljava/lang/Object;" // super
+                    + "Ljava/lang/Object;" // elem
+                    + "Lorg/mozilla/javascript/Context;" // cx
+                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Ljava/lang/Object;" // this
                     + ")Ljava/lang/Object;";
 
     /**
@@ -110,11 +110,11 @@ interface Signatures {
      */
     String PROP_SET_SUPER =
             "("
-                    + "Ljava/lang/Object;"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;" // superObj
+                    + "Ljava/lang/Object;" // value
+                    + "Lorg/mozilla/javascript/Context;" // cx
+                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Ljava/lang/Object;" // thisObj
                     + ")Ljava/lang/Object;";
 
     /**
@@ -155,16 +155,16 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
-     * PROP:SETELEMENT_SUPER: Set a property on super based on an identifier. Falls back to
+     * PROP:SETELEMENTSUPER: Set a property on super based on an identifier. Falls back to
      * ScriptRuntime.setSuperElem.
      */
     String PROP_SET_ELEMENT_SUPER =
-            "(Ljava/lang/Object;"
-                    + "Ljava/lang/Object;"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
+            "(Ljava/lang/Object;" // super
+                    + "Ljava/lang/Object;" // elem
+                    + "Ljava/lang/Object;" // value
+                    + "Lorg/mozilla/javascript/Context;" // cx
+                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Ljava/lang/Object;" // this
                     + ")Ljava/lang/Object;";
 
     /**

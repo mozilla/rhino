@@ -1268,6 +1268,12 @@ class CodeGenerator extends Icode {
     private void visitIncDec(Node node, Node child) {
         int incrDecrMask = node.getExistingIntProp(Node.INCRDECR_PROP);
         int childType = child.getType();
+
+        if (child.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            visitSuperIncDec(node, child, childType, incrDecrMask);
+            return;
+        }
+
         switch (childType) {
             case Token.GETVAR:
                 {
@@ -1318,6 +1324,79 @@ class CodeGenerator extends Icode {
                 {
                     throw badTree(node);
                 }
+        }
+    }
+
+    // Handles super.x++ and variants thereof. We don't want to create new icode in the interpreter
+    // for this edge case, so we will transform this into something like super.x = super.x + 1
+    private void visitSuperIncDec(Node node, Node child, int childType, int incrDecrMask) {
+        Node object = child.getFirstChild();
+
+        // Push the old value on the stack
+        visitExpression(object, 0); // stack: [super]
+        switch (childType) {
+            case Token.GETPROP:
+                addStringOp(Token.GETPROP_SUPER, object.getNext().getString()); // stack: [p]
+                break;
+
+            case Token.GETELEM:
+                {
+                    Node index = object.getNext();
+                    visitExpression(index, 0); // stack: [super, elem]
+                    addToken(Token.GETELEM_SUPER); // stack: [p]
+                    stackChange(-1);
+                    break;
+                }
+
+            default:
+                throw badTree(node);
+        }
+
+        // If it's a postfix expression, we copy the old value
+        // If it's postfix, we only need the _new_ value on the stack
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            addIcode(Icode_DUP); // stack: postfix [p, p], prefix: [p]
+            stackChange(+1);
+        }
+
+        // We need, in order, super and then the new value
+        addToken(Token.SUPER); // stack: postfix [p, p, super], prefix: [p, super]
+        stackChange(+1);
+        addIcode(Icode_SWAP); // stack: postfix [p, super, p], prefix: [super, p]
+
+        // Increment or decrement the new value
+        addIcode(Icode_ONE); // stack: prefix  [p, super, p, 1], postfix: [super, p, 1]
+        stackChange(+1);
+        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+            addToken(Token.ADD); // stack: prefix [p, super, p+1], postfix: [super, p+1]
+        } else {
+            addToken(Token.SUB); // stack: prefix [p, super, p-1], postfix: [super, p-1]
+        }
+        stackChange(-1);
+
+        // Assign the new value to the property
+        switch (childType) {
+            case Token.GETPROP:
+                addStringOp(Token.SETPROP_SUPER, object.getNext().getString());
+                // stack: prefix [p, p+-1], postfix: [p+-1]
+                stackChange(-1);
+                break;
+
+            case Token.GETELEM:
+                {
+                    Node index = object.getNext();
+                    visitExpression(index, 0);
+                    // stack: prefix [p, super, p+-1, elem], postfix: [super, p+-1, elem]
+                    addToken(Token.SETELEM_SUPER); // stack: prefix [p, p+-1], postfix: [p+-1]
+                    stackChange(-2);
+                    break;
+                }
+        }
+
+        // If it was a postfix, just drop the new value
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            addIcode(Icode_POP); // stack: [p]
+            stackChange(-1);
         }
     }
 
