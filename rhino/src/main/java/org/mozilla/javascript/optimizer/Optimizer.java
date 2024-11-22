@@ -138,6 +138,10 @@ class Optimizer {
             case Token.DEC:
                 {
                     Node child = n.getFirstChild();
+                    if (child.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                        // Don't optimize super.prop++ and related
+                        return NoType;
+                    }
                     int type = rewriteForNumberVariables(child, NumberType);
                     if (child.getType() == Token.GETVAR) {
                         if (type == NumberType && !convertParameter(child)) {
