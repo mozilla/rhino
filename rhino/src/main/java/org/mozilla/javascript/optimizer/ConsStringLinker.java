@@ -14,6 +14,15 @@ import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * This linker optimizes:
+ *
+ * <ul>
+ *   <li>"+" operations when the LHS is a ConsString and the RHS is any kind of CharSequence object
+ *       (either a String or ConsString)
+ *   <li>accesses to the "length" property of a ConsString.
+ * </ul>
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
     @Override

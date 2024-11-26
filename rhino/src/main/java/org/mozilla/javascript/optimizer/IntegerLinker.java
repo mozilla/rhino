@@ -12,6 +12,12 @@ import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 
+/**
+ * This linker optimizes a suite of math operations when the LHS is an Integer object, and the RHS
+ * (if any) is either an Integer or a Double. It avoids a gigantic set of "if...then" statements in
+ * ScriptRuntime for the generic case. When operating on Integers (and there is no overflow) it and
+ * ScriptRuntime contrive to return Integer results, which can result in faster operations later.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class IntegerLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -26,14 +32,15 @@ class IntegerLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         MethodHandle mh = null;
         MethodHandle guard = null;
 
         if (op.isNamespace(RhinoNamespace.MATH)) {
             Object arg2 = null;
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MethodType mType = req.getCallSiteDescriptor().getMethodType();
+
             if (req.getArguments().length > 1) {
                 arg2 = req.getArguments()[1];
             }

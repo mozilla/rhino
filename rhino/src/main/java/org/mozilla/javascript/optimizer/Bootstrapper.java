@@ -18,12 +18,22 @@ import org.mozilla.classfile.ClassFileWriter;
 
 /**
  * The Bootstrapper contains the method that is called by invokedynamic instructions in the bytecode
- * to map a call site to a method. We should never go down this entire code path on Android.
+ * to map a call site to a method. The "bootstrap" method here is called the first time the runtime
+ * encounters a particular "invokedynamic" call site, and it is responsible for setting up method
+ * handles that may be used to invoke code. To learn more about this entire sequence, read up on the
+ * "jdk.dynalink" package.
+ *
+ * <p>We will never go down this entire code path on Android because we do not support bytecode
+ * generation there.
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 public class Bootstrapper {
     private static final Pattern SEPARATOR = Pattern.compile(":");
 
+    /**
+     * This is the method handle that's wired in to the bytecode for every dynamic call site in the
+     * bytecode.
+     */
     public static final ClassFileWriter.MHandle BOOTSTRAP_HANDLE =
             new ClassFileWriter.MHandle(
                     ByteCode.MH_INVOKESTATIC,
@@ -35,12 +45,15 @@ public class Bootstrapper {
     private static final DynamicLinker linker;
 
     static {
-        // Set up the linkers
+        // Set up the linkers that will map each call site to a method handle.
         DynamicLinkerFactory factory = new DynamicLinkerFactory();
-        // This composite linker will cache type names and invoke only the linkers
-        // that are compatible with each type. Linkers higher in the order will
-        // still be prioritized, so we prioritize this list in terms of the
-        // amount it will help performance.
+        // Set up a linker that will delegate to other linkers based on the class
+        // of the first argument to each dynamic invocation. (That's why the method
+        // signatures in "Signatures" sometimes have different orders than their
+        // counterparts in "ScriptRuntime".)
+        // The linker caches the results so that it can efficiently only delegate to
+        // compatible linkers. It will still go in order, so we put the linkers
+        // likely to have the biggest impact on performance at the top of the list.
         CompositeTypeBasedGuardingDynamicLinker typeLinker =
                 new CompositeTypeBasedGuardingDynamicLinker(
                         Arrays.asList(
@@ -52,23 +65,30 @@ public class Bootstrapper {
                                 new ConsStringLinker(),
                                 new NativeArrayLinker(),
                                 new BaseFunctionLinker()));
+        // Add the default linker, which can link anything no matter what.
         factory.setPrioritizedLinkers(typeLinker, new DefaultLinker());
         linker = factory.createLinker();
     }
 
-    /** This is the method called by every call site in the bytecode to map it to a function. */
+    /**
+     * This is the method called by every call site in the bytecode to map it to a method handle.
+     */
     @SuppressWarnings("unused")
     public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType mType)
             throws NoSuchMethodException {
         Operation op = parseOperation(name);
-        // ChainedCallSite lets a call site have a few options for complex situations
+        // ChainedCallSite lets a call site have a few options for complex situations.
+        // It caches up to eight invocations, so that we can quickly select the best
+        // implementation in situations where the same call site is invoked in different
+        // contexts.
         return linker.link(new ChainedCallSite(new CallSiteDescriptor(lookup, op, mType)));
     }
 
     /**
-     * Operation names in the bytecode are names like "PROP:GET:<NAME> and "NAME:BIND:<NAME>". This
-     * translates them the first time a call site is seen to an object that can be easily consumed
-     * by the various types of linkers.
+     * Operation names in the bytecode are names like "PROP:GET:<NAME> and "NAME:BIND:<NAME>". (See
+     * the "Signatures" interface for a description of these.) This method translates them the first
+     * time a call site is seen to an object that can be easily consumed by the various types of
+     * linkers.
      */
     private static Operation parseOperation(String name) throws NoSuchMethodException {
         String[] tokens = SEPARATOR.split(name, -1);
@@ -184,20 +204,23 @@ public class Bootstrapper {
             }
         }
 
-        // Fall through to no match. This should only happen if the name in the bytecode
-        // does not match the pattern that this method understands.
+        // Fall through to no match. This will only happen if the name in the bytecode
+        // does not match the pattern that this method understands, which means that
+        // there is a mismatch between the bytecode and the runtime.
         throw new NoSuchMethodException(name);
     }
 
     // Given a list of name segments and a position, return the interned name at the
-    // specified position.
+    // specified position. This allows us, to pull a name like "foo" from an operation
+    // named, for example, "NAME:GET:foo".
     private static String getNameSegment(String[] segments, String name, int pos) {
         if (pos >= segments.length) {
             return "";
         }
-        // Because segments of operation names, especially property names, are essentially
-        // wired in to the bootstrapping result, interning works and has a big impact on
-        // performance.
+        // The "slot maps" in ScriptableObject-based classes can shortcut when property names
+        // are "==", so interning strings improves performance in a measurable way, because
+        // the property names that we pull from the INDY operation descriptors are essentially
+        // constants.
         return segments[pos].intern();
     }
 }

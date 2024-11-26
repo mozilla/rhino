@@ -14,6 +14,11 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * This linker optimizes accesses to the "length" property of native arrays by delegating directly
+ * to the native code. It helps in the common case that code is iterating over the length of an
+ * array.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class NativeArrayLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -28,15 +33,15 @@ class NativeArrayLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         MethodHandle mh = null;
         MethodHandle guard = null;
 
         if (op.isNamespace(StandardNamespace.PROPERTY)) {
             if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
                     && "length".equals(op.getName())) {
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
+                MethodType mType = req.getCallSiteDescriptor().getMethodType();
                 mh = lookup.findStatic(NativeArrayLinker.class, "getLength", mType);
                 guard = Guards.getInstanceOfGuard(NativeArray.class);
             }

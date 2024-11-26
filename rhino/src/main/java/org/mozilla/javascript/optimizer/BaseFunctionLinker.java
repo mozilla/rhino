@@ -14,6 +14,10 @@ import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * This linker optimizes accesses to the "prototype" property of any standard Rhino function so that
+ * it calls the native function rather than going through' a property name match.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -28,15 +32,15 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         MethodHandle mh = null;
         MethodHandle guard = null;
 
         if (op.isNamespace(StandardNamespace.PROPERTY)) {
             if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
                     && "prototype".equals(op.getName())) {
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
+                MethodType mType = req.getCallSiteDescriptor().getMethodType();
                 mh = lookup.findStatic(BaseFunctionLinker.class, "getPrototype", mType);
                 guard = Guards.getInstanceOfGuard(BaseFunction.class);
             }

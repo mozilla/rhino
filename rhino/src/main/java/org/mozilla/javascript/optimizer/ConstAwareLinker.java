@@ -14,6 +14,13 @@ import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
+/**
+ * This linker optimizes accesses to constants, either as object properties or in the current scope.
+ * These constants must be truly constants, which means neither "writable" nor "configurable," which
+ * pretty much means that they were declared with the "const" keyword. In those cases, it will
+ * replace the entire property lookup with code that directly returns the constant value, which is
+ * much faster.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -28,7 +35,6 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         Object target = req.getReceiver();
 
@@ -37,6 +43,7 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
                         && op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN))) {
             Object constValue = getConstValue(target, op.getName());
             if (constValue != null) {
+                MethodType mType = req.getCallSiteDescriptor().getMethodType();
                 // The guard returns boolean and compares the first argument to the
                 // target here. This works because the target is always our first argument.
                 MethodHandle guard = Guards.asType(Guards.getIdentityGuard(target), mType);

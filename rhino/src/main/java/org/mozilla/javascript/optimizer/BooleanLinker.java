@@ -10,6 +10,10 @@ import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 
+/**
+ * This linker short-circuits invocations of "==", "===", and "toBoolean" operations when the
+ * argument is already a boolean.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class BooleanLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -24,13 +28,14 @@ class BooleanLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         MethodHandle mh = null;
         MethodHandle guard = null;
 
         if (op.isNamespace(RhinoNamespace.MATH)) {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MethodType mType = req.getCallSiteDescriptor().getMethodType();
+
             if (op.isOperation(RhinoOperation.EQ, RhinoOperation.SHALLOWEQ)
                     && req.getArguments()[1] instanceof Boolean) {
                 mh = lookup.findStatic(BooleanLinker.class, "eq", mType);

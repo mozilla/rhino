@@ -11,6 +11,11 @@ import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 
+/**
+ * This linker optimizes a suite of math operations when the LHS is a Double object, and the RHS (if
+ * any) is either a Double or an Integer. It avoids a gigantic set of "if...then" statements in
+ * ScriptRuntime for the generic case.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class DoubleLinker implements TypeBasedGuardingDynamicLinker {
     @Override
@@ -25,14 +30,14 @@ class DoubleLinker implements TypeBasedGuardingDynamicLinker {
             return null;
         }
 
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         MethodHandle mh = null;
         MethodHandle guard = null;
 
         if (op.isNamespace(RhinoNamespace.MATH)) {
             Object arg2 = null;
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MethodType mType = req.getCallSiteDescriptor().getMethodType();
             if (req.getArguments().length > 1) {
                 arg2 = req.getArguments()[1];
             }

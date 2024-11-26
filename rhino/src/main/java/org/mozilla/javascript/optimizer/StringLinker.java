@@ -15,6 +15,19 @@ import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * This linker optimizes a few string operations:
+ *
+ * <ul>
+ *   <li>"+" operations when the first argument is a String and the second is a CharSequence (a
+ *       String or ConsString)
+ *   <li>"==" and "===" operations when both arguments are Strings
+ *   <li>Accesses to the "length" property of a String.
+ * </ul>
+ *
+ * As in other custom linkers, this avoids the large cascading "if...then" statements in the
+ * ScriptRuntime classes.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class StringLinker implements TypeBasedGuardingDynamicLinker {
     @Override
