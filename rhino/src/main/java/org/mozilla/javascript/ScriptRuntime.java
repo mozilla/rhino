@@ -188,7 +188,7 @@ public class ScriptRuntime {
 
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
-        getRegExpProxy(cx).register(scope, sealed);
+        registerRegExp(cx, scope, sealed);
 
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
@@ -296,6 +296,13 @@ public class ScriptRuntime {
         }
 
         return scope;
+    }
+
+    private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
+        RegExpProxy regExpProxy = getRegExpProxy(cx);
+        if (regExpProxy != null) {
+            regExpProxy.register(scope, sealed);
+        }
     }
 
     public static ScriptableObject initStandardObjects(

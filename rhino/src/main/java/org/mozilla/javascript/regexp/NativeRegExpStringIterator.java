@@ -19,6 +19,13 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     private static final long serialVersionUID = 1L;
     private static final String ITERATOR_TAG = "RegExpStringIterator";
 
+    private Scriptable regexp;
+    private String string;
+    private boolean global;
+    private boolean fullUnicode;
+    private boolean nextDone;
+    private Object next = null;
+
     public static void init(ScriptableObject scope, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeRegExpStringIterator(), ITERATOR_TAG);
     }
@@ -101,11 +108,4 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     protected String getTag() {
         return ITERATOR_TAG;
     }
-
-    private Scriptable regexp;
-    private String string;
-    private boolean global;
-    private boolean fullUnicode;
-    private boolean nextDone;
-    private Object next = null;
 }
