@@ -606,6 +606,10 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return lineno;
     }
 
+    public int getTokenStartLineno() {
+        return tokenStartLineno;
+    }
+
     final String getString() {
         return string;
     }
@@ -650,11 +654,15 @@ class TokenStream implements Parser.CurrentPositionReporter {
             for (; ; ) {
                 c = getChar();
                 if (c == EOF_CHAR) {
+                    tokenStartLastLineEnd = lastLineEnd;
+                    tokenStartLineno = lineno;
                     tokenBeg = cursor - 1;
                     tokenEnd = cursor;
                     return Token.EOF;
                 } else if (c == '\n') {
                     dirtyLine = false;
+                    tokenStartLastLineEnd = lastLineEnd;
+                    tokenStartLineno = lineno;
                     tokenBeg = cursor - 1;
                     tokenEnd = cursor;
                     return Token.EOL;
@@ -667,6 +675,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
             }
 
             // Assume the token will be 1 char - fixed up below.
+            tokenStartLastLineEnd = lastLineEnd;
+            tokenStartLineno = lineno;
             tokenBeg = cursor - 1;
             tokenEnd = cursor;
 
@@ -1233,6 +1243,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     if (matchChar('!')) {
                         if (matchChar('-')) {
                             if (matchChar('-')) {
+                                tokenStartLastLineEnd = lastLineEnd;
+                                tokenStartLineno = lineno;
                                 tokenBeg = cursor - 4;
                                 skipLine();
                                 commentType = Token.CommentType.HTML;
@@ -1289,6 +1301,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     markCommentStart();
                     // is it a // comment?
                     if (matchChar('/')) {
+                        tokenStartLastLineEnd = lastLineEnd;
+                        tokenStartLineno = lineno;
                         tokenBeg = cursor - 2;
                         skipLine();
                         commentType = Token.CommentType.LINE;
@@ -1297,6 +1311,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     // is it a /* or /** comment?
                     if (matchChar('*')) {
                         boolean lookForSlash = false;
+                        tokenStartLastLineEnd = lastLineEnd;
+                        tokenStartLineno = lineno;
                         tokenBeg = cursor - 2;
                         if (matchChar('*')) {
                             lookForSlash = true;
@@ -1842,6 +1858,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
     }
 
     int getNextXMLToken() throws IOException {
+        tokenStartLastLineEnd = lastLineEnd;
+        tokenStartLineno = lineno;
         tokenBeg = cursor;
         stringBufferTop = 0; // remember the XML
 
@@ -2180,6 +2198,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 }
                 lineEndChar = -1;
                 lineStart = sourceCursor - 1;
+                lastLineEnd = tokenEnd;
                 lineno++;
             }
 
@@ -2432,6 +2451,10 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return tokenEnd - tokenBeg;
     }
 
+    public int getTokenColumn() {
+        return tokenBeg - tokenStartLastLineEnd + 1;
+    }
+
     // stuff other than whitespace since start of line
     private boolean dirtyLine;
 
@@ -2483,6 +2506,10 @@ class TokenStream implements Parser.CurrentPositionReporter {
     // Record start and end positions of last scanned token.
     int tokenBeg;
     int tokenEnd;
+
+    private int lastLineEnd;
+    private int tokenStartLastLineEnd;
+    private int tokenStartLineno;
 
     // Type of last comment scanned.
     Token.CommentType commentType;

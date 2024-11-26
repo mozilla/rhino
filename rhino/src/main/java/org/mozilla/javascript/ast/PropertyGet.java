@@ -35,10 +35,12 @@ public class PropertyGet extends InfixExpression {
      */
     public PropertyGet(AstNode target, Name property) {
         super(target, property);
+        super.setLineColumnNumber(property.getLineno(), property.getColumn());
     }
 
     public PropertyGet(AstNode target, Name property, int dotPosition) {
         super(Token.GETPROP, target, property, dotPosition);
+        super.setLineColumnNumber(property.getLineno(), property.getColumn());
     }
 
     /** Returns the object on which the property is being fetched. Should never be {@code null}. */

@@ -180,7 +180,8 @@ public class NodeTransformer {
                                     unwind = new Node(Token.LEAVEWITH);
                                 }
                                 if (unwindBlock == null) {
-                                    unwindBlock = new Node(Token.BLOCK, node.getLineno());
+                                    unwindBlock = new Node(Token.BLOCK);
+                                    unwind.setLineColumnNumber(node.getLineno(), node.getColumn());
                                 }
                                 unwindBlock.addChildToBack(unwind);
                             }
@@ -297,7 +298,8 @@ public class NodeTransformer {
                                 // to a LETEXPR
                                 if (n.getType() != Token.LETEXPR) throw Kit.codeBug();
                             }
-                            Node pop = new Node(Token.EXPR_VOID, n, node.getLineno());
+                            Node pop = new Node(Token.EXPR_VOID, n);
+                            pop.setLineColumnNumber(node.getLineno(), node.getColumn());
                             result.addChildToBack(pop);
                         }
                         node = replaceCurrent(parent, previous, node, result);

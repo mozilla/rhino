@@ -59,6 +59,7 @@ public class ElementGet extends AstNode {
         assertNotNull(target);
         this.target = target;
         target.setParent(this);
+        setLineColumnNumber(target.getLineno(), target.getColumn());
     }
 
     /** Returns the element being accessed */

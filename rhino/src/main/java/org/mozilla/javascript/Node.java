@@ -118,24 +118,24 @@ public class Node implements Iterable<Node> {
         right.next = null;
     }
 
-    public Node(int nodeType, int line) {
+    public Node(int nodeType, int line, int column) {
         type = nodeType;
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node child, int line) {
+    public Node(int nodeType, Node child, int line, int column) {
         this(nodeType, child);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node left, Node right, int line) {
+    public Node(int nodeType, Node left, Node right, int line, int column) {
         this(nodeType, left, right);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
-    public Node(int nodeType, Node left, Node mid, Node right, int line) {
+    public Node(int nodeType, Node left, Node mid, Node right, int line, int column) {
         this(nodeType, left, mid, right);
-        lineno = line;
+        setLineColumnNumber(line, column);
     }
 
     public static Node newNumber(double number) {
@@ -531,8 +531,9 @@ public class Node implements Iterable<Node> {
         return lineno;
     }
 
-    public void setLineno(int lineno) {
+    public void setLineColumnNumber(int lineno, int column) {
         this.lineno = lineno;
+        this.column = column;
     }
 
     /** Can only be called when <code>getType() == Token.NUMBER</code> */
@@ -1253,11 +1254,21 @@ public class Node implements Iterable<Node> {
         }
     }
 
+    /**
+     * @return the column of where a Node is defined in source. If the column is -1, it was never
+     *     initialized. One-based.
+     *     <p>May be overridden by sub classes
+     */
+    public int getColumn() {
+        return column;
+    }
+
     protected int type = Token.ERROR; // type of the node, e.g. Token.NAME
     protected Node next; // next sibling
     protected Node first; // first element of a linked list of children
     protected Node last; // last element of a linked list of children
     protected int lineno = -1;
+    private int column = -1;
 
     /**
      * Linked list of properties. Since vast majority of nodes would have no more then 2 properties,
