@@ -414,7 +414,7 @@ class SuperTest {
     }
 
     @Nested
-    class PropertyWrite {
+    class PropertyMutate {
         @Test
         void byName() {
             String script =
@@ -747,6 +747,51 @@ class SuperTest {
                             + "object.f();"
                             + "object.x + ':' + proto.x";
             Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+        }
+
+        @Test
+        void deleteNotAllowed() {
+            String script =
+                    ""
+                            + "var catchHit = false;\n"
+                            + "var getterCalled = false;\n"
+                            + "var proto = { get x() { getterCalled = true; } };"
+                            + "var object = {\n"
+                            + "  f() {\n"
+                            + "    try {\n"
+                            + "      delete super.x;\n"
+                            + "    } catch (err) {\n"
+                            + "      catchHit = err instanceof ReferenceError;"
+                            + "    }\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();\n"
+                            + "catchHit + ':' + getterCalled";
+            Utils.assertWithAllOptimizationLevelsES6("true:false", script);
+        }
+
+        @Test
+        void deleteSuperFirstEvaluatesPropertyKey() {
+            String script =
+                    ""
+                            + "var catchHit = false;\n"
+                            + "var gCalled = false;\n"
+                            + "var proto = { x: 1 };\n"
+                            + "function g() { gCalled = true; return 'x'; }\n"
+                            + " object = {\n"
+                            + "  f() {\n"
+                            + "    try {\n"
+                            + "      delete super[g()];\n"
+                            + "    } catch (err) {\n"
+                            + "      catchHit = err instanceof ReferenceError;"
+                            + "    }\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();\n"
+                            + "catchHit + ':' + gCalled";
+            Utils.assertWithAllOptimizationLevelsES6("true:true", script);
         }
     }
 

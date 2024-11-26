@@ -1864,6 +1864,9 @@ public final class IRFactory {
                         // Always evaluate delete operand, see ES5 11.4.1 & bug #726121
                         n = new Node(nodeType, new Node(Token.TRUE), child);
                     }
+                    if (child.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                        n.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+                    }
                     return n;
                 }
             case Token.TYPEOF:

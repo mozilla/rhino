@@ -5364,6 +5364,10 @@ public class ScriptRuntime {
         return syntaxError(msg);
     }
 
+    public static EcmaError referenceError(String message) {
+        return constructError("ReferenceError", message);
+    }
+
     private static void warnAboutNonJSObject(Object nonJSObject) {
         final String omitParam = ScriptRuntime.getMessageById("params.omit.non.js.object.warning");
         if (!"true".equals(omitParam)) {
@@ -5590,6 +5594,11 @@ public class ScriptRuntime {
                         constructorName,
                         new Object[] {message, filename, Integer.valueOf(linep[0])});
         return new JavaScriptException(error, filename, linep[0]);
+    }
+
+    /** Throws a ReferenceError "cannot delete a super property". See ECMAScript spec 13.5.1.2 */
+    public static void throwDeleteOnSuperPropertyNotAllowed() {
+        throw referenceError("msg.delete.super");
     }
 
     public static final Object[] emptyArgs = new Object[0];
