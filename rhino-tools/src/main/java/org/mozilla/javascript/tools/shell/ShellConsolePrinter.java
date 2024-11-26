@@ -36,6 +36,8 @@ class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
                     console.println(element.toString());
                 }
             }
+
+            console.flush();
         } catch (IOException e) {
             throw Context.reportRuntimeError(e.getMessage());
         }
