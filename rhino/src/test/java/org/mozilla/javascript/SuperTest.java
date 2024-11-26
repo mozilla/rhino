@@ -942,4 +942,63 @@ class SuperTest {
             Utils.assertWithAllOptimizationLevelsES6("object", script);
         }
     }
+
+    /**
+     * Test cases related to the special handling of REF in Rhino, which includes the special
+     * properties __proto__ and __parent__. It also includes XML stuff, but we do not support it for
+     * super.
+     */
+    @Nested
+    class Ref {
+        @Test
+        void propertyGet() {
+            String script =
+                    ""
+                            + "var a = {x: 'a'};\n"
+                            + "var b = {x: 'b'};\n"
+                            + "var c = {x: 'c',\n"
+                            + "  f() {\n"
+                            + "    return super.__proto__.x;\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(c, b);\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "c.f();";
+            Utils.assertWithAllOptimizationLevelsES6("b", script);
+        }
+
+        @Test
+        void propertyGetter() {
+            String script =
+                    ""
+                            + "var a = {get x() { return 'a' + this.y }, y: 'a' };\n"
+                            + "var b = {get x() { return 'b' + this.y }, y: 'b' };\n"
+                            + "var c = {\n"
+                            + "  get x() { return 'c' + this.y }, y: 'c',\n"
+                            + "  f() { return super.__proto__.x },"
+                            + "};\n"
+                            + "Object.setPrototypeOf(c, b);\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "c.f();";
+            Utils.assertWithAllOptimizationLevelsES6("bb", script);
+        }
+
+        @Test
+        void propertySet() {
+            String script =
+                    ""
+                            + "var a = {x: 'a'};\n"
+                            + "var b = {x: 'b'};\n"
+                            + "var c = {x: 'c',\n"
+                            + "  f() {\n"
+                            + "    super.__proto__ = a;\n"
+                            + "    return Object.getPrototypeOf(this).x;\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(c, b);\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "c.f();";
+            Utils.assertWithAllOptimizationLevelsES6("a", script);
+        }
+    }
 }
