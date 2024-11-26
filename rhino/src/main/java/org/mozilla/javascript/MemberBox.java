@@ -89,26 +89,6 @@ final class MemberBox implements Serializable {
         return memberObject.getDeclaringClass();
     }
 
-    String toJavaDeclaration() {
-        StringBuilder sb = new StringBuilder();
-        if (isMethod()) {
-            Method method = method();
-            sb.append(method.getReturnType());
-            sb.append(' ');
-            sb.append(method.getName());
-        } else {
-            Constructor<?> ctor = ctor();
-            String name = ctor.getDeclaringClass().getName();
-            int lastDot = name.lastIndexOf('.');
-            if (lastDot >= 0) {
-                name = name.substring(lastDot + 1);
-            }
-            sb.append(name);
-        }
-        sb.append(JavaMembers.liveConnectSignature(argTypes));
-        return sb.toString();
-    }
-
     @Override
     public String toString() {
         return memberObject.toString();
