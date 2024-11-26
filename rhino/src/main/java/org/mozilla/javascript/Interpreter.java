@@ -1643,6 +1643,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop = doDelName(cx, frame, op, stack, sDbl, stackTop);
                                     continue Loop;
                                 }
+                            case Icode_DELPROP_SUPER:
+                                stackTop -= 1;
+                                stack[stackTop] = Boolean.FALSE;
+                                ScriptRuntime.throwDeleteOnSuperPropertyNotAllowed();
+                                continue Loop;
                             case Token.GETPROPNOWARN:
                                 {
                                     Object lhs = stack[stackTop];

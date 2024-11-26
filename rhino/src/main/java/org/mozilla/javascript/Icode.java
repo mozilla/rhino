@@ -156,8 +156,11 @@ abstract class Icode {
             // Call a method on the super object, i.e. super.foo()
             Icode_CALL_ON_SUPER = Icode_IF_NOT_NULL_UNDEF - 1,
 
+            // delete super.prop
+            Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
+
             // Last icode
-            MIN_ICODE = Icode_CALL_ON_SUPER;
+            MIN_ICODE = Icode_DELPROP_SUPER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -343,6 +346,8 @@ abstract class Icode {
                 return "IF_NOT_NULL_UNDEF";
             case Icode_CALL_ON_SUPER:
                 return "CALL_ON_SUPER";
+            case Icode_DELPROP_SUPER:
+                return "DELPROP_SUPER";
         }
 
         // icode without name

@@ -737,7 +737,9 @@ class CodeGenerator extends Icode {
                 visitExpression(child, 0);
                 child = child.getNext();
                 visitExpression(child, 0);
-                if (isName) {
+                if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                    addIcode(Icode_DELPROP_SUPER);
+                } else if (isName) {
                     // special handling for delete name
                     addIcode(Icode_DELNAME);
                 } else {
