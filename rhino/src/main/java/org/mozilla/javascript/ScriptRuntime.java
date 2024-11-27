@@ -3242,28 +3242,30 @@ public class ScriptRuntime {
     // Integer-optimized methods.
 
     public static Object add(Integer i1, Integer i2) {
-        try {
-            return Math.addExact(i1, i2);
-        } catch (ArithmeticException ae) {
-            // We'll get here in the rare event that just resulted in an overflow
-            return i1.doubleValue() + i2.doubleValue();
+        // Do 64-bit addition to account for overflow
+        long r = i1.longValue() + i2.longValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return (int) r;
         }
+        return (double) r;
     }
 
     public static Number subtract(Integer i1, Integer i2) {
-        try {
-            return Math.subtractExact(i1, i2);
-        } catch (ArithmeticException ae) {
-            return i1.doubleValue() - i2.doubleValue();
+        // Account for overflow
+        long r = i1.longValue() - i2.longValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return (int) r;
         }
+        return (double) r;
     }
 
     public static Number multiply(Integer i1, Integer i2) {
-        try {
-            return Math.multiplyExact(i1, i2);
-        } catch (ArithmeticException ae) {
-            return i1.doubleValue() * i2.doubleValue();
+        // Account for overflow
+        long r = i1.longValue() * i2.longValue();
+        if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
+            return (int) r;
         }
+        return (double) r;
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
