@@ -18,6 +18,8 @@ public interface RegExpProxy {
     public static final int RA_REPLACE_ALL = 3;
     public static final int RA_SEARCH = 4;
 
+    public void register(ScriptableObject scope, boolean sealed);
+
     public boolean isRegExp(Scriptable obj);
 
     public Object compileRegExp(Context cx, String source, String flags);

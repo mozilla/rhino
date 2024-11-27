@@ -820,18 +820,22 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
      * @return obj casted to the target type
      * @throws EcmaError if the cast failed.
      */
-    @SuppressWarnings("unchecked")
     protected static <T> T ensureType(Object obj, Class<T> clazz, IdFunctionObject f) {
+        return ensureType(obj, clazz, f.getFunctionName());
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> T ensureType(Object obj, Class<T> clazz, String functionName) {
         if (clazz.isInstance(obj)) {
             return (T) obj;
         }
         if (obj == null) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.incompat.call.details", f.getFunctionName(), "null", clazz.getName());
+                    "msg.incompat.call.details", functionName, "null", clazz.getName());
         }
         throw ScriptRuntime.typeErrorById(
                 "msg.incompat.call.details",
-                f.getFunctionName(),
+                functionName,
                 obj.getClass().getName(),
                 clazz.getName());
     }

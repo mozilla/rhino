@@ -112,8 +112,6 @@ public class Test262SuiteTest {
                             "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
                             "super",
-                            "String.prototype.matchAll",
-                            "Symbol.matchAll",
                             "tail-call-optimization",
                             "u180e"));
 

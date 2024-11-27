@@ -7,7 +7,10 @@
 package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
+import org.mozilla.javascript.AbstractEcmaObjectOperations;
+import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
@@ -2695,6 +2698,10 @@ public class NativeRegExp extends IdScriptableObject {
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH, "[Symbol.match]", 1);
             return;
         }
+        if (id == SymbolId_matchAll) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH_ALL, "[Symbol.matchAll]", 1);
+            return;
+        }
         if (id == SymbolId_search) {
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
             return;
@@ -2761,7 +2768,7 @@ public class NativeRegExp extends IdScriptableObject {
                 return realThis(thisObj, f).toString();
 
             case Id_exec:
-                return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+                return js_exec(cx, scope, thisObj, args);
 
             case Id_test:
                 {
@@ -2775,6 +2782,9 @@ public class NativeRegExp extends IdScriptableObject {
             case SymbolId_match:
                 return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
 
+            case SymbolId_matchAll:
+                return js_SymbolMatchAll(cx, scope, thisObj, args);
+
             case SymbolId_search:
                 Scriptable scriptable =
                         (Scriptable) realThis(thisObj, f).execSub(cx, scope, args, MATCH);
@@ -2783,14 +2793,53 @@ public class NativeRegExp extends IdScriptableObject {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
+    static Object js_exec(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "exec").execSub(cx, scope, args, MATCH);
+    }
+
+    private Object js_SymbolMatchAll(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // See ECMAScript spec 22.2.6.9
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+
+        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        Function defaultConstructor =
+                ScriptRuntime.getExistingCtor(cx, topLevelScope, getClassName());
+        Constructable c =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+
+        Scriptable matcher = c.construct(cx, scope, new Object[] {thisObj, flags});
+
+        long lastIndex =
+                ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
+        ScriptRuntime.setObjectProp(matcher, "lastIndex", lastIndex, cx);
+        boolean global = flags.indexOf('g') != -1;
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+
+        return new NativeRegExpStringIterator(scope, matcher, s, global, fullUnicode);
+    }
+
     private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, NativeRegExp.class, f);
+        return realThis(thisObj, f.getFunctionName());
+    }
+
+    private static NativeRegExp realThis(Scriptable thisObj, String functionName) {
+        return ensureType(thisObj, NativeRegExp.class, functionName);
     }
 
     @Override
     protected int findPrototypeId(Symbol k) {
         if (SymbolKey.MATCH.equals(k)) {
             return SymbolId_match;
+        }
+        if (SymbolKey.MATCH_ALL.equals(k)) {
+            return SymbolId_matchAll;
         }
         if (SymbolKey.SEARCH.equals(k)) {
             return SymbolId_search;
@@ -2834,7 +2883,8 @@ public class NativeRegExp extends IdScriptableObject {
             Id_test = 5,
             Id_prefix = 6,
             SymbolId_match = 7,
-            SymbolId_search = 8,
+            SymbolId_matchAll = 8,
+            SymbolId_search = 9,
             MAX_PROTOTYPE_ID = SymbolId_search;
 
     private RECompiled re;

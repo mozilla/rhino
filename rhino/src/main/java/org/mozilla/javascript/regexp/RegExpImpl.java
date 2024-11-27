@@ -9,6 +9,7 @@ package org.mozilla.javascript.regexp;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.LazilyLoadedCtor;
 import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -17,6 +18,13 @@ import org.mozilla.javascript.Undefined;
 
 /** */
 public class RegExpImpl implements RegExpProxy {
+
+    @Override
+    public void register(ScriptableObject scope, boolean sealed) {
+        NativeRegExpStringIterator.init(scope, sealed);
+        new LazilyLoadedCtor(
+                scope, "RegExp", "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
+    }
 
     @Override
     public boolean isRegExp(Scriptable obj) {
