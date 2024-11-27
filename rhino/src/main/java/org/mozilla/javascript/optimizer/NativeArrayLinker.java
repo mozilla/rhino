@@ -62,8 +62,8 @@ class NativeArrayLinker implements TypeBasedGuardingDynamicLinker {
     private static Object getLength(Object o, Context cx, Scriptable scope) {
         long length = ((NativeArray) o).getLength();
         if (length < Integer.MAX_VALUE) {
-            return Integer.valueOf((int) length);
+            return (int) length;
         }
-        return Double.valueOf((double) length);
+        return (double) length;
     }
 }
