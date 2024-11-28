@@ -185,6 +185,17 @@ class SuperTest {
         }
 
         @Test
+        void superInDefaultArguments() {
+            String script =
+                    ""
+                            + "const a = { x: 'a'};\n"
+                            + "const b = { x: 'b', f(p = super.x) { return p; } };\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "b.f();";
+            Utils.assertWithAllOptimizationLevelsES6("a", script);
+        }
+
+        @Test
         void usesHomeObjectAndIgnoresThis1() {
             String script =
                     ""
