@@ -594,7 +594,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Token.REGEXP:
                     out.println(tname + " " + idata.itsRegExpLiterals[indexReg]);
                     break;
-                case Icode_LITERAL_KEYS:
+                case Icode_LITERAL_NEW_OBJECT:
                     {
                         boolean copyArray = iCode[pc++] != 0;
                         Object[] keys = (Object[]) idata.literalIds[indexReg];
@@ -891,7 +891,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // line number
                 return 1 + 2;
 
-            case Icode_LITERAL_KEYS:
+            case Icode_LITERAL_NEW_OBJECT:
                 // make a copy or not flag
                 return 1 + 1;
         }
@@ -2430,7 +2430,25 @@ public final class Interpreter extends Icode implements Evaluator {
                                         ScriptRuntime.getTemplateLiteralCallSite(
                                                 cx, frame.scope, templateLiterals, indexReg);
                                 continue Loop;
-                            case Icode_LITERAL_NEW:
+                            case Icode_LITERAL_NEW_OBJECT:
+                                {
+                                    // indexReg: index of constant with the keys
+                                    Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
+                                    boolean copyArray = iCode[frame.pc] != 0;
+                                    ++frame.pc;
+                                    ++stackTop;
+                                    stack[stackTop] = cx.newObject(frame.scope);
+                                    ++stackTop;
+                                    stack[stackTop] =
+                                            copyArray ? Arrays.copyOf(ids, ids.length) : ids;
+                                    ++stackTop;
+                                    stack[stackTop] = new int[ids.length];
+                                    ++stackTop;
+                                    stack[stackTop] = new Object[ids.length];
+                                    sDbl[stackTop] = 0;
+                                    continue Loop;
+                                }
+                            case Icode_LITERAL_NEW_ARRAY:
                                 // indexReg: number of values in the literal
                                 ++stackTop;
                                 stack[stackTop] = new int[indexReg];
@@ -2469,19 +2487,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     sDbl[stackTop] = i + 1;
                                     continue Loop;
                                 }
-                            case Icode_LITERAL_KEYS:
-                                {
-                                    Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
-                                    ++stackTop;
-                                    boolean copyArray = iCode[frame.pc] != 0;
-                                    ++frame.pc;
-                                    if (copyArray) {
-                                        stack[stackTop] = Arrays.copyOf(ids, ids.length);
-                                    } else {
-                                        stack[stackTop] = ids;
-                                    }
-                                    continue Loop;
-                                }
 
                             case Icode_LITERAL_KEY_SET:
                                 {
@@ -2490,20 +2495,21 @@ public final class Interpreter extends Icode implements Evaluator {
                                         key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                     --stackTop;
                                     Object[] ids = (Object[]) stack[stackTop - 2];
-                                    ids[indexReg] = key;
+                                    int i = (int) sDbl[stackTop];
+                                    ids[i] = key;
                                     continue Loop;
                                 }
                             case Token.OBJECTLIT:
                                 {
-                                    Object[] data = (Object[]) stack[stackTop];
+                                    Object[] values = (Object[]) stack[stackTop];
                                     --stackTop;
                                     int[] getterSetters = (int[]) stack[stackTop];
                                     --stackTop;
-                                    Object[] ids = (Object[]) stack[stackTop];
-                                    Object val =
-                                            ScriptRuntime.newObjectLiteral(
-                                                    ids, data, getterSetters, cx, frame.scope);
-                                    stack[stackTop] = val;
+                                    Object[] keys = (Object[]) stack[stackTop];
+                                    --stackTop;
+                                    Scriptable object = (Scriptable) stack[stackTop];
+                                    ScriptRuntime.fillObjectLiteral(
+                                            object, keys, values, getterSetters, cx, frame.scope);
                                     continue Loop;
                                 }
                             case Token.ARRAYLIT:

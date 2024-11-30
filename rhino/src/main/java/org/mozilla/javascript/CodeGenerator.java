@@ -1319,10 +1319,9 @@ class CodeGenerator extends Icode {
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
 
-        addIndexOp(Icode_LITERAL_KEYS, nextLiteralIndex);
+        addIndexOp(Icode_LITERAL_NEW_OBJECT, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
-        addIndexOp(Icode_LITERAL_NEW, count);
-        stackChange(3);
+        stackChange(4);
 
         int i = 0;
         while (child != null) {
@@ -1332,7 +1331,7 @@ class CodeGenerator extends Icode {
                 // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
                 Node computedPropertyNode = (Node) propertyId;
                 visitExpression(computedPropertyNode.first, 0);
-                addIndexOp(Icode_LITERAL_KEY_SET, i);
+                addIcode(Icode_LITERAL_KEY_SET);
                 stackChange(-1);
             }
 
@@ -1344,7 +1343,7 @@ class CodeGenerator extends Icode {
 
         addToken(Token.OBJECTLIT);
 
-        stackChange(-2);
+        stackChange(-3);
     }
 
     private void visitArrayLiteral(Node node, Node child) {
@@ -1352,7 +1351,7 @@ class CodeGenerator extends Icode {
         for (Node n = child; n != null; n = n.getNext()) {
             ++count;
         }
-        addIndexOp(Icode_LITERAL_NEW, count);
+        addIndexOp(Icode_LITERAL_NEW_ARRAY, count);
         stackChange(2);
         while (child != null) {
             visitLiteralValue(child);
