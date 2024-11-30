@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -23,6 +24,46 @@ class SlotMapContainer implements SlotMap {
 
     private static final int DEFAULT_SIZE = 10;
 
+    private static class EmptySlotMap implements SlotMap {
+
+        @Override
+        public Iterator<Slot> iterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return true;
+        }
+
+        @Override
+        public Slot modify(Object key, int index, int attributes) {
+            return null;
+        }
+
+        @Override
+        public Slot query(Object key, int index) {
+            return null;
+        }
+
+        @Override
+        public void add(Slot newSlot) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public <S extends Slot> S compute(Object key, int index, SlotComputer<S> compute) {
+            throw new IllegalStateException();
+        }
+    }
+
+    private static EmptySlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
+
     protected SlotMap map;
 
     SlotMapContainer() {
@@ -30,7 +71,9 @@ class SlotMapContainer implements SlotMap {
     }
 
     SlotMapContainer(int initialSize) {
-        if (initialSize > LARGE_HASH_SIZE) {
+        if (initialSize == 0) {
+            map = EMPTY_SLOT_MAP;
+        } else if (initialSize > LARGE_HASH_SIZE) {
             map = new HashSlotMap();
         } else {
             map = new EmbeddedSlotMap();
@@ -59,6 +102,7 @@ class SlotMapContainer implements SlotMap {
 
     @Override
     public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+        checkMapSize();
         return map.compute(key, index, c);
     }
 
@@ -92,7 +136,9 @@ class SlotMapContainer implements SlotMap {
      * map to a HashMap that is more robust against large numbers of hash collisions.
      */
     protected void checkMapSize() {
-        if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
+        if (map == EMPTY_SLOT_MAP) {
+            map = new EmbeddedSlotMap();
+        } else if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
             SlotMap newMap = new HashSlotMap(map);
             map = newMap;
         }

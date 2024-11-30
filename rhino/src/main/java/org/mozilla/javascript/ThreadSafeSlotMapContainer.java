@@ -77,6 +77,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
     public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
         final long stamp = lock.writeLock();
         try {
+            checkMapSize();
             return map.compute(key, index, c);
         } finally {
             lock.unlockWrite(stamp);
