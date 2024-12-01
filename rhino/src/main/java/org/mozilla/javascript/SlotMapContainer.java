@@ -69,7 +69,7 @@ class SlotMapContainer extends SlotMapOwner implements SlotMap {
         }
     }
 
-    static EmptySlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
+    static SlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
 
     SlotMapContainer() {
         this(DEFAULT_SIZE);
