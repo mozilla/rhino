@@ -154,40 +154,14 @@ public class EmbeddedSlotMap implements SlotMap {
                 prev = slot;
             }
             if (slot != null) {
-                // Modify or remove existing slot
-                S newSlot = c.compute(key, index, slot);
-                if (newSlot == null) {
-                    // Need to delete this slot actually
-                    removeSlot(slot, prev, slotIndex, key);
-                } else if (!Objects.equals(slot, newSlot)) {
-                    // Replace slot in hash table
-                    if (prev == slot) {
-                        slots[slotIndex] = newSlot;
-                    } else {
-                        prev.next = newSlot;
-                    }
-                    newSlot.next = slot.next;
-                    // Replace new slot in linked list, keeping same order
-                    if (slot == firstAdded) {
-                        firstAdded = newSlot;
-                    } else {
-                        Slot ps = firstAdded;
-                        while ((ps != null) && (ps.orderedNext != slot)) {
-                            ps = ps.orderedNext;
-                        }
-                        if (ps != null) {
-                            ps.orderedNext = newSlot;
-                        }
-                    }
-                    newSlot.orderedNext = slot.orderedNext;
-                    if (slot == lastAdded) {
-                        lastAdded = newSlot;
-                    }
-                }
-                return newSlot;
+                return computeExisting(key, index, c, slot, prev, slotIndex);
             }
         }
+        return computeNew(owner, key, index, c);
+    }
 
+    private <S extends Slot> S computeNew(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         // If we get here, we know we are potentially adding a new slot
         if (slots != null && slots.length > SlotMapContainer.LARGE_HASH_SIZE) {
             var map = copyToNewMap(owner);
@@ -196,6 +170,41 @@ public class EmbeddedSlotMap implements SlotMap {
         S newSlot = c.compute(key, index, null);
         if (newSlot != null) {
             createNewSlot(newSlot);
+        }
+        return newSlot;
+    }
+
+    private <S extends Slot> S computeExisting(
+            Object key, int index, SlotComputer<S> c, Slot slot, Slot prev, int slotIndex) {
+        // Modify or remove existing slot
+        S newSlot = c.compute(key, index, slot);
+        if (newSlot == null) {
+            // Need to delete this slot actually
+            removeSlot(slot, prev, slotIndex, key);
+        } else if (!Objects.equals(slot, newSlot)) {
+            // Replace slot in hash table
+            if (prev == slot) {
+                slots[slotIndex] = newSlot;
+            } else {
+                prev.next = newSlot;
+            }
+            newSlot.next = slot.next;
+            // Replace new slot in linked list, keeping same order
+            if (slot == firstAdded) {
+                firstAdded = newSlot;
+            } else {
+                Slot ps = firstAdded;
+                while ((ps != null) && (ps.orderedNext != slot)) {
+                    ps = ps.orderedNext;
+                }
+                if (ps != null) {
+                    ps.orderedNext = newSlot;
+                }
+            }
+            newSlot.orderedNext = slot.orderedNext;
+            if (slot == lastAdded) {
+                lastAdded = newSlot;
+            }
         }
         return newSlot;
     }
