@@ -25,8 +25,13 @@ public abstract class SlotMapOwner {
         Context cx = Context.getCurrentContext();
         if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
             return new ThreadSafeSlotMapContainer(initialSize);
+        } else if (initialSize == 0) {
+            return SlotMapContainer.EMPTY_SLOT_MAP;
+        } else if (initialSize > SlotMapContainer.LARGE_HASH_SIZE) {
+            return new HashSlotMap();
+        } else {
+            return new EmbeddedSlotMap();
         }
-        return new SlotMapContainer(initialSize);
     }
 
     final SlotMap getMap() {
