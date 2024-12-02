@@ -48,11 +48,15 @@ import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UpdateExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.WithStatement;
+import org.mozilla.javascript.ast.XmlFragment;
+import org.mozilla.javascript.ast.XmlLiteral;
 import org.mozilla.javascript.testing.TestErrorReporter;
 
 public class ParserTest {
@@ -1207,6 +1211,41 @@ public class ParserTest {
         AstRoot root = parse("\uD842\uDFB7");
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
         assertEquals("𠮷", first.getString());
+    }
+    
+    @Test
+    public void testParseMultibyteCharacter_StringLiteral() {
+        AstRoot root = parse("'\uD83C\uDF1F'");
+        StringLiteral first = (StringLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        assertEquals(4, first.getLength());
+        assertEquals("'🌟'", first.getValue(true));
+    }
+    
+    @Test
+    public void testParseMultibyteCharacter_TemplateLiteral() {
+        AstRoot root = parse("`\uD83C\uDF1F`");
+        TemplateLiteral first = (TemplateLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        TemplateCharacters templateCharacter = (TemplateCharacters) first.getElement(0);
+        assertEquals(2, templateCharacter.getLength());
+		assertEquals("🌟", templateCharacter.getValue());
+		assertEquals(4, first.getLength());
+    }
+    
+    @Test
+    public void testParseMultibyteCharacter_XMLLiteral() {
+        AstRoot root = parse("<xml>\uD83C\uDF1F</xml>");
+        XmlLiteral first = (XmlLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        XmlFragment fragment = first.getFragments().get(0);
+        assertEquals(13, fragment.getLength());
+        assertEquals("<xml>🌟</xml>", fragment.toSource());
+    }
+    
+    @Test
+    public void testParseMultibyteCharacter_Comment() {
+        AstRoot root = parse("/*\uD83C\uDF1F*/");
+        Comment comment = root.getComments().first();
+        assertEquals(6, comment.getLength());
+		assertEquals("/*🌟*/", comment.getValue());
     }
 
     @Test

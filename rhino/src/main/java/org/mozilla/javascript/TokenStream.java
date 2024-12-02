@@ -1127,6 +1127,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
                 String str = getStringFromBuffer();
                 this.string = internString(str);
+                cursor = sourceCursor;
+                tokenEnd = cursor;
                 return Token.STRING;
             }
 
@@ -1330,6 +1332,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                 lookForSlash = true;
                             } else if (c == '/') {
                                 if (lookForSlash) {
+                                	cursor = sourceCursor;
                                     tokenEnd = cursor;
                                     return Token.COMMENT;
                                 }
@@ -1653,6 +1656,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case '`':
                     rawString.setLength(rawString.length() - 1); // don't include "`"
                     this.string = hasInvalidEscapeSequences ? null : getStringFromBuffer();
+                    cursor = sourceCursor;
+                    tokenEnd = cursor;
                     return Token.TEMPLATE_LITERAL;
                 case '$':
                     if (matchTemplateLiteralChar('{')) {
@@ -1907,6 +1912,8 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
                 if (!xmlIsTagContent && xmlOpenTagsCount == 0) {
                     this.string = getStringFromBuffer();
+                    cursor = sourceCursor;
+                    tokenEnd = cursor;
                     return Token.XMLEND;
                 }
             } else {
