@@ -137,12 +137,10 @@ public class PropertyTest {
                 new ContextFactory() {
                     @Override
                     protected boolean hasFeature(Context cx, int featureIndex) {
-                        switch (featureIndex) {
-                            case Context.FEATURE_THREAD_SAFE_OBJECTS:
-                                return true;
-                            default:
-                                return super.hasFeature(cx, featureIndex);
+                        if (featureIndex == Context.FEATURE_THREAD_SAFE_OBJECTS) {
+                            return true;
                         }
+                        return super.hasFeature(cx, featureIndex);
                     }
                 };
 
