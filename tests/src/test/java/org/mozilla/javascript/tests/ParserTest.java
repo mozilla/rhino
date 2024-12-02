@@ -1207,14 +1207,14 @@ public class ParserTest {
     }
 
     @Test
-    public void testParseUnicodeMultibyteCharacter() {
+    public void parseUnicodeMultibyteCharacter() {
         AstRoot root = parse("\uD842\uDFB7");
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
         assertEquals("𠮷", first.getString());
     }
     
     @Test
-    public void testParseMultibyteCharacter_StringLiteral() {
+    public void parseMultibyteCharacter_StringLiteral() {
         AstRoot root = parse("'\uD83C\uDF1F'");
         StringLiteral first = (StringLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         assertEquals(4, first.getLength());
@@ -1222,7 +1222,7 @@ public class ParserTest {
     }
     
     @Test
-    public void testParseMultibyteCharacter_TemplateLiteral() {
+    public void parseMultibyteCharacter_TemplateLiteral() {
         AstRoot root = parse("`\uD83C\uDF1F`");
         TemplateLiteral first = (TemplateLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         TemplateCharacters templateCharacter = (TemplateCharacters) first.getElement(0);
@@ -1232,7 +1232,7 @@ public class ParserTest {
     }
     
     @Test
-    public void testParseMultibyteCharacter_XMLLiteral() {
+    public void parseMultibyteCharacter_XMLLiteral() {
         AstRoot root = parse("<xml>\uD83C\uDF1F</xml>");
         XmlLiteral first = (XmlLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         XmlFragment fragment = first.getFragments().get(0);
@@ -1241,7 +1241,7 @@ public class ParserTest {
     }
     
     @Test
-    public void testParseMultibyteCharacter_Comment() {
+    public void parseMultibyteCharacter_Comment() {
         AstRoot root = parse("/*\uD83C\uDF1F*/");
         Comment comment = root.getComments().first();
         assertEquals(6, comment.getLength());
@@ -1249,7 +1249,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testParseUnicodeIdentifierPartWhichIsNotJavaIdentifierPart() {
+    public void parseUnicodeIdentifierPartWhichIsNotJavaIdentifierPart() {
         // On the JDK 11 I'm using, Character.isUnicodeIdentifierPart(U+9FEB) returns true
         // but Character.isJavaIdentifierPart(U+9FEB) returns false. On a JDK 17 results
         // seem to vary, but I think it's enough to verify that TokenStream uses
