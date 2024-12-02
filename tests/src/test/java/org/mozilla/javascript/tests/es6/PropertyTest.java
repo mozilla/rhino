@@ -1,19 +1,13 @@
 package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mozilla.javascript.tests.Utils.DEFAULT_OPT_LEVELS;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
-import org.mozilla.javascript.tools.shell.Global;
 
 public class PropertyTest {
 
@@ -125,9 +119,6 @@ public class PropertyTest {
 
                     return null;
                 });
-
-
-
     }
 
     @Test
@@ -163,19 +154,15 @@ public class PropertyTest {
                 // define custom getter method
                 final Method getter = MyHostObject.class.getMethod("getFoo");
                 final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
-                myHostObject.defineProperty(
-                        "foo", null, getter, setter, ScriptableObject.EMPTY);
+                myHostObject.defineProperty("foo", null, getter, setter, ScriptableObject.EMPTY);
                 scope.put("MyHostObject", scope, myHostObject);
             } catch (Exception e) {
             }
 
-            final String result =
-                    (String) cx.evaluateString(scope, script, "myScript", 1, null);
+            final String result = (String) cx.evaluateString(scope, script, "myScript", 1, null);
 
             assertEquals(expected, result);
-
         }
-
     }
 
     public static class MyHostObject extends ScriptableObject {
