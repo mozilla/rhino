@@ -1624,9 +1624,7 @@ public abstract class ScriptableObject
                 index,
                 (k, ix, existing) -> {
                     if (checkValid) {
-                        ScriptableObject current =
-                                existing == null ? null : existing.getPropertyDescriptor(cx, this);
-                        checkPropertyChange(id, current, desc);
+                        checkPropertyChangeForSlot(id, existing, desc);
                     }
 
                     Slot slot;
@@ -1813,6 +1811,49 @@ public abstract class ScriptableObject
                                 "msg.change.property.data.to.accessor.with.configurable.false", id);
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.property.accessor.to.data.with.configurable.false", id);
+                }
+            }
+        }
+    }
+
+    protected void checkPropertyChangeForSlot(Object id, Slot current, ScriptableObject desc) {
+        if (current == null) { // new property
+            if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
+        } else {
+            if ((current.getAttributes() & PERMANENT) != 0) {
+                if (isTrue(getProperty(desc, "configurable")))
+                    throw ScriptRuntime.typeErrorById("msg.change.configurable.false.to.true", id);
+                if (((current.getAttributes() & DONTENUM) == 0)
+                        != isTrue(getProperty(desc, "enumerable")))
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.change.enumerable.with.configurable.false", id);
+                boolean isData = isDataDescriptor(desc);
+                boolean isAccessor = isAccessorDescriptor(desc);
+                if (!isData && !isAccessor) {
+                    // no further validation required for generic descriptor
+                } else if (isData) {
+                    if ((current.getAttributes() & READONLY) != 0) {
+                        if (isTrue(getProperty(desc, "writable")))
+                            throw ScriptRuntime.typeErrorById(
+                                    "msg.change.writable.false.to.true.with.configurable.false",
+                                    id);
+
+                        if (!sameValue(getProperty(desc, "value"), current.value))
+                            throw ScriptRuntime.typeErrorById(
+                                    "msg.change.value.with.writable.false", id);
+                    }
+                } else if (isAccessor && current instanceof AccessorSlot) {
+                    AccessorSlot accessor = (AccessorSlot) current;
+                    if (!accessor.isSameSetterFunction(getProperty(desc, "set")))
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.change.setter.with.configurable.false", id);
+
+                    if (!accessor.isSameGetterFunction(getProperty(desc, "get")))
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.change.getter.with.configurable.false", id);
+                } else {
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.change.property.data.to.accessor.with.configurable.false", id);
                 }
             }
         }
@@ -2776,19 +2817,8 @@ public abstract class ScriptableObject
         var newDesc = newSlot.getPropertyDescriptor(cx, this);
         checkPropertyDefinition(newDesc);
 
-        if (existing == null) {
-            checkPropertyChange(name, null, newDesc);
-            return newSlot;
-        } else if (existing instanceof LambdaAccessorSlot) {
-            var slot = (LambdaAccessorSlot) existing;
-            var existingDesc = slot.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
-        } else {
-            var existingDesc = existing.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
-        }
+        checkPropertyChangeForSlot(name, existing, newDesc);
+        return newSlot;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

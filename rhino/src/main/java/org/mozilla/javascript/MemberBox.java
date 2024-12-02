@@ -114,6 +114,16 @@ final class MemberBox implements Serializable {
         return memberObject.toString();
     }
 
+    boolean isSameGetterFunction(Object function) {
+        var f = asGetterFunction == null ? Undefined.instance : asGetterFunction;
+        return ScriptRuntime.shallowEq(function, f);
+    }
+
+    boolean isSameSetterFunction(Object function) {
+        var f = asSetterFunction == null ? Undefined.instance : asSetterFunction;
+        return ScriptRuntime.shallowEq(function, f);
+    }
+
     /** Function returned by calls to __lookupGetter__ */
     Function asGetterFunction(final String name, final Scriptable scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
