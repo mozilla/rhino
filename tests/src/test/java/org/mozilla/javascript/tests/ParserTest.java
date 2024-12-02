@@ -1227,8 +1227,8 @@ public class ParserTest {
         TemplateLiteral first = (TemplateLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         TemplateCharacters templateCharacter = (TemplateCharacters) first.getElement(0);
         assertEquals(2, templateCharacter.getLength());
-		assertEquals("🌟", templateCharacter.getValue());
-		assertEquals(4, first.getLength());
+        assertEquals("🌟", templateCharacter.getValue());
+        assertEquals(4, first.getLength());
     }
     
     @Test
@@ -1245,7 +1245,7 @@ public class ParserTest {
         AstRoot root = parse("/*\uD83C\uDF1F*/");
         Comment comment = root.getComments().first();
         assertEquals(6, comment.getLength());
-		assertEquals("/*🌟*/", comment.getValue());
+        assertEquals("/*🌟*/", comment.getValue());
     }
 
     @Test
