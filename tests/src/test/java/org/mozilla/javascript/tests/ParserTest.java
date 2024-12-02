@@ -1212,34 +1212,37 @@ public class ParserTest {
         AstNode first = ((ExpressionStatement) root.getFirstChild()).getExpression();
         assertEquals("𠮷", first.getString());
     }
-    
+
     @Test
     public void parseMultibyteCharacter_StringLiteral() {
         AstRoot root = parse("'\uD83C\uDF1F'");
-        StringLiteral first = (StringLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        StringLiteral first =
+                (StringLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         assertEquals(4, first.getLength());
         assertEquals("'🌟'", first.getValue(true));
     }
-    
+
     @Test
     public void parseMultibyteCharacter_TemplateLiteral() {
         AstRoot root = parse("`\uD83C\uDF1F`");
-        TemplateLiteral first = (TemplateLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        TemplateLiteral first =
+                (TemplateLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         TemplateCharacters templateCharacter = (TemplateCharacters) first.getElement(0);
         assertEquals(2, templateCharacter.getLength());
         assertEquals("🌟", templateCharacter.getValue());
         assertEquals(4, first.getLength());
     }
-    
+
     @Test
     public void parseMultibyteCharacter_XMLLiteral() {
         AstRoot root = parse("<xml>\uD83C\uDF1F</xml>");
-        XmlLiteral first = (XmlLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
+        XmlLiteral first =
+                (XmlLiteral) ((ExpressionStatement) root.getFirstChild()).getExpression();
         XmlFragment fragment = first.getFragments().get(0);
         assertEquals(13, fragment.getLength());
         assertEquals("<xml>🌟</xml>", fragment.toSource());
     }
-    
+
     @Test
     public void parseMultibyteCharacter_Comment() {
         AstRoot root = parse("/*\uD83C\uDF1F*/");
