@@ -867,8 +867,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     delete(id); // it will be replaced with a slot
                 } else {
                     checkPropertyDefinition(desc);
-                    ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-                    checkPropertyChange(name, current, desc);
+                    var slot = queryOrFakeSlot(cx, key);
+                    checkPropertyChangeForSlot(name, slot, desc);
                     int attr = (info >>> 16);
                     Object value = getProperty(desc, "value");
                     if (value != NOT_FOUND && ((attr & READONLY) == 0 || (attr & PERMANENT) == 0)) {
@@ -889,8 +889,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         prototypeValues.delete(id); // it will be replaced with a slot
                     } else {
                         checkPropertyDefinition(desc);
-                        ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-                        checkPropertyChange(name, current, desc);
+                        var slot = queryOrFakeSlot(cx, key);
+                        checkPropertyChangeForSlot(name, slot, desc);
                         int attr = prototypeValues.getAttributes(id);
                         Object value = getProperty(desc, "value");
                         if (value != NOT_FOUND && (attr & READONLY) == 0) {
@@ -936,48 +936,82 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return desc;
     }
 
-    private ScriptableObject getBuiltInDescriptor(String name) {
-        Object value = null;
-        int attr = EMPTY;
+    private Slot queryOrFakeSlot(Context cx, Object id) {
+        var slot = querySlot(cx, id);
+        if (slot == null) {
+            if (id instanceof String) {
+                return getBuiltInSlot((String) id);
+            }
 
+            if (ScriptRuntime.isSymbol(id)) {
+                if (id instanceof SymbolKey) {
+                    return getBuiltInSlot((SymbolKey) id);
+                }
+
+                return getBuiltInSlot(((NativeSymbol) id).getKey());
+            }
+        }
+        return slot;
+    }
+
+    private ScriptableObject getBuiltInDescriptor(String name) {
         Scriptable scope = getParentScope();
         if (scope == null) {
             scope = this;
         }
+
+        var slot = getBuiltInSlot(name);
+        return slot == null ? null : buildDataDescriptor(scope, slot.value, slot.getAttributes());
+    }
+
+    private Slot getBuiltInSlot(String name) {
+        Object value = null;
+        int attr = EMPTY;
 
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
             value = getInstanceIdValue(id);
             attr = (info >>> 16);
-            return buildDataDescriptor(scope, value, attr);
+            var slot = new Slot(name, 0, attr);
+            slot.value = value;
+            return slot;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
                 value = prototypeValues.get(id);
                 attr = prototypeValues.getAttributes(id);
-                return buildDataDescriptor(scope, value, attr);
+                var slot = new Slot(name, 0, attr);
+                slot.value = value;
+                return slot;
             }
         }
         return null;
     }
 
     private ScriptableObject getBuiltInDescriptor(Symbol key) {
-        Object value = null;
-        int attr = EMPTY;
-
         Scriptable scope = getParentScope();
         if (scope == null) {
             scope = this;
         }
+
+        var slot = getBuiltInSlot(key);
+        return slot == null ? null : buildDataDescriptor(scope, slot.value, slot.getAttributes());
+    }
+
+    private Slot getBuiltInSlot(Symbol key) {
+        Object value = null;
+        int attr = EMPTY;
 
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
             if (id != 0) {
                 value = prototypeValues.get(id);
                 attr = prototypeValues.getAttributes(id);
-                return buildDataDescriptor(scope, value, attr);
+                var slot = new Slot(key, 0, attr);
+                slot.value = value;
+                return slot;
             }
         }
         return null;

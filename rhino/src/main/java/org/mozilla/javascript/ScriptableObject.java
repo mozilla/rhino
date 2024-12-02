@@ -1771,51 +1771,6 @@ public abstract class ScriptableObject
         }
     }
 
-    protected void checkPropertyChange(Object id, ScriptableObject current, ScriptableObject desc) {
-        if (current == null) { // new property
-            if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
-        } else {
-            if (isFalse(current.get("configurable", current))) {
-                if (isTrue(getProperty(desc, "configurable")))
-                    throw ScriptRuntime.typeErrorById("msg.change.configurable.false.to.true", id);
-                if (isTrue(current.get("enumerable", current))
-                        != isTrue(getProperty(desc, "enumerable")))
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.change.enumerable.with.configurable.false", id);
-                boolean isData = isDataDescriptor(desc);
-                boolean isAccessor = isAccessorDescriptor(desc);
-                if (!isData && !isAccessor) {
-                    // no further validation required for generic descriptor
-                } else if (isData && isDataDescriptor(current)) {
-                    if (isFalse(current.get("writable", current))) {
-                        if (isTrue(getProperty(desc, "writable")))
-                            throw ScriptRuntime.typeErrorById(
-                                    "msg.change.writable.false.to.true.with.configurable.false",
-                                    id);
-
-                        if (!sameValue(getProperty(desc, "value"), current.get("value", current)))
-                            throw ScriptRuntime.typeErrorById(
-                                    "msg.change.value.with.writable.false", id);
-                    }
-                } else if (isAccessor && isAccessorDescriptor(current)) {
-                    if (!sameValue(getProperty(desc, "set"), current.get("set", current)))
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.change.setter.with.configurable.false", id);
-
-                    if (!sameValue(getProperty(desc, "get"), current.get("get", current)))
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.change.getter.with.configurable.false", id);
-                } else {
-                    if (isDataDescriptor(current))
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.change.property.data.to.accessor.with.configurable.false", id);
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.change.property.accessor.to.data.with.configurable.false", id);
-                }
-            }
-        }
-    }
-
     protected void checkPropertyChangeForSlot(Object id, Slot current, ScriptableObject desc) {
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
