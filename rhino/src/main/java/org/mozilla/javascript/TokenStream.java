@@ -1332,7 +1332,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                 lookForSlash = true;
                             } else if (c == '/') {
                                 if (lookForSlash) {
-                                	cursor = sourceCursor;
+                                    cursor = sourceCursor;
                                     tokenEnd = cursor;
                                     return Token.COMMENT;
                                 }
