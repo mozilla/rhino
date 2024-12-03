@@ -117,22 +117,22 @@ public class AccessorSlot extends Slot {
     boolean isSameGetterFunction(Object function) {
         if (function == Scriptable.NOT_FOUND) {
             return true;
-        } else if (getter == null) {
-            return ScriptRuntime.shallowEq(Undefined.instance, function);
-        } else {
-            return getter.isSameGetterFunction(function);
         }
+        if (getter == null) {
+            return ScriptRuntime.shallowEq(Undefined.instance, function);
+        }
+        return getter.isSameGetterFunction(function);
     }
 
     @Override
     boolean isSameSetterFunction(Object function) {
         if (function == Scriptable.NOT_FOUND) {
             return true;
-        } else if (setter == null) {
-            return ScriptRuntime.shallowEq(Undefined.instance, function);
-        } else {
-            return setter.isSameSetterFunction(function);
         }
+        if (setter == null) {
+            return ScriptRuntime.shallowEq(Undefined.instance, function);
+        }
+        return setter.isSameSetterFunction(function);
     }
 
     interface Getter {
