@@ -3270,30 +3270,30 @@ public class ScriptRuntime {
     // Integer-optimized methods.
 
     public static Object add(Integer i1, Integer i2) {
-        // Try to add integers for efficiency, but account for overflow
-        long r = (long) i1.intValue() + (long) i2.intValue();
+        // Do 64-bit addition to account for overflow
+        long r = i1.longValue() + i2.longValue();
         if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
-            return Integer.valueOf((int) r);
+            return (int) r;
         }
-        return Double.valueOf((double) r);
+        return (double) r;
     }
 
     public static Number subtract(Integer i1, Integer i2) {
         // Account for overflow
-        long r = (long) i1.intValue() - (long) i2.intValue();
+        long r = i1.longValue() - i2.longValue();
         if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
-            return Integer.valueOf((int) r);
+            return (int) r;
         }
-        return Double.valueOf((double) r);
+        return (double) r;
     }
 
     public static Number multiply(Integer i1, Integer i2) {
-        // Aunt for overflow
-        long r = (long) i1.intValue() * (long) i2.intValue();
+        // Account for overflow
+        long r = i1.longValue() * i2.longValue();
         if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
-            return Integer.valueOf((int) r);
+            return (int) r;
         }
-        return Double.valueOf((double) r);
+        return (double) r;
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")

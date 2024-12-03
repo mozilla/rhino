@@ -6,23 +6,35 @@ import java.lang.invoke.MethodType;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
-import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
+import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
+/**
+ * This linker optimizes accesses to constants, either as object properties or in the current scope.
+ * These constants must be truly constants, which means neither "writable" nor "configurable," which
+ * pretty much means that they were declared with the "const" keyword. In those cases, it will
+ * replace the entire property lookup with code that directly returns the constant value, which is
+ * much faster.
+ */
 @SuppressWarnings("AndroidJdkLibsChecker")
-class ConstAwareLinker implements GuardingDynamicLinker {
+class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
+    @Override
+    public boolean canLinkType(Class<?> type) {
+        return ScriptableObject.class.isAssignableFrom(type)
+                || NativeWith.class.isAssignableFrom(type);
+    }
+
     @Override
     public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc) {
         if (req.isCallSiteUnstable()) {
             return null;
         }
 
-        MethodType mType = req.getCallSiteDescriptor().getMethodType();
         ParsedOperation op = new ParsedOperation(req.getCallSiteDescriptor().getOperation());
         Object target = req.getReceiver();
 
@@ -31,6 +43,7 @@ class ConstAwareLinker implements GuardingDynamicLinker {
                         && op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN))) {
             Object constValue = getConstValue(target, op.getName());
             if (constValue != null) {
+                MethodType mType = req.getCallSiteDescriptor().getMethodType();
                 // The guard returns boolean and compares the first argument to the
                 // target here. This works because the target is always our first argument.
                 MethodHandle guard = Guards.asType(Guards.getIdentityGuard(target), mType);
@@ -61,9 +74,7 @@ class ConstAwareLinker implements GuardingDynamicLinker {
             // Support constants referenced from inside functions
             return getConstValue(((NativeWith) t).getPrototype(), name);
         }
-        if (!(t instanceof ScriptableObject)) {
-            return null;
-        }
+        assert t instanceof ScriptableObject;
         try {
             ScriptableObject target = (ScriptableObject) t;
             // Just look in the root of the object -- don't mess around with
