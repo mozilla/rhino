@@ -922,15 +922,15 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
         if (desc == null) {
             if (id instanceof String) {
-                return getBuiltInDescriptor((String) id);
+                return getBuiltInDataDescriptor((String) id);
             }
 
             if (ScriptRuntime.isSymbol(id)) {
                 if (id instanceof SymbolKey) {
-                    return getBuiltInDescriptor((SymbolKey) id);
+                    return getBuiltInDataDescriptor((SymbolKey) id);
                 }
 
-                return getBuiltInDescriptor(((NativeSymbol) id).getKey());
+                return getBuiltInDataDescriptor(((NativeSymbol) id).getKey());
             }
         }
         return desc;
@@ -954,7 +954,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot;
     }
 
-    private ScriptableObject getBuiltInDescriptor(String name) {
+    private ScriptableObject getBuiltInDataDescriptor(String name) {
         Scriptable scope = getParentScope();
         if (scope == null) {
             scope = this;
@@ -990,7 +990,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return null;
     }
 
-    private ScriptableObject getBuiltInDescriptor(Symbol key) {
+    private ScriptableObject getBuiltInDataDescriptor(Symbol key) {
         Scriptable scope = getParentScope();
         if (scope == null) {
             scope = this;
