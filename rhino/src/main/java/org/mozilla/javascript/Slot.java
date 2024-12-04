@@ -25,6 +25,13 @@ public class Slot implements Serializable {
         this.attributes = (short) attributes;
     }
 
+    Slot copySlot() {
+        var newSlot = new Slot(this);
+        newSlot.next = null;
+        newSlot.orderedNext = null;
+        return newSlot;
+    }
+
     /**
      * Return true if this is a base-class "Slot". Sadly too much code breaks if we try to do this
      * any other way.

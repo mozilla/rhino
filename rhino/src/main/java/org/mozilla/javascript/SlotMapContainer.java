@@ -93,10 +93,7 @@ class SlotMapContainer implements SlotMap {
      */
     protected void checkMapSize() {
         if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
-            SlotMap newMap = new HashSlotMap();
-            for (Slot s : map) {
-                newMap.add(s);
-            }
+            SlotMap newMap = new HashSlotMap(map);
             map = newMap;
         }
     }
