@@ -1617,6 +1617,17 @@ public abstract class ScriptableObject
             }
         }
 
+        // this property lookup cannot happen from inside slotMap.compute lambda
+        // as it risks causing a deadlock if ThreadSafeSlotMapContainer is used
+        // and `this` is in prototype chain of `desc`
+        Object enumerable = getProperty(desc, "enumerable");
+        Object writable = getProperty(desc, "writable");
+        Object configurable = getProperty(desc, "configurable");
+        Object getter = getProperty(desc, "get");
+        Object setter = getProperty(desc, "set");
+        Object value = getProperty(desc, "value");
+        boolean accessorDescriptor = isAccessorDescriptor(desc);
+
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
         slotMap.compute(
@@ -1634,14 +1645,21 @@ public abstract class ScriptableObject
                         slot = new Slot(k, ix, 0);
                         attributes =
                                 applyDescriptorToAttributeBitset(
-                                        DONTENUM | READONLY | PERMANENT, desc);
+                                        DONTENUM | READONLY | PERMANENT,
+                                        enumerable,
+                                        writable,
+                                        configurable);
                     } else {
                         slot = existing;
                         attributes =
-                                applyDescriptorToAttributeBitset(existing.getAttributes(), desc);
+                                applyDescriptorToAttributeBitset(
+                                        existing.getAttributes(),
+                                        enumerable,
+                                        writable,
+                                        configurable);
                     }
 
-                    if (isAccessorDescriptor(desc)) {
+                    if (accessorDescriptor) {
                         AccessorSlot fslot;
                         if (slot instanceof AccessorSlot) {
                             fslot = (AccessorSlot) slot;
@@ -1649,11 +1667,10 @@ public abstract class ScriptableObject
                             fslot = new AccessorSlot(slot);
                             slot = fslot;
                         }
-                        Object getter = getProperty(desc, "get");
                         if (getter != NOT_FOUND) {
                             fslot.getter = new AccessorSlot.FunctionGetter(getter);
                         }
-                        Object setter = getProperty(desc, "set");
+
                         if (setter != NOT_FOUND) {
                             fslot.setter = new AccessorSlot.FunctionSetter(setter);
                         }
@@ -1663,7 +1680,7 @@ public abstract class ScriptableObject
                             // Replace a non-base slot with a regular slot
                             slot = new Slot(slot);
                         }
-                        Object value = getProperty(desc, "value");
+
                         if (value != NOT_FOUND) {
                             slot.value = value;
                         } else if (existing == null) {
@@ -1851,8 +1868,8 @@ public abstract class ScriptableObject
         return ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
-        Object enumerable = getProperty(desc, "enumerable");
+    protected int applyDescriptorToAttributeBitset(
+            int attributes, Object enumerable, Object writable, Object configurable) {
         if (enumerable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(enumerable)
@@ -1860,7 +1877,6 @@ public abstract class ScriptableObject
                             : attributes | DONTENUM;
         }
 
-        Object writable = getProperty(desc, "writable");
         if (writable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(writable)
@@ -1868,7 +1884,6 @@ public abstract class ScriptableObject
                             : attributes | READONLY;
         }
 
-        Object configurable = getProperty(desc, "configurable");
         if (configurable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(configurable)

@@ -877,7 +877,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                             setInstanceIdValue(id, value);
                         }
                     }
-                    attr = applyDescriptorToAttributeBitset(attr, desc);
+                    attr =
+                            applyDescriptorToAttributeBitset(
+                                    attr,
+                                    getProperty(desc, "enumerable"),
+                                    getProperty(desc, "writable"),
+                                    getProperty(desc, "configurable"));
                     setAttributes(name, attr);
                     return;
                 }
@@ -900,7 +905,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                             }
                         }
                         prototypeValues.setAttributes(
-                                id, applyDescriptorToAttributeBitset(attr, desc));
+                                id,
+                                applyDescriptorToAttributeBitset(
+                                        attr,
+                                        getProperty(desc, "enumerable"),
+                                        getProperty(desc, "writable"),
+                                        getProperty(desc, "configurable")));
 
                         // Handle the regular slot that was created if this property was previously
                         // replaced
