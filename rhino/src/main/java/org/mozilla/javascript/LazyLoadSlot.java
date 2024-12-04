@@ -14,6 +14,15 @@ public class LazyLoadSlot extends Slot {
     }
 
     @Override
+    LazyLoadSlot copySlot() {
+        var newSlot = new LazyLoadSlot(this);
+        newSlot.value = value;
+        newSlot.next = null;
+        newSlot.orderedNext = null;
+        return newSlot;
+    }
+
+    @Override
     public Object getValue(Scriptable start) {
         Object val = this.value;
         if (val instanceof LazilyLoadedCtor) {

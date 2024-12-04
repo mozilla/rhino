@@ -17,7 +17,18 @@ import java.util.LinkedHashMap;
  */
 public class HashSlotMap implements SlotMap {
 
-    private final LinkedHashMap<Object, Slot> map = new LinkedHashMap<>();
+    private final LinkedHashMap<Object, Slot> map;
+
+    public HashSlotMap() {
+        map = new LinkedHashMap<>();
+    }
+
+    public HashSlotMap(SlotMap oldMap) {
+        map = new LinkedHashMap<>(oldMap.size());
+        for (Slot n : oldMap) {
+            add(n.copySlot());
+        }
+    }
 
     @Override
     public int size() {

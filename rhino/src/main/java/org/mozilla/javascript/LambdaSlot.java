@@ -22,6 +22,17 @@ public class LambdaSlot extends Slot {
         super(oldSlot);
     }
 
+    @Override
+    LambdaSlot copySlot() {
+        var newSlot = new LambdaSlot(this);
+        newSlot.value = value;
+        newSlot.getter = getter;
+        newSlot.setter = setter;
+        newSlot.next = null;
+        newSlot.orderedNext = null;
+        return newSlot;
+    }
+
     transient Supplier<Object> getter;
     transient Consumer<Object> setter;
 

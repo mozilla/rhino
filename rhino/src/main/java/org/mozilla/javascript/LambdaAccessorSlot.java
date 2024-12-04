@@ -29,6 +29,19 @@ public class LambdaAccessorSlot extends Slot {
     }
 
     @Override
+    LambdaAccessorSlot copySlot() {
+        var newSlot = new LambdaAccessorSlot(this);
+        newSlot.value = value;
+        newSlot.getter = getter;
+        newSlot.setter = setter;
+        newSlot.getterFunction = getterFunction;
+        newSlot.setterFunction = setterFunction;
+        newSlot.next = null;
+        newSlot.orderedNext = null;
+        return newSlot;
+    }
+
+    @Override
     boolean isValueSlot() {
         return false;
     }

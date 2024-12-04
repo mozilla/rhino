@@ -16,6 +16,17 @@ public class AccessorSlot extends Slot {
         super(oldSlot);
     }
 
+    @Override
+    AccessorSlot copySlot() {
+        var newSlot = new AccessorSlot(this);
+        newSlot.value = value;
+        newSlot.getter = getter;
+        newSlot.setter = setter;
+        newSlot.next = null;
+        newSlot.orderedNext = null;
+        return newSlot;
+    }
+
     // The Getter and Setter may each be of a different type (JavaScript function, Java
     // function, or neither). So, use an abstraction to distinguish them.
     transient Getter getter;
