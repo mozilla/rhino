@@ -110,18 +110,12 @@ public class EmbeddedSlotMap implements SlotMap {
             }
         }
 
-        // A new slot has to be inserted.
-        if (slots != null && slots.length > SlotMapContainer.LARGE_HASH_SIZE) {
-            var map = copyToNewMap(owner);
-            return map.modify(owner, key, index, attributes);
-        } else {
-            Slot newSlot = new Slot(key, index, attributes);
-            createNewSlot(newSlot);
-            return newSlot;
-        }
+        Slot newSlot = new Slot(key, index, attributes);
+        createNewSlot(owner, newSlot);
+        return newSlot;
     }
 
-    private void createNewSlot(Slot newSlot) {
+    private void createNewSlot(SlotMapOwner owner, Slot newSlot) {
         if (count == 0) {
             // Always throw away old slots if any on empty insert.
             slots = new Slot[INITIAL_SLOT_SIZE];
@@ -130,6 +124,11 @@ public class EmbeddedSlotMap implements SlotMap {
         // Check if the table is not too full before inserting.
         if (4 * (count + 1) > 3 * slots.length) {
             // table size must be a power of 2 -- always grow by x2!
+            if (count > SlotMapContainer.LARGE_HASH_SIZE) {
+                var newMap = new HashSlotMap(this, newSlot);
+                owner.setMap(newMap);
+                return;
+            }
             Slot[] newSlots = new Slot[slots.length * 2];
             copyTable(slots, newSlots);
             slots = newSlots;
@@ -162,14 +161,9 @@ public class EmbeddedSlotMap implements SlotMap {
 
     private <S extends Slot> S computeNew(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-        // If we get here, we know we are potentially adding a new slot
-        if (slots != null && slots.length > SlotMapContainer.LARGE_HASH_SIZE) {
-            var map = copyToNewMap(owner);
-            return map.compute(owner, key, index, c);
-        }
         S newSlot = c.compute(key, index, null);
         if (newSlot != null) {
-            createNewSlot(newSlot);
+            createNewSlot(owner, newSlot);
         }
         return newSlot;
     }
@@ -209,25 +203,12 @@ public class EmbeddedSlotMap implements SlotMap {
         return newSlot;
     }
 
-    private HashSlotMap copyToNewMap(SlotMapOwner owner) {
-        var newMap = new HashSlotMap();
-        for (Slot n : this) {
-            newMap.add(owner, n);
-        }
-        owner.setMap(newMap);
-        return newMap;
-    }
-
     @Override
     public void add(SlotMapOwner owner, Slot newSlot) {
         if (slots == null) {
             slots = new Slot[INITIAL_SLOT_SIZE];
-        } else if (slots.length > SlotMapContainer.LARGE_HASH_SIZE) {
-            var map = copyToNewMap(owner);
-            map.add(owner, newSlot);
-            return;
         }
-        insertNewSlot(newSlot);
+        createNewSlot(owner, newSlot);
     }
 
     private void insertNewSlot(Slot newSlot) {
