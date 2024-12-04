@@ -33,6 +33,7 @@ import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.GeneratorExpression;
 import org.mozilla.javascript.ast.GeneratorExpressionLoop;
+import org.mozilla.javascript.ast.GeneratorMethodDefinition;
 import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Jump;
@@ -266,6 +267,9 @@ public final class IRFactory {
                 }
                 if (node instanceof XmlLiteral) {
                     return transformXmlLiteral((XmlLiteral) node);
+                }
+                if (node instanceof GeneratorMethodDefinition) {
+                    return transformGeneratorMethodDefinition((GeneratorMethodDefinition) node);
                 }
                 throw new IllegalArgumentException("Can't transform: " + node);
         }
@@ -1320,6 +1324,11 @@ public final class IRFactory {
     private Node transformDefaultXmlNamespace(UnaryExpression node) {
         Node child = transform(node.getOperand());
         return createUnary(Token.DEFAULTNAMESPACE, child);
+    }
+
+    private Node transformGeneratorMethodDefinition(GeneratorMethodDefinition node) {
+        // Unwrap the "temporary" AST node
+        return transform(node.getMethodName());
     }
 
     /** If caseExpression argument is null it indicates a default label. */
