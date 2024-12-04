@@ -30,6 +30,14 @@ public class HashSlotMap implements SlotMap {
         }
     }
 
+    public HashSlotMap(SlotMap oldMap, Slot newSlot) {
+        map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
+        for (Slot n : oldMap) {
+            add(null, n.copySlot());
+        }
+        add(null, newSlot);
+    }
+
     @Override
     public int size() {
         return map.size();
