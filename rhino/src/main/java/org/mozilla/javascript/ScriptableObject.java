@@ -1744,30 +1744,47 @@ public abstract class ScriptableObject
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
+        LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
+        ScriptableObject newDesc = newSlot.buildPropertyDescriptor(cx);
+        checkPropertyDefinition(newDesc);
         slotMap.compute(
                 name,
                 0,
-                (id, index, existing) ->
-                        ensureLambdaAccessorSlot(
-                                cx, id, index, existing, getter, setter, attributes));
+                (id, index, existing) -> {
+                    if (existing != null) {
+                        // it's dangerous to use `this` as scope inside slotMap.compute.
+                        // It can cause deadlock when ThreadSafeSlotMapContainer is used
+
+                        return replaceExistingLambdaSlot(cx, name, existing, newSlot);
+                    }
+                    checkPropertyChangeForSlot(name, null, newDesc);
+                    return newSlot;
+                });
+    }
+
+    private LambdaAccessorSlot replaceExistingLambdaSlot(
+            Context cx, String name, Slot existing, LambdaAccessorSlot newSlot) {
+        LambdaAccessorSlot replacedSlot;
+        if (existing instanceof LambdaAccessorSlot) {
+            replacedSlot = (LambdaAccessorSlot) existing;
+        } else {
+            replacedSlot = new LambdaAccessorSlot(existing);
+        }
+
+        replacedSlot.replaceWith(newSlot);
+        var replacedDesc = replacedSlot.buildPropertyDescriptor(cx);
+
+        checkPropertyChangeForSlot(name, existing, replacedDesc);
+        return replacedSlot;
     }
 
     private LambdaAccessorSlot createLambdaAccessorSlot(
             Object name,
             int index,
-            Slot existing,
             java.util.function.Function<Scriptable, Object> getter,
             BiConsumer<Scriptable, Object> setter,
             int attributes) {
-        LambdaAccessorSlot slot;
-        if (existing == null) {
-            slot = new LambdaAccessorSlot(name, index);
-        } else if (existing instanceof LambdaAccessorSlot) {
-            slot = (LambdaAccessorSlot) existing;
-        } else {
-            slot = new LambdaAccessorSlot(existing);
-        }
-
+        LambdaAccessorSlot slot = new LambdaAccessorSlot(name, index);
         slot.setGetter(this, getter);
         slot.setSetter(this, setter);
         slot.setAttributes(attributes);
@@ -2773,22 +2790,6 @@ public abstract class ScriptableObject
         } else {
             return new LambdaSlot(existing);
         }
-    }
-
-    private LambdaAccessorSlot ensureLambdaAccessorSlot(
-            Context cx,
-            Object name,
-            int index,
-            Slot existing,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
-            int attributes) {
-        var newSlot = createLambdaAccessorSlot(name, index, existing, getter, setter, attributes);
-        var newDesc = newSlot.getPropertyDescriptor(cx, this);
-        checkPropertyDefinition(newDesc);
-
-        checkPropertyChangeForSlot(name, existing, newDesc);
-        return newSlot;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
