@@ -12,6 +12,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * @author Marc Guillemot
@@ -121,6 +122,7 @@ public class StackTraceTest {
             final String _source, final String _expectedStackTrace) {
         Utils.runWithOptimizationLevel(
                 cx -> {
+                    cx.setWrapFactory(new JavaWrapFactory());
                     final Scriptable scope = cx.initStandardObjects();
                     try {
                         cx.evaluateString(scope, _source, "test.js", 0, null);

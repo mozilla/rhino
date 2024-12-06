@@ -37,7 +37,6 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Function;
-import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.RhinoException;
@@ -52,6 +51,8 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
 import org.mozilla.javascript.commonjs.module.provider.SoftCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.lc.ImporterTopLevel;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
 import org.mozilla.javascript.tools.ToolErrorReporter;
@@ -106,6 +107,7 @@ public class Global extends ImporterTopLevel {
     public void init(Context cx) {
         // Define some global functions particular to the shell. Note
         // that these functions are not part of ECMA.
+        cx.setWrapFactory(new JavaWrapFactory());
         initStandardObjects(cx, sealedStdLib);
         NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
         String[] names = {

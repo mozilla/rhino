@@ -25,6 +25,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrappedException;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
 
@@ -70,6 +71,7 @@ public class ContinuationsApiTest {
     @Before
     public void setUp() {
         try (Context cx = Context.enter()) {
+            cx.setWrapFactory(new JavaWrapFactory());
             globalScope = cx.initStandardObjects();
             cx.setOptimizationLevel(-1); // must use interpreter mode
             globalScope.put("myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
@@ -254,6 +256,7 @@ public class ContinuationsApiTest {
             Scriptable globalScope;
 
             try (Context cx = Context.enter()) {
+                cx.setWrapFactory(new JavaWrapFactory());
                 globalScope = cx.initStandardObjects();
                 cx.setOptimizationLevel(-1); // must use interpreter mode
                 globalScope.put(
@@ -314,6 +317,7 @@ public class ContinuationsApiTest {
         Scriptable globalScope;
 
         try (Context cx = Context.enter()) {
+            cx.setWrapFactory(new JavaWrapFactory());
             globalScope = cx.initStandardObjects();
             cx.setOptimizationLevel(-1); // must use interpreter mode
             globalScope.put("myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));

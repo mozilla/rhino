@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
@@ -24,6 +24,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.ClassShutter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.MemberBox;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * @author Mike Shaver
@@ -139,7 +147,7 @@ class JavaMembers {
             // main setter. Otherwise, let the NativeJavaMethod decide which
             // setter to use:
             if (bp.setters == null || value == null) {
-                Class<?> setType = bp.setter.argTypes[0];
+                Class<?> setType = bp.setter.getArgTypes()[0];
                 Object[] args = {Context.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
@@ -255,7 +263,7 @@ class JavaMembers {
 
         if (methodsOrCtors != null) {
             for (MemberBox methodsOrCtor : methodsOrCtors) {
-                Class<?>[] type = methodsOrCtor.argTypes;
+                Class<?>[] type = methodsOrCtor.getArgTypes();
                 String sig = liveConnectSignature(type);
                 if (sigStart + sig.length() == name.length()
                         && name.regionMatches(sigStart, sig, 0, sig.length())) {
@@ -708,7 +716,7 @@ class JavaMembers {
         for (MemberBox method : methods) {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
-            if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
+            if (method.getArgTypes().length == 0 && (!isStatic || method.isStatic())) {
                 Class<?> type = method.method().getReturnType();
                 if (type != Void.TYPE) {
                     return method;
@@ -732,7 +740,7 @@ class JavaMembers {
         for (int pass = 1; pass <= 2; ++pass) {
             for (MemberBox method : methods) {
                 if (!isStatic || method.isStatic()) {
-                    Class<?>[] params = method.argTypes;
+                    Class<?>[] params = method.getArgTypes();
                     if (params.length == 1) {
                         if (pass == 1) {
                             if (params[0] == type) {
@@ -756,7 +764,7 @@ class JavaMembers {
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
                 if (method.method().getReturnType() == Void.TYPE) {
-                    if (method.argTypes.length == 1) {
+                    if (method.getArgTypes().length == 1) {
                         return method;
                     }
                 }

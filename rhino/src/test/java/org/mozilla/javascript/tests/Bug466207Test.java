@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=466207
@@ -44,6 +45,7 @@ public class Bug466207Test {
         // get a js object as map
 
         try (Context context = Context.enter()) {
+            context.setWrapFactory(new JavaWrapFactory());
             ScriptableObject scope = context.initStandardObjects();
             list =
                     (List<Object>)

@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.ImporterTopLevel;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * @author hatanaka
@@ -62,7 +63,7 @@ public class WrapFactoryTest {
             String mapResult,
             String getResult) {
         try (Context cx = Context.enter()) {
-            cx.getWrapFactory().setJavaPrimitiveWrap(javaPrimitiveWrap);
+            ((JavaWrapFactory) cx.getWrapFactory()).setJavaPrimitiveWrap(javaPrimitiveWrap);
             Scriptable scope = cx.newObject(new ImporterTopLevel(cx));
 
             // register object

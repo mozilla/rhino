@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=409702
@@ -46,6 +47,7 @@ public class Bug409702Test {
 
         Utils.runWithAllOptimizationLevels(
                 cx -> {
+                    cx.setWrapFactory(new JavaWrapFactory());
                     final Scriptable scope = cx.initStandardObjects();
 
                     Object result = cx.evaluateString(scope, source, "source", 1, null);

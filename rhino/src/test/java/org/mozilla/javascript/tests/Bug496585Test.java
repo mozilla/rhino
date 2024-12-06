@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 public class Bug496585Test {
 
@@ -24,7 +25,8 @@ public class Bug496585Test {
         new ContextFactory()
                 .call(
                         cx -> {
-                            cx.getWrapFactory().setJavaPrimitiveWrap(false);
+                            cx.setWrapFactory(new JavaWrapFactory());
+                            ((JavaWrapFactory) cx.getWrapFactory()).setJavaPrimitiveWrap(false);
                             Assert.assertEquals(
                                     "string[]",
                                     cx.evaluateString(
