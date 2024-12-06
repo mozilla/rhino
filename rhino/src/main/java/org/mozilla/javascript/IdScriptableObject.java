@@ -856,7 +856,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected void defineOwnProperty(
+    protected boolean defineOwnProperty(
             Context cx, Object key, ScriptableObject desc, boolean checkValid) {
         if (key instanceof CharSequence) {
             String name = key.toString();
@@ -879,7 +879,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     }
                     attr = applyDescriptorToAttributeBitset(attr, desc);
                     setAttributes(name, attr);
-                    return;
+                    return true;
                 }
             }
             if (prototypeValues != null) {
@@ -909,12 +909,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                             super.delete(name);
                         }
 
-                        return;
+                        return true;
                     }
                 }
             }
         }
-        super.defineOwnProperty(cx, key, desc, checkValid);
+        return super.defineOwnProperty(cx, key, desc, checkValid);
     }
 
     @Override
