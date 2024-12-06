@@ -265,7 +265,7 @@ public class ComputedPropertiesTest {
     public void unsupportedInDestructuringInVariableDeclaration() {
         String script = "var { [a]: b } = {};";
         assertComputedPropertiesAreUnsupportedInDestructuring(
-                script, "Unsupported computed property in destructuring.");
+                script, "Unsupported computed property in destructuring. (test#1)");
     }
 
     private void assertComputedPropertiesAreUnsupportedInDestructuring(

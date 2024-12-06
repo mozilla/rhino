@@ -221,6 +221,15 @@ public class CompilerEnvirons {
         return allowSharpComments;
     }
 
+    /** Allows usage of "super" everywhere, simulating that we are inside a method. */
+    public void setAllowSuper(boolean allowSuper) {
+        this.allowSuper = allowSuper;
+    }
+
+    public boolean isAllowSuper() {
+        return allowSuper;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -257,5 +266,6 @@ public class CompilerEnvirons {
     private boolean warnTrailingComma;
     private boolean ideMode;
     private boolean allowSharpComments;
+    private boolean allowSuper;
     Set<String> activationNames;
 }

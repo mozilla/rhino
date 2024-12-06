@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
@@ -1367,6 +1368,16 @@ public class Context implements Closeable {
      */
     public final Script compileReader(
             Reader in, String sourceName, int lineno, Object securityDomain) throws IOException {
+        return compileReader(in, sourceName, lineno, securityDomain, null);
+    }
+
+    public Script compileReader(
+            Reader in,
+            String sourceName,
+            int lineno,
+            Object securityDomain,
+            Consumer<CompilerEnvirons> compilerEnvironsProcessor)
+            throws IOException {
         if (lineno < 0) {
             // For compatibility IllegalArgumentException can not be thrown here
             lineno = 0;
@@ -1381,7 +1392,8 @@ public class Context implements Closeable {
                         securityDomain,
                         false,
                         null,
-                        null);
+                        null,
+                        compilerEnvironsProcessor);
     }
 
     /**
@@ -1405,7 +1417,7 @@ public class Context implements Closeable {
             // For compatibility IllegalArgumentException can not be thrown here
             lineno = 0;
         }
-        return compileString(source, null, null, sourceName, lineno, securityDomain);
+        return compileString(source, null, null, sourceName, lineno, securityDomain, null);
     }
 
     final Script compileString(
@@ -1414,7 +1426,8 @@ public class Context implements Closeable {
             ErrorReporter compilationErrorReporter,
             String sourceName,
             int lineno,
-            Object securityDomain) {
+            Object securityDomain,
+            Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
         return (Script)
                 compileImpl(
                         null,
@@ -1424,7 +1437,8 @@ public class Context implements Closeable {
                         securityDomain,
                         false,
                         compiler,
-                        compilationErrorReporter);
+                        compilationErrorReporter,
+                        compilerEnvironsProcessor);
     }
 
     /**
@@ -1465,7 +1479,8 @@ public class Context implements Closeable {
                         securityDomain,
                         true,
                         compiler,
-                        compilationErrorReporter);
+                        compilationErrorReporter,
+                        null);
     }
 
     /**
@@ -2424,7 +2439,8 @@ public class Context implements Closeable {
             Object securityDomain,
             boolean returnFunction,
             Evaluator compiler,
-            ErrorReporter compilationErrorReporter) {
+            ErrorReporter compilationErrorReporter,
+            Consumer<CompilerEnvirons> compilerEnvironProcessor) {
         if (sourceName == null) {
             sourceName = "unnamed script";
         }
@@ -2440,6 +2456,9 @@ public class Context implements Closeable {
         compilerEnv.initFromContext(this);
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
+        }
+        if (compilerEnvironProcessor != null) {
+            compilerEnvironProcessor.accept(compilerEnv);
         }
 
         ScriptNode tree =
@@ -2524,7 +2543,8 @@ public class Context implements Closeable {
             }
         }
 
-        IRFactory irf = new IRFactory(compilerEnv, sourceString, compilationErrorReporter);
+        IRFactory irf =
+                new IRFactory(compilerEnv, sourceName, sourceString, compilationErrorReporter);
         ScriptNode tree = irf.transformTree(ast);
 
         if (compilerEnv.isGeneratingSource()) {

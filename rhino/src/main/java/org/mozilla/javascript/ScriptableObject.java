@@ -2126,7 +2126,19 @@ public abstract class ScriptableObject
      * @since 1.5R2
      */
     public static Object getProperty(Scriptable obj, String name) {
-        Scriptable start = obj;
+        return getPropWalkingPrototypeChain(obj, name, obj);
+    }
+
+    /**
+     * Gets a named property from super, walking the super's prototype chain, but passing the
+     * correct "this" to getter slots.
+     */
+    public static Object getSuperProperty(Scriptable superObj, Scriptable thisObj, String name) {
+        return getPropWalkingPrototypeChain(superObj, name, thisObj);
+    }
+
+    private static Object getPropWalkingPrototypeChain(
+            Scriptable obj, String name, Scriptable start) {
         Object result;
         do {
             result = obj.get(name, start);
@@ -2138,7 +2150,16 @@ public abstract class ScriptableObject
 
     /** This is a version of getProperty that works with Symbols. */
     public static Object getProperty(Scriptable obj, Symbol key) {
-        Scriptable start = obj;
+        return getPropWalkingPrototypeChain(obj, obj, key);
+    }
+
+    /** This is a version of getSuperProperty that works with Symbols. */
+    public static Object getSuperProperty(Scriptable superObj, Scriptable thisObj, Symbol key) {
+        return getPropWalkingPrototypeChain(superObj, thisObj, key);
+    }
+
+    private static Object getPropWalkingPrototypeChain(
+            Scriptable obj, Scriptable start, Symbol key) {
         Object result;
         do {
             result = ensureSymbolScriptable(obj).get(key, start);
@@ -2190,7 +2211,19 @@ public abstract class ScriptableObject
      * @since 1.5R2
      */
     public static Object getProperty(Scriptable obj, int index) {
-        Scriptable start = obj;
+        return getPropWalkingPrototypeChain(obj, index, obj);
+    }
+
+    /**
+     * Gets an indexed property from super, walking the super's prototype chain, but passing the
+     * correct "this" to getter slots.
+     */
+    public static Object getSuperProperty(Scriptable superObj, Scriptable thisObj, int index) {
+        return getPropWalkingPrototypeChain(superObj, index, thisObj);
+    }
+
+    private static Object getPropWalkingPrototypeChain(
+            Scriptable obj, int index, Scriptable start) {
         Object result;
         do {
             result = obj.get(index, start);
@@ -2303,11 +2336,23 @@ public abstract class ScriptableObject
         base.put(name, obj, value);
     }
 
+    /** Variant of putProperty to handle super.name = value */
+    public static void putSuperProperty(
+            Scriptable superObj, Scriptable thisObj, String name, Object value) {
+        superObj.put(name, thisObj, value);
+    }
+
     /** This is a version of putProperty for Symbol keys. */
     public static void putProperty(Scriptable obj, Symbol key, Object value) {
         Scriptable base = getBase(obj, key);
         if (base == null) base = obj;
         ensureSymbolScriptable(base).put(key, obj, value);
+    }
+
+    /** Variant of putProperty to handle super[key] = value where key is a symbol */
+    public static void putSuperProperty(
+            Scriptable superObj, Scriptable thisObj, Symbol key, Object value) {
+        ensureSymbolScriptable(superObj).put(key, thisObj, value);
     }
 
     /**
@@ -2350,6 +2395,12 @@ public abstract class ScriptableObject
         Scriptable base = getBase(obj, index);
         if (base == null) base = obj;
         base.put(index, obj, value);
+    }
+
+    /** Variant of putProperty to handle super[index] = value where index is integer */
+    public static void putSuperProperty(
+            Scriptable superObj, Scriptable thisObj, int index, Object value) {
+        superObj.put(index, thisObj, value);
     }
 
     /**

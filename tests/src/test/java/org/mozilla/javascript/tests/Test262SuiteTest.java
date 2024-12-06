@@ -111,7 +111,6 @@ public class Test262SuiteTest {
                             "regexp-named-groups",
                             "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
-                            "super",
                             "tail-call-optimization",
                             "u180e"));
 

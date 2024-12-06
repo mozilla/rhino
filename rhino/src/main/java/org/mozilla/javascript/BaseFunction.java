@@ -656,6 +656,14 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return id;
     }
 
+    public void setHomeObject(Scriptable homeObject) {
+        this.homeObject = homeObject;
+    }
+
+    public Scriptable getHomeObject() {
+        return homeObject;
+    }
+
     private static final int Id_constructor = 1,
             Id_toString = 2,
             Id_toSource = 3,
@@ -668,6 +676,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
     private Object argumentsObj = NOT_FOUND;
     private String nameValue = null;
     private boolean isGeneratorFunction = false;
+    private Scriptable homeObject = null;
 
     // For function object instances, attributes are
     //  {configurable:false, enumerable:false};
