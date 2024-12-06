@@ -110,6 +110,21 @@ public class ComputedPropertiesTest {
     }
 
     @Test
+    public void computedPropertyNameAsSymbolForGetterSetterWork() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "var o = { get [Symbol.toStringTag]() { return 'foo'; }}; o.toString()";
+
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertEquals("[object foo]", value);
+                    return null;
+                });
+    }
+
+    @Test
     public void yieldWorksForPropertyValues() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
