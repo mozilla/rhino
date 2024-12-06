@@ -193,19 +193,12 @@ public class ScriptRuntime {
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
 
-        boolean withXml =
-                cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
-
         // define lazy-loaded properties using their class name
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-        if (withXml) {
-            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
-            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            plugin.initSafeStandardObjects(cx, scope, sealed);
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
@@ -309,6 +302,9 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            plugin.initStandardObjects(cx, s, sealed);
+        }
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
