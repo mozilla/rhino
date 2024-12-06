@@ -140,6 +140,7 @@ public class Parser {
     // The following are per function variables and should be saved/restored
     // during function parsing.  See PerFunctionVariables class below.
     ScriptNode currentScriptOrFn;
+    private boolean insideMethod;
     Scope currentScope;
     private int endFlags;
     private boolean inForInit; // bound temporarily during forStatement()
@@ -919,6 +920,10 @@ public class Parser {
     }
 
     private FunctionNode function(int type) throws IOException {
+        return function(type, false);
+    }
+
+    private FunctionNode function(int type, boolean isMethodDefiniton) throws IOException {
         boolean isGenerator = false;
         int syntheticType = type;
         int baseLineno = lineNumber(); // line number where source starts
@@ -976,6 +981,7 @@ public class Parser {
         }
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
+        fnNode.setMethodDefinition(isMethodDefiniton);
         fnNode.setFunctionType(type);
         if (isGenerator) {
             fnNode.setIsES6Generator();
@@ -985,6 +991,8 @@ public class Parser {
         fnNode.setJsDocNode(getAndResetJsDoc());
 
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
+        boolean wasInsideMethod = insideMethod;
+        insideMethod = isMethodDefiniton;
         try {
             parseFunctionParams(fnNode);
             AstNode body = parseFunctionBody(type, fnNode);
@@ -1002,6 +1010,7 @@ public class Parser {
             }
         } finally {
             savedVars.restore();
+            insideMethod = wasInsideMethod;
         }
 
         if (memberExprNode != null) {
@@ -1050,6 +1059,8 @@ public class Parser {
         Set<String> paramNames = new HashSet<>();
 
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
+        // Intentionally not overwriting "insideMethod" - we want to propagate this from the parent
+        // function or scope
         try {
             if (params instanceof ParenthesizedExpression) {
                 fnNode.setParens(0, params.getLength());
@@ -3050,6 +3061,11 @@ public class Parser {
      */
     private AstNode propertyAccess(int tt, AstNode pn, boolean isOptionalChain) throws IOException {
         if (pn == null) codeBug();
+        if (pn.getType() == Token.SUPER && isOptionalChain) {
+            reportError("msg.optional.super");
+            return makeErrorNode();
+        }
+
         int memberTypeFlags = 0,
                 lineno = lineNumber(),
                 dotPos = ts.tokenBeg,
@@ -3364,12 +3380,27 @@ public class Parser {
             case Token.THIS:
             case Token.FALSE:
             case Token.TRUE:
-                consumeToken();
-                pos = ts.tokenBeg;
-                end = ts.tokenEnd;
-                KeywordLiteral keywordLiteral = new KeywordLiteral(pos, end - pos, tt);
-                keywordLiteral.setLineColumnNumber(lineNumber(), columnNumber());
-                return keywordLiteral;
+                {
+                    consumeToken();
+                    pos = ts.tokenBeg;
+                    end = ts.tokenEnd;
+                    KeywordLiteral keywordLiteral = new KeywordLiteral(pos, end - pos, tt);
+                    keywordLiteral.setLineColumnNumber(lineNumber(), columnNumber());
+                    return keywordLiteral;
+                }
+
+            case Token.SUPER:
+                if (insideFunction() && insideMethod) {
+                    consumeToken();
+                    pos = ts.tokenBeg;
+                    end = ts.tokenEnd;
+                    KeywordLiteral keywordLiteral = new KeywordLiteral(pos, end - pos, tt);
+                    keywordLiteral.setLineColumnNumber(lineNumber(), columnNumber());
+                    return keywordLiteral;
+                } else {
+                    reportError("msg.super.shorthand.function");
+                }
+                break;
 
             case Token.TEMPLATE_LITERAL:
                 consumeToken();
@@ -3795,6 +3826,7 @@ public class Parser {
                         propertyName = null;
                     } else {
                         propertyName = ts.getString();
+                        // short-hand method definition
                         ObjectProperty objectProp = methodDefinition(ppos, pname, entryKind);
                         pname.setJsDocNode(jsdocNode);
                         elems.add(objectProp);
@@ -3944,7 +3976,7 @@ public class Parser {
 
     private ObjectProperty methodDefinition(int pos, AstNode propName, int entryKind)
             throws IOException {
-        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION);
+        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         // We've already parsed the function name, so fn should be anonymous.
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
@@ -4757,6 +4789,10 @@ public class Parser {
             if (!compilerEnv.isIdeMode())
                 throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
         }
+    }
+
+    public void setSourceURI(String sourceURI) {
+        this.sourceURI = sourceURI;
     }
 
     public interface CurrentPositionReporter {

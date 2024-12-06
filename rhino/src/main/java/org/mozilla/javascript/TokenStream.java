@@ -379,7 +379,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_instanceof = Token.INSTANCEOF,
                 Id_new = Token.NEW,
                 Id_return = Token.RETURN,
-                Id_super = Token.RESERVED,
+                Id_super = Token.SUPER,
                 Id_switch = Token.SWITCH,
                 Id_this = Token.THIS,
                 Id_throw = Token.THROW,

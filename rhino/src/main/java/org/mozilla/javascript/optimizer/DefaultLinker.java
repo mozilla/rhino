@@ -89,6 +89,10 @@ class DefaultLinker implements GuardingDynamicLinker {
                             "getObjectPropNoWarn",
                             1,
                             op.getName());
+        } else if (op.isOperation(RhinoOperation.GETSUPER)) {
+            mh =
+                    bindStringParameter(
+                            lookup, mType, ScriptRuntime.class, "getSuperProp", 1, op.getName());
         } else if (op.isOperation(RhinoOperation.GETWITHTHIS)) {
             mh =
                     bindStringParameter(
@@ -111,14 +115,26 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh =
                     bindStringParameter(
                             lookup, mType, ScriptRuntime.class, "setObjectProp", 1, op.getName());
+        } else if (op.isOperation(RhinoOperation.SETSUPER)) {
+            mh =
+                    bindStringParameter(
+                            lookup, mType, ScriptRuntime.class, "setSuperProp", 1, op.getName());
         } else if (op.isOperation(RhinoOperation.GETELEMENT)) {
             mh = lookup.findStatic(ScriptRuntime.class, "getObjectElem", mType);
+        } else if (op.isOperation(RhinoOperation.GETELEMENTSUPER)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "getSuperElem", mType);
         } else if (op.isOperation(RhinoOperation.GETINDEX)) {
             mh = lookup.findStatic(ScriptRuntime.class, "getObjectIndex", mType);
+        } else if (op.isOperation(RhinoOperation.GETINDEXSUPER)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "getSuperIndex", mType);
         } else if (op.isOperation(RhinoOperation.SETELEMENT)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setObjectElem", mType);
+        } else if (op.isOperation(RhinoOperation.SETELEMENTSUPER)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "setSuperElem", mType);
         } else if (op.isOperation(RhinoOperation.SETINDEX)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setObjectIndex", mType);
+        } else if (op.isOperation(RhinoOperation.SETINDEXSUPER)) {
+            mh = lookup.findStatic(ScriptRuntime.class, "setSuperIndex", mType);
         }
 
         if (mh != null) {

@@ -95,13 +95,24 @@ public final class IRFactory {
     private AstNodePosition astNodePos;
 
     public IRFactory(CompilerEnvirons env, String sourceString) {
-        this(env, sourceString, env.getErrorReporter());
+        this(env, null, sourceString, env.getErrorReporter());
     }
 
+    /** Use {@link #IRFactory(CompilerEnvirons, String, String, ErrorReporter)} */
+    @Deprecated
     public IRFactory(CompilerEnvirons env, String sourceString, ErrorReporter errorReporter) {
+        this(env, null, sourceString, errorReporter);
+    }
+
+    public IRFactory(
+            CompilerEnvirons env,
+            String sourceName,
+            String sourceString,
+            ErrorReporter errorReporter) {
         parser = new Parser(env, errorReporter);
         astNodePos = new AstNodePosition(sourceString);
         parser.currentPos = astNodePos;
+        parser.setSourceURI(sourceName);
     }
 
     /** Transforms the tree into a lower-level IR suitable for codegen. */
@@ -180,7 +191,9 @@ public final class IRFactory {
             case Token.NULL:
             case Token.DEBUGGER:
                 return transformLiteral(node);
-
+            case Token.SUPER:
+                parser.setRequiresActivation();
+                return transformLiteral(node);
             case Token.NAME:
                 return transformName((Name) node);
             case Token.NUMBER:
@@ -533,6 +546,9 @@ public final class IRFactory {
         if (node.type == Token.QUESTION_DOT) {
             getElem.putIntProp(Node.OPTIONAL_CHAINING, 1);
         }
+        if (target.getType() == Token.SUPER) {
+            getElem.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+        }
         return getElem;
     }
 
@@ -660,17 +676,26 @@ public final class IRFactory {
     }
 
     private Node transformFunctionCall(FunctionCall node) {
-        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
-        call.setLineColumnNumber(node.getLineno(), node.getColumn());
-        List<AstNode> args = node.getArguments();
-        for (int i = 0; i < args.size(); i++) {
-            AstNode arg = args.get(i);
-            call.addChildToBack(transform(arg));
+        astNodePos.push(node);
+        try {
+            Node transformedTarget = transform(node.getTarget());
+            Node call = createCallOrNew(Token.CALL, transformedTarget);
+            call.setLineColumnNumber(node.getLineno(), node.getColumn());
+            List<AstNode> args = node.getArguments();
+            for (int i = 0; i < args.size(); i++) {
+                AstNode arg = args.get(i);
+                call.addChildToBack(transform(arg));
+            }
+            if (node.isOptionalCall()) {
+                call.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            if (transformedTarget.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                call.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+            }
+            return call;
+        } finally {
+            astNodePos.pop();
         }
-        if (node.isOptionalCall()) {
-            call.putIntProp(Node.OPTIONAL_CHAINING, 1);
-        }
-        return call;
     }
 
     private Node transformGenExpr(GeneratorExpression node) {
@@ -863,6 +888,11 @@ public final class IRFactory {
     }
 
     private Node transformLiteral(AstNode node) {
+        // Trying to call super as a function. See 15.4.2 Static Semantics: HasDirectSuper
+        if (node.getParent() instanceof FunctionCall
+                && node.getType() == Token.SUPER
+                && parser.currentScriptOrFn.isMethodDefinition())
+            parser.reportError("msg.super.shorthand.function");
         return node;
     }
 
@@ -969,8 +999,12 @@ public final class IRFactory {
     }
 
     private Node transformTemplateLiteralCall(TaggedTemplateLiteral node) {
-        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
+        Node transformedTarget = transform(node.getTarget());
+        Node call = createCallOrNew(Token.CALL, transformedTarget);
         call.setLineColumnNumber(node.getLineno(), node.getColumn());
+        if (transformedTarget.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            call.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+        }
         TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
         List<AstNode> elems = templateLiteral.getElements();
         call.addChildToBack(templateLiteral);
@@ -1937,12 +1971,18 @@ public final class IRFactory {
                     ref.putIntProp(Node.OPTIONAL_CHAINING, 1);
                     getRef.putIntProp(Node.OPTIONAL_CHAINING, 1);
                 }
+                if (target.getType() == Token.SUPER) {
+                    getRef.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+                }
                 return getRef;
             }
 
             Node node = new Node(Token.GETPROP, target, Node.newString(name));
             if (type == Token.QUESTION_DOT) {
                 node.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            if (target.getType() == Token.SUPER) {
+                node.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
             }
             return node;
         }
@@ -2147,7 +2187,9 @@ public final class IRFactory {
         int assignOp;
         switch (assignType) {
             case Token.ASSIGN:
-                return parser.simpleAssignment(left, right);
+                {
+                    return propagateSuperFromLhs(parser.simpleAssignment(left, right), left);
+                }
             case Token.ASSIGN_BITOR:
                 assignOp = Token.BITOR;
                 break;
@@ -2203,7 +2245,7 @@ public final class IRFactory {
                 {
                     Node op = new Node(assignOp, left, right);
                     Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
-                    return new Node(Token.SETNAME, lvalueLeft, op);
+                    return propagateSuperFromLhs(new Node(Token.SETNAME, lvalueLeft, op), left);
                 }
             case Token.GETPROP:
             case Token.GETELEM:
@@ -2215,7 +2257,7 @@ public final class IRFactory {
 
                     Node opLeft = new Node(Token.USE_STACK);
                     Node op = new Node(assignOp, opLeft, right);
-                    return new Node(type, obj, id, op);
+                    return propagateSuperFromLhs(new Node(type, obj, id, op), left);
                 }
             case Token.GET_REF:
                 {
@@ -2223,11 +2265,18 @@ public final class IRFactory {
                     parser.checkMutableReference(ref);
                     Node opLeft = new Node(Token.USE_STACK);
                     Node op = new Node(assignOp, opLeft, right);
-                    return new Node(Token.SET_REF_OP, ref, op);
+                    return propagateSuperFromLhs(new Node(Token.SET_REF_OP, ref, op), left);
                 }
         }
 
         throw Kit.codeBug();
+    }
+
+    private Node propagateSuperFromLhs(Node result, Node left) {
+        if (left.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            result.putIntProp(Node.SUPER_PROPERTY_ACCESS, 1);
+        }
+        return result;
     }
 
     private static Node createUseLocal(Node localBlock) {
