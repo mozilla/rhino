@@ -118,6 +118,35 @@ public class LambdaAccessorSlotTest {
     }
 
     @Test
+    public void testRedefineExistingProperty() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects();
+                    var sh = new StatusHolder("PENDING");
+
+                    sh.defineProperty("value", "oldValueOfValue", DONTENUM);
+
+                    sh.defineProperty(cx, "value", (thisObj) -> "valueOfValue", null, DONTENUM);
+
+                    sh.defineProperty(cx, "status", (thisObj) -> 42, null, DONTENUM);
+
+                    sh.defineProperty(
+                            cx,
+                            "status",
+                            (thisObj) -> self(thisObj).getStatus(),
+                            (thisObj, value) -> self(thisObj).setStatus(value),
+                            DONTENUM);
+
+                    var status = sh.get("status", sh);
+                    assertEquals("PENDING", status);
+
+                    var value = sh.get("value", sh);
+                    assertEquals("valueOfValue", value);
+                    return null;
+                });
+    }
+
+    @Test
     public void testWhenNoSetterDefined_InStrictMode_WillThrowException() {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
