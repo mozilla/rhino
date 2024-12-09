@@ -559,8 +559,8 @@ public abstract class ScriptableObject
 
     /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */
     public void setGetterOrSetter(
-            String name, int index, Callable getterOrSetter, boolean isSetter) {
-        if (name != null && index != 0) throw new IllegalArgumentException(name);
+            Object name, int index, Callable getterOrSetter, boolean isSetter) {
+        if (name != null && index != 0) throw new IllegalArgumentException(name.toString());
         checkNotSealed(name, index);
 
         AccessorSlot aSlot;
