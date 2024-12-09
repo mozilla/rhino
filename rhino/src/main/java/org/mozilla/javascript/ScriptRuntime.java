@@ -4866,8 +4866,8 @@ public class ScriptRuntime {
                     Symbol sym = (Symbol) id;
                     SymbolScriptable so = (SymbolScriptable) object;
                     so.put(sym, object, value);
-                } else if (id instanceof Integer) {
-                    int index = ((Integer) id).intValue();
+                } else if (id instanceof Integer && ((Integer) id) >= 0) {
+                    int index = (Integer) id;
                     object.put(index, object, value);
                 } else {
                     StringIdOrIndex s = toStringIdOrIndex(id);
