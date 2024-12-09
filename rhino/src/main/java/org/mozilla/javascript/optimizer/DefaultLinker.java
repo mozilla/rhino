@@ -125,16 +125,12 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh = lookup.findStatic(ScriptRuntime.class, "getSuperElem", mType);
         } else if (op.isOperation(RhinoOperation.GETINDEX)) {
             mh = lookup.findStatic(ScriptRuntime.class, "getObjectIndex", mType);
-        } else if (op.isOperation(RhinoOperation.GETINDEXSUPER)) {
-            mh = lookup.findStatic(ScriptRuntime.class, "getSuperIndex", mType);
         } else if (op.isOperation(RhinoOperation.SETELEMENT)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setObjectElem", mType);
         } else if (op.isOperation(RhinoOperation.SETELEMENTSUPER)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setSuperElem", mType);
         } else if (op.isOperation(RhinoOperation.SETINDEX)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setObjectIndex", mType);
-        } else if (op.isOperation(RhinoOperation.SETINDEXSUPER)) {
-            mh = lookup.findStatic(ScriptRuntime.class, "setSuperIndex", mType);
         }
 
         if (mh != null) {

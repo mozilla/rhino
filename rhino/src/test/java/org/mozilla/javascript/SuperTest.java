@@ -769,6 +769,23 @@ class SuperTest {
         }
 
         @Test
+        void modifyOperatorByKey() {
+            // Equivalent to `super[x] = super[x] + 1`, so reads from super, writes in this
+            String script =
+                    ""
+                            + "const xAsStr = 'x';\n"
+                            + "var proto = { x: 'proto' };"
+                            + "var object = {\n"
+                            + "  x: 'obj',\n"
+                            + "  f() { super[xAsStr] += '1'; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();"
+                            + "object.x + ':' + proto.x";
+            Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+        }
+
+        @Test
         void deleteNotAllowed() {
             String script =
                     ""

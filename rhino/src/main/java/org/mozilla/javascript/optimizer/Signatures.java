@@ -62,18 +62,6 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
-     * PROP:GETINDEXSUPER: Get a property from super based on a numeric index. Falls back to
-     * ScriptRuntime.getSuperIndex.
-     */
-    String PROP_GET_INDEX_SUPER =
-            "(Ljava/lang/Object;"
-                    + "D"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
-                    + ")Ljava/lang/Object;";
-
-    /**
      * PROP:GETELEMENT: Get a property from an object based on an element ID, which could be a
      * string, number, or symbol. Falls back to ScriptRuntime.getObjectElem.
      */
@@ -127,19 +115,6 @@ interface Signatures {
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
-
-    /**
-     * PROP:SETINDEXSUPER: Set a property on super based on a numeric index. Falls back to
-     * ScriptRuntime.setSuperIndex.
-     */
-    String PROP_SET_INDEX_SUPER =
-            "(Ljava/lang/Object;"
-                    + "D"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
                     + ")Ljava/lang/Object;";
 
     /**

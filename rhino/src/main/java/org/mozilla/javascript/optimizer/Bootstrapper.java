@@ -133,9 +133,6 @@ public class Bootstrapper {
                 case "GETINDEX":
                     // Same but the value is definitely a numeric index
                     return RhinoOperation.GETINDEX.withNamespace(StandardNamespace.PROPERTY);
-                case "GETINDEXSUPER":
-                    // Same but the value is definitely a numeric index
-                    return RhinoOperation.GETINDEXSUPER.withNamespace(StandardNamespace.PROPERTY);
                 case "SET":
                     // Set an object property with a constant name
                     return StandardOperation.SET
@@ -155,9 +152,6 @@ public class Bootstrapper {
                 case "SETINDEX":
                     // Same but the property name is definitely a number
                     return RhinoOperation.SETINDEX.withNamespace(StandardNamespace.PROPERTY);
-                case "SETINDEXSUPER":
-                    // Same but the property name is definitely a number
-                    return RhinoOperation.SETINDEXSUPER.withNamespace(StandardNamespace.PROPERTY);
             }
         } else if ("NAME".equals(namespaceName)) {
             switch (opName) {

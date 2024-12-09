@@ -1773,11 +1773,7 @@ class BodyCodegen {
 
         if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
             cfw.addALoad(thisObjLocal);
-            if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                addDynamicInvoke("PROP:GETINDEXSUPER", Signatures.PROP_GET_INDEX_SUPER);
-            } else {
-                addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
-            }
+            addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
         } else {
             if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                 addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
@@ -4440,48 +4436,44 @@ class BodyCodegen {
         boolean indexIsNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         boolean isSuper = node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1;
         if (type == Token.SETELEM_OP) {
-            if (indexIsNumber) {
+            if (isSuper) {
+                // indexIsNumber will never be true because functions with super always require
+                // activation, and when they do we not optimize them
+
+                // stack: ... object object indexObject
+                //        -> ... object indexObject object indexObject
+                cfw.add(ByteCode.DUP_X1);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(thisObjLocal);
+                addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
+            } else if (indexIsNumber) {
                 // stack: ... object object number
                 //        -> ... object number object number
                 cfw.add(ByteCode.DUP2_X1);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                if (isSuper) {
-                    cfw.addALoad(thisObjLocal);
-                    addDynamicInvoke("PROP:GETINDEXSUPER", Signatures.PROP_GET_INDEX_SUPER);
-                } else {
-                    addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
-                }
+                addDynamicInvoke("PROP:GETINDEX", Signatures.PROP_GET_INDEX);
             } else {
                 // stack: ... object object indexObject
                 //        -> ... object indexObject object indexObject
                 cfw.add(ByteCode.DUP_X1);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                if (isSuper) {
-                    cfw.addALoad(thisObjLocal);
-                    addDynamicInvoke("PROP:GETELEMENTSUPER", Signatures.PROP_GET_ELEMENT_SUPER);
-                } else {
-                    addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
-                }
+                addDynamicInvoke("PROP:GETELEMENT", Signatures.PROP_GET_ELEMENT);
             }
         }
         generateExpression(child, node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         if (isSuper) {
+            // Again, we will never have super && indexIsNumber together
             cfw.addALoad(thisObjLocal);
-            if (indexIsNumber) {
-                addDynamicInvoke("PROP:SETINDEXSUPER", Signatures.PROP_SET_INDEX_SUPER);
-            } else {
-                addDynamicInvoke("PROP:SETELEMENTSUPER", Signatures.PROP_SET_ELEMENT_SUPER);
-            }
+            addDynamicInvoke("PROP:SETELEMENTSUPER", Signatures.PROP_SET_ELEMENT_SUPER);
+        } else if (indexIsNumber) {
+            addDynamicInvoke("PROP:SETINDEX", Signatures.PROP_SET_INDEX);
         } else {
-            if (indexIsNumber) {
-                addDynamicInvoke("PROP:SETINDEX", Signatures.PROP_SET_INDEX);
-            } else {
-                addDynamicInvoke("PROP:SETELEMENT", Signatures.PROP_SET_ELEMENT);
-            }
+            addDynamicInvoke("PROP:SETELEMENT", Signatures.PROP_SET_ELEMENT);
         }
     }
 
