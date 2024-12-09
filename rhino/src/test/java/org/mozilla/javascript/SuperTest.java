@@ -116,6 +116,36 @@ class SuperTest {
         }
 
         @Test
+        void byIndexNegative() {
+            String script =
+                    ""
+                            + "var a = { [-1]: 1 };"
+                            + "var b = {\n"
+                            + "  f() {\n"
+                            + "    return super[-1];\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "b.f();";
+            Utils.assertWithAllOptimizationLevelsES6(1, script);
+        }
+
+        @Test
+        void byIndexFractional() {
+            String script =
+                    ""
+                            + "var a = { [0.1]: 1 };"
+                            + "var b = {\n"
+                            + "  f() {\n"
+                            + "    return super[0.1];\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(b, a);\n"
+                            + "b.f();";
+            Utils.assertWithAllOptimizationLevelsES6(1, script);
+        }
+
+        @Test
         void byElementString() {
             String script =
                     ""
@@ -400,6 +430,35 @@ class SuperTest {
         }
 
         @Test
+        void propertyNotFoundInSuperByElement() {
+            // super is implicitly Object.prototype here
+            String script =
+                    ""
+                            + "const xAsString = 'x';\n"
+                            + "const o = {\n"
+                            + "  f() {\n"
+                            + "    return super[xAsString];\n"
+                            + "  }"
+                            + "};\n"
+                            + "o.f();";
+            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+        }
+
+        @Test
+        void propertyNotFoundInSuperByIndex() {
+            // super is implicitly Object.prototype here
+            String script =
+                    ""
+                            + "const o = {\n"
+                            + "  f() {\n"
+                            + "    return super[2];\n"
+                            + "  }"
+                            + "};\n"
+                            + "o.f();";
+            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+        }
+
+        @Test
         void prototypeIsNull() {
             String script =
                     ""
@@ -460,6 +519,36 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[42] + ':' + proto[42]";
+            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+        }
+
+        @Test
+        void byIndexNegative() {
+            String script =
+                    ""
+                            + "var proto = { [-1]: 'proto' };"
+                            + "var object = {\n"
+                            + "  [-1]: 'obj',\n"
+                            + "  f() { super[-1] = 'new'; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();"
+                            + "object[-1] + ':' + proto[-1]";
+            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+        }
+
+        @Test
+        void byIndexFractional() {
+            String script =
+                    ""
+                            + "var proto = { [0.1]: 'proto' };"
+                            + "var object = {\n"
+                            + "  [0.1]: 'obj',\n"
+                            + "  f() { super[0.1] = 'new'; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();"
+                            + "object[0.1] + ':' + proto[0.1]";
             Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
         }
 
