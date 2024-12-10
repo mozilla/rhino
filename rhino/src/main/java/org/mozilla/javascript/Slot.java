@@ -127,4 +127,19 @@ public class Slot implements Serializable {
     Function getGetterFunction(String name, Scriptable scope) {
         return null;
     }
+
+    /**
+     * Compare the JavaScript function that represents the "setter" to the provided Object. We do
+     * this to avoid generating a new function object when it might not be required. Specifically,
+     * if we have a cached funciion object that has not yet been generated then we don't have to
+     * generate it because it cannot be the same as the provided function.
+     */
+    boolean isSameSetterFunction(Object function) {
+        return false;
+    }
+
+    /** Same for the "getter" function. */
+    boolean isSameGetterFunction(Object function) {
+        return false;
+    }
 }

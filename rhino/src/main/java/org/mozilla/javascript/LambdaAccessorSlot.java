@@ -53,7 +53,17 @@ public class LambdaAccessorSlot extends Slot {
 
     @Override
     ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+        return buildPropertyDescriptor(cx);
+    }
+
+    /**
+     * The method exists avoid changing the getPropertyDescriptor signature and at the same time to
+     * make it explicit that we don't use Scriptable scope parameter of getPropertyDescriptor, since
+     * it can be problematic when called from inside ThreadSafeSlotMapContainer::compute lambda
+     * which can lead to deadlocks.
+     */
+    public ScriptableObject buildPropertyDescriptor(Context cx) {
+        ScriptableObject desc = new NativeObject();
 
         int attr = getAttributes();
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
@@ -138,5 +148,13 @@ public class LambdaAccessorSlot extends Slot {
                                 return Undefined.instance;
                             });
         }
+    }
+
+    public void replaceWith(LambdaAccessorSlot slot) {
+        this.getterFunction = slot.getterFunction;
+        this.getter = slot.getter;
+        this.setterFunction = slot.setterFunction;
+        this.setter = slot.setter;
+        setAttributes(slot.getAttributes());
     }
 }
