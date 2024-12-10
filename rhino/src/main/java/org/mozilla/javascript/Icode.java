@@ -20,8 +20,11 @@ abstract class Icode {
             // Stack: ... value2 value1 -> ... value2 value1 value2 value1
             Icode_DUP2 = Icode_DUP - 1,
 
+            // Stack: ... value2 value1 -> ... value1 value2
+            Icode_SWAP = Icode_DUP2 - 1,
+
             // Stack: ... value1 -> ...
-            Icode_POP = Icode_DUP2 - 1,
+            Icode_POP = Icode_SWAP - 1,
 
             // Store stack top into return register and then pop it
             Icode_POP_RESULT = Icode_POP - 1,
@@ -78,9 +81,10 @@ abstract class Icode {
             Icode_LITERAL_NEW_OBJECT = Icode_INTNUMBER - 1,
             Icode_LITERAL_NEW_ARRAY = Icode_LITERAL_NEW_OBJECT - 1,
             Icode_LITERAL_SET = Icode_LITERAL_NEW_ARRAY - 1,
+            ICode_FN_STORE_HOME_OBJECT = Icode_LITERAL_SET - 1,
 
             // Array literal with skipped index like [1,,2]
-            Icode_SPARE_ARRAYLIT = Icode_LITERAL_SET - 1,
+            Icode_SPARE_ARRAYLIT = ICode_FN_STORE_HOME_OBJECT - 1,
 
             // Load index register to prepare for the following index operation
             Icode_REG_IND_C0 = Icode_SPARE_ARRAYLIT - 1,
@@ -151,8 +155,15 @@ abstract class Icode {
             // Jump if stack head is null or undefined
             Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
             Icode_IF_NOT_NULL_UNDEF = Icode_IF_NULL_UNDEF - 1,
+
+            // Call a method on the super object, i.e. super.foo()
+            Icode_CALL_ON_SUPER = Icode_IF_NOT_NULL_UNDEF - 1,
+
+            // delete super.prop
+            Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
+
             // Last icode
-            MIN_ICODE = Icode_IF_NOT_NULL_UNDEF;
+            MIN_ICODE = Icode_DELPROP_SUPER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -174,6 +185,8 @@ abstract class Icode {
                 return "DUP";
             case Icode_DUP2:
                 return "DUP2";
+            case Icode_SWAP:
+                return "SWAP";
             case Icode_POP:
                 return "POP";
             case Icode_POP_RESULT:
@@ -240,6 +253,8 @@ abstract class Icode {
                 return "LITERAL_NEW_ARRAY";
             case Icode_LITERAL_SET:
                 return "LITERAL_SET";
+            case ICode_FN_STORE_HOME_OBJECT:
+                return "FN_STORE_HOME_OBJECT";
             case Icode_SPARE_ARRAYLIT:
                 return "SPARE_ARRAYLIT";
             case Icode_REG_IND_C0:
@@ -334,6 +349,10 @@ abstract class Icode {
                 return "IF_NULL_UNDEF";
             case Icode_IF_NOT_NULL_UNDEF:
                 return "IF_NOT_NULL_UNDEF";
+            case Icode_CALL_ON_SUPER:
+                return "CALL_ON_SUPER";
+            case Icode_DELPROP_SUPER:
+                return "DELPROP_SUPER";
         }
 
         // icode without name

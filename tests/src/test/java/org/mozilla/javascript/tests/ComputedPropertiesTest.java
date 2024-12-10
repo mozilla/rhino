@@ -49,10 +49,10 @@ public class ComputedPropertiesTest {
                         + "var o = {\n"
                         + "  a: 1,\n"
                         + "  0: 2,\n"
-                        + "  [1]: 3\n,"
+                        + "  [-1]: 3\n,"
                         + "  [f('b')]: 4\n"
                         + "};\n"
-                        + "o.a + o[0] + o['1'] + o.b";
+                        + "o.a + o[0] + o['-1'] + o.b";
 
         ScriptableObject scope = cx.initStandardObjects();
         Object value = cx.evaluateString(scope, script, "test", 1, null);
@@ -265,7 +265,7 @@ public class ComputedPropertiesTest {
     public void unsupportedInDestructuringInVariableDeclaration() {
         String script = "var { [a]: b } = {};";
         assertComputedPropertiesAreUnsupportedInDestructuring(
-                script, "Unsupported computed property in destructuring.");
+                script, "Unsupported computed property in destructuring. (test#1)");
     }
 
     private void assertComputedPropertiesAreUnsupportedInDestructuring(

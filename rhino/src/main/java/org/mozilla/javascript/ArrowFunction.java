@@ -15,11 +15,17 @@ public class ArrowFunction extends BaseFunction {
 
     private final Callable targetFunction;
     private final Scriptable boundThis;
+    private final Scriptable boundHomeObject;
 
     public ArrowFunction(
-            Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis) {
+            Context cx,
+            Scriptable scope,
+            Callable targetFunction,
+            Scriptable boundThis,
+            Scriptable boundHomeObject) {
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
+        this.boundHomeObject = boundHomeObject;
 
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, false);
 
@@ -78,6 +84,10 @@ public class ArrowFunction extends BaseFunction {
 
     Scriptable getCallThis(Context cx) {
         return boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
+    }
+
+    Scriptable getBoundHomeObject() {
+        return this.boundHomeObject;
     }
 
     Callable getTargetFunction() {

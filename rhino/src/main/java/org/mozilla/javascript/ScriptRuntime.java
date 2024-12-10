@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -1722,15 +1723,11 @@ public class ScriptRuntime {
 
     /** Call obj.[[Get]](id) */
     public static Object getObjectElem(Object obj, Object elem, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefReadError(obj, elem);
-        }
+        Scriptable sobj = asScriptableOrThrowUndefReadError(cx, scope, obj, elem);
         return getObjectElem(sobj, elem, cx);
     }
 
     public static Object getObjectElem(Scriptable obj, Object elem, Context cx) {
-
         Object result;
 
         if (obj instanceof XMLObject) {
@@ -1750,7 +1747,40 @@ public class ScriptRuntime {
         if (result == Scriptable.NOT_FOUND) {
             result = Undefined.instance;
         }
+        return result;
+    }
 
+    public static Object getSuperElem(
+            Object superObject, Object elem, Context cx, Scriptable scope, Object thisObject) {
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefReadError(cx, scope, superObject, elem);
+        Scriptable thisScriptable = asScriptableOrThrowUndefReadError(cx, scope, thisObject, elem);
+        return getSuperElem(elem, superScriptable, thisScriptable);
+    }
+
+    public static Object getSuperElem(
+            Object elem, Scriptable superScriptable, Scriptable thisScriptable) {
+        Object result;
+        // No XML support for super
+        if (isSymbol(elem)) {
+            result =
+                    ScriptableObject.getSuperProperty(
+                            superScriptable, thisScriptable, (Symbol) elem);
+        } else {
+            StringIdOrIndex s = toStringIdOrIndex(elem);
+            if (s.stringId == null) {
+                int index = s.index;
+                result = ScriptableObject.getSuperProperty(superScriptable, thisScriptable, index);
+            } else {
+                result =
+                        ScriptableObject.getSuperProperty(
+                                superScriptable, thisScriptable, s.stringId);
+            }
+        }
+
+        if (result == Scriptable.NOT_FOUND) {
+            result = Undefined.instance;
+        }
         return result;
     }
 
@@ -1770,15 +1800,11 @@ public class ScriptRuntime {
      * @param scope the scope that should be used to resolve primitive prototype
      */
     public static Object getObjectProp(Object obj, String property, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefReadError(obj, property);
-        }
+        Scriptable sobj = asScriptableOrThrowUndefReadError(cx, scope, obj, property);
         return getObjectProp(sobj, property, cx);
     }
 
     public static Object getObjectProp(Scriptable obj, String property, Context cx) {
-
         Object result = ScriptableObject.getProperty(obj, property);
         if (result == Scriptable.NOT_FOUND) {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
@@ -1801,12 +1827,45 @@ public class ScriptRuntime {
 
     public static Object getObjectPropNoWarn(
             Object obj, String property, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefReadError(obj, property);
-        }
+        Scriptable sobj = asScriptableOrThrowUndefReadError(cx, scope, obj, property);
         Object result = ScriptableObject.getProperty(sobj, property);
         if (result == Scriptable.NOT_FOUND) {
+            return Undefined.instance;
+        }
+        return result;
+    }
+
+    public static Object getSuperProp(
+            Object superObject,
+            String property,
+            Context cx,
+            Scriptable scope,
+            Object thisObject,
+            boolean noWarn) {
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefReadError(cx, scope, superObject, property);
+        Scriptable thisScriptable =
+                asScriptableOrThrowUndefReadError(cx, scope, thisObject, property);
+        return getSuperProp(superScriptable, thisScriptable, property, cx, noWarn);
+    }
+
+    private static Object getSuperProp(
+            Scriptable superScriptable,
+            Scriptable thisScriptable,
+            String property,
+            Context cx,
+            boolean noWarn) {
+        Object result =
+                ScriptableObject.getSuperProperty(superScriptable, thisScriptable, property);
+
+        if (result == Scriptable.NOT_FOUND) {
+            if (noWarn) {
+                return Undefined.instance;
+            }
+            if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
+                Context.reportWarning(
+                        ScriptRuntime.getMessageById("msg.ref.undefined.prop", property));
+            }
             return Undefined.instance;
         }
         return result;
@@ -1824,10 +1883,7 @@ public class ScriptRuntime {
 
     /** A cheaper and less general version of the above for well-known argument types. */
     public static Object getObjectIndex(Object obj, double dblIndex, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefReadError(obj, toString(dblIndex));
-        }
+        Scriptable sobj = asScriptableOrThrowUndefReadError(cx, scope, obj, dblIndex);
 
         int index = (int) dblIndex;
         if (index == dblIndex && index >= 0) {
@@ -1842,7 +1898,31 @@ public class ScriptRuntime {
         if (result == Scriptable.NOT_FOUND) {
             result = Undefined.instance;
         }
+        return result;
+    }
 
+    public static Object getSuperIndex(
+            Object superObject, double dblIndex, Context cx, Scriptable scope, Object thisObject) {
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefReadError(cx, scope, superObject, dblIndex);
+        Scriptable thisScriptable =
+                asScriptableOrThrowUndefReadError(cx, scope, thisObject, dblIndex);
+
+        int index = (int) dblIndex;
+        if (index == dblIndex && index >= 0) {
+            return getSuperIndex(superScriptable, thisScriptable, index);
+        }
+
+        String s = toString(dblIndex);
+        return getSuperProp(superScriptable, thisScriptable, s, cx, false);
+    }
+
+    private static Object getSuperIndex(
+            Scriptable superScriptable, Scriptable thisScriptable, int index) {
+        Object result = ScriptableObject.getSuperProperty(superScriptable, thisScriptable, index);
+        if (result == Scriptable.NOT_FOUND) {
+            return Undefined.instance;
+        }
         return result;
     }
 
@@ -1859,10 +1939,7 @@ public class ScriptRuntime {
     /** Call obj.[[Put]](id, value) */
     public static Object setObjectElem(
             Object obj, Object elem, Object value, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefWriteError(obj, elem, value);
-        }
+        Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, elem, value);
         return setObjectElem(sobj, elem, value, cx);
     }
 
@@ -1883,6 +1960,43 @@ public class ScriptRuntime {
         return value;
     }
 
+    /** Call super.[[Put]](id, value) */
+    public static Object setSuperElem(
+            Object superObject,
+            Object elem,
+            Object value,
+            Context cx,
+            Scriptable scope,
+            Object thisObject) {
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, superObject, elem, value);
+        Scriptable thisScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, thisObject, elem, value);
+        return setSuperElem(superScriptable, thisScriptable, elem, value, cx);
+    }
+
+    public static Object setSuperElem(
+            Scriptable superScriptable,
+            Scriptable thisScriptable,
+            Object elem,
+            Object value,
+            Context cx) {
+        // No XML support for super
+        if (isSymbol(elem)) {
+            ScriptableObject.putSuperProperty(
+                    superScriptable, thisScriptable, (Symbol) elem, value);
+        } else {
+            StringIdOrIndex s = toStringIdOrIndex(elem);
+            if (s.stringId == null) {
+                ScriptableObject.putSuperProperty(superScriptable, thisScriptable, s.index, value);
+            } else {
+                ScriptableObject.putSuperProperty(
+                        superScriptable, thisScriptable, s.stringId, value);
+            }
+        }
+        return value;
+    }
+
     /**
      * Version of setObjectElem when elem is a valid JS identifier name.
      *
@@ -1896,22 +2010,42 @@ public class ScriptRuntime {
     /** Version of setObjectElem when elem is a valid JS identifier name. */
     public static Object setObjectProp(
             Object obj, String property, Object value, Context cx, Scriptable scope) {
-        if (!(obj instanceof Scriptable)
-                && cx.isStrictMode()
-                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
-            throw undefWriteError(obj, property, value);
-        }
-
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefWriteError(obj, property, value);
-        }
-
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(obj, property, value, cx);
+        Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, property, value);
         return setObjectProp(sobj, property, value, cx);
     }
 
     public static Object setObjectProp(Scriptable obj, String property, Object value, Context cx) {
         ScriptableObject.putProperty(obj, property, value);
+        return value;
+    }
+
+    /** Version of setSuperElem when elem is a valid JS identifier name. */
+    public static Object setSuperProp(
+            Object superObject,
+            String property,
+            Object value,
+            Context cx,
+            Scriptable scope,
+            Object thisObject) {
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(superObject, property, value, cx);
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(thisObject, property, value, cx);
+
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, superObject, property, value);
+        Scriptable thisScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, thisObject, property, value);
+
+        return setSuperProp(superScriptable, thisScriptable, property, value, cx);
+    }
+
+    public static Object setSuperProp(
+            Scriptable superScriptable,
+            Scriptable thisScriptable,
+            String property,
+            Object value,
+            Context cx) {
+        ScriptableObject.putSuperProperty(superScriptable, thisScriptable, property, value);
         return value;
     }
 
@@ -1928,11 +2062,7 @@ public class ScriptRuntime {
     /** A cheaper and less general version of the above for well-known argument types. */
     public static Object setObjectIndex(
             Object obj, double dblIndex, Object value, Context cx, Scriptable scope) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            throw undefWriteError(obj, String.valueOf(dblIndex), value);
-        }
-
+        Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, dblIndex, value);
         int index = (int) dblIndex;
         if (index == dblIndex && index >= 0) {
             return setObjectIndex(sobj, index, value, cx);
@@ -1943,6 +2073,37 @@ public class ScriptRuntime {
 
     public static Object setObjectIndex(Scriptable obj, int index, Object value, Context cx) {
         ScriptableObject.putProperty(obj, index, value);
+        return value;
+    }
+
+    /** A cheaper and less general version of the above for well-known argument types. */
+    public static Object setSuperIndex(
+            Object superObject,
+            double dblIndex,
+            Object value,
+            Context cx,
+            Scriptable scope,
+            Object thisObject) {
+        Scriptable superScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, superObject, dblIndex, value);
+        Scriptable thisScriptable =
+                asScriptableOrThrowUndefWriteError(cx, scope, thisObject, dblIndex, value);
+
+        int index = (int) dblIndex;
+        if (index == dblIndex && index >= 0) {
+            return setSuperIndex(superScriptable, thisScriptable, index, value, cx);
+        }
+        String s = toString(dblIndex);
+        return setSuperProp(superScriptable, thisScriptable, s, value, cx);
+    }
+
+    public static Object setSuperIndex(
+            Scriptable superScriptable,
+            Scriptable thisScriptable,
+            int index,
+            Object value,
+            Context cx) {
+        ScriptableObject.putSuperProperty(superScriptable, thisScriptable, index, value);
         return value;
     }
 
@@ -3069,7 +3230,25 @@ public class ScriptRuntime {
 
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        Script script = cx.compileString(x.toString(), evaluator, reporter, sourceName, 1, null);
+        Consumer<CompilerEnvirons> compilerEnvironsProcessor =
+                compilerEnvs -> {
+                    // If we are inside a method, we need to allow super. Methods have the home
+                    // object set and propagated via the activation (i.e. the NativeCall),
+                    // but non-methods will have the home object set to null.
+                    boolean isInsideMethod =
+                            scope instanceof NativeCall
+                                    && ((NativeCall) scope).getHomeObject() != null;
+                    compilerEnvs.setAllowSuper(isInsideMethod);
+                };
+        Script script =
+                cx.compileString(
+                        x.toString(),
+                        evaluator,
+                        reporter,
+                        sourceName,
+                        1,
+                        null,
+                        compilerEnvironsProcessor);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable) script;
         Scriptable thisObject =
@@ -3456,10 +3635,7 @@ public class ScriptRuntime {
 
     public static Object propIncrDecr(
             Object obj, String id, Context cx, Scriptable scope, int incrDecrMask) {
-        Scriptable start = toObjectOrNull(cx, obj, scope);
-        if (start == null) {
-            throw undefReadError(obj, id);
-        }
+        Scriptable start = asScriptableOrThrowUndefReadError(cx, scope, obj, id);
 
         Scriptable target = start;
         Object value;
@@ -4363,24 +4539,24 @@ public class ScriptRuntime {
 
     /**
      * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean)} instead
+     *     Object[], boolean, boolean, Scriptable)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
             NativeFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false);
+                funObj, Context.getCurrentContext(), scope, args, false, false, null);
     }
 
     /**
      * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean)} instead
+     *     Object[], boolean, boolean, Scriptable)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
             NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false);
+                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, null);
     }
 
     public static Scriptable createFunctionActivation(
@@ -4389,19 +4565,20 @@ public class ScriptRuntime {
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest);
+            boolean argsHasRest,
+            Scriptable homeObject) {
+        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, homeObject);
     }
 
     /**
      * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean)} instead
+     *     Object[], boolean, boolean, Scriptable)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
             NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false);
+                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, null);
     }
 
     public static Scriptable createArrowFunctionActivation(
@@ -4410,8 +4587,9 @@ public class ScriptRuntime {
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest);
+            boolean argsHasRest,
+            Scriptable homeObject) {
+        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, homeObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
@@ -4866,8 +5044,8 @@ public class ScriptRuntime {
                     Symbol sym = (Symbol) id;
                     SymbolScriptable so = (SymbolScriptable) object;
                     so.put(sym, object, value);
-                } else if (id instanceof Integer) {
-                    int index = ((Integer) id).intValue();
+                } else if (id instanceof Integer && ((Integer) id) >= 0) {
+                    int index = (Integer) id;
                     object.put(index, object, value);
                 } else {
                     StringIdOrIndex s = toStringIdOrIndex(id);
@@ -5112,6 +5290,33 @@ public class ScriptRuntime {
         return typeError(msg);
     }
 
+    private static Scriptable asScriptableOrThrowUndefReadError(
+            Context cx, Scriptable scope, Object obj, Object elem) {
+        Scriptable scriptable = toObjectOrNull(cx, obj, scope);
+        if (scriptable == null) {
+            throw undefReadError(obj, elem);
+        }
+        return scriptable;
+    }
+
+    private static Scriptable asScriptableOrThrowUndefWriteError(
+            Context cx, Scriptable scope, Object obj, Object elem, Object value) {
+        Scriptable scriptable = toObjectOrNull(cx, obj, scope);
+        if (scriptable == null) {
+            throw undefWriteError(obj, elem, value);
+        }
+        return scriptable;
+    }
+
+    private static void verifyIsScriptableOrComplainWriteErrorInEs5Strict(
+            Object obj, String property, Object value, Context cx) {
+        if (!(obj instanceof Scriptable)
+                && cx.isStrictMode()
+                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+            throw undefWriteError(obj, property, value);
+        }
+    }
+
     public static RuntimeException undefReadError(Object object, Object id) {
         return typeErrorById("msg.undef.prop.read", toString(object), toString(id));
     }
@@ -5176,6 +5381,10 @@ public class ScriptRuntime {
     public static EcmaError syntaxErrorById(String messageId, Object... args) {
         String msg = getMessageById(messageId, args);
         return syntaxError(msg);
+    }
+
+    public static EcmaError referenceError(String message) {
+        return constructError("ReferenceError", message);
     }
 
     private static void warnAboutNonJSObject(Object nonJSObject) {
@@ -5333,6 +5542,11 @@ public class ScriptRuntime {
         return result;
     }
 
+    public static void discardLastStoredScriptable(Context cx) {
+        if (cx.scratchScriptable == null) throw new IllegalStateException();
+        cx.scratchScriptable = null;
+    }
+
     static String makeUrlForGeneratedScript(
             boolean isEval, String masterScriptUrl, int masterScriptLine) {
         if (isEval) {
@@ -5399,6 +5613,11 @@ public class ScriptRuntime {
                         constructorName,
                         new Object[] {message, filename, Integer.valueOf(linep[0])});
         return new JavaScriptException(error, filename, linep[0]);
+    }
+
+    /** Throws a ReferenceError "cannot delete a super property". See ECMAScript spec 13.5.1.2 */
+    public static void throwDeleteOnSuperPropertyNotAllowed() {
+        throw referenceError("msg.delete.super");
     }
 
     public static final Object[] emptyArgs = new Object[0];
