@@ -393,7 +393,7 @@ public class Context implements Closeable {
         }
         this.factory = factory;
         version = VERSION_DEFAULT;
-        optimizationLevel = codegenClass != null ? 0 : -1;
+        interpretedMode = codegenClass == null;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
     }
 
@@ -1893,14 +1893,11 @@ public class Context implements Closeable {
     /**
      * Specify whether or not debug information should be generated.
      *
-     * <p>Setting the generation of debug information on will set the optimization level to zero.
-     *
      * @since 1.3
      */
     public final void setGeneratingDebug(boolean generatingDebug) {
         if (sealed) onSealedMutation();
         generatingDebugChanged = true;
-        if (generatingDebug && getOptimizationLevel() > 0) setOptimizationLevel(0);
         this.generatingDebug = generatingDebug;
     }
 
@@ -1930,36 +1927,44 @@ public class Context implements Closeable {
     /**
      * Get the current optimization level.
      *
-     * <p>The optimization level is expressed as an integer between -1 and 9.
+     * <p>The optimization level is expressed as an integer between -1 and 9. Rhino now has only one
+     * optimization level, and we will always return either -1 or 9 here.
      *
      * @since 1.3
      */
     public final int getOptimizationLevel() {
-        return optimizationLevel;
+        return interpretedMode ? -1 : 9;
+    }
+
+    /**
+     * Return whether Rhino is running in interpreted mode. In this mode, Rhino does not generate
+     * bytecode, but runs much more slowly. Some platforms, notably Android, use this mode.
+     */
+    public final boolean isInterpretedMode() {
+        return interpretedMode;
     }
 
     /**
      * Set the current optimization level.
      *
-     * <p>The optimization level is expected to be an integer between -1 and 9. Any negative values
-     * will be interpreted as -1, and any values greater than 9 will be interpreted as 9. An
-     * optimization level of -1 indicates that interpretive mode will always be used. Levels 0
-     * through 9 indicate that class files may be generated. Higher optimization levels trade off
-     * compile time performance for runtime performance. The optimizer level can't be set greater
-     * than -1 if the optimizer package doesn't exist at run time.
+     * <p>This function previously set multiple modes today. Any value less than zero sets up
+     * interpreted mode, and otherwise we run in compiled mode.
      *
      * @param optimizationLevel an integer indicating the level of optimization to perform
      * @since 1.3
      */
     public final void setOptimizationLevel(int optimizationLevel) {
+        setInterpretedMode(optimizationLevel < 0);
+    }
+
+    /**
+     * Set Rhino to run in interpreted mode. In this mode, Rhino does not generate bytecode, but
+     * runs much more slowly. Some platforms, notably Android, must use this mode because they
+     * cannot generate bytecode.
+     */
+    public final void setInterpretedMode(boolean interpretedMode) {
         if (sealed) onSealedMutation();
-        if (optimizationLevel == -2) {
-            // To be compatible with Cocoon fork
-            optimizationLevel = -1;
-        }
-        checkOptimizationLevel(optimizationLevel);
-        if (codegenClass == null) optimizationLevel = -1;
-        this.optimizationLevel = optimizationLevel;
+        this.interpretedMode = interpretedMode;
     }
 
     public static boolean isValidOptimizationLevel(int optimizationLevel) {
@@ -2006,9 +2011,9 @@ public class Context implements Closeable {
      */
     public final void setMaximumInterpreterStackDepth(int max) {
         if (sealed) onSealedMutation();
-        if (optimizationLevel != -1) {
+        if (!interpretedMode) {
             throw new IllegalStateException(
-                    "Cannot set maximumInterpreterStackDepth when optimizationLevel != -1");
+                    "Cannot set maximumInterpreterStackDepth outside interpreted mode");
         }
         if (max < 1) {
             throw new IllegalArgumentException(
@@ -2569,7 +2574,7 @@ public class Context implements Closeable {
 
     private Evaluator createCompiler() {
         Evaluator result = null;
-        if (optimizationLevel >= 0 && codegenClass != null) {
+        if (!interpretedMode && codegenClass != null) {
             result = (Evaluator) Kit.newInstanceOrNull(codegenClass);
         }
         if (result == null) {
@@ -2718,7 +2723,7 @@ public class Context implements Closeable {
     private boolean generatingDebugChanged;
     private boolean generatingSource = true;
     boolean useDynamicScope;
-    private int optimizationLevel;
+    private boolean interpretedMode;
     private int maximumInterpreterStackDepth;
     private WrapFactory wrapFactory;
     Debugger debugger;

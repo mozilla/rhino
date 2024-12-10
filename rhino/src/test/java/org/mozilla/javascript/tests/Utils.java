@@ -22,27 +22,30 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class Utils {
     /** The default set of levels to run tests at. */
-    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
+    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 9};
 
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(final ContextAction<?> action) {
-        for (int level : getTestOptLevels()) {
-            runWithOptimizationLevel(action, level);
-        }
+        runWithMode(action, false);
+        runWithMode(action, true);
     }
 
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(
             final ContextFactory contextFactory, final ContextAction<?> action) {
-        for (int level : getTestOptLevels()) {
-            runWithOptimizationLevel(contextFactory, action, level);
-        }
+        runWithMode(contextFactory, action, false);
+        runWithMode(contextFactory, action, true);
     }
 
     /** Runs the provided action at the given optimization level */
     public static void runWithOptimizationLevel(
             final ContextAction<?> action, final int optimizationLevel) {
         runWithOptimizationLevel(new ContextFactory(), action, optimizationLevel);
+    }
+
+    /** Runs the provided action at the given interpretation mode */
+    public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
+        runWithMode(new ContextFactory(), action, interpretedMode);
     }
 
     /** Runs the provided action at the given optimization level */
@@ -53,6 +56,17 @@ public class Utils {
 
         try (final Context cx = contextFactory.enterContext()) {
             cx.setOptimizationLevel(optimizationLevel);
+            action.run(cx);
+        }
+    }
+
+    /** Runs the provided action at the given optimization level */
+    public static void runWithMode(
+            final ContextFactory contextFactory,
+            final ContextAction<?> action,
+            final boolean interpretedMode) {
+        try (final Context cx = contextFactory.enterContext()) {
+            cx.setInterpretedMode(interpretedMode);
             action.run(cx);
         }
     }

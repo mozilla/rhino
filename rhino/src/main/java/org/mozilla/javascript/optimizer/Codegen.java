@@ -177,10 +177,10 @@ public class Codegen implements Evaluator {
     private void transform(ScriptNode tree) {
         initOptFunctions_r(tree);
 
-        int optLevel = compilerEnv.getOptimizationLevel();
+        boolean optimizing = !compilerEnv.isInterpretedMode();
 
         Map<String, OptFunctionNode> possibleDirectCalls = null;
-        if (optLevel > 0) {
+        if (optimizing) {
             /*
              * Collect all of the contained functions into a hashtable
              * so that the call optimizer can access the class name & parameter
@@ -210,7 +210,7 @@ public class Codegen implements Evaluator {
         OptTransformer ot = new OptTransformer(possibleDirectCalls, directCallTargets);
         ot.transform(tree, compilerEnv);
 
-        if (optLevel > 0) {
+        if (optimizing) {
             new Optimizer().optimize(tree);
         }
     }

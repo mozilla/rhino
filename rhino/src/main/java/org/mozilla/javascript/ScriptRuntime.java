@@ -168,7 +168,7 @@ public class ScriptRuntime {
         NativeGlobal.init(cx, scope, sealed);
 
         NativeArray.init(cx, scope, sealed);
-        if (cx.getOptimizationLevel() > 0) {
+        if (!cx.isInterpretedMode()) {
             // When optimizing, attempt to fulfill all requests for new Array(N)
             // with a higher threshold before switching to a sparse
             // representation

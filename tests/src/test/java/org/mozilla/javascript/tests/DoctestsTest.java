@@ -36,12 +36,12 @@ public class DoctestsTest {
     static final String doctestsExtension = ".doctest";
     String name;
     String source;
-    int optimizationLevel;
+    boolean interpretedMode;
 
-    public DoctestsTest(String name, String source, int optimizationLevel) {
+    public DoctestsTest(String name, String source, boolean interpretedMode) {
         this.name = name;
         this.source = source;
-        this.optimizationLevel = optimizationLevel;
+        this.interpretedMode = interpretedMode;
     }
 
     public static File[] getDoctestFiles() {
@@ -64,15 +64,14 @@ public class DoctestsTest {
         return new String(buf);
     }
 
-    @Parameters(name = "{0} opt:{2}")
+    @Parameters(name = "{0} interpreted:{2}")
     public static Collection<Object[]> doctestValues() throws IOException {
         File[] doctests = getDoctestFiles();
         List<Object[]> result = new ArrayList<Object[]>();
         for (File f : doctests) {
             String contents = loadFile(f);
-            result.add(new Object[] {f.getName(), contents, -1});
-            result.add(new Object[] {f.getName(), contents, 0});
-            result.add(new Object[] {f.getName(), contents, 9});
+            result.add(new Object[] {f.getName(), contents, false});
+            result.add(new Object[] {f.getName(), contents, true});
         }
         return result;
     }
@@ -90,13 +89,14 @@ public class DoctestsTest {
     public void runDoctest() throws Exception {
         ContextFactory factory = ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
-            cx.setOptimizationLevel(optimizationLevel);
+            cx.setInterpretedMode(interpretedMode);
             Global global = new Global(cx);
             // global.runDoctest throws an exception on any failure
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
             assertTrue(testsPassed > 0);
         } catch (Exception ex) {
-            System.out.println(name + "(" + optimizationLevel + "): FAILED due to " + ex);
+            System.out.println(
+                    name + "(interpreted = " + interpretedMode + "): FAILED due to " + ex);
             throw ex;
         }
     }
