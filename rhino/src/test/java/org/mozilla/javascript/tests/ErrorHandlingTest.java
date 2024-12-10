@@ -15,6 +15,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.WrappedException;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * Unit tests to check error handling. Especially, we expect to get a correct cause, when an error
@@ -118,6 +119,7 @@ public class ErrorHandlingTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     try {
+                        cx.setWrapFactory(new JavaWrapFactory());
                         final ScriptableObject scope = cx.initStandardObjects();
                         cx.evaluateString(scope, script, "myScript.js", 1, null);
                         Assert.fail("No error was thrown");

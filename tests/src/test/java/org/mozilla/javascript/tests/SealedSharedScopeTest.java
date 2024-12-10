@@ -20,9 +20,10 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.lc.ImporterTopLevel;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class SealedSharedScopeTest {
@@ -35,11 +36,13 @@ public class SealedSharedScopeTest {
     @Before
     public void setUp() throws Exception {
         try (Context tmpCtx = Context.enter()) {
+            tmpCtx.setWrapFactory(new JavaWrapFactory());
             sharedScope = new ImporterTopLevel(tmpCtx, true);
             sharedScope.sealObject();
         }
 
         ctx = Context.enter();
+        ctx.setWrapFactory(new JavaWrapFactory());
         scope1 = ctx.newObject(sharedScope);
         scope1.setPrototype(sharedScope);
         scope1.setParentScope(null);

@@ -3,10 +3,16 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.Undefined;
 
 /**
  * <code>NativeJavaList</code> is a wrapper for java objects implementing <code>java.util.List

@@ -22,7 +22,7 @@ import java.lang.reflect.Modifier;
  *
  * @author Igor Bukanov
  */
-final class MemberBox implements Serializable {
+public final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
@@ -33,11 +33,11 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    MemberBox(Method method) {
+    public MemberBox(Method method) {
         init(method);
     }
 
-    MemberBox(Constructor<?> constructor) {
+    public MemberBox(Constructor<?> constructor) {
         init(constructor);
     }
 
@@ -53,11 +53,11 @@ final class MemberBox implements Serializable {
         this.vararg = constructor.isVarArgs();
     }
 
-    Method method() {
+    public Method method() {
         return (Method) memberObject;
     }
 
-    Constructor<?> ctor() {
+    public Constructor<?> ctor() {
         return (Constructor<?>) memberObject;
     }
 
@@ -65,53 +65,41 @@ final class MemberBox implements Serializable {
         return memberObject;
     }
 
-    boolean isMethod() {
+    public boolean isMethod() {
         return memberObject instanceof Method;
     }
 
-    boolean isCtor() {
+    public boolean isCtor() {
         return memberObject instanceof Constructor;
     }
 
-    boolean isStatic() {
+    public boolean isStatic() {
         return Modifier.isStatic(memberObject.getModifiers());
     }
 
-    boolean isPublic() {
+    public boolean isPublic() {
         return Modifier.isPublic(memberObject.getModifiers());
     }
 
-    String getName() {
+    public String getName() {
         return memberObject.getName();
     }
 
-    Class<?> getDeclaringClass() {
+    public Class<?> getDeclaringClass() {
         return memberObject.getDeclaringClass();
-    }
-
-    String toJavaDeclaration() {
-        StringBuilder sb = new StringBuilder();
-        if (isMethod()) {
-            Method method = method();
-            sb.append(method.getReturnType());
-            sb.append(' ');
-            sb.append(method.getName());
-        } else {
-            Constructor<?> ctor = ctor();
-            String name = ctor.getDeclaringClass().getName();
-            int lastDot = name.lastIndexOf('.');
-            if (lastDot >= 0) {
-                name = name.substring(lastDot + 1);
-            }
-            sb.append(name);
-        }
-        sb.append(JavaMembers.liveConnectSignature(argTypes));
-        return sb.toString();
     }
 
     @Override
     public String toString() {
         return memberObject.toString();
+    }
+
+    public Class<?>[] getArgTypes() {
+        return argTypes;
+    }
+
+    public boolean isVararg() {
+        return vararg;
     }
 
     /** Function returned by calls to __lookupGetter__ */
@@ -195,7 +183,7 @@ final class MemberBox implements Serializable {
         return asSetterFunction;
     }
 
-    Object invoke(Object target, Object[] args) {
+    public Object invoke(Object target, Object[] args) {
         Method method = method();
 
         // handle delegators
@@ -239,7 +227,7 @@ final class MemberBox implements Serializable {
         }
     }
 
-    Object newInstance(Object[] args) {
+    public Object newInstance(Object[] args) {
         Constructor<?> ctor = ctor();
         try {
             try {

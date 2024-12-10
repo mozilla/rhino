@@ -25,6 +25,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 /**
  * This is the implementation of the standard ScriptEngine interface for Rhino.
@@ -277,6 +278,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         if (ol != null) {
             cx.setOptimizationLevel(parseInteger(ol));
         }
+        cx.setWrapFactory(new JavaWrapFactory());
     }
 
     private static int parseInteger(Object v) throws ScriptException {

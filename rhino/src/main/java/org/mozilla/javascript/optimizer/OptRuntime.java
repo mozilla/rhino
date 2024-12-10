@@ -7,17 +7,14 @@ package org.mozilla.javascript.optimizer;
 import org.mozilla.javascript.ArrowFunction;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ES6Generator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
-import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 public final class OptRuntime extends ScriptRuntime {
@@ -228,23 +225,6 @@ public final class OptRuntime extends ScriptRuntime {
             Object[] objects, String encodedInts, int skipCount, Context cx, Scriptable scope) {
         int[] skipIndexces = decodeIntArray(encodedInts, skipCount);
         return newArrayLiteral(objects, skipIndexces, cx, scope);
-    }
-
-    public static void main(final Script script, final String[] args) {
-        ContextFactory.getGlobal()
-                .call(
-                        cx -> {
-                            ScriptableObject global = getGlobal(cx);
-
-                            // get the command line arguments and define "arguments"
-                            // array in the top-level object
-                            Object[] argsCopy = new Object[args.length];
-                            System.arraycopy(args, 0, argsCopy, 0, args.length);
-                            Scriptable argsObj = cx.newArray(global, argsCopy);
-                            global.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
-                            script.exec(cx, global);
-                            return null;
-                        });
     }
 
     public static void throwStopIteration(Object scope, Object genState) {

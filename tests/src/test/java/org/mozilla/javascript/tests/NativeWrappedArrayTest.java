@@ -16,6 +16,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -31,7 +32,8 @@ public class NativeWrappedArrayTest {
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
-        cx.getWrapFactory().setJavaPrimitiveWrap(false);
+        cx.setWrapFactory(new JavaWrapFactory());
+        ((JavaWrapFactory) cx.getWrapFactory()).setJavaPrimitiveWrap(false);
         global = new Global(cx);
     }
 

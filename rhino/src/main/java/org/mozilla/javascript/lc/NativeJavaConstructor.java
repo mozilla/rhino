@@ -4,7 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
+
+import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.MemberBox;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * This class reflects a single Java constructor into the JavaScript environment. It satisfies a
@@ -33,7 +38,7 @@ public class NativeJavaConstructor extends BaseFunction {
 
     @Override
     public String getFunctionName() {
-        String sig = JavaMembers.liveConnectSignature(ctor.argTypes);
+        String sig = JavaMembers.liveConnectSignature(ctor.getArgTypes());
         return "<init>".concat(sig);
     }
 

@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 public abstract class JsTestsBase {
     private int optimizationLevel;
@@ -56,6 +57,7 @@ public abstract class JsTestsBase {
     public void runJsTests(File[] tests) throws IOException {
         try (Context cx = threadSafeFactory.enterContext()) {
             cx.setOptimizationLevel(this.optimizationLevel);
+            cx.setWrapFactory(new JavaWrapFactory());
             Scriptable shared = cx.initStandardObjects();
             for (File f : tests) {
                 int length = (int) f.length(); // don't worry about very long

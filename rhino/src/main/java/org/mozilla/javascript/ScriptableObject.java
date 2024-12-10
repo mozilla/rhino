@@ -945,7 +945,7 @@ public abstract class ScriptableObject
      * @exception InvocationTargetException if an exception is thrown during execution of methods of
      *     the named class
      * @see org.mozilla.javascript.Function
-     * @see org.mozilla.javascript.FunctionObject
+     * @see FunctionObject
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject #defineProperty(String, Class, int)
      */
@@ -1913,7 +1913,7 @@ public abstract class ScriptableObject
         return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
-    protected static Scriptable ensureScriptable(Object arg) {
+    public static Scriptable ensureScriptable(Object arg) {
         if (!(arg instanceof Scriptable))
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;
@@ -1926,7 +1926,7 @@ public abstract class ScriptableObject
         return (SymbolScriptable) arg;
     }
 
-    protected static ScriptableObject ensureScriptableObject(Object arg) {
+    public static ScriptableObject ensureScriptableObject(Object arg) {
         if (arg instanceof ScriptableObject) {
             return (ScriptableObject) arg;
         }
@@ -1946,7 +1946,7 @@ public abstract class ScriptableObject
      * @param names the names of the Methods to add as function properties
      * @param clazz the class to search for the Methods
      * @param attributes the attributes of the new properties
-     * @see org.mozilla.javascript.FunctionObject
+     * @see FunctionObject
      */
     public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);

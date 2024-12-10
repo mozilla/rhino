@@ -19,8 +19,9 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.NativeJavaMethod;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.JavaWrapFactory;
+import org.mozilla.javascript.lc.NativeJavaMethod;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
@@ -236,6 +237,7 @@ public class NativeJavaMapTest {
         return getContextFactory(enableJavaMapAccess)
                 .call(
                         context -> {
+                            context.setWrapFactory(new JavaWrapFactory());
                             Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
@@ -247,6 +249,7 @@ public class NativeJavaMapTest {
         return getContextFactory(false)
                 .call(
                         context -> {
+                            context.setWrapFactory(new JavaWrapFactory());
                             Scriptable scope = context.newObject(global);
                             context.setLanguageVersion(Context.VERSION_ES6);
                             scope.put("value", scope, Context.javaToJS(value, scope));

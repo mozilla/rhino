@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.JavaWrapFactory;
 
 public class NativeObjectTest {
 
@@ -69,6 +70,7 @@ public class NativeObjectTest {
     @Test
     public void nativeJavaObject_hasOwnProperty() {
         try (Context cx = Context.enter()) {
+            cx.setWrapFactory(new JavaWrapFactory());
             Scriptable scope = cx.initStandardObjects();
             ScriptableObject.putProperty(scope, "javaObj", Context.javaToJS(new JavaObj(), scope));
             Object result =

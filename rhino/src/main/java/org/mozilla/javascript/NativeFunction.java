@@ -32,7 +32,7 @@ public abstract class NativeFunction extends BaseFunction {
      * @param flags Flags specifying format of decompilation output
      */
     @Override
-    final String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected final String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         String rawSource = getRawSource();
         if (rawSource != null) {
             return rawSource;

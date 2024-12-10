@@ -4,7 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.IdFunctionCall;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
@@ -83,7 +92,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         // We want to get a real alias, and not a distinct JavaPackage
         // with the same packageName, so that we share classes and top
         // that are underneath.
-        String[] topNames = ScriptRuntime.getTopPackageNames();
+        String[] topNames = getTopPackageNames();
         NativeJavaPackage[] topPackages = new NativeJavaPackage[topNames.length];
         for (int i = 0; i < topNames.length; i++) {
             topPackages[i] = (NativeJavaPackage) top.get(topNames[i], top);
@@ -101,6 +110,13 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         for (int i = 0; i < topNames.length; i++) {
             global.defineProperty(topNames[i], topPackages[i], ScriptableObject.DONTENUM);
         }
+    }
+
+    static String[] getTopPackageNames() {
+        // Include "android" top package if running on Android
+        return "Dalvik".equals(System.getProperty("java.vm.name"))
+                ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
+                : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }
 
     @Override
