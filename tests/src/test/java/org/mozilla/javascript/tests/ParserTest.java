@@ -33,6 +33,7 @@ import org.mozilla.javascript.ast.ExpressionStatement;
 import org.mozilla.javascript.ast.ForLoop;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.GeneratorMethodDefinition;
 import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.LabeledStatement;
@@ -1442,6 +1443,27 @@ public class ParserTest {
         assertEquals("g", f.getName());
         assertTrue(f.isGenerator());
         assertTrue(f.isES6Generator());
+    }
+
+    @Test
+    public void memberFunctionGenerator() {
+        environment.setLanguageVersion(Context.VERSION_ES6);
+        AstNode root = parse("o = { *g() { return true; } }");
+        ExpressionStatement expr = (ExpressionStatement) root.getFirstChild();
+        assertTrue(expr.getExpression() instanceof Assignment);
+        assertTrue(((Assignment) expr.getExpression()).getRight() instanceof ObjectLiteral);
+        ObjectLiteral obj = (ObjectLiteral) ((Assignment) expr.getExpression()).getRight();
+        assertEquals(1, obj.getElements().size());
+        ObjectProperty g = obj.getElements().get(0);
+
+        assertTrue(g.getLeft() instanceof GeneratorMethodDefinition);
+        assertLineColumnAre(0, 7, g.getLeft());
+        AstNode genMethodName = ((GeneratorMethodDefinition) g.getLeft()).getMethodName();
+        assertTrue(genMethodName instanceof Name);
+        assertLineColumnAre(0, 8, genMethodName);
+
+        assertTrue(g.getRight() instanceof FunctionNode);
+        assertTrue(((FunctionNode) g.getRight()).isES6Generator());
     }
 
     @Test
