@@ -32,7 +32,7 @@ public class ScriptRuntimeEquivalentValuesTest {
                                     "test",
                                     1,
                                     null);
-                    assertEquals("" + cx.getOptimizationLevel(), "true true", result);
+                    assertEquals("" + cx.isInterpretedMode(), "true true", result);
 
                     return null;
                 });
@@ -56,7 +56,7 @@ public class ScriptRuntimeEquivalentValuesTest {
                                     "test",
                                     1,
                                     null);
-                    assertEquals("" + cx.getOptimizationLevel(), "true true", result);
+                    assertEquals("" + cx.isInterpretedMode(), "true true", result);
 
                     return null;
                 });

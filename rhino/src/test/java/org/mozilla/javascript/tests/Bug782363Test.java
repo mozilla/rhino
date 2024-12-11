@@ -41,7 +41,6 @@ public class Bug782363Test {
     public void setUp() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_1_8);
-        cx.setOptimizationLevel(9);
     }
 
     @After
