@@ -71,7 +71,7 @@ public class ContinuationsApiTest {
     public void setUp() {
         try (Context cx = Context.enter()) {
             globalScope = cx.initStandardObjects();
-            cx.setOptimizationLevel(-1); // must use interpreter mode
+            cx.setInterpretedMode(true); // must use interpreter mode
             globalScope.put("myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
         }
     }
@@ -80,7 +80,7 @@ public class ContinuationsApiTest {
     public void scriptWithContinuations() {
         try (Context cx = Context.enter()) {
             try {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 Script script = cx.compileString("myObject.f(3) + 1;", "test source", 1, null);
                 cx.executeScriptWithContinuations(script, globalScope);
                 fail("Should throw ContinuationPending");
@@ -99,7 +99,7 @@ public class ContinuationsApiTest {
     public void scriptWithMultipleContinuations() {
         try (Context cx = Context.enter()) {
             try {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 Script script =
                         cx.compileString(
                                 "myObject.f(3) + myObject.g(3) + 2;", "test source", 1, null);
@@ -129,7 +129,7 @@ public class ContinuationsApiTest {
     public void scriptWithNestedContinuations() {
         try (Context cx = Context.enter()) {
             try {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 Script script =
                         cx.compileString(
                                 "myObject.g( myObject.f(1) ) + 2;", "test source", 1, null);
@@ -159,7 +159,7 @@ public class ContinuationsApiTest {
     public void functionWithContinuations() {
         try (Context cx = Context.enter()) {
             try {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 cx.evaluateString(
                         globalScope,
                         "function f(a) { return myObject.f(a); }",
@@ -189,7 +189,7 @@ public class ContinuationsApiTest {
     @Test
     public void errorOnEvalCall() {
         try (Context cx = Context.enter()) {
-            cx.setOptimizationLevel(-1); // must use interpreter mode
+            cx.setInterpretedMode(true); // must use interpreter mode
             Script script = cx.compileString("eval('myObject.f(3);');", "test source", 1, null);
             cx.executeScriptWithContinuations(script, globalScope);
             fail("Should throw IllegalStateException");
@@ -204,7 +204,7 @@ public class ContinuationsApiTest {
     public void serializationWithContinuations() throws IOException, ClassNotFoundException {
         try (Context cx = Context.enter()) {
             try {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 cx.evaluateString(
                         globalScope,
                         "function f(a) { var k = myObject.f(a); var t = []; return k; }",
@@ -255,13 +255,13 @@ public class ContinuationsApiTest {
 
             try (Context cx = Context.enter()) {
                 globalScope = cx.initStandardObjects();
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 globalScope.put(
                         "myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
             }
 
             try (Context cx = Context.enter()) {
-                cx.setOptimizationLevel(-1); // must use interpreter mode
+                cx.setInterpretedMode(true); // must use interpreter mode
                 cx.evaluateString(
                         globalScope,
                         "function f(a) { Number.prototype.blargh = function() {return 'foo';}; var k = myObject.f(a); var t = []; return new Number(8).blargh(); }",
@@ -315,12 +315,12 @@ public class ContinuationsApiTest {
 
         try (Context cx = Context.enter()) {
             globalScope = cx.initStandardObjects();
-            cx.setOptimizationLevel(-1); // must use interpreter mode
+            cx.setInterpretedMode(true); // must use interpreter mode
             globalScope.put("myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
         }
 
         try (Context cx = Context.enter()) {
-            cx.setOptimizationLevel(-1); // must use interpreter mode
+            cx.setInterpretedMode(true); // must use interpreter mode
 
             try {
                 cx.evaluateString(

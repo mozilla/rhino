@@ -37,7 +37,6 @@ public class ObjectBenchmark {
         @SuppressWarnings("unused")
         public void create() throws IOException {
             cx = Context.enter();
-            cx.setOptimizationLevel(9);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             scope = new Global(cx);

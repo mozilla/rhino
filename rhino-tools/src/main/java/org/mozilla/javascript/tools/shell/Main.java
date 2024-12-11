@@ -285,6 +285,7 @@ public class Main {
                 continue;
             }
             if (arg.equals("-opt") || arg.equals("-O")) {
+                // This bit remains for backward compatibility
                 if (++i == args.length) {
                     usageError = arg;
                     break goodUsage;
@@ -296,14 +297,13 @@ public class Main {
                     usageError = args[i];
                     break goodUsage;
                 }
-                if (opt == -2) {
-                    // Compatibility with Cocoon Rhino fork
-                    opt = -1;
-                } else if (!Context.isValidOptimizationLevel(opt)) {
-                    usageError = args[i];
-                    break goodUsage;
+                if (opt < 0) {
+                    shellContextFactory.setInterpretedMode(true);
                 }
-                shellContextFactory.setOptimizationLevel(opt);
+                continue;
+            }
+            if (arg.equals("-int")) {
+                shellContextFactory.setInterpretedMode(true);
                 continue;
             }
             if (arg.equals("-encoding")) {
@@ -551,7 +551,7 @@ public class Main {
         Object source = readFileOrUrl(path, !isClass);
 
         byte[] digest = getDigest(source);
-        String key = path + "_" + cx.getOptimizationLevel();
+        String key = path + "_" + (cx.isInterpretedMode() ? "int" : "comp");
         ScriptReference ref = scriptCache.get(key, digest);
         Script script = ref != null ? ref.get() : null;
 

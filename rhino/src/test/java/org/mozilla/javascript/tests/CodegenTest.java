@@ -32,7 +32,7 @@ public class CodegenTest {
                 _cx -> {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-                    if (_cx.getOptimizationLevel() > -1) {
+                    if (!_cx.isInterpretedMode()) {
                         Assert.assertTrue(
                                 script.getClass().getName(),
                                 script.getClass()
@@ -119,7 +119,7 @@ public class CodegenTest {
                 _cx -> {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-                    if (_cx.getOptimizationLevel() > -1) {
+                    if (!_cx.isInterpretedMode()) {
                         Assert.assertTrue(
                                 script.getClass().getName(),
                                 script.getClass()
@@ -188,7 +188,7 @@ public class CodegenTest {
                 _cx -> {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-                    if (_cx.getOptimizationLevel() > -1) {
+                    if (!_cx.isInterpretedMode()) {
                         Assert.assertTrue(
                                 script.getClass().getName(),
                                 script.getClass()
@@ -259,7 +259,7 @@ public class CodegenTest {
                 _cx -> {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-                    if (_cx.getOptimizationLevel() > -1) {
+                    if (!_cx.isInterpretedMode()) {
                         Assert.assertTrue(
                                 script.getClass().getName(),
                                 script.getClass()

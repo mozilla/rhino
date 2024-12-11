@@ -28,7 +28,7 @@ public class Bug685403Test {
     @Before
     public void setUp() {
         cx = Context.enter();
-        cx.setOptimizationLevel(-1);
+        cx.setInterpretedMode(true);
         scope = cx.initStandardObjects();
     }
 

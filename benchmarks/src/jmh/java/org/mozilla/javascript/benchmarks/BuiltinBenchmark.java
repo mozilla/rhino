@@ -22,7 +22,6 @@ public class BuiltinBenchmark {
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
             cx = Context.enter();
-            cx.setOptimizationLevel(9);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             scope = cx.initStandardObjects();

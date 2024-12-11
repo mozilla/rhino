@@ -80,8 +80,7 @@ public class Main {
                     continue;
                 }
                 if ((arg.equals("-opt") || arg.equals("-O")) && ++i < args.length) {
-                    int optLevel = Integer.parseInt(args[i]);
-                    compilerEnv.setOptimizationLevel(optLevel);
+                    // This no longer has an effect, but parse it for backward compatibility
                     continue;
                 }
             } catch (NumberFormatException e) {

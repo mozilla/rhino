@@ -38,7 +38,6 @@ public class DynamicScopeTest {
         protected Context makeContext() {
             Context cx = super.makeContext();
             cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
             return cx;
         }
     }

@@ -17,7 +17,7 @@ public class ReadCommentsTest {
     @Test
     public void readComments() throws IOException {
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
-        compilerEnv.setOptimizationLevel(5);
+        compilerEnv.setInterpretedMode(false);
         compilerEnv.setRecordingComments(true);
         compilerEnv.setRecordingLocalJsDocComments(true);
         compilerEnv.setStrictMode(true);

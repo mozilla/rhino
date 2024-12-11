@@ -17,8 +17,8 @@ import org.mozilla.javascript.tools.shell.Global;
 
 @RunWith(Parameterized.class)
 public class DoctestFeature18EnabledTest extends DoctestsTest {
-    public DoctestFeature18EnabledTest(String name, String source, int optimizationLevel) {
-        super(name, source, optimizationLevel);
+    public DoctestFeature18EnabledTest(String name, String source, boolean interpretedMode) {
+        super(name, source, interpretedMode);
     }
 
     @Parameters(name = "{0}")
@@ -26,7 +26,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
         List<Object[]> result = new ArrayList<Object[]>();
         File f = new File(DoctestsTest.baseDirectory, "feature18enabled.doctest");
         String contents = DoctestsTest.loadFile(f);
-        result.add(new Object[] {f.getName(), contents, -1});
+        result.add(new Object[] {f.getName(), contents, false});
         return result;
     }
 
@@ -45,7 +45,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
                 };
 
         try (Context context = contextFactory.enterContext()) {
-            context.setOptimizationLevel(optimizationLevel);
+            context.setInterpretedMode(interpretedMode);
             Global global = new Global(context);
             int testsPassed = global.runDoctest(context, global, source, name, 1);
             assertTrue(testsPassed > 0);

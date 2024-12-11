@@ -17,6 +17,12 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple:2.0.16")
 }
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs = [
+            '-Xlint:-deprecation'
+    ]
+}
+
 test {
     testLogging.showStandardStreams = true
     maxHeapSize = "1g"

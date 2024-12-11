@@ -54,14 +54,18 @@ import org.mozilla.javascript.ScriptableObject;
 public class RhinoScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
 
     /**
-     * Reserved key for the Rhino optimization level. Default is "9," for optimized and compiled
-     * code. Set this to "-1" to run Rhino in interpreted mode -- this is much much slower but the
-     * only option on platforms like Android that don't support class files.
+     * Reserved key for the Rhino optimization level. This is supported for backward compatibility
+     * -- any value less than zero results in using interpreted mode.
      */
     public static final String OPTIMIZATION_LEVEL = "org.mozilla.javascript.optimization_level";
 
+    /**
+     * Reserved key for interpreted mode, which is much slower than the default compiled mode but
+     * necessary on Android where Rhino can't generate class files.
+     */
+    public static final String INTERPRETED_MODE = "org.mozilla.javascript.interpreted_mode";
+
     static final int DEFAULT_LANGUAGE_VERSION = Context.VERSION_ES6;
-    private static final int DEFAULT_OPT = 9;
     private static final boolean DEFAULT_DEBUG = true;
     private static final String DEFAULT_FILENAME = "eval";
 
@@ -275,7 +279,14 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         }
         Object ol = get(OPTIMIZATION_LEVEL);
         if (ol != null) {
-            cx.setOptimizationLevel(parseInteger(ol));
+            int lvl = parseInteger(ol);
+            if (lvl < 0) {
+                cx.setInterpretedMode(true);
+            }
+        }
+        Object interpreted = get(INTERPRETED_MODE);
+        if (interpreted != null) {
+            cx.setInterpretedMode(parseBoolean(interpreted));
         }
     }
 
@@ -287,9 +298,19 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
                 throw new ScriptException("Invalid number " + v);
             }
         } else if (v instanceof Integer) {
-            return ((Integer) v).intValue();
+            return (Integer) v;
         } else {
             throw new ScriptException("Value must be a string or number");
+        }
+    }
+
+    private static boolean parseBoolean(Object v) throws ScriptException {
+        if (v instanceof String) {
+            return Boolean.parseBoolean((String) v);
+        } else if (v instanceof Boolean) {
+            return (Boolean) v;
+        } else {
+            throw new ScriptException("Value must be a string or boolean");
         }
     }
 
@@ -327,7 +348,6 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         @Override
         protected void onContextCreated(Context cx) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(DEFAULT_OPT);
             cx.setGeneratingDebug(DEFAULT_DEBUG);
         }
     }

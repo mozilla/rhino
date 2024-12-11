@@ -41,7 +41,6 @@ public class V8Benchmark {
         void initialize() {
             cx = Context.enter();
             cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
             scope = cx.initStandardObjects();
             evaluateSource(cx, scope, "testsrc/benchmarks/framework.js");
         }
