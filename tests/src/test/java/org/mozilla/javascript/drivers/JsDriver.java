@@ -624,7 +624,9 @@ public class JsDriver {
         }
 
         ShellContextFactory factory = new ShellContextFactory();
-        factory.setOptimizationLevel(arguments.getOptimizationLevel());
+        if (arguments.getOptimizationLevel() < 0) {
+            factory.setInterpretedMode(true);
+        }
         factory.setStrictMode(arguments.isStrict());
 
         File path = arguments.getTestsPath();

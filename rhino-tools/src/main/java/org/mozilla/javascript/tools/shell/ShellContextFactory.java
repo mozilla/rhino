@@ -14,7 +14,7 @@ public class ShellContextFactory extends ContextFactory {
     private boolean strictMode;
     private boolean warningAsError;
     private int languageVersion = Context.VERSION_ES6;
-    private int optimizationLevel;
+    private boolean interpretedMode;
     private boolean generatingDebug;
     private boolean allowReservedKeywords = true;
     private ErrorReporter errorReporter;
@@ -43,7 +43,7 @@ public class ShellContextFactory extends ContextFactory {
     @Override
     protected void onContextCreated(Context cx) {
         cx.setLanguageVersion(languageVersion);
-        cx.setOptimizationLevel(optimizationLevel);
+        cx.setInterpretedMode(interpretedMode);
         if (errorReporter != null) {
             cx.setErrorReporter(errorReporter);
         }
@@ -67,10 +67,9 @@ public class ShellContextFactory extends ContextFactory {
         this.languageVersion = version;
     }
 
-    public void setOptimizationLevel(int optimizationLevel) {
-        Context.checkOptimizationLevel(optimizationLevel);
+    public void setInterpretedMode(boolean interpreted) {
         checkNotSealed();
-        this.optimizationLevel = optimizationLevel;
+        this.interpretedMode = interpreted;
     }
 
     public void setErrorReporter(ErrorReporter errorReporter) {

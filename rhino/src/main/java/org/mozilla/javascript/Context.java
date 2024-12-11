@@ -1932,6 +1932,7 @@ public class Context implements Closeable {
      *
      * @since 1.3
      */
+    @Deprecated
     public final int getOptimizationLevel() {
         return interpretedMode ? -1 : 9;
     }
@@ -1953,6 +1954,7 @@ public class Context implements Closeable {
      * @param optimizationLevel an integer indicating the level of optimization to perform
      * @since 1.3
      */
+    @Deprecated
     public final void setOptimizationLevel(int optimizationLevel) {
         setInterpretedMode(optimizationLevel < 0);
     }
@@ -1967,10 +1969,12 @@ public class Context implements Closeable {
         this.interpretedMode = interpretedMode;
     }
 
+    @Deprecated
     public static boolean isValidOptimizationLevel(int optimizationLevel) {
         return -1 <= optimizationLevel && optimizationLevel <= 9;
     }
 
+    @Deprecated
     public static void checkOptimizationLevel(int optimizationLevel) {
         if (isValidOptimizationLevel(optimizationLevel)) {
             return;
