@@ -133,7 +133,7 @@ public class Main {
      */
     public static void main(String args[]) {
         try {
-            if (RhinoConfig.getBoolean("rhino.use_java_policy_security")) {
+            if (RhinoConfig.DEFAULT.useJavaPolicySecurity()) {
                 initJavaPolicySecuritySupport();
             }
         } catch (SecurityException ex) {

@@ -11,6 +11,7 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.RhinoConfig;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
@@ -22,15 +23,7 @@ import org.mozilla.javascript.Token;
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class DefaultLinker implements GuardingDynamicLinker {
-    static final boolean DEBUG;
-
-    static {
-        String debugVal = System.getProperty("RHINO_DEBUG_LINKER");
-        if (debugVal == null) {
-            debugVal = System.getenv("RHINO_DEBUG_LINKER");
-        }
-        DEBUG = Boolean.parseBoolean(debugVal);
-    }
+    static final boolean DEBUG = RhinoConfig.DEFAULT.debugLinker();
 
     @Override
     public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc)
