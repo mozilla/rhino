@@ -374,7 +374,7 @@ public abstract class RhinoException extends RuntimeException {
     private static final long serialVersionUID = 1883500631321581169L;
 
     // Just for testing!
-    private static StackStyle stackStyle = StackStyle.RHINO;
+    private static StackStyle stackStyle = RhinoConfig.DEFAULT.stackStyle();
 
     private String sourceName;
     private int lineNumber;
@@ -383,18 +383,4 @@ public abstract class RhinoException extends RuntimeException {
 
     Object interpreterStackInfo;
     int[] interpreterLineData;
-
-    // Allow us to override default stack style for debugging.
-    static {
-        String style = RhinoConfig.getProperty("rhino.stack.style");
-        if (style != null) {
-            if ("Rhino".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.RHINO;
-            } else if ("Mozilla".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.MOZILLA;
-            } else if ("V8".equalsIgnoreCase(style)) {
-                stackStyle = StackStyle.V8;
-            }
-        }
-    }
 }
