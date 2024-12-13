@@ -5063,7 +5063,10 @@ public class ScriptRuntime {
                 Callable getterOrSetter = (Callable) value;
                 boolean isSetter = getterSetter == 1;
                 Integer index = id instanceof Integer ? (Integer) id : null;
-                String key = index == null ? ScriptRuntime.toString(id) : null;
+                Object key =
+                        index != null
+                                ? null
+                                : (id instanceof Symbol ? id : ScriptRuntime.toString(id));
                 so.setGetterOrSetter(key, index == null ? 0 : index, getterOrSetter, isSetter);
             }
         }

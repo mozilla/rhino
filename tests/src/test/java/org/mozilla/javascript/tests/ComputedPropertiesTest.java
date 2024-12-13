@@ -15,215 +15,135 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class ComputedPropertiesTest {
     @Test
-    public void objectWithComputedPropertiesWorkInInterpretedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(-1);
-            assertObjectWithMixedPropertiesWorks(cx);
-        }
+    public void objectWithComputedPropertiesWorks() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "\n"
+                                    + "function f(x) { return x; }\n"
+                                    + "\n"
+                                    + "var o = {\n"
+                                    + "  a: 1,\n"
+                                    + "  0: 2,\n"
+                                    + "  [-1]: 3\n,"
+                                    + "  [f('b')]: 4\n"
+                                    + "};\n"
+                                    + "o.a + o[0] + o['-1'] + o.b";
+
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertTrue(value instanceof Number);
+                    assertEquals(10, ((Number) value).intValue());
+                    return null;
+                });
     }
 
     @Test
-    public void objectWithComputedPropertiesWorkInCompiledMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-            assertObjectWithMixedPropertiesWorks(cx);
-        }
+    public void canCoerceFunctionToString() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "\n"
+                                    + "function f(x) {\n"
+                                    + "  var o = {\n"
+                                    + "    1: true,\n"
+                                    + "    [2]: false,\n"
+                                    + "    [g(x)]: 3\n"
+                                    + "  };\n"
+                                    + "}\n"
+                                    + "f.toString()";
+
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertTrue(value instanceof String);
+                    assertEquals(
+                            "function f(x) {\n"
+                                    + "  var o = {\n"
+                                    + "    1: true,\n"
+                                    + "    [2]: false,\n"
+                                    + "    [g(x)]: 3\n"
+                                    + "  };\n"
+                                    + "}",
+                            value);
+                    return null;
+                });
     }
 
     @Test
-    public void objectWithComputedPropertiesWorkInOptimizedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
-            assertObjectWithMixedPropertiesWorks(cx);
-        }
-    }
+    public void computedPropertiesWithSideEffectsWork() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    ;
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "'use strict';\n"
+                                    + "var x = 0;\n"
+                                    + "var o = {\n"
+                                    + "  [++x]: 'x',\n"
+                                    + "  a: ++x,\n"
+                                    + "  [++x]: 'y'\n"
+                                    + "};\n"
+                                    + "o[1] + o.a + o[3]";
 
-    private static void assertObjectWithMixedPropertiesWorks(Context cx) {
-        String script =
-                "\n"
-                        + "function f(x) { return x; }\n"
-                        + "\n"
-                        + "var o = {\n"
-                        + "  a: 1,\n"
-                        + "  0: 2,\n"
-                        + "  [-1]: 3\n,"
-                        + "  [f('b')]: 4\n"
-                        + "};\n"
-                        + "o.a + o[0] + o['-1'] + o.b";
-
-        ScriptableObject scope = cx.initStandardObjects();
-        Object value = cx.evaluateString(scope, script, "test", 1, null);
-        assertTrue(value instanceof Number);
-        assertEquals(10, ((Number) value).intValue());
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertEquals("x2y", value);
+                    return null;
+                });
     }
 
     @Test
-    public void canCoerceFunctionToStringInInterpretedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(-1);
-            assertCanCoerceFunctionWithComputedPropertiesToString(cx);
-        }
+    public void computedPropertyNameForGetterSetterWork() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script = "var o = { get ['x' + 1]() { return 42; }}; o.x1";
+
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertTrue(value instanceof Number);
+                    assertEquals(42, ((Number) value).intValue());
+                    return null;
+                });
     }
 
     @Test
-    public void canCoerceFunctionToStringInCompiledMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-            assertCanCoerceFunctionWithComputedPropertiesToString(cx);
-        }
-    }
+    public void computedPropertyNameAsSymbolForGetterSetterWork() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "var o = { get [Symbol.toStringTag]() { return 'foo'; }}; o.toString()";
 
-    private static void assertCanCoerceFunctionWithComputedPropertiesToString(Context cx) {
-        String script =
-                "\n"
-                        + "function f(x) {\n"
-                        + "  var o = {\n"
-                        + "    1: true,\n"
-                        + "    [2]: false,\n"
-                        + "    [g(x)]: 3\n"
-                        + "  };\n"
-                        + "}\n"
-                        + "f.toString()";
-
-        ScriptableObject scope = cx.initStandardObjects();
-        Object value = cx.evaluateString(scope, script, "test", 1, null);
-        assertTrue(value instanceof String);
-        assertEquals(
-                "function f(x) {\n"
-                        + "  var o = {\n"
-                        + "    1: true,\n"
-                        + "    [2]: false,\n"
-                        + "    [g(x)]: 3\n"
-                        + "  };\n"
-                        + "}",
-                value);
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertEquals("[object foo]", value);
+                    return null;
+                });
     }
 
     @Test
-    public void computedPropertiesWithSideEffectsWorkInInterpretedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(-1);
-            assertComputedPropertiesWithSideEffectsWork(cx);
-        }
-    }
+    public void yieldWorksForPropertyValues() {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    String script =
+                            "\n"
+                                    + "function *gen() {\n"
+                                    + " ({x: yield 1});\n"
+                                    + "}\n"
+                                    + "var g = gen()\n"
+                                    + "var res1 = g.next();\n"
+                                    + "var res2 = g.next();\n"
+                                    + "res1.value === 1 && !res1.done && res2.done\n";
 
-    @Test
-    public void computedPropertiesWithSideEffectsWorkInCompiledMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-            assertComputedPropertiesWithSideEffectsWork(cx);
-        }
-    }
-
-    @Test
-    public void computedPropertiesWithSideEffectsWorkInOptimizedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
-            assertComputedPropertiesWithSideEffectsWork(cx);
-        }
-    }
-
-    private static void assertComputedPropertiesWithSideEffectsWork(Context cx) {
-        String script =
-                "'use strict';\n"
-                        + "var x = 0;\n"
-                        + "var o = {\n"
-                        + "  [++x]: 'x',\n"
-                        + "  a: ++x,\n"
-                        + "  [++x]: 'y'\n"
-                        + "};\n"
-                        + "o[1] + o.a + o[3]";
-
-        ScriptableObject scope = cx.initStandardObjects();
-        Object value = cx.evaluateString(scope, script, "test", 1, null);
-        assertEquals("x2y", value);
-    }
-
-    @Test
-    public void computedPropertyNameForGetterSetterWorkInInterpretedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(-1);
-            assertComputedPropertyNameForGetterSetterWorks(cx);
-        }
-    }
-
-    @Test
-    public void computedPropertyNameForGetterSetterWorkInCompiled() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-            assertComputedPropertyNameForGetterSetterWorks(cx);
-        }
-    }
-
-    @Test
-    public void computedPropertyNameForGetterSetterWorkInOptimizedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
-            assertComputedPropertyNameForGetterSetterWorks(cx);
-        }
-    }
-
-    private static void assertComputedPropertyNameForGetterSetterWorks(Context cx) {
-        String script = "var o = { get ['x' + 1]() { return 42; }}; o.x1";
-
-        ScriptableObject scope = cx.initStandardObjects();
-        Object value = cx.evaluateString(scope, script, "test", 1, null);
-        assertTrue(value instanceof Number);
-        assertEquals(42, ((Number) value).intValue());
-    }
-
-    @Test
-    public void yieldWorksForPropertyValuesInInterpretedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(-1);
-            assertYieldWorksForPropertyValues(cx);
-        }
-    }
-
-    @Test
-    public void yieldWorksForPropertyValuesInCompiledMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-            assertYieldWorksForPropertyValues(cx);
-        }
-    }
-
-    @Test
-    public void yieldWorksForPropertyValuesInOptimizedMode() {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
-            assertYieldWorksForPropertyValues(cx);
-        }
-    }
-
-    private static void assertYieldWorksForPropertyValues(Context cx) {
-        String script =
-                "\n"
-                        + "function *gen() {\n"
-                        + " ({x: yield 1});\n"
-                        + "}\n"
-                        + "var g = gen()\n"
-                        + "var res1 = g.next();\n"
-                        + "var res2 = g.next();\n"
-                        + "res1.value === 1 && !res1.done && res2.done\n";
-
-        ScriptableObject scope = cx.initStandardObjects();
-        Object value = cx.evaluateString(scope, script, "test", 1, null);
-        assertEquals(Boolean.TRUE, value);
+                    ScriptableObject scope = cx.initStandardObjects();
+                    Object value = cx.evaluateString(scope, script, "test", 1, null);
+                    assertEquals(Boolean.TRUE, value);
+                    return null;
+                });
     }
 
     @Test
