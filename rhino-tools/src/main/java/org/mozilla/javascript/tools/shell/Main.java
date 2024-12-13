@@ -285,7 +285,8 @@ public class Main {
                 continue;
             }
             if (arg.equals("-opt") || arg.equals("-O")) {
-                // This bit remains for backward compatibility
+                // As of 1.8.0, this bit remains for backward compatibility,
+                // although it is no longer documented in the "help" message.
                 if (++i == args.length) {
                     usageError = arg;
                     break goodUsage;
@@ -302,7 +303,7 @@ public class Main {
                 }
                 continue;
             }
-            if (arg.equals("-int")) {
+            if (arg.equals("-int") || arg.equals("-interpreted")) {
                 shellContextFactory.setInterpretedMode(true);
                 continue;
             }
@@ -551,7 +552,7 @@ public class Main {
         Object source = readFileOrUrl(path, !isClass);
 
         byte[] digest = getDigest(source);
-        String key = path + "_" + (cx.isInterpretedMode() ? "int" : "comp");
+        String key = path + "_" + (cx.isInterpretedMode() ? "interpreted" : "compiled");
         ScriptReference ref = scriptCache.get(key, digest);
         Script script = ref != null ? ref.get() : null;
 

@@ -98,6 +98,9 @@ public class CompilerEnvirons {
         xmlAvailable = flag;
     }
 
+    /**
+     * @deprecated As of 1.8.0, use {@link #isInterpretedMode()} instead.
+     */
     @Deprecated
     public final int getOptimizationLevel() {
         return interpretedMode ? -1 : 9;
@@ -107,7 +110,11 @@ public class CompilerEnvirons {
         return interpretedMode;
     }
 
+    /**
+     * @deprecated As of 1.8.0, use {@link #setInterpretedMode(boolean)} instead.
+     */
     @Deprecated
+    @SuppressWarnings("deprecation")
     public void setOptimizationLevel(int level) {
         Context.checkOptimizationLevel(level);
         interpretedMode = (level < 0);

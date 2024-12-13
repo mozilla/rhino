@@ -80,7 +80,10 @@ public class Main {
                     continue;
                 }
                 if ((arg.equals("-opt") || arg.equals("-O")) && ++i < args.length) {
-                    // This no longer has an effect, but parse it for backward compatibility
+                    // As of 1.8.0, optimization levels no longer have an effect, but
+                    // parse this for backward compatibility with existing scripts.
+                    // Technically the optimization level was replaced with "interpreted
+                    // mode, but this tool only makes sense in compiled mode.
                     continue;
                 }
             } catch (NumberFormatException e) {

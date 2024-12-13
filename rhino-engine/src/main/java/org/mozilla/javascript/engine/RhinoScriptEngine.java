@@ -56,7 +56,10 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     /**
      * Reserved key for the Rhino optimization level. This is supported for backward compatibility
      * -- any value less than zero results in using interpreted mode.
+     *
+     * @deprecated Replaced in 1.8.0; use {@link #INTERPRETED_MODE} instead.
      */
+    @Deprecated
     public static final String OPTIMIZATION_LEVEL = "org.mozilla.javascript.optimization_level";
 
     /**
@@ -272,6 +275,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         return factory;
     }
 
+    @SuppressWarnings("deprecation")
     private void configureContext(Context cx) throws ScriptException {
         Object lv = get(ScriptEngine.LANGUAGE_VERSION);
         if (lv != null) {
@@ -279,10 +283,8 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         }
         Object ol = get(OPTIMIZATION_LEVEL);
         if (ol != null) {
-            int lvl = parseInteger(ol);
-            if (lvl < 0) {
-                cx.setInterpretedMode(true);
-            }
+            // Handle backwardly-compatible "optimization level".
+            cx.setOptimizationLevel(parseInteger(ol));
         }
         Object interpreted = get(INTERPRETED_MODE);
         if (interpreted != null) {
@@ -297,21 +299,21 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             } catch (NumberFormatException nfe) {
                 throw new ScriptException("Invalid number " + v);
             }
-        } else if (v instanceof Integer) {
-            return (Integer) v;
-        } else {
-            throw new ScriptException("Value must be a string or number");
         }
+        if (v instanceof Integer) {
+            return (Integer) v;
+        }
+        throw new ScriptException("Value must be a string or number");
     }
 
     private static boolean parseBoolean(Object v) throws ScriptException {
         if (v instanceof String) {
             return Boolean.parseBoolean((String) v);
-        } else if (v instanceof Boolean) {
-            return (Boolean) v;
-        } else {
-            throw new ScriptException("Value must be a string or boolean");
         }
+        if (v instanceof Boolean) {
+            return (Boolean) v;
+        }
+        throw new ScriptException("Value must be a string or boolean");
     }
 
     private String getFilename() {

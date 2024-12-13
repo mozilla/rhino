@@ -82,7 +82,7 @@ public class MozillaSuiteTest {
     }
 
     public static String getTestFilename(boolean interpretedMode) {
-        return interpretedMode ? "opt-1.tests" : "opt9.tests";
+        return interpretedMode ? "interpreted.tests" : "compiled.tests";
     }
 
     public static File[] getTestFiles(boolean interpretedMode) throws IOException {

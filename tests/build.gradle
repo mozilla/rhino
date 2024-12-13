@@ -18,6 +18,8 @@ dependencies {
 }
 
 tasks.withType(JavaCompile) {
+    // We have deprecated things, like "optimization level", and have
+    // not yet removed them from all tests, so turn this warning off.
     options.compilerArgs = [
             '-Xlint:-deprecation'
     ]
