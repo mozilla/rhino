@@ -81,6 +81,7 @@ public class EqualObjectGraphsTest {
     @Test
     public void heterogenousScriptables() {
         try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
             ScriptableObject top = cx.initStandardObjects();
             ScriptRuntime.doTopCall(
                     (Callable)

@@ -566,6 +566,7 @@ public class NativeConsoleTest {
         DummyConsolePrinter printer = new DummyConsolePrinter();
 
         try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
             Scriptable scope = cx.initStandardObjects();
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);

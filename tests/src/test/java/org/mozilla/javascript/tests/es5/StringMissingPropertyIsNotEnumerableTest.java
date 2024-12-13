@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.mozilla.javascript.tests.Evaluator.eval;
 
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeObject;
 
 /**
@@ -19,8 +20,10 @@ public class StringMissingPropertyIsNotEnumerableTest {
     public void stringMissingPropertyIsNotEnumerable() {
         NativeObject object = new NativeObject();
 
-        Object result = eval("'s'.propertyIsEnumerable(0)", "obj", object);
-
-        assertFalse((Boolean) result);
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
+            Object result = eval("'s'.propertyIsEnumerable(0)", "obj", object);
+            assertFalse((Boolean) result);
+        }
     }
 }
