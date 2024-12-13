@@ -14,4 +14,6 @@ module org.mozilla.rhino {
     requires java.compiler;
     requires jdk.dynalink;
     requires transitive java.desktop;
+    requires kotlin.metadata.jvm;
+    requires kotlin.stdlib;
 }

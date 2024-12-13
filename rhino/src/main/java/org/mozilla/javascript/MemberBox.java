@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static kotlin.metadata.Attributes.isNullable;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -15,6 +17,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.Optional;
+import kotlin.Metadata;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmValueParameter;
+import kotlin.metadata.jvm.KotlinClassMetadata;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -27,6 +36,7 @@ final class MemberBox implements Serializable {
 
     private transient Member memberObject;
     transient Class<?>[] argTypes;
+    transient boolean[] argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -44,12 +54,56 @@ final class MemberBox implements Serializable {
     private void init(Method method) {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
+        this.argNullability = getParameterNullability(method);
         this.vararg = method.isVarArgs();
+    }
+
+    private boolean[] getParameterNullability(Method method) {
+        boolean[] result = new boolean[method.getParameters().length];
+        Metadata metadata = method.getDeclaringClass().getAnnotation(Metadata.class);
+        if (metadata != null) {
+            result = getParameterNullabilityFromKotlinMetadata(metadata, method.getName(), result);
+        }
+        return result;
+    }
+
+    private boolean[] getParameterNullability(Constructor<?> constructor) {
+        boolean[] result = new boolean[constructor.getParameters().length];
+        Metadata metadata = constructor.getDeclaringClass().getAnnotation(Metadata.class);
+        if (metadata != null) {
+            result =
+                    getParameterNullabilityFromKotlinMetadata(
+                            metadata, constructor.getName(), result);
+        }
+        return result;
+    }
+
+    private boolean[] getParameterNullabilityFromKotlinMetadata(
+            Metadata metadata, String methodName, boolean[] fallback) {
+        KotlinClassMetadata.Class kMetadata =
+                (KotlinClassMetadata.Class) KotlinClassMetadata.readLenient(metadata);
+        KmClass clazz = kMetadata.getKmClass();
+        Optional<KmFunction> function =
+                clazz.getFunctions().stream()
+                        .filter(f -> f.getName().equals(methodName))
+                        .findFirst();
+        if (function.isPresent()) {
+            List<KmValueParameter> params = function.get().getValueParameters();
+            boolean[] result = new boolean[params.size()];
+            int index = 0;
+            for (KmValueParameter parameter : params) {
+                result[index++] = isNullable(parameter.getType());
+            }
+            return result;
+        } else {
+            return fallback;
+        }
     }
 
     private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
+        this.argNullability = getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
     }
 
@@ -184,7 +238,8 @@ final class MemberBox implements Serializable {
                                                     thisObj,
                                                     originalArgs[0],
                                                     FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]))
+                                                            nativeSetter.argTypes[0]),
+                                                    nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
