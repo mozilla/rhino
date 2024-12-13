@@ -203,7 +203,7 @@ public class RhinoConfig {
     }
 
     /** "rhino.stack.style" */
-    private StackStyle stackStyle;
+    private StackStyle stackStyle = StackStyle.RHINO;
 
     private boolean useJavaPolicySecurity;
     private boolean printTrees = false;
