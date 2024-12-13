@@ -164,19 +164,32 @@ public class FunctionObject extends BaseFunction {
     }
 
     public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
+        return convertArg(cx, scope, arg, typeTag, false);
+    }
+
+    public static Object convertArg(
+            Context cx, Scriptable scope, Object arg, int typeTag, boolean isNullable) {
         switch (typeTag) {
             case JAVA_STRING_TYPE:
                 if (arg instanceof String) return arg;
-                return ScriptRuntime.toString(arg);
+                return (arg == null && isNullable) ? null : ScriptRuntime.toString(arg);
             case JAVA_INT_TYPE:
                 if (arg instanceof Integer) return arg;
-                return Integer.valueOf(ScriptRuntime.toInt32(arg));
+                return (arg == null && isNullable)
+                        ? null
+                        : Integer.valueOf(ScriptRuntime.toInt32(arg));
             case JAVA_BOOLEAN_TYPE:
                 if (arg instanceof Boolean) return arg;
-                return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
+                if (arg == null && isNullable) {
+                    return null;
+                } else {
+                    return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
+                }
             case JAVA_DOUBLE_TYPE:
                 if (arg instanceof Double) return arg;
-                return Double.valueOf(ScriptRuntime.toNumber(arg));
+                return (arg == null && isNullable)
+                        ? null
+                        : Double.valueOf(ScriptRuntime.toNumber(arg));
             case JAVA_SCRIPTABLE_TYPE:
                 return ScriptRuntime.toObjectOrNull(cx, arg, scope);
             case JAVA_OBJECT_TYPE:
@@ -321,7 +334,7 @@ public class FunctionObject extends BaseFunction {
 
     /**
      * @deprecated Use {@link #getTypeTag(Class)} and {@link #convertArg(Context, Scriptable,
-     *     Object, int)} for type conversion.
+     *     Object, int, boolean)} for type conversion.
      */
     @Deprecated
     public static Object convertArg(Context cx, Scriptable scope, Object arg, Class<?> desired) {
@@ -329,7 +342,7 @@ public class FunctionObject extends BaseFunction {
         if (tag == JAVA_UNSUPPORTED_TYPE) {
             throw Context.reportRuntimeErrorById("msg.cant.convert", desired.getName());
         }
-        return convertArg(cx, scope, arg, tag);
+        return convertArg(cx, scope, arg, tag, false);
     }
 
     /**
@@ -401,7 +414,8 @@ public class FunctionObject extends BaseFunction {
                 invokeArgs = args;
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = args[i];
-                    Object converted = convertArg(cx, scope, arg, typeTags[i]);
+                    Object converted =
+                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -415,7 +429,8 @@ public class FunctionObject extends BaseFunction {
                 invokeArgs = new Object[parmsLength];
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = (i < argsLength) ? args[i] : Undefined.instance;
-                    invokeArgs[i] = convertArg(cx, scope, arg, typeTags[i]);
+                    invokeArgs[i] =
+                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
                 }
             }
 
