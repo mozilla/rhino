@@ -96,7 +96,7 @@ public class Main {
             }
             if (type == PROCESS_FILES) {
                 processFiles(cx, args);
-                printPromiseWarnings(cx);
+                printPromiseWarnings(cx, true);
             } else if (type == EVAL_INLINE_SCRIPT) {
                 evalInlineScript(cx, scriptText);
             } else {
@@ -494,7 +494,7 @@ public class Main {
                         NativeArray h = global.history;
                         h.put((int) h.getLength(), h, source);
                     }
-                    printPromiseWarnings(cx);
+                    printPromiseWarnings(cx, false);
                 } catch (RhinoException rex) {
                     ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                     exitCode = EXITCODE_RUNTIME_ERROR;
@@ -643,21 +643,22 @@ public class Main {
         }
     }
 
-    private static void printPromiseWarnings(Context cx) {
+    private static void printPromiseWarnings(Context cx, boolean exitOnRejections) {
         List<Object> unhandled = cx.getUnhandledPromiseTracker().enumerate();
         if (!unhandled.isEmpty()) {
-            Object result = unhandled.get(0);
-            String msg = "Unhandled rejected promise: " + Context.toString(result);
-            if (result instanceof Scriptable) {
-                Object stack = ScriptableObject.getProperty((Scriptable) result, "stack");
-                if (stack != null && stack != Scriptable.NOT_FOUND) {
-                    msg += '\n' + Context.toString(stack);
+            for (Object rejection : unhandled) {
+                String msg = "Unhandled rejected promise: " + Context.toString(rejection);
+                if (rejection instanceof Scriptable) {
+                    Object stack = ScriptableObject.getProperty((Scriptable) rejection, "stack");
+                    if (stack != null && stack != Scriptable.NOT_FOUND) {
+                        msg += '\n' + Context.toString(stack);
+                    }
                 }
+                System.out.println(msg);
             }
-            System.out.println(msg);
-            if (unhandled.size() > 1) {
-                System.out.println(
-                        "  and " + (unhandled.size() - 1) + " other unhandled rejected promises");
+
+            if (exitOnRejections) {
+                exitCode = EXITCODE_RUNTIME_ERROR;
             }
         }
     }
