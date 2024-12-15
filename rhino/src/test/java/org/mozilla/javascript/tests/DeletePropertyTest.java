@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import org.junit.Test;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 
 /**
  * Test for delete that should apply for properties defined in prototype chain. See
@@ -27,11 +28,6 @@ public class DeletePropertyTest {
                         + "[].foo();\n"
                         + "[][1]();\n";
 
-        Utils.runWithAllOptimizationLevels(
-                _cx -> {
-                    final ScriptableObject scope = _cx.initStandardObjects();
-                    final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(Undefined.instance, script);
     }
 }

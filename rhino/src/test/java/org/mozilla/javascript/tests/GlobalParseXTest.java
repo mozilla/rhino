@@ -37,8 +37,8 @@ public class GlobalParseXTest {
     }
 
     private void testParseFloatWhiteSpaces(final String prefix) {
-        assertEvaluates("789", "String(parseInt('" + prefix + "789 '))");
-        assertEvaluates("7.89", "String(parseFloat('" + prefix + "7.89 '))");
+        Utils.assertWithAllOptimizationLevels("789", "String(parseInt('" + prefix + "789 '))");
+        Utils.assertWithAllOptimizationLevels("7.89", "String(parseFloat('" + prefix + "7.89 '))");
     }
 
     /**
@@ -70,16 +70,6 @@ public class GlobalParseXTest {
     }
 
     private static void testParseFloat(final String expected, final String value) {
-        assertEvaluates(expected, "String(parseFloat('" + value + "'))");
-    }
-
-    private static void assertEvaluates(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                    assertEquals(expected, rep);
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(expected, "String(parseFloat('" + value + "'))");
     }
 }
