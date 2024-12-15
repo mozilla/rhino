@@ -559,8 +559,8 @@ public abstract class ScriptableObject
 
     /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */
     public void setGetterOrSetter(
-            String name, int index, Callable getterOrSetter, boolean isSetter) {
-        if (name != null && index != 0) throw new IllegalArgumentException(name);
+            Object name, int index, Callable getterOrSetter, boolean isSetter) {
+        if (name != null && index != 0) throw new IllegalArgumentException(name.toString());
         checkNotSealed(name, index);
 
         AccessorSlot aSlot;
@@ -1617,6 +1617,17 @@ public abstract class ScriptableObject
             }
         }
 
+        // this property lookup cannot happen from inside slotMap.compute lambda
+        // as it risks causing a deadlock if ThreadSafeSlotMapContainer is used
+        // and `this` is in prototype chain of `desc`
+        Object enumerable = getProperty(desc, "enumerable");
+        Object writable = getProperty(desc, "writable");
+        Object configurable = getProperty(desc, "configurable");
+        Object getter = getProperty(desc, "get");
+        Object setter = getProperty(desc, "set");
+        Object value = getProperty(desc, "value");
+        boolean accessorDescriptor = isAccessorDescriptor(desc);
+
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
         slotMap.compute(
@@ -1624,9 +1635,7 @@ public abstract class ScriptableObject
                 index,
                 (k, ix, existing) -> {
                     if (checkValid) {
-                        ScriptableObject current =
-                                existing == null ? null : existing.getPropertyDescriptor(cx, this);
-                        checkPropertyChange(id, current, desc);
+                        checkPropertyChangeForSlot(id, existing, desc);
                     }
 
                     Slot slot;
@@ -1636,14 +1645,21 @@ public abstract class ScriptableObject
                         slot = new Slot(k, ix, 0);
                         attributes =
                                 applyDescriptorToAttributeBitset(
-                                        DONTENUM | READONLY | PERMANENT, desc);
+                                        DONTENUM | READONLY | PERMANENT,
+                                        enumerable,
+                                        writable,
+                                        configurable);
                     } else {
                         slot = existing;
                         attributes =
-                                applyDescriptorToAttributeBitset(existing.getAttributes(), desc);
+                                applyDescriptorToAttributeBitset(
+                                        existing.getAttributes(),
+                                        enumerable,
+                                        writable,
+                                        configurable);
                     }
 
-                    if (isAccessorDescriptor(desc)) {
+                    if (accessorDescriptor) {
                         AccessorSlot fslot;
                         if (slot instanceof AccessorSlot) {
                             fslot = (AccessorSlot) slot;
@@ -1651,11 +1667,10 @@ public abstract class ScriptableObject
                             fslot = new AccessorSlot(slot);
                             slot = fslot;
                         }
-                        Object getter = getProperty(desc, "get");
                         if (getter != NOT_FOUND) {
                             fslot.getter = new AccessorSlot.FunctionGetter(getter);
                         }
-                        Object setter = getProperty(desc, "set");
+
                         if (setter != NOT_FOUND) {
                             fslot.setter = new AccessorSlot.FunctionSetter(setter);
                         }
@@ -1665,7 +1680,7 @@ public abstract class ScriptableObject
                             // Replace a non-base slot with a regular slot
                             slot = new Slot(slot);
                         }
-                        Object value = getProperty(desc, "value");
+
                         if (value != NOT_FOUND) {
                             slot.value = value;
                         } else if (existing == null) {
@@ -1729,30 +1744,47 @@ public abstract class ScriptableObject
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
+        LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
+        ScriptableObject newDesc = newSlot.buildPropertyDescriptor(cx);
+        checkPropertyDefinition(newDesc);
         slotMap.compute(
                 name,
                 0,
-                (id, index, existing) ->
-                        ensureLambdaAccessorSlot(
-                                cx, id, index, existing, getter, setter, attributes));
+                (id, index, existing) -> {
+                    if (existing != null) {
+                        // it's dangerous to use `this` as scope inside slotMap.compute.
+                        // It can cause deadlock when ThreadSafeSlotMapContainer is used
+
+                        return replaceExistingLambdaSlot(cx, name, existing, newSlot);
+                    }
+                    checkPropertyChangeForSlot(name, null, newDesc);
+                    return newSlot;
+                });
+    }
+
+    private LambdaAccessorSlot replaceExistingLambdaSlot(
+            Context cx, String name, Slot existing, LambdaAccessorSlot newSlot) {
+        LambdaAccessorSlot replacedSlot;
+        if (existing instanceof LambdaAccessorSlot) {
+            replacedSlot = (LambdaAccessorSlot) existing;
+        } else {
+            replacedSlot = new LambdaAccessorSlot(existing);
+        }
+
+        replacedSlot.replaceWith(newSlot);
+        var replacedDesc = replacedSlot.buildPropertyDescriptor(cx);
+
+        checkPropertyChangeForSlot(name, existing, replacedDesc);
+        return replacedSlot;
     }
 
     private LambdaAccessorSlot createLambdaAccessorSlot(
             Object name,
             int index,
-            Slot existing,
             java.util.function.Function<Scriptable, Object> getter,
             BiConsumer<Scriptable, Object> setter,
             int attributes) {
-        LambdaAccessorSlot slot;
-        if (existing == null) {
-            slot = new LambdaAccessorSlot(name, index);
-        } else if (existing instanceof LambdaAccessorSlot) {
-            slot = (LambdaAccessorSlot) existing;
-        } else {
-            slot = new LambdaAccessorSlot(existing);
-        }
-
+        LambdaAccessorSlot slot = new LambdaAccessorSlot(name, index);
         slot.setGetter(this, getter);
         slot.setSetter(this, setter);
         slot.setAttributes(attributes);
@@ -1773,14 +1805,14 @@ public abstract class ScriptableObject
         }
     }
 
-    protected void checkPropertyChange(Object id, ScriptableObject current, ScriptableObject desc) {
+    protected void checkPropertyChangeForSlot(Object id, Slot current, ScriptableObject desc) {
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
         } else {
-            if (isFalse(current.get("configurable", current))) {
+            if ((current.getAttributes() & PERMANENT) != 0) {
                 if (isTrue(getProperty(desc, "configurable")))
                     throw ScriptRuntime.typeErrorById("msg.change.configurable.false.to.true", id);
-                if (isTrue(current.get("enumerable", current))
+                if (((current.getAttributes() & DONTENUM) == 0)
                         != isTrue(getProperty(desc, "enumerable")))
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.enumerable.with.configurable.false", id);
@@ -1788,31 +1820,29 @@ public abstract class ScriptableObject
                 boolean isAccessor = isAccessorDescriptor(desc);
                 if (!isData && !isAccessor) {
                     // no further validation required for generic descriptor
-                } else if (isData && isDataDescriptor(current)) {
-                    if (isFalse(current.get("writable", current))) {
+                } else if (isData) {
+                    if ((current.getAttributes() & READONLY) != 0) {
                         if (isTrue(getProperty(desc, "writable")))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.writable.false.to.true.with.configurable.false",
                                     id);
 
-                        if (!sameValue(getProperty(desc, "value"), current.get("value", current)))
+                        if (!sameValue(getProperty(desc, "value"), current.value))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.value.with.writable.false", id);
                     }
-                } else if (isAccessor && isAccessorDescriptor(current)) {
-                    if (!sameValue(getProperty(desc, "set"), current.get("set", current)))
+                } else if (isAccessor && current instanceof AccessorSlot) {
+                    AccessorSlot accessor = (AccessorSlot) current;
+                    if (!accessor.isSameSetterFunction(getProperty(desc, "set")))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.setter.with.configurable.false", id);
 
-                    if (!sameValue(getProperty(desc, "get"), current.get("get", current)))
+                    if (!accessor.isSameGetterFunction(getProperty(desc, "get")))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.getter.with.configurable.false", id);
                 } else {
-                    if (isDataDescriptor(current))
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.change.property.data.to.accessor.with.configurable.false", id);
                     throw ScriptRuntime.typeErrorById(
-                            "msg.change.property.accessor.to.data.with.configurable.false", id);
+                            "msg.change.property.data.to.accessor.with.configurable.false", id);
                 }
             }
         }
@@ -1855,8 +1885,8 @@ public abstract class ScriptableObject
         return ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
-        Object enumerable = getProperty(desc, "enumerable");
+    protected int applyDescriptorToAttributeBitset(
+            int attributes, Object enumerable, Object writable, Object configurable) {
         if (enumerable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(enumerable)
@@ -1864,7 +1894,6 @@ public abstract class ScriptableObject
                             : attributes | DONTENUM;
         }
 
-        Object writable = getProperty(desc, "writable");
         if (writable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(writable)
@@ -1872,7 +1901,6 @@ public abstract class ScriptableObject
                             : attributes | READONLY;
         }
 
-        Object configurable = getProperty(desc, "configurable");
         if (configurable != NOT_FOUND) {
             attributes =
                     ScriptRuntime.toBoolean(configurable)
@@ -2812,33 +2840,6 @@ public abstract class ScriptableObject
             return (LambdaSlot) existing;
         } else {
             return new LambdaSlot(existing);
-        }
-    }
-
-    private LambdaAccessorSlot ensureLambdaAccessorSlot(
-            Context cx,
-            Object name,
-            int index,
-            Slot existing,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
-            int attributes) {
-        var newSlot = createLambdaAccessorSlot(name, index, existing, getter, setter, attributes);
-        var newDesc = newSlot.getPropertyDescriptor(cx, this);
-        checkPropertyDefinition(newDesc);
-
-        if (existing == null) {
-            checkPropertyChange(name, null, newDesc);
-            return newSlot;
-        } else if (existing instanceof LambdaAccessorSlot) {
-            var slot = (LambdaAccessorSlot) existing;
-            var existingDesc = slot.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
-        } else {
-            var existingDesc = existing.getPropertyDescriptor(cx, this);
-            checkPropertyChange(name, existingDesc, newDesc);
-            return newSlot;
         }
     }
 
