@@ -4,10 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Scriptable;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=419940
@@ -15,8 +12,6 @@ import org.mozilla.javascript.Scriptable;
  * @author Norris Boyd
  */
 public class Bug419940Test {
-    static final int value = 12;
-
     public abstract static class BaseFoo {
         public abstract int doSomething();
     }
@@ -24,21 +19,14 @@ public class Bug419940Test {
     public static class Foo extends BaseFoo {
         @Override
         public int doSomething() {
-            return value;
+            return 12;
         }
     }
 
     @Test
     public void adapter() {
-        String source = "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
+        String script = "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
 
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    Scriptable scope = cx.initStandardObjects();
-                    Object result = cx.evaluateString(scope, source, "source", 1, null);
-                    assertEquals(Integer.valueOf(value), result);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels(12, script);
     }
 }

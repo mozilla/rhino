@@ -6,7 +6,6 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
-import org.mozilla.javascript.ScriptableObject;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=412433
@@ -17,12 +16,6 @@ public class Bug412433Test {
 
     @Test
     public void malformedJavascript2() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
-                    cx.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
-
-                    return null;
-                });
+        Utils.assertWithAllOptimizationLevels("", "'' + \"\".split(/[/?,/&]/)");
     }
 }
