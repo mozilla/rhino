@@ -5,10 +5,7 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Scriptable;
 
 /**
  * Tests for global functions parseFloat and parseInt.

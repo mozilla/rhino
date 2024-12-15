@@ -5,7 +5,6 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
