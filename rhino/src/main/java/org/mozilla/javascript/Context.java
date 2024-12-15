@@ -105,14 +105,21 @@ public class Context implements Closeable {
     public static final int VERSION_1_8 = 180;
 
     /**
+     * Old constant for ECMAScript 6 and after. This has been replaced with the more clearly-named
+     * {@link #VERSION_ECMASCRIPT}. Both constants have the same value, and this is retained for
+     * compatibility.
+     */
+    public static final int VERSION_ES6 = 200;
+
+    /**
      * ECMAScript 6 and after. Since around version 1.7, this has been used to denote most new
-     * language features.
+     * language features. This has the same value as {@link #VERSION_ES6}.
      *
      * <p>As of version 1.8, the Rhino community has no plans to continue adding new language
      * versions, but instead plans to track the ECMAScript specification as it evolves and add new
      * features in new versions of Rhino.
      */
-    public static final int VERSION_ES6 = 200;
+    public static final int VERSION_ECMASCRIPT = VERSION_ES6;
 
     /**
      * Controls behaviour of <code>Date.prototype.getYear()</code>. If <code>
@@ -407,7 +414,7 @@ public class Context implements Closeable {
             throw new IllegalArgumentException("factory == null");
         }
         this.factory = factory;
-        version = VERSION_ES6;
+        version = VERSION_ECMASCRIPT;
         optimizationLevel = codegenClass != null ? 0 : -1;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
     }

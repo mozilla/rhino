@@ -60,7 +60,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
      */
     public static final String OPTIMIZATION_LEVEL = "org.mozilla.javascript.optimization_level";
 
-    static final int DEFAULT_LANGUAGE_VERSION = Context.VERSION_ES6;
+    static final int DEFAULT_LANGUAGE_VERSION = Context.VERSION_ECMASCRIPT;
     private static final int DEFAULT_OPT = 9;
     private static final boolean DEFAULT_DEBUG = true;
     private static final String DEFAULT_FILENAME = "eval";
@@ -326,7 +326,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
 
         @Override
         protected void onContextCreated(Context cx) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
             cx.setOptimizationLevel(DEFAULT_OPT);
             cx.setGeneratingDebug(DEFAULT_DEBUG);
         }
