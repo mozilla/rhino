@@ -9,14 +9,7 @@ import org.mozilla.javascript.Scriptable;
 public class NullishCoalescingOpTest {
     @Test
     public void testNullishCoalescingOperatorRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.evaluateString(scope, "true ?? false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "true ?? false");
     }
 
     @Test
@@ -75,16 +68,7 @@ public class NullishCoalescingOpTest {
 
     @Test
     public void testNullishAssignmentRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () ->
-                                    cx.evaluateString(
-                                            scope, "a = true; a ??= false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "a = true; a ??= false");
     }
 
     @Test
