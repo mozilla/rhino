@@ -46,6 +46,9 @@ public abstract class SlotMapOwner {
     protected static SlotMap createSlotMap(int initialSize) {
         Context cx = Context.getCurrentContext();
         if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
+            if (initialSize == 0) {
+                return ThreadSafeSlotMapContainer.EMPTY_SLOT_MAP;
+            }
             return new ThreadSafeSlotMapContainer(initialSize);
         } else if (initialSize == 0) {
             return SlotMapContainer.EMPTY_SLOT_MAP;

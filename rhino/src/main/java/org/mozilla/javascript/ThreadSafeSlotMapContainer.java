@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.locks.StampedLock;
 
@@ -23,6 +24,71 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
     ThreadSafeSlotMapContainer(int initialSize) {
         super(initialSize);
     }
+
+    private static final class EmptySlotMap implements SlotMap {
+
+        @Override
+        public Iterator<Slot> iterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return true;
+        }
+
+        @Override
+        public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+            var newSlot = new Slot(key, index, attributes);
+            var currentMap = replaceMapAndAddSlot(owner, newSlot);
+            if (currentMap != this) {
+                return currentMap.modify(owner, key, index, attributes);
+            }
+            return newSlot;
+        }
+
+        @Override
+        public Slot query(Object key, int index) {
+            return null;
+        }
+
+        @Override
+        public void add(SlotMapOwner owner, Slot newSlot) {
+            if (newSlot != null) {
+                var currentMap = replaceMapAndAddSlot(owner, newSlot);
+                if (currentMap != this) {
+                    currentMap.add(owner, newSlot);
+                }
+                return;
+            }
+        }
+
+        @Override
+        public <S extends Slot> S compute(
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            var newSlot = c.compute(key, index, null);
+            if (newSlot != null) {
+                var currentMap = replaceMapAndAddSlot(owner, newSlot);
+                if (currentMap != this) {
+                    return currentMap.compute(owner, key, index, c);
+                }
+            }
+            return newSlot;
+        }
+
+        private SlotMap replaceMapAndAddSlot(SlotMapOwner owner, Slot newSlot) {
+            var map = new ThreadSafeSlotMapContainer();
+            map.add(null, newSlot);
+            return SlotMapOwner.ThreadedAccess.checkAndReplaceMap(owner, this, map);
+        }
+    }
+
+    static SlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
 
     @Override
     public int size() {
