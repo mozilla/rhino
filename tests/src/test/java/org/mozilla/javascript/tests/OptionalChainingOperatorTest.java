@@ -10,14 +10,7 @@ import org.mozilla.javascript.Undefined;
 public class OptionalChainingOperatorTest {
     @Test
     public void requiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.evaluateString(scope, "a?.b", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "a?.b");
     }
 
     @Test
