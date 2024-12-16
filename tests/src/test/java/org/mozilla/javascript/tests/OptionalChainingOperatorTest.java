@@ -3,7 +3,6 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -11,15 +10,7 @@ import org.mozilla.javascript.Undefined;
 public class OptionalChainingOperatorTest {
     @Test
     public void requiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.evaluateString(scope, "a?.b", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "a?.b");
     }
 
     @Test
