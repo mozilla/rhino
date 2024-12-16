@@ -259,7 +259,9 @@ public class Utils {
             String js) {
 
         // to avoid false positives because we use startsWith()
-        assertTrue("expectedMessage can't be empty",expectedMessage != null && !expectedMessage.isEmpty());
+        assertTrue(
+                "expectedMessage can't be empty",
+                expectedMessage != null && !expectedMessage.isEmpty());
 
         Utils.runWithAllOptimizationLevels(
                 cx -> {
