@@ -1,7 +1,29 @@
 package org.mozilla.javascript;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
 public abstract class SlotMapOwner {
     private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    static final class ThreadedAccess {
+
+        private static final VarHandle SLOT_MAP = getSlotMapHandle();
+
+        private static VarHandle getSlotMapHandle() {
+            try {
+                return MethodHandles.lookup()
+                        .findVarHandle(SlotMapOwner.class, "slotMap", SlotMap.class);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new Error(e);
+            }
+        }
+
+        static SlotMap checkAndReplaceMap(SlotMapOwner owner, SlotMap oldMap, SlotMap newMap) {
+            return (SlotMap) SLOT_MAP.compareAndExchange(owner, oldMap, newMap);
+        }
+    }
 
     /**
      * This holds all the slots. It may or may not be thread-safe, and may expand itself to a
