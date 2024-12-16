@@ -3,22 +3,13 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 
 public class NullishCoalescingOpTest {
     @Test
     public void testNullishCoalescingOperatorRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.evaluateString(scope, "true ?? false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "true ?? false");
     }
 
     @Test
@@ -77,17 +68,7 @@ public class NullishCoalescingOpTest {
 
     @Test
     public void testNullishAssignmentRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () ->
-                                    cx.evaluateString(
-                                            scope, "a = true; a ??= false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "a = true; a ??= false");
     }
 
     @Test
