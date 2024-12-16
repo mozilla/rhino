@@ -57,4 +57,9 @@ public abstract class SlotMapOwner {
     final void setMap(SlotMap newMap) {
         slotMap = newMap;
     }
+
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    final SlotMap checkAndReplaceMap(SlotMap oldMap, SlotMap newMap) {
+        return (SlotMap) SLOT_MAP.compareAndExchange(this, oldMap, newMap);
+    }
 }
