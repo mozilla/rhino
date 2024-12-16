@@ -1,10 +1,6 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertThrows;
-
 import org.junit.Test;
-import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
 
 public class NullishCoalescingOpTest {
     @Test
