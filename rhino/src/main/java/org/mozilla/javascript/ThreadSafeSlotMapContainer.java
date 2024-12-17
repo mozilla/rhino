@@ -8,6 +8,8 @@ package org.mozilla.javascript;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.locks.StampedLock;
 
 /**
@@ -82,9 +84,108 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
         }
 
         private SlotMap replaceMapAndAddSlot(SlotMapOwner owner, Slot newSlot) {
-            var map = new ThreadSafeSlotMapContainer();
-            map.add(null, newSlot);
+            var map = new SingleEntrySlotMap(newSlot);
             return SlotMapOwner.ThreadedAccess.checkAndReplaceMap(owner, this, map);
+        }
+    }
+
+    private static final class Iter implements Iterator<Slot> {
+        private Slot next;
+
+        Iter(Slot slot) {
+            next = slot;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public Slot next() {
+            Slot ret = next;
+            if (ret == null) {
+                throw new NoSuchElementException();
+            }
+            next = next.orderedNext;
+            return ret;
+        }
+    }
+
+    static final class SingleEntrySlotMap implements SlotMap {
+
+        SingleEntrySlotMap(Slot slot) {
+            assert (slot != null);
+            this.slot = slot;
+        }
+
+        private final Slot slot;
+
+        @Override
+        public Iterator<Slot> iterator() {
+            return new Iter(slot);
+        }
+
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+            final int indexOrHash = (key != null ? key.hashCode() : index);
+
+            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                return slot;
+            }
+            Slot newSlot = new Slot(key, index, attributes);
+            add(owner, newSlot);
+            return newSlot;
+        }
+
+        @Override
+        public Slot query(Object key, int index) {
+            final int indexOrHash = (key != null ? key.hashCode() : index);
+
+            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                return slot;
+            }
+            return null;
+        }
+
+        @Override
+        public void add(SlotMapOwner owner, Slot newSlot) {
+            if (owner == null) {
+                throw new IllegalStateException();
+            } else {
+                var newMap = new ThreadSafeSlotMapContainer(2);
+                newMap.add(null, slot);
+                var currentMap =
+                        SlotMapOwner.ThreadedAccess.checkAndReplaceMap(owner, this, newMap);
+                if (currentMap == this) {
+                    newMap.add(owner, newSlot);
+                } else {
+                    currentMap.add(owner, newSlot);
+                }
+            }
+        }
+
+        @Override
+        public <S extends Slot> S compute(
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            var newMap = new ThreadSafeSlotMapContainer(2);
+            newMap.add(null, slot);
+            var currentMap = SlotMapOwner.ThreadedAccess.checkAndReplaceMap(owner, this, newMap);
+            if (currentMap == this) {
+                return newMap.compute(owner, key, index, c);
+            } else {
+                return currentMap.compute(owner, key, index, c);
+            }
         }
     }
 
