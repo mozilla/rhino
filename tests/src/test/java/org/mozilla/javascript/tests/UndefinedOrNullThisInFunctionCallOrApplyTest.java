@@ -40,7 +40,6 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
 
     @After
     public void tearDown() throws Exception {
-        cx.setLanguageVersion(Context.VERSION_DEFAULT);
         Context.exit();
     }
 
@@ -106,6 +105,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         NativeArray arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
 
         assertNotEquals(arr.get(0), arr.get(1));
@@ -117,6 +117,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
         assertNotEquals(arr.get(0), arr.get(2));
@@ -126,6 +127,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
 
         assertNotEquals(arr.get(0), arr.get(1));
@@ -137,6 +139,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
         assertNotEquals(arr.get(0), arr.get(2));
@@ -149,6 +152,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         NativeArray arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
 
         assertEquals(arr.get(0), arr.get(1));
@@ -158,6 +162,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
 
         assertEquals(arr.get(0), arr.get(1));
@@ -171,6 +176,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         NativeArray arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
 
         assertNotEquals(arr.get(0), arr.get(1));
@@ -182,6 +188,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
         assertNotEquals(arr.get(0), arr.get(2));
@@ -191,6 +198,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
 
         assertNotEquals(arr.get(0), arr.get(1));
@@ -202,6 +210,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
         assertNotEquals(arr.get(0), arr.get(2));
@@ -214,6 +223,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         NativeArray arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
 
         assertEquals(arr.get(0), arr.get(1));
@@ -223,6 +233,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         arr =
                 (NativeArray)
                         Evaluator.eval(
+                                cx,
                                 "function F2() {return this;};[this, F2.call(), F2.call(null)];");
 
         assertEquals(arr.get(0), arr.get(1));

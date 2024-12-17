@@ -89,6 +89,7 @@ public class DoctestsTest {
     public void runDoctest() throws Exception {
         ContextFactory factory = ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setInterpretedMode(interpretedMode);
             Global global = new Global(cx);
             // global.runDoctest throws an exception on any failure

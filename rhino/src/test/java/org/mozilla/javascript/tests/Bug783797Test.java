@@ -25,6 +25,7 @@ public class Bug783797Test {
 
     private static ContextAction<Void> action(final String fn, final Action a) {
         return cx -> {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
             ScriptableObject scope1 = cx.initStandardObjects();
             ScriptableObject scope2 = cx.initStandardObjects();
             scope1.put("scope2", scope1, scope2);

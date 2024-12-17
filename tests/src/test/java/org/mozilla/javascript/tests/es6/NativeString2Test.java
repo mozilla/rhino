@@ -8,6 +8,7 @@
 package org.mozilla.javascript.tests.es6;
 
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tests.Utils;
 
 /** Test for handling const variables. */
@@ -50,7 +51,8 @@ public class NativeString2Test {
 
     @Test
     public void replaceReplacementAsString() {
-        Utils.assertWithAllOptimizationLevels("1null3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllOptimizationLevels(
+                Context.VERSION_DEFAULT, "1null3", "'123'.replace('2', /x/);");
         Utils.assertWithAllOptimizationLevelsES6("1/x/3", "'123'.replace('2', /x/);");
     }
 

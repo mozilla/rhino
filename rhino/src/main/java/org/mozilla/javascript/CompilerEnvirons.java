@@ -12,7 +12,7 @@ import org.mozilla.javascript.ast.ErrorCollector;
 public class CompilerEnvirons {
     public CompilerEnvirons() {
         errorReporter = DefaultErrorReporter.instance;
-        languageVersion = Context.VERSION_DEFAULT;
+        languageVersion = Context.VERSION_ECMASCRIPT;
         generateDebugInfo = true;
         reservedKeywordAsIdentifier = true;
         allowMemberExprAsFunctionName = false;

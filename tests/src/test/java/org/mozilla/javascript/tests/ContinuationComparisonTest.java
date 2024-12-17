@@ -31,6 +31,7 @@ public class ContinuationComparisonTest {
 
     private NativeContinuation createContinuation() throws Exception {
         try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setOptimizationLevel(-1); // interpreter for continuations
             ScriptableObject global = cx.initStandardObjects();
             final AtomicReference<NativeContinuation> captured = new AtomicReference<>();

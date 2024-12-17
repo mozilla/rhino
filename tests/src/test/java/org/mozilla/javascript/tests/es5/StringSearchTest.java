@@ -1,13 +1,12 @@
 package org.mozilla.javascript.tests.es5;
 
 import static org.junit.Assert.assertEquals;
-import static org.mozilla.javascript.tests.Evaluator.eval;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * @see <a
@@ -15,12 +14,13 @@ import org.mozilla.javascript.NativeObject;
  */
 public class StringSearchTest {
     private Context cx;
+    private Scriptable scope;
 
     @Before
     public void setUp() {
         cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        cx.initStandardObjects();
+        cx.setLanguageVersion(Context.VERSION_1_8);
+        scope = cx.initStandardObjects();
     }
 
     @After
@@ -30,9 +30,8 @@ public class StringSearchTest {
 
     @Test
     public void search() {
-        NativeObject object = new NativeObject();
-
-        Object result = eval("String.prototype.search(1, 1)", "obj", object);
+        Object result =
+                cx.evaluateString(scope, "String.prototype.search(1, 1)", "test.js", 1, null);
         assertEquals(-1, result);
     }
 }

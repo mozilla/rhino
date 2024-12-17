@@ -16,21 +16,33 @@ public class Evaluator {
         return eval(source, null);
     }
 
+    public static Object eval(Context cx, String source) {
+        return eval(cx, source, null);
+    }
+
     public static Object eval(String source, String id, Scriptable object) {
         return eval(source, Collections.singletonMap(id, object));
     }
 
+    public static Object eval(Context cx, String source, String id, Scriptable object) {
+        return eval(cx, source, Collections.singletonMap(id, object));
+    }
+
     public static Object eval(String source, Map<String, Scriptable> bindings) {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
-            Scriptable scope = cx.initStandardObjects();
-            if (bindings != null) {
-                for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
-                    final Scriptable object = entry.getValue();
-                    object.setParentScope(scope);
-                    scope.put(entry.getKey(), scope, object);
-                }
-            }
-            return cx.evaluateString(scope, source, "source", 1, null);
+            return eval(cx, source, bindings);
         }
+    }
+
+    public static Object eval(Context cx, String source, Map<String, Scriptable> bindings) {
+        Scriptable scope = cx.initStandardObjects();
+        if (bindings != null) {
+            for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
+                final Scriptable object = entry.getValue();
+                object.setParentScope(scope);
+                scope.put(entry.getKey(), scope, object);
+            }
+        }
+        return cx.evaluateString(scope, source, "source", 1, null);
     }
 }

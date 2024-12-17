@@ -66,6 +66,7 @@ public class ParserTest {
     @Before
     public void setUp() throws Exception {
         environment = new CompilerEnvirons();
+        environment.setLanguageVersion(Context.VERSION_DEFAULT);
     }
 
     @Test

@@ -40,6 +40,7 @@ public class SealedSharedScopeTest {
         }
 
         ctx = Context.enter();
+        ctx.setLanguageVersion(Context.VERSION_DEFAULT);
         scope1 = ctx.newObject(sharedScope);
         scope1.setPrototype(sharedScope);
         scope1.setParentScope(null);
@@ -79,7 +80,7 @@ public class SealedSharedScopeTest {
         assertEquals(java.sql.Date.class, o);
 
         o = evaluateString(scope1, "Date"); // JavaScript "Statement" function
-        assertEquals(IdFunctionObject.class, o.getClass());
+        assertTrue(o instanceof IdFunctionObject);
 
         o = evaluateString(scope2, "typeof imp1"); // scope 2 has
         // no imp1
@@ -104,7 +105,7 @@ public class SealedSharedScopeTest {
         assertEquals(java.sql.Date.class, o);
 
         o = evaluateString(scope1, "Date"); // JavaScript "Statement" function
-        assertEquals(IdFunctionObject.class, o.getClass());
+        assertTrue(o instanceof IdFunctionObject);
 
         o = evaluateString(scope2, "typeof imp1 == 'undefined'"); // scope 2 has
         // no imp1
