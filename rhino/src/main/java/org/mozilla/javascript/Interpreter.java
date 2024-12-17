@@ -2228,7 +2228,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                             continue StateLoop;
                                         }
                                     }
-                                    if (!(lhs instanceof Function)) {
+                                    if (!(lhs instanceof Constructable)) {
                                         if (lhs == DBL_MRK)
                                             lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
                                         throw ScriptRuntime.notFunctionError(lhs);
@@ -3559,7 +3559,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Continuation jump is almost done: capturedFrame
             // points to the call to the function that captured
             // continuation, so clone capturedFrame and
-            // emulate return that function with the supplied result
+            // emulate return that function with the suplied result
             frame = cjump.capturedFrame.cloneFrozen();
             setCallResult(frame, cjump.result, cjump.resultDbl);
             // restart the execution

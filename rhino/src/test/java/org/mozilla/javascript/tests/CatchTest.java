@@ -50,7 +50,7 @@ public class CatchTest {
 
         return factory.call(
                 context -> {
-                    context.setOptimizationLevel(-1);
+                    context.setInterpretedMode(true);
                     if (shutter != null) {
                         context.setClassShutter(shutter);
                     }

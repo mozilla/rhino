@@ -19,7 +19,7 @@ public class Bug482203Test {
     @Test
     public void jsApi() throws Exception {
         try (Context cx = Context.enter()) {
-            cx.setOptimizationLevel(-1);
+            cx.setInterpretedMode(true);
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
@@ -42,7 +42,7 @@ public class Bug482203Test {
     @Test
     public void javaApi() throws Exception {
         try (Context cx = Context.enter()) {
-            cx.setOptimizationLevel(-1);
+            cx.setInterpretedMode(true);
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);

@@ -20,15 +20,14 @@ public class ErrorPropertiesTest {
     static final String LS = System.getProperty("line.separator");
 
     private void testScriptStackTrace(final String script, final String expectedStackTrace) {
-        testScriptStackTrace(script, expectedStackTrace, -1);
-        testScriptStackTrace(script, expectedStackTrace, 0);
-        testScriptStackTrace(script, expectedStackTrace, 1);
+        testScriptStackTrace(script, expectedStackTrace, false);
+        testScriptStackTrace(script, expectedStackTrace, true);
     }
 
     private void testScriptStackTrace(
-            final String script, final String expectedStackTrace, final int optimizationLevel) {
+            final String script, final String expectedStackTrace, final boolean interpreted) {
         try {
-            Utils.executeScript(script, optimizationLevel);
+            Utils.executeScript(script, interpreted);
         } catch (final RhinoException e) {
             Assert.assertEquals(expectedStackTrace, e.getScriptStackTrace());
         }

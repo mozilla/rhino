@@ -91,9 +91,9 @@ public class ToNumberConversionsTest {
     public static Collection<Object[]> data() {
         List<Object[]> cases = new ArrayList<>();
 
-        for (int optLevel : Utils.DEFAULT_OPT_LEVELS) {
+        for (boolean interpreted : new boolean[] {false, true}) {
             for (Object[] test : TESTS) {
-                cases.add(new Object[] {test[0], test[1], optLevel});
+                cases.add(new Object[] {test[0], test[1], interpreted});
             }
         }
 
@@ -107,7 +107,7 @@ public class ToNumberConversionsTest {
     public String source;
 
     @Parameterized.Parameter(2)
-    public int optLevel;
+    public boolean interpreted;
 
     @SuppressWarnings("ConstantConditions")
     private boolean execute(Context cx, Scriptable scope, String script) {
@@ -120,7 +120,7 @@ public class ToNumberConversionsTest {
     @Before
     public void setup() {
         cx = Context.enter();
-        cx.setOptimizationLevel(optLevel);
+        cx.setInterpretedMode(interpreted);
         cx.setLanguageVersion(Context.VERSION_ES6);
         scope = cx.initSafeStandardObjects();
     }

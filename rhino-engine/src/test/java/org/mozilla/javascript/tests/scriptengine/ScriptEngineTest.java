@@ -47,7 +47,7 @@ public class ScriptEngineTest {
 
     @Test
     public void helloInterpreted() throws ScriptException {
-        engine.put(RhinoScriptEngine.OPTIMIZATION_LEVEL, -1);
+        engine.put(RhinoScriptEngine.INTERPRETED_MODE, true);
         Object result = engine.eval("'Hello, World!';");
         assertEquals(result, "Hello, World!");
     }
