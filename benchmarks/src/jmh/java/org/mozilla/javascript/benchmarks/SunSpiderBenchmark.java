@@ -26,7 +26,6 @@ public class SunSpiderBenchmark {
         public void setUp() {
             cx = Context.enter();
             cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(9);
             scope = cx.initStandardObjects();
 
             try (FileReader rdr = new FileReader(fileName)) {

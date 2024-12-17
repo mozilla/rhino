@@ -29,7 +29,7 @@ public class Issue385Test {
         cx.setLanguageVersion(Context.VERSION_1_8);
         // errors are reported in the parsing stage,
         // optimization level doesn't matter
-        cx.setOptimizationLevel(-1);
+        cx.setInterpretedMode(true);
     }
 
     @After

@@ -27,7 +27,6 @@ public class PropertyBenchmark {
         @Setup(Level.Trial)
         public void setup() throws IOException {
             cx = Context.enter();
-            cx.setOptimizationLevel(9);
             cx.setLanguageVersion(Context.VERSION_ES6);
             scope = cx.initStandardObjects();
 

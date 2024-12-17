@@ -17,6 +17,14 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple:2.0.16")
 }
 
+tasks.withType(JavaCompile) {
+    // We have deprecated things, like "optimization level", and have
+    // not yet removed them from all tests, so turn this warning off.
+    options.compilerArgs = [
+            '-Xlint:-deprecation'
+    ]
+}
+
 test {
     testLogging.showStandardStreams = true
     maxHeapSize = "1g"

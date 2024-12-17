@@ -37,13 +37,10 @@ public class Bug708801Test {
 
     private static final ContextFactory factory =
             new ContextFactory() {
-                static final int COMPILER_MODE = 9;
-
                 @Override
                 protected Context makeContext() {
                     Context cx = super.makeContext();
                     cx.setLanguageVersion(Context.VERSION_1_8);
-                    cx.setOptimizationLevel(COMPILER_MODE);
                     return cx;
                 }
             };

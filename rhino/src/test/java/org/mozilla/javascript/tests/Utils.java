@@ -5,14 +5,11 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 /**
  * Misc utilities to make test code easier.
@@ -21,38 +18,31 @@ import org.mozilla.javascript.ScriptableObject;
  * @author Ronald Brill
  */
 public class Utils {
-    /** The default set of levels to run tests at. */
-    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
-
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(final ContextAction<?> action) {
-        for (int level : getTestOptLevels()) {
-            runWithOptimizationLevel(action, level);
-        }
+        runWithMode(action, false);
+        runWithMode(action, true);
     }
 
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(
             final ContextFactory contextFactory, final ContextAction<?> action) {
-        for (int level : getTestOptLevels()) {
-            runWithOptimizationLevel(contextFactory, action, level);
-        }
+        runWithMode(contextFactory, action, false);
+        runWithMode(contextFactory, action, true);
+    }
+
+    /** Runs the provided action at the given interpretation mode */
+    public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
+        runWithMode(new ContextFactory(), action, interpretedMode);
     }
 
     /** Runs the provided action at the given optimization level */
-    public static void runWithOptimizationLevel(
-            final ContextAction<?> action, final int optimizationLevel) {
-        runWithOptimizationLevel(new ContextFactory(), action, optimizationLevel);
-    }
-
-    /** Runs the provided action at the given optimization level */
-    public static void runWithOptimizationLevel(
+    public static void runWithMode(
             final ContextFactory contextFactory,
             final ContextAction<?> action,
-            final int optimizationLevel) {
-
+            final boolean interpretedMode) {
         try (final Context cx = contextFactory.enterContext()) {
-            cx.setOptimizationLevel(optimizationLevel);
+            cx.setInterpretedMode(interpretedMode);
             action.run(cx);
         }
     }
@@ -62,25 +52,13 @@ public class Utils {
      *
      * @param script the script code
      */
-    static void executeScript(final String script, final int optimizationLevel) {
-        Utils.runWithOptimizationLevel(
+    static void executeScript(String script, boolean interpreted) {
+        Utils.runWithMode(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     return cx.evaluateString(scope, script, "myScript.js", 1, null);
                 },
-                optimizationLevel);
-    }
-
-    /**
-     * If the TEST_OPTLEVEL system property is set, then return an array containing only that one
-     * integer. Otherwise, return an array of the typical opt levels that we expect for testing.
-     */
-    public static int[] getTestOptLevels() {
-        String overriddenLevel = System.getProperty("TEST_OPTLEVEL");
-        if (overriddenLevel != null && !overriddenLevel.isEmpty()) {
-            return new int[] {Integer.parseInt(overriddenLevel)};
-        }
-        return DEFAULT_OPT_LEVELS;
+                interpreted);
     }
 
     public static void assertWithAllOptimizationLevels(final Object expected, final String script) {
@@ -103,23 +81,6 @@ public class Utils {
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
 
                     assertEquals(expected, res);
-                    return null;
-                });
-    }
-
-    public static void assertEvaluatorExceptionES6(String expectedMessage, String js) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    try {
-                        cx.evaluateString(scope, js, "test", 1, null);
-                        fail("EvaluatorException expected");
-                    } catch (EvaluatorException e) {
-                        assertEquals(expectedMessage, e.getMessage());
-                    }
-
                     return null;
                 });
     }

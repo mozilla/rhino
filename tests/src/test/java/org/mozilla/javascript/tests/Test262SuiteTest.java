@@ -511,11 +511,11 @@ public class Test262SuiteTest {
         }
     }
 
-    private Scriptable buildScope(Context cx, Test262Case testCase, int optLevel) {
+    private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
         ScriptableObject scope = cx.initSafeStandardObjects();
 
         for (String harnessFile : testCase.harnessFiles) {
-            String harnessKey = harnessFile + '-' + optLevel;
+            String harnessKey = harnessFile + '-' + interpretedMode;
             Script harnessScript =
                     HARNESS_SCRIPT_CACHE.computeIfAbsent(
                             harnessKey,
@@ -556,19 +556,19 @@ public class Test262SuiteTest {
     @MethodSource("test262SuiteValues")
     public void test262Case(
             String testFilePath,
-            int optLevel,
+            TestMode testMode,
             boolean useStrict,
             Test262Case testCase,
             boolean markedAsFailing) {
         try (Context cx = Context.enter()) {
-            cx.setOptimizationLevel(optLevel);
+            cx.setInterpretedMode(testMode == TestMode.INTERPRETED);
             cx.setGeneratingDebug(true);
 
             boolean failedEarly = false;
             try {
                 Scriptable scope;
                 try {
-                    scope = buildScope(cx, testCase, optLevel);
+                    scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
                 } catch (Exception ex) {
                     throw new RuntimeException(
                             "Failed to build a scope with the harness files.", ex);
@@ -598,7 +598,7 @@ public class Test262SuiteTest {
                 synchronized (RESULT_TRACKERS) {
                     TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
                     if (tracker != null) {
-                        tracker.passes(optLevel, useStrict);
+                        tracker.passes(testMode, useStrict);
                     }
                 }
             } catch (RhinoException ex) {
@@ -630,7 +630,7 @@ public class Test262SuiteTest {
                 synchronized (RESULT_TRACKERS) {
                     TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
                     if (tracker != null) {
-                        tracker.passes(optLevel, useStrict);
+                        tracker.passes(testMode, useStrict);
                     }
                 }
             } catch (Exception ex) {
@@ -825,7 +825,7 @@ public class Test262SuiteTest {
                             RESULT_TRACKERS.computeIfAbsent(
                                     new Test262Case(testFile, null, null, null, false, null, null),
                                     k -> new TestResultTracker(comment));
-                    tracker.setExpectations(-2, true, false, false, true);
+                    tracker.setExpectations(TestMode.SKIPPED, true, false, false, true);
                     continue;
                 }
             }
@@ -848,7 +848,7 @@ public class Test262SuiteTest {
                                 RESULT_TRACKERS.computeIfAbsent(
                                         testCase, k -> new TestResultTracker(comment));
                         tracker.setExpectations(
-                                -2,
+                                TestMode.SKIPPED,
                                 true,
                                 testCase.hasFlag(FLAG_ONLY_STRICT),
                                 testCase.hasFlag(FLAG_NO_STRICT),
@@ -865,7 +865,7 @@ public class Test262SuiteTest {
                             RESULT_TRACKERS.computeIfAbsent(
                                     testCase, k -> new TestResultTracker(comment));
                     tracker.setExpectations(
-                            -2,
+                            TestMode.SKIPPED,
                             true,
                             testCase.hasFlag(FLAG_ONLY_STRICT),
                             testCase.hasFlag(FLAG_NO_STRICT),
@@ -875,17 +875,17 @@ public class Test262SuiteTest {
                 continue;
             }
 
-            for (int optLevel : OPT_LEVELS) {
+            for (TestMode testMode : new TestMode[] {TestMode.INTERPRETED, TestMode.COMPILED}) {
                 if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
-                                caseShortPath, optLevel, false, testCase, markedAsFailing
+                                caseShortPath, testMode, false, testCase, markedAsFailing
                             });
                     TestResultTracker tracker =
                             RESULT_TRACKERS.computeIfAbsent(
                                     testCase, k -> new TestResultTracker(comment));
                     tracker.setExpectations(
-                            optLevel,
+                            testMode,
                             false,
                             testCase.hasFlag(FLAG_ONLY_STRICT),
                             testCase.hasFlag(FLAG_NO_STRICT),
@@ -895,13 +895,13 @@ public class Test262SuiteTest {
                 if (!testCase.hasFlag(FLAG_NO_STRICT) && !testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
-                                caseShortPath, optLevel, true, testCase, markedAsFailing
+                                caseShortPath, testMode, true, testCase, markedAsFailing
                             });
                     TestResultTracker tracker =
                             RESULT_TRACKERS.computeIfAbsent(
                                     testCase, k -> new TestResultTracker(comment));
                     tracker.setExpectations(
-                            optLevel,
+                            testMode,
                             true,
                             testCase.hasFlag(FLAG_ONLY_STRICT),
                             testCase.hasFlag(FLAG_NO_STRICT),
@@ -1009,9 +1009,14 @@ public class Test262SuiteTest {
         }
     }
 
+    private enum TestMode {
+        INTERPRETED,
+        COMPILED,
+        SKIPPED,
+    }
+
     private static class TestResultTracker {
-        private Set<Integer> strictOptLevel = new HashSet<>();
-        private Set<Integer> nonStrictOptLevel = new HashSet<>();
+        private Set<String> modes = new HashSet<>();
         private boolean onlyStrict;
         private boolean noStrict;
         private boolean expectedFailure;
@@ -1021,43 +1026,40 @@ public class Test262SuiteTest {
             this.comment = comment;
         }
 
+        private static String makeKey(TestMode mode, boolean useStrict) {
+            return mode.name().toLowerCase() + '-' + (useStrict ? "strict" : "non-strict");
+        }
+
         public void setExpectations(
-                int optLevel,
+                TestMode mode,
                 boolean useStrict,
                 boolean onlyStrict,
                 boolean noStrict,
                 boolean expectedFailure) {
-            if (useStrict) {
-                strictOptLevel.add(optLevel);
-            } else {
-                nonStrictOptLevel.add(optLevel);
-            }
+
+            modes.add(makeKey(mode, useStrict));
             this.onlyStrict = onlyStrict;
             this.noStrict = noStrict;
             this.expectedFailure = expectedFailure;
         }
 
         public boolean expectationsMet() {
-            return strictOptLevel.size() + nonStrictOptLevel.size() == 0;
+            return modes.isEmpty();
         }
 
-        public void passes(int optLevel, boolean useStrict) {
-            if (useStrict) {
-                strictOptLevel.remove(optLevel);
-            } else {
-                nonStrictOptLevel.remove(optLevel);
-            }
+        public void passes(TestMode mode, boolean useStrict) {
+            modes.remove(makeKey(mode, useStrict));
         }
 
         public String getResult(int[] optLevels, Test262Case tc) {
             // success on all optLevels in both strict and non-strict mode
-            if (strictOptLevel.size() + nonStrictOptLevel.size() == 0) {
+            if (modes.isEmpty()) {
                 return null;
             }
 
             // Test skipped due to dependencies on unsupported features/environment
-            if (strictOptLevel.contains(-2)) {
-                List<String> feats = new ArrayList<String>();
+            if (modes.contains("skipped-strict")) {
+                List<String> feats = new ArrayList<>();
 
                 for (String feature : tc.features) {
                     if (UNSUPPORTED_FEATURES.contains(feature)) {
@@ -1077,43 +1079,12 @@ public class Test262SuiteTest {
             }
 
             // failure on all optLevels in both strict and non-strict mode
-            if (strictOptLevel.size() == optLevels.length
-                    && nonStrictOptLevel.size() == optLevels.length) {
+            if (modes.size() == 4) {
                 return "";
             }
 
-            // all optLevels fail only in strict
-            if (strictOptLevel.size() == optLevels.length && nonStrictOptLevel.size() == 0) {
-                return "strict";
-            }
-
-            // all optLevels fail only in non-strict
-            if (nonStrictOptLevel.size() == optLevels.length && strictOptLevel.size() == 0) {
-                return "non-strict";
-            }
-
-            // success in interpreted optLevel, but failure in all other optLevels
-            if ((noStrict
-                            || (strictOptLevel.size() == optLevels.length - 1
-                                    && !strictOptLevel.contains(-1)))
-                    && (onlyStrict
-                            || (nonStrictOptLevel.size() == optLevels.length - 1
-                                    && !nonStrictOptLevel.contains(-1)))) {
-                return "non-interpreted";
-            }
-
             // mix of mode and optLevel successes and failures
-            String result = "{";
-            if (!noStrict && strictOptLevel.size() > 0) {
-                result += "strict: " + Arrays.toString(strictOptLevel.toArray());
-            }
-
-            if (!onlyStrict && nonStrictOptLevel.size() > 0) {
-                result += !noStrict && strictOptLevel.size() > 0 ? ", " : "";
-                result += "non-strict: " + Arrays.toString(nonStrictOptLevel.toArray());
-            }
-
-            return result + "}";
+            return '{' + String.join(",", new ArrayList<>(modes)) + '}';
         }
     }
 }

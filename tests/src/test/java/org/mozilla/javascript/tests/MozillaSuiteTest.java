@@ -44,13 +44,11 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
 @RunWith(Parameterized.class)
 public class MozillaSuiteTest {
     private final File jsFile;
-    private final int optimizationLevel;
+    private final boolean interpretedMode;
 
-    private static final int[] OPT_LEVELS = Utils.getTestOptLevels();
-
-    public MozillaSuiteTest(File jsFile, int optimizationLevel) {
+    public MozillaSuiteTest(File jsFile, boolean interpretedMode) {
         this.jsFile = jsFile;
-        this.optimizationLevel = optimizationLevel;
+        this.interpretedMode = interpretedMode;
         ShellTest.cacheFramework();
     }
 
@@ -83,14 +81,14 @@ public class MozillaSuiteTest {
         return testDir;
     }
 
-    public static String getTestFilename(int optimizationLevel) {
-        return "opt" + optimizationLevel + ".tests";
+    public static String getTestFilename(boolean interpretedMode) {
+        return interpretedMode ? "interpreted.tests" : "compiled.tests";
     }
 
-    public static File[] getTestFiles(int optimizationLevel) throws IOException {
+    public static File[] getTestFiles(boolean interpretedMode) throws IOException {
         File testDir = getTestDir();
         String[] tests =
-                TestUtils.loadTestsFromResource("/" + getTestFilename(optimizationLevel), null);
+                TestUtils.loadTestsFromResource("/" + getTestFilename(interpretedMode), null);
         Arrays.sort(tests);
         File[] files = new File[tests.length];
         for (int i = 0; i < files.length; i++) {
@@ -115,11 +113,10 @@ public class MozillaSuiteTest {
     @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
-        int[] optLevels = OPT_LEVELS;
-        for (int i = 0; i < optLevels.length; i++) {
-            File[] tests = getTestFiles(optLevels[i]);
+        for (boolean im : new boolean[] {false, true}) {
+            File[] tests = getTestFiles(im);
             for (File f : tests) {
-                result.add(new Object[] {f, optLevels[i]});
+                result.add(new Object[] {f, im});
             }
         }
         return result;
@@ -129,12 +126,11 @@ public class MozillaSuiteTest {
     //    @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> singleDoctest() throws IOException {
         final String SINGLE_TEST_FILE = "...";
-        final int[] SINGLE_TEST_OPTIMIZATION_LEVEL = OPT_LEVELS;
 
         List<Object[]> result = new ArrayList<Object[]>();
-        for (int optLevel : SINGLE_TEST_OPTIMIZATION_LEVEL) {
+        for (boolean im : new boolean[] {false, true}) {
             File f = new File(getTestDir(), SINGLE_TEST_FILE);
-            result.add(new Object[] {f, optLevel});
+            result.add(new Object[] {f, im});
         }
         return result;
     }
@@ -194,7 +190,7 @@ public class MozillaSuiteTest {
         // System.out.println("Test \"" + jsFile + "\" running under optimization level " +
         // optimizationLevel);
         final ShellContextFactory shellContextFactory = new ShellContextFactory();
-        shellContextFactory.setOptimizationLevel(optimizationLevel);
+        shellContextFactory.setInterpretedMode(interpretedMode);
         shellContextFactory.setLanguageVersion(Context.VERSION_1_8);
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
@@ -208,8 +204,7 @@ public class MozillaSuiteTest {
     public static void main(String[] args) throws IOException {
         try (PrintStream out = new PrintStream("fix-tests-files.sh")) {
             try {
-                for (int i = 0; i < OPT_LEVELS.length; i++) {
-                    int optLevel = OPT_LEVELS[i];
+                for (boolean im : new boolean[] {false, true}) {
                     File testDir = getTestDir();
                     File[] allTests =
                             TestUtils.recursiveListFiles(
@@ -222,13 +217,13 @@ public class MozillaSuiteTest {
                                         }
                                     });
                     HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
-                    File testFiles[] = getTestFiles(optLevel);
+                    File testFiles[] = getTestFiles(im);
                     diff.removeAll(Arrays.asList(testFiles));
                     ArrayList<String> skippedPassed = new ArrayList<String>();
                     int absolutePathLength = testDir.getAbsolutePath().length() + 1;
                     for (File testFile : diff) {
                         try {
-                            (new MozillaSuiteTest(testFile, optLevel)).runMozillaTest();
+                            (new MozillaSuiteTest(testFile, im)).runMozillaTest();
                             // strip off testDir
                             String canonicalized =
                                     testFile.getAbsolutePath().substring(absolutePathLength);
@@ -242,7 +237,7 @@ public class MozillaSuiteTest {
                     // skipped but now pass. Print out shell commands to update the
                     // appropriate *.tests file.
                     if (skippedPassed.size() > 0) {
-                        out.println("cat >> " + getTestFilename(optLevel) + " <<EOF");
+                        out.println("cat >> " + getTestFilename(im) + " <<EOF");
                         String[] sorted = skippedPassed.toArray(new String[0]);
                         Arrays.sort(sorted);
                         for (int j = 0; j < sorted.length; j++) {
