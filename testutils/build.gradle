@@ -1,0 +1,12 @@
+// This module contains library code used by the tests in multiple other modules.
+
+plugins {
+    id 'rhino.java-conventions'
+}
+
+dependencies {
+    implementation project(':rhino')
+    // We need this to be an "implementation" dependency because, in order to be shared
+    // with tests in other projects, code in here must be in "main".
+    implementation "junit:junit:4.13.2"
+}

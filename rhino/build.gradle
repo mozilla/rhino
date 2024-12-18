@@ -2,6 +2,9 @@ plugins {
     id 'rhino.library-conventions'
 }
 
+dependencies {
+    testImplementation project(':testutils')
+}
 
 publishing {
     publications {

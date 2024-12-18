@@ -25,6 +25,20 @@ public class Utils {
     /** The default set of levels to run tests at. */
     public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 9};
 
+    /**
+     * Execute the provided script in a fresh context as "myScript.js".
+     *
+     * @param script the script code
+     */
+    static void executeScript(String script, boolean interpreted) {
+        Utils.runWithMode(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    return cx.evaluateString(scope, script, "myScript.js", 1, null);
+                },
+                interpreted);
+    }
+
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(final ContextAction<?> action) {
         runWithMode(action, false);
@@ -50,6 +64,7 @@ public class Utils {
     }
 
     /** Runs the provided action at the given optimization level */
+    @SuppressWarnings("deprecation")
     public static void runWithOptimizationLevel(
             final ContextFactory contextFactory,
             final ContextAction<?> action,
@@ -92,7 +107,7 @@ public class Utils {
     }
 
     /**
-     * Execute the provided script and assert the result. The language version is not changed.
+     * Execute the provided script and assert the result. The language version is not ch anged.
      *
      * @param expected the expected result
      * @param script the javascript script to execute

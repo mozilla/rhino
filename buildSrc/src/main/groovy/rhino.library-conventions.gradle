@@ -1,3 +1,8 @@
+// This file inherits from "java-conventions" and adds additional error
+// checks and publishing data for modules that will be published to
+// Maven Central. It should only be used for those modules that will
+// be published and used by other projects.
+
 plugins {
     id 'rhino.java-conventions'
     id 'maven-publish'
