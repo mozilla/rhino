@@ -107,7 +107,7 @@ public class Utils {
     }
 
     /**
-     * Execute the provided script and assert the result. The language version is not ch anged.
+     * Execute the provided script and assert the result. The language version is not changed.
      *
      * @param expected the expected result
      * @param script the javascript script to execute
