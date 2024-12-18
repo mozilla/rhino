@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
@@ -2642,24 +2641,20 @@ public class Context implements Closeable {
     }
 
     /** Returns the current filename in the java stack. */
-    @SuppressWarnings("AndroidJdkLibsChecker")
-    // Android uses interpreter, so we should not get here.
     static String getSourcePositionFromJavaStack(int[] linep) {
-        Optional<StackWalker.StackFrame> frame =
-                StackWalker.getInstance()
-                        .walk(stream -> stream.filter(Context::frameMatches).findFirst());
-        return frame.map(
-                        f -> {
-                            linep[0] = f.getLineNumber();
-                            return f.getFileName();
-                        })
-                .orElse(null);
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        for (StackTraceElement e : stack) {
+            if (frameMatches(e)) {
+                linep[0] = e.getLineNumber();
+                return e.getFileName();
+            }
+        }
+        return null;
     }
 
-    @SuppressWarnings("AndroidJdkLibsChecker")
-    private static boolean frameMatches(StackWalker.StackFrame frame) {
-        return (frame.getFileName() == null || !frame.getFileName().endsWith(".java"))
-                && frame.getLineNumber() > 0;
+    private static boolean frameMatches(StackTraceElement e) {
+        return (e.getFileName() == null || !e.getFileName().endsWith(".java"))
+                && e.getLineNumber() > 0;
     }
 
     RegExpProxy getRegExpProxy() {
