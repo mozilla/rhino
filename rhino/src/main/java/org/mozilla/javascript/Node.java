@@ -1181,7 +1181,7 @@ public class Node implements Iterable<Node> {
                             Object[] a = (Object[]) x.objectValue;
                             sb.append("[");
                             for (int i = 0; i < a.length; i++) {
-                                sb.append(a[i].toString());
+                                if (a[i] != null) sb.append(a[i].toString());
                                 if (i + 1 < a.length) sb.append(", ");
                             }
                             sb.append("]");
