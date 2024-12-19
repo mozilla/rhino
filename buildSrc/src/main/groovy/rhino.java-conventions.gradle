@@ -1,3 +1,7 @@
+// This file contains Gradle "conventions" that we use in all of our projects.
+// It is the appropriate set of conventions to use for modules that will not be
+// published, such as test modules.
+
 plugins {
     id 'java-library'
     id 'com.diffplug.spotless'
