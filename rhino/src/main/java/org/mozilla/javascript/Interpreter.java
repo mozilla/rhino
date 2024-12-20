@@ -2006,6 +2006,14 @@ public final class Interpreter extends Icode implements Evaluator {
                                     if (lhs instanceof InterpretedFunction) {
                                         InterpretedFunction f = (InterpretedFunction) lhs;
                                         if (frame.fnOrScript.securityDomain == f.securityDomain) {
+                                            if (cx.getLanguageVersion() >= Context.VERSION_ES6
+                                                    && f.getHomeObject() != null) {
+                                                // Only methods have home objects associated with
+                                                // them
+                                                throw ScriptRuntime.typeErrorById(
+                                                        "msg.not.ctor", f.getFunctionName());
+                                            }
+
                                             Scriptable newInstance =
                                                     f.createObject(cx, frame.scope);
                                             CallFrame calleeFrame =
