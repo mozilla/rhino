@@ -52,6 +52,11 @@ public class SlotMapTest {
                         () -> new HashSlotMap(),
                         () -> new SlotMapContainer(),
                         () -> ThreadSafeSlotMapContainer.EMPTY_SLOT_MAP,
+                        () ->
+                                new ThreadSafeSlotMapContainer.SingleEntrySlotMap(
+                                        new Slot(new Object(), 0, 0)),
+                        () -> new ThreadSafeEmbeddedSlotMap(),
+                        () -> new ThreadSafeHashSlotMap(),
                         () -> new ThreadSafeSlotMapContainer());
         return suppliers.stream().map(i -> new Object[] {i}).collect(Collectors.toList());
     }

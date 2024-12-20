@@ -163,7 +163,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
             if (owner == null) {
                 throw new IllegalStateException();
             } else {
-                var newMap = new ThreadSafeSlotMapContainer(2);
+                var newMap = new ThreadSafeEmbeddedSlotMap(2);
                 newMap.add(null, slot);
                 var currentMap = owner.checkAndReplaceMap(this, newMap);
                 if (currentMap == this) {
@@ -177,7 +177,7 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
         @Override
         public <S extends Slot> S compute(
                 SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newMap = new ThreadSafeSlotMapContainer(2);
+            var newMap = new ThreadSafeEmbeddedSlotMap(2);
             newMap.add(null, slot);
             var currentMap = owner.checkAndReplaceMap(this, newMap);
             if (currentMap == this) {
