@@ -33,7 +33,6 @@ public class CompilerEnvirons {
         allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
         strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
         warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
-        xmlAvailable = cx.hasFeature(Context.FEATURE_E4X);
 
         interpretedMode = cx.isInterpretedMode();
 
@@ -42,6 +41,7 @@ public class CompilerEnvirons {
 
         // Observer code generation in compiled code :
         generateObserverCount = cx.isGenerateObserverCount();
+        cx.getFactory().getPlugins().forEach(plugin -> plugin.initCompilerEnvirons(cx, this));
     }
 
     public final ErrorReporter getErrorReporter() {
