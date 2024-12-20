@@ -48,8 +48,11 @@ public abstract class SlotMapOwner {
         if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
             if (initialSize == 0) {
                 return ThreadSafeSlotMapContainer.EMPTY_SLOT_MAP;
+            } else if (initialSize > SlotMapContainer.LARGE_HASH_SIZE) {
+                return new ThreadSafeHashSlotMap(initialSize);
+            } else {
+                return new ThreadSafeEmbeddedSlotMap();
             }
-            return new ThreadSafeSlotMapContainer(initialSize);
         } else if (initialSize == 0) {
             return SlotMapContainer.EMPTY_SLOT_MAP;
         } else if (initialSize > SlotMapContainer.LARGE_HASH_SIZE) {
