@@ -1750,7 +1750,7 @@ public class Context implements Closeable {
      * JavaScript type will be string.
      *
      * <p>The rest of values will be wrapped as LiveConnect objects by calling {@link
-     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class staticType)} as in:
+     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Type staticType)} as in:
      *
      * <pre>
      *    Context cx = Context.getCurrentContext();
@@ -1780,7 +1780,7 @@ public class Context implements Closeable {
      * JavaScript type will be string.
      *
      * <p>The rest of values will be wrapped as LiveConnect objects by calling {@link
-     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class staticType)} as in:
+     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Type staticType)} as in:
      *
      * <pre>
      *    return cx.getWrapFactory().wrap(cx, scope, value, null);
