@@ -12,6 +12,6 @@ public class ForTest {
     /** Test for issue #645. There was a NPE. */
     @Test
     public void forInit() {
-        Utils.assertWithAllOptimizationLevels(Undefined.instance, "for(({});;){ break; }");
+        Utils.assertWithAllModes(Undefined.instance, "for(({});;){ break; }");
     }
 }

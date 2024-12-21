@@ -59,7 +59,7 @@ public class PrimitiveTypeScopeResolutionTest {
     }
 
     private void testWithTwoScopes(final String scriptScope1, final String scriptScope2) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope1 =
                             cx.initStandardObjects(new MySimpleScriptableObject("scope1"));
@@ -126,7 +126,7 @@ public class PrimitiveTypeScopeResolutionTest {
 
         final String scriptScope1 = "String.prototype.foo = 'from 1'; scope2.f()";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope1 =
                             cx.initStandardObjects(new MySimpleScriptableObject("scope1"));

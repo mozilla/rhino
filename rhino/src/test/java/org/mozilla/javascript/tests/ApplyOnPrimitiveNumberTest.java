@@ -23,7 +23,7 @@ public class ApplyOnPrimitiveNumberTest {
     public void testIt() {
         final String script = "var fn = function() { return this; }\n" + "fn.apply(1)";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 _cx -> {
                     final ScriptableObject scope = _cx.initStandardObjects();
                     final Object result = _cx.evaluateString(scope, script, "test script", 0, null);

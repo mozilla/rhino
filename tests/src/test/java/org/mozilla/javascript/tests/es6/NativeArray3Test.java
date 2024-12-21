@@ -14,28 +14,28 @@ public class NativeArray3Test {
     public void iteratorPrototype() {
         String code = "Array.prototype.values === [][Symbol.iterator]";
 
-        Utils.assertWithAllOptimizationLevelsES6(true, code);
+        Utils.assertWithAllModes_ES6(true, code);
     }
 
     @Test
     public void iteratorInstances() {
         String code = "[1, 2][Symbol.iterator] === [][Symbol.iterator]";
 
-        Utils.assertWithAllOptimizationLevelsES6(true, code);
+        Utils.assertWithAllModes_ES6(true, code);
     }
 
     @Test
     public void iteratorPrototypeName() {
         String code = "Array.prototype.values.name;";
 
-        Utils.assertWithAllOptimizationLevelsES6("values", code);
+        Utils.assertWithAllModes_ES6("values", code);
     }
 
     @Test
     public void iteratorInstanceName() {
         String code = "[][Symbol.iterator].name;";
 
-        Utils.assertWithAllOptimizationLevelsES6("values", code);
+        Utils.assertWithAllModes_ES6("values", code);
     }
 
     @Test
@@ -52,6 +52,6 @@ public class NativeArray3Test {
                         + "res += arr[Symbol.iterator].toString().includes('return i;');\n"
                         + "res;";
 
-        Utils.assertWithAllOptimizationLevelsES6("false - true - false", code);
+        Utils.assertWithAllModes_ES6("false - true - false", code);
     }
 }

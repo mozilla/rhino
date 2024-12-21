@@ -1,31 +1,18 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertThrows;
-
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
 
 public class NullishCoalescingOpTest {
     @Test
     public void testNullishCoalescingOperatorRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () -> cx.evaluateString(scope, "true ?? false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "true ?? false");
     }
 
     @Test
     public void testNullishCoalescingBasic() {
-        Utils.assertWithAllOptimizationLevelsES6("val", "'val' ?? 'default string'");
-        Utils.assertWithAllOptimizationLevelsES6("default string", "null ?? 'default string'");
-        Utils.assertWithAllOptimizationLevelsES6("default string", "undefined ?? 'default string'");
+        Utils.assertWithAllModes_ES6("val", "'val' ?? 'default string'");
+        Utils.assertWithAllModes_ES6("default string", "null ?? 'default string'");
+        Utils.assertWithAllModes_ES6("default string", "undefined ?? 'default string'");
     }
 
     @Test
@@ -45,8 +32,7 @@ public class NullishCoalescingOpTest {
 
     @Test
     public void testNullishCoalescingPrecedence() {
-        Utils.assertWithAllOptimizationLevelsES6(
-                "yes", "3 == 3 ? 'yes' ?? 'default string' : 'no'");
+        Utils.assertWithAllModes_ES6("yes", "3 == 3 ? 'yes' ?? 'default string' : 'no'");
     }
 
     @Test
@@ -56,7 +42,7 @@ public class NullishCoalescingOpTest {
                         + "function f() { runs++; return 3; } \n"
                         + "var eval1 = f() ?? 42; \n"
                         + "runs";
-        Utils.assertWithAllOptimizationLevelsES6(1, script);
+        Utils.assertWithAllModes_ES6(1, script);
     }
 
     @Test
@@ -66,34 +52,24 @@ public class NullishCoalescingOpTest {
                         + "function f() { runs++; return 3; } \n"
                         + "var eval1 = 42 ?? f(); \n"
                         + "runs";
-        Utils.assertWithAllOptimizationLevelsES6(0, script);
+        Utils.assertWithAllModes_ES6(0, script);
     }
 
     @Test
     public void testNullishCoalescingDoesNotLeakVariables() {
         String script = "$0 = false; true ?? true; $0";
-        Utils.assertWithAllOptimizationLevelsES6(false, script);
+        Utils.assertWithAllModes_ES6(false, script);
     }
 
     @Test
     public void testNullishAssignmentRequiresES6() {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
-                    Scriptable scope = cx.initStandardObjects();
-                    assertThrows(
-                            EvaluatorException.class,
-                            () ->
-                                    cx.evaluateString(
-                                            scope, "a = true; a ??= false", "test.js", 0, null));
-                    return null;
-                });
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", "a = true; a ??= false");
     }
 
     @Test
     public void testNullishAssignment() {
-        Utils.assertWithAllOptimizationLevelsES6(true, "a = true; a ??= false; a");
-        Utils.assertWithAllOptimizationLevelsES6(false, "a = undefined; a ??= false; a");
-        Utils.assertWithAllOptimizationLevelsES6(false, "a = null; a ??= false; a");
+        Utils.assertWithAllModes_ES6(true, "a = true; a ??= false; a");
+        Utils.assertWithAllModes_ES6(false, "a = undefined; a ??= false; a");
+        Utils.assertWithAllModes_ES6(false, "a = null; a ??= false; a");
     }
 }

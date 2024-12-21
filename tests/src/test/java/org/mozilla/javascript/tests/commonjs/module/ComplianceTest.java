@@ -66,7 +66,7 @@ public class ComplianceTest {
 
     @Test
     public void require() throws Throwable {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     ScriptableObject.putProperty(scope, "print", new Print(scope));

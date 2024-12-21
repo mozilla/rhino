@@ -25,7 +25,7 @@ public class NativeObjectTest {
                         + "Error.captureStackTrace(myError);\n"
                         + "Object.freeze(myError);\n"
                         + "myError.stack.trim();";
-        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("at test.js:1", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("at test.js:1", script);
     }
 
     /**
@@ -42,8 +42,7 @@ public class NativeObjectTest {
                         + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');\n"
                         + "var res = '' + desc.get + '-' + desc.set + '-' + desc.value;\n"
                         + "res = res.replace(/(\\n|\\r)/gm, '');";
-        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6(
-                "undefined-undefined-\tat test.js:1", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("undefined-undefined-\tat test.js:1", script);
     }
 
     /**
@@ -59,7 +58,7 @@ public class NativeObjectTest {
                         + "Error.captureStackTrace(myError);\n"
                         + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');\n"
                         + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable";
-        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("true true false", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("true true false", script);
     }
 
     public static class JavaObj {

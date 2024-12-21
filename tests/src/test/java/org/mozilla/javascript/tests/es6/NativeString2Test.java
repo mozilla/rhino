@@ -29,50 +29,50 @@ public class NativeString2Test {
                         + "  res += desc.configurable;"
                         + "  res += ';';"
                         + "  res;";
-        Utils.assertWithAllOptimizationLevelsES6("true;h;false;true;false;", js);
+        Utils.assertWithAllModes_ES6("true;h;false;true;false;", js);
     }
 
     @Test
     public void normalizeNoParam() {
-        Utils.assertWithAllOptimizationLevels("123", "'123'.normalize()");
+        Utils.assertWithAllModes("123", "'123'.normalize()");
     }
 
     @Test
     public void normalizeNoUndefined() {
-        Utils.assertWithAllOptimizationLevels("123", "'123'.normalize(undefined)");
+        Utils.assertWithAllModes("123", "'123'.normalize(undefined)");
     }
 
     @Test
     public void normalizeNoNull() {
         String js = "try { " + "  '123'.normalize(null);" + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 "The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.", js);
     }
 
     @Test
     public void replaceReplacementAsString() {
-        Utils.assertWithAllOptimizationLevels(
-                Context.VERSION_DEFAULT, "1null3", "'123'.replace('2', /x/);");
-        Utils.assertWithAllOptimizationLevelsES6("1/x/3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllModes(
+                Context.VERSION_DEFAULT, null, "1null3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllModes_ES6("1/x/3", "'123'.replace('2', /x/);");
     }
 
     @Test
     public void indexOfEmpty() {
-        Utils.assertWithAllOptimizationLevels(0, "'1234'.indexOf('', 0);");
-        Utils.assertWithAllOptimizationLevels(1, "'1234'.indexOf('', 1);");
-        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 4);");
-        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 5);");
-        Utils.assertWithAllOptimizationLevels(4, "'1234'.indexOf('', 42);");
+        Utils.assertWithAllModes(0, "'1234'.indexOf('', 0);");
+        Utils.assertWithAllModes(1, "'1234'.indexOf('', 1);");
+        Utils.assertWithAllModes(4, "'1234'.indexOf('', 4);");
+        Utils.assertWithAllModes(4, "'1234'.indexOf('', 5);");
+        Utils.assertWithAllModes(4, "'1234'.indexOf('', 42);");
     }
 
     @Test
     public void includesEmpty() {
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('');");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 0);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 1);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 4);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 5);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.includes('', 42);");
+        Utils.assertWithAllModes(true, "'1234'.includes('');");
+        Utils.assertWithAllModes(true, "'1234'.includes('', 0);");
+        Utils.assertWithAllModes(true, "'1234'.includes('', 1);");
+        Utils.assertWithAllModes(true, "'1234'.includes('', 4);");
+        Utils.assertWithAllModes(true, "'1234'.includes('', 5);");
+        Utils.assertWithAllModes(true, "'1234'.includes('', 42);");
     }
 
     @Test
@@ -89,19 +89,19 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: First argument to String.prototype.includes must not be a regular expression # true",
                 js);
     }
 
     @Test
     public void startsWithEmpty() {
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('');");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 0);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 1);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 4);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 5);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.startsWith('', 42);");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('');");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('', 0);");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('', 1);");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('', 4);");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('', 5);");
+        Utils.assertWithAllModes(true, "'1234'.startsWith('', 42);");
     }
 
     @Test
@@ -118,19 +118,19 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
                 js);
     }
 
     @Test
     public void endsWithEmpty() {
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('');");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 0);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 1);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 4);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 5);");
-        Utils.assertWithAllOptimizationLevels(true, "'1234'.endsWith('', 42);");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('');");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('', 0);");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('', 1);");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('', 4);");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('', 5);");
+        Utils.assertWithAllModes(true, "'1234'.endsWith('', 42);");
     }
 
     @Test
@@ -147,24 +147,21 @@ public class NativeString2Test {
                         + "res += ' # ' + '/./'.includes(regExp);\n"
                         + "res;";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: First argument to String.prototype.startsWith must not be a regular expression # true",
                 js);
     }
 
     @Test
     public void tagify() {
-        Utils.assertWithAllOptimizationLevels("<big>tester</big>", "'tester'.big()");
-        Utils.assertWithAllOptimizationLevels("<big>\"tester\"</big>", "'\"tester\"'.big()");
-        Utils.assertWithAllOptimizationLevels(
-                "<font size=\"undefined\">tester</font>", "'tester'.fontsize()");
-        Utils.assertWithAllOptimizationLevels(
-                "<font size=\"null\">tester</font>", "'tester'.fontsize(null)");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("<big>tester</big>", "'tester'.big()");
+        Utils.assertWithAllModes("<big>\"tester\"</big>", "'\"tester\"'.big()");
+        Utils.assertWithAllModes("<font size=\"undefined\">tester</font>", "'tester'.fontsize()");
+        Utils.assertWithAllModes("<font size=\"null\">tester</font>", "'tester'.fontsize(null)");
+        Utils.assertWithAllModes(
                 "<font size=\"undefined\">tester</font>", "'tester'.fontsize(undefined)");
-        Utils.assertWithAllOptimizationLevels(
-                "<font size=\"123\">tester</font>", "'tester'.fontsize(123)");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("<font size=\"123\">tester</font>", "'tester'.fontsize(123)");
+        Utils.assertWithAllModes(
                 "<font size=\"&quot;123&quot;\">tester</font>", "'tester'.fontsize('\"123\"')");
     }
 
@@ -188,7 +185,7 @@ public class NativeString2Test {
             String js = "try { String.prototype." + call + ".call(null);} catch (e) { e.message }";
             String expected = "String.prototype." + call + " method called on null or undefined";
 
-            Utils.assertWithAllOptimizationLevelsES6(expected, js);
+            Utils.assertWithAllModes_ES6(expected, js);
         }
     }
 
@@ -213,70 +210,68 @@ public class NativeString2Test {
                     "try { String.prototype." + call + ".call(undefined);} catch (e) { e.message }";
             String expected = "String.prototype." + call + " method called on null or undefined";
 
-            Utils.assertWithAllOptimizationLevelsES6(expected, js);
+            Utils.assertWithAllModes_ES6(expected, js);
         }
     }
 
     @Test
     public void stringReplace() {
-        Utils.assertWithAllOptimizationLevels("xyz", "''.replace('', 'xyz')");
-        Utils.assertWithAllOptimizationLevels("1", "'121'.replace('21', '')");
-        Utils.assertWithAllOptimizationLevels("xyz121", "'121'.replace('', 'xyz')");
-        Utils.assertWithAllOptimizationLevels("a$c21", "'121'.replace('1', 'a$c')");
-        Utils.assertWithAllOptimizationLevels("a121", "'121'.replace('1', 'a$&')");
-        Utils.assertWithAllOptimizationLevels("a$c21", "'121'.replace('1', 'a$$c')");
-        Utils.assertWithAllOptimizationLevels("abaabe", "'abcde'.replace('cd', 'a$`')");
-        Utils.assertWithAllOptimizationLevels("a21", "'121'.replace('1', 'a$`')");
-        Utils.assertWithAllOptimizationLevels("abaee", "'abcde'.replace('cd', \"a$'\")");
-        Utils.assertWithAllOptimizationLevels("aba", "'abcd'.replace('cd', \"a$'\")");
-        Utils.assertWithAllOptimizationLevels("aba$0", "'abcd'.replace('cd', 'a$0')");
-        Utils.assertWithAllOptimizationLevels("aba$1", "'abcd'.replace('cd', 'a$1')");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("xyz", "''.replace('', 'xyz')");
+        Utils.assertWithAllModes("1", "'121'.replace('21', '')");
+        Utils.assertWithAllModes("xyz121", "'121'.replace('', 'xyz')");
+        Utils.assertWithAllModes("a$c21", "'121'.replace('1', 'a$c')");
+        Utils.assertWithAllModes("a121", "'121'.replace('1', 'a$&')");
+        Utils.assertWithAllModes("a$c21", "'121'.replace('1', 'a$$c')");
+        Utils.assertWithAllModes("abaabe", "'abcde'.replace('cd', 'a$`')");
+        Utils.assertWithAllModes("a21", "'121'.replace('1', 'a$`')");
+        Utils.assertWithAllModes("abaee", "'abcde'.replace('cd', \"a$'\")");
+        Utils.assertWithAllModes("aba", "'abcd'.replace('cd', \"a$'\")");
+        Utils.assertWithAllModes("aba$0", "'abcd'.replace('cd', 'a$0')");
+        Utils.assertWithAllModes("aba$1", "'abcd'.replace('cd', 'a$1')");
+        Utils.assertWithAllModes(
                 "abCD",
                 "'abcd'.replace('cd', function (matched) { return matched.toUpperCase() })");
-        Utils.assertWithAllOptimizationLevels("", "'123456'.replace(/\\d+/, '')");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("", "'123456'.replace(/\\d+/, '')");
+        Utils.assertWithAllModes(
                 "123ABCD321abcd",
                 "'123abcd321abcd'.replace(/[a-z]+/, function (matched) { return matched.toUpperCase() })");
     }
 
     @Test
     public void stringReplaceAll() {
-        Utils.assertWithAllOptimizationLevels("xyz", "''.replaceAll('', 'xyz')");
-        Utils.assertWithAllOptimizationLevels("1", "'12121'.replaceAll('21', '')");
-        Utils.assertWithAllOptimizationLevels("xyz1xyz2xyz1xyz", "'121'.replaceAll('', 'xyz')");
-        Utils.assertWithAllOptimizationLevels("a$c2a$c", "'121'.replaceAll('1', 'a$c')");
-        Utils.assertWithAllOptimizationLevels("a12a1", "'121'.replaceAll('1', 'a$&')");
-        Utils.assertWithAllOptimizationLevels("a$c2a$c", "'121'.replaceAll('1', 'a$$c')");
-        Utils.assertWithAllOptimizationLevels("aaadaaabcda", "'abcdabc'.replaceAll('bc', 'a$`')");
-        Utils.assertWithAllOptimizationLevels("a2a12", "'121'.replaceAll('1', 'a$`')");
-        Utils.assertWithAllOptimizationLevels("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
-        Utils.assertWithAllOptimizationLevels("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
-        Utils.assertWithAllOptimizationLevels("aa$0daa$0", "'abcdabc'.replaceAll('bc', 'a$0')");
-        Utils.assertWithAllOptimizationLevels("aa$1daa$1", "'abcdabc'.replaceAll('bc', 'a$1')");
-        Utils.assertWithAllOptimizationLevels("", "'123456'.replaceAll(/\\d+/g, '')");
-        Utils.assertWithAllOptimizationLevels("123456", "'123456'.replaceAll(undefined, '')");
-        Utils.assertWithAllOptimizationLevels("afoobarb", "'afoob'.replaceAll(/(foo)/g, '$1bar')");
-        Utils.assertWithAllOptimizationLevels("foobarb", "'foob'.replaceAll(/(foo)/gy, '$1bar')");
-        Utils.assertWithAllOptimizationLevels("hllo", "'hello'.replaceAll(/(h)e/gy, '$1')");
-        Utils.assertWithAllOptimizationLevels("$1llo", "'hello'.replaceAll(/he/g, '$1')");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("xyz", "''.replaceAll('', 'xyz')");
+        Utils.assertWithAllModes("1", "'12121'.replaceAll('21', '')");
+        Utils.assertWithAllModes("xyz1xyz2xyz1xyz", "'121'.replaceAll('', 'xyz')");
+        Utils.assertWithAllModes("a$c2a$c", "'121'.replaceAll('1', 'a$c')");
+        Utils.assertWithAllModes("a12a1", "'121'.replaceAll('1', 'a$&')");
+        Utils.assertWithAllModes("a$c2a$c", "'121'.replaceAll('1', 'a$$c')");
+        Utils.assertWithAllModes("aaadaaabcda", "'abcdabc'.replaceAll('bc', 'a$`')");
+        Utils.assertWithAllModes("a2a12", "'121'.replaceAll('1', 'a$`')");
+        Utils.assertWithAllModes("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        Utils.assertWithAllModes("aadabcdaa", "'abcdabc'.replaceAll('bc', \"a$'\")");
+        Utils.assertWithAllModes("aa$0daa$0", "'abcdabc'.replaceAll('bc', 'a$0')");
+        Utils.assertWithAllModes("aa$1daa$1", "'abcdabc'.replaceAll('bc', 'a$1')");
+        Utils.assertWithAllModes("", "'123456'.replaceAll(/\\d+/g, '')");
+        Utils.assertWithAllModes("123456", "'123456'.replaceAll(undefined, '')");
+        Utils.assertWithAllModes("afoobarb", "'afoob'.replaceAll(/(foo)/g, '$1bar')");
+        Utils.assertWithAllModes("foobarb", "'foob'.replaceAll(/(foo)/gy, '$1bar')");
+        Utils.assertWithAllModes("hllo", "'hello'.replaceAll(/(h)e/gy, '$1')");
+        Utils.assertWithAllModes("$1llo", "'hello'.replaceAll(/he/g, '$1')");
+        Utils.assertWithAllModes(
                 "I$want$these$periods$to$be$$s",
                 "'I.want.these.periods.to.be.$s'.replaceAll(/\\./g, '$')");
-        Utils.assertWithAllOptimizationLevels("food bar", "'foo bar'.replaceAll(/foo/g, '$&d')");
-        Utils.assertWithAllOptimizationLevels("foo foo ", "'foo bar'.replaceAll(/bar/g, '$`')");
-        Utils.assertWithAllOptimizationLevels(" bar bar", "'foo bar'.replaceAll(/foo/g, '$\\'')");
-        Utils.assertWithAllOptimizationLevels("$' bar", "'foo bar'.replaceAll(/foo/g, '$$\\'')");
-        Utils.assertWithAllOptimizationLevels("ad$0db", "'afoob'.replaceAll(/(foo)/g, 'd$0d')");
-        Utils.assertWithAllOptimizationLevels(
-                "ad$0db", "'afkxxxkob'.replace(/(f)k(.*)k(o)/g, 'd$0d')");
-        Utils.assertWithAllOptimizationLevels(
-                "ad$0dbd$0dc", "'afoobfuoc'.replaceAll(/(f.o)/g, 'd$0d')");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("food bar", "'foo bar'.replaceAll(/foo/g, '$&d')");
+        Utils.assertWithAllModes("foo foo ", "'foo bar'.replaceAll(/bar/g, '$`')");
+        Utils.assertWithAllModes(" bar bar", "'foo bar'.replaceAll(/foo/g, '$\\'')");
+        Utils.assertWithAllModes("$' bar", "'foo bar'.replaceAll(/foo/g, '$$\\'')");
+        Utils.assertWithAllModes("ad$0db", "'afoob'.replaceAll(/(foo)/g, 'd$0d')");
+        Utils.assertWithAllModes("ad$0db", "'afkxxxkob'.replace(/(f)k(.*)k(o)/g, 'd$0d')");
+        Utils.assertWithAllModes("ad$0dbd$0dc", "'afoobfuoc'.replaceAll(/(f.o)/g, 'd$0d')");
+        Utils.assertWithAllModes(
                 "123FOOBAR321BARFOO123",
                 "'123foobar321barfoo123'.replace(/[a-z]+/g, function (matched) { return matched.toUpperCase() })");
 
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 "TypeError: replaceAll must be called with a global RegExp",
                 "try { 'hello'.replaceAll(/he/i, 'x'); } catch (e) { '' + e }");
     }

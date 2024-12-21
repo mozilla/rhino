@@ -76,7 +76,7 @@ public class ObserveInstructionCountTest {
     }
 
     private static void baseCase(String source) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 new MyFactory(),
                 cx -> {
                     assertTrue(cx instanceof MyContext);
@@ -128,7 +128,7 @@ public class ObserveInstructionCountTest {
     /** see https://github.com/mozilla/rhino/issues/1497 */
     @Test
     public void regExpObserved() {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 new ContextFactory() {
                     @Override
                     protected Context makeContext() {

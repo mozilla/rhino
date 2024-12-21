@@ -18,7 +18,7 @@ public class ArgumentsTest {
                         + "}"
                         + "foo()";
 
-        Utils.assertWithAllOptimizationLevelsES6(true, code);
+        Utils.assertWithAllModes_ES6(true, code);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class ArgumentsTest {
                         + "}"
                         + "foo()";
 
-        Utils.assertWithAllOptimizationLevelsES6(true, code);
+        Utils.assertWithAllModes_ES6(true, code);
     }
 
     @Test
@@ -44,6 +44,6 @@ public class ArgumentsTest {
                         + "}"
                         + "foo(1, 2, 3, 5)";
 
-        Utils.assertWithAllOptimizationLevelsES6("1235", code);
+        Utils.assertWithAllModes_ES6("1235", code);
     }
 }

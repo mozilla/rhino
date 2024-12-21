@@ -75,7 +75,7 @@ public class ErrorPropertiesTest {
     }
 
     private void testIt(final String script, final Object expected) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     try {
                         final ScriptableObject scope = cx.initStandardObjects();

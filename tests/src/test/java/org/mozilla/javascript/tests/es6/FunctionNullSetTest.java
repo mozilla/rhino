@@ -64,7 +64,7 @@ public class FunctionNullSetTest {
                     }
                 };
 
-        Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllModes(action);
     }
 
     public static class MyHostObject extends ScriptableObject {

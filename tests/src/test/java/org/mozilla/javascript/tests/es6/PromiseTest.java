@@ -21,7 +21,7 @@ public class PromiseTest {
                         + "    });\n"
                         + "  r += ' done';\n"
                         + "  r;";
-        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6("[object global] done", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("[object global] done", script);
     }
 
     @Test
@@ -34,6 +34,6 @@ public class PromiseTest {
                         + "    });\n"
                         + "  r += ' done';\n"
                         + "  r;";
-        Utils.assertWithAllOptimizationLevelsES6("true done", script);
+        Utils.assertWithAllModes_ES6("true done", script);
     }
 }

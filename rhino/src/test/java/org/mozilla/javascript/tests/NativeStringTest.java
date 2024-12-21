@@ -25,9 +25,8 @@ public class NativeStringTest {
      */
     @Test
     public void toLowerCaseApply() {
-        Utils.assertWithAllOptimizationLevels(
-                "hello", "var x = String.toLowerCase; x.apply('HELLO')");
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes("hello", "var x = String.toLowerCase; x.apply('HELLO')");
+        Utils.assertWithAllModes(
                 "hello",
                 "String.toLowerCase('HELLO')"); // first patch proposed to #492359 was breaking this
     }
@@ -36,7 +35,7 @@ public class NativeStringTest {
     public void toLocaleLowerCase() {
         String js = "'\\u0130'.toLocaleLowerCase()";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -47,7 +46,7 @@ public class NativeStringTest {
                     return null;
                 });
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -63,7 +62,7 @@ public class NativeStringTest {
     public void toLocaleLowerCaseIgnoreParams() {
         String js = "'\\u0130'.toLocaleLowerCase('en')";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -74,7 +73,7 @@ public class NativeStringTest {
                     return null;
                 });
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);

@@ -6,7 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import static org.mozilla.javascript.tests.Utils.runWithAllOptimizationLevels;
+import static org.mozilla.javascript.tests.Utils.runWithAllModes;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -51,7 +51,7 @@ public class Bug783797Test {
     @Test
     public void getElem() {
         String fn = "function test(){ return ''['foo'] }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -75,7 +75,7 @@ public class Bug783797Test {
     @Test
     public void getProp() {
         String fn = "function test(){ return ''.foo }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -99,7 +99,7 @@ public class Bug783797Test {
     @Test
     public void getPropNoWarn1() {
         String fn = "function test(){ if (''.foo) return true; return false; }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -120,7 +120,7 @@ public class Bug783797Test {
     @Test
     public void getPropNoWarn2() {
         String fn = "function test(){ if (''.foo) return true; return false; }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -141,7 +141,7 @@ public class Bug783797Test {
     @Test
     public void setElem() {
         String fn = "function test(){ ''['foo'] = '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -171,7 +171,7 @@ public class Bug783797Test {
     @Test
     public void setProp() {
         String fn = "function test(){ ''.foo = '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -201,7 +201,7 @@ public class Bug783797Test {
     @Test
     public void setElemIncDec() {
         String fn = "function test(){ ''['foo']++ }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -231,7 +231,7 @@ public class Bug783797Test {
     @Test
     public void setPropIncDec() {
         String fn = "function test(){ ''.foo++ }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -261,7 +261,7 @@ public class Bug783797Test {
     @Test
     public void setElemOp1() {
         String fn = "function test(){ return ''['foo'] += '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -291,7 +291,7 @@ public class Bug783797Test {
     @Test
     public void setPropOp1() {
         String fn = "function test(){ return ''.foo += '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -325,7 +325,7 @@ public class Bug783797Test {
     @Test
     public void setElemOp2() {
         String fn = "function test(){ return ''['foo'] += '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -359,7 +359,7 @@ public class Bug783797Test {
     @Test
     public void setPropOp2() {
         String fn = "function test(){ return ''.foo += '_' }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -383,7 +383,7 @@ public class Bug783797Test {
     @Test
     public void getElemCall() {
         String fn = "function test(){ return ''['foo']() }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -413,7 +413,7 @@ public class Bug783797Test {
     @Test
     public void getPropCall() {
         String fn = "function test(){ return ''.foo() }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -444,7 +444,7 @@ public class Bug783797Test {
     public void enum1() {
         String fn =
                 "function test(){ for (var k in '') if (k == 'foo') return true; return false; }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -466,7 +466,7 @@ public class Bug783797Test {
     public void enum2() {
         String fn =
                 "function test(){ for (var k in '') if (k == 'foo') return true; return false; }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -487,7 +487,7 @@ public class Bug783797Test {
     @Test
     public void parent() {
         String fn = "function test(){}";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -506,7 +506,7 @@ public class Bug783797Test {
     @Test
     public void returnThis() {
         String fn = "function test(){ return this }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -528,7 +528,7 @@ public class Bug783797Test {
     @Test
     public void returnThisNested() {
         String fn = "function test(){ return (function(){ return this })() }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -550,7 +550,7 @@ public class Bug783797Test {
     @Test
     public void returnThisNestedCall() {
         String fn = "function test(o){ return (function(){ return this }).call(o) }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -583,7 +583,7 @@ public class Bug783797Test {
     @Test
     public void nameStringPrototype() {
         String fn = "function test(){ return String.prototype }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -616,7 +616,7 @@ public class Bug783797Test {
     @Test
     public void nameStringPrototypeNested() {
         String fn = "function test(){ return (function(){ return String.prototype })() }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -649,7 +649,7 @@ public class Bug783797Test {
     @Test
     public void thisStringPrototype() {
         String fn = "function test(){ return this.String.prototype }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -682,7 +682,7 @@ public class Bug783797Test {
     @Test
     public void thisProto() {
         String fn = "function test(){ return this.__proto__ }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -707,7 +707,7 @@ public class Bug783797Test {
     @Test
     public void stringLiteralProto() {
         String fn = "function test(){ return ''.__proto__ }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -740,7 +740,7 @@ public class Bug783797Test {
     @Test
     public void thisProtoNested() {
         String fn = "function test(){ return (function(){ return this.__proto__ }).call('') }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {
@@ -773,7 +773,7 @@ public class Bug783797Test {
     @Test
     public void stringLiteralProtoNested() {
         String fn = "function test(){ return (function(){ return ''.__proto__ })() }";
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 action(
                         fn,
                         new Action() {

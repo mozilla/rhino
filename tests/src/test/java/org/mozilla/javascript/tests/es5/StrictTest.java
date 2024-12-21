@@ -17,7 +17,7 @@ public class StrictTest {
                         + "Function('with(this) {  }')();"
                         + "})();"
                         + "'done'";
-        Utils.assertWithAllOptimizationLevels("done", script);
+        Utils.assertWithAllModes("done", script);
     }
 
     @Test
@@ -28,6 +28,6 @@ public class StrictTest {
                         + "new Function('with(this) {  }')();"
                         + "})();"
                         + "'done'";
-        Utils.assertWithAllOptimizationLevels("done", script);
+        Utils.assertWithAllModes("done", script);
     }
 }

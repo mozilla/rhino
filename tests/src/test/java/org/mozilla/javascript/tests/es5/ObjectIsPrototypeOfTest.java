@@ -18,7 +18,7 @@ public class ObjectIsPrototypeOfTest {
                 "try { "
                         + "  Object.prototype.isPrototypeOf.call(undefined, []);"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevels_1_8("Cannot convert undefined to an object.", script);
+        Utils.assertWithAllModes_1_8("Cannot convert undefined to an object.", script);
     }
 
     @Test
@@ -27,6 +27,6 @@ public class ObjectIsPrototypeOfTest {
                 "try { "
                         + "  Object.prototype.isPrototypeOf.call(null, []);"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevels_1_8("Cannot convert null to an object.", script);
+        Utils.assertWithAllModes_1_8("Cannot convert null to an object.", script);
     }
 }

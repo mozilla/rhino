@@ -6,7 +6,7 @@ import org.mozilla.javascript.tests.Utils;
 public class GeneratorToStringTest {
     @Test
     public void generatorsTest() {
-        Utils.assertWithAllOptimizationLevelsTopLevelScopeES6(
+        Utils.assertWithAllModesTopLevelScope_ES6(
                 "function* f() {\n" + "    yield 1;\n" + "  }",
                 "function* f() {\n" + "    yield 1;\n" + "  }; f.toString();");
     }

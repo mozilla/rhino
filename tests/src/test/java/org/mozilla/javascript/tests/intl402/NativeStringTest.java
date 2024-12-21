@@ -33,7 +33,7 @@ public class NativeStringTest {
     public void toLocaleLowerCase() {
         String js = "'\\u0130'.toLocaleLowerCase()";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 contextFactoryIntl402,
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -45,7 +45,7 @@ public class NativeStringTest {
                     return null;
                 });
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 contextFactoryIntl402,
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -70,7 +70,7 @@ public class NativeStringTest {
     public void toLocaleUpperCase() {
         String js = "'\\u0069'.toLocaleUpperCase()";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 contextFactoryIntl402,
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -82,7 +82,7 @@ public class NativeStringTest {
                     return null;
                 });
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 contextFactoryIntl402,
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
@@ -104,7 +104,7 @@ public class NativeStringTest {
     }
 
     private void assertEvaluatesES6(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 contextFactoryIntl402,
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();

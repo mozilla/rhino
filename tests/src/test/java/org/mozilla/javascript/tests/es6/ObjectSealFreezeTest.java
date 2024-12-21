@@ -25,7 +25,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
+        Utils.assertWithAllModes_ES6("Rhino", script);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
+        Utils.assertWithAllModes_ES6("Rhino", script);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
+        Utils.assertWithAllModes_ES6("Rhino", script);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("Rhino", script);
+        Utils.assertWithAllModes_ES6("Rhino", script);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("abc", script);
+        Utils.assertWithAllModes_ES6("abc", script);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "Cannot add properties to this object because extensible is false.", script);
     }
 
@@ -128,7 +128,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6("abc", script);
+        Utils.assertWithAllModes_ES6("abc", script);
     }
 
     @Test
@@ -146,7 +146,7 @@ public class ObjectSealFreezeTest {
                         + "try { "
                         + "  foo();"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "Cannot add properties to this object because extensible is false.", script);
     }
 
@@ -168,7 +168,7 @@ public class ObjectSealFreezeTest {
                         + "  return res;\n"
                         + "};"
                         + "  foo();";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false", script);
     }
 }

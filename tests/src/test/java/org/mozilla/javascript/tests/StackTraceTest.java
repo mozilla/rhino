@@ -119,7 +119,7 @@ public class StackTraceTest {
 
     private static void runWithExpectedStackTrace(
             final String _source, final String _expectedStackTrace) {
-        Utils.runWithOptimizationLevel(
+        Utils.runWithMode(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     try {
@@ -130,6 +130,6 @@ public class StackTraceTest {
                     }
                     throw new RuntimeException("Exception expected!");
                 },
-                -1);
+                true);
     }
 }

@@ -15,7 +15,7 @@ public class NativeRegExpTest {
     @Test
     public void openBrace() {
         final String script = "/0{0/";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 _cx -> {
                     final ScriptableObject scope = _cx.initStandardObjects();
                     final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
@@ -339,7 +339,7 @@ public class NativeRegExpTest {
                         + "res += regex.sticky;\n"
                         + "res";
 
-        Utils.assertWithAllOptimizationLevelsES6(expected, script);
+        Utils.assertWithAllModes_ES6(expected, script);
     }
 
     /**
@@ -358,7 +358,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + regex.test(str);\n"
                         + "res = res + '-' + regex.lastIndex;\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("true-9-false-0-false-0", script);
+        Utils.assertWithAllModes_ES6("true-9-false-0-false-0", script);
     }
 
     /**
@@ -371,7 +371,7 @@ public class NativeRegExpTest {
                         + "regex.lastIndex = 2;\n"
                         + "var res = '' + regex.test('..foo');\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("false", script);
+        Utils.assertWithAllModes_ES6("false", script);
     }
 
     /**
@@ -386,7 +386,7 @@ public class NativeRegExpTest {
                         + "regex.lastIndex = 2;\n"
                         + "res = res + '-' + regex.test('.\\nfoo');\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("false-true", script);
+        Utils.assertWithAllModes_ES6("false-true", script);
     }
 
     /**
@@ -401,7 +401,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[1];\n"
                         + "res = res + '-' + result[2];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("3-a-a-a", script);
+        Utils.assertWithAllModes_ES6("3-a-a-a", script);
     }
 
     /**
@@ -416,7 +416,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[1];\n"
                         + "res = res + '-' + result[2];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("3-a-a-a", script);
+        Utils.assertWithAllModes_ES6("3-a-a-a", script);
     }
 
     /**
@@ -429,7 +429,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("1-bar\nfoo", script);
+        Utils.assertWithAllModes_ES6("1-bar\nfoo", script);
     }
 
     /**
@@ -442,7 +442,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("1-a", script);
+        Utils.assertWithAllModes_ES6("1-a", script);
     }
 
     /**
@@ -455,7 +455,7 @@ public class NativeRegExpTest {
                         + "var res = '' + result.length;\n"
                         + "res = res + '-' + result[0];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("1-a", script);
+        Utils.assertWithAllModes_ES6("1-a", script);
     }
 
     /**
@@ -469,7 +469,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[0];\n"
                         + "res = res + '-' + result[1];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("2-a-a", script);
+        Utils.assertWithAllModes_ES6("2-a-a", script);
     }
 
     /**
@@ -483,7 +483,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + result[0];\n"
                         + "res = res + '-' + result[1];\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("2-a-a", script);
+        Utils.assertWithAllModes_ES6("2-a-a", script);
     }
 
     /**
@@ -499,7 +499,7 @@ public class NativeRegExpTest {
                         + "res = res + '-' + get.enumerable;\n"
                         + "res = res + '-' + get.writable;\n"
                         + "res;";
-        Utils.assertWithAllOptimizationLevelsES6("0-undefined-true-false-undefined", script);
+        Utils.assertWithAllModes_ES6("0-undefined-true-false-undefined", script);
     }
 
     /**
@@ -507,25 +507,24 @@ public class NativeRegExpTest {
      */
     @Test
     public void objectToString() throws Exception {
-        Utils.assertWithAllOptimizationLevelsES6(
-                "/undefined/undefined", "RegExp.prototype.toString.call({})");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6("/undefined/undefined", "RegExp.prototype.toString.call({})");
+        Utils.assertWithAllModes_ES6(
                 "/Foo/undefined", "RegExp.prototype.toString.call({source: 'Foo'})");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "/undefined/gy", "RegExp.prototype.toString.call({flags: 'gy'})");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "/Foo/g", "RegExp.prototype.toString.call({source: 'Foo', flags: 'g'})");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "/Foo/g",
                 "RegExp.prototype.toString.call({source: 'Foo', flags: 'g', sticky: true})");
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "try { RegExp.prototype.toString.call(''); } catch (e) { ('' + e).substr(0, 58) }");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "try { RegExp.prototype.toString.call(undefined); } catch (e) { ('' + e).substr(0, 58) }");
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
     }

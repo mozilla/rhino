@@ -27,7 +27,7 @@ public class InterfaceAdapterTest {
     }
 
     private void testIt(String js, Object expected) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final ScriptableObject scope = cx.initStandardObjects();
                     scope.put("list", scope, createList());
