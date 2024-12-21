@@ -394,7 +394,9 @@ public class Test262SuiteTest {
      */
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
-                    "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+                    "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
+                            + "(?:strict|non-strict|compiled-strict|compiled-non-strict|interpreted-strict|interpreted-non-strict|compiled|interpreted|"
+                            + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
@@ -1026,7 +1028,7 @@ public class Test262SuiteTest {
         }
 
         public String getResult(Test262Case tc) {
-            // success in interpreted and optimized mode in both strict and non-strict mode
+            // success on all optLevels in both strict and non-strict mode
             if (modes.isEmpty()) {
                 return null;
             }
@@ -1052,30 +1054,29 @@ public class Test262SuiteTest {
                 return "{unsupported: " + Arrays.toString(feats.toArray()) + "}";
             }
 
-            // failure in interpreted and optimized mode in both strict and non-strict mode
-            // no need to add more details
+            // failure on all optLevels in both strict and non-strict mode
             if (modes.size() == 4) {
                 return "";
             }
 
             // simplify the output for some cases
             ArrayList res = new ArrayList<>(modes);
-            if (modes.contains("compiled-non-strict") && modes.contains("interpreted-non-strict")) {
+            if (res.contains("compiled-non-strict") && res.contains("interpreted-non-strict")) {
                 res.remove("compiled-non-strict");
                 res.remove("interpreted-non-strict");
                 res.add("non-strict");
             }
-            if (modes.contains("compiled-strict") && modes.contains("interpreted-strict")) {
+            if (res.contains("compiled-strict") && res.contains("interpreted-strict")) {
                 res.remove("compiled-strict");
                 res.remove("interpreted-strict");
                 res.add("strict");
             }
-            if (modes.contains("compiled-strict") && modes.contains("compiled-non-strict")) {
+            if (res.contains("compiled-strict") && res.contains("compiled-non-strict")) {
                 res.remove("compiled-strict");
                 res.remove("compiled-non-strict");
-                res.add("non-interpreted"); // maybe "compiled"
+                res.add("compiled");
             }
-            if (modes.contains("interpreted-strict") && modes.contains("interpreted-non-strict")) {
+            if (res.contains("interpreted-strict") && res.contains("interpreted-non-strict")) {
                 res.remove("interpreted-strict");
                 res.remove("interpreted-non-strict");
                 res.add("interpreted");
