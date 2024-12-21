@@ -555,17 +555,26 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             }
 
             if ((byteOff < 0) || (byteOff > na.getLength())) {
-                throw ScriptRuntime.rangeError("offset out of range");
+                String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", byteOff);
+                throw ScriptRuntime.rangeError(msg);
             }
             if ((byteLen < 0) || ((byteOff + byteLen) > na.getLength())) {
-                throw ScriptRuntime.rangeError("length out of range");
+                String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.length", byteLen);
+                throw ScriptRuntime.rangeError(msg);
             }
             if ((byteOff % bytesPerElement) != 0) {
-                throw ScriptRuntime.rangeError("offset must be a multiple of the byte size");
+                String msg =
+                        ScriptRuntime.getMessageById(
+                                "msg.typed.array.bad.offset.byte.size", byteOff, bytesPerElement);
+                throw ScriptRuntime.rangeError(msg);
             }
             if ((byteLen % bytesPerElement) != 0) {
-                throw ScriptRuntime.rangeError(
-                        "offset and buffer must be a multiple of the byte size");
+                String msg =
+                        ScriptRuntime.getMessageById(
+                                "msg.typed.array.bad.buffer.length.byte.size",
+                                byteLen,
+                                bytesPerElement);
+                throw ScriptRuntime.rangeError(msg);
             }
 
             return constructable.construct(na, byteOff, byteLen / bytesPerElement);
@@ -609,7 +618,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private void setRange(NativeTypedArrayView<?> v, int off) {
         if (off < 0 || off > length) {
-            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", off);
             throw ScriptRuntime.rangeError(msg);
         }
 
@@ -636,7 +645,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private void setRange(NativeArray a, int off) {
         if (off < 0 || off > length) {
-            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", off);
             throw ScriptRuntime.rangeError(msg);
         }
         if ((off + a.size()) > length) {

@@ -22,14 +22,14 @@ for (var t = 0; t < types.length; t++) {
 
     var msg = null;
     try { arr.set([0], -1); } catch (e) { msg = e.toString();}
-    assertEquals("RangeError: offset out of range", msg);
+    assertEquals("RangeError: offset -1 out of range", msg);
 
     arr.set([], 8);
     assertEquals("8,9,0,1,2,3,0,0", arr.toString());
 
     msg = null;
     try { arr.set([], 9); } catch (e) { msg = e.toString();}
-    assertEquals("RangeError: offset out of range", msg);
+    assertEquals("RangeError: offset 9 out of range", msg);
 
     arr.set([1], 7);
     assertEquals("8,9,0,1,2,3,0,1", arr.toString());
@@ -63,14 +63,14 @@ for (var t = 0; t < types.length; t++) {
 
     var msg = null;
     try { arr.set(new type([0]), -1); } catch (e) { msg = e.toString();}
-    assertEquals("RangeError: offset out of range", msg);
+    assertEquals("RangeError: offset -1 out of range", msg);
 
     arr.set(new type([]), 8);
     assertEquals("8,9,0,1,2,3,0,0", arr.toString());
 
     msg = null;
     try { arr.set(new type([]), 9); } catch (e) { msg = e.toString();}
-    assertEquals("RangeError: offset out of range", msg);
+    assertEquals("RangeError: offset 9 out of range", msg);
 
     arr.set(new type([1]), 7);
     assertEquals("8,9,0,1,2,3,0,1", arr.toString());
