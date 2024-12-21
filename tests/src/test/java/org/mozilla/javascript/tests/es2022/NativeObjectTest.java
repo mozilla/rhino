@@ -14,7 +14,7 @@ public class NativeObjectTest {
     public void hasStringOwn() {
         final String code =
                 "let result = Object.hasOwn({ test: '123' }, 'test');\n" + "'result = ' + result";
-        Utils.assertWithAllOptimizationLevelsES6("result = true", code);
+        Utils.assertWithAllModes_ES6("result = true", code);
     }
 
     @Test
@@ -22,14 +22,14 @@ public class NativeObjectTest {
         final String code =
                 "let result = Object.hasOwn({ test: undefined }, 'test');\n"
                         + "'result = ' + result;";
-        Utils.assertWithAllOptimizationLevelsES6("result = true", code);
+        Utils.assertWithAllModes_ES6("result = true", code);
     }
 
     @Test
     public void hasNullOwn() {
         final String code =
                 "let result = Object.hasOwn({ test: null }, 'test');\n" + "'result = ' + result;";
-        Utils.assertWithAllOptimizationLevelsES6("result = true", code);
+        Utils.assertWithAllModes_ES6("result = true", code);
     }
 
     @Test
@@ -38,14 +38,14 @@ public class NativeObjectTest {
                 "let dessert = [\"cake\", \"coffee\", \"chocolate\"];\n"
                         + "let result = Object.hasOwn(dessert, 2);\n"
                         + "'result = ' + result;";
-        Utils.assertWithAllOptimizationLevelsES6("result = true", code);
+        Utils.assertWithAllModes_ES6("result = true", code);
     }
 
     @Test
     public void hasNoOwn() {
         final String code =
                 "let result = Object.hasOwn({ cake: 123 }, 'test');\n" + "'result = ' + result";
-        Utils.assertWithAllOptimizationLevelsES6("result = false", code);
+        Utils.assertWithAllModes_ES6("result = false", code);
     }
 
     @Test
@@ -55,7 +55,7 @@ public class NativeObjectTest {
                         + "foo.prop = 'test';\n"
                         + "var result = Object.hasOwn(foo, 'prop');\n"
                         + "'result = ' + result;";
-        Utils.assertWithAllOptimizationLevelsES6("result = true", code);
+        Utils.assertWithAllModes_ES6("result = true", code);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class NativeObjectTest {
         final String code =
                 "var result = Object.hasOwn(Object.create({ q: 321 }), 'q');\n"
                         + "'result = ' + result; ";
-        Utils.assertWithAllOptimizationLevelsES6("result = false", code);
+        Utils.assertWithAllModes_ES6("result = false", code);
     }
 
     @Test
@@ -74,6 +74,6 @@ public class NativeObjectTest {
                         + "          Object.hasOwn(null, { toString() { called = true } });\n"
                         + "} catch (e) {}\n"
                         + "'called = ' + called;";
-        Utils.assertWithAllOptimizationLevelsES6("called = false", code);
+        Utils.assertWithAllModes_ES6("called = false", code);
     }
 }

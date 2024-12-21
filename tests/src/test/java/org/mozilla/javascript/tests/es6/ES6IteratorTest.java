@@ -19,6 +19,6 @@ public class ES6IteratorTest {
                         + "    res = res + p + ' ';\n"
                         + "  }\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("value done ", code);
+        Utils.assertWithAllModes_ES6("value done ", code);
     }
 }

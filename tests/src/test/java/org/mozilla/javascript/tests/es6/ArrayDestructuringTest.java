@@ -12,19 +12,18 @@ public class ArrayDestructuringTest {
     /** Test for issue #662. There was a ClassCastException. */
     @Test
     public void strangeCase() {
-        Utils.assertWithAllOptimizationLevels("", "var a = ''; [a.x] = ''; a");
+        Utils.assertWithAllModes("", "var a = ''; [a.x] = ''; a");
     }
 
     /** Test for issue #662. */
     @Test
     public void strangeCase2() {
-        Utils.assertWithAllOptimizationLevels("", "[1..h]=''");
+        Utils.assertWithAllModes("", "[1..h]=''");
     }
 
     /** Test for issue #662. */
     @Test
     public void strangeCase3() {
-        Utils.assertWithAllOptimizationLevels(
-                123, "[0..toString.h] = [123]; Number.prototype.toString.h");
+        Utils.assertWithAllModes(123, "[0..toString.h] = [123]; Number.prototype.toString.h");
     }
 }

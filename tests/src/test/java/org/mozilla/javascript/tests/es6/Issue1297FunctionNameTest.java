@@ -18,6 +18,6 @@ public class Issue1297FunctionNameTest {
                         + "Object.defineProperty(X, 'name', {value: 'y', configurable: true, writable: true});"
                         + "X.name";
 
-        Utils.assertWithAllOptimizationLevels("y", code);
+        Utils.assertWithAllModes("y", code);
     }
 }

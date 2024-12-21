@@ -18,7 +18,7 @@ public class ComputedPropertiesTest {
                         + "  [f('b')]: 4\n"
                         + "};\n"
                         + "o.a + o[0] + o['-1'] + o.b";
-        Utils.assertWithAllOptimizationLevelsES6(10, script);
+        Utils.assertWithAllModes_ES6(10, script);
     }
 
     @Test
@@ -41,7 +41,7 @@ public class ComputedPropertiesTest {
                         + "  };\n"
                         + "}";
 
-        Utils.assertWithAllOptimizationLevelsES6(expected, script);
+        Utils.assertWithAllModes_ES6(expected, script);
     }
 
     @Test
@@ -55,18 +55,17 @@ public class ComputedPropertiesTest {
                         + "  [++x]: 'y'\n"
                         + "};\n"
                         + "o[1] + o.a + o[3]";
-        Utils.assertWithAllOptimizationLevelsES6("x2y", script);
+        Utils.assertWithAllModes_ES6("x2y", script);
     }
 
     @Test
     public void computedPropertyNameForGetterSetterWork() {
-        Utils.assertWithAllOptimizationLevelsES6(
-                42, "var o = { get ['x' + 1]() { return 42; }}; o.x1");
+        Utils.assertWithAllModes_ES6(42, "var o = { get ['x' + 1]() { return 42; }}; o.x1");
     }
 
     @Test
     public void computedPropertyNameAsSymbolForGetterSetterWork() {
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "[object foo]",
                 "var o = { get [Symbol.toStringTag]() { return 'foo'; }}; o.toString()");
     }
@@ -82,7 +81,7 @@ public class ComputedPropertiesTest {
                         + "var res2 = g.next();\n"
                         + "res1.value === 1 && !res1.done && res2.done\n";
 
-        Utils.assertWithAllOptimizationLevelsES6(Boolean.TRUE, script);
+        Utils.assertWithAllModes_ES6(Boolean.TRUE, script);
     }
 
     @Test

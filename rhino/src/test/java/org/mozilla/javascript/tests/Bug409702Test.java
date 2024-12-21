@@ -37,6 +37,6 @@ public class Bug409702Test {
                         + "{ b: function () { return 12; } });"
                         + "instance.b();";
 
-        Utils.assertWithAllOptimizationLevels(12, script);
+        Utils.assertWithAllModes(12, script);
     }
 }

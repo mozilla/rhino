@@ -16,6 +16,6 @@ public class BoundFunctionTest {
     public void ctorCallableThis() {
         String code = "function foo() {};\n" + " foo.bind({}).name;";
 
-        Utils.assertWithAllOptimizationLevelsES6("bound foo", code);
+        Utils.assertWithAllModes_ES6("bound foo", code);
     }
 }

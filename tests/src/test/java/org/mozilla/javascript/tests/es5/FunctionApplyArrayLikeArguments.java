@@ -15,15 +15,15 @@ public class FunctionApplyArrayLikeArguments {
 
     @Test
     public void arrayLikeArgumentsOfFunctionApply() {
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 Undefined.instance,
                 "function test() { return arguments[0]; } test.apply(this, {});");
 
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 "banana",
                 "function test() { return arguments[0]; } test.apply(this, {'length':1, '0':'banana'});");
 
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 "lala",
                 "function test() { return arguments[0]; } test.apply(this, {'length':'1', '0':'lala'});");
 
@@ -31,11 +31,11 @@ public class FunctionApplyArrayLikeArguments {
                 "TypeError: second argument to Function.prototype.apply must be an array",
                 "function test() { return arguments[0]; } test.apply(2,2);");
 
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 Undefined.instance,
                 "function test() { return arguments[0]; } test.apply(this,{'length':'abc', '0':'banana'});");
 
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 Undefined.instance,
                 "function test() { return arguments[0]; } test.apply(this,{'length':function(){return 1;}, '0':'banana'});");
     }

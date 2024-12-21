@@ -93,7 +93,7 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingNonSymbolScriptable() {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -127,7 +127,7 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingNonIterable() {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -157,7 +157,7 @@ public class IterableTest {
      */
     @Test
     public void forOfUsingArrayIterator() {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();

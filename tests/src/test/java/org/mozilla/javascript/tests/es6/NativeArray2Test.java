@@ -18,7 +18,7 @@ public class NativeArray2Test {
                         + " '' + e;\n"
                         + "};";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "TypeError: Array length 9,007,199,254,740,992 exceeds supported capacity limit.",
                 js);
     }
@@ -39,6 +39,6 @@ public class NativeArray2Test {
                         + " '' + e;\n"
                         + "};";
 
-        Utils.assertWithAllOptimizationLevelsES6("Error: get failed", js);
+        Utils.assertWithAllModes_ES6("Error: get failed", js);
     }
 }

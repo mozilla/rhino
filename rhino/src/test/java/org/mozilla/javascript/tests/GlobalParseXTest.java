@@ -34,8 +34,8 @@ public class GlobalParseXTest {
     }
 
     private void testParseFloatWhiteSpaces(final String prefix) {
-        Utils.assertWithAllOptimizationLevels("789", "String(parseInt('" + prefix + "789 '))");
-        Utils.assertWithAllOptimizationLevels("7.89", "String(parseFloat('" + prefix + "7.89 '))");
+        Utils.assertWithAllModes("789", "String(parseInt('" + prefix + "789 '))");
+        Utils.assertWithAllModes("7.89", "String(parseFloat('" + prefix + "7.89 '))");
     }
 
     /**
@@ -67,6 +67,6 @@ public class GlobalParseXTest {
     }
 
     private static void testParseFloat(final String expected, final String value) {
-        Utils.assertWithAllOptimizationLevels(expected, "String(parseFloat('" + value + "'))");
+        Utils.assertWithAllModes(expected, "String(parseFloat('" + value + "'))");
     }
 }

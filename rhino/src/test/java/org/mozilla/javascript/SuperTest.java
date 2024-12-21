@@ -86,7 +86,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -102,7 +102,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -118,7 +118,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -134,7 +134,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -151,7 +151,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -168,7 +168,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -186,7 +186,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -203,7 +203,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f;";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -215,7 +215,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.y;";
 
-            Utils.assertWithAllOptimizationLevelsES6("bxy", script);
+            Utils.assertWithAllModes_ES6("bxy", script);
         }
 
         @Test
@@ -227,7 +227,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("a", script);
+            Utils.assertWithAllModes_ES6("a", script);
         }
 
         @Test
@@ -245,7 +245,7 @@ class SuperTest {
                             + "var fn = b.f;\n"
                             + "fn()\n";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -266,7 +266,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(d, c)\n"
                             + "d.fn()\n";
 
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -286,7 +286,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(obj, protoY);\n"
                             + "obj.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("xy", script);
+            Utils.assertWithAllModes_ES6("xy", script);
         }
 
         @Test
@@ -306,7 +306,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(obj, protoY);\n"
                             + "obj.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("xy", script);
+            Utils.assertWithAllModes_ES6("xy", script);
         }
 
         @Test
@@ -323,7 +323,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("number", script);
+            Utils.assertWithAllModes_ES6("number", script);
         }
 
         @Test
@@ -340,7 +340,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("undefined", script);
+            Utils.assertWithAllModes_ES6("undefined", script);
         }
 
         @Test
@@ -356,7 +356,7 @@ class SuperTest {
                         }
                     };
 
-            Utils.runWithAllOptimizationLevels(
+            Utils.runWithAllModes(
                     factory,
                     cx -> {
                         AtomicBoolean warningReported = new AtomicBoolean(false);
@@ -431,7 +431,7 @@ class SuperTest {
                             + "};\n"
                             + "o.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -447,7 +447,7 @@ class SuperTest {
                             + "};\n"
                             + "o.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -462,7 +462,7 @@ class SuperTest {
                             + "};\n"
                             + "o.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -497,7 +497,7 @@ class SuperTest {
                             + "object.f();"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -513,7 +513,7 @@ class SuperTest {
                             + "object.f();"
                             + "object[42] + ':' + proto[42]";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -529,7 +529,7 @@ class SuperTest {
                             + "object.f();"
                             + "object[-1] + ':' + proto[-1]";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -545,7 +545,7 @@ class SuperTest {
                             + "object.f();"
                             + "object[0.1] + ':' + proto[0.1]";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -561,7 +561,7 @@ class SuperTest {
                             + "object.f();"
                             + "object.x+ ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -577,7 +577,7 @@ class SuperTest {
                             + "object.f();"
                             + "object[42] + ':' + proto[42]";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -594,7 +594,7 @@ class SuperTest {
                             + "object.f();"
                             + "object[s] + ':' + proto[s]";
 
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -613,7 +613,7 @@ class SuperTest {
                             + "object.f = 1;\n"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:0", script);
+            Utils.assertWithAllModes_ES6("1:0", script);
         }
 
         @Test
@@ -635,7 +635,7 @@ class SuperTest {
                             + "object.x = 1;\n"
                             + "object._x + ':' + proto._x";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:0", script);
+            Utils.assertWithAllModes_ES6("1:0", script);
         }
 
         @Test
@@ -652,7 +652,7 @@ class SuperTest {
                             + "o.f();\n"
                             + "o.x + ':' + Object.prototype.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:undefined", script);
+            Utils.assertWithAllModes_ES6("1:undefined", script);
         }
 
         @Test
@@ -669,7 +669,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("obj:proto", script);
+            Utils.assertWithAllModes_ES6("obj:proto", script);
         }
 
         @Test
@@ -686,7 +686,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("obj:proto", script);
+            Utils.assertWithAllModes_ES6("obj:proto", script);
         }
 
         @Test
@@ -756,7 +756,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:undefined", script);
+            Utils.assertWithAllModes_ES6("1:undefined", script);
         }
 
         @Test
@@ -772,7 +772,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("undefined:undefined", script);
+            Utils.assertWithAllModes_ES6("undefined:undefined", script);
         }
 
         @Test
@@ -808,7 +808,7 @@ class SuperTest {
                             + "object.f();"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+            Utils.assertWithAllModes_ES6("proto1:proto", script);
         }
 
         @Test
@@ -826,7 +826,7 @@ class SuperTest {
                             + "object.f();"
                             + "object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+            Utils.assertWithAllModes_ES6("proto1:proto", script);
         }
 
         @Test
@@ -849,7 +849,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "catchHit + ':' + getterCalled";
 
-            Utils.assertWithAllOptimizationLevelsES6("true:false", script);
+            Utils.assertWithAllModes_ES6("true:false", script);
         }
 
         @Test
@@ -873,7 +873,7 @@ class SuperTest {
                             + "object.f();\n"
                             + "catchHit + ':' + gCalled";
 
-            Utils.assertWithAllOptimizationLevelsES6("true:true", script);
+            Utils.assertWithAllModes_ES6("true:true", script);
         }
 
         @Test
@@ -889,7 +889,7 @@ class SuperTest {
                             + "var f = object.f();"
                             + "f + ':' + object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:2:1", script);
+            Utils.assertWithAllModes_ES6("1:2:1", script);
         }
 
         @Test
@@ -905,7 +905,7 @@ class SuperTest {
                             + "var f = object.f();"
                             + "f + ':' + object.x + ':' + proto.x";
 
-            Utils.assertWithAllOptimizationLevelsES6("2:2:1", script);
+            Utils.assertWithAllModes_ES6("2:2:1", script);
         }
 
         @Test
@@ -921,7 +921,7 @@ class SuperTest {
                             + "var f = object.f();"
                             + "f + ':' + object[0] + ':' + proto[0]";
 
-            Utils.assertWithAllOptimizationLevelsES6("1:0:1", script);
+            Utils.assertWithAllModes_ES6("1:0:1", script);
         }
 
         @Test
@@ -937,7 +937,7 @@ class SuperTest {
                             + "var f = object.f();"
                             + "f + ':' + object[0] + ':' + proto[0]";
 
-            Utils.assertWithAllOptimizationLevelsES6("0:0:1", script);
+            Utils.assertWithAllModes_ES6("0:0:1", script);
         }
     }
 
@@ -960,7 +960,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(obj, proto);\n"
                             + "obj.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("prototype1", script);
+            Utils.assertWithAllModes_ES6("prototype1", script);
         }
 
         // All the n-arguments variants are necessary because we have optimized code paths in
@@ -986,7 +986,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1008,7 +1008,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object:a", script);
+            Utils.assertWithAllModes_ES6("object:a", script);
         }
 
         @Test
@@ -1030,7 +1030,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object:a:b", script);
+            Utils.assertWithAllModes_ES6("object:a:b", script);
         }
 
         @Test
@@ -1052,7 +1052,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object:a:b:c", script);
+            Utils.assertWithAllModes_ES6("object:a:b:c", script);
         }
 
         @Test
@@ -1073,7 +1073,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f3();";
 
-            Utils.assertWithAllOptimizationLevelsES6("f2f1", script);
+            Utils.assertWithAllModes_ES6("f2f1", script);
         }
 
         @Test
@@ -1095,7 +1095,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1117,7 +1117,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1139,7 +1139,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()()();";
 
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+            Utils.assertWithAllModes_ES6("object", script);
         }
     }
 
@@ -1165,7 +1165,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("b", script);
+            Utils.assertWithAllModes_ES6("b", script);
         }
 
         @Test
@@ -1181,7 +1181,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(c, b);\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
-            Utils.assertWithAllOptimizationLevelsES6("bb", script);
+            Utils.assertWithAllModes_ES6("bb", script);
         }
 
         @Test
@@ -1200,7 +1200,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("a", script);
+            Utils.assertWithAllModes_ES6("a", script);
         }
     }
 
@@ -1222,7 +1222,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();";
 
-            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+            Utils.assertWithAllModes_ES6("proto", script);
         }
 
         @Test
@@ -1241,7 +1241,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()();";
 
-            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+            Utils.assertWithAllModes_ES6("proto", script);
         }
 
         @Test

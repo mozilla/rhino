@@ -23,18 +23,18 @@ public class Symbol3Test {
                         + "  return '' + sym.length + ' ' + typeof sym[0];"
                         + "}"
                         + "foo()";
-        Utils.assertWithAllOptimizationLevelsES6("1 symbol", code);
+        Utils.assertWithAllModes_ES6("1 symbol", code);
     }
 
     @Test
     public void scriptRuntimeTypeofSymbol() {
         final String code = "typeof Symbol.toStringTag";
-        Utils.assertWithAllOptimizationLevelsES6("symbol", code);
+        Utils.assertWithAllModes_ES6("symbol", code);
     }
 
     @Test
     public void symbolProperty() throws Exception {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();

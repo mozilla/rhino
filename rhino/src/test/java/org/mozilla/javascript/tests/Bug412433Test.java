@@ -16,6 +16,6 @@ public class Bug412433Test {
 
     @Test
     public void malformedJavascript2() {
-        Utils.assertWithAllOptimizationLevels("", "'' + \"\".split(/[/?,/&]/)");
+        Utils.assertWithAllModes("", "'' + \"\".split(/[/?,/&]/)");
     }
 }

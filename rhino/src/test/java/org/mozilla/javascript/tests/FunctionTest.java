@@ -21,7 +21,7 @@ public class FunctionTest {
      */
     @Test
     public void functionWithSlashSlash() {
-        Utils.assertWithAllOptimizationLevels(true, "new Function('return true//;').call()");
+        Utils.assertWithAllModes(true, "new Function('return true//;').call()");
     }
 
     @Test
@@ -36,7 +36,7 @@ public class FunctionTest {
                         + "foo();\n"
                         + "result;";
 
-        Utils.assertWithAllOptimizationLevels("-outer abc = 1-inner abc = function", script);
+        Utils.assertWithAllModes("-outer abc = 1-inner abc = function", script);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class FunctionTest {
                         + "b();\n"
                         + "result;";
 
-        Utils.assertWithAllOptimizationLevels("ab", script);
+        Utils.assertWithAllModes("ab", script);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class FunctionTest {
                         + "a();\n"
                         + "result;";
 
-        Utils.assertWithAllOptimizationLevels("a", script);
+        Utils.assertWithAllModes("a", script);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class FunctionTest {
                         + "func();\n"
                         + "result;";
 
-        Utils.assertWithAllOptimizationLevels("functionfunc(){result+=norm(func);}outer", script);
+        Utils.assertWithAllModes("functionfunc(){result+=norm(func);}outer", script);
     }
 
     @Test
@@ -134,6 +134,6 @@ public class FunctionTest {
                         + "result;";
 
         // assertEvaluates("f1f2f3!f4f5!f6!f7!f8f10f11f12!f10f11f12f13", script);
-        Utils.assertWithAllOptimizationLevels("f1f2f3!f4f5!f6!f7!f8f10f11f12f11f12f13", script);
+        Utils.assertWithAllModes("f1f2f3!f4f5!f6!f7!f8f10f11f12f11f12f13", script);
     }
 }

@@ -27,6 +27,6 @@ public class Bug419940Test {
     public void adapter() {
         String script = "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
 
-        Utils.assertWithAllOptimizationLevels(12, script);
+        Utils.assertWithAllModes(12, script);
     }
 }

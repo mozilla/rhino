@@ -368,7 +368,7 @@ public class NativeObjectTest {
 
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
-            Utils.runWithAllOptimizationLevels(
+            Utils.runWithAllModes(
                     cx -> {
                         cx.setLanguageVersion(Context.VERSION_ES6);
                         ScriptableObject scope = cx.initStandardObjects();
@@ -386,7 +386,7 @@ public class NativeObjectTest {
     private static void evaluateAndAssert(final String script, final Object expected) {
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
-            Utils.assertWithAllOptimizationLevelsES6(expected, prefix + script);
+            Utils.assertWithAllModes_ES6(expected, prefix + script);
         }
     }
 
@@ -407,7 +407,7 @@ public class NativeObjectTest {
                         + "  var p = new f();\n"
                         + "  log = log + ' / ' + (p instanceof f);";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();

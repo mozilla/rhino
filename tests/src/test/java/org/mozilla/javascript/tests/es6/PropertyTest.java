@@ -13,7 +13,7 @@ public class PropertyTest {
 
     @Test
     public void prototypeProperty() throws Exception {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -49,7 +49,7 @@ public class PropertyTest {
 
     @Test
     public void redefineGetterProperty() throws Exception {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -86,7 +86,7 @@ public class PropertyTest {
 
     @Test
     public void redefineSetterProperty() throws Exception {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();

@@ -27,6 +27,6 @@ public class DeletePropertyTest {
                         + "[].foo();\n"
                         + "[][1]();\n";
 
-        Utils.assertWithAllOptimizationLevels(Undefined.instance, script);
+        Utils.assertWithAllModes(Undefined.instance, script);
     }
 }

@@ -128,7 +128,7 @@ public class LookupSetterTest {
                     }
                 };
 
-        Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllModes(action);
     }
 
     public static class Foo extends ScriptableObject {
