@@ -51,7 +51,8 @@ public class NativeString2Test {
 
     @Test
     public void replaceReplacementAsString() {
-        Utils.assertWithAllModes(Context.VERSION_DEFAULT, "1null3", "'123'.replace('2', /x/);");
+        Utils.assertWithAllModes(
+                Context.VERSION_DEFAULT, null, "1null3", "'123'.replace('2', /x/);");
         Utils.assertWithAllModes_ES6("1/x/3", "'123'.replace('2', /x/);");
     }
 
