@@ -1131,7 +1131,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0;
 
         if (actualIndex < 0 || actualIndex >= self.length) {
-            throw ScriptRuntime.rangeError("index out of range");
+            String msg =
+                    ScriptRuntime.getMessageById(
+                            "msg.typed.array.index.out.of.bounds",
+                            relativeIndex,
+                            self.length * -1,
+                            self.length - 1);
+            throw ScriptRuntime.rangeError(msg);
         }
 
         NativeArrayBuffer newBuffer =
