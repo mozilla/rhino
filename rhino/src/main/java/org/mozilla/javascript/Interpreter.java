@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -951,7 +952,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 --previousCount;
             }
             array = new CallFrame[previousCount + 1];
-            cx.previousInterpreterInvocations.toArray(array);
+
+            ArrayList<Object> tempList = new ArrayList<>(cx.previousInterpreterInvocations);
+            Collections.reverse(tempList);
+            tempList.toArray(array);
         }
         array[array.length - 1] = (CallFrame) cx.lastInterpreterFrame;
 
