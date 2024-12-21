@@ -94,7 +94,7 @@ public class Utils {
      * @param script the javascript script to execute
      */
     public static void assertWithAllModes(final Object expected, final String script) {
-        assertWithAllModes(-1, expected, script);
+        assertWithAllModes(-1, null, expected, script);
     }
 
     /**
@@ -104,9 +104,8 @@ public class Utils {
      * @param expected the expected result
      * @param script the javascript script to execute
      */
-    public static void assertWithAllModes_1_8(
-            final Object expected, final String script) {
-        assertWithAllModes(Context.VERSION_1_8, expected, script);
+    public static void assertWithAllModes_1_8(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_1_8, null, expected, script);
     }
 
     /**
@@ -116,9 +115,21 @@ public class Utils {
      * @param expected the expected result
      * @param script the javascript script to execute
      */
+    public static void assertWithAllModes_ES6(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_ES6, null, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_ES6}.
+     *
+     * @param message the message to be used if this fails
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
     public static void assertWithAllModes_ES6(
-            final Object expected, final String script) {
-        assertWithAllModes(Context.VERSION_ES6, expected, script);
+            final String message, final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_ES6, message, expected, script);
     }
 
     /**
@@ -126,11 +137,15 @@ public class Utils {
      *
      * @param languageVersion the language version constant from @{@link Context} or -1 to not
      *     change the language version at all
+     * @param message the message to be used if this fails
      * @param expected the expected result
      * @param script the javascript script to execute
      */
     public static void assertWithAllModes(
-            final int languageVersion, final Object expected, final String script) {
+            final int languageVersion,
+            final String message,
+            final Object expected,
+            final String script) {
         runWithAllModes(
                 cx -> {
                     if (languageVersion > -1) {
@@ -141,6 +156,7 @@ public class Utils {
 
                     if (expected instanceof Integer && res instanceof Double) {
                         assertEquals(
+                                message,
                                 ((Integer) expected).doubleValue(),
                                 ((Double) res).doubleValue(),
                                 0.00001);
@@ -148,13 +164,14 @@ public class Utils {
                     }
                     if (expected instanceof Double && res instanceof Integer) {
                         assertEquals(
+                                message,
                                 ((Double) expected).doubleValue(),
                                 ((Integer) res).doubleValue(),
                                 0.00001);
                         return null;
                     }
 
-                    assertEquals(expected, res);
+                    assertEquals(message, expected, res);
                     return null;
                 });
     }
