@@ -52,28 +52,9 @@ public class Utils {
         runWithMode(contextFactory, action, true);
     }
 
-    /** Runs the provided action at the given optimization level */
-    public static void runWithOptimizationLevel(
-            final ContextAction<?> action, final int optimizationLevel) {
-        runWithOptimizationLevel(new ContextFactory(), action, optimizationLevel);
-    }
-
     /** Runs the provided action at the given interpretation mode */
     public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
         runWithMode(new ContextFactory(), action, interpretedMode);
-    }
-
-    /** Runs the provided action at the given optimization level */
-    @SuppressWarnings("deprecation")
-    public static void runWithOptimizationLevel(
-            final ContextFactory contextFactory,
-            final ContextAction<?> action,
-            final int optimizationLevel) {
-
-        try (final Context cx = contextFactory.enterContext()) {
-            cx.setOptimizationLevel(optimizationLevel);
-            action.run(cx);
-        }
     }
 
     /** Runs the provided action at the given interpretation mode */

@@ -22,7 +22,7 @@ public class NumericSeparatorTest {
     /** Special Tokenizer test for numeric constant at end. */
     @Test
     public void numericAtEndManyDigits() {
-        Utils.runWithOptimizationLevel(
+        Utils.runWithMode(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -32,10 +32,10 @@ public class NumericSeparatorTest {
 
                     return null;
                 },
-                -1);
+                true);
 
         // the byte code generator adds a cast to integer
-        Utils.runWithOptimizationLevel(
+        Utils.runWithMode(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();
@@ -45,19 +45,7 @@ public class NumericSeparatorTest {
 
                     return null;
                 },
-                0);
-
-        Utils.runWithOptimizationLevel(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, "1234", "test", 1, null);
-                    assertEquals(1234, result);
-
-                    return null;
-                },
-                1);
+                false);
     }
 
     /** Special Tokenizer test for numeric separator constant at end. */
