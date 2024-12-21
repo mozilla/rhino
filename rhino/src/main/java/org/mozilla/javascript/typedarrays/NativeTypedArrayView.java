@@ -609,11 +609,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private void setRange(NativeTypedArrayView<?> v, int off) {
         if (off < 0 || off > length) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset");
+            throw ScriptRuntime.rangeError(msg);
         }
 
         if (v.length > (length - off)) {
-            throw ScriptRuntime.rangeError("source array is too long");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.source.array");
+            throw ScriptRuntime.rangeError(msg);
         }
 
         if (v.arrayBuffer == arrayBuffer) {
@@ -634,10 +636,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private void setRange(NativeArray a, int off) {
         if (off < 0 || off > length) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset");
+            throw ScriptRuntime.rangeError(msg);
         }
         if ((off + a.size()) > length) {
-            throw ScriptRuntime.rangeError("source array is too long");
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.source.array");
+            throw ScriptRuntime.rangeError(msg);
         }
 
         int pos = off;
