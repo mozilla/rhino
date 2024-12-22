@@ -31,7 +31,6 @@ This behavior can be changed through different means:
 ```
 ./gradlew test -DoptLevel=9
 ```
-3. Setting an explicit optimization level through the `TEST_262_OPTLEVEL` environment variable
 
 ## Running a specific TestSuite
 ```
