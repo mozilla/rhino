@@ -71,8 +71,6 @@ public class Test262SuiteTest {
     /** The test must be executed just once--in non-strict mode, only. */
     private static final String FLAG_NO_STRICT = "noStrict";
 
-    static final int[] OPT_LEVELS;
-
     private static final File testDir = new File("test262/test");
     private static final String testHarnessDir = "test262/harness/";
     private static final String testProperties;
@@ -132,33 +130,9 @@ public class Test262SuiteTest {
                     includeUnsupported =
                             updateProps.isEmpty() || updateProps.indexOf("unsupported") != -1;
             }
-
-            if (getOverriddenLevel() != null) {
-                System.out.println(
-                        "Ignoring custom optLevels because the updateTest262Properties param is set");
-            }
-
-            OPT_LEVELS = Utils.DEFAULT_OPT_LEVELS;
         } else {
             updateTest262Properties = rollUpEnabled = statsEnabled = includeUnsupported = false;
-
-            // Reduce the number of tests that we run by a factor of three...
-            String overriddenLevel = getOverriddenLevel();
-            if (overriddenLevel != null) {
-                OPT_LEVELS = new int[] {Integer.parseInt(overriddenLevel)};
-            } else {
-                OPT_LEVELS = Utils.DEFAULT_OPT_LEVELS;
-            }
         }
-    }
-
-    private static String getOverriddenLevel() {
-        String optLevel = System.getProperty("TEST_OPTLEVEL");
-
-        if (optLevel == null || optLevel.isEmpty()) {
-            optLevel = System.getenv("TEST_262_OPTLEVEL");
-        }
-        return optLevel;
     }
 
     @BeforeAll
@@ -279,7 +253,7 @@ public class Test262SuiteTest {
                         }
 
                         if (!testFile.isDirectory()) {
-                            testResult = tt.getResult(OPT_LEVELS, testCases[j]);
+                            testResult = tt.getResult(testCases[j]);
 
                             if (testResult == null) {
                                 // At least one passing test in currentParent directory, so prevent
@@ -420,7 +394,9 @@ public class Test262SuiteTest {
      */
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
-                    "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+                    "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
+                            + "(?:strict|non-strict|compiled-strict|compiled-non-strict|interpreted-strict|interpreted-non-strict|compiled|interpreted|"
+                            + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
@@ -1051,7 +1027,7 @@ public class Test262SuiteTest {
             modes.remove(makeKey(mode, useStrict));
         }
 
-        public String getResult(int[] optLevels, Test262Case tc) {
+        public String getResult(Test262Case tc) {
             // success on all optLevels in both strict and non-strict mode
             if (modes.isEmpty()) {
                 return null;
@@ -1083,8 +1059,33 @@ public class Test262SuiteTest {
                 return "";
             }
 
-            // mix of mode and optLevel successes and failures
-            return '{' + String.join(",", new ArrayList<>(modes)) + '}';
+            // simplify the output for some cases
+            ArrayList res = new ArrayList<>(modes);
+            if (res.contains("compiled-non-strict") && res.contains("interpreted-non-strict")) {
+                res.remove("compiled-non-strict");
+                res.remove("interpreted-non-strict");
+                res.add("non-strict");
+            }
+            if (res.contains("compiled-strict") && res.contains("interpreted-strict")) {
+                res.remove("compiled-strict");
+                res.remove("interpreted-strict");
+                res.add("strict");
+            }
+            if (res.contains("compiled-strict") && res.contains("compiled-non-strict")) {
+                res.remove("compiled-strict");
+                res.remove("compiled-non-strict");
+                res.add("compiled");
+            }
+            if (res.contains("interpreted-strict") && res.contains("interpreted-non-strict")) {
+                res.remove("interpreted-strict");
+                res.remove("interpreted-non-strict");
+                res.add("interpreted");
+            }
+
+            if (res.size() > 1) {
+                return '{' + String.join(",", res) + '}';
+            }
+            return String.join(",", res);
         }
     }
 }
