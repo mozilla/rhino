@@ -77,21 +77,25 @@ public class ImportClassTest {
 
     @Test
     public void importMultipleTimes() {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            ScriptableObject sharedScope = cx.initStandardObjects();
-            //sharedScope.sealObject(); code below will try to modify sealed object
+        Utils.runWithAllModes(
+                cx -> {
+                    ScriptableObject sharedScope = cx.initStandardObjects();
+                    // sharedScope.sealObject(); // code below will try to modify sealed object
 
-            Script script = cx.compileString("importClass(java.util.UUID);true", "TestScript", 1, null);
+                    Script script =
+                            cx.compileString(
+                                    "importClass(java.util.UUID);true", "TestScript", 1, null);
 
-            for (int i = 0; i < 3; i++) {
-                Scriptable scope = new ImporterTopLevel(cx);
-                scope.setParentScope(sharedScope);
-                script.exec(cx, scope);
-                assertEquals(UniqueTag.NOT_FOUND, sharedScope.get("UUID", sharedScope));
-                assertTrue(scope.get("UUID", scope) instanceof NativeJavaClass);
-            }
-            return null;
-        });
+                    for (int i = 0; i < 3; i++) {
+                        Scriptable scope = new ImporterTopLevel(cx);
+                        scope.setPrototype(sharedScope);
+                        scope.setParentScope(null);
+                        script.exec(cx, scope);
+                        assertEquals(UniqueTag.NOT_FOUND, sharedScope.get("UUID", sharedScope));
+                        assertTrue(scope.get("UUID", scope) instanceof NativeJavaClass);
+                    }
+                    return null;
+                });
     }
 
     private Object runScript(final String scriptSourceText) {
