@@ -18,6 +18,28 @@ load("testsrc/assert.js");
   try { new Int8Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -2.68435457E8", msg);
 
+  msg = null;
+  try { new Int8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Int8Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Int8Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -1 out of range", msg);
+
+  msg = null;
+  try { new Int8Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 3 out of range", msg);
+
+  var ta = new Int8Array(new ArrayBuffer(4), 3);
+  assertEquals("0", ta.toString());
+
+  ta = new Int8Array(new ArrayBuffer(5), 2);
+  assertEquals("0,0,0", ta.toString());
+
   var one = new Int8Array([7]);
   assertEquals("7", one.toString());
 
@@ -62,6 +84,28 @@ load("testsrc/assert.js");
   msg = null;
   try { new Uint8Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+
+  msg = null;
+  try { new Uint8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Uint8Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Uint8Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -1 out of range", msg);
+
+  msg = null;
+  try { new Uint8Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 3 out of range", msg);
+
+  var ta = new Uint8Array(new ArrayBuffer(4), 3);
+  assertEquals("0", ta.toString());
+
+  ta = new Uint8Array(new ArrayBuffer(5), 2);
+  assertEquals("0,0,0", ta.toString());
 
   one = new Uint8Array([7]);
   assertEquals("7", one.toString());
@@ -109,6 +153,30 @@ load("testsrc/assert.js");
   try { new Int16Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -5.36870914E8", msg);
 
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -2 out of range", msg);
+
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 6 out of range", msg);
+
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 2", msg);
+
+  msg = null;
+  try { new Int16Array(new ArrayBuffer(5), 2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 3 must be a multiple of the byte size 2", msg);
+
   one = new Int16Array([7]);
   assertEquals("7", one.toString());
 
@@ -154,6 +222,30 @@ load("testsrc/assert.js");
   msg = null;
   try { new Uint16Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -5.36870914E8", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -2 out of range", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 6 out of range", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 2", msg);
+
+  msg = null;
+  try { new Uint16Array(new ArrayBuffer(5), 2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 3 must be a multiple of the byte size 2", msg);
 
   one = new Uint16Array([7]);
   assertEquals("7", one.toString());
@@ -201,6 +293,30 @@ load("testsrc/assert.js");
   try { new Int32Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -1.073741828E9", msg);
 
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -4 out of range", msg);
+
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 12 out of range", msg);
+
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 4", msg);
+
+  msg = null;
+  try { new Int32Array(new ArrayBuffer(5), 4); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 1 must be a multiple of the byte size 4", msg);
+
   one = new Int32Array([7]);
   assertEquals("7", one.toString());
 
@@ -246,6 +362,30 @@ load("testsrc/assert.js");
   msg = null;
   try { new Uint32Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -4 out of range", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 12 out of range", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 4", msg);
+
+  msg = null;
+  try { new Uint32Array(new ArrayBuffer(5), 4); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 1 must be a multiple of the byte size 4", msg);
 
   one = new Uint32Array([7]);
   assertEquals("7", one.toString());
@@ -293,6 +433,28 @@ load("testsrc/assert.js");
   try { new Uint8ClampedArray(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -2.68435457E8", msg);
 
+  msg = null;
+  try { new Uint8ClampedArray(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Uint8ClampedArray(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Uint8ClampedArray(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -1 out of range", msg);
+
+  msg = null;
+  try { new Uint8ClampedArray(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 3 out of range", msg);
+
+  var ta = new Uint8ClampedArray(new ArrayBuffer(4), 3);
+  assertEquals("0", ta.toString());
+
+  ta = new Uint8ClampedArray(new ArrayBuffer(5), 2);
+  assertEquals("0,0,0", ta.toString());
+
   one = new Uint8ClampedArray([7]);
   assertEquals("7", one.toString());
 
@@ -339,6 +501,30 @@ load("testsrc/assert.js");
   try { new Float32Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -1.073741828E9", msg);
 
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -4 out of range", msg);
+
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 12 out of range", msg);
+
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 4", msg);
+
+  msg = null;
+  try { new Float32Array(new ArrayBuffer(5), 4); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 1 must be a multiple of the byte size 4", msg);
+
   one = new Float32Array([7]);
   assertEquals("7", one.toString());
 
@@ -384,6 +570,30 @@ load("testsrc/assert.js");
   msg = null;
   try { new Float64Array(-268435457); } catch (e) { msg = e.toString();}
   assertEquals("RangeError: Negative array length -2.147483656E9", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset -1 out of range", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 out of range", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length -8 out of range", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: length 24 out of range", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(4), 3); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: offset 3 must be a multiple of the byte size 8", msg);
+
+  msg = null;
+  try { new Float64Array(new ArrayBuffer(9), 8); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: used buffer length 1 must be a multiple of the byte size 8", msg);
 
   one = new Float64Array([7]);
   assertEquals("7", one.toString());
