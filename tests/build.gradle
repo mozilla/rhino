@@ -50,13 +50,6 @@ test {
     jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
     jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
 
-    // Set to reduce number of tests by only running at one opt level
-    if (System.getProperty('quick') != null) {
-        systemProperty 'TEST_OPTLEVEL', -1
-    } else if (System.getProperty('optLevel')) {
-        systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
-    }
-
     systemProperty 'test262properties', System.getProperty('test262properties')
     if (System.getProperty('updateTest262properties') != null) {
         if (System.getenv("RHINO_TEST_JAVA_VERSION") != "11") {

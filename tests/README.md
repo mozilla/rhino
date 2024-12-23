@@ -3,8 +3,8 @@
 ```
 ./gradlew test
 ```
-Runs the MozillaSuiteTest (and the Test262Suite if installed) 3 times (at optimization levels -1, 0 and 9)
-Results can be found in `./buildGradle/reports/tests/test/index.html`
+Runs the MozillaSuiteTest, the Test262Suite if installed, and many other tests.
+Results can be found in the various "...build/reports/tests" subdirectories of each module.
 
 ## Running the official ECMAScript Test Suite (test262)
 The Rhino test source contains logic to additionally run the official [ECMAScript Test Suite](https://github.com/tc39/test262).
@@ -18,19 +18,6 @@ After doing so, the `./gradlew test` command will also execute all tests that ar
 
 As Rhino isn't 100% compliant with the latest ECMAScript standard, there is a mechanism to define which tests to run/skip,
 through the [test262.properties](test262.properties) file, the format of which is discussed in the [test262.properties format](#test262.properties-format) section
-
-## Optimization levels
-By default all tests are run 3 times, at optimization levels -1, 0 and 9.
-
-This behavior can be changed through different means:
-1. Quick disable (will run tests with optimization level -1)
-```
-./gradlew test -Dquick
-```
-2. Setting an explicit optimization level through the command line:
-```
-./gradlew test -DoptLevel=9
-```
 
 ## Running a specific TestSuite
 ```
@@ -77,10 +64,17 @@ The test262.properties file uses the Java Properties format, with the folder/.js
 ```
 
 A Java Properties file can also have entire lines as comments, by prefixing the line with either `!` or `#`.
-While the test262.properties file does support this (because it is a Java Properties file), such line comments will be lost when (re)generating the test262.properties file!
+While the test262.properties file does support this (because it is a Java Properties file), such line comments will be
+lost when (re)generating the test262.properties file!
 
 ## Updating the test262.properties file
-While the [test262.properties](test262.properties) file could be manually updated, the tooling also comes with a mechanism to (re)generate the file based on the current revision of the test262 submodule and the results of running Test262SuiteTest against this revision on all standard optLevels (-1, 0 & 9)
+While the [test262.properties](test262.properties) file could be manually updated, the tooling also comes with a mechanism to
+(re)generate the file based on the current revision of the test262 submodule and the results of running
+the Test262SuiteTest against this revision on all standard optLevels (-1, 0 & 9)
+
+(Note that the logic to build and organize regenerating this file seems dependent on Java version -- it may be 
+helpful to make sure that Java 11 is the first JVM in your path before trying this if the result seems
+very unusual.)
 
 ```
 RHINO_TEST_JAVA_VERSION=11 ./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
@@ -95,7 +89,9 @@ These defaults can be overridden by specifying a value for the `generateTest262p
 - none: rollup, stats and unsupported all false
 - [rollup][stats][unsupported]: the ones included will be true
 
-Note: the tests must actually run for the .properties file to be updated. If gradle determines that nothing has changed since the last time the `test` command was run, it won't run the tests. The `--rerun-tasks` argument forces gradle to run all tests 
+Note: the tests must actually run for the .properties file to be updated. If gradle determines that nothing has
+changed since the last time the `test` command was run, it won't run the tests. The `--rerun-tasks` argument forces
+gradle to run all tests 
 
 ## Running specific tests from the official ECMAScript Test Suite (test262)
 The default setup for running the test262 test suite is defined in [test262.properties](test262.properties).
@@ -104,4 +100,5 @@ Another .properties file to use can be specified using the `test262properties` c
 ```
 ./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest -Dtest262properties=testsrc/myOwn.properties
 ```
-This allows the creation of a custom .properties file containing for example just the tests for one specific feature being implemented, which allows for (quickly) running just the tests for that specific feature
+This allows the creation of a custom .properties file containing for example just the tests for one specific feature
+being implemented, which allows for (quickly) running just the tests for that specific feature
