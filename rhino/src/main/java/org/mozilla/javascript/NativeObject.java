@@ -674,14 +674,16 @@ public class NativeObject extends IdScriptableObject implements Map {
                                 if (sourceObj.has(intId, sourceObj)
                                         && isEnumerable(intId, sourceObj)) {
                                     Object val = sourceObj.get(intId, sourceObj);
-                                    ScriptableObject.putPropertyStrict(targetObj, intId, val);
+                                    AbstractEcmaObjectOperations.put(
+                                            cx, targetObj, intId, val, true);
                                 }
                             } else {
                                 String stringId = ScriptRuntime.toString(key);
                                 if (sourceObj.has(stringId, sourceObj)
                                         && isEnumerable(stringId, sourceObj)) {
                                     Object val = sourceObj.get(stringId, sourceObj);
-                                    ScriptableObject.putPropertyStrict(targetObj, stringId, val);
+                                    AbstractEcmaObjectOperations.put(
+                                            cx, targetObj, stringId, val, true);
                                 }
                             }
                         }
