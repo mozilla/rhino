@@ -70,7 +70,7 @@ lost when (re)generating the test262.properties file!
 ## Updating the test262.properties file
 While the [test262.properties](test262.properties) file could be manually updated, the tooling also comes with a mechanism to
 (re)generate the file based on the current revision of the test262 submodule and the results of running
-the Test262SuiteTest against this revision on all standard optLevels (-1, 0 & 9)
+the Test262SuiteTest in both interpreted and compiled mode, and with strict mode on and off.
 
 (Note that the logic to build and organize regenerating this file seems dependent on Java version -- it may be 
 helpful to make sure that Java 11 is the first JVM in your path before trying this if the result seems
