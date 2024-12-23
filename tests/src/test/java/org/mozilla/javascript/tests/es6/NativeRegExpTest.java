@@ -14,34 +14,33 @@ public class NativeRegExpTest {
 
     @Test
     public void regExIsCallableForBackwardCompatibility() {
-        Utils.assertWithAllOptimizationLevels_1_8("1", "var a = new RegExp('1'); a(1).toString();");
-        Utils.assertWithAllOptimizationLevels_1_8(
-                "{1234},1234", "/^\\{(.*)\\}$/('{1234}').toString();");
-        Utils.assertWithAllOptimizationLevels_1_8(null, "RegExp('a|b','g')()");
-        Utils.assertWithAllOptimizationLevels_1_8(null, "new /z/();");
-        Utils.assertWithAllOptimizationLevels_1_8("", "(new new RegExp).toString()");
+        Utils.assertWithAllModes_1_8("1", "var a = new RegExp('1'); a(1).toString();");
+        Utils.assertWithAllModes_1_8("{1234},1234", "/^\\{(.*)\\}$/('{1234}').toString();");
+        Utils.assertWithAllModes_1_8(null, "RegExp('a|b','g')()");
+        Utils.assertWithAllModes_1_8(null, "new /z/();");
+        Utils.assertWithAllModes_1_8("", "(new new RegExp).toString()");
     }
 
     @Test
     public void regExMinusInRangeBorderCases() {
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "axbxc d efg 1 23", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "axbxcxdxefgx1x23",
                 "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\s]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "x x x x x", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\S]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "x x x x x", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\w]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "axbxcxdxefgx1x23",
                 "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\W]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "axbxc d efg x x",
                 "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\d]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "x1x23", "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\D]+/g, 'x');");
-        Utils.assertWithAllOptimizationLevels_1_8(
+        Utils.assertWithAllModes_1_8(
                 "x-bxc d efg 1 23",
                 "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\a]+/g, 'x');");
     }
@@ -68,16 +67,15 @@ public class NativeRegExpTest {
                         + "  Object.defineProperty(r, 'lastIndex', { writable: false });"
                         + "  r.exec('abc');"
                         + "} catch (e) { e.message }";
-        Utils.assertWithAllOptimizationLevels(
-                "Cannot modify readonly property: lastIndex.", script);
+        Utils.assertWithAllModes("Cannot modify readonly property: lastIndex.", script);
     }
 
     @Test
     public void search() {
-        Utils.assertWithAllOptimizationLevelsES6(1, "'abc'.search(/b/);");
-        Utils.assertWithAllOptimizationLevelsES6(1, "/b/[Symbol.search]('abc');");
-        Utils.assertWithAllOptimizationLevelsES6(-1, "'abc'.search(/d/);");
-        Utils.assertWithAllOptimizationLevelsES6(-1, "/d/[Symbol.search]('abc');");
+        Utils.assertWithAllModes_ES6(1, "'abc'.search(/b/);");
+        Utils.assertWithAllModes_ES6(1, "/b/[Symbol.search]('abc');");
+        Utils.assertWithAllModes_ES6(-1, "'abc'.search(/d/);");
+        Utils.assertWithAllModes_ES6(-1, "/d/[Symbol.search]('abc');");
     }
 
     @Test
@@ -96,7 +94,7 @@ public class NativeRegExpTest {
                         + "  pattern.multiline === re.multiline &&"
                         + "  pattern.global === re.global && "
                         + "  pattern.ignoreCase === re.ignoreCase";
-        Utils.assertWithAllOptimizationLevels(true, script);
+        Utils.assertWithAllModes(true, script);
     }
 
     @Test
@@ -108,7 +106,7 @@ public class NativeRegExpTest {
                         + "  pattern.multiline === re.multiline &&"
                         + "  pattern.global === re.global && "
                         + "  pattern.ignoreCase === re.ignoreCase";
-        Utils.assertWithAllOptimizationLevels(true, script);
+        Utils.assertWithAllModes(true, script);
     }
 
     @Test
@@ -129,6 +127,6 @@ public class NativeRegExpTest {
                         + "pattern.lastIndex = 42;\n"
                         + "var re = new RegExp(pattern, \"g\");\n"
                         + "re.global && re.lastIndex === 0";
-        Utils.assertWithAllOptimizationLevelsES6(true, script);
+        Utils.assertWithAllModes_ES6(true, script);
     }
 }

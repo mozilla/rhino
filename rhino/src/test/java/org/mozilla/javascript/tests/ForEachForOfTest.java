@@ -69,7 +69,7 @@ public class ForEachForOfTest {
     }
 
     private static void testList(final String script) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();
@@ -86,7 +86,7 @@ public class ForEachForOfTest {
     }
 
     private static void testArray(final String script) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();
@@ -103,7 +103,7 @@ public class ForEachForOfTest {
     }
 
     private static void testSet(final String script) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();
@@ -121,7 +121,7 @@ public class ForEachForOfTest {
     }
 
     private static void testMap(final String script) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();

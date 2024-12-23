@@ -22,7 +22,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("1,abc,2,##", code);
+        Utils.assertWithAllModes_ES6("1,abc,2,##", code);
     }
 
     @Test
@@ -35,7 +35,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1, 'abc', 2, '##').toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("1,abc,2,##", code);
+        Utils.assertWithAllModes_ES6("1,abc,2,##", code);
     }
 
     @Test
@@ -47,7 +47,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest();\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("true-0", code);
+        Utils.assertWithAllModes_ES6("true-0", code);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest();\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("true-0", code);
+        Utils.assertWithAllModes_ES6("true-0", code);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest('xy');\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("true-1", code);
+        Utils.assertWithAllModes_ES6("true-1", code);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class FunctionsRestParametersTest {
                         + "var r = rest('xy');\n"
                         + "'' + Array.isArray(r) + '-' + r.length;\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("true-1", code);
+        Utils.assertWithAllModes_ES6("true-1", code);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("abc,2,##", code);
+        Utils.assertWithAllModes_ES6("abc,2,##", code);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest(1, 'abc', 2, '##').toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("abc,2,##", code);
+        Utils.assertWithAllModes_ES6("abc,2,##", code);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("undefined - true-0", code);
+        Utils.assertWithAllModes_ES6("undefined - true-0", code);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("undefined - true-0", code);
+        Utils.assertWithAllModes_ES6("undefined - true-0", code);
     }
 
     @Test
@@ -146,7 +146,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest('77');";
 
-        Utils.assertWithAllOptimizationLevelsES6("77 - true-0", code);
+        Utils.assertWithAllModes_ES6("77 - true-0", code);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest('77');";
 
-        Utils.assertWithAllOptimizationLevelsES6("77 - true-0", code);
+        Utils.assertWithAllModes_ES6("77 - true-0", code);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "'' + rest('77') + '-' + rest(1, 2, 3, 4);\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("1-4", code);
+        Utils.assertWithAllModes_ES6("1-4", code);
     }
 
     @Test
@@ -183,7 +183,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "'' + rest('77') + '-' + rest(1, 2, 3, 4);\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("1-4", code);
+        Utils.assertWithAllModes_ES6("1-4", code);
     }
 
     @Test
@@ -194,7 +194,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1,2) + '-' + rest(1) + '-' + rest();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("2-1-0", code);
+        Utils.assertWithAllModes_ES6("2-1-0", code);
     }
 
     @Test
@@ -207,7 +207,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "  rest(1,2) + '-' + rest(1) + '-' + rest();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("2-1-0", code);
+        Utils.assertWithAllModes_ES6("2-1-0", code);
     }
 
     @Test
@@ -217,7 +217,7 @@ public class FunctionsRestParametersTest {
                         + "function foo2(arg, ...restArgs) {}\n"
                         + "foo1.length + '-' + foo2.length;\n";
 
-        Utils.assertWithAllOptimizationLevelsES6("0-1", code);
+        Utils.assertWithAllModes_ES6("0-1", code);
     }
 
     @Test
@@ -228,7 +228,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest.toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "function rest(...restArgs) {\n  return restArgs.length;\n}", code);
     }
 
@@ -240,7 +240,7 @@ public class FunctionsRestParametersTest {
                         + "}\n"
                         + "rest.toString();\n";
 
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "function rest( arg ,  ...restArgs ) {\n  return restArgs.length;\n}", code);
     }
 

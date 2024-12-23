@@ -19,7 +19,7 @@ public class NativeFunctionTest {
                         + "var res = 'configurable: ' + desc.configurable;\n"
                         + "res += '  enumerable: ' + desc.enumerable;\n"
                         + "res += '  writable: ' + desc.writable;";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "configurable: true  enumerable: false  writable: false", code);
     }
 
@@ -30,7 +30,7 @@ public class NativeFunctionTest {
                         + "var res = 'configurable: ' + desc.configurable;\n"
                         + "res += '  enumerable: ' + desc.enumerable;\n"
                         + "res += '  writable: ' + desc.writable;";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "configurable: true  enumerable: false  writable: false", code);
     }
 
@@ -42,7 +42,7 @@ public class NativeFunctionTest {
                         + "var res = 'configurable: ' + desc.configurable;\n"
                         + "res += '  enumerable: ' + desc.enumerable;\n"
                         + "res += '  writable: ' + desc.writable;";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "configurable: true  enumerable: false  writable: false", code);
     }
 
@@ -54,13 +54,13 @@ public class NativeFunctionTest {
                         + "var res = 'configurable: ' + desc.configurable;\n"
                         + "res += '  enumerable: ' + desc.enumerable;\n"
                         + "res += '  writable: ' + desc.writable;";
-        Utils.assertWithAllOptimizationLevelsES6(
+        Utils.assertWithAllModes_ES6(
                 "configurable: true  enumerable: false  writable: false", code);
     }
 
     @Test
     public void functionNameJavaObject() throws Exception {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Scriptable scope = cx.initStandardObjects();

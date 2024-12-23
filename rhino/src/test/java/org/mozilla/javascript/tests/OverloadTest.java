@@ -50,7 +50,7 @@ public class OverloadTest {
     }
 
     private static void assertEvaluates(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
@@ -61,7 +61,7 @@ public class OverloadTest {
 
     private static void assertThrows(
             final Class<? extends Exception> exceptionClass, final String source) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     try {

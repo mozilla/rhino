@@ -112,7 +112,7 @@ public class TypedArrayJavaTest {
             "Uint8ClampedArray"
         };
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     ScriptableObject scope = cx.initStandardObjects();

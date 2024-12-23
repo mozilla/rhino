@@ -5,10 +5,7 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-import org.mozilla.javascript.Scriptable;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=409702
@@ -33,25 +30,13 @@ public class Bug409702Test {
 
     @Test
     public void adapter() {
-        final int value = 12;
-        String source =
-                "var instance = "
-                        + "  new JavaAdapter("
+        String script =
+                "var instance = new JavaAdapter("
                         + Foo.Subclass.class.getName()
                         + ","
-                        + "{ b: function () { return "
-                        + value
-                        + "; } });"
+                        + "{ b: function () { return 12; } });"
                         + "instance.b();";
 
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-
-                    Object result = cx.evaluateString(scope, source, "source", 1, null);
-                    assertEquals(Integer.valueOf(value), result);
-
-                    return null;
-                });
+        Utils.assertWithAllModes(12, script);
     }
 }

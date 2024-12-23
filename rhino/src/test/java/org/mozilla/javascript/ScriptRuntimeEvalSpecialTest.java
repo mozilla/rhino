@@ -22,7 +22,7 @@ public class ScriptRuntimeEvalSpecialTest {
     }
 
     private static void canUseEvalSpecialWithThisSetTo(Object thisArg) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     ScriptableObject scope = cx.initStandardObjects();
                     Object o =

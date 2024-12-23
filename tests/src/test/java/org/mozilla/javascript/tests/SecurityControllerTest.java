@@ -128,7 +128,7 @@ public class SecurityControllerTest {
 
     /** Compiles and runs the script with the given protection domain. */
     private void runScript(String scriptSourceText, ProtectionDomain pd) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 context -> {
                     context.setClassShutter(new PolicyClassShutter());
                     Scriptable scope = context.initStandardObjects(global);

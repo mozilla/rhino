@@ -70,7 +70,7 @@ public class TypeOfTest {
     }
 
     private static void doTest(String expected, final String script, final Scriptable obj) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     scope.put("myObj", scope, obj);

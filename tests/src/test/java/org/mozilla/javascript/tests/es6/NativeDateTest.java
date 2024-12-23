@@ -133,7 +133,7 @@ public class NativeDateTest {
     }
 
     private static void ctorDateTimeString(final String expected, final String js) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -169,7 +169,7 @@ public class NativeDateTest {
     public void ctorDateTimeBerlinDaylightSavingTime() {
         String js = "new Date('2021-07-18T22:23').toISOString()";
 
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -198,7 +198,7 @@ public class NativeDateTest {
 
     private static void ctorDateTime(final String expected, final String tz) {
         final String js = "new Date('2021-12-18T22:23').toISOString()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -247,7 +247,7 @@ public class NativeDateTest {
 
     private static void ctorDate(final String expected, final String tz) {
         final String js = "new Date('2021-12-18').toISOString()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -261,14 +261,13 @@ public class NativeDateTest {
 
     @Test
     public void ctorInt() {
-        Utils.assertWithAllOptimizationLevels(
+        Utils.assertWithAllModes(
                 "2000-02-28T23:59:59.000Z", "new Date(951782399000).toISOString()");
     }
 
     @Test
     public void ctorDouble() {
-        Utils.assertWithAllOptimizationLevels(
-                "2035-11-30T01:46:40.000Z", "new Date(208e10).toISOString()");
+        Utils.assertWithAllModes("2035-11-30T01:46:40.000Z", "new Date(208e10).toISOString()");
     }
 
     @Test
@@ -346,7 +345,7 @@ public class NativeDateTest {
     }
 
     private static void toLocale(final String expected, final String js) {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -395,7 +394,7 @@ public class NativeDateTest {
 
     private static void toDateString(final String expected, final String tz) {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toDateString()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -446,7 +445,7 @@ public class NativeDateTest {
 
     private static void toTimeString(final String expected, final String tz) {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toTimeString()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -495,7 +494,7 @@ public class NativeDateTest {
 
     private static void toUTCString(final String expected, final String tz) {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toUTCString()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -544,7 +543,7 @@ public class NativeDateTest {
 
     private static void timezoneOffset(final int expected, final String tz) {
         final String js = "new Date(0).getTimezoneOffset()";
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);

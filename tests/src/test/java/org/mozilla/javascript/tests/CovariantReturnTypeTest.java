@@ -94,7 +94,7 @@ public class CovariantReturnTypeTest {
 
     @Test
     public void checkIt() {
-        Utils.runWithAllOptimizationLevels(
+        Utils.runWithAllModes(
                 cx -> {
                     final Global scope = new Global();
                     scope.init(cx);

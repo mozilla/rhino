@@ -2,7 +2,6 @@ package org.mozilla.javascript;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -25,60 +24,49 @@ class SuperTest {
 
         @Test
         void superIsAKeywordInES6AndCannotBeUsedAsVariableName() {
-            assertIsSyntaxErrorES6("var super = 42;", "missing variable name (test#1)");
+            Utils.assertEvaluatorExceptionES6("missing variable name (test#1)", "var super = 42;");
         }
 
         @Test
         void isSyntaxErrorIfHasSuperCall() {
-            assertIsSyntaxErrorES6(
-                    "({ method() { super(); }});",
-                    "super should be inside a shorthand function (test#1)");
+            Utils.assertEvaluatorExceptionES6(
+                    "super should be inside a shorthand function (test#1)",
+                    "({ method() { super(); }});");
         }
 
         @Test
         void superCannotBeUsedInAPropertyValue() {
-            assertIsSyntaxErrorES6(
-                    "var o = { a: super.b }",
-                    "super should be inside a shorthand function (test#1)");
+            Utils.assertEvaluatorExceptionES6(
+                    "super should be inside a shorthand function (test#1)",
+                    "var o = { a: super.b }");
         }
 
         @Test
         void superCannotBeUsedInAComputedPropertyName() {
-            assertIsSyntaxErrorES6(
-                    "var o = { [super.x]: 42 }",
-                    "super should be inside a shorthand function (test#1)");
+            Utils.assertEvaluatorExceptionES6(
+                    "super should be inside a shorthand function (test#1)",
+                    "var o = { [super.x]: 42 }");
         }
 
         @Test
         void superCannotBeUsedInANonShorthandMethod() {
-            assertIsSyntaxErrorES6(
-                    "var o = { f: function() { super.x } }",
-                    "super should be inside a shorthand function (test#1)");
+            Utils.assertEvaluatorExceptionES6(
+                    "super should be inside a shorthand function (test#1)",
+                    "var o = { f: function() { super.x } }");
         }
 
         @Test
         void superCannotHaveOptionalPropertyAccess() {
-            assertIsSyntaxErrorES6(
-                    "var o = { f() { super?.x } }",
-                    "super is not allowed in an optional chaining expression (test#1)");
+            Utils.assertEvaluatorExceptionES6(
+                    "super is not allowed in an optional chaining expression (test#1)",
+                    "var o = { f() { super?.x } }");
         }
 
         @Test
         void superNestedInAFunctionInsideAMethodIsNotAllowed() {
-            assertIsSyntaxErrorES6(
-                    "var o = { f() {\n" + "  (function() { super.x; })() \n" + "} }",
-                    "super should be inside a shorthand function (test#2)");
-        }
-
-        private void assertIsSyntaxErrorES6(String source, String expected) {
-            try (Context cx = Context.enter()) {
-                cx.setLanguageVersion(Context.VERSION_ES6);
-                EvaluatorException err =
-                        assertThrows(
-                                EvaluatorException.class,
-                                () -> cx.compileString(source, "test", 1, null));
-                assertEquals(expected, err.getMessage());
-            }
+            Utils.assertEvaluatorExceptionES6(
+                    "super should be inside a shorthand function (test#2)",
+                    "var o = { f() {\n" + "  (function() { super.x; })() \n" + "} }");
         }
     }
 
@@ -97,7 +85,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -112,7 +101,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -127,7 +117,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -142,7 +133,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -158,7 +150,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -174,7 +167,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -191,7 +185,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -207,7 +202,8 @@ class SuperTest {
                             + "\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f;";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -218,7 +214,8 @@ class SuperTest {
                             + "const b = { x: 'b', get y() { return super['y'] + 'y'; } };\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.y;";
-            Utils.assertWithAllOptimizationLevelsES6("bxy", script);
+
+            Utils.assertWithAllModes_ES6("bxy", script);
         }
 
         @Test
@@ -229,7 +226,8 @@ class SuperTest {
                             + "const b = { x: 'b', f(p = super.x) { return p; } };\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6("a", script);
+
+            Utils.assertWithAllModes_ES6("a", script);
         }
 
         @Test
@@ -246,7 +244,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(b, a);\n"
                             + "var fn = b.f;\n"
                             + "fn()\n";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -266,7 +265,8 @@ class SuperTest {
                             + "var d = { fn };\n"
                             + "Object.setPrototypeOf(d, c)\n"
                             + "d.fn()\n";
-            Utils.assertWithAllOptimizationLevelsES6(1, script);
+
+            Utils.assertWithAllModes_ES6(1, script);
         }
 
         @Test
@@ -285,7 +285,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(obj, protoY);\n"
                             + "obj.f();";
-            Utils.assertWithAllOptimizationLevelsES6("xy", script);
+
+            Utils.assertWithAllModes_ES6("xy", script);
         }
 
         @Test
@@ -304,7 +305,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(obj, protoY);\n"
                             + "obj.f();";
-            Utils.assertWithAllOptimizationLevelsES6("xy", script);
+
+            Utils.assertWithAllModes_ES6("xy", script);
         }
 
         @Test
@@ -320,7 +322,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6("number", script);
+
+            Utils.assertWithAllModes_ES6("number", script);
         }
 
         @Test
@@ -336,7 +339,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "b.f();";
-            Utils.assertWithAllOptimizationLevelsES6("undefined", script);
+
+            Utils.assertWithAllModes_ES6("undefined", script);
         }
 
         @Test
@@ -352,7 +356,7 @@ class SuperTest {
                         }
                     };
 
-            Utils.runWithAllOptimizationLevels(
+            Utils.runWithAllModes(
                     factory,
                     cx -> {
                         AtomicBoolean warningReported = new AtomicBoolean(false);
@@ -426,7 +430,8 @@ class SuperTest {
                             + "   x: 42\n"
                             + "};\n"
                             + "o.f();";
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -441,7 +446,8 @@ class SuperTest {
                             + "  }"
                             + "};\n"
                             + "o.f();";
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -455,7 +461,8 @@ class SuperTest {
                             + "  }"
                             + "};\n"
                             + "o.f();";
-            Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, script);
+
+            Utils.assertWithAllModes_ES6(Undefined.instance, script);
         }
 
         @Test
@@ -469,24 +476,9 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(obj, null);\n"
                             + "obj.method();";
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "TypeError: Cannot read property \"x\" from null (test#3)",
-                                error.getMessage());
-                        return null;
-                    });
+
+            Utils.assertEcmaErrorES6(
+                    "TypeError: Cannot read property \"x\" from null (test#3)", script);
         }
     }
 
@@ -504,7 +496,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -519,7 +512,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[42] + ':' + proto[42]";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -534,7 +528,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[-1] + ':' + proto[-1]";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -549,7 +544,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[0.1] + ':' + proto[0.1]";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -564,7 +560,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object.x+ ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -579,7 +576,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[42] + ':' + proto[42]";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -595,7 +593,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object[s] + ':' + proto[s]";
-            Utils.assertWithAllOptimizationLevelsES6("new:proto", script);
+
+            Utils.assertWithAllModes_ES6("new:proto", script);
         }
 
         @Test
@@ -613,7 +612,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f = 1;\n"
                             + "object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("1:0", script);
+
+            Utils.assertWithAllModes_ES6("1:0", script);
         }
 
         @Test
@@ -634,7 +634,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.x = 1;\n"
                             + "object._x + ':' + proto._x";
-            Utils.assertWithAllOptimizationLevelsES6("1:0", script);
+
+            Utils.assertWithAllModes_ES6("1:0", script);
         }
 
         @Test
@@ -650,13 +651,14 @@ class SuperTest {
                             + "};\n"
                             + "o.f();\n"
                             + "o.x + ':' + Object.prototype.x";
-            Utils.assertWithAllOptimizationLevelsES6("1:undefined", script);
+
+            Utils.assertWithAllModes_ES6("1:undefined", script);
         }
 
         @Test
         void superPropertyNotWritableIgnoredSilentlyInNonStrictMode() {
             String script =
-                    "\n"
+                    ""
                             + "var proto = { x: 'proto' };\n"
                             + "var object = {\n"
                             + "  x: 'obj',\n"
@@ -666,14 +668,14 @@ class SuperTest {
                             + "Object.defineProperty(proto, 'x', {writable: false});\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            Utils.assertWithAllOptimizationLevelsES6("obj:proto", script);
+
+            Utils.assertWithAllModes_ES6("obj:proto", script);
         }
 
         @Test
         void thisPropertyNotWritableIgnoredSilentlyInNonStrictMode() {
             String script =
-                    "\n"
+                    ""
                             + "var proto = { x: 'proto' };\n"
                             + "var object = {\n"
                             + "  x: 'obj',\n"
@@ -683,14 +685,14 @@ class SuperTest {
                             + "Object.defineProperty(object, 'x', {writable: false});\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            Utils.assertWithAllOptimizationLevelsES6("obj:proto", script);
+
+            Utils.assertWithAllModes_ES6("obj:proto", script);
         }
 
         @Test
         void superPropertyNotWritableInStrictIsError() {
             String script =
-                    "\n"
+                    ""
                             + "'use strict';\n"
                             + "var proto = { x: 'proto' };\n"
                             + "var object = {\n"
@@ -701,14 +703,15 @@ class SuperTest {
                             + "Object.defineProperty(proto, 'x', {writable: false});\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            assertThrowsTypeErrorCannotWriteProperty(script);
+
+            Utils.assertEcmaErrorES6(
+                    "TypeError: Cannot modify readonly property: x. (test#5)", script);
         }
 
         @Test
         void thisPropertyNotWritableInStrictIsError() {
             String script =
-                    "\n"
+                    ""
                             + "'use strict';\n"
                             + "var proto = { x: 'proto' };\n"
                             + "var object = {\n"
@@ -719,29 +722,9 @@ class SuperTest {
                             + "Object.defineProperty(object, 'x', {writable: false});\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            assertThrowsTypeErrorCannotWriteProperty(script);
-        }
 
-        private void assertThrowsTypeErrorCannotWriteProperty(String script) {
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "TypeError: Cannot modify readonly property: x. (test#6)",
-                                error.getMessage());
-                        return null;
-                    });
+            Utils.assertEcmaErrorES6(
+                    "TypeError: Cannot modify readonly property: x. (test#5)", script);
         }
 
         @Test
@@ -755,30 +738,15 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(obj, null);\n"
                             + "obj.method();";
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "TypeError: Cannot set property \"x\" of null to \"42\" (test#3)",
-                                error.getMessage());
-                        return null;
-                    });
+
+            Utils.assertEcmaErrorES6(
+                    "TypeError: Cannot set property \"x\" of null to \"42\" (test#3)", script);
         }
 
         @Test
         void missingPropertyPrototypeSealedCreatesItOnTheThisObject() {
             String script =
-                    "\n"
+                    ""
                             + "var proto = {};\n"
                             + "var object = {\n"
                             + "  f() { super.x = 1; }\n"
@@ -787,14 +755,14 @@ class SuperTest {
                             + "Object.seal(proto);\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            Utils.assertWithAllOptimizationLevelsES6("1:undefined", script);
+
+            Utils.assertWithAllModes_ES6("1:undefined", script);
         }
 
         @Test
         void missingPropertyThisSealedIsIgnoredSilentlyInNonStrictMode() {
             String script =
-                    "\n"
+                    ""
                             + "var proto = {};\n"
                             + "var object = {\n"
                             + "  f() { super.x = 1; }\n"
@@ -803,14 +771,14 @@ class SuperTest {
                             + "Object.seal(object);\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            Utils.assertWithAllOptimizationLevelsES6("undefined:undefined", script);
+
+            Utils.assertWithAllModes_ES6("undefined:undefined", script);
         }
 
         @Test
         void missingPropertyThisSealedIsErrorInStrictMode() {
             String script =
-                    "\n"
+                    ""
                             + "'use strict';\n"
                             + "var proto = {};\n"
                             + "var object = {\n"
@@ -820,25 +788,10 @@ class SuperTest {
                             + "Object.seal(object);\n"
                             + "object.f();\n"
                             + "object.x + ':' + proto.x";
-            ;
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "TypeError: Cannot add properties to this object because extensible is false. (test#5)",
-                                error.getMessage());
-                        return null;
-                    });
+
+            Utils.assertEcmaErrorES6(
+                    "TypeError: Cannot add properties to this object because extensible is false. (test#4)",
+                    script);
         }
 
         @Test
@@ -854,7 +807,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+
+            Utils.assertWithAllModes_ES6("proto1:proto", script);
         }
 
         @Test
@@ -871,7 +825,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();"
                             + "object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("proto1:proto", script);
+
+            Utils.assertWithAllModes_ES6("proto1:proto", script);
         }
 
         @Test
@@ -893,7 +848,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();\n"
                             + "catchHit + ':' + getterCalled";
-            Utils.assertWithAllOptimizationLevelsES6("true:false", script);
+
+            Utils.assertWithAllModes_ES6("true:false", script);
         }
 
         @Test
@@ -916,7 +872,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();\n"
                             + "catchHit + ':' + gCalled";
-            Utils.assertWithAllOptimizationLevelsES6("true:true", script);
+
+            Utils.assertWithAllModes_ES6("true:true", script);
         }
 
         @Test
@@ -931,7 +888,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "var f = object.f();"
                             + "f + ':' + object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("1:2:1", script);
+
+            Utils.assertWithAllModes_ES6("1:2:1", script);
         }
 
         @Test
@@ -946,7 +904,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "var f = object.f();"
                             + "f + ':' + object.x + ':' + proto.x";
-            Utils.assertWithAllOptimizationLevelsES6("2:2:1", script);
+
+            Utils.assertWithAllModes_ES6("2:2:1", script);
         }
 
         @Test
@@ -961,7 +920,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "var f = object.f();"
                             + "f + ':' + object[0] + ':' + proto[0]";
-            Utils.assertWithAllOptimizationLevelsES6("1:0:1", script);
+
+            Utils.assertWithAllModes_ES6("1:0:1", script);
         }
 
         @Test
@@ -976,7 +936,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "var f = object.f();"
                             + "f + ':' + object[0] + ':' + proto[0]";
-            Utils.assertWithAllOptimizationLevelsES6("0:0:1", script);
+
+            Utils.assertWithAllModes_ES6("0:0:1", script);
         }
     }
 
@@ -998,7 +959,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(obj, proto);\n"
                             + "obj.f();";
-            Utils.assertWithAllOptimizationLevelsES6("prototype1", script);
+
+            Utils.assertWithAllModes_ES6("prototype1", script);
         }
 
         // All the n-arguments variants are necessary because we have optimized code paths in
@@ -1023,7 +985,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1044,7 +1007,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
-            Utils.assertWithAllOptimizationLevelsES6("object:a", script);
+
+            Utils.assertWithAllModes_ES6("object:a", script);
         }
 
         @Test
@@ -1065,7 +1029,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
-            Utils.assertWithAllOptimizationLevelsES6("object:a:b", script);
+
+            Utils.assertWithAllModes_ES6("object:a:b", script);
         }
 
         @Test
@@ -1086,7 +1051,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.g();";
-            Utils.assertWithAllOptimizationLevelsES6("object:a:b:c", script);
+
+            Utils.assertWithAllModes_ES6("object:a:b:c", script);
         }
 
         @Test
@@ -1106,7 +1072,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f3();";
-            Utils.assertWithAllOptimizationLevelsES6("f2f1", script);
+
+            Utils.assertWithAllModes_ES6("f2f1", script);
         }
 
         @Test
@@ -1127,7 +1094,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();";
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1143,12 +1111,13 @@ class SuperTest {
                             + "var object = {\n"
                             + "   x: 'object',\n"
                             + "   f() {\n"
-                            + "    return () => { return super.f(); } ;\n"
+                            + "    return () => { return super.f(); };\n"
                             + "  }\n"
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()();";
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+
+            Utils.assertWithAllModes_ES6("object", script);
         }
 
         @Test
@@ -1164,12 +1133,13 @@ class SuperTest {
                             + "var object = {\n"
                             + "   x: 'object',\n"
                             + "   f() {\n"
-                            + "    return () => { return () => { return super.f(); } } ;\n"
+                            + "    return () => { return () => { return super.f(); } };\n"
                             + "  }\n"
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()()();";
-            Utils.assertWithAllOptimizationLevelsES6("object", script);
+
+            Utils.assertWithAllModes_ES6("object", script);
         }
     }
 
@@ -1194,7 +1164,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(c, b);\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
-            Utils.assertWithAllOptimizationLevelsES6("b", script);
+
+            Utils.assertWithAllModes_ES6("b", script);
         }
 
         @Test
@@ -1210,7 +1181,7 @@ class SuperTest {
                             + "Object.setPrototypeOf(c, b);\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
-            Utils.assertWithAllOptimizationLevelsES6("bb", script);
+            Utils.assertWithAllModes_ES6("bb", script);
         }
 
         @Test
@@ -1228,7 +1199,8 @@ class SuperTest {
                             + "Object.setPrototypeOf(c, b);\n"
                             + "Object.setPrototypeOf(b, a);\n"
                             + "c.f();";
-            Utils.assertWithAllOptimizationLevelsES6("a", script);
+
+            Utils.assertWithAllModes_ES6("a", script);
         }
     }
 
@@ -1249,7 +1221,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f();";
-            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+
+            Utils.assertWithAllModes_ES6("proto", script);
         }
 
         @Test
@@ -1267,7 +1240,8 @@ class SuperTest {
                             + "};\n"
                             + "Object.setPrototypeOf(object, proto);\n"
                             + "object.f()();";
-            Utils.assertWithAllOptimizationLevelsES6("proto", script);
+
+            Utils.assertWithAllModes_ES6("proto", script);
         }
 
         @Test
@@ -1280,47 +1254,17 @@ class SuperTest {
                             + "  }\n"
                             + "};"
                             + "o.f();";
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
-                                error.getMessage());
-                        return null;
-                    });
+
+            Utils.assertEcmaErrorES6(
+                    "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
+                    script);
         }
 
         @Test
         void evalOutsideMethodCannotAccessSuper() {
-            String script = "eval('super.x')";
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "SyntaxError: super should be inside a shorthand function (test#1(eval)#1)",
-                                error.getMessage());
-                        return null;
-                    });
+            Utils.assertEcmaErrorES6(
+                    "SyntaxError: super should be inside a shorthand function (test#1(eval)#1)",
+                    "eval('super.x')");
         }
 
         @Test
@@ -1333,24 +1277,9 @@ class SuperTest {
                             + "  }\n"
                             + "};"
                             + "o.f();";
-            Utils.runWithAllOptimizationLevels(
-                    cx -> {
-                        cx.setLanguageVersion(Context.VERSION_ES6);
-                        EcmaError error =
-                                assertThrows(
-                                        EcmaError.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        cx.initStandardObjects(),
-                                                        script,
-                                                        "test",
-                                                        1,
-                                                        null));
-                        assertEquals(
-                                "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
-                                error.getMessage());
-                        return null;
-                    });
+            Utils.assertEcmaErrorES6(
+                    "SyntaxError: super should be inside a shorthand function (test#3(eval)#1)",
+                    script);
         }
     }
 }

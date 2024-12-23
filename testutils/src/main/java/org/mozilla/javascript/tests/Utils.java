@@ -39,41 +39,22 @@ public class Utils {
                 interpreted);
     }
 
-    /** Runs the action successively with all available optimization levels */
-    public static void runWithAllOptimizationLevels(final ContextAction<?> action) {
+    /** Runs the action successively with interpreted and optimized mode */
+    public static void runWithAllModes(final ContextAction<?> action) {
         runWithMode(action, false);
         runWithMode(action, true);
     }
 
-    /** Runs the action successively with all available optimization levels */
-    public static void runWithAllOptimizationLevels(
+    /** Runs the action successively with interpreted and optimized mode */
+    public static void runWithAllModes(
             final ContextFactory contextFactory, final ContextAction<?> action) {
         runWithMode(contextFactory, action, false);
         runWithMode(contextFactory, action, true);
     }
 
-    /** Runs the provided action at the given optimization level */
-    public static void runWithOptimizationLevel(
-            final ContextAction<?> action, final int optimizationLevel) {
-        runWithOptimizationLevel(new ContextFactory(), action, optimizationLevel);
-    }
-
     /** Runs the provided action at the given interpretation mode */
     public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
         runWithMode(new ContextFactory(), action, interpretedMode);
-    }
-
-    /** Runs the provided action at the given optimization level */
-    @SuppressWarnings("deprecation")
-    public static void runWithOptimizationLevel(
-            final ContextFactory contextFactory,
-            final ContextAction<?> action,
-            final int optimizationLevel) {
-
-        try (final Context cx = contextFactory.enterContext()) {
-            cx.setOptimizationLevel(optimizationLevel);
-            action.run(cx);
-        }
     }
 
     /** Runs the provided action at the given interpretation mode */
@@ -112,8 +93,30 @@ public class Utils {
      * @param expected the expected result
      * @param script the javascript script to execute
      */
-    public static void assertWithAllOptimizationLevels(final Object expected, final String script) {
-        assertWithAllOptimizationLevels(-1, expected, script);
+    public static void assertWithAllModes(final Object expected, final String script) {
+        assertWithAllModes(-1, null, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_1_4}.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertWithAllModes_1_4(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_1_4, null, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_1_5}.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertWithAllModes_1_5(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_1_5, null, expected, script);
     }
 
     /**
@@ -123,9 +126,8 @@ public class Utils {
      * @param expected the expected result
      * @param script the javascript script to execute
      */
-    public static void assertWithAllOptimizationLevels_1_8(
-            final Object expected, final String script) {
-        assertWithAllOptimizationLevels(Context.VERSION_1_8, expected, script);
+    public static void assertWithAllModes_1_8(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_1_8, null, expected, script);
     }
 
     /**
@@ -135,9 +137,21 @@ public class Utils {
      * @param expected the expected result
      * @param script the javascript script to execute
      */
-    public static void assertWithAllOptimizationLevelsES6(
-            final Object expected, final String script) {
-        assertWithAllOptimizationLevels(Context.VERSION_ES6, expected, script);
+    public static void assertWithAllModes_ES6(final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_ES6, null, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result. Before the execution the language version
+     * is set to {@link Context#VERSION_ES6}.
+     *
+     * @param message the message to be used if this fails
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertWithAllModes_ES6(
+            final String message, final Object expected, final String script) {
+        assertWithAllModes(Context.VERSION_ES6, message, expected, script);
     }
 
     /**
@@ -145,12 +159,16 @@ public class Utils {
      *
      * @param languageVersion the language version constant from @{@link Context} or -1 to not
      *     change the language version at all
+     * @param message the message to be used if this fails
      * @param expected the expected result
      * @param script the javascript script to execute
      */
-    public static void assertWithAllOptimizationLevels(
-            final int languageVersion, final Object expected, final String script) {
-        runWithAllOptimizationLevels(
+    public static void assertWithAllModes(
+            final int languageVersion,
+            final String message,
+            final Object expected,
+            final String script) {
+        runWithAllModes(
                 cx -> {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
@@ -160,6 +178,7 @@ public class Utils {
 
                     if (expected instanceof Integer && res instanceof Double) {
                         assertEquals(
+                                message,
                                 ((Integer) expected).doubleValue(),
                                 ((Double) res).doubleValue(),
                                 0.00001);
@@ -167,20 +186,21 @@ public class Utils {
                     }
                     if (expected instanceof Double && res instanceof Integer) {
                         assertEquals(
+                                message,
                                 ((Double) expected).doubleValue(),
                                 ((Integer) res).doubleValue(),
                                 0.00001);
                         return null;
                     }
 
-                    assertEquals(expected, res);
+                    assertEquals(message, expected, res);
                     return null;
                 });
     }
 
-    public static void assertWithAllOptimizationLevelsTopLevelScopeES6(
+    public static void assertWithAllModesTopLevelScope_ES6(
             final Object expected, final String script) {
-        runWithAllOptimizationLevels(
+        runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     Scriptable scope = cx.initStandardObjects(new TopLevel());
@@ -257,7 +277,13 @@ public class Utils {
             final Class<T> expectedThrowable,
             final String expectedMessage,
             String js) {
-        Utils.runWithAllOptimizationLevels(
+
+        // to avoid false positives because we use startsWith()
+        assertTrue(
+                "expectedMessage can't be empty",
+                expectedMessage != null && !expectedMessage.isEmpty());
+
+        Utils.runWithAllModes(
                 cx -> {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
