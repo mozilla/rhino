@@ -1208,20 +1208,52 @@ public final class Interpreter extends Icode implements Evaluator {
         return interpretLoop(cx, null, cjump);
     }
 
+    // arbitrary number to add to instructionCount when calling
+    // other functions
+    private static final int INVOCATION_COST = 100;
+    // arbitrary exception cost for instruction counting
+    private static final int EXCEPTION_COST = 100;
+
+    private static final Object undefined = Undefined.instance;
+
+    private static class NewState {}
+
+    private static final class StateContinue extends NewState {
+        private final CallFrame frame;
+
+        private StateContinue(CallFrame frame) {
+            this.frame = frame;
+        }
+    }
+
+    private static final class NewThrowable extends NewState {
+        private final Object throwable;
+
+        private NewThrowable(Object throwable) {
+            this.throwable = throwable;
+        }
+    }
+
+    private static final class ContinueLoop extends NewState {
+        private final CallFrame frame;
+        private final int stackTop;
+        private final int indexReg;
+
+        private ContinueLoop(CallFrame frame, int stackTop, int indexReg) {
+            this.frame = frame;
+            this.stackTop = stackTop;
+            this.indexReg = indexReg;
+        }
+    }
+
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
         // throwable holds exception object to rethrow or catch
         // It is also used for continuation restart in which case
         // it holds ContinuationJump
 
         final Object DBL_MRK = DOUBLE_MARK;
-        final Object undefined = Undefined.instance;
 
         final boolean instructionCounting = cx.instructionThreshold != 0;
-        // arbitrary number to add to instructionCount when calling
-        // other functions
-        final int INVOCATION_COST = 100;
-        // arbitrary exception cost for instruction counting
-        final int EXCEPTION_COST = 100;
 
         String stringReg = null;
         BigInteger bigIntReg = null;
@@ -1930,268 +1962,32 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_TAIL_CALL:
                             case Token.REF_CALL:
                                 {
-                                    if (instructionCounting) {
-                                        cx.instructionCount += INVOCATION_COST;
-                                    }
-                                    // stack change: function thisObj arg0 .. argN -> result
-                                    // indexReg: number of arguments
-                                    stackTop -= 1 + indexReg;
-
-                                    // CALL generation ensures that fun and funThisObj
-                                    // are already Scriptable and Callable objects respectively
-                                    Callable fun = (Callable) stack[stackTop];
-                                    Scriptable funThisObj = (Scriptable) stack[stackTop + 1];
-                                    Scriptable funHomeObj =
-                                            (fun instanceof BaseFunction)
-                                                    ? ((BaseFunction) fun).getHomeObject()
-                                                    : null;
-                                    if (op == Icode_CALL_ON_SUPER) {
-                                        // funThisObj would have been the "super" object, which we
-                                        // used to lookup the function. Now that that's done, we
-                                        // discard it and invoke the function with the current
-                                        // "this".
-                                        funThisObj = frame.thisObj;
-                                    }
-
-                                    if (op == Token.REF_CALL) {
-                                        Object[] outArgs =
-                                                getArgsArray(stack, sDbl, stackTop + 2, indexReg);
-                                        stack[stackTop] =
-                                                ScriptRuntime.callRef(
-                                                        fun, funThisObj,
-                                                        outArgs, cx);
-                                        continue Loop;
-                                    }
-                                    Scriptable calleeScope = frame.scope;
-                                    if (frame.useActivation) {
-                                        calleeScope =
-                                                ScriptableObject.getTopLevelScope(frame.scope);
-                                    }
-                                    // Iteratively reduce known function types: arrows, lambdas,
-                                    // bound functions, call/apply, and no-such-method-handler in
-                                    // order to make a best-effort to keep them in this interpreter
-                                    // loop so continuations keep working. The loop initializer and
-                                    // condition are formulated so that they short-circuit the loop
-                                    // if the function is already an interpreted function, which
-                                    // should be the majority of cases.
-                                    for (; ; ) {
-                                        if (fun instanceof ArrowFunction) {
-                                            ArrowFunction afun = (ArrowFunction) fun;
-                                            fun = afun.getTargetFunction();
-                                            funThisObj = afun.getCallThis(cx);
-                                            funHomeObj = afun.getBoundHomeObject();
-                                        } else if (fun instanceof LambdaConstructor) {
-                                            break;
-                                        } else if (fun instanceof LambdaFunction) {
-                                            fun = ((LambdaFunction) fun).getTarget();
-                                        } else if (fun instanceof BoundFunction) {
-                                            BoundFunction bfun = (BoundFunction) fun;
-                                            fun = bfun.getTargetFunction();
-                                            funThisObj = bfun.getCallThis(cx, calleeScope);
-                                            Object[] boundArgs = bfun.getBoundArgs();
-                                            int blen = boundArgs.length;
-                                            if (blen > 0) {
-                                                stack =
-                                                        frame.ensureStackLength(
-                                                                blen + stackTop + 2 + indexReg);
-                                                sDbl = frame.sDbl;
-                                                System.arraycopy(
-                                                        stack,
-                                                        stackTop + 2,
-                                                        stack,
-                                                        stackTop + 2 + blen,
-                                                        indexReg);
-                                                System.arraycopy(
-                                                        sDbl,
-                                                        stackTop + 2,
-                                                        sDbl,
-                                                        stackTop + 2 + blen,
-                                                        indexReg);
-                                                System.arraycopy(
-                                                        boundArgs, 0, stack, stackTop + 2, blen);
-                                                indexReg += blen;
-                                            }
-                                        } else if (fun instanceof IdFunctionObject) {
-                                            IdFunctionObject ifun = (IdFunctionObject) fun;
-                                            // Bug 405654 -- make the best effort to keep
-                                            // Function.apply and Function.call within this
-                                            // interpreter loop invocation
-                                            if (BaseFunction.isApplyOrCall(ifun)) {
-                                                // funThisObj becomes fun
-                                                fun = ScriptRuntime.getCallable(funThisObj);
-                                                // first arg becomes thisObj
-                                                funThisObj =
-                                                        getApplyThis(
-                                                                cx,
-                                                                stack,
-                                                                sDbl,
-                                                                stackTop + 2,
-                                                                indexReg,
-                                                                fun,
-                                                                frame);
-                                                if (BaseFunction.isApply(ifun)) {
-                                                    // Apply: second argument after new "this"
-                                                    // should be array-like
-                                                    // and we'll spread its elements on the stack
-                                                    Object[] callArgs =
-                                                            indexReg < 2
-                                                                    ? ScriptRuntime.emptyArgs
-                                                                    : ScriptRuntime
-                                                                            .getApplyArguments(
-                                                                                    cx,
-                                                                                    stack[
-                                                                                            stackTop
-                                                                                                    + 3]);
-                                                    int alen = callArgs.length;
-                                                    stack =
-                                                            frame.ensureStackLength(
-                                                                    alen + stackTop + 2);
-                                                    sDbl = frame.sDbl;
-                                                    System.arraycopy(
-                                                            callArgs, 0, stack, stackTop + 2, alen);
-                                                    indexReg = alen;
-                                                } else {
-                                                    // Call: shift args left, starting from 2nd
-                                                    if (indexReg > 0) {
-                                                        if (indexReg > 1) {
-                                                            System.arraycopy(
-                                                                    stack,
-                                                                    stackTop + 3,
-                                                                    stack,
-                                                                    stackTop + 2,
-                                                                    indexReg - 1);
-                                                            System.arraycopy(
-                                                                    sDbl,
-                                                                    stackTop + 3,
-                                                                    sDbl,
-                                                                    stackTop + 2,
-                                                                    indexReg - 1);
-                                                        }
-                                                        indexReg--;
-                                                    }
-                                                }
-                                            } else {
-                                                // Some other IdFunctionObject we don't know how to
-                                                // reduce.
-                                                break;
-                                            }
-                                        } else if (fun instanceof NoSuchMethodShim) {
-                                            NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;
-                                            // Bug 447697 -- make best effort to keep
-                                            // __noSuchMethod__ within this interpreter loop
-                                            // invocation.
-                                            stack = frame.ensureStackLength(stackTop + 4);
-                                            sDbl = frame.sDbl;
-                                            Object[] elements =
-                                                    getArgsArray(
-                                                            stack, sDbl, stackTop + 2, indexReg);
-                                            fun = nsmfun.noSuchMethodMethod;
-                                            stack[stackTop + 2] = nsmfun.methodName;
-                                            stack[stackTop + 3] =
-                                                    cx.newArray(calleeScope, elements);
-                                            indexReg = 2;
-                                        } else if (fun == null) {
-                                            throw ScriptRuntime.notFunctionError(null, null);
-                                        } else {
-                                            // Current function is something that we can't reduce
-                                            // further.
-                                            break;
-                                        }
-                                    }
-
-                                    if (fun instanceof InterpretedFunction) {
-                                        InterpretedFunction ifun = (InterpretedFunction) fun;
-                                        if (frame.fnOrScript.securityDomain
-                                                == ifun.securityDomain) {
-                                            CallFrame callParentFrame = frame;
-                                            if (op == Icode_TAIL_CALL) {
-                                                // In principle tail call can re-use the current
-                                                // frame and its stack arrays but it is hard to
-                                                // do properly. Any exceptions that can legally
-                                                // happen during frame re-initialization including
-                                                // StackOverflowException during innocent looking
-                                                // System.arraycopy may leave the current frame
-                                                // data corrupted leading to undefined behaviour
-                                                // in the catch code bellow that unwinds JS stack
-                                                // on exceptions. Then there is issue about frame
-                                                // release
-                                                // end exceptions there.
-                                                // To avoid frame allocation a released frame
-                                                // can be cached for re-use which would also benefit
-                                                // non-tail calls but it is not clear that this
-                                                // caching
-                                                // would gain in performance due to potentially
-                                                // bad interaction with GC.
-                                                callParentFrame = frame.parentFrame;
-                                                // Release the current frame. See Bug #344501 to see
-                                                // why
-                                                // it is being done here.
-                                                exitFrame(cx, frame, null);
-                                            }
-                                            CallFrame calleeFrame =
-                                                    initFrame(
-                                                            cx,
-                                                            calleeScope,
-                                                            funThisObj,
-                                                            funHomeObj,
-                                                            stack,
-                                                            sDbl,
-                                                            stackTop + 2,
-                                                            indexReg,
-                                                            ifun,
-                                                            callParentFrame);
-                                            if (op != Icode_TAIL_CALL) {
-                                                frame.savedStackTop = stackTop;
-                                                frame.savedCallOp = op;
-                                            }
-                                            frame = calleeFrame;
-                                            continue StateLoop;
-                                        }
-                                    }
-
-                                    if (fun instanceof NativeContinuation) {
-                                        // Jump to the captured continuation
-                                        ContinuationJump cjump;
-                                        cjump =
-                                                new ContinuationJump(
-                                                        (NativeContinuation) fun, frame);
-
-                                        // continuation result is the first argument if any
-                                        // of continuation call
-                                        if (indexReg == 0) {
-                                            cjump.result = undefined;
-                                        } else {
-                                            cjump.result = stack[stackTop + 2];
-                                            cjump.resultDbl = sDbl[stackTop + 2];
-                                        }
-
-                                        // Start the real unwind job
-                                        throwable = cjump;
-                                        break withoutExceptions;
-                                    }
-
-                                    if (fun instanceof IdFunctionObject) {
-                                        IdFunctionObject ifun = (IdFunctionObject) fun;
-                                        if (NativeContinuation.isContinuationConstructor(ifun)) {
-                                            frame.stack[stackTop] =
-                                                    captureContinuation(
-                                                            cx, frame.parentFrame, false);
-                                            continue Loop;
-                                        }
-                                    }
-
-                                    cx.lastInterpreterFrame = frame;
-                                    frame.savedCallOp = op;
-                                    frame.savedStackTop = stackTop;
-                                    stack[stackTop] =
-                                            fun.call(
+                                    var callState =
+                                            doCallByteCode(
                                                     cx,
-                                                    calleeScope,
-                                                    funThisObj,
-                                                    getArgsArray(
-                                                            stack, sDbl, stackTop + 2, indexReg));
-
-                                    continue Loop;
+                                                    frame,
+                                                    instructionCounting,
+                                                    op,
+                                                    stackTop,
+                                                    indexReg);
+                                    if (callState instanceof ContinueLoop) {
+                                        var contLoop = (ContinueLoop) callState;
+                                        frame = contLoop.frame;
+                                        stack = frame.stack;
+                                        sDbl = frame.sDbl;
+                                        stackTop = contLoop.stackTop;
+                                        indexReg = contLoop.indexReg;
+                                        continue Loop;
+                                    } else if (callState instanceof StateContinue) {
+                                        frame = ((StateContinue) callState).frame;
+                                        continue StateLoop;
+                                    } else if (callState instanceof NewThrowable) {
+                                        throwable = ((NewThrowable) callState).throwable;
+                                        break withoutExceptions;
+                                    } else {
+                                        Kit.codeBug();
+                                        break;
+                                    }
                                 }
                             case Token.NEW:
                                 {
@@ -2986,6 +2782,228 @@ public final class Interpreter extends Icode implements Evaluator {
         return (interpreterResult != DBL_MRK)
                 ? interpreterResult
                 : ScriptRuntime.wrapNumber(interpreterResultDbl);
+    }
+
+    private static final NewState doCallByteCode(
+            Context cx,
+            CallFrame frame,
+            boolean instructionCounting,
+            int op,
+            int stackTop,
+            int indexReg) {
+        Object[] stack = frame.stack;
+        double[] sDbl = frame.sDbl;
+
+        if (instructionCounting) {
+            cx.instructionCount += INVOCATION_COST;
+        }
+        // stack change: function thisObj arg0 .. argN -> result
+        // indexReg: number of arguments
+        stackTop -= 1 + indexReg;
+
+        // CALL generation ensures that fun and funThisObj
+        // are already Scriptable and Callable objects respectively
+        Callable fun = (Callable) stack[stackTop];
+        Scriptable funThisObj = (Scriptable) stack[stackTop + 1];
+        Scriptable funHomeObj =
+                (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
+        if (op == Icode_CALL_ON_SUPER) {
+            // funThisObj would have been the "super" object, which we
+            // used to lookup the function. Now that that's done, we
+            // discard it and invoke the function with the current
+            // "this".
+            funThisObj = frame.thisObj;
+        }
+
+        if (op == Token.REF_CALL) {
+            Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2, indexReg);
+            stack[stackTop] =
+                    ScriptRuntime.callRef(
+                            fun, funThisObj,
+                            outArgs, cx);
+            return new ContinueLoop(frame, stackTop, indexReg);
+        }
+        Scriptable calleeScope = frame.scope;
+        if (frame.useActivation) {
+            calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
+        }
+        // Iteratively reduce known function types: arrows, lambdas,
+        // bound functions, call/apply, and no-such-method-handler in
+        // order to make a best-effort to keep them in this interpreter
+        // loop so continuations keep working. The loop initializer and
+        // condition are formulated so that they short-circuit the loop
+        // if the function is already an interpreted function, which
+        // should be the majority of cases.
+        for (; ; ) {
+            if (fun instanceof ArrowFunction) {
+                ArrowFunction afun = (ArrowFunction) fun;
+                fun = afun.getTargetFunction();
+                funThisObj = afun.getCallThis(cx);
+                funHomeObj = afun.getBoundHomeObject();
+            } else if (fun instanceof LambdaConstructor) {
+                break;
+            } else if (fun instanceof LambdaFunction) {
+                fun = ((LambdaFunction) fun).getTarget();
+            } else if (fun instanceof BoundFunction) {
+                BoundFunction bfun = (BoundFunction) fun;
+                fun = bfun.getTargetFunction();
+                funThisObj = bfun.getCallThis(cx, calleeScope);
+                Object[] boundArgs = bfun.getBoundArgs();
+                int blen = boundArgs.length;
+                if (blen > 0) {
+                    stack = frame.ensureStackLength(blen + stackTop + 2 + indexReg);
+                    sDbl = frame.sDbl;
+                    System.arraycopy(stack, stackTop + 2, stack, stackTop + 2 + blen, indexReg);
+                    System.arraycopy(sDbl, stackTop + 2, sDbl, stackTop + 2 + blen, indexReg);
+                    System.arraycopy(boundArgs, 0, stack, stackTop + 2, blen);
+                    indexReg += blen;
+                }
+            } else if (fun instanceof IdFunctionObject) {
+                IdFunctionObject ifun = (IdFunctionObject) fun;
+                // Bug 405654 -- make the best effort to keep
+                // Function.apply and Function.call within this
+                // interpreter loop invocation
+                if (BaseFunction.isApplyOrCall(ifun)) {
+                    // funThisObj becomes fun
+                    fun = ScriptRuntime.getCallable(funThisObj);
+                    // first arg becomes thisObj
+                    funThisObj = getApplyThis(cx, stack, sDbl, stackTop + 2, indexReg, fun, frame);
+                    if (BaseFunction.isApply(ifun)) {
+                        // Apply: second argument after new "this"
+                        // should be array-like
+                        // and we'll spread its elements on the stack
+                        Object[] callArgs =
+                                indexReg < 2
+                                        ? ScriptRuntime.emptyArgs
+                                        : ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
+                        int alen = callArgs.length;
+                        stack = frame.ensureStackLength(alen + stackTop + 2);
+                        sDbl = frame.sDbl;
+                        System.arraycopy(callArgs, 0, stack, stackTop + 2, alen);
+                        indexReg = alen;
+                    } else {
+                        // Call: shift args left, starting from 2nd
+                        if (indexReg > 0) {
+                            if (indexReg > 1) {
+                                System.arraycopy(
+                                        stack, stackTop + 3, stack, stackTop + 2, indexReg - 1);
+                                System.arraycopy(
+                                        sDbl, stackTop + 3, sDbl, stackTop + 2, indexReg - 1);
+                            }
+                            indexReg--;
+                        }
+                    }
+                } else {
+                    // Some other IdFunctionObject we don't know how to
+                    // reduce.
+                    break;
+                }
+            } else if (fun instanceof NoSuchMethodShim) {
+                NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;
+                // Bug 447697 -- make best effort to keep
+                // __noSuchMethod__ within this interpreter loop
+                // invocation.
+                stack = frame.ensureStackLength(stackTop + 4);
+                sDbl = frame.sDbl;
+                Object[] elements = getArgsArray(stack, sDbl, stackTop + 2, indexReg);
+                fun = nsmfun.noSuchMethodMethod;
+                stack[stackTop + 2] = nsmfun.methodName;
+                stack[stackTop + 3] = cx.newArray(calleeScope, elements);
+                indexReg = 2;
+            } else if (fun == null) {
+                throw ScriptRuntime.notFunctionError(null, null);
+            } else {
+                // Current function is something that we can't reduce
+                // further.
+                break;
+            }
+        }
+
+        if (fun instanceof InterpretedFunction) {
+            InterpretedFunction ifun = (InterpretedFunction) fun;
+            if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
+                CallFrame callParentFrame = frame;
+                if (op == Icode_TAIL_CALL) {
+                    // In principle tail call can re-use the current
+                    // frame and its stack arrays but it is hard to
+                    // do properly. Any exceptions that can legally
+                    // happen during frame re-initialization including
+                    // StackOverflowException during innocent looking
+                    // System.arraycopy may leave the current frame
+                    // data corrupted leading to undefined behaviour
+                    // in the catch code bellow that unwinds JS stack
+                    // on exceptions. Then there is issue about frame
+                    // release
+                    // end exceptions there.
+                    // To avoid frame allocation a released frame
+                    // can be cached for re-use which would also benefit
+                    // non-tail calls but it is not clear that this
+                    // caching
+                    // would gain in performance due to potentially
+                    // bad interaction with GC.
+                    callParentFrame = frame.parentFrame;
+                    // Release the current frame. See Bug #344501 to see
+                    // why
+                    // it is being done here.
+                    exitFrame(cx, frame, null);
+                }
+                CallFrame calleeFrame =
+                        initFrame(
+                                cx,
+                                calleeScope,
+                                funThisObj,
+                                funHomeObj,
+                                stack,
+                                sDbl,
+                                stackTop + 2,
+                                indexReg,
+                                ifun,
+                                callParentFrame);
+                if (op != Icode_TAIL_CALL) {
+                    frame.savedStackTop = stackTop;
+                    frame.savedCallOp = op;
+                }
+                return new StateContinue(calleeFrame);
+            }
+        }
+
+        if (fun instanceof NativeContinuation) {
+            // Jump to the captured continuation
+            ContinuationJump cjump;
+            cjump = new ContinuationJump((NativeContinuation) fun, frame);
+
+            // continuation result is the first argument if any
+            // of continuation call
+            if (indexReg == 0) {
+                cjump.result = undefined;
+            } else {
+                cjump.result = stack[stackTop + 2];
+                cjump.resultDbl = sDbl[stackTop + 2];
+            }
+
+            // Start the real unwind job
+            return new NewThrowable(cjump);
+        }
+
+        if (fun instanceof IdFunctionObject) {
+            IdFunctionObject ifun = (IdFunctionObject) fun;
+            if (NativeContinuation.isContinuationConstructor(ifun)) {
+                frame.stack[stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                return new ContinueLoop(frame, stackTop, indexReg);
+            }
+        }
+
+        cx.lastInterpreterFrame = frame;
+        frame.savedCallOp = op;
+        frame.savedStackTop = stackTop;
+        stack[stackTop] =
+                fun.call(
+                        cx,
+                        calleeScope,
+                        funThisObj,
+                        getArgsArray(stack, sDbl, stackTop + 2, indexReg));
+
+        return new ContinueLoop(frame, stackTop, indexReg);
     }
 
     private static Scriptable getCurrentFrameHomeObject(CallFrame frame) {
