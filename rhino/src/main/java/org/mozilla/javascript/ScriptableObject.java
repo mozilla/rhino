@@ -294,10 +294,21 @@ public abstract class ScriptableObject
      */
     @Override
     public void put(String name, Scriptable start, Object value) {
-        if (putImpl(name, 0, start, value)) return;
+        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
         start.put(name, start, value);
+    }
+
+    /**
+     * Set the value of the named property, and return true if the property is actually defined and
+     * can be set. Subclasses of ScriptableObject should override this method, and not "put," for
+     * proper strict mode operation in the future.
+     *
+     * @param isThrow if true, throw an exception as if in strict mode
+     */
+    protected boolean putOwnProperty(String name, Scriptable start, Object value, boolean isThrow) {
+        return putImpl(name, 0, start, value, isThrow);
     }
 
     /**
@@ -326,19 +337,41 @@ public abstract class ScriptableObject
             return;
         }
 
-        if (putImpl(null, index, start, value)) return;
+        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
         start.put(index, start, value);
     }
 
+    /**
+     * Set the value of the named property, and return true if the property is actually defined and
+     * can be set. Subclasses of ScriptableObject should override this method, and not "put," for
+     * proper strict mode operation in the future
+     *
+     * @param isThrow if true, throw an exception as if in strict mode
+     */
+    protected boolean putOwnProperty(int index, Scriptable start, Object value, boolean isThrow) {
+        return putImpl(null, index, start, value, isThrow);
+    }
+
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
     public void put(Symbol key, Scriptable start, Object value) {
-        if (putImpl(key, 0, start, value)) return;
+        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
         ensureSymbolScriptable(start).put(key, start, value);
+    }
+
+    /**
+     * Set the value of the named property, and return true if the property is actually defined and
+     * can be set. Subclasses of ScriptableObject should override this method, and not "put," for
+     * proper strict mode operation in the future
+     *
+     * @param isThrow if true, throw an exception as if in strict mode
+     */
+    protected boolean putOwnProperty(Symbol key, Scriptable start, Object value, boolean isThrow) {
+        return putImpl(key, 0, start, value, isThrow);
     }
 
     /**
@@ -2662,10 +2695,6 @@ public abstract class ScriptableObject
         return Kit.initHash(h, key, value);
     }
 
-    private boolean putImpl(Object key, int index, Scriptable start, Object value) {
-        return putImpl(key, index, start, value, Context.isCurrentContextStrict());
-    }
-
     /**
      * @param key
      * @param index
@@ -2675,7 +2704,8 @@ public abstract class ScriptableObject
      * @return false if this != start and no slot was found. true if this == start or this != start
      *     and a READONLY slot was found.
      */
-    boolean putImpl(Object key, int index, Scriptable start, Object value, boolean isThrow) {
+    private boolean putImpl(
+            Object key, int index, Scriptable start, Object value, boolean isThrow) {
         // This method is very hot (basically called on each assignment)
         // so we inline the extensible/sealed checks below.
         Slot slot;

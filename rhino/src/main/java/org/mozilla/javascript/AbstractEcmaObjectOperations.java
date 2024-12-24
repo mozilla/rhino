@@ -221,7 +221,7 @@ public class AbstractEcmaObjectOperations {
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
-            if (((ScriptableObject) base).putImpl(p, 0, o, v, isThrow)) return;
+            if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
 
             o.put(p, o, v);
         } else {
@@ -239,7 +239,7 @@ public class AbstractEcmaObjectOperations {
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
-            if (((ScriptableObject) base).putImpl(null, p, o, v, isThrow)) return;
+            if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
 
             o.put(p, o, v);
         } else {
