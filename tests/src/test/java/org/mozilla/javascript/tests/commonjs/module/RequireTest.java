@@ -1,6 +1,8 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.InputStreamReader;
@@ -10,11 +12,14 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.tests.Utils;
 
 /**
  * @author Attila Szegedi
@@ -135,6 +140,32 @@ public class RequireTest {
                 assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
             }
         }
+    }
+
+    @Test
+    public void stackTracesAlwaysHaveFileName() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setGeneratingDebug(false);
+                    final Scriptable scope = cx.initStandardObjects();
+                    try {
+                        final Require require = getSandboxedRequire(cx, scope, false);
+                        require.install(scope);
+                        RhinoException rhinoException =
+                                assertThrows(
+                                        RhinoException.class,
+                                        () -> require.requireMain(cx, "throw-one"));
+
+                        ScriptStackElement[] stack = rhinoException.getScriptStack();
+                        assertEquals(2, stack.length);
+
+                        assertTrue(stack[0].fileName.contains("throw-two.js"));
+                        assertTrue(stack[1].fileName.contains("throw-one.js"));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    return null;
+                });
     }
 
     private Reader getReader(String name) {

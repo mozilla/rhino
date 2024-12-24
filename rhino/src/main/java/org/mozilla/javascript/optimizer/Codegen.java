@@ -250,11 +250,7 @@ public class Codegen implements Evaluator {
         boolean hasFunctions = (scriptOrFnNodes.length > 1 || !hasScript);
         boolean isStrictMode = scriptOrFnNodes[0].isInStrictMode();
 
-        String sourceFile = null;
-        if (compilerEnv.isGenerateDebugInfo()) {
-            sourceFile = scriptOrFnNodes[0].getSourceName();
-        }
-
+        String sourceFile = scriptOrFnNodes[0].getSourceName();
         ClassFileWriter cfw = new ClassFileWriter(mainClassName, SUPER_CLASS_NAME, sourceFile);
         cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
 
