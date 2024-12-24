@@ -63,7 +63,10 @@ assertEquals(123, {
 }.abc());
 
 // Method is the kind of function, that is non-constructor.
-// assertThrows('new (({ a() {} }).a)', TypeError);
+assertThrows(function() {
+  new (({ a() {} }).a)
+}, TypeError);
+assertNotNull(new (({ notAMethod: function() {} }).notAMethod));
 
 var desc = Object.getOwnPropertyDescriptor({
   a() {
