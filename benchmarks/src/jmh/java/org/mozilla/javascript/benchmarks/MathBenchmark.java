@@ -33,9 +33,13 @@ public class MathBenchmark {
         Function bitwiseRsh;
         Function bitwiseSignedRsh;
 
+        @Param({"false", "true"})
+        public boolean interpreted;
+
         @Setup(Level.Trial)
         public void setup() throws IOException {
             cx = Context.enter();
+            cx.setInterpretedMode(interpreted);
             cx.setLanguageVersion(Context.VERSION_ES6);
             scope = cx.initStandardObjects();
 
