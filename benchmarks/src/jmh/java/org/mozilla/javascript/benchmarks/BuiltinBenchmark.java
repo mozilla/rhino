@@ -19,9 +19,13 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class AbstractClassState {
 
+        @Param({"false", "true"})
+        public boolean interpreted;
+
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
             cx = Context.enter();
+            cx.setInterpretedMode(interpreted);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             scope = cx.initStandardObjects();
