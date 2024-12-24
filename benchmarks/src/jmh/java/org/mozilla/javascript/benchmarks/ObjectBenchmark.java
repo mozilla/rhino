@@ -33,10 +33,14 @@ public class ObjectBenchmark {
         Scriptable strings;
         Scriptable ints;
 
+        @Param({"false", "true"})
+        public boolean interpreted;
+
         @Setup(Level.Trial)
         @SuppressWarnings("unused")
         public void create() throws IOException {
             cx = Context.enter();
+            cx.setInterpretedMode(interpreted);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             scope = new Global(cx);
