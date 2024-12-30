@@ -737,8 +737,14 @@ public class NativeObject extends IdScriptableObject implements Map {
     private boolean isEnumerable(int index, Object obj) {
         if (obj instanceof ScriptableObject) {
             ScriptableObject so = (ScriptableObject) obj;
-            int attrs = so.getAttributes(index);
-            return (attrs & ScriptableObject.DONTENUM) == 0;
+            try {
+                int attrs = so.getAttributes(index);
+                return (attrs & ScriptableObject.DONTENUM) == 0;
+            } catch (RhinoException re) {
+                // Not all ScriptableObject implementations implement
+                // "getAttributes" for all properties
+                return true;
+            }
         } else {
             return true;
         }
@@ -747,8 +753,12 @@ public class NativeObject extends IdScriptableObject implements Map {
     private boolean isEnumerable(String key, Object obj) {
         if (obj instanceof ScriptableObject) {
             ScriptableObject so = (ScriptableObject) obj;
-            int attrs = so.getAttributes(key);
-            return (attrs & ScriptableObject.DONTENUM) == 0;
+            try {
+                int attrs = so.getAttributes(key);
+                return (attrs & ScriptableObject.DONTENUM) == 0;
+            } catch (RhinoException re) {
+                return true;
+            }
         } else {
             return true;
         }
@@ -757,8 +767,12 @@ public class NativeObject extends IdScriptableObject implements Map {
     private boolean isEnumerable(Symbol sym, Object obj) {
         if (obj instanceof ScriptableObject) {
             ScriptableObject so = (ScriptableObject) obj;
-            int attrs = so.getAttributes(sym);
-            return (attrs & ScriptableObject.DONTENUM) == 0;
+            try {
+                int attrs = so.getAttributes(sym);
+                return (attrs & ScriptableObject.DONTENUM) == 0;
+            } catch (RhinoException re) {
+                return true;
+            }
         } else {
             return true;
         }
