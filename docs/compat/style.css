@@ -208,7 +208,7 @@ article > header > h1 a:hover {
   right: 0;
   font-weight: normal;
   background-color: #454545;
-  color: #aaa;
+  color: #ccc;
   width: 240px;
   border-radius: 9px;
 }
@@ -240,7 +240,7 @@ sub {
 }
 .subsub {
   text-indent: 10px;
-  color: #aaa
+  color: #666
 }
 
 .Yes.flagged.required:before {
@@ -283,7 +283,7 @@ sub {
 .info {
   border-radius: 9px;
   background-color: #eee;
-  color: #aaa;
+  color: #666;
   float: right;
   text-align: center;
   font-size: 12px;
