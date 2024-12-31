@@ -538,6 +538,8 @@ public class Test262SuiteTest {
             boolean markedAsFailing) {
         try (Context cx = Context.enter()) {
             cx.setInterpretedMode(testMode == TestMode.INTERPRETED);
+            // Ensure maximum compatibility, including future strict mode and "const" checks
+            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
             cx.setGeneratingDebug(true);
 
             boolean failedEarly = false;
