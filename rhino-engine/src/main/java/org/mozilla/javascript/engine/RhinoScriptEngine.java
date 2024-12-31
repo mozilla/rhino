@@ -68,7 +68,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
      */
     public static final String INTERPRETED_MODE = "org.mozilla.javascript.interpreted_mode";
 
-    static final int DEFAULT_LANGUAGE_VERSION = Context.VERSION_ECMASCRIPT;
+    static final int DEFAULT_LANGUAGE_VERSION = Context.VERSION_ES6;
     private static final boolean DEFAULT_DEBUG = true;
     private static final String DEFAULT_FILENAME = "eval";
 
@@ -349,7 +349,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
 
         @Override
         protected void onContextCreated(Context cx) {
-            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
+            cx.setLanguageVersion(Context.VERSION_ES6);
             cx.setGeneratingDebug(DEFAULT_DEBUG);
         }
     }

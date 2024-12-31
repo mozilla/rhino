@@ -169,7 +169,7 @@ public class Main {
 
         main.attachTo(org.mozilla.javascript.tools.shell.Main.shellContextFactory);
         try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
+            cx.setLanguageVersion(Context.VERSION_ES6);
 
             Global global = org.mozilla.javascript.tools.shell.Main.getGlobal();
             global.init(cx);

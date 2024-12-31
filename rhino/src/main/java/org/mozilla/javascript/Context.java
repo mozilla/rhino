@@ -73,7 +73,17 @@ public class Context implements Closeable {
      */
     public static final int VERSION_UNKNOWN = -1;
 
-    /** The default version. */
+    /**
+     * The default version for older versions of Rhino.
+     *
+     * <p>Be aware, this version will not support many of the newer language features and will not
+     * change in the future. In practice, for historical reasons, this is an odd version that
+     * doesn't necessarily match any particular version of JavaScript and should not be used,
+     * although many older scripts and many tests may depend on it.
+     *
+     * <p>Please use one of the other constants like {@link #VERSION_ECMASCRIPT} to get support for
+     * recent language features.
+     */
     public static final int VERSION_DEFAULT = 0;
 
     /** JavaScript 1.0 */
@@ -104,27 +114,32 @@ public class Context implements Closeable {
     public static final int VERSION_1_8 = 180;
 
     /**
-     * Old constant for ECMAScript 6 and after. This has been replaced with the more clearly-named
-     * {@link #VERSION_ECMASCRIPT}. Both constants have the same value, and this is retained for
-     * compatibility.
+     * ECMAScript 6 and after. This constant refers to the latest version of the language, and is
+     * mostly identical to {@link #VERSION_ECMASCRIPT}. The difference is that features that may
+     * cause existing code to break, such as enforcement of "const" and strict mode checks, are not
+     * enabled.
+     *
+     * <p>As of version 1.8, this is the default language version.
      */
     public static final int VERSION_ES6 = 200;
 
     /**
-     * ECMAScript 6 and after. Since around version 1.7, this has been used to denote most new
-     * language features. This has the same value as {@link #VERSION_ES6}.
+     * The current version of JavaScript as defined by ECMAScript. This version will always refer to
+     * the latest version of the language that Rhino supports. This will include everything in
+     * {@link #VERSION_ES6}, plus features that may cause backward incompatibility, such as
+     * enforcement of "const" and strict mode checks.
      *
      * <p>As of version 1.8, the Rhino community has no plans to continue adding new language
      * versions, but instead plans to track the ECMAScript specification as it evolves and add new
-     * features in new versions of Rhino.
+     * features in new versions of Rhino using this version number.
      */
-    public static final int VERSION_ECMASCRIPT = VERSION_ES6;
+    public static final int VERSION_ECMASCRIPT = 250;
 
     /**
      * Controls behaviour of <code>Date.prototype.getYear()</code>. If <code>
      * hasFeature(FEATURE_NON_ECMA_GET_YEAR)</code> returns true, Date.prototype.getYear subtructs
      * 1900 only if 1900 &lt;= date &lt; 2000. The default behavior of {@link #hasFeature(int)} is
-     * always to subtruct 1900 as rquired by ECMAScript B.2.4.
+     * always to subtract 1900 as required by ECMAScript B.2.4.
      */
     public static final int FEATURE_NON_ECMA_GET_YEAR = 1;
 
@@ -378,10 +393,10 @@ public class Context implements Closeable {
     /**
      * Creates a new Context. The context will be associated with the {@link
      * ContextFactory#getGlobal() global context factory}. By default, the new context will run in
-     * compiled mode and use the {@link #VERSION_ECMASCRIPT} language version, which supports
-     * features as defined in the most recent ECMAScript standard. This default behavior can be
-     * changed by overriding the ContextFactory class and installing the new implementation as the
-     * global ContextFactory.
+     * compiled mode and use the {@link #VERSION_ES6} language version, which supports features as
+     * defined in the most recent ECMAScript standard. This default behavior can be changed by
+     * overriding the ContextFactory class and installing the new implementation as the global
+     * ContextFactory.
      *
      * <p>Note that the Context must be associated with a thread before it can be used to execute a
      * script.
@@ -399,9 +414,9 @@ public class Context implements Closeable {
     /**
      * Creates a new context. Provided as a preferred super constructor for subclasses in place of
      * the deprecated default public constructor. By default, the new context will run in compiled
-     * mode and use the {@link #VERSION_ECMASCRIPT} language version, which supports features as
-     * defined in the most recent ECMAScript standard. This default behavior can be changed by
-     * overriding the ContextFactory class
+     * mode and use the {@link #VERSION_ES6} language version, which supports features as defined in
+     * the most recent ECMAScript standard. This default behavior can be changed by overriding the
+     * ContextFactory class
      *
      * @param factory the context factory associated with this context (most likely, the one that
      *     created the context). Can not be null. The context features are inherited from the
@@ -413,7 +428,7 @@ public class Context implements Closeable {
             throw new IllegalArgumentException("factory == null");
         }
         this.factory = factory;
-        version = VERSION_ECMASCRIPT;
+        version = VERSION_ES6;
         interpretedMode = codegenClass == null;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
     }
@@ -681,9 +696,12 @@ public class Context implements Closeable {
      *
      * <p>Setting the language version will affect functions and scripts compiled subsequently. See
      * the overview documentation for version-specific behavior. The default version is {@link
-     * #VERSION_ECMASCRIPT}, which represents the newest ECMAScript features implemented by Rhino,
-     * and this is the version that should be used unless a project needs backwards compatibility
-     * with older Rhino scripts that may depend on behaviors from the earlier history of JavaScript.
+     * #VERSION_ES6}, which represents the newest ECMAScript features implemented by Rhino, minus
+     * some "const" and strict mode checks.
+     *
+     * <p>New projects should use either {@link #VERSION_ES6} or {@link #VERSION_ECMASCRIPT} unless
+     * a project needs backwards compatibility with older Rhino scripts that may depend on behaviors
+     * from the earlier history of JavaScript.
      *
      * <p>As of version 1.8, the Rhino community has no plans to continue to add new language
      * versions, but instead plans to track the ECMAScript standard and add new features as the
@@ -720,6 +738,7 @@ public class Context implements Closeable {
             case VERSION_1_7:
             case VERSION_1_8:
             case VERSION_ES6:
+            case VERSION_ECMASCRIPT:
                 return true;
         }
         return false;
