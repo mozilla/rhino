@@ -770,6 +770,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return function;
     }
 
+    public final IdFunctionObject initPrototypeMethod(
+            Object tag, int id, Symbol key, String functionName, int arity, int attributes) {
+        Scriptable scope = ScriptableObject.getTopLevelScope(this);
+        IdFunctionObject function = newIdFunction(tag, id, functionName, arity, scope);
+        prototypeValues.initValue(id, key, function, attributes);
+        return function;
+    }
+
     public final void initPrototypeConstructor(IdFunctionObject f) {
         int id = prototypeValues.constructorId;
         if (id == 0) throw new IllegalStateException();

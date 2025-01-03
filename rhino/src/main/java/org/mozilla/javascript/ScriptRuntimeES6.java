@@ -46,15 +46,4 @@ public class ScriptRuntimeES6 {
         ScriptableObject.putProperty(unScopablesDescriptor, "writable", false);
         constructor.defineOwnProperty(cx, SymbolKey.UNSCOPABLES, unScopablesDescriptor, false);
     }
-
-    /** Registers the symbol <code>[Symbol.hasInstance]</code> on the given constructor function. */
-    public static void addSymbolHasInstance(
-            Context cx, Scriptable scope, IdScriptableObject constructor) {
-        ScriptableObject hasInstanceDescriptor = (ScriptableObject) cx.newObject(scope);
-        ScriptableObject.putProperty(hasInstanceDescriptor, "value", ScriptableObject.EMPTY);
-        ScriptableObject.putProperty(hasInstanceDescriptor, "enumerable", false);
-        ScriptableObject.putProperty(hasInstanceDescriptor, "configurable", false);
-        ScriptableObject.putProperty(hasInstanceDescriptor, "writable", false);
-        constructor.defineOwnProperty(cx, SymbolKey.HAS_INSTANCE, hasInstanceDescriptor, false);
-    }
 }
