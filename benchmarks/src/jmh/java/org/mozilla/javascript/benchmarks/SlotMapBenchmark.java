@@ -44,7 +44,7 @@ public class SlotMapBenchmark {
     public Object embeddedInsert1Key(EmbeddedState state) {
         Slot newSlot = null;
         for (int i = 0; i < 100; i++) {
-            newSlot = state.emptyMap.modify(state.randomKeys[i], 0, 0);
+            newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
         }
         if (newSlot == null) {
             throw new AssertionError();
@@ -109,7 +109,7 @@ public class SlotMapBenchmark {
     public Object hashInsert1Key(HashState state) {
         Slot newSlot = null;
         for (int i = 0; i < 100; i++) {
-            newSlot = state.emptyMap.modify(state.randomKeys[i], 0, 0);
+            newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
         }
         if (newSlot == null) {
             throw new AssertionError();
@@ -156,7 +156,7 @@ public class SlotMapBenchmark {
     /** Insert a random key and value into the map */
     private static String insertRandomEntry(SlotMap map) {
         String key = makeRandomString();
-        Slot slot = map.modify(key, 0, 0);
+        Slot slot = map.modify(null, key, 0, 0);
         slot.setValue(key, null, null);
         return key;
     }
