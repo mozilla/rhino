@@ -1,6 +1,5 @@
 package org.mozilla.javascript;
 
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.tests.Utils;
@@ -16,7 +15,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "};\n"
                         + "var g = {};\n"
                         + "`${f.hasOwnProperty(Symbol.hasInstance)}:${g.hasOwnProperty(Symbol.hasInstance)}`";
-        Utils.assertWithAllOptimizationLevelsES6("true:false", script);
+        Utils.assertWithAllModes("true:false", script);
     }
 
     @Test
@@ -29,7 +28,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "   }"
                         + "};\n"
                         + "f[Symbol.hasInstance]() == 42";
-        Utils.assertWithAllOptimizationLevelsES6(true, script);
+        Utils.assertWithAllModes(true, script);
     }
 
     // See: https://tc39.es/ecma262/#sec-function.prototype-%symbol.hasinstance%
@@ -38,7 +37,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
         String script =
                 "var a = Object.getOwnPropertyDescriptor(Function.prototype, Symbol.hasInstance);\n"
                         + "a.writable + ':' + a.configurable + ':' + a.enumerable";
-        Utils.assertWithAllOptimizationLevelsES6("false:false:false", script);
+        Utils.assertWithAllModes("false:false:false", script);
     }
 
     // See: https://tc39.es/ecma262/#sec-function.prototype-%symbol.hasinstance%
@@ -55,7 +54,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "    typeErrorThrown = true \n"
                         + "}\n"
                         + "Object.prototype.hasOwnProperty.call(Function.prototype, Symbol.hasInstance) + ':' + typeErrorThrown + ':' + t + ':' + a.writable + ':' + a.configurable + ':' + a.enumerable; \n";
-        Utils.assertWithAllOptimizationLevelsES6("true:true:function:false:false:false", script);
+        Utils.assertWithAllModes("true:true:function:false:false:false", script);
     }
 
     @Test
@@ -68,9 +67,8 @@ public class FunctionPrototypeSymbolHasInstanceTest {
         String script2 =
                 "var a = Object.getOwnPropertyDescriptor(Function.prototype[Symbol.hasInstance], 'name');\n"
                         + "a.value + ':' + a.writable + ':' + a.configurable + ':' + a.enumerable";
-        Utils.assertWithAllOptimizationLevelsES6("1:false:true:false", script);
-        Utils.assertWithAllOptimizationLevelsES6(
-                "Symbol(Symbol.hasInstance):false:true:false", script2);
+        Utils.assertWithAllModes("1:false:true:false", script);
+        Utils.assertWithAllModes("Symbol(Symbol.hasInstance):false:true:false", script2);
     }
 
     @Test
@@ -78,7 +76,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
         String script =
                 "(Function.prototype[Symbol.hasInstance] instanceof Function) + ':' + "
                         + "Function.prototype[Symbol.hasInstance].call(Function, Object)\n";
-        Utils.assertWithAllOptimizationLevelsES6("true:true", script);
+        Utils.assertWithAllModes("true:true", script);
     }
 
     @Test
@@ -89,7 +87,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "var o2 = Object.create(o);\n"
                         + "(f[Symbol.hasInstance](o)) + ':' + "
                         + "(f[Symbol.hasInstance](o2));\n";
-        Utils.assertWithAllOptimizationLevelsES6("true:true", script);
+        Utils.assertWithAllModes("true:true", script);
     }
 
     @Test
@@ -99,7 +97,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "var bc = new BC();\n"
                         + "var bound = BC.bind();\n"
                         + "bound[Symbol.hasInstance](bc);\n";
-        Utils.assertWithAllOptimizationLevelsES6(true, script);
+        Utils.assertWithAllModes(true, script);
     }
 
     @Test
@@ -112,7 +110,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "(null instanceof f) + ':' +\n"
                         + "(void 0 instanceof f)\n"
                         + "a";
-        Utils.assertWithAllOptimizationLevelsES6("false:false:false:false", script);
+        Utils.assertWithAllModes("false:false:false:false", script);
     }
 
     @Test
@@ -120,7 +118,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
         String script =
                 "Function.prototype[Symbol.hasInstance].call() + ':' +"
                         + "Function.prototype[Symbol.hasInstance].call({});";
-        Utils.assertWithAllOptimizationLevelsES6("false:false", script);
+        Utils.assertWithAllModes("false:false", script);
     }
 
     @Test
@@ -138,7 +136,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "Object.setPrototypeOf(g, f);\n"
                         + "g instanceof f;"
                         + "globalSet == 1";
-        Utils.assertWithAllOptimizationLevelsES6(true, script);
+        Utils.assertWithAllModes(true, script);
     }
 
     @Test
@@ -148,25 +146,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "var f = function() {}; \n"
                         + "f.prototype = Symbol(); \n"
                         + "f[Symbol.hasInstance]({})";
-
-        Utils.runWithAllOptimizationLevels(
-                (cx) -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
-                    var error =
-                            Assert.assertThrows(
-                                    EcmaError.class,
-                                    () ->
-                                            cx.evaluateString(
-                                                    scope,
-                                                    script,
-                                                    "testSymbolHasInstance",
-                                                    0,
-                                                    null));
-                    Assert.assertTrue(
-                            error.toString()
-                                    .contains("'prototype' property of  is not an object."));
-                    return null;
-                });
+        Utils.assertEcmaErrorES6(
+                "TypeError: 'prototype' property of  is not an object. (test#3)", script);
     }
 }
