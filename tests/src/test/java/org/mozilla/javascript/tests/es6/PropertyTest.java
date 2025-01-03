@@ -125,15 +125,7 @@ public class PropertyTest {
     public void redefinePropertyWithThreadSafeSlotMap() {
 
         final ContextFactory factory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        if (featureIndex == Context.FEATURE_THREAD_SAFE_OBJECTS) {
-                            return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                };
+                new Utils.FeatureContextFactory(Context.FEATURE_THREAD_SAFE_OBJECTS);
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_ES6);

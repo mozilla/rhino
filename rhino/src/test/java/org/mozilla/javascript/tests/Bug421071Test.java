@@ -63,16 +63,8 @@ public class Bug421071Test {
         thread.join();
     }
 
-    static class DynamicScopeContextFactory extends ContextFactory {
-        @Override
-        public boolean hasFeature(Context cx, int featureIndex) {
-            if (featureIndex == Context.FEATURE_DYNAMIC_SCOPE) return true;
-            return super.hasFeature(cx, featureIndex);
-        }
-    }
-
     private TopLevelScope createGlobalScope() {
-        factory = new DynamicScopeContextFactory();
+        factory = new Utils.FeatureContextFactory(Context.FEATURE_DYNAMIC_SCOPE);
 
         try (Context context = factory.enterContext()) {
             // noinspection deprecation
