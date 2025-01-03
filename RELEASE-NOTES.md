@@ -1,3 +1,16 @@
+# Rhino 1.8.0
+## January 2, 2025
+
+Rhino 1.8.0 contains some significant changes, so we're incrementing the final version number for the first time in a very long time. Here are a few highlights:
+
+* Rhino now requires Java 11 minimum. We currently test against Java 11, 17, and 21.
+* Rhino has been broken down into individual Java modules that are properly encapsulated as Java Modules. See [README.md](https://github.com/mozilla/rhino/blob/master/README.md) for a breakdown of which modules are which -- short answer is that everyone will need the "rhino" module and many will need others.
+* Older code not able to adapt to using multiple JARS can still use the "rhino-all" module, which publishes an "all-in-one" JAR like the old "rhino.jar".
+* The default language level is "VERSION_ES6". That means that modern JavaScript features supported by Rhino will work by default.
+* There are big improvements in compatibility, including support for "super", reflect and proxy, and lots of other language features. See the [compatibility table](https://mozilla.github.io/rhino/compat/engines.html) for the details.
+
+Thanks to all who contributed -- we had 24 contributors to this release, with some new contributors who added significant capabilities. Please keep the contributions and attention coming!
+
 # Rhino 1.7.15
 ## May 3, 2024
 
