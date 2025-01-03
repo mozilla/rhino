@@ -23,11 +23,23 @@ public class HashSlotMap implements SlotMap {
         map = new LinkedHashMap<>();
     }
 
+    protected HashSlotMap(int capacity) {
+        map = new LinkedHashMap<>(capacity);
+    }
+
     public HashSlotMap(SlotMap oldMap) {
         map = new LinkedHashMap<>(oldMap.size());
         for (Slot n : oldMap) {
-            add(n.copySlot());
+            add(null, n.copySlot());
         }
+    }
+
+    public HashSlotMap(SlotMap oldMap, Slot newSlot) {
+        map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
+        for (Slot n : oldMap) {
+            add(null, n.copySlot());
+        }
+        add(null, newSlot);
     }
 
     @Override
@@ -47,21 +59,22 @@ public class HashSlotMap implements SlotMap {
     }
 
     @Override
-    public Slot modify(Object key, int index, int attributes) {
+    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
         Object name = makeKey(key, index);
         return map.computeIfAbsent(name, n -> new Slot(key, index, attributes));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+    public <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         Object name = makeKey(key, index);
         Slot ret = map.compute(name, (n, existing) -> c.compute(key, index, existing));
         return (S) ret;
     }
 
     @Override
-    public void add(Slot newSlot) {
+    public void add(SlotMapOwner owner, Slot newSlot) {
         Object name = makeKey(newSlot);
         map.put(name, newSlot);
     }
