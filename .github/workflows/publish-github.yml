@@ -29,4 +29,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         ORG_GRADLE_PROJECT_SIGNINGKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
         ORG_GRADLE_PROJECT_SIGNINGPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
-      run: ./gradlew publish -Dorg.gradle.parallel=false -Dorg.gradle.caching=false
+      run: ./gradlew publish --no-configuration-cache -Dorg.gradle.parallel=false -Dorg.gradle.caching=false -Dorg.gradle.con
