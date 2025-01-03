@@ -27,4 +27,4 @@ jobs:
         ORG_GRADLE_PROJECT_SIGNINGKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
         ORG_GRADLE_PROJECT_SIGNINGPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
       run: >-
-        ./gradlew publish
+        ./gradlew publish -Dorg.gradle.parallel=false

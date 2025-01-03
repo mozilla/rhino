@@ -6,6 +6,7 @@
 plugins {
     id 'rhino.java-conventions'
     id 'maven-publish'
+    id 'signing'
     id 'jacoco'
     id 'net.ltgt.errorprone'
 }
@@ -97,6 +98,18 @@ task sourceJar(type: Jar) {
         into 'META-INF'
     }
 }
+
+signing {
+    if (project.hasProperty('SIGNINGKEY')) {
+        // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system.
+        // Otherwise, do not sign.
+        def signingKey = getProperty('SIGNINGKEY')
+        def signingPassword = getProperty('SIGNINGPASSWORD')
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications
+    }
+}
+
 
 publishing {
     if (project.hasProperty("mavenPassword")) {

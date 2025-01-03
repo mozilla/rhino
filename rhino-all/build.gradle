@@ -39,25 +39,30 @@ publishing {
     publications {
         rhinoall(MavenPublication) {
             from components.java
-            artifacts = [jar]
-            pom {
-                description = "Rhino JavaScript all-in-one JAR, not for use with modular Java projects"
-                url = "https://mozilla.github.io/rhino/"
-                licenses {
-                    license {
-                        name = "Mozilla Public License, Version 2.0"
-                        url = "http://www.mozilla.org/MPL/2.0/index.txt"
-                    }
-                }
-                scm {
-                    connection = "scm:git:git@github.com:mozilla/rhino.git"
-                    developerConnection = "scm:git:git@github.com:mozilla/rhino.git"
-                    url = "git@github.com:mozilla/rhino.git"
-                }
-                organization {
-                    name = "The Mozilla Foundation"
-                    url = "http://www.mozilla.org"
-                }
+            artifacts = [jar, sourceJar, javadocJar]
+            pom.withXml {
+                def root = asNode()
+
+                root.appendNode('description', "Rhino JavaScript all-in-one JAR, not for use with modular Java projects")
+                root.appendNode("url", "https://mozilla.github.io/rhino/")
+
+                def p = root.appendNode("parent")
+                p.appendNode("groupId", "org.sonatype.oss")
+                p.appendNode("artifactId", "oss-parent")
+                p.appendNode("version", "7")
+
+                def l = root.appendNode("licenses").appendNode("license")
+                l.appendNode("name", "Mozilla Public License, Version 2.0")
+                l.appendNode("url", "http://www.mozilla.org/MPL/2.0/index.txt")
+
+                def scm = root.appendNode("scm")
+                scm.appendNode("connection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("developerConnection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("url", "git@github.com:mozilla/rhino.git")
+
+                def o = root.appendNode("organization")
+                o.appendNode("name", "The Mozilla Foundation")
+                o.appendNode("url", "http://www.mozilla.org")
             }
         }
     }
