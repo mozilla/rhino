@@ -10,7 +10,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Locale;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tests.Utils;
 
@@ -18,23 +17,13 @@ import org.mozilla.javascript.tests.Utils;
  * @author Ronald Brill
  */
 public class NativeStringTest {
-    private ContextFactory contextFactoryIntl402 =
-            new ContextFactory() {
-                @Override
-                protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == Context.FEATURE_INTL_402) {
-                        return true;
-                    }
-                    return super.hasFeature(cx, featureIndex);
-                }
-            };
 
     @Test
     public void toLocaleLowerCase() {
         String js = "'\\u0130'.toLocaleLowerCase()";
 
         Utils.runWithAllModes(
-                contextFactoryIntl402,
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -46,7 +35,7 @@ public class NativeStringTest {
                 });
 
         Utils.runWithAllModes(
-                contextFactoryIntl402,
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -60,10 +49,25 @@ public class NativeStringTest {
 
     @Test
     public void toLocaleLowerCaseParam() {
-        assertEvaluatesES6("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('en')");
-        assertEvaluatesES6("\u0069", "'\\u0130'.toLocaleLowerCase('tr')");
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0069\u0307",
+                "'\\u0130'.toLocaleLowerCase('en')");
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0069",
+                "'\\u0130'.toLocaleLowerCase('tr')");
 
-        assertEvaluatesES6("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('Absurdistan')");
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0069\u0307",
+                "'\\u0130'.toLocaleLowerCase('Absurdistan')");
     }
 
     @Test
@@ -71,7 +75,7 @@ public class NativeStringTest {
         String js = "'\\u0069'.toLocaleUpperCase()";
 
         Utils.runWithAllModes(
-                contextFactoryIntl402,
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -83,7 +87,7 @@ public class NativeStringTest {
                 });
 
         Utils.runWithAllModes(
-                contextFactoryIntl402,
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -97,21 +101,24 @@ public class NativeStringTest {
 
     @Test
     public void toLocaleUpperCaseParam() {
-        assertEvaluatesES6("\u0049", "'\\u0069'.toLocaleUpperCase('en')");
-        assertEvaluatesES6("\u0130", "'\\u0069'.toLocaleUpperCase('tr')");
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0049",
+                "'\\u0069'.toLocaleUpperCase('en')");
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0130",
+                "'\\u0069'.toLocaleUpperCase('tr')");
 
-        assertEvaluatesES6("\u0049", "'\\u0069'.toLocaleUpperCase('Absurdistan')");
-    }
-
-    private void assertEvaluatesES6(final Object expected, final String source) {
-        Utils.runWithAllModes(
-                contextFactoryIntl402,
-                cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-                    assertEquals(expected, rep);
-                    return null;
-                });
+        Utils.assertWithAllModes(
+                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Context.VERSION_ES6,
+                null,
+                "\u0049",
+                "'\\u0069'.toLocaleUpperCase('Absurdistan')");
     }
 }
