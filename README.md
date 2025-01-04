@@ -56,11 +56,11 @@ Newer releases now organize the code using Java modules. There are four primary 
 * **rhino-tools**: Contains the shell, debugger, and the "Global" object, which many tests and other Rhino-based tools use. Note that adding Global gives Rhino the ability to print to stdout, open files, and do other things that may be considered dangerous in a sensitive environment, so it only makes sense to include if you will use it.
 * **rhino-xml**: Adds the implementation of the E4X XML standard. Only required if you are using that.
 * **rhino-engine**: Adds the Rhino implementation of the standard Java *ScriptEngine* interface. Some projects use this to be able to switch between script execution engines, but for anything even moderately complex it is almost always easier and always more flexible to use Rhino's API directly.
+* **rhino-all**: This creates an "all-in-one" JAR that includes *rhino-runtime*, *rhino-tools*, and *rhino-xml*. This is what's used if you want to run Rhino using "java jar".
 
 The release contains the following other modules, which are used while building and 
 testing but which are not published to Maven Central:
 
-* **rhino-all**: This creates an "all-in-one" JAR that includes *rhino-runtime*, *rhino-tools*, and *rhino-xml*. This is what's used if you want to run Rhino using "java jar".
 * **tests**: The tests that depend on all of Rhino and also the external tests, including the Mozilla legacy test scripts and the test262 tests.
 * **benchmarks**: Runs benchmarks using JMH.
 * **examples**: Surprisingly, this contains example code.
