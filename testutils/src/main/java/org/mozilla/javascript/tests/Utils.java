@@ -336,8 +336,8 @@ public class Utils {
     }
 
     /**
-     * @param features the features to enable in addition to the already enabled
-     *                 featured from the {@link ContextFactory}
+     * @param features the features to enable in addition to the already enabled featured from the
+     *     {@link ContextFactory}
      * @return a new {@link ContextFactory} with all provided features enabled
      */
     public static ContextFactory contextFactoryWithFeatures(int... features) {

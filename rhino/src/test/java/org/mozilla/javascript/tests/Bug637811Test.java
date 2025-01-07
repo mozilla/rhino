@@ -16,7 +16,8 @@ public class Bug637811Test {
     @Test
     public void test() {
         Utils.assertWithAllModes(
-                Utils.contextFactoryWithFeatures(Context.FEATURE_STRICT_MODE, Context.FEATURE_WARNING_AS_ERROR),
+                Utils.contextFactoryWithFeatures(
+                        Context.FEATURE_STRICT_MODE, Context.FEATURE_WARNING_AS_ERROR),
                 Context.VERSION_ES6,
                 null,
                 Undefined.instance,
