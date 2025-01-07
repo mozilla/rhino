@@ -23,7 +23,7 @@ public class NativeStringTest {
         String js = "'\\u0130'.toLocaleLowerCase()";
 
         Utils.runWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -35,7 +35,7 @@ public class NativeStringTest {
                 });
 
         Utils.runWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -50,20 +50,20 @@ public class NativeStringTest {
     @Test
     public void toLocaleLowerCaseParam() {
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0069\u0307",
                 "'\\u0130'.toLocaleLowerCase('en')");
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0069",
                 "'\\u0130'.toLocaleLowerCase('tr')");
 
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0069\u0307",
@@ -75,7 +75,7 @@ public class NativeStringTest {
         String js = "'\\u0069'.toLocaleUpperCase()";
 
         Utils.runWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -87,7 +87,7 @@ public class NativeStringTest {
                 });
 
         Utils.runWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -102,20 +102,20 @@ public class NativeStringTest {
     @Test
     public void toLocaleUpperCaseParam() {
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0049",
                 "'\\u0069'.toLocaleUpperCase('en')");
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0130",
                 "'\\u0069'.toLocaleUpperCase('tr')");
 
         Utils.assertWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_INTL_402),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 Context.VERSION_ES6,
                 null,
                 "\u0049",

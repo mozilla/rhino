@@ -125,7 +125,7 @@ public class PropertyTest {
     public void redefinePropertyWithThreadSafeSlotMap() {
 
         final ContextFactory factory =
-                new Utils.FeatureContextFactory(Context.FEATURE_THREAD_SAFE_OBJECTS);
+                Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_ES6);

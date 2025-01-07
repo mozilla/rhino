@@ -20,7 +20,7 @@ public class StrictModeApiTest {
     @Test
     public void strictModeError() {
         final ContextFactory contextFactory =
-                new Utils.FeatureContextFactory(
+                Utils.contextFactoryWithFeatures(
                         Context.FEATURE_STRICT_MODE,
                         Context.FEATURE_STRICT_VARS,
                         Context.FEATURE_STRICT_EVAL,
@@ -40,7 +40,7 @@ public class StrictModeApiTest {
         final String script = "o.readonlyProp = 123";
 
         Utils.runWithAllModes(
-                new Utils.FeatureContextFactory(Context.FEATURE_STRICT_MODE),
+                Utils.contextFactoryWithFeatures(Context.FEATURE_STRICT_MODE),
                 cx -> {
                     try {
                         Scriptable scope = cx.initSafeStandardObjects();
