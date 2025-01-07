@@ -335,10 +335,19 @@ public class Utils {
                 });
     }
 
-    public static class FeatureContextFactory extends ContextFactory {
+    /**
+     * @param features the features to enable in addition to the already enabled
+     *                 featured from the {@link ContextFactory}
+     * @return a new {@link ContextFactory} with all provided features enabled
+     */
+    public static ContextFactory contextFactoryWithFeatures(int... features) {
+        return new ContextFactoryWithFeatures(features);
+    }
+
+    private static class ContextFactoryWithFeatures extends ContextFactory {
         private final int[] features;
 
-        public FeatureContextFactory(int... features) {
+        private ContextFactoryWithFeatures(int... features) {
             this.features = features;
         }
 

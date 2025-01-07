@@ -64,7 +64,7 @@ public class Bug421071Test {
     }
 
     private TopLevelScope createGlobalScope() {
-        factory = new Utils.FeatureContextFactory(Context.FEATURE_DYNAMIC_SCOPE);
+        factory = Utils.contextFactoryWithFeatures(Context.FEATURE_DYNAMIC_SCOPE);
 
         try (Context context = factory.enterContext()) {
             // noinspection deprecation
