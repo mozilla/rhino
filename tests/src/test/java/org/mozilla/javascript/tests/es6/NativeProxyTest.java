@@ -80,6 +80,7 @@ public class NativeProxyTest {
                 "try { Proxy() } catch(e) { '' + e }");
     }
 
+    @Test
     public void construct() {
         String js =
                 "var _target, _handler, _args, _P;\n"
