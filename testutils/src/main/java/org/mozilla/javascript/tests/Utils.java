@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.*;
 
+import java.util.stream.IntStream;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
@@ -168,7 +169,27 @@ public class Utils {
             final String message,
             final Object expected,
             final String script) {
+        assertWithAllModes(new ContextFactory(), languageVersion, message, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result.
+     *
+     * @param contextFactory a user defined {@link ContextFactory}
+     * @param languageVersion the language version constant from @{@link Context} or -1 to not
+     *     change the language version at all
+     * @param message the message to be used if this fails
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertWithAllModes(
+            final ContextFactory contextFactory,
+            final int languageVersion,
+            final String message,
+            final Object expected,
+            final String script) {
         runWithAllModes(
+                contextFactory,
                 cx -> {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
@@ -272,7 +293,14 @@ public class Utils {
         assertException(Context.VERSION_ES6, EcmaError.class, expectedMessage, script);
     }
 
-    private static <T extends Exception> void assertException(
+    public static <T extends Exception> void assertException(
+            final int languageVersion,
+            final Class<T> expectedThrowable,
+            final String expectedMessage,
+            String js) {}
+
+    public static <T extends Exception> void assertException(
+            final ContextFactory contextFactory,
             final int languageVersion,
             final Class<T> expectedThrowable,
             final String expectedMessage,
@@ -284,6 +312,7 @@ public class Utils {
                 expectedMessage != null && !expectedMessage.isEmpty());
 
         Utils.runWithAllModes(
+                contextFactory,
                 cx -> {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
@@ -304,5 +333,31 @@ public class Utils {
                             e.getMessage().startsWith(expectedMessage));
                     return null;
                 });
+    }
+
+    /**
+     * @param features the features to enable in addition to the already enabled featured from the
+     *     {@link ContextFactory}
+     * @return a new {@link ContextFactory} with all provided features enabled
+     */
+    public static ContextFactory contextFactoryWithFeatures(int... features) {
+        return new ContextFactoryWithFeatures(features);
+    }
+
+    private static class ContextFactoryWithFeatures extends ContextFactory {
+        private final int[] features;
+
+        private ContextFactoryWithFeatures(int... features) {
+            this.features = features;
+        }
+
+        @Override
+        protected boolean hasFeature(Context cx, int featureIndex) {
+            if (IntStream.of(features).anyMatch(x -> x == featureIndex)) {
+                return true;
+            }
+
+            return super.hasFeature(cx, featureIndex);
+        }
     }
 }

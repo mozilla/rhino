@@ -4,45 +4,23 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Undefined;
 
 /**
  * @author André Bargull
  */
 public class Bug637811Test {
 
-    private Context cx;
-
-    @Before
-    public void setUp() throws Exception {
-        cx =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        switch (featureIndex) {
-                            case Context.FEATURE_STRICT_MODE:
-                            case Context.FEATURE_WARNING_AS_ERROR:
-                                return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                }.enterContext();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        Context.exit();
-    }
-
     @Test
     public void test() {
-        String source = "";
-        source += "var x = 0;";
-        source += "bar: while (x < 0) { x = x + 1; }";
-        cx.compileString(source, "", 1, null);
+        Utils.assertWithAllModes(
+                Utils.contextFactoryWithFeatures(
+                        Context.FEATURE_STRICT_MODE, Context.FEATURE_WARNING_AS_ERROR),
+                Context.VERSION_ES6,
+                null,
+                Undefined.instance,
+                "var x = 0; bar: while (x < 0) { x = x + 1; }");
     }
 }
