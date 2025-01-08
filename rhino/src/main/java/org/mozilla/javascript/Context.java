@@ -387,8 +387,12 @@ public class Context implements Closeable {
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
-    /** Convenient value to use as zero-length array of objects. */
-    public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
+    /**
+     * Convenient value to use as zero-length array of objects.
+     *
+     * @deprecated As of 1.8.1, use {@link ScriptRuntime#emptyArgs} instead.
+     */
+    @Deprecated public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
 
     /**
      * Creates a new Context. The context will be associated with the {@link

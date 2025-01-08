@@ -565,7 +565,7 @@ public class Dim {
     /** Returns an array of the property names on the given script object. */
     private Object[] getObjectIdsImpl(Context cx, Object object) {
         if (!(object instanceof Scriptable) || object == Undefined.instance) {
-            return Context.emptyArgs;
+            return ScriptRuntime.emptyArgs;
         }
 
         Object[] ids;
