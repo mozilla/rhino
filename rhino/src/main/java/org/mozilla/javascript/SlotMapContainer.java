@@ -13,16 +13,16 @@ import java.util.Iterator;
  * This class holds the various SlotMaps of various types, and knows how to atomically switch
  * between them when we need to so that we use the right data structure at the right time.
  */
-class SlotMapContainer implements SlotMap {
+class SlotMapContainer extends SlotMapOwner implements SlotMap {
 
     /**
      * Once the object has this many properties in it, we will replace the EmbeddedSlotMap with
      * HashSlotMap. We can adjust this parameter to balance performance for typical objects versus
      * performance for huge objects with many collisions.
      */
-    private static final int LARGE_HASH_SIZE = 2000;
+    static final int LARGE_HASH_SIZE = 2000;
 
-    private static final int DEFAULT_SIZE = 10;
+    static final int DEFAULT_SIZE = 10;
 
     private static class EmptySlotMap implements SlotMap {
 
@@ -42,8 +42,10 @@ class SlotMapContainer implements SlotMap {
         }
 
         @Override
-        public Slot modify(Object key, int index, int attributes) {
-            return null;
+        public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+            var map = new EmbeddedSlotMap();
+            owner.setMap(map);
+            return map.modify(owner, key, index, attributes);
         }
 
         @Override
@@ -52,81 +54,89 @@ class SlotMapContainer implements SlotMap {
         }
 
         @Override
-        public void add(Slot newSlot) {
-            throw new IllegalStateException();
+        public void add(SlotMapOwner owner, Slot newSlot) {
+            var map = new EmbeddedSlotMap();
+            owner.setMap(map);
+            map.add(owner, newSlot);
         }
 
         @Override
-        public <S extends Slot> S compute(Object key, int index, SlotComputer<S> compute) {
-            throw new IllegalStateException();
+        public <S extends Slot> S compute(
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+            var map = new EmbeddedSlotMap();
+            owner.setMap(map);
+            return map.compute(owner, key, index, compute);
         }
     }
 
-    private static EmptySlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
-
-    protected SlotMap map;
+    static SlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
 
     SlotMapContainer() {
         this(DEFAULT_SIZE);
     }
 
     SlotMapContainer(int initialSize) {
+        super(initialMap(initialSize));
+    }
+
+    private static SlotMap initialMap(int initialSize) {
         if (initialSize == 0) {
-            map = EMPTY_SLOT_MAP;
+            return EMPTY_SLOT_MAP;
         } else if (initialSize > LARGE_HASH_SIZE) {
-            map = new HashSlotMap();
+            return new HashSlotMap();
         } else {
-            map = new EmbeddedSlotMap();
+            return new EmbeddedSlotMap();
         }
     }
 
     @Override
     public int size() {
-        return map.size();
+        return getMap().size();
     }
 
+    @Override
     public int dirtySize() {
-        return map.size();
+        return getMap().size();
     }
 
     @Override
     public boolean isEmpty() {
-        return map.isEmpty();
+        return getMap().isEmpty();
     }
 
     @Override
-    public Slot modify(Object key, int index, int attributes) {
-        checkMapSize();
-        return map.modify(key, index, attributes);
+    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+        return getMap().modify(this, key, index, attributes);
     }
 
     @Override
-    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
-        checkMapSize();
-        return map.compute(key, index, c);
+    public <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+        return getMap().compute(this, key, index, c);
     }
 
     @Override
     public Slot query(Object key, int index) {
-        return map.query(key, index);
+        return getMap().query(key, index);
     }
 
     @Override
-    public void add(Slot newSlot) {
-        checkMapSize();
-        map.add(newSlot);
+    public void add(SlotMapOwner owner, Slot newSlot) {
+        getMap().add(this, newSlot);
     }
 
     @Override
     public Iterator<Slot> iterator() {
-        return map.iterator();
+        return getMap().iterator();
     }
 
+    @Override
     public long readLock() {
         // No locking in the default implementation
         return 0L;
     }
 
+    @Override
     public void unlockRead(long stamp) {
         // No locking in the default implementation
     }
@@ -136,11 +146,12 @@ class SlotMapContainer implements SlotMap {
      * map to a HashMap that is more robust against large numbers of hash collisions.
      */
     protected void checkMapSize() {
+        var map = getMap();
         if (map == EMPTY_SLOT_MAP) {
-            map = new EmbeddedSlotMap();
+            setMap(new EmbeddedSlotMap());
         } else if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
             SlotMap newMap = new HashSlotMap(map);
-            map = newMap;
+            setMap(newMap);
         }
     }
 }
