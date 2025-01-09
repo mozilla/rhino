@@ -10,6 +10,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.file.AccessMode;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -169,6 +171,43 @@ public class NativeJavaMapTest {
         assertThrows(EvaluatorException.class, () -> runScript("value['a'] = 0", map, false));
         assertEquals(false, runScript("'a' in value", map, false));
         assertEquals(true, runScript("Object.keys(value).includes('getClass')", map, false));
+    }
+
+    @Test
+    public void stringIntMap() {
+        Map<String, Object> stringMap = new HashMap<String, Object>() {};
+        stringMap.put("42", "foo");
+
+        Map<Integer, Object> intMap = new HashMap<Integer, Object>() {};
+        intMap.put(42, "foo");
+
+        assertEquals("foo", runScriptAsString("value['42']", stringMap, true));
+        assertEquals("foo", runScriptAsString("value[42]", stringMap, true));
+        assertEquals("42", runScriptAsString("Object.keys(value)", stringMap, true));
+        assertEquals("foo", runScriptAsString("value['42']", intMap, true));
+        assertEquals("foo", runScriptAsString("value[42]", intMap, true));
+        assertEquals("42", runScriptAsString("Object.keys(value)", intMap, true));
+
+        runScriptAsString("value[43]='bar'", intMap, true);
+        runScriptAsString("value[43]='bar'", stringMap, true);
+        assertEquals("bar", intMap.get(43));
+        assertEquals("bar", stringMap.get("43"));
+    }
+
+    @Test
+    public void enumMap() {
+        Map<AccessMode, Object> enumMap = new EnumMap<AccessMode, Object>(AccessMode.class) {};
+        enumMap.put(AccessMode.READ, "foo");
+
+        assertEquals(
+                "foo",
+                runScriptAsString("value.get(java.nio.file.AccessMode.READ)", enumMap, true));
+        assertEquals(
+                "undefined",
+                runScriptAsString("value[java.nio.file.AccessMode.READ]", enumMap, true));
+        assertThrows(
+                EvaluatorException.class,
+                () -> runScript("value[java.nio.file.AccessMode.READ] = 'bar'", enumMap, true));
     }
 
     @Test

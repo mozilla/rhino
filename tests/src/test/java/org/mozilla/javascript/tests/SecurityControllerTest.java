@@ -88,7 +88,7 @@ public class SecurityControllerTest {
         String script =
                 "f = new com.example.securitytest.SomeFactory();\n"
                         + "var i = f.create();\n"
-                        + "i.size();\n"
+                        + "i.foo();\n" // i is SomeInterface - you can only access foo()
                         + "i.bar();";
 
         // try in allowed scope

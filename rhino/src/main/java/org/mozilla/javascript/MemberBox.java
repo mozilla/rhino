@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -27,6 +28,7 @@ final class MemberBox implements Serializable {
 
     private transient Member memberObject;
     transient Class<?>[] argTypes;
+    transient Type[] genericArgTypes;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -44,13 +46,24 @@ final class MemberBox implements Serializable {
     private void init(Method method) {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
+        this.genericArgTypes = filterGenerics(method.getGenericParameterTypes());
         this.vararg = method.isVarArgs();
     }
 
     private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
+        this.genericArgTypes = filterGenerics(constructor.getGenericParameterTypes());
         this.vararg = constructor.isVarArgs();
+    }
+
+    private Type[] filterGenerics(Type[] params) {
+        for (Type param : params) {
+            if (!(param instanceof Class)) {
+                return params;
+            }
+        }
+        return null;
     }
 
     Method method() {

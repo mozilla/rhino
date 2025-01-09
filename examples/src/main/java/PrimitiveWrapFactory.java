@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import java.lang.reflect.Type;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrapFactory;
@@ -24,7 +25,7 @@ import org.mozilla.javascript.WrapFactory;
 public class PrimitiveWrapFactory extends WrapFactory {
 
     @Override
-    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+    public Object wrap(Context cx, Scriptable scope, Object obj, Type staticType) {
         if (obj instanceof String || obj instanceof Number || obj instanceof Boolean) {
             return obj;
         } else if (obj instanceof Character) {
