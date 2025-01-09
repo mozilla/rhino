@@ -55,6 +55,12 @@ public class EmbeddedSlotMap implements SlotMap {
 
     public EmbeddedSlotMap() {}
 
+    public EmbeddedSlotMap(int capacity) {
+        int n = -1 >>> Integer.numberOfLeadingZeros(capacity - 1);
+        n = (n < 0) ? 1 : n + 1;
+        slots = new Slot[n];
+    }
+
     @Override
     public int size() {
         return count;
@@ -94,7 +100,7 @@ public class EmbeddedSlotMap implements SlotMap {
      * @param index index or 0 if slot holds property name.
      */
     @Override
-    public Slot modify(Object key, int index, int attributes) {
+    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
         Slot slot;
 
@@ -110,14 +116,13 @@ public class EmbeddedSlotMap implements SlotMap {
             }
         }
 
-        // A new slot has to be inserted.
         Slot newSlot = new Slot(key, index, attributes);
-        createNewSlot(newSlot);
+        createNewSlot(owner, newSlot);
         return newSlot;
     }
 
-    private void createNewSlot(Slot newSlot) {
-        if (count == 0) {
+    private void createNewSlot(SlotMapOwner owner, Slot newSlot) {
+        if (count == 0 && slots == null) {
             // Always throw away old slots if any on empty insert.
             slots = new Slot[INITIAL_SLOT_SIZE];
         }
@@ -125,6 +130,10 @@ public class EmbeddedSlotMap implements SlotMap {
         // Check if the table is not too full before inserting.
         if (4 * (count + 1) > 3 * slots.length) {
             // table size must be a power of 2 -- always grow by x2!
+            if (count > SlotMapOwner.LARGE_HASH_SIZE) {
+                promoteMap(owner, newSlot);
+                return;
+            }
             Slot[] newSlots = new Slot[slots.length * 2];
             copyTable(slots, newSlots);
             slots = newSlots;
@@ -133,8 +142,14 @@ public class EmbeddedSlotMap implements SlotMap {
         insertNewSlot(newSlot);
     }
 
+    protected void promoteMap(SlotMapOwner owner, Slot newSlot) {
+        var newMap = new HashSlotMap(this, newSlot);
+        owner.setMap(newMap);
+    }
+
     @Override
-    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
+    public <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
 
         if (slots != null) {
@@ -148,54 +163,62 @@ public class EmbeddedSlotMap implements SlotMap {
                 prev = slot;
             }
             if (slot != null) {
-                // Modify or remove existing slot
-                S newSlot = c.compute(key, index, slot);
-                if (newSlot == null) {
-                    // Need to delete this slot actually
-                    removeSlot(slot, prev, slotIndex, key);
-                } else if (!Objects.equals(slot, newSlot)) {
-                    // Replace slot in hash table
-                    if (prev == slot) {
-                        slots[slotIndex] = newSlot;
-                    } else {
-                        prev.next = newSlot;
-                    }
-                    newSlot.next = slot.next;
-                    // Replace new slot in linked list, keeping same order
-                    if (slot == firstAdded) {
-                        firstAdded = newSlot;
-                    } else {
-                        Slot ps = firstAdded;
-                        while ((ps != null) && (ps.orderedNext != slot)) {
-                            ps = ps.orderedNext;
-                        }
-                        if (ps != null) {
-                            ps.orderedNext = newSlot;
-                        }
-                    }
-                    newSlot.orderedNext = slot.orderedNext;
-                    if (slot == lastAdded) {
-                        lastAdded = newSlot;
-                    }
-                }
-                return newSlot;
+                return computeExisting(key, index, c, slot, prev, slotIndex);
             }
         }
+        return computeNew(owner, key, index, c);
+    }
 
-        // If we get here, we know we are potentially adding a new slot
+    private <S extends Slot> S computeNew(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         S newSlot = c.compute(key, index, null);
         if (newSlot != null) {
-            createNewSlot(newSlot);
+            createNewSlot(owner, newSlot);
+        }
+        return newSlot;
+    }
+
+    private <S extends Slot> S computeExisting(
+            Object key, int index, SlotComputer<S> c, Slot slot, Slot prev, int slotIndex) {
+        // Modify or remove existing slot
+        S newSlot = c.compute(key, index, slot);
+        if (newSlot == null) {
+            // Need to delete this slot actually
+            removeSlot(slot, prev, slotIndex, key);
+        } else if (!Objects.equals(slot, newSlot)) {
+            // Replace slot in hash table
+            if (prev == slot) {
+                slots[slotIndex] = newSlot;
+            } else {
+                prev.next = newSlot;
+            }
+            newSlot.next = slot.next;
+            // Replace new slot in linked list, keeping same order
+            if (slot == firstAdded) {
+                firstAdded = newSlot;
+            } else {
+                Slot ps = firstAdded;
+                while ((ps != null) && (ps.orderedNext != slot)) {
+                    ps = ps.orderedNext;
+                }
+                if (ps != null) {
+                    ps.orderedNext = newSlot;
+                }
+            }
+            newSlot.orderedNext = slot.orderedNext;
+            if (slot == lastAdded) {
+                lastAdded = newSlot;
+            }
         }
         return newSlot;
     }
 
     @Override
-    public void add(Slot newSlot) {
+    public void add(SlotMapOwner owner, Slot newSlot) {
         if (slots == null) {
             slots = new Slot[INITIAL_SLOT_SIZE];
         }
-        insertNewSlot(newSlot);
+        createNewSlot(owner, newSlot);
     }
 
     private void insertNewSlot(Slot newSlot) {
