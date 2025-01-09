@@ -101,7 +101,7 @@ class JavaMembers {
             if (member instanceof BeanProperty) {
                 BeanProperty bp = (BeanProperty) member;
                 if (bp.getter == null) return Scriptable.NOT_FOUND;
-                rval = bp.getter.invoke(javaObject, Context.emptyArgs);
+                rval = bp.getter.invoke(javaObject, ScriptRuntime.emptyArgs);
                 type = bp.getter.method().getReturnType();
             } else {
                 Field field = (Field) member;
