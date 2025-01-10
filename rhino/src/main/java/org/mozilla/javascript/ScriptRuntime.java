@@ -14,15 +14,18 @@ import java.math.MathContext;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
+import org.mozilla.javascript.xml.XMLLoader;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -194,19 +197,16 @@ public class ScriptRuntime {
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
 
-        boolean withXml =
-                cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
-
         // define lazy-loaded properties using their class name
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-        if (withXml) {
-            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
-            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+        if (cx.hasFeature(Context.FEATURE_E4X)) {
+            ServiceLoader<XMLLoader> l = ServiceLoader.load(XMLLoader.class);
+            Iterator<XMLLoader> i = l.iterator();
+            if (i.hasNext()) {
+                i.next().load(scope, sealed);
+            }
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)

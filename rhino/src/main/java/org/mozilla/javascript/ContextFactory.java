@@ -295,42 +295,6 @@ public class ContextFactory {
         throw new IllegalArgumentException(String.valueOf(featureIndex));
     }
 
-    private static boolean isDom3Present() {
-        Class<?> nodeClass = Kit.classOrNull("org.w3c.dom.Node");
-        if (nodeClass == null) return false;
-        // Check to see whether DOM3 is present; use a new method defined in
-        // DOM3 that is vital to our implementation
-        try {
-            nodeClass.getMethod("getUserData", String.class);
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Provides a default {@link org.mozilla.javascript.xml.XMLLib.Factory XMLLib.Factory} to be
-     * used by the <code>Context</code> instances produced by this factory. See {@link
-     * Context#getE4xImplementationFactory} for details.
-     *
-     * <p>May return null, in which case E4X functionality is not supported in Rhino.
-     *
-     * <p>The default implementation now prefers the DOM3 E4X implementation.
-     */
-    protected org.mozilla.javascript.xml.XMLLib.Factory getE4xImplementationFactory() {
-        // Must provide default implementation, rather than abstract method,
-        // so that past implementors of ContextFactory do not fail at runtime
-        // upon invocation of this method.
-        // Note that the default implementation returns null if we
-        // neither have XMLBeans nor a DOM3 implementation present.
-
-        if (isDom3Present()) {
-            return org.mozilla.javascript.xml.XMLLib.Factory.create(
-                    "org.mozilla.javascript.xmlimpl.XMLLibImpl");
-        }
-        return null;
-    }
-
     /**
      * Create class loader for generated classes. This method creates an instance of the default
      * implementation of {@link GeneratedClassLoader}. Rhino uses this interface to load generated

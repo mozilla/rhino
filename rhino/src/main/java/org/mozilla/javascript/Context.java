@@ -23,8 +23,10 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
@@ -35,6 +37,7 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.xml.XMLLib;
+import org.mozilla.javascript.xml.XMLLoader;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -2318,11 +2321,19 @@ public class Context implements Closeable {
      * <p>The default implementation uses the implementation provided by this <code>Context</code>'s
      * {@link ContextFactory}.
      *
+     * <p>This is no longer used in E4X -- an implementation is only provided for backward
+     * compatibility.
+     *
      * @return An XMLLib.Factory. Should not return <code>null</code> if {@link #FEATURE_E4X} is
      *     enabled. See {@link #hasFeature}.
      */
+    @Deprecated
     public XMLLib.Factory getE4xImplementationFactory() {
-        return getFactory().getE4xImplementationFactory();
+        Iterator<XMLLoader> i = ServiceLoader.load(XMLLoader.class).iterator();
+        if (i.hasNext()) {
+            return i.next().getFactory();
+        }
+        return null;
     }
 
     /**
@@ -2682,9 +2693,12 @@ public class Context implements Closeable {
 
     RegExpProxy getRegExpProxy() {
         if (regExpProxy == null) {
-            Class<?> cl = Kit.classOrNull("org.mozilla.javascript.regexp.RegExpImpl");
-            if (cl != null) {
-                regExpProxy = (RegExpProxy) Kit.newInstanceOrNull(cl);
+            ServiceLoader<RegExpProxy> l = ServiceLoader.load(RegExpProxy.class);
+            Iterator<RegExpProxy> i = l.iterator();
+            if (i.hasNext()) {
+                regExpProxy = i.next();
+            } else {
+                return null;
             }
         }
         return regExpProxy;
