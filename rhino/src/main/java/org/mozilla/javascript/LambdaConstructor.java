@@ -181,6 +181,22 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(name, f, attributes);
     }
 
+    /** Set the same exact value in the prototype both using a name and using a symbol. */
+    public void definePrototypeMethod(
+            Scriptable scope,
+            String name,
+            SymbolKey key,
+            int length,
+            Callable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, f, attributes);
+        proto.defineProperty(key, f, attributes);
+    }
+
     /** Define a property that may be of any type on the prototype of this constructor. */
     public void definePrototypeProperty(String name, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
@@ -192,6 +208,16 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(key, value, attributes);
     }
 
+    public void definePrototypeProperty(Context cx, String name, ScriptableObject descriptor) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineOwnProperty(cx, name, descriptor);
+    }
+
+    public void definePrototypeProperty(Context cx, Symbol key, ScriptableObject descriptor) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineOwnProperty(cx, key, descriptor);
+    }
+
     /**
      * Define a property on the prototype using a function. The function will be wired to a
      * JavaScript function, so the resulting property will look just like one that was defined using
@@ -201,6 +227,12 @@ public class LambdaConstructor extends LambdaFunction {
             Context cx, String name, ScriptableObject.LambdaGetterFunction getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, null, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx, Symbol key, Function<Scriptable, Object> getter, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, key, getter, null, attributes);
     }
 
     /**
