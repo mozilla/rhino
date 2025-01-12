@@ -6,9 +6,9 @@
 
 package org.mozilla.javascript;
 
-public class NativeSet extends IdScriptableObject {
+public class NativeSet extends ScriptableObject {
     private static final long serialVersionUID = -8442212766987072986L;
-    private static final Object SET_TAG = "Set";
+    private static final String CLASS_NAME = "Set";
     static final String ITERATOR_TAG = "Set Iterator";
 
     static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]");
@@ -18,70 +18,121 @@ public class NativeSet extends IdScriptableObject {
     private boolean instanceOfSet = false;
 
     static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeSet obj = new NativeSet();
-        IdFunctionObject constructor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        0,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        NativeSet::jsConstructor);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
+        constructor.definePrototypeMethod(
+                scope,
+                "add",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "add").js_add(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "delete",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "has",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "has").js_has(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "clear",
+                0,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "clear").js_clear(),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "values",
+                0,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "values")
+                                .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "forEach",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "forEach")
+                                .js_forEach(
+                                        lcx,
+                                        lscope,
+                                        NativeMap.key(args),
+                                        args.length > 1 ? args[1] : Undefined.instance),
+                DONTENUM,
+                DONTENUM | READONLY);
+
+        constructor.definePrototypeMethod(
+                scope,
+                "entries",
+                SymbolKey.ITERATOR,
+                0,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "entries")
+                                .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
+                DONTENUM,
+                DONTENUM | READONLY);
+
+        // The spec requires very specific handling of the "size" prototype
+        // property that's not like other things that we already do.
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
         desc.put("enumerable", desc, Boolean.FALSE);
         desc.put("configurable", desc, Boolean.TRUE);
-        desc.put("get", desc, obj.get(GETSIZE, obj));
-        obj.defineOwnProperty(cx, "size", desc);
+        LambdaFunction sizeFunc =
+                new LambdaFunction(
+                        scope,
+                        "get size",
+                        0,
+                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                                realThis(thisObj, "size").js_getSize());
+        sizeFunc.setPrototypeProperty(Undefined.instance);
+        desc.put("get", desc, sizeFunc);
+        constructor.definePrototypeProperty(cx, "size", desc);
+        constructor.definePrototypeProperty(cx, NativeSet.GETSIZE, desc);
+
+        constructor.definePrototypeProperty(
+                SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
 
         if (sealed) {
-            obj.sealObject();
+            constructor.sealObject();
         }
     }
 
     @Override
     public String getClassName() {
-        return "Set";
+        return CLASS_NAME;
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(SET_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
+    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+        NativeSet ns = new NativeSet();
+        ns.instanceOfSet = true;
+        if (args.length > 0) {
+            loadFromIterable(cx, scope, ns, NativeMap.key(args));
         }
-        final int id = f.methodId();
-        switch (id) {
-            case Id_constructor:
-                if (thisObj == null) {
-                    NativeSet ns = new NativeSet();
-                    ns.instanceOfSet = true;
-                    if (args.length > 0) {
-                        loadFromIterable(cx, scope, ns, NativeMap.key(args));
-                    }
-                    return ns;
-                } else {
-                    throw ScriptRuntime.typeErrorById("msg.no.new", "Set");
-                }
-            case Id_add:
-                return realThis(thisObj, f).js_add(NativeMap.key(args));
-            case Id_delete:
-                return realThis(thisObj, f).js_delete(NativeMap.key(args));
-            case Id_has:
-                return realThis(thisObj, f).js_has(NativeMap.key(args));
-            case Id_clear:
-                return realThis(thisObj, f).js_clear();
-            case Id_values:
-                return realThis(thisObj, f)
-                        .js_iterator(scope, NativeCollectionIterator.Type.VALUES);
-            case Id_entries:
-                return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.BOTH);
-            case Id_forEach:
-                return realThis(thisObj, f)
-                        .js_forEach(
-                                cx,
-                                scope,
-                                NativeMap.key(args),
-                                args.length > 1 ? args[1] : Undefined.instance);
-            case SymbolId_getSize:
-                return realThis(thisObj, f).js_getSize();
-        }
-        throw new IllegalArgumentException("Set.prototype has no method: " + f.getFunctionName());
+        return ns;
     }
 
     private Object js_add(Object k) {
@@ -95,11 +146,11 @@ public class NativeSet extends IdScriptableObject {
     }
 
     private Object js_delete(Object arg) {
-        return Boolean.valueOf(entries.deleteEntry(arg));
+        return entries.deleteEntry(arg);
     }
 
     private Object js_has(Object arg) {
-        return Boolean.valueOf(entries.has(arg));
+        return entries.has(arg);
     }
 
     private Object js_clear() {
@@ -108,7 +159,7 @@ public class NativeSet extends IdScriptableObject {
     }
 
     private Object js_getSize() {
-        return Integer.valueOf(entries.size());
+        return entries.size();
     }
 
     private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
@@ -173,139 +224,12 @@ public class NativeSet extends IdScriptableObject {
         }
     }
 
-    private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f) {
-        final NativeSet ns = ensureType(thisObj, NativeSet.class, f);
+    private static NativeSet realThis(Scriptable thisObj, String name) {
+        NativeSet ns = LambdaConstructor.convertThisObject(thisObj, NativeSet.class);
         if (!ns.instanceOfSet) {
             // If we get here, then this object doesn't have the "Set internal data slot."
-            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", name);
         }
-
         return ns;
     }
-
-    @Override
-    protected void initPrototypeId(int id) {
-        switch (id) {
-            case SymbolId_getSize:
-                initPrototypeMethod(SET_TAG, id, GETSIZE, "get size", 0);
-                return;
-            case SymbolId_toStringTag:
-                initPrototypeValue(
-                        SymbolId_toStringTag,
-                        SymbolKey.TO_STRING_TAG,
-                        getClassName(),
-                        DONTENUM | READONLY);
-                return;
-                // fallthrough
-        }
-
-        String s, fnName = null;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 0;
-                s = "constructor";
-                break;
-            case Id_add:
-                arity = 1;
-                s = "add";
-                break;
-            case Id_delete:
-                arity = 1;
-                s = "delete";
-                break;
-            case Id_has:
-                arity = 1;
-                s = "has";
-                break;
-            case Id_clear:
-                arity = 0;
-                s = "clear";
-                break;
-            case Id_entries:
-                arity = 0;
-                s = "entries";
-                break;
-            case Id_values:
-                arity = 0;
-                s = "values";
-                break;
-            case Id_forEach:
-                arity = 1;
-                s = "forEach";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(SET_TAG, id, s, fnName, arity);
-    }
-
-    @Override
-    protected int findPrototypeId(Symbol k) {
-        if (GETSIZE.equals(k)) {
-            return SymbolId_getSize;
-        }
-        if (SymbolKey.ITERATOR.equals(k)) {
-            return Id_values;
-        }
-        if (SymbolKey.TO_STRING_TAG.equals(k)) {
-            return SymbolId_toStringTag;
-        }
-        return 0;
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "add":
-                id = Id_add;
-                break;
-            case "delete":
-                id = Id_delete;
-                break;
-            case "has":
-                id = Id_has;
-                break;
-            case "clear":
-                id = Id_clear;
-                break;
-            case "keys":
-                id = Id_keys;
-                break;
-            case "values":
-                id = Id_values;
-                break;
-            case "entries":
-                id = Id_entries;
-                break;
-            case "forEach":
-                id = Id_forEach;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    // Note that SymbolId_iterator is not present because it is required to have the
-    // same value as the "values" entry.
-    // Similarly, "keys" is supposed to have the same value as "values," which is why
-    // both have the same ID.
-    private static final int Id_constructor = 1,
-            Id_add = 2,
-            Id_delete = 3,
-            Id_has = 4,
-            Id_clear = 5,
-            Id_keys = 6,
-            Id_values = 6, // These are deliberately the same to match the spec
-            Id_entries = 7,
-            Id_forEach = 8,
-            SymbolId_getSize = 9,
-            SymbolId_toStringTag = 10,
-            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }

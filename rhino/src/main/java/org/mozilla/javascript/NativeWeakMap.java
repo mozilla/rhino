@@ -18,10 +18,10 @@ import java.util.WeakHashMap;
  * reference. Therefore, we can use WeakHashMap as the basis of this implementation and preserve the
  * same semantics.
  */
-public class NativeWeakMap extends IdScriptableObject {
+public class NativeWeakMap extends ScriptableObject {
     private static final long serialVersionUID = 8670434366883930453L;
 
-    private static final Object MAP_TAG = "WeakMap";
+    private static final String CLASS_NAME = "WeakMap";
 
     private boolean instanceOfWeakMap = false;
 
@@ -29,56 +29,82 @@ public class NativeWeakMap extends IdScriptableObject {
 
     private static final Object NULL_VALUE = new Object();
 
-    static void init(Scriptable scope, boolean sealed) {
-        NativeWeakMap m = new NativeWeakMap();
-        m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+    static void init(Context cx, Scriptable scope, boolean sealed) {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        0,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        NativeWeakMap::jsConstructor);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+
+        constructor.definePrototypeMethod(
+                scope,
+                "set",
+                2,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "set")
+                                .js_set(
+                                        NativeMap.key(args),
+                                        args.length > 1 ? args[1] : Undefined.instance),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "delete",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "get",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "get").js_get(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "has",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "has").js_has(NativeMap.key(args)),
+                DONTENUM,
+                DONTENUM | READONLY);
+
+        constructor.definePrototypeProperty(
+                SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
+
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
+
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     @Override
     public String getClassName() {
-        return "WeakMap";
+        return CLASS_NAME;
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-
-        if (!f.hasTag(MAP_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
+    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+        NativeWeakMap nm = new NativeWeakMap();
+        nm.instanceOfWeakMap = true;
+        if (args.length > 0) {
+            NativeMap.loadFromIterable(cx, scope, nm, NativeMap.key(args));
         }
-        int id = f.methodId();
-        switch (id) {
-            case Id_constructor:
-                if (thisObj == null) {
-                    NativeWeakMap nm = new NativeWeakMap();
-                    nm.instanceOfWeakMap = true;
-                    if (args.length > 0) {
-                        NativeMap.loadFromIterable(cx, scope, nm, NativeMap.key(args));
-                    }
-                    return nm;
-                }
-                throw ScriptRuntime.typeErrorById("msg.no.new", "WeakMap");
-            case Id_delete:
-                return realThis(thisObj, f).js_delete(NativeMap.key(args));
-            case Id_get:
-                return realThis(thisObj, f).js_get(NativeMap.key(args));
-            case Id_has:
-                return realThis(thisObj, f).js_has(NativeMap.key(args));
-            case Id_set:
-                return realThis(thisObj, f)
-                        .js_set(
-                                NativeMap.key(args),
-                                args.length > 1 ? args[1] : Undefined.instance);
-        }
-        throw new IllegalArgumentException(
-                "WeakMap.prototype has no method: " + f.getFunctionName());
+        return nm;
     }
 
     private Object js_delete(Object key) {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return Boolean.valueOf(map.remove(key) != null);
+        return map.remove(key) != null;
     }
 
     private Object js_get(Object key) {
@@ -98,7 +124,7 @@ public class NativeWeakMap extends IdScriptableObject {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return Boolean.valueOf(map.containsKey(key));
+        return map.containsKey(key);
     }
 
     private Object js_set(Object key, Object v) {
@@ -116,97 +142,15 @@ public class NativeWeakMap extends IdScriptableObject {
         return this;
     }
 
-    private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
-        final NativeWeakMap nm = ensureType(thisObj, NativeWeakMap.class, f);
+    private static NativeWeakMap realThis(Scriptable thisObj, String name) {
+        NativeWeakMap nm = LambdaConstructor.convertThisObject(thisObj, NativeWeakMap.class);
         if (!nm.instanceOfWeakMap) {
             // Check for "Map internal data tag"
-            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", name);
         }
 
         return nm;
     }
-
-    @Override
-    protected void initPrototypeId(int id) {
-        if (id == SymbolId_toStringTag) {
-            initPrototypeValue(
-                    SymbolId_toStringTag,
-                    SymbolKey.TO_STRING_TAG,
-                    getClassName(),
-                    DONTENUM | READONLY);
-            return;
-        }
-
-        String s, fnName = null;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 0;
-                s = "constructor";
-                break;
-            case Id_delete:
-                arity = 1;
-                s = "delete";
-                break;
-            case Id_get:
-                arity = 1;
-                s = "get";
-                break;
-            case Id_has:
-                arity = 1;
-                s = "has";
-                break;
-            case Id_set:
-                arity = 2;
-                s = "set";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
-    }
-
-    @Override
-    protected int findPrototypeId(Symbol k) {
-        if (SymbolKey.TO_STRING_TAG.equals(k)) {
-            return SymbolId_toStringTag;
-        }
-        return 0;
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "delete":
-                id = Id_delete;
-                break;
-            case "get":
-                id = Id_get;
-                break;
-            case "has":
-                id = Id_has;
-                break;
-            case "set":
-                id = Id_set;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    private static final int Id_constructor = 1,
-            Id_delete = 2,
-            Id_get = 3,
-            Id_has = 4,
-            Id_set = 5,
-            SymbolId_toStringTag = 6,
-            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();

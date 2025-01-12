@@ -286,8 +286,8 @@ public class ScriptRuntime {
             NativeMap.init(cx, scope, sealed);
             NativePromise.init(cx, scope, sealed);
             NativeSet.init(cx, scope, sealed);
-            NativeWeakMap.init(scope, sealed);
-            NativeWeakSet.init(scope, sealed);
+            NativeWeakMap.init(cx, scope, sealed);
+            NativeWeakSet.init(cx, scope, sealed);
             NativeBigInt.init(scope, sealed);
 
             NativeProxy.init(cx, scope, sealed);
