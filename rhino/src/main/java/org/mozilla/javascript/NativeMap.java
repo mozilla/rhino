@@ -94,7 +94,7 @@ public class NativeMap extends ScriptableObject {
                 "forEach",
                 1,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "entries")
+                        realThis(thisObj, "forEach")
                                 .js_forEach(
                                         lcx,
                                         lscope,
