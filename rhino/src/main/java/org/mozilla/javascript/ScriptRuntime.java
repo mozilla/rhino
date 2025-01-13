@@ -202,10 +202,9 @@ public class ScriptRuntime {
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
         if (cx.hasFeature(Context.FEATURE_E4X)) {
-            ServiceLoader<XMLLoader> l = ServiceLoader.load(XMLLoader.class);
-            Iterator<XMLLoader> i = l.iterator();
-            if (i.hasNext()) {
-                i.next().load(scope, sealed);
+            XMLLoader loader = loadOneServiceImplementation(XMLLoader.class);
+            if (loader != null) {
+                loader.load(scope, sealed);
             }
         }
 
@@ -5624,6 +5623,24 @@ public class ScriptRuntime {
     /** Throws a ReferenceError "cannot delete a super property". See ECMAScript spec 13.5.1.2 */
     public static void throwDeleteOnSuperPropertyNotAllowed() {
         throw referenceError("msg.delete.super");
+    }
+
+    /**
+     * Load a single implementation of "serviceClass" using the ServiceLoader. If there are no
+     * implementations, return null. If there is more than one implementation, throw a fatal
+     * exception, since this indicates that the classpath was configured incorrectly.
+     */
+    static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
+        Iterator<T> it = ServiceLoader.load(serviceClass).iterator();
+        if (it.hasNext()) {
+            T result = it.next();
+            if (it.hasNext()) {
+                throw Kit.codeBug(
+                        "Invalid configuration: more than one implementation of " + serviceClass);
+            }
+            return result;
+        }
+        return null;
     }
 
     public static final Object[] emptyArgs = new Object[0];

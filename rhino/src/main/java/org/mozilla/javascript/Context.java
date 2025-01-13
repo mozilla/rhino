@@ -23,10 +23,8 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
@@ -2329,9 +2327,9 @@ public class Context implements Closeable {
      */
     @Deprecated
     public XMLLib.Factory getE4xImplementationFactory() {
-        Iterator<XMLLoader> i = ServiceLoader.load(XMLLoader.class).iterator();
-        if (i.hasNext()) {
-            return i.next().getFactory();
+        XMLLoader loader = ScriptRuntime.loadOneServiceImplementation(XMLLoader.class);
+        if (loader != null) {
+            return loader.getFactory();
         }
         return null;
     }
@@ -2693,13 +2691,7 @@ public class Context implements Closeable {
 
     RegExpProxy getRegExpProxy() {
         if (regExpProxy == null) {
-            ServiceLoader<RegExpProxy> l = ServiceLoader.load(RegExpProxy.class);
-            Iterator<RegExpProxy> i = l.iterator();
-            if (i.hasNext()) {
-                regExpProxy = i.next();
-            } else {
-                return null;
-            }
+            regExpProxy = ScriptRuntime.loadOneServiceImplementation(RegExpProxy.class);
         }
         return regExpProxy;
     }
