@@ -106,13 +106,13 @@ public class NativeMap extends ScriptableObject {
         constructor.definePrototypeMethod(
                 scope,
                 "entries",
-                SymbolKey.ITERATOR,
                 0,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "entries")
                                 .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
                 DONTENUM,
                 DONTENUM | READONLY);
+        constructor.definePrototypeAlias("entries", SymbolKey.ITERATOR, DONTENUM);
 
         // The spec requires very specific handling of the "size" prototype
         // property that's not like other things that we already do.

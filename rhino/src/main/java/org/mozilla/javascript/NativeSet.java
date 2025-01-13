@@ -68,6 +68,9 @@ public class NativeSet extends ScriptableObject {
                                 .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
                 DONTENUM,
                 DONTENUM | READONLY);
+        constructor.definePrototypeAlias("values", "keys", DONTENUM | READONLY);
+        constructor.definePrototypeAlias("values", SymbolKey.ITERATOR, DONTENUM);
+
         constructor.definePrototypeMethod(
                 scope,
                 "forEach",
@@ -85,7 +88,6 @@ public class NativeSet extends ScriptableObject {
         constructor.definePrototypeMethod(
                 scope,
                 "entries",
-                SymbolKey.ITERATOR,
                 0,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "entries")

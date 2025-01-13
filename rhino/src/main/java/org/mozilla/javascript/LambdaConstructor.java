@@ -181,22 +181,6 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(name, f, attributes);
     }
 
-    /** Set the same exact value in the prototype both using a name and using a symbol. */
-    public void definePrototypeMethod(
-            Scriptable scope,
-            String name,
-            SymbolKey key,
-            int length,
-            Callable target,
-            int attributes,
-            int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
-        f.setStandardPropertyAttributes(propertyAttributes);
-        ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, f, attributes);
-        proto.defineProperty(key, f, attributes);
-    }
-
     /** Define a property that may be of any type on the prototype of this constructor. */
     public void definePrototypeProperty(String name, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
@@ -248,6 +232,20 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, setter, attributes);
+    }
+
+    /** Define a property on the prototype that has the same value as another property. */
+    public void definePrototypeAlias(String name, SymbolKey alias, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        Object val = proto.get(name, proto);
+        proto.defineProperty(alias, val, attributes);
+    }
+
+    /** Define a property on the prototype that has the same value as another property. */
+    public void definePrototypeAlias(String name, String alias, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        Object val = proto.get(name, proto);
+        proto.defineProperty(alias, val, attributes);
     }
 
     /**
