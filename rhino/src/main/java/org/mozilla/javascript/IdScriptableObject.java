@@ -201,7 +201,13 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 Context cx = Context.getContext();
                 if (cx.isStrictMode()) {
                     int nameSlot = (id - 1) * SLOT_SPAN + NAME_SLOT;
-                    String name = (String) valueArray[nameSlot];
+
+                    String name = null;
+                    if (valueArray[nameSlot] instanceof String)
+                        name = (String) valueArray[nameSlot];
+                    else if (valueArray[nameSlot] instanceof Symbol) {
+                        name = valueArray[nameSlot].toString();
+                    }
                     throw ScriptRuntime.typeErrorById(
                             "msg.delete.property.with.configurable.false", name);
                 }
@@ -761,6 +767,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         Scriptable scope = ScriptableObject.getTopLevelScope(this);
         IdFunctionObject function = newIdFunction(tag, id, functionName, arity, scope);
         prototypeValues.initValue(id, key, function, DONTENUM);
+        return function;
+    }
+
+    public final IdFunctionObject initPrototypeMethod(
+            Object tag, int id, Symbol key, String functionName, int arity, int attributes) {
+        Scriptable scope = ScriptableObject.getTopLevelScope(this);
+        IdFunctionObject function = newIdFunction(tag, id, functionName, arity, scope);
+        prototypeValues.initValue(id, key, function, attributes);
         return function;
     }
 
