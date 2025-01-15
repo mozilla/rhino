@@ -13,7 +13,7 @@ package org.mozilla.javascript;
  *
  * @author Norris Boyd
  */
-final class NativeNumber extends IdScriptableObject {
+final class NativeNumber extends ScriptableObject {
     private static final long serialVersionUID = 3504516769741512101L;
 
     /**
@@ -21,15 +21,93 @@ final class NativeNumber extends IdScriptableObject {
      */
     public static final double MAX_SAFE_INTEGER = 9007199254740991.0; // Math.pow(2, 53) - 1
 
-    private static final Object NUMBER_TAG = "Number";
+    private static final String CLASS_NAME = "Number";
 
     private static final int MAX_PRECISION = 100;
     private static final double MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER;
-    private static final double EPSILON = 2.220446049250313e-16; // Math.pow(2, -52)
+    private static final double EPSILON = 2.220446049250313e-16;
+
+    private final double doubleValue;// Math.pow(2, -52)
 
     static void init(Scriptable scope, boolean sealed) {
-        NativeNumber obj = new NativeNumber(0.0);
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        1,
+                        NativeNumber::js_constructorFunc,
+                        NativeNumber::js_constructor);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        constructor.setPrototypeScriptable(new NativeNumber(0.0));
+
+        final int propAttr =
+                DONTENUM | PERMANENT | READONLY;
+
+        constructor.defineProperty("NaN", ScriptRuntime.NaNobj, propAttr);
+        constructor.defineProperty(
+                "POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), propAttr);
+        constructor.defineProperty(
+                "NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), propAttr);
+        constructor.defineProperty("MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), propAttr);
+        constructor.defineProperty("MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), propAttr);
+        constructor.defineProperty("MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), propAttr);
+        constructor.defineProperty("MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), propAttr);
+        constructor.defineProperty("EPSILON", ScriptRuntime.wrapNumber(EPSILON), propAttr);
+
+        constructor.defineConstructorMethod(
+                scope,
+                "isFinite",
+                1,
+                NativeNumber::js_isFinite,
+                DONTENUM,
+                DONTENUM | READONLY
+        );
+        constructor.defineConstructorMethod(
+                scope,
+                "isNaN",
+                1,
+                NativeNumber::js_isNaN,
+                DONTENUM,
+                DONTENUM | READONLY
+        );
+        constructor.defineConstructorMethod(
+                scope,
+                "isInteger",
+                1,
+                NativeNumber::js_isInteger,
+                DONTENUM,
+                DONTENUM | READONLY
+        );
+        constructor.defineConstructorMethod(
+                scope,
+                "isSafeInteger",
+                1,
+                NativeNumber::js_isSafeInteger,
+                DONTENUM,
+                DONTENUM | READONLY
+        );
+
+        Object parseFloat = ScriptRuntime.getTopLevelProp(constructor, "parseFloat");
+        if (parseFloat instanceof Function) {
+            constructor.defineProperty(
+                    "parseFloat",
+                    parseFloat,
+                    DONTENUM
+            );
+        }
+        Object parseInt = ScriptRuntime.getTopLevelProp(constructor, "parseInt");
+        if (parseInt instanceof Function) {
+            constructor.defineProperty(
+                    "parseInt",
+                    parseInt,
+                    DONTENUM
+            );
+        }
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     NativeNumber(double number) {
@@ -38,39 +116,16 @@ final class NativeNumber extends IdScriptableObject {
 
     @Override
     public String getClassName() {
-        return "Number";
+        return CLASS_NAME;
     }
 
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor) {
-        final int attr =
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY;
+    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+        double val = (args.length >= 1) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
+        return new NativeNumber(val);
+    }
 
-        ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr);
-        ctor.defineProperty(
-                "POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), attr);
-        ctor.defineProperty(
-                "NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), attr);
-        ctor.defineProperty("MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), attr);
-        ctor.defineProperty("MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), attr);
-        ctor.defineProperty("MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), attr);
-        ctor.defineProperty("MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), attr);
-        ctor.defineProperty("EPSILON", ScriptRuntime.wrapNumber(EPSILON), attr);
-
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isFinite, "isFinite", 1);
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isNaN, "isNaN", 1);
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isInteger, "isInteger", 1);
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isSafeInteger, "isSafeInteger", 1);
-        Object parseFloat = ScriptRuntime.getTopLevelProp(ctor, "parseFloat");
-        if (parseFloat instanceof IdFunctionObject) {
-            ((IdFunctionObject) parseFloat).addAsProperty(ctor);
-        }
-        Object parseInt = ScriptRuntime.getTopLevelProp(ctor, "parseInt");
-        if (parseInt instanceof IdFunctionObject) {
-            ((IdFunctionObject) parseInt).addAsProperty(ctor);
-        }
-
-        super.fillConstructorProperties(ctor);
+    private static Object js_constructorFunc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return (args.length >= 1) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
     }
 
     @Override
@@ -207,48 +262,13 @@ final class NativeNumber extends IdScriptableObject {
         }
     }
 
-    private static Object execConstructorCall(int id, Object[] args) {
-        switch (id) {
-            case ConstructorId_isFinite:
-                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
-                    return Boolean.FALSE;
-                }
-                if (args[0] instanceof Number) {
-                    // Match ES6 polyfill, which only works for "number" types
-                    return isFinite(args[0]);
-                }
-                return Boolean.FALSE;
-
-            case ConstructorId_isNaN:
-                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
-                    return Boolean.FALSE;
-                }
-                if (args[0] instanceof Number) {
-                    return isNaN((Number) args[0]);
-                }
-                return Boolean.FALSE;
-
-            case ConstructorId_isInteger:
-                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
-                    return Boolean.FALSE;
-                }
-                if (args[0] instanceof Number) {
-                    return Boolean.valueOf(isInteger((Number) args[0]));
-                }
-                return Boolean.FALSE;
-
-            case ConstructorId_isSafeInteger:
-                if ((args.length == 0) || (Undefined.instance == args[0])) {
-                    return Boolean.FALSE;
-                }
-                if (args[0] instanceof Number) {
-                    return Boolean.valueOf(isSafeInteger((Number) args[0]));
-                }
-                return Boolean.FALSE;
-
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
+    private static Number argToNumber(Object[] args) {
+        if (args.length > 0) {
+            if (args[0] instanceof Number) {
+                return (Number) args[0];
+            }
         }
+        return null;
     }
 
     @Override
@@ -284,19 +304,33 @@ final class NativeNumber extends IdScriptableObject {
         return sb.toString();
     }
 
+    private static Object js_isFinite(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Number n = argToNumber(args);
+        return n == null? Boolean.FALSE : isFinite(n);
+    }
+
     static Object isFinite(Object val) {
-        double d = ScriptRuntime.toNumber(val);
-        Double nd = Double.valueOf(d);
-        return ScriptRuntime.wrapBoolean(!nd.isInfinite() && !nd.isNaN());
+        double nd = ScriptRuntime.toNumber(val);
+        return ScriptRuntime.wrapBoolean(!Double.isInfinite(nd) && !Double.isNaN(nd));
+    }
+
+    private static Object js_isNaN(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Number n = argToNumber(args);
+        return n == null ? Boolean.FALSE : isNaN(n);
     }
 
     private static Boolean isNaN(Number val) {
         if (val instanceof Double) {
-            return Boolean.valueOf(((Double) val).isNaN());
+            return((Double) val).isNaN();
         }
 
         double d = val.doubleValue();
-        return Boolean.valueOf(Double.isNaN(d));
+        return Double.isNaN(d);
+    }
+
+    private static Object js_isInteger(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Number n = argToNumber(args);
+        return n == null ? Boolean.FALSE : isInteger(n);
     }
 
     private static boolean isInteger(Number val) {
@@ -307,11 +341,16 @@ final class NativeNumber extends IdScriptableObject {
     }
 
     private static boolean isDoubleInteger(Double d) {
-        return !d.isInfinite() && !d.isNaN() && (Math.floor(d.doubleValue()) == d.doubleValue());
+        return !d.isInfinite() && !d.isNaN() && (Math.floor(d) == d);
     }
 
     private static boolean isDoubleInteger(double d) {
         return !Double.isInfinite(d) && !Double.isNaN(d) && (Math.floor(d) == d);
+    }
+
+    private static Object js_isSafeInteger(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Number n = argToNumber(args);
+        return n == null ? Boolean.FALSE : isSafeInteger(n);
     }
 
     private static boolean isSafeInteger(Number val) {
@@ -323,62 +362,11 @@ final class NativeNumber extends IdScriptableObject {
 
     private static boolean isDoubleSafeInteger(Double d) {
         return isDoubleInteger(d)
-                && (d.doubleValue() <= MAX_SAFE_INTEGER)
-                && (d.doubleValue() >= MIN_SAFE_INTEGER);
+                && (d <= MAX_SAFE_INTEGER)
+                && (d >= MIN_SAFE_INTEGER);
     }
 
     private static boolean isDoubleSafeInteger(double d) {
         return isDoubleInteger(d) && (d <= MAX_SAFE_INTEGER) && (d >= MIN_SAFE_INTEGER);
     }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "toString":
-                id = Id_toString;
-                break;
-            case "toLocaleString":
-                id = Id_toLocaleString;
-                break;
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "valueOf":
-                id = Id_valueOf;
-                break;
-            case "toFixed":
-                id = Id_toFixed;
-                break;
-            case "toExponential":
-                id = Id_toExponential;
-                break;
-            case "toPrecision":
-                id = Id_toPrecision;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    private static final int ConstructorId_isFinite = -1,
-            ConstructorId_isNaN = -2,
-            ConstructorId_isInteger = -3,
-            ConstructorId_isSafeInteger = -4,
-            Id_constructor = 1,
-            Id_toString = 2,
-            Id_toLocaleString = 3,
-            Id_toSource = 4,
-            Id_valueOf = 5,
-            Id_toFixed = 6,
-            Id_toExponential = 7,
-            Id_toPrecision = 8,
-            MAX_PROTOTYPE_ID = 8;
-
-    private double doubleValue;
 }

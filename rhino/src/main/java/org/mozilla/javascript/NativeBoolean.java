@@ -27,24 +27,15 @@ final class NativeBoolean extends ScriptableObject {
                         NativeBoolean::js_constructorFunc,
                         NativeBoolean::js_constructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        // Boolean is an unusual object in that the prototype is itself a Boolean
+        constructor.setPrototypeScriptable(new NativeBoolean(false));
+
         constructor.definePrototypeMethod(
-                scope,
-                "toString",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        Boolean.toString(toSelf(thisObj).booleanValue),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "toString", 0, NativeBoolean::js_toString, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope, "toSource", 0, NativeBoolean::js_toSource, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "valueOf",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        toSelf(thisObj).booleanValue,
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "valueOf", 0, NativeBoolean::js_valueOf, DONTENUM, DONTENUM | READONLY);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
@@ -61,8 +52,8 @@ final class NativeBoolean extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static NativeBoolean toSelf(Scriptable thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeBoolean.class);
+    private static boolean toValue(Scriptable thisObj) {
+        return LambdaConstructor.ensureType(thisObj, NativeBoolean.class, "Boolean").booleanValue;
     }
 
     @Override
@@ -84,8 +75,18 @@ final class NativeBoolean extends ScriptableObject {
         return new NativeBoolean(b);
     }
 
+    private static String js_toString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toValue(thisObj) ? "true" : "false";
+    }
+
+    private static Object js_valueOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toValue(thisObj);
+    }
+
     private static Object js_toSource(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return "(new Boolean(" + ScriptRuntime.toString(toSelf(thisObj).booleanValue) + "))";
+        return "(new Boolean(" + ScriptRuntime.toString(toValue(thisObj)) + "))";
     }
 }

@@ -23,7 +23,7 @@ final class NativeBigInt extends ScriptableObject {
                         scope,
                         CLASS_NAME,
                         1,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        NativeBigInt::js_constructorFunc,
                         NativeBigInt::js_constructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         constructor.defineConstructorMethod(
@@ -89,8 +89,13 @@ final class NativeBigInt extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class);
     }
 
-    private static NativeBigInt js_constructor(Context cx, Scriptable scope, Object[] args) {
-        return new NativeBigInt(ScriptRuntime.toBigInt(args[0]));
+    private static Object js_constructorFunc(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
+    }
+
+    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+        throw ScriptRuntime.typeErrorById("msg.no.new", CLASS_NAME);
     }
 
     private static Object js_toString(
