@@ -11,10 +11,10 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.RhinoConfig;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * This linker is the last one in the chain, and as such it must be able to link every type of
@@ -23,7 +23,7 @@ import org.mozilla.javascript.Token;
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class DefaultLinker implements GuardingDynamicLinker {
-    static final boolean DEBUG = RhinoConfig.DEFAULT.debugLinker();
+    static final boolean DEBUG = RhinoConfig.get("rhino.debugLinker", false);
 
     @Override
     public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc)

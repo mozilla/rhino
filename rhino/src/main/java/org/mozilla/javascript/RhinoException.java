@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /** The class of exceptions thrown by the JavaScript engine. */
 public abstract class RhinoException extends RuntimeException {
@@ -374,7 +375,7 @@ public abstract class RhinoException extends RuntimeException {
     private static final long serialVersionUID = 1883500631321581169L;
 
     // Just for testing!
-    private static StackStyle stackStyle = RhinoConfig.DEFAULT.stackStyle();
+    private static StackStyle stackStyle = RhinoConfig.get("rhino.stack.style", StackStyle.RHINO);
 
     private String sourceName;
     private int lineNumber;
