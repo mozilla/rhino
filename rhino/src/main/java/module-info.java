@@ -12,6 +12,8 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.xml;
     exports org.mozilla.javascript.config;
 
+    uses org.mozilla.javascript.config.RhinoPropertiesLoader;
+
     requires java.compiler;
     requires jdk.dynalink;
     requires transitive java.desktop;
