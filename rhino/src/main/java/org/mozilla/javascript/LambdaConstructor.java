@@ -307,9 +307,9 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     /**
-     * Replace the default "Object" prototype with a prototype of a specific implementation.
-     * This is only necessary for a few built-in constructors, like Boolean, that must have
-     * their prototype be an object with a specific "internal data slot."
+     * Replace the default "Object" prototype with a prototype of a specific implementation. This is
+     * only necessary for a few built-in constructors, like Boolean, that must have their prototype
+     * be an object with a specific "internal data slot."
      */
     public void setPrototypeScriptable(ScriptableObject proto) {
         proto.setParentScope(getParentScope());

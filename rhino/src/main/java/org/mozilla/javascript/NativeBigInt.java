@@ -44,6 +44,7 @@ final class NativeBigInt extends ScriptableObject {
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope, "toString", 0, NativeBigInt::js_toString, DONTENUM, DONTENUM | READONLY);
+        // Alias toLocaleString to toString
         constructor.definePrototypeMethod(
                 scope,
                 "toLocaleString",
@@ -52,13 +53,7 @@ final class NativeBigInt extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "toSource",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        "(new BigInt(" + ScriptRuntime.toString(toSelf(thisObj).bigIntValue) + "))",
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "toSource", 0, NativeBigInt::js_toSource, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "valueOf",
@@ -106,6 +101,11 @@ final class NativeBigInt extends ScriptableObject {
                         : ScriptRuntime.toInt32(args[0]);
         BigInteger value = toSelf(thisObj).bigIntValue;
         return ScriptRuntime.bigIntToString(value, base);
+    }
+
+    private static Object js_toSource(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return "(new BigInt(" + ScriptRuntime.toString(toSelf(thisObj).bigIntValue) + "))";
     }
 
     private static Object js_asIntOrUintN(boolean isSigned, Object[] args) {
