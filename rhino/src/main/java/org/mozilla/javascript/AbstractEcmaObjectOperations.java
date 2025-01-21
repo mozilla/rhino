@@ -264,8 +264,19 @@ public class AbstractEcmaObjectOperations {
             Object items,
             Object callback,
             KEY_COERCION keyCoercion) {
+        return groupBy(cx, scope, f.getTag(), f.getFunctionName(), items, callback, keyCoercion);
+    }
+
+    static Map<Object, List<Object>> groupBy(
+            Context cx,
+            Scriptable scope,
+            Object classTag,
+            String functionName,
+            Object items,
+            Object callback,
+            KEY_COERCION keyCoercion) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ScriptRuntimeES6.requireObjectCoercible(cx, items, f);
+            ScriptRuntimeES6.requireObjectCoercible(cx, items, classTag, functionName);
         }
         if (!(callback instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(

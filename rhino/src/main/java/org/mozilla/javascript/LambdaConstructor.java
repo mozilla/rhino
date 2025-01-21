@@ -189,6 +189,16 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(key, value, attributes);
     }
 
+    public void definePrototypeProperty(Context cx, String name, ScriptableObject descriptor) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineOwnProperty(cx, name, descriptor);
+    }
+
+    public void definePrototypeProperty(Context cx, Symbol key, ScriptableObject descriptor) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineOwnProperty(cx, key, descriptor);
+    }
+
     /**
      * Define a property on the prototype using a function. The function will be wired to a
      * JavaScript function, so the resulting property will look just like one that was defined using
@@ -198,6 +208,12 @@ public class LambdaConstructor extends LambdaFunction {
             Context cx, String name, Function<Scriptable, Object> getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, null, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx, Symbol key, Function<Scriptable, Object> getter, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, key, getter, null, attributes);
     }
 
     /**
@@ -213,6 +229,20 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, setter, attributes);
+    }
+
+    /** Define a property on the prototype that has the same value as another property. */
+    public void definePrototypeAlias(String name, SymbolKey alias, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        Object val = proto.get(name, proto);
+        proto.defineProperty(alias, val, attributes);
+    }
+
+    /** Define a property on the prototype that has the same value as another property. */
+    public void definePrototypeAlias(String name, String alias, int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        Object val = proto.get(name, proto);
+        proto.defineProperty(alias, val, attributes);
     }
 
     /**
