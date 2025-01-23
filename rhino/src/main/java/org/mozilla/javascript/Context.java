@@ -204,8 +204,9 @@ public class Context implements Closeable {
      * {@link #VERSION_DEFAULT} or is at least {@link #VERSION_1_6}.
      *
      * @since 1.6 Release 1
+     * @deprecated This flag may be removed later.
      */
-    public static final int FEATURE_E4X = 6;
+    @Deprecated public static final int FEATURE_E4X = 6;
 
     /**
      * Control if dynamic scope should be used for name access. If hasFeature(FEATURE_DYNAMIC_SCOPE)
@@ -2309,20 +2310,6 @@ public class Context implements Closeable {
     public boolean hasFeature(int featureIndex) {
         ContextFactory f = getFactory();
         return f.hasFeature(this, featureIndex);
-    }
-
-    /**
-     * Returns an object which specifies an E4X implementation to use within this <code>Context
-     * </code>. Note that the XMLLib.Factory interface should be considered experimental.
-     *
-     * <p>The default implementation uses the implementation provided by this <code>Context</code>'s
-     * {@link ContextFactory}.
-     *
-     * @return An XMLLib.Factory. Should not return <code>null</code> if {@link #FEATURE_E4X} is
-     *     enabled. See {@link #hasFeature}.
-     */
-    public XMLLib.Factory getE4xImplementationFactory() {
-        return getFactory().getE4xImplementationFactory();
     }
 
     /**
