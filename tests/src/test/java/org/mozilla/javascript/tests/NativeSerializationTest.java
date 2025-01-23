@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,6 +12,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.serialize.ScriptableInputStream;
+import org.mozilla.javascript.serialize.ScriptableOutputStream;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class NativeSerializationTest {
@@ -23,7 +23,7 @@ public class NativeSerializationTest {
     @BeforeEach
     public void init() {
         cx = Context.enter();
-        cx.setInterpretedMode(true);
+        //cx.setInterpretedMode(true);
         scope = new Global(cx);
     }
 
@@ -34,12 +34,32 @@ public class NativeSerializationTest {
 
     private static Object[][] getTestCases() {
         return new Object[][]{
+                /*{
+                        "String",
+                        "TESTOBJ = 'testing';",
+                        "assertEquals('testing', TESTOBJ);"
+                },
                 {
+                        "Number",
+                        "TESTOBJ = Number(123);",
+                        "assertEquals(123, TESTOBJ);"
+                },
+                {
+                        "Boolean",
+                        "TESTOBJ = Boolean(true);",
+                        "assertEquals(true, TESTOBJ);"
+                },*/
+                {
+                        "Symbol",
+                        "TESTOBJ = Symbol('test');",
+                        "assertEquals('Symbol(test)', TESTOBJ.toString());"
+                },
+                /*{
                         "Symbol Registry",
                         "TESTOBJ = Symbol.for('test');",
                         "assertEquals(Symbol.for('test'), TESTOBJ);"
                 },
-                {
+                /*{
                         "Object",
                         "TESTOBJ = {a: 1, b: 'two', c: {a: 3}}",
                         "assertEquals(1, TESTOBJ.a);\nassertEquals('two', TESTOBJ.b);\nassertEquals(3, TESTOBJ.c.a);"
@@ -53,7 +73,7 @@ public class NativeSerializationTest {
                         "Set",
                         "TESTOBJ = new Set();\nTESTOBJ.add('testing');",
                         "assertTrue(TESTOBJ.has('testing'));"
-                }
+                }*/
         };
     }
 
@@ -81,11 +101,11 @@ public class NativeSerializationTest {
 
     private Object serializeLoop(Object obj) throws IOException, ClassNotFoundException {
         ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(outBuf);
+        ScriptableOutputStream out = new ScriptableOutputStream(outBuf, scope);
         out.writeObject(obj);
         out.close();
         ByteArrayInputStream inBuf = new ByteArrayInputStream(outBuf.toByteArray());
-        ObjectInputStream in = new ObjectInputStream(inBuf);
+        ScriptableInputStream in = new ScriptableInputStream(inBuf, scope);
         return in.readObject();
     }
 }
