@@ -14,15 +14,18 @@ import java.math.MathContext;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
+import org.mozilla.javascript.xml.XMLLoader;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -194,19 +197,15 @@ public class ScriptRuntime {
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
 
-        boolean withXml =
-                cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
-
         // define lazy-loaded properties using their class name
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-        if (withXml) {
-            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
-            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
-            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+        if (cx.hasFeature(Context.FEATURE_E4X)) {
+            XMLLoader loader = loadOneServiceImplementation(XMLLoader.class);
+            if (loader != null) {
+                loader.load(scope, sealed);
+            }
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
@@ -5624,6 +5623,24 @@ public class ScriptRuntime {
     /** Throws a ReferenceError "cannot delete a super property". See ECMAScript spec 13.5.1.2 */
     public static void throwDeleteOnSuperPropertyNotAllowed() {
         throw referenceError("msg.delete.super");
+    }
+
+    /**
+     * Load a single implementation of "serviceClass" using the ServiceLoader. If there are no
+     * implementations, return null. If there is more than one implementation, throw a fatal
+     * exception, since this indicates that the classpath was configured incorrectly.
+     */
+    static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
+        Iterator<T> it = ServiceLoader.load(serviceClass).iterator();
+        if (it.hasNext()) {
+            T result = it.next();
+            if (it.hasNext()) {
+                throw Kit.codeBug(
+                        "Invalid configuration: more than one implementation of " + serviceClass);
+            }
+            return result;
+        }
+        return null;
     }
 
     public static final Object[] emptyArgs = new Object[0];

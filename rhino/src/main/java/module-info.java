@@ -11,6 +11,12 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.typedarrays;
     exports org.mozilla.javascript.xml;
 
+    uses org.mozilla.javascript.RegExpProxy;
+    uses org.mozilla.javascript.xml.XMLLoader;
+
+    provides org.mozilla.javascript.RegExpProxy with
+            org.mozilla.javascript.regexp.RegExpImpl;
+
     requires java.compiler;
     requires jdk.dynalink;
     requires transitive java.desktop;
