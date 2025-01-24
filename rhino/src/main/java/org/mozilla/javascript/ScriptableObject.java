@@ -1746,6 +1746,14 @@ public abstract class ScriptableObject extends SlotMapOwner
         slot.setter = setter;
     }
 
+    public interface LambdaGetterFunction extends Serializable {
+        Object apply(Scriptable scope);
+    }
+
+    public interface LambdaSetterFunction extends Serializable {
+        void accept(Scriptable scope, Object value);
+    }
+
     /**
      * This is a single method interface suitable to be implemented as a lambda. It's used in the
      * "defineProperty" method.
