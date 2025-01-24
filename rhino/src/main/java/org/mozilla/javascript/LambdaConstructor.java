@@ -6,9 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 /**
  * This class implements a JavaScript function that may be used as a constructor by delegating to an
  * interface that can be easily implemented as a lambda. The LambdaFunction class may be used to add
@@ -35,7 +32,7 @@ public class LambdaConstructor extends LambdaFunction {
     public static final int CONSTRUCTOR_DEFAULT = CONSTRUCTOR_FUNCTION | CONSTRUCTOR_NEW;
 
     // Lambdas should not be serialized.
-    protected final transient Constructable targetConstructor;
+    protected final SerializableConstructable targetConstructor;
     private final int flags;
 
     /**
@@ -51,7 +48,8 @@ public class LambdaConstructor extends LambdaFunction {
      * @param target an object that implements the function in Java. Since Constructable is a
      *     single-function interface this will typically be implemented as a lambda.
      */
-    public LambdaConstructor(Scriptable scope, String name, int length, Constructable target) {
+    public LambdaConstructor(
+            Scriptable scope, String name, int length, SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = CONSTRUCTOR_DEFAULT;
@@ -72,7 +70,11 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope, String name, int length, int flags, Constructable target) {
+            Scriptable scope,
+            String name,
+            int length,
+            int flags,
+            SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = flags;
@@ -97,8 +99,8 @@ public class LambdaConstructor extends LambdaFunction {
             Scriptable scope,
             String name,
             int length,
-            Callable target,
-            Constructable targetConstructor) {
+            SerializableCallable target,
+            SerializableConstructable targetConstructor) {
         super(scope, name, length, target);
         this.targetConstructor = targetConstructor;
         this.flags = CONSTRUCTOR_DEFAULT;
@@ -138,7 +140,8 @@ public class LambdaConstructor extends LambdaFunction {
      * Define a function property on the prototype of the constructor using a LambdaFunction under
      * the covers.
      */
-    public void definePrototypeMethod(Scriptable scope, String name, int length, Callable target) {
+    public void definePrototypeMethod(
+            Scriptable scope, String name, int length, SerializableCallable target) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, 0);
@@ -152,7 +155,7 @@ public class LambdaConstructor extends LambdaFunction {
             Scriptable scope,
             String name,
             int length,
-            Callable target,
+            SerializableCallable target,
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
@@ -169,7 +172,7 @@ public class LambdaConstructor extends LambdaFunction {
             Scriptable scope,
             SymbolKey name,
             int length,
-            Callable target,
+            SerializableCallable target,
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, "[" + name.getName() + "]", length, target);
@@ -195,7 +198,7 @@ public class LambdaConstructor extends LambdaFunction {
      * "Object.defineOwnProperty" with a property descriptor.
      */
     public void definePrototypeProperty(
-            Context cx, String name, Function<Scriptable, Object> getter, int attributes) {
+            Context cx, String name, ScriptableObject.LambdaGetterFunction getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, null, attributes);
     }
@@ -208,8 +211,8 @@ public class LambdaConstructor extends LambdaFunction {
     public void definePrototypeProperty(
             Context cx,
             String name,
-            Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
+            ScriptableObject.LambdaGetterFunction getter,
+            ScriptableObject.LambdaSetterFunction setter,
             int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, setter, attributes);
@@ -226,7 +229,11 @@ public class LambdaConstructor extends LambdaFunction {
      * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
-            Scriptable scope, String name, int length, Callable target, int attributes) {
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            int attributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         defineProperty(name, f, attributes);
     }
@@ -246,7 +253,7 @@ public class LambdaConstructor extends LambdaFunction {
             Symbol key,
             String name,
             int length,
-            Callable target,
+            SerializableCallable target,
             int attributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         defineProperty(key, f, attributes);
@@ -261,7 +268,7 @@ public class LambdaConstructor extends LambdaFunction {
             Scriptable scope,
             String name,
             int length,
-            Callable target,
+            SerializableCallable target,
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);

@@ -39,7 +39,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     private Scriptable handlerObj;
     private final String typeOf;
 
-    private static final class Revoker implements Callable {
+    private static final class Revoker implements SerializableCallable {
         private NativeProxy revocableProxy = null;
 
         public Revoker(NativeProxy proxy) {

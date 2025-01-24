@@ -1,8 +1,5 @@
 package org.mozilla.javascript;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-
 /**
  * A specialized property accessor using lambda functions, similar to {@link LambdaSlot}, but allows
  * defining properties with getter and setter lambdas that require access to the owner object
@@ -15,8 +12,8 @@ import java.util.function.Function;
  * native functionality without the need for reflection.
  */
 public class LambdaAccessorSlot extends Slot {
-    private transient Function<Scriptable, Object> getter;
-    private transient BiConsumer<Scriptable, Object> setter;
+    private ScriptableObject.LambdaGetterFunction getter;
+    private ScriptableObject.LambdaSetterFunction setter;
     private LambdaFunction getterFunction;
     private LambdaFunction setterFunction;
 
@@ -123,7 +120,7 @@ public class LambdaAccessorSlot extends Slot {
         return super.getValue(owner);
     }
 
-    public void setGetter(Scriptable scope, Function<Scriptable, Object> getter) {
+    public void setGetter(Scriptable scope, ScriptableObject.LambdaGetterFunction getter) {
         this.getter = getter;
         if (getter != null) {
             this.getterFunction =
@@ -135,7 +132,7 @@ public class LambdaAccessorSlot extends Slot {
         }
     }
 
-    public void setSetter(Scriptable scope, BiConsumer<Scriptable, Object> setter) {
+    public void setSetter(Scriptable scope, ScriptableObject.LambdaSetterFunction setter) {
         this.setter = setter;
         if (setter != null) {
             this.setterFunction =

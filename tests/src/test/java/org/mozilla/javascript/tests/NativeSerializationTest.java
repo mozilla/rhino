@@ -23,7 +23,7 @@ public class NativeSerializationTest {
     @BeforeEach
     public void init() {
         cx = Context.enter();
-        //cx.setInterpretedMode(true);
+        // cx.setInterpretedMode(true);
         scope = new Global(cx);
     }
 
@@ -33,47 +33,35 @@ public class NativeSerializationTest {
     }
 
     private static Object[][] getTestCases() {
-        return new Object[][]{
-                /*{
-                        "String",
-                        "TESTOBJ = 'testing';",
-                        "assertEquals('testing', TESTOBJ);"
-                },
-                {
-                        "Number",
-                        "TESTOBJ = Number(123);",
-                        "assertEquals(123, TESTOBJ);"
-                },
-                {
-                        "Boolean",
-                        "TESTOBJ = Boolean(true);",
-                        "assertEquals(true, TESTOBJ);"
-                },*/
-                {
-                        "Symbol",
-                        "TESTOBJ = Symbol('test');",
-                        "assertEquals('Symbol(test)', TESTOBJ.toString());"
-                },
-                /*{
-                        "Symbol Registry",
-                        "TESTOBJ = Symbol.for('test');",
-                        "assertEquals(Symbol.for('test'), TESTOBJ);"
-                },
-                /*{
-                        "Object",
-                        "TESTOBJ = {a: 1, b: 'two', c: {a: 3}}",
-                        "assertEquals(1, TESTOBJ.a);\nassertEquals('two', TESTOBJ.b);\nassertEquals(3, TESTOBJ.c.a);"
-                },
-                {
-                        "Map",
-                        "TESTOBJ = new Map();\nTESTOBJ.set('testing', '123');",
-                        "assertEquals('123', TESTOBJ.get('testing'));"
-                },
-                {
-                        "Set",
-                        "TESTOBJ = new Set();\nTESTOBJ.add('testing');",
-                        "assertTrue(TESTOBJ.has('testing'));"
-                }*/
+        return new Object[][] {
+            {"String", "TESTOBJ = 'testing';", "assertEquals('testing', TESTOBJ);"},
+            {"Number", "TESTOBJ = Number(123);", "assertEquals(123, TESTOBJ);"},
+            {"Boolean", "TESTOBJ = Boolean(true);", "assertEquals(true, TESTOBJ);"},
+            {
+                "Symbol",
+                "TESTOBJ = Symbol('test');",
+                "assertEquals('Symbol(test)', TESTOBJ.toString());"
+            },
+            /*{
+                    "Symbol Registry",
+                    "TESTOBJ = Symbol.for('test');",
+                    "assertEquals(Symbol.for('test'), TESTOBJ);"
+            },*/
+            {
+                "Object",
+                "TESTOBJ = {a: 1, b: 'two', c: {a: 3}};",
+                "assertEquals(1, TESTOBJ.a);\nassertEquals('two', TESTOBJ.b);\nassertEquals(3, TESTOBJ.c.a);"
+            },
+            {
+                "Map",
+                "TESTOBJ = new Map();\nTESTOBJ.set('testing', '123');",
+                "assertEquals('123', TESTOBJ.get('testing'));"
+            },
+            {
+                "Set",
+                "TESTOBJ = new Set();\nTESTOBJ.add('testing');",
+                "assertTrue(TESTOBJ.has('testing'));"
+            }
         };
     }
 
