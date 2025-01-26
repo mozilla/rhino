@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +24,6 @@ public class NativeSerializationTest {
     @BeforeEach
     public void init() {
         cx = Context.enter();
-        // cx.setInterpretedMode(true);
         scope = new Global(cx);
     }
 
@@ -33,6 +33,22 @@ public class NativeSerializationTest {
     }
 
     private static Object[][] getTestCases() {
+        ArrayList<Object[]> result = new ArrayList<>();
+        for (Object[] testCase : getBaseTestCases()) {
+            result.add(addFlag(testCase, true));
+            result.add(addFlag(testCase, false));
+        }
+        return result.toArray(new Object[0][0]);
+    }
+
+    private static Object[] addFlag(Object[] tc, boolean flag) {
+        Object[] ret = new Object[tc.length + 1];
+        System.arraycopy(tc, 0, ret, 0, tc.length);
+        ret[tc.length] = flag;
+        return ret;
+    }
+
+    private static Object[][] getBaseTestCases() {
         return new Object[][] {
             {"String", "TESTOBJ = 'testing';", "assertEquals('testing', TESTOBJ);"},
             {"Number", "TESTOBJ = Number(123);", "assertEquals(123, TESTOBJ);"},
@@ -42,11 +58,11 @@ public class NativeSerializationTest {
                 "TESTOBJ = Symbol('test');",
                 "assertEquals('Symbol(test)', TESTOBJ.toString());"
             },
-            /*{
-                    "Symbol Registry",
-                    "TESTOBJ = Symbol.for('test');",
-                    "assertEquals(Symbol.for('test'), TESTOBJ);"
-            },*/
+            {
+                "Date",
+                "TESTOBJ = new Date(1737920959661);",
+                "assertEquals(1737920959661, TESTOBJ.valueOf());"
+            },
             {
                 "Object",
                 "TESTOBJ = {a: 1, b: 'two', c: {a: 3}};",
@@ -61,22 +77,46 @@ public class NativeSerializationTest {
                 "Set",
                 "TESTOBJ = new Set();\nTESTOBJ.add('testing');",
                 "assertTrue(TESTOBJ.has('testing'));"
+            },
+            // Don't expect WeakMap and WeakSet to retain values after serialization.
+            // However, do expect them to serialize without error and work after
+            // serialization.
+            {
+                "WeakMap",
+                "let key = {};\nTESTOBJ = new WeakMap();\nTESTOBJ.set(key, 123);",
+                "TESTOBJ.set(key, 456);\nassertEquals(456, TESTOBJ.get(key));"
+            },
+            {
+                "WeakSet",
+                "let key = {};\nTESTOBJ = new WeakSet();\nTESTOBJ.add(key);",
+                "TESTOBJ.add(key);\nassertTrue(TESTOBJ.has(key));"
             }
         };
     }
 
-    @ParameterizedTest(name = "Sanity Check {0}")
+    /*
+     * Test to ensure that each pair of scripts works without serialization.
+     */
+    @ParameterizedTest(name = "Sanity Check {0} interpreted = {3}")
     @MethodSource("getTestCases")
-    public void testWithoutSerialization(String name, String createScript, String testScript) {
+    public void testWithoutSerialization(
+            String name, String createScript, String testScript, boolean interpreted) {
+        cx.setInterpretedMode(interpreted);
         cx.evaluateString(scope, "load('testsrc/assert.js');", "init.js", 1, null);
         cx.evaluateString(scope, createScript, "create.js", 1, null);
         cx.evaluateString(scope, testScript, "test.js", 1, null);
     }
 
-    @ParameterizedTest(name = "Serialize {0}")
+    /*
+     * Test to ensure that each type of object may be serialized and deserialized and end
+     * up in a sane state.
+     */
+    @ParameterizedTest(name = "Serialize {0} interpreted = {3}")
     @MethodSource("getTestCases")
-    public void testSerialization(String name, String createScript, String testScript)
+    public void testSerialization(
+            String name, String createScript, String testScript, boolean interpreted)
             throws IOException, ClassNotFoundException {
+        cx.setInterpretedMode(interpreted);
         cx.evaluateString(scope, "load('testsrc/assert.js');", "init.js", 1, null);
         cx.evaluateString(scope, createScript, "create.js", 1, null);
         cx.evaluateString(scope, testScript, "test.js", 1, null);
@@ -89,6 +129,8 @@ public class NativeSerializationTest {
 
     private Object serializeLoop(Object obj) throws IOException, ClassNotFoundException {
         ByteArrayOutputStream outBuf = new ByteArrayOutputStream();
+        // We need to use ScriptableOutputStream here to ensure that Rhino objects
+        // are properly serialized, including classloading of generated code.
         ScriptableOutputStream out = new ScriptableOutputStream(outBuf, scope);
         out.writeObject(obj);
         out.close();
