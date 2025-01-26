@@ -527,7 +527,7 @@ public class NativeJavaMethod extends BaseFunction {
         final var weights = new int[typeLen];
         for (int i = 0; i < typeLen; i++) {
             final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes[i]);
-            if (weight < NativeJavaObject.CONVERSION_NONE) {
+            if (weight >= NativeJavaObject.CONVERSION_NONE) {
                 if (debug) {
                     printDebug("Rejecting (args can't convert) ", member, args);
                 }
