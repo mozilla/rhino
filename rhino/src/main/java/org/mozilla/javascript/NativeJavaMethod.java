@@ -265,28 +265,12 @@ public class NativeJavaMethod extends BaseFunction {
     static int findFunction(Context cx, MemberBox[] methodsOrCtors, Object[] args) {
         if (methodsOrCtors.length == 0) {
             return -1;
-        } else if (methodsOrCtors.length == 1) {
-            MemberBox member = methodsOrCtors[0];
-            Class<?>[] argTypes = member.argTypes;
-            int alength = argTypes.length;
-
-            if (member.vararg) {
-                alength--;
-                if (alength > args.length) {
-                    return -1;
-                }
-            } else {
-                if (alength != args.length) {
-                    return -1;
-                }
+        }
+        if (methodsOrCtors.length == 1) {
+            if (failFastConversionWeights(args, methodsOrCtors[0]) == null) {
+                return -1;
             }
-            for (int j = 0; j != alength; ++j) {
-                if (!NativeJavaObject.canConvert(args[j], argTypes[j])) {
-                    if (debug) printDebug("Rejecting (args can't convert) ", member, args);
-                    return -1;
-                }
-            }
-            if (debug) printDebug("Found ", member, args);
+            if (debug) printDebug("Found ", methodsOrCtors[0], args);
             return 0;
         }
 
@@ -517,12 +501,13 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     /**
-     * @return an int array holding all computed conversion weights, whose length will be {@code args.length} for
-     * non-vararg member or {@code args.length-1} for vararg member, or {@code null} if:
+     * 1. {@code args} is too short for {@code member} calling -> return {@code null}
      * <p>
-     * 1. {@code args} is too short for {@code member} calling, or
+     * 2. at least one arg cannot be converted -> return {@code null}
      * <p>
-     * 2. at least one arg cannot be converted
+     * 3. otherwise -> return an int array holding all computed conversion weights, whose length will be {@code args.length} for
+     * non-vararg member or {@code args.length-1} for vararg member
+     *
      * @see NativeJavaObject#getConversionWeight(Object, Class)
      * @see NativeJavaObject#canConvert(Object, Class)
      */
