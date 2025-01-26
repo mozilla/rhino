@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -1386,7 +1385,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             Scriptable scope,
             String name,
             int length,
-            Callable target,
+            SerializableCallable target,
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
@@ -1748,6 +1747,22 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     /**
+     * This is a single method interface suitable to be implemented as a lambda. It's used in the
+     * "defineProperty" method.
+     */
+    public interface LambdaGetterFunction extends Serializable {
+        Object apply(Scriptable scope);
+    }
+
+    /**
+     * This is a single method interface suitable to be implemented as a lambda. It's used in the
+     * "defineProperty" method.
+     */
+    public interface LambdaSetterFunction extends Serializable {
+        void accept(Scriptable scope, Object value);
+    }
+
+    /**
      * Define a property on this object that is implemented using lambda functions accepting
      * Scriptable `this` object as first parameter. Unlike with `defineProperty(String name,
      * Supplier<Object> getter, Consumer<Object> setter, int attributes)` where getter and setter
@@ -1768,8 +1783,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     public void defineProperty(
             Context cx,
             String name,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter,
             int attributes) {
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
@@ -1812,8 +1827,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     private LambdaAccessorSlot createLambdaAccessorSlot(
             Object name,
             int index,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter,
             int attributes) {
         LambdaAccessorSlot slot = new LambdaAccessorSlot(name, index);
         slot.setGetter(this, getter);
