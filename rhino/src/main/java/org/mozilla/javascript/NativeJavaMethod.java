@@ -501,6 +501,43 @@ public class NativeJavaMethod extends BaseFunction {
         return totalPreference;
     }
 
+    /**
+     * @return an int array holding all computed conversion weights, whose length will be {@code args.length} for
+     * non-vararg member or {@code args.length-1} for vararg member, or {@code null} if:
+     * <p>
+     * 1. {@code args} is too short for {@code member} calling, or
+     * <p>
+     * 2. at least one arg cannot be converted
+     * @see NativeJavaObject#getConversionWeight(Object, Class)
+     * @see NativeJavaObject#canConvert(Object, Class)
+     */
+    static int[] failFastConversionWeights(Object[] args, MemberBox member) {
+        final var argTypes = member.argTypes;
+        var typeLen = argTypes.length;
+        if (member.vararg) {
+            typeLen--;
+            if (typeLen > args.length) {
+                return null;
+            }
+        } else {
+            if (typeLen != args.length) {
+                return null;
+            }
+        }
+        final var weights = new int[typeLen];
+        for (int i = 0; i < typeLen; i++) {
+            final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes[i]);
+            if (weight < NativeJavaObject.CONVERSION_NONE) {
+                if (debug) {
+                    printDebug("Rejecting (args can't convert) ", member, args);
+                }
+                return null;
+            }
+            weights[i] = weight;
+        }
+        return weights;
+    }
+
     private static final boolean debug = false;
 
     private static void printDebug(String msg, MemberBox member, Object[] args) {
