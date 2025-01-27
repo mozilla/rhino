@@ -1812,8 +1812,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     public void defineProperty(
             Context cx,
             Symbol key,
-            java.util.function.Function<Scriptable, Object> getter,
-            BiConsumer<Scriptable, Object> setter,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter,
             int attributes) {
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
@@ -1828,16 +1828,16 @@ public abstract class ScriptableObject extends SlotMapOwner
         checkPropertyDefinition(newDesc);
         getMap().compute(
                         this,
-                        name,
+                        key,
                         0,
                         (id, index, existing) -> {
                             if (existing != null) {
                                 // it's dangerous to use `this` as scope inside slotMap.compute.
                                 // It can cause deadlock when ThreadSafeSlotMapContainer is used
 
-                                return replaceExistingLambdaSlot(cx, name, existing, newSlot);
+                                return replaceExistingLambdaSlot(cx, key, existing, newSlot);
                             }
-                            checkPropertyChangeForSlot(name, null, newDesc);
+                            checkPropertyChangeForSlot(key, null, newDesc);
                             return newSlot;
                         });
     }

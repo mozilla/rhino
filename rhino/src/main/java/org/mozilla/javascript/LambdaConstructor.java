@@ -214,7 +214,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     public void definePrototypeProperty(
-            Context cx, Symbol key, Function<Scriptable, Object> getter, int attributes) {
+            Context cx, Symbol key, ScriptableObject.LambdaGetterFunction getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, key, getter, null, attributes);
     }
