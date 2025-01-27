@@ -736,8 +736,7 @@ class JavaMembers {
                         // perfect match, no need to continue scanning
                         return method;
                     }
-                    if (acceptableMatch == null
-                        && params[0].isAssignableFrom(type)) {
+                    if (acceptableMatch == null && params[0].isAssignableFrom(type)) {
                         // do not return at this point, there can still be perfect match
                         acceptableMatch = method;
                     }

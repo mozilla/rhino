@@ -306,13 +306,9 @@ public class NativeJavaMethod extends BaseFunction {
             int worseCount = 0; // number of times best fits were preferred
             // over member
             for (int j = -1; j != extraBestFitsCount; ++j) {
-                int bestFitIndex = j < 0
-                    ? firstBestFit
-                    : extraBestFits[j];
+                int bestFitIndex = j < 0 ? firstBestFit : extraBestFits[j];
                 MemberBox bestFit = methodsOrCtors[bestFitIndex];
-                int[] bestFitWeights = j < 0
-                    ? firstBestFitWeights
-                    : extraBestFitWeights[j];
+                int[] bestFitWeights = j < 0 ? firstBestFitWeights : extraBestFitWeights[j];
                 if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
                         && bestFit.isPublic() != member.isPublic()) {
                     // When FEATURE_ENHANCED_JAVA_ACCESS gives us access
@@ -321,13 +317,8 @@ public class NativeJavaMethod extends BaseFunction {
                     if (!bestFit.isPublic()) ++betterCount;
                     else ++worseCount;
                 } else {
-                    int preference = preferSignature(
-                        args,
-                        member,
-                        weights,
-                        bestFit,
-                        bestFitWeights
-                    );
+                    int preference =
+                            preferSignature(args, member, weights, bestFit, bestFitWeights);
                     if (preference == PREFERENCE_AMBIGUOUS) {
                         break;
                     } else if (preference == PREFERENCE_FIRST_ARG) {
@@ -348,8 +339,7 @@ public class NativeJavaMethod extends BaseFunction {
                             // static methods of the class hierarchy, even if
                             // a derived class's parameters match exactly.
                             // We want to call the derived class's method.
-                            if (debug)
-                                printDebug("Substituting (overridden static)", member, args);
+                            if (debug) printDebug("Substituting (overridden static)", member, args);
                             if (j == -1) {
                                 firstBestFit = i;
                                 firstBestFitWeights = weights;
@@ -358,8 +348,7 @@ public class NativeJavaMethod extends BaseFunction {
                                 extraBestFitWeights[j] = weights;
                             }
                         } else {
-                            if (debug)
-                                printDebug("Ignoring same signature member ", member, args);
+                            if (debug) printDebug("Ignoring same signature member ", member, args);
                         }
                         continue search;
                     }
@@ -435,28 +424,25 @@ public class NativeJavaMethod extends BaseFunction {
     private static final int PREFERENCE_AMBIGUOUS = 3;
 
     /**
-     * Determine which of two signatures is the closer fit.
-     * Returns one of {@link #PREFERENCE_EQUAL}, {@link #PREFERENCE_FIRST_ARG},
-     * {@link #PREFERENCE_SECOND_ARG}, or {@link #PREFERENCE_AMBIGUOUS}.
+     * Determine which of two signatures is the closer fit. Returns one of {@link
+     * #PREFERENCE_EQUAL}, {@link #PREFERENCE_FIRST_ARG}, {@link #PREFERENCE_SECOND_ARG}, or {@link
+     * #PREFERENCE_AMBIGUOUS}.
      */
     private static int preferSignature(
-        Object[] args,
-        MemberBox member1,
-        int[] computedWeights1,
-        MemberBox member2,
-        int[] computedWeights2
-    ) {
+            Object[] args,
+            MemberBox member1,
+            int[] computedWeights1,
+            MemberBox member2,
+            int[] computedWeights2) {
         final var types1 = member1.argTypes;
         final var types2 = member2.argTypes;
 
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
-            final var type1 = member1.vararg && j >= types1.length
-                ? types1[types1.length - 1]
-                : types1[j];
-            final var type2 = member2.vararg && j >= types2.length
-                ? types2[types2.length - 1]
-                : types2[j];
+            final var type1 =
+                    member1.vararg && j >= types1.length ? types1[types1.length - 1] : types1[j];
+            final var type2 =
+                    member2.vararg && j >= types2.length ? types2[types2.length - 1] : types2[j];
             if (type1 == type2) {
                 continue;
             }
@@ -464,12 +450,14 @@ public class NativeJavaMethod extends BaseFunction {
 
             // Determine which of type1, type2 is easier to convert from arg.
 
-            final var rank1 = j < computedWeights1.length
-                ? computedWeights1[j]
-                : NativeJavaObject.getConversionWeight(arg, type1);
-            final var rank2 = j < computedWeights2.length
-                ? computedWeights2[j]
-                : NativeJavaObject.getConversionWeight(arg, type2);
+            final var rank1 =
+                    j < computedWeights1.length
+                            ? computedWeights1[j]
+                            : NativeJavaObject.getConversionWeight(arg, type1);
+            final var rank2 =
+                    j < computedWeights2.length
+                            ? computedWeights2[j]
+                            : NativeJavaObject.getConversionWeight(arg, type2);
 
             int preference;
             if (rank1 < rank2) {
@@ -502,11 +490,11 @@ public class NativeJavaMethod extends BaseFunction {
 
     /**
      * 1. {@code args} is too short for {@code member} calling -> return {@code null}
-     * <p>
-     * 2. at least one arg cannot be converted -> return {@code null}
-     * <p>
-     * 3. otherwise -> return an int array holding all computed conversion weights, whose length will be {@code args.length} for
-     * non-vararg member or {@code args.length-1} for vararg member
+     *
+     * <p>2. at least one arg cannot be converted -> return {@code null}
+     *
+     * <p>3. otherwise -> return an int array holding all computed conversion weights, whose length
+     * will be {@code args.length} for non-vararg member or {@code args.length-1} for vararg member
      *
      * @see NativeJavaObject#getConversionWeight(Object, Class)
      * @see NativeJavaObject#canConvert(Object, Class)
