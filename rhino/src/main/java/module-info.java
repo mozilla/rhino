@@ -10,6 +10,9 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.serialize;
     exports org.mozilla.javascript.typedarrays;
     exports org.mozilla.javascript.xml;
+    exports org.mozilla.javascript.config;
+
+    uses org.mozilla.javascript.config.RhinoPropertiesLoader;
 
     uses org.mozilla.javascript.RegExpProxy;
     uses org.mozilla.javascript.xml.XMLLoader;

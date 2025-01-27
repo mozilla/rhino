@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.config.RhinoConfig;
+
 /**
  * This class implements the JavaScript scanner.
  *
@@ -24,8 +26,8 @@ public class Token {
     }
 
     // debug flags
-    public static final boolean printTrees = false;
-    static final boolean printICode = false;
+    public static final boolean printTrees = RhinoConfig.get("rhino.printTrees", false);
+    static final boolean printICode = RhinoConfig.get("rhino.printICode", false);
     static final boolean printNames = printTrees || printICode;
 
     /** Token types. These values correspond to JSTokenType values in jsscan.c. */
