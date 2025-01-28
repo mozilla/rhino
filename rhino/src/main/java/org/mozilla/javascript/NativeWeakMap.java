@@ -101,14 +101,14 @@ public class NativeWeakMap extends ScriptableObject {
     }
 
     private Object js_delete(Object key) {
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidKey(key)) {
             return Boolean.FALSE;
         }
         return map.remove(key) != null;
     }
 
     private Object js_get(Object key) {
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidKey(key)) {
             return Undefined.instance;
         }
         Object result = map.get(key);
@@ -121,7 +121,7 @@ public class NativeWeakMap extends ScriptableObject {
     }
 
     private Object js_has(Object key) {
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidKey(key)) {
             return Boolean.FALSE;
         }
         return map.containsKey(key);
@@ -132,7 +132,7 @@ public class NativeWeakMap extends ScriptableObject {
         // Use the default object equality here. ScriptableObject does not override
         // equals or hashCode, which means that in effect we are only keying on object identity.
         // This is all correct according to the ECMAscript spec.
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidKey(key)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(key));
         }
         // Map.get() does not distinguish between "not found" and a null value. So,
@@ -140,6 +140,10 @@ public class NativeWeakMap extends ScriptableObject {
         final Object value = (v == null ? NULL_VALUE : v);
         map.put((Scriptable) key, value);
         return this;
+    }
+
+    private static boolean isValidKey(Object key) {
+        return ScriptRuntime.isUnregisteredSymbol(key) || ScriptRuntime.isObject(key);
     }
 
     private static NativeWeakMap realThis(Scriptable thisObj, String name) {

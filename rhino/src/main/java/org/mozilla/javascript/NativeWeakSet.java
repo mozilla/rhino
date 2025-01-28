@@ -90,7 +90,7 @@ public class NativeWeakSet extends ScriptableObject {
         // Use the default object equality here. ScriptableObject does not override
         // equals or hashCode, which means that in effect we are only keying on object identity.
         // This is all correct according to the ECMAscript spec.
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidValue(key)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(key));
         }
         // Add a value to the map, but don't make it the key -- otherwise the WeakHashMap
@@ -100,17 +100,21 @@ public class NativeWeakSet extends ScriptableObject {
     }
 
     private Object js_delete(Object key) {
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidValue(key)) {
             return Boolean.FALSE;
         }
         return map.remove(key) != null;
     }
 
     private Object js_has(Object key) {
-        if (!ScriptRuntime.isObject(key)) {
+        if (!isValidValue(key)) {
             return Boolean.FALSE;
         }
         return map.containsKey(key);
+    }
+
+    private static boolean isValidValue(Object v) {
+        return ScriptRuntime.isUnregisteredSymbol(v) || ScriptRuntime.isObject(v);
     }
 
     private static NativeWeakSet realThis(Scriptable thisObj, String name) {
