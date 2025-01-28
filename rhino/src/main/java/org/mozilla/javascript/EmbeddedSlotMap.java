@@ -55,6 +55,12 @@ public class EmbeddedSlotMap implements SlotMap {
 
     public EmbeddedSlotMap() {}
 
+    public EmbeddedSlotMap(int capacity) {
+        int n = -1 >>> Integer.numberOfLeadingZeros(capacity - 1);
+        n = (n < 0) ? 1 : n + 1;
+        slots = new Slot[n];
+    }
+
     @Override
     public int size() {
         return count;
@@ -116,7 +122,7 @@ public class EmbeddedSlotMap implements SlotMap {
     }
 
     private void createNewSlot(SlotMapOwner owner, Slot newSlot) {
-        if (count == 0) {
+        if (count == 0 && slots == null) {
             // Always throw away old slots if any on empty insert.
             slots = new Slot[INITIAL_SLOT_SIZE];
         }
@@ -124,9 +130,8 @@ public class EmbeddedSlotMap implements SlotMap {
         // Check if the table is not too full before inserting.
         if (4 * (count + 1) > 3 * slots.length) {
             // table size must be a power of 2 -- always grow by x2!
-            if (count > SlotMapContainer.LARGE_HASH_SIZE) {
-                var newMap = new HashSlotMap(this, newSlot);
-                owner.setMap(newMap);
+            if (count > SlotMapOwner.LARGE_HASH_SIZE) {
+                promoteMap(owner, newSlot);
                 return;
             }
             Slot[] newSlots = new Slot[slots.length * 2];
@@ -135,6 +140,11 @@ public class EmbeddedSlotMap implements SlotMap {
         }
 
         insertNewSlot(newSlot);
+    }
+
+    protected void promoteMap(SlotMapOwner owner, Slot newSlot) {
+        var newMap = new HashSlotMap(this, newSlot);
+        owner.setMap(newMap);
     }
 
     @Override

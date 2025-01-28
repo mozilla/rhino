@@ -46,12 +46,16 @@ public class SlotMapTest {
     public static Collection<Object[]> mapTypes() {
         List<Supplier<SlotMap>> suppliers =
                 List.of(
-                        () -> SlotMapContainer.EMPTY_SLOT_MAP,
-                        () -> new SlotMapContainer.SingleEntrySlotMap(new Slot(new Object(), 0, 0)),
+                        () -> SlotMapOwner.EMPTY_SLOT_MAP,
+                        () -> new SlotMapOwner.SingleEntrySlotMap(new Slot(new Object(), 0, 0)),
                         () -> new EmbeddedSlotMap(),
                         () -> new HashSlotMap(),
-                        () -> new SlotMapContainer(),
-                        () -> new ThreadSafeSlotMapContainer());
+                        () -> SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
+                        () ->
+                                new SlotMapOwner.ThreadSafeSingleEntrySlotMap(
+                                        new Slot(new Object(), 0, 0)),
+                        () -> new ThreadSafeEmbeddedSlotMap(),
+                        () -> new ThreadSafeHashSlotMap());
         return suppliers.stream().map(i -> new Object[] {i}).collect(Collectors.toList());
     }
 
@@ -254,9 +258,7 @@ public class SlotMapTest {
 
     private void verifyIndicesAndKeys() {
         long lockStamp = 0;
-        if (obj.getMap() instanceof SlotMapContainer) {
-            lockStamp = ((SlotMapContainer) obj.getMap()).readLock();
-        }
+        lockStamp = obj.getMap().readLock();
         try {
             Iterator<Slot> it = obj.getMap().iterator();
             for (int i = 0; i < startingSize; i++) {
@@ -279,9 +281,7 @@ public class SlotMapTest {
             }
             assertFalse(it.hasNext());
         } finally {
-            if (obj.getMap() instanceof SlotMapContainer) {
-                ((SlotMapContainer) obj.getMap()).unlockRead(lockStamp);
-            }
+            obj.getMap().unlockRead(lockStamp);
         }
     }
 
