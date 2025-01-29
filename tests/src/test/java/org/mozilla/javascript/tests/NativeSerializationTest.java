@@ -24,7 +24,6 @@ public class NativeSerializationTest {
     @BeforeEach
     public void init() {
         cx = Context.enter();
-        cx.setInterpretedMode(true);
         scope = new Global(cx);
     }
 
