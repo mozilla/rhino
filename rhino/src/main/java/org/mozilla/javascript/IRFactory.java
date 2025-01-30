@@ -499,10 +499,26 @@ public final class IRFactory {
         }
         try {
             List<Node> kids = new ArrayList<>();
+            /*
+            Function declarations inside blocks (FUNCTION_EXPRESSION_STATEMENTS) should be
+            hoisted at the top of block so that they can be referred by statements above them
+             */
+            List<Node> functions = new ArrayList<>();
+
             for (Node kid : node) {
-                kids.add(transform((AstNode) kid));
+                if (kid instanceof FunctionNode
+                        && ((FunctionNode) kid).getFunctionType()
+                                == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
+                    functions.add(transform((AstNode) kid));
+                } else {
+                    kids.add(transform((AstNode) kid));
+                }
             }
             node.removeChildren();
+
+            for (Node function : functions) {
+                node.addChildToBack(function);
+            }
             for (Node kid : kids) {
                 node.addChildToBack(kid);
             }

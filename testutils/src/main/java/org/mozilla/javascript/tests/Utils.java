@@ -12,6 +12,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -279,6 +280,46 @@ public class Utils {
      */
     public static void assertEcmaError_1_8(final String expectedMessage, final String script) {
         assertException(Context.VERSION_1_8, EcmaError.class, expectedMessage, script);
+    }
+
+    /**
+     * Execute the provided script and assert an {@link org.mozilla.javascript.JavaScriptException}.
+     * The error message of the {@link org.mozilla.javascript.JavaScriptException} has to start with
+     * the provided expectedMessage.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertJavaScriptException(
+            final String expectedMessage, final String script) {
+        assertException(-1, JavaScriptException.class, expectedMessage, script);
+    }
+
+    /**
+     * Execute the provided script and assert an {@link JavaScriptException}. The error message of
+     * the {@link JavaScriptException} has to start with the provided expectedMessage. Before the
+     * execution the language version is set to {@link Context#VERSION_1_8}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertJavaScriptException_1_8(
+            final String expectedMessage, final String script) {
+        assertException(Context.VERSION_1_8, JavaScriptException.class, expectedMessage, script);
+    }
+
+    /**
+     * Execute the provided script and assert an {@link org.mozilla.javascript.JavaScriptException}.
+     * The error message of the {@link org.mozilla.javascript.JavaScriptException} has to start with
+     * the provided expectedMessage. Before the execution the language version is set to {@link
+     * Context#VERSION_1_8}.
+     *
+     * @param expectedMessage the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertJavaScriptException_ES6(
+            final String expectedMessage, final String script) {
+        assertException(Context.VERSION_ES6, JavaScriptException.class, expectedMessage, script);
     }
 
     /**
