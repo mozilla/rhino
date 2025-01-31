@@ -9,37 +9,40 @@ import org.junit.Test;
 public class ComputedPropertiesTest {
     @Test
     public void objectWithComputedPropertiesWorks() {
-        String script =
-                "function f(x) { return x; }\n"
-                        + "var o = {\n"
-                        + "  a: 1,\n"
-                        + "  0: 2,\n"
-                        + "  [-1]: 3\n,"
-                        + "  [f('b')]: 4\n"
-                        + "};\n"
-                        + "o.a + o[0] + o['-1'] + o.b";
-        Utils.assertWithAllModes_ES6(10, script);
+        Utils.assertWithAllModes_ES6(
+                10,
+                Utils.lines(
+                        "function f(x) { return x; }",
+                        "var o = {",
+                        "  a: 1,",
+                        "  0: 2,",
+                        "  [-1]: 3,",
+                        "  [f('b')]: 4",
+                        "};",
+                        "o.a + o[0] + o['-1'] + o.b"));
     }
 
     @Test
     public void canCoerceFunctionToString() {
         String script =
-                "function f(x) {\n"
-                        + "  var o = {\n"
-                        + "    1: true,\n"
-                        + "    [2]: false,\n"
-                        + "    [g(x)]: 3\n"
-                        + "  };\n"
-                        + "}\n"
-                        + "f.toString()";
+                Utils.lines(
+                        "function f(x) {",
+                        "  var o = {",
+                        "    1: true,",
+                        "    [2]: false,",
+                        "    [g(x)]: 3",
+                        "  };",
+                        "}",
+                        "f.toString()");
         String expected =
-                "function f(x) {\n"
-                        + "  var o = {\n"
-                        + "    1: true,\n"
-                        + "    [2]: false,\n"
-                        + "    [g(x)]: 3\n"
-                        + "  };\n"
-                        + "}";
+                Utils.lines(
+                        "function f(x) {",
+                        "  var o = {",
+                        "    1: true,",
+                        "    [2]: false,",
+                        "    [g(x)]: 3",
+                        "  };",
+                        "}");
 
         Utils.assertWithAllModes_ES6(expected, script);
     }
@@ -47,14 +50,15 @@ public class ComputedPropertiesTest {
     @Test
     public void computedPropertiesWithSideEffectsWork() {
         String script =
-                "'use strict';\n"
-                        + "var x = 0;\n"
-                        + "var o = {\n"
-                        + "  [++x]: 'x',\n"
-                        + "  a: ++x,\n"
-                        + "  [++x]: 'y'\n"
-                        + "};\n"
-                        + "o[1] + o.a + o[3]";
+                Utils.lines(
+                        "'use strict';",
+                        "var x = 0;",
+                        "var o = {",
+                        "  [++x]: 'x',",
+                        "  a: ++x,",
+                        "  [++x]: 'y'",
+                        "};",
+                        "o[1] + o.a + o[3]");
         Utils.assertWithAllModes_ES6("x2y", script);
     }
 
@@ -73,13 +77,14 @@ public class ComputedPropertiesTest {
     @Test
     public void yieldWorksForPropertyValues() {
         String script =
-                "function *gen() {\n"
-                        + " ({x: yield 1});\n"
-                        + "}\n"
-                        + "var g = gen()\n"
-                        + "var res1 = g.next();\n"
-                        + "var res2 = g.next();\n"
-                        + "res1.value === 1 && !res1.done && res2.done\n";
+                Utils.lines(
+                        "function *gen() {",
+                        " ({x: yield 1});",
+                        "}",
+                        "var g = gen()",
+                        "var res1 = g.next();",
+                        "var res2 = g.next();",
+                        "res1.value === 1 && !res1.done && res2.done");
 
         Utils.assertWithAllModes_ES6(Boolean.TRUE, script);
     }
