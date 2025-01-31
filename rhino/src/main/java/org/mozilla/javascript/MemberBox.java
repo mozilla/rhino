@@ -27,6 +27,7 @@ final class MemberBox implements Serializable {
 
     private transient Member memberObject;
     transient Class<?>[] argTypes;
+    transient boolean[] argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -44,12 +45,24 @@ final class MemberBox implements Serializable {
     private void init(Method method) {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
+        NullabilityDetector detector =
+                ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
+        this.argNullability =
+                detector == null
+                        ? new boolean[method.getParameters().length]
+                        : detector.getParameterNullability(method);
         this.vararg = method.isVarArgs();
     }
 
     private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
+        NullabilityDetector detector =
+                ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
+        this.argNullability =
+                detector == null
+                        ? new boolean[constructor.getParameters().length]
+                        : detector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
     }
 
@@ -184,7 +197,8 @@ final class MemberBox implements Serializable {
                                                     thisObj,
                                                     originalArgs[0],
                                                     FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]))
+                                                            nativeSetter.argTypes[0]),
+                                                    nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;

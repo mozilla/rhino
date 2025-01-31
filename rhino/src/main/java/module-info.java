@@ -1,4 +1,6 @@
 module org.mozilla.rhino {
+    uses org.mozilla.javascript.NullabilityDetector;
+
     exports org.mozilla.classfile;
     exports org.mozilla.javascript;
     exports org.mozilla.javascript.annotations;
