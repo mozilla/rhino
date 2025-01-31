@@ -19,6 +19,14 @@ public class ScriptRuntimeES6 {
         return val;
     }
 
+    public static Object requireObjectCoercible(
+            Context cx, Object val, Object tag, String functionName) {
+        if (val == null || Undefined.isUndefined(val)) {
+            throw ScriptRuntime.typeErrorById("msg.called.null.or.undefined", tag, functionName);
+        }
+        return val;
+    }
+
     /** Registers the symbol <code>[Symbol.species]</code> on the given constructor function. */
     public static void addSymbolSpecies(
             Context cx, Scriptable scope, IdScriptableObject constructor) {

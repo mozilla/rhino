@@ -22,7 +22,14 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static final Object GLOBAL_TABLE_KEY = new Object();
 
+    enum SymbolKind {
+        REGULAR, // A regular symbol is created using the constructor
+        BUILT_IN, // A built-in symbol is one of the properties of the "Symbol" constructor
+        REGISTERED // A registered symbol was created using "Symbol.for"
+    }
+
     private final SymbolKey key;
+    private final SymbolKind kind;
     private final NativeSymbol symbolData;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
@@ -40,7 +47,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                 scope,
                 "for",
                 1,
-                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lcx, lscope, args, ctor),
+                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
                 DONTENUM,
                 DONTENUM | READONLY);
         ctor.defineConstructorMethod(
@@ -64,19 +71,19 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
 
         // Create all the predefined symbols and bind them to the scope.
-        createStandardSymbol(cx, scope, ctor, "iterator", SymbolKey.ITERATOR);
-        createStandardSymbol(cx, scope, ctor, "species", SymbolKey.SPECIES);
-        createStandardSymbol(cx, scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
-        createStandardSymbol(cx, scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
-        createStandardSymbol(cx, scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
-        createStandardSymbol(cx, scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
-        createStandardSymbol(cx, scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
-        createStandardSymbol(cx, scope, ctor, "match", SymbolKey.MATCH);
-        createStandardSymbol(cx, scope, ctor, "matchAll", SymbolKey.MATCH_ALL);
-        createStandardSymbol(cx, scope, ctor, "replace", SymbolKey.REPLACE);
-        createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
-        createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);
-        createStandardSymbol(cx, scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
+        createStandardSymbol(scope, ctor, "iterator", SymbolKey.ITERATOR);
+        createStandardSymbol(scope, ctor, "species", SymbolKey.SPECIES);
+        createStandardSymbol(scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
+        createStandardSymbol(scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);
+        createStandardSymbol(scope, ctor, "isConcatSpreadable", SymbolKey.IS_CONCAT_SPREADABLE);
+        createStandardSymbol(scope, ctor, "isRegExp", SymbolKey.IS_REGEXP);
+        createStandardSymbol(scope, ctor, "toPrimitive", SymbolKey.TO_PRIMITIVE);
+        createStandardSymbol(scope, ctor, "match", SymbolKey.MATCH);
+        createStandardSymbol(scope, ctor, "matchAll", SymbolKey.MATCH_ALL);
+        createStandardSymbol(scope, ctor, "replace", SymbolKey.REPLACE);
+        createStandardSymbol(scope, ctor, "search", SymbolKey.SEARCH);
+        createStandardSymbol(scope, ctor, "split", SymbolKey.SPLIT);
+        createStandardSymbol(scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
 
         if (sealed) {
             // Can't seal until we have created all the stuff above!
@@ -84,14 +91,20 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         }
     }
 
-    NativeSymbol(SymbolKey key) {
+    NativeSymbol(SymbolKey key, SymbolKind kind) {
         this.key = key;
         this.symbolData = this;
+        this.kind = kind;
     }
 
     public NativeSymbol(NativeSymbol s) {
         this.key = s.key;
         this.symbolData = s.symbolData;
+        this.kind = s.kind;
+    }
+
+    SymbolKind getKind() {
+        return kind;
     }
 
     @Override
@@ -99,23 +112,19 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return CLASS_NAME;
     }
 
-    /**
-     * Create a symbol directly. We use this internally to construct new symbols as if the
-     * constructor was called directly.
-     */
-    private static NativeSymbol constructSymbol(
-            Context cx, Scriptable scope, LambdaConstructor ctor, SymbolKey key) {
-        return (NativeSymbol) ctor.call(cx, scope, null, new Object[] {Undefined.instance, key});
-    }
-
-    private static NativeSymbol constructSymbol(
-            Context cx, Scriptable scope, LambdaConstructor ctor, String name) {
-        return (NativeSymbol) ctor.call(cx, scope, null, new Object[] {name});
+    private static NativeSymbol createRegisteredSymbol(
+            Scriptable scope, LambdaConstructor ctor, String name) {
+        NativeSymbol sym = new NativeSymbol(new SymbolKey(name), SymbolKind.REGISTERED);
+        sym.setPrototype(ctor.getClassPrototype());
+        sym.setParentScope(scope);
+        return sym;
     }
 
     private static void createStandardSymbol(
-            Context cx, Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
-        NativeSymbol sym = constructSymbol(cx, scope, ctor, key);
+            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+        NativeSymbol sym = new NativeSymbol(key, SymbolKind.BUILT_IN);
+        sym.setPrototype(ctor.getClassPrototype());
+        sym.setParentScope(scope);
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
@@ -130,10 +139,10 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         }
 
         if (args.length > 1) {
-            return new NativeSymbol((SymbolKey) args[1]);
+            return new NativeSymbol((SymbolKey) args[1], SymbolKind.REGULAR);
         }
 
-        return new NativeSymbol(new SymbolKey(desc));
+        return new NativeSymbol(new SymbolKey(desc), SymbolKind.REGULAR);
     }
 
     private static String js_toString(
@@ -150,15 +159,14 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(
-            Context cx, Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
                         : ScriptRuntime.toString(Undefined.instance));
 
         Map<String, NativeSymbol> table = getGlobalMap(scope);
-        return table.computeIfAbsent(name, (k) -> constructSymbol(cx, scope, constructor, name));
+        return table.computeIfAbsent(name, (k) -> createRegisteredSymbol(scope, constructor, name));
     }
 
     @SuppressWarnings("ReferenceEquality")

@@ -286,8 +286,8 @@ public class ScriptRuntime {
             NativeMap.init(cx, scope, sealed);
             NativePromise.init(cx, scope, sealed);
             NativeSet.init(cx, scope, sealed);
-            NativeWeakMap.init(scope, sealed);
-            NativeWeakSet.init(scope, sealed);
+            NativeWeakMap.init(cx, scope, sealed);
+            NativeWeakSet.init(cx, scope, sealed);
             NativeBigInt.init(scope, sealed);
 
             NativeProxy.init(cx, scope, sealed);
@@ -1272,7 +1272,8 @@ public class ScriptRuntime {
 
         if (isSymbol(val)) {
             if (val instanceof SymbolKey) {
-                NativeSymbol result = new NativeSymbol((SymbolKey) val);
+                NativeSymbol result =
+                        new NativeSymbol((SymbolKey) val, NativeSymbol.SymbolKind.REGULAR);
                 setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
                 return result;
             }
@@ -5573,6 +5574,18 @@ public class ScriptRuntime {
     static boolean isSymbol(Object obj) {
         return ((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())
                 || (obj instanceof SymbolKey);
+    }
+
+    /**
+     * Return that the symbol was created by the constructor, or is a built-in Symbol, and was not
+     * put in the registry using "for".
+     */
+    static boolean isUnregisteredSymbol(Object obj) {
+        if (obj instanceof NativeSymbol) {
+            NativeSymbol ns = (NativeSymbol) obj;
+            return ns.isSymbol() && ns.getKind() != NativeSymbol.SymbolKind.REGISTERED;
+        }
+        return (obj instanceof SymbolKey);
     }
 
     private static RuntimeException errorWithClassName(String msg, Object val) {

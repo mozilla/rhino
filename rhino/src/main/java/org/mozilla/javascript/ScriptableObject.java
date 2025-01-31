@@ -1790,26 +1790,44 @@ public abstract class ScriptableObject extends SlotMapOwner
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
         LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
+        replaceLambdaAccessorSlot(cx, name, newSlot);
+    }
+
+    public void defineProperty(
+            Context cx,
+            Symbol key,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter,
+            int attributes) {
+        if (getter == null && setter == null)
+            throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
+
+        LambdaAccessorSlot newSlot =
+                createLambdaAccessorSlot(key.toString(), 0, getter, setter, attributes);
+        replaceLambdaAccessorSlot(cx, key, newSlot);
+    }
+
+    private void replaceLambdaAccessorSlot(Context cx, Object key, LambdaAccessorSlot newSlot) {
         ScriptableObject newDesc = newSlot.buildPropertyDescriptor(cx);
         checkPropertyDefinition(newDesc);
         getMap().compute(
                         this,
-                        name,
+                        key,
                         0,
                         (id, index, existing) -> {
                             if (existing != null) {
                                 // it's dangerous to use `this` as scope inside slotMap.compute.
                                 // It can cause deadlock when ThreadSafeSlotMapContainer is used
 
-                                return replaceExistingLambdaSlot(cx, name, existing, newSlot);
+                                return replaceExistingLambdaSlot(cx, key, existing, newSlot);
                             }
-                            checkPropertyChangeForSlot(name, null, newDesc);
+                            checkPropertyChangeForSlot(key, null, newDesc);
                             return newSlot;
                         });
     }
 
     private LambdaAccessorSlot replaceExistingLambdaSlot(
-            Context cx, String name, Slot existing, LambdaAccessorSlot newSlot) {
+            Context cx, Object key, Slot existing, LambdaAccessorSlot newSlot) {
         LambdaAccessorSlot replacedSlot;
         if (existing instanceof LambdaAccessorSlot) {
             replacedSlot = (LambdaAccessorSlot) existing;
@@ -1820,7 +1838,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         replacedSlot.replaceWith(newSlot);
         var replacedDesc = replacedSlot.buildPropertyDescriptor(cx);
 
-        checkPropertyChangeForSlot(name, existing, replacedDesc);
+        checkPropertyChangeForSlot(key, existing, replacedDesc);
         return replacedSlot;
     }
 
