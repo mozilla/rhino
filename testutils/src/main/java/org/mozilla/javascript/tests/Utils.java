@@ -297,7 +297,10 @@ public class Utils {
             final int languageVersion,
             final Class<T> expectedThrowable,
             final String expectedMessage,
-            String js) {}
+            String js) {
+        assertException(
+                new ContextFactory(), languageVersion, expectedThrowable, expectedMessage, js);
+    }
 
     public static <T extends Exception> void assertException(
             final ContextFactory contextFactory,
