@@ -38,7 +38,7 @@ public class NativeJavaMethodTest {
         }
 
         public void fN(String s1, String s2, String... sN) {
-            captured.add("N");
+            captured.add("N." + sN.length);
         }
     }
 
@@ -107,7 +107,16 @@ public class NativeJavaMethodTest {
 
     @Test
     void varArg() {
-        expect(Arrays.asList("N"), "d.fN('x', 'y', 'overflow');");
+        expect(
+                Arrays.asList("N.0", "N.3", "N.2"),
+                "d.fN('x', 'y');",
+                "d.fN('x', 'y', 'extra1', 'extra2', 'extra3');",
+                "d.fN('x', 'y', 'extra1', 'extra2');");
+    }
+
+    @Test
+    void argsTooShortForFixedArg() {
+        expectException(EvaluatorException.class, "Can't find method", "d.f2('x');");
     }
 
     @Test
