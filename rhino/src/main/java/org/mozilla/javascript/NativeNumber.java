@@ -86,7 +86,7 @@ final class NativeNumber extends ScriptableObject {
         constructor.definePrototypeMethod(
                 scope,
                 "toLocaleString",
-                1,
+                0,
                 NativeNumber::js_toString,
                 DONTENUM,
                 DONTENUM | READONLY);
