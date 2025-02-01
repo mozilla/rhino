@@ -1763,22 +1763,6 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     /**
-     * This is a single method interface suitable to be implemented as a lambda. It's used in the
-     * "defineProperty" method.
-     */
-    public interface LambdaGetterFunction extends Serializable {
-        Object apply(Scriptable scope);
-    }
-
-    /**
-     * This is a single method interface suitable to be implemented as a lambda. It's used in the
-     * "defineProperty" method.
-     */
-    public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable scope, Object value);
-    }
-
-    /**
      * Define a property on this object that is implemented using lambda functions accepting
      * Scriptable `this` object as first parameter. Unlike with `defineProperty(String name,
      * Supplier<Object> getter, Consumer<Object> setter, int attributes)` where getter and setter
