@@ -27,6 +27,14 @@ public class Utils {
     public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 9};
 
     /**
+     * helper for joining multiple lines into one string, so that you don't need to do {@code
+     * "line1\n" + "line2\n" + "line3"} by yourself
+     */
+    public static String lines(String... lines) {
+        return String.join("\n", lines);
+    }
+
+    /**
      * Execute the provided script in a fresh context as "myScript.js".
      *
      * @param script the script code
@@ -297,7 +305,10 @@ public class Utils {
             final int languageVersion,
             final Class<T> expectedThrowable,
             final String expectedMessage,
-            String js) {}
+            String js) {
+        assertException(
+                new ContextFactory(), languageVersion, expectedThrowable, expectedMessage, js);
+    }
 
     public static <T extends Exception> void assertException(
             final ContextFactory contextFactory,
