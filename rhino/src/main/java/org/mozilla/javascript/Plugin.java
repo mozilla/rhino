@@ -7,6 +7,14 @@ package org.mozilla.javascript;
  */
 public interface Plugin {
 
+    /**
+     * defines, if this plugin should be initialized in safe standard objects or only in standard
+     * objects
+     */
+    default boolean isSafe() {
+        return false;
+    }
+
     /** The name of the plugin. */
     String getName();
 

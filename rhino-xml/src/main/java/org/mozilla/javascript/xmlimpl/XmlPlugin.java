@@ -19,6 +19,11 @@ public class XmlPlugin implements Plugin {
     }
 
     @Override
+    public boolean isSafe() {
+        return true;
+    }
+
+    @Override
     public void init(Context cx, ScriptableObject scope, boolean sealed) {
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             String xmlImpl = XMLLibImpl.class.getName();

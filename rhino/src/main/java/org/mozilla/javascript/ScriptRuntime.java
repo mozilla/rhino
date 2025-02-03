@@ -201,7 +201,9 @@ public class ScriptRuntime {
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
         for (Plugin plugin : cx.getFactory().getPlugins()) {
-            plugin.init(cx, scope, sealed);
+            if (plugin.isSafe()) {
+                plugin.init(cx, scope, sealed);
+            }
         }
 
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
@@ -308,7 +310,11 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
-        // TODO: In long term view, we should no longer distinguish between safe and unsafe objects
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            if (!plugin.isSafe()) {
+                plugin.init(cx, scope, sealed);
+            }
+        }
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
