@@ -39,6 +39,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.commonjs.module.Require;
+import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
@@ -132,7 +133,7 @@ public class Main {
      */
     public static void main(String args[]) {
         try {
-            if (Boolean.getBoolean("rhino.use_java_policy_security")) {
+            if (RhinoConfig.get("rhino.use_java_policy_security", false)) {
                 initJavaPolicySecuritySupport();
             }
         } catch (SecurityException ex) {
