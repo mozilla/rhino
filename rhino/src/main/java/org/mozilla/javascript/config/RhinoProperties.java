@@ -48,6 +48,8 @@ public class RhinoProperties {
 
     private static String[] CONFIG_FILES = {"rhino.config", "rhino-test.config"};
     private List<Map<?, ?>> configs = new ArrayList<>();
+    // this allows debugging via system property "rhino.debugConfig"
+    private final boolean debug = Boolean.getBoolean("rhino.debugConfig");
 
     /**
      * Initializes the default, used in RhinoConfig. If there is RhinoPropertiesLoader present, then
@@ -59,9 +61,16 @@ public class RhinoProperties {
                 ServiceLoader.load(RhinoPropertiesLoader.class).iterator();
         if (loader.hasNext()) {
             while (loader.hasNext()) {
-                loader.next().load(props);
+                RhinoPropertiesLoader next = loader.next();
+                if (props.debug) {
+                    System.out.println("Rhino: using loader " + next.getClass().getName());
+                }
+                next.load(props);
             }
         } else {
+            if (props.debug) {
+                System.out.println("Rhino: no loader found. Loading defaults");
+            }
             props.loadDefaults();
         }
         return props;
@@ -77,8 +86,13 @@ public class RhinoProperties {
             loadFromClasspath(contextClassLoader, configFile);
             loadFromFile(new File(configFile));
         }
-
+        if (debug) {
+            System.out.println("Rhino: loading configuration from System.getEnv()");
+        }
         addConfig(System.getenv());
+        if (debug) {
+            System.out.println("Rhino: loading configuration from System.getProperties()");
+        }
         addConfig(System.getProperties());
     }
 
@@ -86,6 +100,9 @@ public class RhinoProperties {
     public void loadFromFile(File config) {
         if (!config.exists()) {
             return;
+        }
+        if (debug) {
+            System.out.println("Rhino: loading configuration from " + config.getAbsolutePath());
         }
         try (InputStream in = new FileInputStream(config)) {
             Properties props = new Properties();
@@ -112,6 +129,9 @@ public class RhinoProperties {
         if (resource == null) {
             return;
         }
+        if (debug) {
+            System.out.println("Rhino: loading configuration from " + resource);
+        }
         try (InputStream in = resource.openStream()) {
             Properties props = new Properties();
             props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
@@ -124,6 +144,9 @@ public class RhinoProperties {
 
     /** Adds a config map. Later added configs are overriding previous ones */
     public void addConfig(Map<?, ?> config) {
+        if (debug) {
+            System.out.println("Rhino: added " + config.size() + " values");
+        }
         configs.add(0, config);
     }
 
@@ -134,13 +157,16 @@ public class RhinoProperties {
     public Object get(String property) {
         Objects.requireNonNull(property, "property must not be null");
         for (Map<?, ?> map : configs) {
-            Object ret = map.get(property);
-            if (ret != null) {
-                return ret;
-            }
-            ret = map.get(toCamelUpper(property));
-            if (ret != null) {
-                return ret;
+            String key = property;
+            for (int i = 0; i < 2; i++) {
+                Object ret = map.get(key);
+                if (ret != null) {
+                    if (debug) {
+                        System.out.println("Rhino: get(" + key + ")=" + ret);
+                    }
+                    return ret;
+                }
+                key = toCamelUpper(property);
             }
         }
         return null;
