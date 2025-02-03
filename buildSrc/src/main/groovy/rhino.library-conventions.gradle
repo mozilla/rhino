@@ -68,7 +68,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(Javadoc) {
-      failOnError false
+      failOnError = false
       options.addStringOption('Xdoclint:none', '-quiet')
 }
 
@@ -116,13 +116,13 @@ publishing {
         repositories {
             maven {
                 credentials {
-                    username mavenUser
-                    password mavenPassword
+                    username = mavenUser
+                    password = mavenPassword
                 }
                 if (project.version.endsWith('-SNAPSHOT')) {
-                    url mavenSnapshotRepo
+                    url = mavenSnapshotRepo
                 } else {
-                    url mavenReleaseRepo
+                    url = mavenReleaseRepo
                 }
             }
         }
@@ -133,7 +133,7 @@ publishing {
                     username = System.getenv("GITHUB_ACTOR")
                     password = System.getenv("GITHUB_TOKEN")
                 }
-                url githubPackagesRepo
+                url = githubPackagesRepo
             }
         }
     }
