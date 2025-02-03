@@ -62,15 +62,11 @@ public class RhinoProperties {
         if (loader.hasNext()) {
             while (loader.hasNext()) {
                 RhinoPropertiesLoader next = loader.next();
-                if (props.debug) {
-                    System.out.println("Rhino: using loader " + next.getClass().getName());
-                }
+                props.logDebug("Using loader %s", next.getClass().getName());
                 next.load(props);
             }
         } else {
-            if (props.debug) {
-                System.out.println("Rhino: no loader found. Loading defaults");
-            }
+            props.logDebug("No loader found. Loading defaults");
             props.loadDefaults();
         }
         return props;
@@ -86,13 +82,10 @@ public class RhinoProperties {
             loadFromClasspath(contextClassLoader, configFile);
             loadFromFile(new File(configFile));
         }
-        if (debug) {
-            System.out.println("Rhino: loading configuration from System.getEnv()");
-        }
+        logDebug("loading configuration from System.getEnv()");
         addConfig(System.getenv());
-        if (debug) {
-            System.out.println("Rhino: loading configuration from System.getProperties()");
-        }
+
+        logDebug("Rhino: loading configuration from System.getProperties()");
         addConfig(System.getProperties());
     }
 
@@ -101,19 +94,16 @@ public class RhinoProperties {
         if (!config.exists()) {
             return;
         }
-        if (debug) {
-            System.out.println("Rhino: loading configuration from " + config.getAbsolutePath());
-        }
+
+        logDebug("loading configuration from %s", config.getAbsoluteFile());
         try (InputStream in = new FileInputStream(config)) {
             Properties props = new Properties();
             props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
             addConfig(props);
         } catch (IOException e) {
-            System.err.println(
-                    "Rhino: Error loading configuration from "
-                            + config.getAbsolutePath()
-                            + ": "
-                            + e.getMessage());
+            logError(
+                    "Error loading configuration from %s: %s",
+                    config.getAbsoluteFile(), e.getMessage());
         }
     }
 
@@ -129,24 +119,20 @@ public class RhinoProperties {
         if (resource == null) {
             return;
         }
-        if (debug) {
-            System.out.println("Rhino: loading configuration from " + resource);
-        }
+
+        logDebug("Rhino: loading configuration from %s", resource);
         try (InputStream in = resource.openStream()) {
             Properties props = new Properties();
             props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
             addConfig(props);
         } catch (IOException e) {
-            System.err.println(
-                    "Rhino: Error loading configuration from " + resource + ": " + e.getMessage());
+            logError("Error loading configuration from %s: %s", resource, e.getMessage());
         }
     }
 
     /** Adds a config map. Later added configs are overriding previous ones */
     public void addConfig(Map<?, ?> config) {
-        if (debug) {
-            System.out.println("Rhino: added " + config.size() + " values");
-        }
+        logDebug("added %d values", config.size());
         configs.add(0, config);
     }
 
@@ -161,9 +147,7 @@ public class RhinoProperties {
             for (int i = 0; i < 2; i++) {
                 Object ret = map.get(key);
                 if (ret != null) {
-                    if (debug) {
-                        System.out.println("Rhino: get(" + key + ")=" + ret);
-                    }
+                    logDebug("get(%s)=%s", key, ret);
                     return ret;
                 }
                 key = toCamelUpper(property);
@@ -184,5 +168,16 @@ public class RhinoProperties {
             sb.append(Character.toUpperCase(c));
         }
         return sb.toString();
+    }
+
+    private void logDebug(String msg, Object... args) {
+        if (!debug) {
+            return;
+        }
+        System.out.println("[Rhino] " + String.format(msg, args));
+    }
+
+    private void logError(String msg, Object... args) {
+        System.err.println("[Rhino] " + String.format(msg, args));
     }
 }
