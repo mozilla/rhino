@@ -15,6 +15,21 @@ import org.mozilla.javascript.ScriptableObject;
 public abstract class XMLLib {
     private static final Object XML_LIB_KEY = new Object();
 
+    /**
+     * An object which specifies an XMLLib implementation to be used at runtime.
+     *
+     * <p>This interface should be considered experimental. It may be better (and certainly more
+     * flexible) to write an interface that returns an XMLLib object rather than a class name, for
+     * example. But that would cause many more ripple effects in the code, all the way back to
+     * {@link ScriptRuntime}.
+     *
+     * @deprecated required for Context.getE4xImplementationFactory().
+     */
+    @Deprecated
+    public abstract static class Factory {
+        public abstract String getImplementationClassName();
+    }
+
     public static XMLLib extractFromScopeOrNull(Scriptable scope) {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {

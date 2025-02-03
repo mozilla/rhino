@@ -126,6 +126,7 @@ public class ContextFactory {
         ServiceLoader.load(Plugin.class)
                 .forEach(
                         plugin -> {
+                            // TODO: use RhinoConfig here!
                             String disabled =
                                     SecurityUtilities.getSystemProperty(
                                             "rhino.plugin." + plugin.getName() + ".disabled");

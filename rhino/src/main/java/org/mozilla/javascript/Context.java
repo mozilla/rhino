@@ -35,7 +35,6 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.xml.XMLLib;
-import org.mozilla.javascript.xml.XMLLoader;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -199,15 +198,15 @@ public class Context implements Closeable {
 
     /**
      * Control if support for E4X(ECMAScript for XML) extension is available. If
-     * hasFeature(FEATURE_E4X) returns true, the XML syntax is available.
+     * hasFeature(FEATURE_E4X) returns true and rhino-xml is on classpath, the XML syntax is
+     * available.
      *
      * <p>By default {@link #hasFeature(int)} returns true if the current JS version is set to
      * {@link #VERSION_DEFAULT} or is at least {@link #VERSION_1_6}.
      *
      * @since 1.6 Release 1
-     * @deprecated This flag may be removed later.
      */
-    @Deprecated public static final int FEATURE_E4X = 6;
+    public static final int FEATURE_E4X = 6;
 
     /**
      * Control if dynamic scope should be used for name access. If hasFeature(FEATURE_DYNAMIC_SCOPE)
@@ -2328,11 +2327,8 @@ public class Context implements Closeable {
      */
     @Deprecated
     public XMLLib.Factory getE4xImplementationFactory() {
-        XMLLoader loader = ScriptRuntime.loadOneServiceImplementation(XMLLoader.class);
-        if (loader != null) {
-            return loader.getFactory();
-        }
-        return null;
+        throw new UnsupportedOperationException(
+                "getE4xImplementationFactory is no longer supported");
     }
 
     /**

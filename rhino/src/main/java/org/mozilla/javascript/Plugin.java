@@ -11,10 +11,7 @@ public interface Plugin {
     String getName();
 
     /** Initializes the safe standard objects. */
-    default void initSafeStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {}
-
-    /** Initializes the (unsafe) standard objects. */
-    default void initStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {}
+    default void init(Context cx, ScriptableObject scope, boolean sealed) {}
 
     /** Initialize the compiler environmnt. */
     default void initCompilerEnvirons(Context cx, CompilerEnvirons compilerEnvirons) {}
