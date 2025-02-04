@@ -18,7 +18,7 @@ public class NativeMap extends ScriptableObject {
 
     private boolean instanceOfMap = false;
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -135,11 +135,10 @@ public class NativeMap extends ScriptableObject {
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
-
         if (sealed) {
             constructor.sealObject();
         }
+        return constructor;
     }
 
     @Override

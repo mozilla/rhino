@@ -242,15 +242,15 @@ public class ScriptRuntime {
             NativeSymbol.init(cx, scope, sealed);
             NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
             NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
-            NativeMap.init(cx, scope, sealed);
-            NativePromise.init(cx, scope, sealed);
-            NativeSet.init(cx, scope, sealed);
-            NativeWeakMap.init(cx, scope, sealed);
-            NativeWeakSet.init(cx, scope, sealed);
+            new LazilyLoadedCtor(scope, "Map", sealed, true, NativeMap::init);
+            new LazilyLoadedCtor(scope, "Promise", sealed, true, NativePromise::init);
+            new LazilyLoadedCtor(scope, "Set", sealed, true, NativeSet::init);
+            new LazilyLoadedCtor(scope, "WeakMap", sealed, true, NativeWeakMap::init);
+            new LazilyLoadedCtor(scope, "WeakSet", sealed, true, NativeWeakSet::init);
+            // Will convert when this is converted to lambdas
             NativeBigInt.init(scope, sealed);
-
-            NativeProxy.init(cx, scope, sealed);
-            NativeReflect.init(cx, scope, sealed);
+            new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
+            new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
         if (scope instanceof TopLevel) {
