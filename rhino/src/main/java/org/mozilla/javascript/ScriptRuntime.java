@@ -1076,7 +1076,6 @@ public class ScriptRuntime {
 
     public static String numberToString(double d, int base) {
         if ((base < 2) || (base > 36)) {
-            // throw Context.reportRuntimeErrorById("msg.bad.radix", Integer.toString(base));
             throw ScriptRuntime.rangeErrorById("msg.bad.radix", Integer.toString(base));
         }
 
