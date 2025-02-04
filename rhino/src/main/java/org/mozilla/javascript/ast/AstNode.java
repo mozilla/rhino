@@ -584,6 +584,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
                 buffer.append(" ").append(((Name) node).getIdentifier());
             } else if (tt == Token.STRING) {
                 buffer.append(" ").append(((StringLiteral) node).getValue(true));
+            } else if (tt == Token.FUNCTION) {
+                buffer.append(" functionType=").append(((FunctionNode) node).getFunctionType());
             }
             buffer.append("\n");
             return true; // process kids
