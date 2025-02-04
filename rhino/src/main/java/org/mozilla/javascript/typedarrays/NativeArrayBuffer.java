@@ -33,7 +33,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -56,10 +56,10 @@ public class NativeArrayBuffer extends ScriptableObject {
         constructor.definePrototypeProperty(
                 cx, "byteLength", NativeArrayBuffer::js_byteLength, DONTENUM | READONLY);
 
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
         }
+        return constructor;
     }
 
     /** Create an empty buffer. */

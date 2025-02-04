@@ -32,7 +32,10 @@ public final class LazilyLoadedCtor implements Serializable {
 
     /**
      * Create a constructor using a lambda function. The lambda should initialize the new value
-     * however it needs and then return the value.
+     * however it needs and then return the value. The lambda may also return null, which indicates
+     * that it stored the necessary property (and possibly other properties) in the scope itself.
+     * This is legacy behavior used by some initializers that register many objects in a single
+     * initialization function.
      */
     public LazilyLoadedCtor(
             ScriptableObject scope,
@@ -52,7 +55,10 @@ public final class LazilyLoadedCtor implements Serializable {
 
     /**
      * Create a constructor using a lambda function. The lambda should initialize the new value
-     * however it needs and then return the value.
+     * however it needs and then return the value. The lambda may also return null, which indicates
+     * that it stored the necessary property (and possibly other properties) in the scope itself.
+     * This is legacy behavior used by some initializers that register many objects in a single
+     * initialization function.
      */
     public LazilyLoadedCtor(
             ScriptableObject scope,
@@ -116,12 +122,21 @@ public final class LazilyLoadedCtor implements Serializable {
     }
 
     private Object buildValue() {
-        Context cx = Context.getCurrentContext();
+
         if (privileged) {
             return AccessController.doPrivileged(
-                    (PrivilegedAction<Object>) () -> initializer.initialize(cx, scope, sealed));
+                    (PrivilegedAction<Object>) () -> buildValueInternal());
         }
-        return initializer.initialize(cx, scope, sealed);
+        return buildValueInternal();
+    }
+
+    private Object buildValueInternal() {
+        Context cx = Context.getCurrentContext();
+        Object value = initializer.initialize(cx, scope, sealed);
+        if (value != null) {
+            return value;
+        }
+        return scope.get(propertyName, scope);
     }
 
     private static Object buildUsingReflection(

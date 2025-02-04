@@ -11,7 +11,6 @@ import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -39,7 +38,7 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -61,11 +60,10 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
                 "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
         }
+        return constructor;
     }
 
     @Override
