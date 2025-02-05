@@ -1568,12 +1568,14 @@ class BodyCodegen {
                     addScriptRuntimeInvoke("throwDeleteOnSuperPropertyNotAllowed", "()V");
                 } else {
                     cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
                     cfw.addPush(isName);
                     addScriptRuntimeInvoke(
                             "delete",
                             "(Ljava/lang/Object;"
                                     + "Ljava/lang/Object;"
                                     + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Z)Ljava/lang/Object;");
                 }
                 break;
