@@ -69,5 +69,4 @@ public class EcmaError extends RhinoException {
     public String getErrorMessage() {
         return errorMessage;
     }
-
 }

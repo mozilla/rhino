@@ -43,5 +43,4 @@ public class EvaluatorException extends RhinoException {
         super(detail);
         recordErrorOrigin(sourceName, lineNumber, lineSource, columnNumber);
     }
-
 }

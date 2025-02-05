@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.CharArrayWriter;
-import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.security.AccessControlException;
