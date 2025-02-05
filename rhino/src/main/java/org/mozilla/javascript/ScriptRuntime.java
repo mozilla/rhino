@@ -192,8 +192,8 @@ public class ScriptRuntime {
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
         NativeDate.init(scope, sealed);
-        NativeMath.init(scope, sealed);
-        NativeJSON.init(scope, sealed);
+        new LazilyLoadedCtor(scope, "Math", sealed, true, NativeMath::init);
+        new LazilyLoadedCtor(scope, "JSON", sealed, true, NativeJSON::init);
 
         NativeWith.init(scope, sealed);
         NativeCall.init(scope, sealed);
@@ -247,8 +247,7 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Set", sealed, true, NativeSet::init);
             new LazilyLoadedCtor(scope, "WeakMap", sealed, true, NativeWeakMap::init);
             new LazilyLoadedCtor(scope, "WeakSet", sealed, true, NativeWeakSet::init);
-            // Will convert when this is converted to lambdas
-            NativeBigInt.init(scope, sealed);
+            new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }

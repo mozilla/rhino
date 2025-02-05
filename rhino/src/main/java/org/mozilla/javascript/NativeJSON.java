@@ -30,7 +30,7 @@ public final class NativeJSON extends ScriptableObject {
 
     private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static Object init(Context cx, Scriptable scope, boolean sealed) {
         NativeJSON json = new NativeJSON();
         json.setPrototype(getObjectPrototype(scope));
         json.setParentScope(scope);
@@ -42,11 +42,10 @@ public final class NativeJSON extends ScriptableObject {
         json.defineProperty("toSource", "JSON", DONTENUM | READONLY | PERMANENT);
 
         json.defineProperty(SymbolKey.TO_STRING_TAG, JSON_TAG, DONTENUM | READONLY);
-
-        ScriptableObject.defineProperty(scope, JSON_TAG, json, DONTENUM);
         if (sealed) {
             json.sealObject();
         }
+        return json;
     }
 
     private NativeJSON() {}
