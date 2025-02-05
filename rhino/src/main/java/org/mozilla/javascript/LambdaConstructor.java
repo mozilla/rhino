@@ -307,6 +307,22 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     /**
+     * Replace the default "Object" prototype with a prototype of a specific implementation. This is
+     * only necessary for a few built-in constructors, like Boolean, that must have their prototype
+     * be an object with a specific "internal data slot."
+     */
+    public void setPrototypeScriptable(ScriptableObject proto) {
+        proto.setParentScope(getParentScope());
+        setPrototypeProperty(proto);
+        Scriptable objectProto = getObjectPrototype(this);
+        if (proto != objectProto) {
+            // not the one we just made, it must remain grounded
+            proto.setPrototype(objectProto);
+        }
+        proto.defineProperty("constructor", this, DONTENUM);
+    }
+
+    /**
      * A convenience method to convert JavaScript's "this" object into a target class and throw a
      * TypeError if it does not match. This is useful for implementing lambda functions, as "this"
      * in JavaScript doesn't necessarily map to an instance of the class.

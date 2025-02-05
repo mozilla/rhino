@@ -11,14 +11,36 @@ package org.mozilla.javascript;
  *
  * @author Norris Boyd
  */
-final class NativeBoolean extends IdScriptableObject {
+final class NativeBoolean extends ScriptableObject {
     private static final long serialVersionUID = -3716996899943880933L;
 
-    private static final Object BOOLEAN_TAG = "Boolean";
+    private static final String CLASS_NAME = "Boolean";
+
+    private final boolean booleanValue;
 
     static void init(Scriptable scope, boolean sealed) {
-        NativeBoolean obj = new NativeBoolean(false);
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        1,
+                        NativeBoolean::js_constructorFunc,
+                        NativeBoolean::js_constructor);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        // Boolean is an unusual object in that the prototype is itself a Boolean
+        constructor.setPrototypeScriptable(new NativeBoolean(false));
+
+        constructor.definePrototypeMethod(
+                scope, "toString", 0, NativeBoolean::js_toString, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope, "toSource", 0, NativeBoolean::js_toSource, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope, "valueOf", 0, NativeBoolean::js_valueOf, DONTENUM, DONTENUM | READONLY);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     NativeBoolean(boolean b) {
@@ -27,7 +49,11 @@ final class NativeBoolean extends IdScriptableObject {
 
     @Override
     public String getClassName() {
-        return "Boolean";
+        return CLASS_NAME;
+    }
+
+    private static boolean toValue(Scriptable thisObj) {
+        return LambdaConstructor.ensureType(thisObj, NativeBoolean.class, "Boolean").booleanValue;
     }
 
     @Override
@@ -38,109 +64,29 @@ final class NativeBoolean extends IdScriptableObject {
         return super.getDefaultValue(typeHint);
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        String s;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 1;
-                s = "constructor";
-                break;
-            case Id_toString:
-                arity = 0;
-                s = "toString";
-                break;
-            case Id_toSource:
-                arity = 0;
-                s = "toSource";
-                break;
-            case Id_valueOf:
-                arity = 0;
-                s = "valueOf";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(BOOLEAN_TAG, id, s, arity);
+    private static Object js_constructorFunc(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
+        return ScriptRuntime.wrapBoolean(b);
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(BOOLEAN_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-
-        if (id == Id_constructor) {
-            boolean b;
-            if (args.length == 0) {
-                b = false;
-            } else {
-                // see special handling in ScriptRuntime.toBoolean(Object)
-                // avoidObjectDetection() is used to implement document.all
-                // see Note on page
-                //
-                // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-                b =
-                        ((args[0] instanceof ScriptableObject)
-                                        && ((ScriptableObject) args[0]).avoidObjectDetection())
-                                ? false
-                                : ScriptRuntime.toBoolean(args[0]);
-            }
-            if (thisObj == null) {
-                // new Boolean(val) creates a new boolean object.
-                return new NativeBoolean(b);
-            }
-            // Boolean(val) converts val to a boolean.
-            return ScriptRuntime.wrapBoolean(b);
-        }
-
-        // The rest of Boolean.prototype methods require thisObj to be Boolean
-        boolean value = ensureType(thisObj, NativeBoolean.class, f).booleanValue;
-
-        switch (id) {
-            case Id_toString:
-                return value ? "true" : "false";
-
-            case Id_toSource:
-                return value ? "(new Boolean(true))" : "(new Boolean(false))";
-
-            case Id_valueOf:
-                return ScriptRuntime.wrapBoolean(value);
-        }
-        throw new IllegalArgumentException(String.valueOf(id));
+    private static NativeBoolean js_constructor(Context cx, Scriptable scope, Object[] args) {
+        boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
+        return new NativeBoolean(b);
     }
 
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "toString":
-                id = Id_toString;
-                break;
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "valueOf":
-                id = Id_valueOf;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
+    private static String js_toString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toValue(thisObj) ? "true" : "false";
     }
 
-    private static final int Id_constructor = 1,
-            Id_toString = 2,
-            Id_toSource = 3,
-            Id_valueOf = 4,
-            MAX_PROTOTYPE_ID = 4;
+    private static Object js_valueOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toValue(thisObj);
+    }
 
-    private boolean booleanValue;
+    private static Object js_toSource(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return "(new Boolean(" + ScriptRuntime.toString(toValue(thisObj)) + "))";
+    }
 }
