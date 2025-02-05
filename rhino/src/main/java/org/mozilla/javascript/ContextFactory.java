@@ -10,6 +10,10 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -114,6 +118,26 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
+    private final List<Plugin> plugins;
+
+    /** returns a list of plugins found by the ServiceLoader */
+    public static List<Plugin> getDefaultPluginsFromServiceLoader() {
+        List<Plugin> result = new ArrayList<Plugin>();
+        ServiceLoader.load(Plugin.class)
+                .forEach(
+                        plugin -> {
+                            // TODO: use RhinoConfig here!
+                            String disabled =
+                                    SecurityUtilities.getSystemProperty(
+                                            "rhino.plugin." + plugin.getName() + ".disabled");
+                            if ("1".equals(disabled) || "true".equals(disabled)) {
+                                // the plugin is disabled
+                            } else {
+                                result.add(plugin);
+                            }
+                        });
+        return result;
+    }
 
     /** Listener of {@link Context} creation and release events. */
     public interface Listener {
@@ -125,6 +149,16 @@ public class ContextFactory {
          * current thread.
          */
         public void contextReleased(Context cx);
+    }
+
+    /** Constructs a new ContextFactory with the plugins found by serviceLoader. */
+    public ContextFactory() {
+        this(getDefaultPluginsFromServiceLoader());
+    }
+
+    /** Constructs a new ContextFactory with a given list of plugins. */
+    public ContextFactory(List<Plugin> plugins) {
+        this.plugins = Collections.unmodifiableList(plugins);
     }
 
     /**
@@ -515,5 +549,10 @@ public class ContextFactory {
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);
+    }
+
+    /** Returns a list of plugins. */
+    public List<Plugin> getPlugins() {
+        return plugins;
     }
 }

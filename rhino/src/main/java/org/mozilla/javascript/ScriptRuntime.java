@@ -25,7 +25,6 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
-import org.mozilla.javascript.xml.XMLLoader;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -201,10 +200,9 @@ public class ScriptRuntime {
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
-        if (cx.hasFeature(Context.FEATURE_E4X)) {
-            XMLLoader loader = loadOneServiceImplementation(XMLLoader.class);
-            if (loader != null) {
-                loader.load(scope, sealed);
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            if (plugin.isSafe()) {
+                plugin.init(cx, scope, sealed);
             }
         }
 
@@ -312,6 +310,11 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
+        for (Plugin plugin : cx.getFactory().getPlugins()) {
+            if (!plugin.isSafe()) {
+                plugin.init(cx, scope, sealed);
+            }
+        }
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(

@@ -22,18 +22,11 @@ public abstract class XMLLib {
      * flexible) to write an interface that returns an XMLLib object rather than a class name, for
      * example. But that would cause many more ripple effects in the code, all the way back to
      * {@link ScriptRuntime}.
+     *
+     * @deprecated required for Context.getE4xImplementationFactory().
      */
+    @Deprecated
     public abstract static class Factory {
-
-        public static Factory create(final String className) {
-            return new Factory() {
-                @Override
-                public String getImplementationClassName() {
-                    return className;
-                }
-            };
-        }
-
         public abstract String getImplementationClassName();
     }
 
