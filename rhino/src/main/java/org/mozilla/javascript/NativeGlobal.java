@@ -504,35 +504,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
         return false;
     }
 
-    /**
-     * @deprecated Use {@link ScriptRuntime#constructError(String,String)} instead.
-     */
-    @Deprecated
-    public static EcmaError constructError(
-            Context cx, String error, String message, Scriptable scope) {
-        return ScriptRuntime.constructError(error, message);
-    }
-
-    /**
-     * @deprecated Use {@link ScriptRuntime#constructError(String,String,String,int,String,int)}
-     *     instead.
-     */
-    @Deprecated
-    public static EcmaError constructError(
-            Context cx,
-            String error,
-            String message,
-            Scriptable scope,
-            String sourceName,
-            int lineNumber,
-            int columnNumber,
-            String lineSource) {
-        return ScriptRuntime.constructError(
-                error, message,
-                sourceName, lineNumber,
-                lineSource, columnNumber);
-    }
-
     /*
      *   ECMA 3, 15.1.3 URI Handling Function Properties
      *

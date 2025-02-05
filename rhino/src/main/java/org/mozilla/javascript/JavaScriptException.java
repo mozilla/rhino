@@ -18,15 +18,6 @@ public class JavaScriptException extends RhinoException {
     private static final long serialVersionUID = -7666130513694669293L;
 
     /**
-     * @deprecated Use {@link WrappedException#WrappedException(Throwable)} to report exceptions in
-     *     Java code.
-     */
-    @Deprecated
-    public JavaScriptException(Object value) {
-        this(value, "", 0);
-    }
-
-    /**
      * Create a JavaScript exception wrapping the given JavaScript value
      *
      * @param value the JavaScript value thrown.
@@ -95,22 +86,6 @@ public class JavaScriptException extends RhinoException {
      */
     public Object getValue() {
         return value;
-    }
-
-    /**
-     * @deprecated Use {@link RhinoException#sourceName()} from the super class.
-     */
-    @Deprecated
-    public String getSourceName() {
-        return sourceName();
-    }
-
-    /**
-     * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
-     */
-    @Deprecated
-    public int getLineNumber() {
-        return lineNumber();
     }
 
     private Object value;

@@ -185,17 +185,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         return members.getIds(false);
     }
 
-    /**
-     * @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
-     *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
-     */
-    @Deprecated
-    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
-
-        Context cx = Context.getContext();
-        return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
-    }
-
     @Override
     public Object unwrap() {
         return javaObject;

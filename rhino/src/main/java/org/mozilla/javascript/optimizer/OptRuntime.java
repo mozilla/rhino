@@ -120,14 +120,6 @@ public final class OptRuntime extends ScriptRuntime {
         return ScriptRuntime.add(val1, val2, cx);
     }
 
-    /**
-     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead
-     */
-    @Deprecated
-    public static Object elemIncrDecr(Object obj, double index, Context cx, int incrDecrMask) {
-        return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
-    }
-
     public static Object elemIncrDecr(
             Object obj, double index, Context cx, Scriptable scope, int incrDecrMask) {
         return ScriptRuntime.elemIncrDecr(obj, Double.valueOf(index), cx, scope, incrDecrMask);
