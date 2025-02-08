@@ -23,6 +23,10 @@ public class HashSlotMap implements SlotMap {
         map = new LinkedHashMap<>();
     }
 
+    protected HashSlotMap(int capacity) {
+        map = new LinkedHashMap<>(capacity);
+    }
+
     public HashSlotMap(SlotMap oldMap) {
         map = new LinkedHashMap<>(oldMap.size());
         for (Slot n : oldMap) {
