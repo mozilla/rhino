@@ -2,7 +2,6 @@ package org.mozilla.javascript.benchmarks;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
 import org.mozilla.javascript.*;
 import org.openjdk.jmh.annotations.*;
 
@@ -172,7 +171,7 @@ public class SlotMapBenchmark {
     public Object orderedInsert1Key(OrderedState state) {
         Slot newSlot = null;
         for (int i = 0; i < 100; i++) {
-            newSlot = state.emptyMap.modify(state.randomKeys[i], 0, 0);
+            newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
         }
         if (newSlot == null) {
             throw new AssertionError();

@@ -5,15 +5,59 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 public class OrderedSlotMap implements SlotMap {
+    // The hash table
     private Slot[] slots;
-    private int slotCount;
-    private Entry[] map;
+    // The slots, in insertion order
+    private Slot[] orderedSlots;
+    // Number of slots in the ordered slots array -- this is not the same as
+    // "count" because it includes deleted items
+    private int orderedCount;
+    // Number of times that an item was deleted
+    private int deleteCount;
+    // Number of items in the map
     private int count;
 
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
-    // Sentinel for deletions
-    private static final Slot DELETED_SLOT = new Slot(null, 0, 0);
+    // when we reach this number of deleted objects, we will
+    // promote ourselves to a different type of slot map
+    private static final int MAX_DELETED_SLOTS = 10;
+
+    // This represents a deleted slot
+    private static final Slot DELETED_SENTINEL = new Slot(null, 0, 0);
+
+    private final class Iter implements Iterator<Slot> {
+        private int pos;
+
+        @Override
+        public boolean hasNext() {
+            skipDeleted();
+            return pos < orderedCount;
+        }
+
+        @Override
+        public Slot next() {
+            skipDeleted();
+            if (pos >= orderedCount) {
+                throw new NoSuchElementException();
+            }
+            return orderedSlots[pos++];
+        }
+
+        private void skipDeleted() {
+            while ((pos < orderedCount) && (orderedSlots[pos] == DELETED_SENTINEL)) {
+                pos++;
+            }
+        }
+    }
+
+    public OrderedSlotMap() {}
+
+    public OrderedSlotMap(int capacity) {
+        int n = -1 >>> Integer.numberOfLeadingZeros(capacity - 1);
+        n = (n < 0) ? 1 : n + 1;
+        slots = new Slot[n];
+    }
 
     @Override
     public int size() {
@@ -26,152 +70,191 @@ public class OrderedSlotMap implements SlotMap {
     }
 
     @Override
+    public Iterator<Slot> iterator() {
+        return new OrderedSlotMap.Iter();
+    }
+
+    /** Locate the slot with the given name or index. */
+    @Override
     public Slot query(Object key, int index) {
-        if (map == null) {
+        if (slots == null) {
             return null;
         }
 
         int indexOrHash = (key != null ? key.hashCode() : index);
-        int slotIndex = getSlotIndex(map.length, indexOrHash);
-        for (Entry e = map[slotIndex]; e != null; e = e.next) {
-            if (indexOrHash == e.indexOrHash && Objects.equals(e.key, key)) {
-                return e.slot;
+        int slotIndex = getSlotIndex(slots.length, indexOrHash);
+        for (Slot slot = slots[slotIndex]; slot != null; slot = slot.next) {
+            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                return slot;
             }
         }
         return null;
     }
 
+    /**
+     * Locate the slot with given name or index, and create a new one if necessary.
+     *
+     * @param key either a String or a Symbol object that identifies the property
+     * @param index index or 0 if slot holds property name.
+     */
     @Override
-    public Slot modify(Object key, int index, int attributes) {
+    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
-        Entry e;
+        Slot slot;
 
-        if (map != null) {
-            int slotIndex = getSlotIndex(map.length, indexOrHash);
-            for (e = map[slotIndex]; e != null; e = e.next) {
-                if (indexOrHash == e.indexOrHash && Objects.equals(e.key, key)) {
+        if (slots != null) {
+            final int slotIndex = getSlotIndex(slots.length, indexOrHash);
+            for (slot = slots[slotIndex]; slot != null; slot = slot.next) {
+                if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
                     break;
                 }
             }
-            if (e != null) {
-                return e.slot;
+            if (slot != null) {
+                return slot;
             }
         }
 
-        // A new slot has to be inserted.
         Slot newSlot = new Slot(key, index, attributes);
-        createNewSlot(newSlot);
+        createNewSlot(owner, newSlot);
         return newSlot;
     }
 
-    @Override
-    public <S extends Slot> S compute(Object key, int index, SlotComputer<S> c) {
-        final int indexOrHash = (key != null ? key.hashCode() : index);
-
-        if (map != null) {
-            Entry e;
-            int slotIndex = getSlotIndex(map.length, indexOrHash);
-            Entry prev = map[slotIndex];
-            Slot slot = null;
-            for (e = prev; e != null; e = e.next) {
-                if (indexOrHash == e.indexOrHash && Objects.equals(e.key, key)) {
-                    slot = e.slot;
-                    break;
-                }
-                prev = e;
-            }
-            if (e != null) {
-                assert(slot != null);
-                // Modify or remove existing slot
-                S newSlot = c.compute(key, index, slot);
-                if (newSlot == null) {
-                    // Need to delete this slot actually
-                    removeSlot(e, prev, slotIndex, key);
-                } else if (!Objects.equals(slot, newSlot)) {
-                    // Replace slot in the list
-                    e.slot = newSlot;
-                    slots[e.slotIx] = newSlot;
-                }
-                return newSlot;
-            }
-        }
-
-        // If we get here, we know we are potentially adding a new slot
-        S newSlot = c.compute(key, index, null);
-        if (newSlot != null) {
-            createNewSlot(newSlot);
-        }
-        return newSlot;
-    }
-
-    @Override
-    public void add(Slot newSlot) {
-        if (map == null) {
-            map = new Entry[INITIAL_SLOT_SIZE];
-        }
-        insertNewSlot(newSlot);
-    }
-
-    @Override
-    public Iterator<Slot> iterator() {
-        return new Itr();
-    }
-
-    private void createNewSlot(Slot newSlot) {
-        if (count == 0) {
+    private void createNewSlot(SlotMapOwner owner, Slot newSlot) {
+        if (count == 0 && slots == null) {
             // Always throw away old slots if any on empty insert.
-            map = new Entry[INITIAL_SLOT_SIZE];
+            slots = new Slot[INITIAL_SLOT_SIZE];
         }
 
         // Check if the table is not too full before inserting.
-        if (4 * (count + 1) > 3 * map.length) {
+        if (4 * (count + 1) > 3 * slots.length) {
             // table size must be a power of 2 -- always grow by x2!
-            Entry[] newMap = new Entry[map.length * 2];
-            copyTable(map, newMap);
-            map = newMap;
+            if (count > SlotMapOwner.LARGE_HASH_SIZE) {
+                // Switch to new map and insert new slot
+                promoteMap(owner, newSlot);
+                return;
+            }
+            Slot[] newSlots = new Slot[slots.length * 2];
+            copyTable(slots, newSlots);
+            slots = newSlots;
         }
 
         insertNewSlot(newSlot);
+    }
+
+    protected void promoteMap(SlotMapOwner owner, Slot newSlot) {
+        SlotMap newMap;
+        if (newSlot == null) {
+            newMap = new HashSlotMap(this);
+        } else {
+            newMap = new HashSlotMap(this, newSlot);
+        }
+        owner.setMap(newMap);
+    }
+
+    @Override
+    public <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+        final int indexOrHash = (key != null ? key.hashCode() : index);
+
+        if (slots != null) {
+            Slot slot;
+            final int slotIndex = getSlotIndex(slots.length, indexOrHash);
+            Slot prev = slots[slotIndex];
+            for (slot = prev; slot != null; slot = slot.next) {
+                if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                    break;
+                }
+                prev = slot;
+            }
+            if (slot != null) {
+                return computeExisting(owner, key, index, c, slot, prev, slotIndex);
+            }
+        }
+        return computeNew(owner, key, index, c);
+    }
+
+    private <S extends Slot> S computeNew(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+        S newSlot = c.compute(key, index, null);
+        if (newSlot != null) {
+            createNewSlot(owner, newSlot);
+        }
+        return newSlot;
+    }
+
+    private <S extends Slot> S computeExisting(
+            SlotMapOwner owner,
+            Object key,
+            int index,
+            SlotComputer<S> c,
+            Slot slot,
+            Slot prev,
+            int slotIndex) {
+        // Modify or remove existing slot
+        S newSlot = c.compute(key, index, slot);
+        if (newSlot == null) {
+            // Need to delete this slot actually
+            removeSlot(owner, slot, prev, slotIndex, key);
+        } else if (!Objects.equals(slot, newSlot)) {
+            // Replace slot in hash table
+            if (prev == slot) {
+                slots[slotIndex] = newSlot;
+            } else {
+                prev.next = newSlot;
+            }
+            newSlot.next = slot.next;
+            // Replace slot in ordered list
+            orderedSlots[slot.orderedPos] = newSlot;
+            newSlot.orderedPos = slot.orderedPos;
+        }
+        return newSlot;
+    }
+
+    @Override
+    public void add(SlotMapOwner owner, Slot newSlot) {
+        if (slots == null) {
+            slots = new Slot[INITIAL_SLOT_SIZE];
+        }
+        createNewSlot(owner, newSlot);
     }
 
     private void insertNewSlot(Slot newSlot) {
         ++count;
-        if (slots == null) {
-            slots = new Slot[INITIAL_SLOT_SIZE];
-        } else if (slotCount == slots.length) {
-            Slot[] newSlots = new Slot[slots.length * 2];
-            System.arraycopy(slots, 0, newSlots, 0, slots.length);
-            slots = newSlots;
+        if (orderedSlots == null) {
+            orderedSlots = new Slot[INITIAL_SLOT_SIZE];
         }
-        slots[slotCount] = newSlot;
-        Entry e = new Entry();
-        e.slotIx = slotCount;
-        e.slot = newSlot;
-        e.indexOrHash = newSlot.indexOrHash;
-        e.key = newSlot.name;
-        slotCount++;
-        addKnownAbsentSlot(map, e);
+        if (orderedCount == orderedSlots.length) {
+            Slot[] newOrderedSlots = new Slot[orderedSlots.length * 2];
+            System.arraycopy(orderedSlots, 0, newOrderedSlots, 0, orderedCount);
+            orderedSlots = newOrderedSlots;
+        }
+        newSlot.orderedPos = orderedCount;
+        orderedSlots[orderedCount++] = newSlot;
+        addKnownAbsentSlot(slots, newSlot);
     }
 
-    private void removeSlot(Entry e, Entry prev, int ix, Object key) {
+    private void removeSlot(SlotMapOwner owner, Slot slot, Slot prev, int ix, Object key) {
         count--;
         // remove slot from hash table
-        if (prev == e) {
-            map[ix] = e.next;
+        if (prev == slot) {
+            slots[ix] = slot.next;
         } else {
-            prev.next = e.next;
+            prev.next = slot.next;
         }
-
-        // Mark missing in slot list -- will add GC later
-        slots[e.slotIx] = DELETED_SLOT;
+        // Replace with sentinel so that we don't iterate forever
+        orderedSlots[slot.orderedPos] = DELETED_SENTINEL;
+        if (++deleteCount > MAX_DELETED_SLOTS) {
+            // Replace this map with one that handles deletes better
+            promoteMap(owner, null);
+        }
     }
 
-    private static void copyTable(Entry[] oldMap, Entry[] newMap) {
-        for (Entry e : oldMap) {
-            while (e != null) {
-                Entry nextEntry = e.next;
-                addKnownAbsentSlot(newMap, e);
-                e = nextEntry;
+    private static void copyTable(Slot[] oldSlots, Slot[] newSlots) {
+        for (Slot slot : oldSlots) {
+            while (slot != null) {
+                Slot nextSlot = slot.next;
+                addKnownAbsentSlot(newSlots, slot);
+                slot = nextSlot;
             }
         }
     }
@@ -180,10 +263,10 @@ public class OrderedSlotMap implements SlotMap {
      * Add slot with keys that are known to absent from the table. This is an optimization to use
      * when inserting into empty table, after table growth or during deserialization.
      */
-    private static void addKnownAbsentSlot(Entry[] map, Entry e) {
-        int insertPos = getSlotIndex(map.length, e.indexOrHash);
-        e.next = map[insertPos];
-        map[insertPos] = e;
+    private static void addKnownAbsentSlot(Slot[] addSlots, Slot slot) {
+        final int insertPos = getSlotIndex(addSlots.length, slot.indexOrHash);
+        slot.next = addSlots[insertPos];
+        addSlots[insertPos] = slot;
     }
 
     private static int getSlotIndex(int tableSize, int indexOrHash) {
@@ -191,37 +274,5 @@ public class OrderedSlotMap implements SlotMap {
         // It only works if the table size is a power of 2.
         // The performance improvement is measurable.
         return indexOrHash & (tableSize - 1);
-    }
-
-    private final class Itr implements Iterator<Slot> {
-        private int pos;
-
-        @Override
-        public boolean hasNext() {
-            while (pos < slotCount && slots[pos] == DELETED_SLOT) {
-                pos++;
-            }
-            return pos < slotCount;
-        }
-
-        @Override
-        public Slot next() {
-            while (pos < slotCount && slots[pos] == DELETED_SLOT) {
-                pos++;
-            }
-            if (pos < slotCount) {
-                return slots[pos];
-            } else {
-                throw new NoSuchElementException();
-            }
-        }
-    }
-
-    private static final class Entry {
-        int indexOrHash;
-        int slotIx;
-        Object key;
-        Entry next;
-        Slot slot;
     }
 }
