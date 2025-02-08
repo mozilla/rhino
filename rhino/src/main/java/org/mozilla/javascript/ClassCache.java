@@ -152,24 +152,6 @@ public class ClassCache implements Serializable {
     }
 
     /**
-     * @deprecated The method always returns false.
-     * @see #setInvokerOptimizationEnabled(boolean enabled)
-     */
-    @Deprecated
-    public boolean isInvokerOptimizationEnabled() {
-        return false;
-    }
-
-    /**
-     * @deprecated The method does nothing. Invoker optimization is no longer used by Rhino. On
-     *     modern JDK like 1.4 or 1.5 the disadvantages of the optimization like increased memory
-     *     usage or longer initialization time overweight small speed increase that can be gained
-     *     using generated proxy class to replace reflection.
-     */
-    @Deprecated
-    public synchronized void setInvokerOptimizationEnabled(boolean enabled) {}
-
-    /**
      * Internal engine method to return serial number for generated classes to ensure name
      * uniqueness.
      */

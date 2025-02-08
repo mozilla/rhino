@@ -483,23 +483,6 @@ public class ContextFactory {
     }
 
     /**
-     * @deprecated use {@link #enterContext()} instead
-     * @return a Context associated with the current thread
-     */
-    @Deprecated
-    public final Context enter() {
-        return enterContext(null);
-    }
-
-    /**
-     * @deprecated Use {@link Context#exit()} instead.
-     */
-    @Deprecated
-    public final void exit() {
-        Context.exit();
-    }
-
-    /**
      * Get a Context associated with the current thread, using the given Context if need be.
      *
      * <p>The same as <code>enterContext()</code> except that <code>cx</code> is associated with the

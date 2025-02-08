@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.CharArrayWriter;
-import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.security.AccessControlException;
@@ -216,20 +215,6 @@ public abstract class RhinoException extends RuntimeException {
             }
         }
         return buffer.toString();
-    }
-
-    /**
-     * Get a string representing the script stack of this exception.
-     *
-     * @deprecated the filter argument is ignored as we are able to recognize script stack elements
-     *     by our own. Use #getScriptStackTrace() instead.
-     * @param filter ignored
-     * @return a script stack dump
-     * @since 1.6R6
-     */
-    @Deprecated
-    public String getScriptStackTrace(FilenameFilter filter) {
-        return getScriptStackTrace();
     }
 
     /**

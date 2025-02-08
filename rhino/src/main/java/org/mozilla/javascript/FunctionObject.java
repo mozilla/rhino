@@ -333,19 +333,6 @@ public class FunctionObject extends BaseFunction {
     }
 
     /**
-     * @deprecated Use {@link #getTypeTag(Class)} and {@link #convertArg(Context, Scriptable,
-     *     Object, int, boolean)} for type conversion.
-     */
-    @Deprecated
-    public static Object convertArg(Context cx, Scriptable scope, Object arg, Class<?> desired) {
-        int tag = getTypeTag(desired);
-        if (tag == JAVA_UNSUPPORTED_TYPE) {
-            throw Context.reportRuntimeErrorById("msg.cant.convert", desired.getName());
-        }
-        return convertArg(cx, scope, arg, tag, false);
-    }
-
-    /**
      * Performs conversions on argument types if needed and invokes the underlying Java method or
      * constructor.
      *

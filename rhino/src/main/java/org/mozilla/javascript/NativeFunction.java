@@ -59,15 +59,6 @@ public abstract class NativeFunction extends BaseFunction {
         return getParamCount();
     }
 
-    /**
-     * @deprecated Use {@link BaseFunction#getFunctionName()} instead. For backwards compatibility
-     *     keep an old method name used by Batik and possibly others.
-     */
-    @Deprecated
-    public String jsGet_name() {
-        return getFunctionName();
-    }
-
     /** Get raw source string. */
     public String getRawSource() {
         return null;

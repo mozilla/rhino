@@ -17,7 +17,6 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.EnumSet;
@@ -190,11 +189,6 @@ public class Context implements Closeable {
      * <p>By default {@link #hasFeature(int)} returns true.
      */
     public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
-
-    /**
-     * @deprecated In previous releases, this name was given to FEATURE_PARENT_PROTO_PROPERTIES.
-     */
-    @Deprecated public static final int FEATURE_PARENT_PROTO_PROPRTIES = 5;
 
     /**
      * Control if support for E4X(ECMAScript for XML) extension is available. If
@@ -398,27 +392,6 @@ public class Context implements Closeable {
     @Deprecated public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
 
     /**
-     * Creates a new Context. The context will be associated with the {@link
-     * ContextFactory#getGlobal() global context factory}. By default, the new context will run in
-     * compiled mode and use the {@link #VERSION_ES6} language version, which supports features as
-     * defined in the most recent ECMAScript standard. This default behavior can be changed by
-     * overriding the ContextFactory class and installing the new implementation as the global
-     * ContextFactory.
-     *
-     * <p>Note that the Context must be associated with a thread before it can be used to execute a
-     * script.
-     *
-     * @deprecated this constructor is deprecated because it creates a dependency on a static
-     *     singleton context factory. Use {@link ContextFactory#enter()} or {@link
-     *     ContextFactory#call(ContextAction)} instead. If you subclass this class, consider using
-     *     {@link #Context(ContextFactory)} constructor instead in the subclasses' constructors.
-     */
-    @Deprecated
-    public Context() {
-        this(ContextFactory.getGlobal());
-    }
-
-    /**
      * Creates a new context. Provided as a preferred super constructor for subclasses in place of
      * the deprecated default public constructor. By default, the new context will run in compiled
      * mode and use the {@link #VERSION_ES6} language version, which supports features as defined in
@@ -468,25 +441,6 @@ public class Context implements Closeable {
      */
     public static Context enter() {
         return enter(null, ContextFactory.getGlobal());
-    }
-
-    /**
-     * Get a Context associated with the current thread, using the given Context if need be.
-     *
-     * <p>The same as <code>enter()</code> except that <code>cx</code> is associated with the
-     * current thread and returned if the current thread has no associated context and <code>cx
-     * </code> is not associated with any other thread.
-     *
-     * @param cx a Context to associate with the thread if possible
-     * @return a Context associated with the current thread
-     * @deprecated use {@link ContextFactory#enterContext(Context)} instead as this method relies on
-     *     usage of a static singleton "global" ContextFactory.
-     * @see ContextFactory#enterContext(Context)
-     * @see ContextFactory#call(ContextAction)
-     */
-    @Deprecated
-    public static Context enter(Context cx) {
-        return enter(cx, ContextFactory.getGlobal());
     }
 
     static final Context enter(Context cx, ContextFactory factory) {
@@ -551,22 +505,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * Call {@link ContextAction#run(Context cx)} using the Context instance associated with the
-     * current thread. If no Context is associated with the thread, then <code>
-     * ContextFactory.getGlobal().makeContext()</code> will be called to construct new Context
-     * instance. The instance will be temporary associated with the thread during call to {@link
-     * ContextAction#run(Context)}.
-     *
-     * @deprecated use {@link ContextFactory#call(ContextAction)} instead as this method relies on
-     *     usage of a static singleton "global" ContextFactory.
-     * @return The result of {@link ContextAction#run(Context)}.
-     */
-    @Deprecated
-    public static <T> T call(ContextAction<T> action) {
-        return call(ContextFactory.getGlobal(), action);
-    }
-
-    /**
      * Call {@link Callable#call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)}
      * using the Context instance associated with the current thread. If no Context is associated
      * with the thread, then {@link ContextFactory#makeContext()} will be called to construct new
@@ -596,42 +534,6 @@ public class Context implements Closeable {
         try (Context cx = enter(null, factory)) {
             return action.run(cx);
         }
-    }
-
-    /**
-     * @deprecated
-     * @see ContextFactory#addListener(org.mozilla.javascript.ContextFactory.Listener)
-     * @see ContextFactory#getGlobal()
-     */
-    @Deprecated
-    public static void addContextListener(ContextListener listener) {
-        // Special workaround for the debugger
-        String DBG = "org.mozilla.javascript.tools.debugger.Main";
-        if (DBG.equals(listener.getClass().getName())) {
-            Class<?> cl = listener.getClass();
-            Class<?> factoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory");
-            Class<?>[] sig = {factoryClass};
-            Object[] args = {ContextFactory.getGlobal()};
-            try {
-                Method m = cl.getMethod("attachTo", sig);
-                m.invoke(listener, args);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-            return;
-        }
-
-        ContextFactory.getGlobal().addListener(listener);
-    }
-
-    /**
-     * @deprecated
-     * @see ContextFactory#removeListener(org.mozilla.javascript.ContextFactory.Listener)
-     * @see ContextFactory#getGlobal()
-     */
-    @Deprecated
-    public static void removeContextListener(ContextListener listener) {
-        ContextFactory.getGlobal().addListener(listener);
     }
 
     /** Return {@link ContextFactory} instance used to create this Context. */
@@ -1397,17 +1299,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * @deprecated
-     * @see #compileReader(Reader in, String sourceName, int lineno, Object securityDomain)
-     */
-    @Deprecated
-    public final Script compileReader(
-            Scriptable scope, Reader in, String sourceName, int lineno, Object securityDomain)
-            throws IOException {
-        return compileReader(in, sourceName, lineno, securityDomain);
-    }
-
-    /**
      * Compiles the source in the given reader.
      *
      * <p>Returns a script that may later be executed. Will consume all the source in the reader.
@@ -1753,15 +1644,6 @@ public class Context implements Closeable {
     }
 
     /**
-     * @deprecated
-     * @see #toObject(Object, Scriptable)
-     */
-    @Deprecated
-    public static Scriptable toObject(Object value, Scriptable scope, Class<?> staticType) {
-        return ScriptRuntime.toObject(scope, value);
-    }
-
-    /**
      * Convenient method to convert java value to its closest representation in JavaScript.
      *
      * <p>If value is an instance of String, Number, Boolean, Function or Scriptable, it is returned
@@ -1845,22 +1727,6 @@ public class Context implements Closeable {
      */
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
         return NativeJavaObject.coerceTypeImpl(desiredType, value);
-    }
-
-    /**
-     * @deprecated
-     * @see #jsToJava(Object, Class)
-     * @throws IllegalArgumentException if the conversion cannot be performed. Note that {@link
-     *     #jsToJava(Object, Class)} throws {@link EvaluatorException} instead.
-     */
-    @Deprecated
-    public static Object toType(Object value, Class<?> desiredType)
-            throws IllegalArgumentException {
-        try {
-            return jsToJava(value, desiredType);
-        } catch (EvaluatorException ex) {
-            throw new IllegalArgumentException(ex.getMessage(), ex);
-        }
     }
 
     /**
@@ -2206,14 +2072,6 @@ public class Context implements Closeable {
         if (threadLocalMap == null) return;
         threadLocalMap.remove(key);
     }
-
-    /**
-     * @deprecated
-     * @see ClassCache#get(Scriptable)
-     * @see ClassCache#setCachingEnabled(boolean)
-     */
-    @Deprecated
-    public static void setCachingEnabled(boolean cachingEnabled) {}
 
     /**
      * Set a WrapFactory for this Context.
