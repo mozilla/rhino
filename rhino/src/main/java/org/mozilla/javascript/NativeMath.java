@@ -18,7 +18,7 @@ final class NativeMath extends ScriptableObject {
     private static final double LOG2E = 1.4426950408889634;
     private static final Double Double32 = Double.valueOf(32d);
 
-    static void init(Scriptable scope, boolean sealed) {
+    static Object init(Context cx, Scriptable scope, boolean sealed) {
         NativeMath math = new NativeMath();
         math.setPrototype(getObjectPrototype(scope));
         math.setParentScope(scope);
@@ -71,11 +71,10 @@ final class NativeMath extends ScriptableObject {
         math.defineProperty("SQRT2", 1.4142135623730951, DONTENUM | READONLY | PERMANENT);
 
         math.defineProperty(SymbolKey.TO_STRING_TAG, MATH_TAG, DONTENUM | READONLY);
-
-        ScriptableObject.defineProperty(scope, MATH_TAG, math, DONTENUM);
         if (sealed) {
             math.sealObject();
         }
+        return math;
     }
 
     private NativeMath() {}

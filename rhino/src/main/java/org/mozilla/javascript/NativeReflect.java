@@ -19,7 +19,7 @@ final class NativeReflect extends ScriptableObject {
 
     private static final String REFLECT_TAG = "Reflect";
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         NativeReflect reflect = new NativeReflect();
         reflect.setPrototype(getObjectPrototype(scope));
         reflect.setParentScope(scope);
@@ -84,11 +84,10 @@ final class NativeReflect extends ScriptableObject {
                 DONTENUM | READONLY);
 
         reflect.defineProperty(SymbolKey.TO_STRING_TAG, REFLECT_TAG, DONTENUM | READONLY);
-
-        ScriptableObject.defineProperty(scope, REFLECT_TAG, reflect, DONTENUM);
         if (sealed) {
             reflect.sealObject();
         }
+        return reflect;
     }
 
     private NativeReflect() {}

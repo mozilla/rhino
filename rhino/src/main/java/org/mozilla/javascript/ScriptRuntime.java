@@ -22,6 +22,17 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
+import org.mozilla.javascript.typedarrays.NativeDataView;
+import org.mozilla.javascript.typedarrays.NativeFloat32Array;
+import org.mozilla.javascript.typedarrays.NativeFloat64Array;
+import org.mozilla.javascript.typedarrays.NativeInt16Array;
+import org.mozilla.javascript.typedarrays.NativeInt32Array;
+import org.mozilla.javascript.typedarrays.NativeInt8Array;
+import org.mozilla.javascript.typedarrays.NativeUint16Array;
+import org.mozilla.javascript.typedarrays.NativeUint32Array;
+import org.mozilla.javascript.typedarrays.NativeUint8Array;
+import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -181,8 +192,8 @@ public class ScriptRuntime {
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
         NativeDate.init(scope, sealed);
-        NativeMath.init(scope, sealed);
-        NativeJSON.init(scope, sealed);
+        new LazilyLoadedCtor(scope, "Math", sealed, true, NativeMath::init);
+        new LazilyLoadedCtor(scope, "JSON", sealed, true, NativeJSON::init);
 
         NativeWith.init(scope, sealed);
         NativeCall.init(scope, sealed);
@@ -198,6 +209,8 @@ public class ScriptRuntime {
         NativeJavaMap.init(scope, sealed);
 
         // define lazy-loaded properties using their class name
+        // Depends on the old reflection-based lazy loading mechanism
+        // to property initialize the prototype.
         new LazilyLoadedCtor(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
@@ -210,87 +223,32 @@ public class ScriptRuntime {
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
                 || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+            new LazilyLoadedCtor(scope, "ArrayBuffer", sealed, true, NativeArrayBuffer::init);
+            new LazilyLoadedCtor(scope, "Int8Array", sealed, true, NativeInt8Array::init);
+            new LazilyLoadedCtor(scope, "Uint8Array", sealed, true, NativeUint8Array::init);
             new LazilyLoadedCtor(
-                    scope,
-                    "ArrayBuffer",
-                    "org.mozilla.javascript.typedarrays.NativeArrayBuffer",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Int8Array",
-                    "org.mozilla.javascript.typedarrays.NativeInt8Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Uint8Array",
-                    "org.mozilla.javascript.typedarrays.NativeUint8Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Uint8ClampedArray",
-                    "org.mozilla.javascript.typedarrays.NativeUint8ClampedArray",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Int16Array",
-                    "org.mozilla.javascript.typedarrays.NativeInt16Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Uint16Array",
-                    "org.mozilla.javascript.typedarrays.NativeUint16Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Int32Array",
-                    "org.mozilla.javascript.typedarrays.NativeInt32Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Uint32Array",
-                    "org.mozilla.javascript.typedarrays.NativeUint32Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Float32Array",
-                    "org.mozilla.javascript.typedarrays.NativeFloat32Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "Float64Array",
-                    "org.mozilla.javascript.typedarrays.NativeFloat64Array",
-                    sealed,
-                    true);
-            new LazilyLoadedCtor(
-                    scope,
-                    "DataView",
-                    "org.mozilla.javascript.typedarrays.NativeDataView",
-                    sealed,
-                    true);
+                    scope, "Uint8ClampedArray", sealed, true, NativeUint8ClampedArray::init);
+            new LazilyLoadedCtor(scope, "Int16Array", sealed, true, NativeInt16Array::init);
+            new LazilyLoadedCtor(scope, "Uint16Array", sealed, true, NativeUint16Array::init);
+            new LazilyLoadedCtor(scope, "Int32Array", sealed, true, NativeInt32Array::init);
+            new LazilyLoadedCtor(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
+            new LazilyLoadedCtor(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
+            new LazilyLoadedCtor(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
+            new LazilyLoadedCtor(scope, "DataView", sealed, true, NativeDataView::init);
         }
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
             NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
             NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
-            NativeMap.init(cx, scope, sealed);
-            NativePromise.init(cx, scope, sealed);
-            NativeSet.init(cx, scope, sealed);
-            NativeWeakMap.init(cx, scope, sealed);
-            NativeWeakSet.init(cx, scope, sealed);
-            NativeBigInt.init(scope, sealed);
-
-            NativeProxy.init(cx, scope, sealed);
-            NativeReflect.init(cx, scope, sealed);
+            new LazilyLoadedCtor(scope, "Map", sealed, true, NativeMap::init);
+            new LazilyLoadedCtor(scope, "Promise", sealed, true, NativePromise::init);
+            new LazilyLoadedCtor(scope, "Set", sealed, true, NativeSet::init);
+            new LazilyLoadedCtor(scope, "WeakMap", sealed, true, NativeWeakMap::init);
+            new LazilyLoadedCtor(scope, "WeakSet", sealed, true, NativeWeakSet::init);
+            new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
+            new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
+            new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
         if (scope instanceof TopLevel) {
@@ -311,6 +269,7 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
+        // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(

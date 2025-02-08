@@ -22,34 +22,79 @@ public final class LazilyLoadedCtor implements Serializable {
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;
 
-    private final ScriptableObject scope;
+    private final Scriptable scope;
+    private final Initializable initializer;
     private final String propertyName;
-    private final String className;
     private final boolean sealed;
     private final boolean privileged;
     private Object initializedValue;
     private int state;
 
+    /**
+     * Create a constructor using a lambda function. The lambda should initialize the new value
+     * however it needs and then return the value. The lambda may also return null, which indicates
+     * that it stored the necessary property (and possibly other properties) in the scope itself.
+     * This is legacy behavior used by some initializers that register many objects in a single
+     * initialization function.
+     */
+    public LazilyLoadedCtor(
+            ScriptableObject scope,
+            String propertyName,
+            boolean sealed,
+            boolean privileged,
+            Initializable initializer) {
+        this.scope = scope;
+        this.propertyName = propertyName;
+        this.sealed = sealed;
+        this.privileged = privileged;
+        this.state = STATE_BEFORE_INIT;
+        this.initializer = initializer;
+
+        scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
+    }
+
+    /**
+     * Create a constructor using a lambda function. The lambda should initialize the new value
+     * however it needs and then return the value. The lambda may also return null, which indicates
+     * that it stored the necessary property (and possibly other properties) in the scope itself.
+     * This is legacy behavior used by some initializers that register many objects in a single
+     * initialization function.
+     */
+    public LazilyLoadedCtor(
+            ScriptableObject scope,
+            String propertyName,
+            boolean sealed,
+            Initializable initializer,
+            boolean privileged) {
+        this(scope, propertyName, sealed, privileged, initializer);
+    }
+
+    /**
+     * Create a constructor that loads via reflection, looking for an "init" method on the class.
+     * This is a legacy mechanism.
+     */
     public LazilyLoadedCtor(
             ScriptableObject scope, String propertyName, String className, boolean sealed) {
         this(scope, propertyName, className, sealed, false);
     }
 
+    /**
+     * Create a constructor that loads via reflection, looking for an "init" method on the class.
+     * This is a legacy mechanism.
+     */
     public LazilyLoadedCtor(
             ScriptableObject scope,
             String propertyName,
             String className,
             boolean sealed,
             boolean privileged) {
-
-        this.scope = scope;
-        this.propertyName = propertyName;
-        this.className = className;
-        this.sealed = sealed;
-        this.privileged = privileged;
-        this.state = STATE_BEFORE_INIT;
-
-        scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
+        this(
+                scope,
+                propertyName,
+                sealed,
+                privileged,
+                (Context lcx, Scriptable lscope, boolean lsealed) ->
+                        buildUsingReflection(lscope, className, propertyName, lsealed));
     }
 
     void init() {
@@ -77,19 +122,25 @@ public final class LazilyLoadedCtor implements Serializable {
     }
 
     private Object buildValue() {
+
         if (privileged) {
             return AccessController.doPrivileged(
-                    new PrivilegedAction<Object>() {
-                        @Override
-                        public Object run() {
-                            return buildValue0();
-                        }
-                    });
+                    (PrivilegedAction<Object>) () -> buildValueInternal());
         }
-        return buildValue0();
+        return buildValueInternal();
     }
 
-    private Object buildValue0() {
+    private Object buildValueInternal() {
+        Context cx = Context.getCurrentContext();
+        Object value = initializer.initialize(cx, scope, sealed);
+        if (value != null) {
+            return value;
+        }
+        return scope.get(propertyName, scope);
+    }
+
+    private static Object buildUsingReflection(
+            Scriptable scope, String className, String propertyName, boolean sealed) {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
@@ -106,10 +157,11 @@ public final class LazilyLoadedCtor implements Serializable {
                 if (target instanceof RuntimeException) {
                     throw (RuntimeException) target;
                 }
-            } catch (RhinoException ex) {
-            } catch (InstantiationException ex) {
-            } catch (IllegalAccessException ex) {
-            } catch (SecurityException ex) {
+            } catch (RhinoException
+                    | InstantiationException
+                    | IllegalAccessException
+                    | SecurityException ex) {
+                // Ignore, which is the legacy behavior
             }
         }
         return Scriptable.NOT_FOUND;

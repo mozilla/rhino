@@ -10,7 +10,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -37,7 +36,7 @@ public class NativeDataView extends NativeArrayBufferView {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -208,10 +207,10 @@ public class NativeDataView extends NativeArrayBufferView {
                 DONTENUM,
                 DONTENUM | READONLY);
 
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
         }
+        return constructor;
     }
 
     private static int determinePos(Object[] args) {

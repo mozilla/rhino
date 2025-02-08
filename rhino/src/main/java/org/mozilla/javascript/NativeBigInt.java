@@ -17,7 +17,7 @@ final class NativeBigInt extends ScriptableObject {
 
     private final BigInteger bigIntValue;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -64,11 +64,10 @@ final class NativeBigInt extends ScriptableObject {
                 DONTENUM | READONLY);
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
         }
+        return constructor;
     }
 
     NativeBigInt(BigInteger bigInt) {
