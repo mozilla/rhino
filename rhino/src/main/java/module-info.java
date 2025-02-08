@@ -16,8 +16,8 @@ module org.mozilla.rhino {
     uses org.mozilla.javascript.RegExpProxy;
     uses org.mozilla.javascript.xml.XMLLoader;
 
-    provides org.mozilla.javascript.RegExpProxy with
-            org.mozilla.javascript.regexp.RegExpImpl;
+    provides org.mozilla.javascript.RegExpLoader with
+            org.mozilla.javascript.regexp.RegExpLoaderImpl;
 
     requires java.compiler;
     requires jdk.dynalink;

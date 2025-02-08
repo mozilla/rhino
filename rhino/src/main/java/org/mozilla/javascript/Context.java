@@ -35,7 +35,6 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.xml.XMLLib;
-import org.mozilla.javascript.xml.XMLLoader;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -387,6 +386,9 @@ public class Context implements Closeable {
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
+
+    private static final RegExpLoader regExpLoader =
+            ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
 
     /**
      * Convenient value to use as zero-length array of objects.
@@ -2327,9 +2329,8 @@ public class Context implements Closeable {
      */
     @Deprecated
     public XMLLib.Factory getE4xImplementationFactory() {
-        XMLLoader loader = ScriptRuntime.loadOneServiceImplementation(XMLLoader.class);
-        if (loader != null) {
-            return loader.getFactory();
+        if (ScriptRuntime.xmlLoaderImpl != null) {
+            return ScriptRuntime.xmlLoaderImpl.getFactory();
         }
         return null;
     }
@@ -2690,8 +2691,8 @@ public class Context implements Closeable {
     }
 
     RegExpProxy getRegExpProxy() {
-        if (regExpProxy == null) {
-            regExpProxy = ScriptRuntime.loadOneServiceImplementation(RegExpProxy.class);
+        if (regExpProxy == null && regExpLoader != null) {
+            regExpProxy = regExpLoader.newProxy();
         }
         return regExpProxy;
     }
