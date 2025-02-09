@@ -185,14 +185,14 @@ public class NativeObject extends IdScriptableObject implements Map {
                 return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
             case Id___defineGetter__:
             case Id___defineSetter__:
-                return js_defineGetterOrSetter(cx, scope, id, thisObj, args);
+                return js_defineGetterOrSetter(cx, scope, id == Id___defineSetter__, thisObj, args);
             case Id___lookupGetter__:
             case Id___lookupSetter__:
-                return js_lookupGetterOrSetter(cx, scope, id, thisObj, args);
+                return js_lookupGetterOrSetter(cx, scope, id == Id___lookupSetter__, thisObj, args);
             case ConstructorId_getPrototypeOf:
                 return js_getPrototypeOf(cx, scope, thisObj, args);
             case ConstructorId_setPrototypeOf:
-                return js_setPrototypeOf(f, cx, scope, thisObj, args);
+                return js_setPrototypeOf(cx, scope, thisObj, args);
             case ConstructorId_keys:
                 return js_keys(cx, scope, thisObj, args);
             case ConstructorId_entries:
@@ -234,7 +234,7 @@ public class NativeObject extends IdScriptableObject implements Map {
             case ConstructorId_is:
                 return js_is(cx, scope, thisObj, args);
             case ConstructorId_groupBy:
-                return js_groupBy(f, cx, scope, thisObj, args);
+                return js_groupBy(cx, scope, thisObj, args);
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -360,7 +360,7 @@ public class NativeObject extends IdScriptableObject implements Map {
     }
 
     private static Object js_defineGetterOrSetter(
-            Context cx, Scriptable scope, int id, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, boolean isSetter, Scriptable thisObj, Object[] args) {
         if (args.length < 2 || !(args[1] instanceof Callable)) {
             Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
             throw ScriptRuntime.notFunctionError(badArg);
@@ -375,7 +375,6 @@ public class NativeObject extends IdScriptableObject implements Map {
         StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
         int index = s.stringId != null ? 0 : s.index;
         Callable getterOrSetter = (Callable) args[1];
-        boolean isSetter = (id == Id___defineSetter__);
         so.setGetterOrSetter(s.stringId, index, getterOrSetter, isSetter);
         if (so instanceof NativeArray) ((NativeArray) so).setDenseOnly(false);
 
@@ -383,13 +382,12 @@ public class NativeObject extends IdScriptableObject implements Map {
     }
 
     private static Object js_lookupGetterOrSetter(
-            Context cx, Scriptable scope, int id, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, boolean isSetter, Scriptable thisObj, Object[] args) {
         if (args.length < 1 || !(thisObj instanceof ScriptableObject)) return Undefined.instance;
 
         ScriptableObject so = (ScriptableObject) thisObj;
         StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
         int index = s.stringId != null ? 0 : s.index;
-        boolean isSetter = (id == Id___lookupSetter__);
         Object gs;
         for (; ; ) {
             gs = so.getGetterOrSetter(s.stringId, index, scope, isSetter);
@@ -422,7 +420,7 @@ public class NativeObject extends IdScriptableObject implements Map {
     }
 
     private static Object js_setPrototypeOf(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -437,7 +435,7 @@ public class NativeObject extends IdScriptableObject implements Map {
 
         final Object arg0 = args[0];
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
+            ScriptRuntimeES6.requireObjectCoercible(cx, arg0, OBJECT_TAG, "setPrototypeOf");
         }
         if (!(arg0 instanceof ScriptableObject)) {
             return arg0;
@@ -771,7 +769,7 @@ public class NativeObject extends IdScriptableObject implements Map {
     }
 
     private static Object js_groupBy(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object items = args.length < 1 ? Undefined.instance : args[0];
         Object callback = args.length < 2 ? Undefined.instance : args[1];
 
@@ -779,7 +777,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                 AbstractEcmaObjectOperations.groupBy(
                         cx,
                         scope,
-                        f,
+                        OBJECT_TAG,
+                        "groupBy",
                         items,
                         callback,
                         AbstractEcmaObjectOperations.KEY_COERCION.PROPERTY);
