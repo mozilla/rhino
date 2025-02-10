@@ -8,6 +8,13 @@ import java.util.Objects;
  * RhinoConfig provides typesafe and static access methods to a {@link RhinoProperties} default
  * instance.
  *
+ * <p>Note: Reading a config value only once is a good practice to avoid affecting performance. For
+ * example:
+ *
+ * <pre>
+ *     private static final boolean XYZ_ENABLED = RhinoConfig.get("rhino.xyz.enabled", false);
+ * </pre>
+ *
  * @author Roland Praml, Foconis Analytics GmbH
  */
 public class RhinoConfig {
