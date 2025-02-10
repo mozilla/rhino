@@ -181,6 +181,24 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(name, f, attributes);
     }
 
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers.
+     */
+    public void definePrototypeMethod(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, prototype, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, f, attributes);
+    }
+
     /** Define a property that may be of any type on the prototype of this constructor. */
     public void definePrototypeProperty(String name, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
@@ -302,6 +320,24 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property directly on the constructor that is implemented under the covers
+     * by a LambdaFunction, and override the properties of its "name", "length", "arity", and
+     * "protoyupe" properties.
+     */
+    public void defineConstructorMethod(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, prototype, target);
         f.setStandardPropertyAttributes(propertyAttributes);
         defineProperty(name, f, attributes);
     }

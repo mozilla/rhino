@@ -42,8 +42,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
         this.tag = tag;
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
-        IdScriptableObject prototype =
-                (IdScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
+        ScriptableObject prototype = (ScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
         setPrototype(prototype);
     }
 

@@ -24,14 +24,256 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  *
  * @author Norris Boyd
  */
-public class NativeObject extends IdScriptableObject implements Map {
+public class NativeObject extends ScriptableObject implements Map {
     private static final long serialVersionUID = -6345305608474346996L;
 
     private static final Object OBJECT_TAG = "Object";
+    private static final String CLASS_NAME = "Object";
 
     static void init(Scriptable scope, boolean sealed) {
-        NativeObject obj = new NativeObject();
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        1,
+                        NativeObject::js_constructorCall,
+                        NativeObject::js_constructor) {
+                    @Override
+                    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+                        return js_constructor(cx, scope, args);
+                    }
+                };
+        constructor.defineConstructorMethod(
+                scope,
+                "getPrototypeOf",
+                1,
+                null,
+                NativeObject::js_getPrototypeOf,
+                DONTENUM,
+                DONTENUM | READONLY);
+        if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
+            constructor.defineConstructorMethod(
+                    scope,
+                    "setPrototypeOf",
+                    2,
+                    null,
+                    NativeObject::js_setPrototypeOf,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+            constructor.defineConstructorMethod(
+                    scope,
+                    "entries",
+                    1,
+                    null,
+                    NativeObject::js_entries,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+            constructor.defineConstructorMethod(
+                    scope,
+                    "fromEntries",
+                    1,
+                    null,
+                    NativeObject::js_fromEntries,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+            constructor.defineConstructorMethod(
+                    scope,
+                    "values",
+                    1,
+                    null,
+                    NativeObject::js_values,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+            constructor.defineConstructorMethod(
+                    scope,
+                    "hasOwn",
+                    1,
+                    null,
+                    NativeObject::js_hasOwn,
+                    DONTENUM,
+                    DONTENUM | READONLY);
+        }
+        constructor.defineConstructorMethod(
+                scope, "keys", 1, null, NativeObject::js_keys, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "getOwnPropertyNames",
+                1,
+                null,
+                NativeObject::js_getOwnPropertyNames,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "getOwnPropertySymbols",
+                1,
+                null,
+                NativeObject::js_getOwnPropertySymbols,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "getOwnPropertyDescriptor",
+                2,
+                null,
+                NativeObject::js_getOwnPropertyDescriptor,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "getOwnPropertyDescriptors",
+                1,
+                null,
+                NativeObject::js_getOwnPropertyDescriptors,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "defineProperty",
+                3,
+                null,
+                NativeObject::js_defineProperty,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "isExtensible",
+                1,
+                null,
+                NativeObject::js_isExtensible,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "preventExtensions",
+                1,
+                null,
+                NativeObject::js_preventExtensions,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "defineProperties",
+                2,
+                null,
+                NativeObject::js_defineProperties,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "create", 2, null, NativeObject::js_create, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "isSealed",
+                1,
+                null,
+                NativeObject::js_isSealed,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope,
+                "isFrozen",
+                1,
+                null,
+                NativeObject::js_isFrozen,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "seal", 1, null, NativeObject::js_seal, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "freeze", 1, null, NativeObject::js_freeze, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "assign", 2, null, NativeObject::js_assign, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "is", 2, null, NativeObject::js_is, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
+                scope, "groupBy", 2, null, NativeObject::js_groupBy, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "toString",
+                0,
+                null,
+                NativeObject::js_toString,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "toLocaleString",
+                0,
+                null,
+                NativeObject::js_toLocaleString,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "__lookupGetter__",
+                1,
+                null,
+                NativeObject::js_lookupGetter,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "__lookupSetter__",
+                1,
+                null,
+                NativeObject::js_lookupSetter,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "__defineGetter__",
+                2,
+                null,
+                NativeObject::js_defineGetter,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "__defineSetter__",
+                2,
+                null,
+                NativeObject::js_defineSetter,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "hasOwnProperty",
+                1,
+                null,
+                NativeObject::js_hasOwnProperty,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "propertyIsEnumerable",
+                1,
+                null,
+                NativeObject::js_propertyIsEnumerable,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope, "valueOf", 0, null, NativeObject::js_valueOf, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "isPrototypeOf",
+                1,
+                null,
+                NativeObject::js_isPrototypeOf,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "toSource",
+                0,
+                null,
+                ScriptRuntime::defaultObjectToSource,
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
     }
 
     @Override
@@ -44,200 +286,19 @@ public class NativeObject extends IdScriptableObject implements Map {
         return ScriptRuntime.defaultObjectToString(this);
     }
 
-    @SuppressWarnings("resource")
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor) {
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf, "getPrototypeOf", 1);
-        if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
-            addIdFunctionProperty(
-                    ctor, OBJECT_TAG, ConstructorId_setPrototypeOf, "setPrototypeOf", 2);
-            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_entries, "entries", 1);
-            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_fromEntries, "fromEntries", 1);
-            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_values, "values", 1);
-            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_hasOwn, "hasOwn", 1);
+    private static Scriptable js_constructorCall(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
+            return cx.newObject(scope);
         }
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
-        addIdFunctionProperty(
-                ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1);
-        addIdFunctionProperty(
-                ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1);
-        addIdFunctionProperty(
-                ctor,
-                OBJECT_TAG,
-                ConstructorId_getOwnPropertyDescriptor,
-                "getOwnPropertyDescriptor",
-                2);
-        addIdFunctionProperty(
-                ctor,
-                OBJECT_TAG,
-                ConstructorId_getOwnPropertyDescriptors,
-                "getOwnPropertyDescriptors",
-                1);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty, "defineProperty", 3);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible, "isExtensible", 1);
-        addIdFunctionProperty(
-                ctor, OBJECT_TAG, ConstructorId_preventExtensions, "preventExtensions", 1);
-        addIdFunctionProperty(
-                ctor, OBJECT_TAG, ConstructorId_defineProperties, "defineProperties", 2);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_create, "create", 2);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isSealed, "isSealed", 1);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isFrozen, "isFrozen", 1);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_seal, "seal", 1);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze, "freeze", 1);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign, "assign", 2);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is, "is", 2);
-        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_groupBy, "groupBy", 2);
-        super.fillConstructorProperties(ctor);
+        return ScriptRuntime.toObject(cx, scope, args[0]);
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        String s;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 1;
-                s = "constructor";
-                break;
-            case Id_toString:
-                arity = 0;
-                s = "toString";
-                break;
-            case Id_toLocaleString:
-                arity = 0;
-                s = "toLocaleString";
-                break;
-            case Id_valueOf:
-                arity = 0;
-                s = "valueOf";
-                break;
-            case Id_hasOwnProperty:
-                arity = 1;
-                s = "hasOwnProperty";
-                break;
-            case Id_propertyIsEnumerable:
-                arity = 1;
-                s = "propertyIsEnumerable";
-                break;
-            case Id_isPrototypeOf:
-                arity = 1;
-                s = "isPrototypeOf";
-                break;
-            case Id_toSource:
-                arity = 0;
-                s = "toSource";
-                break;
-            case Id___defineGetter__:
-                arity = 2;
-                s = "__defineGetter__";
-                break;
-            case Id___defineSetter__:
-                arity = 2;
-                s = "__defineSetter__";
-                break;
-            case Id___lookupGetter__:
-                arity = 1;
-                s = "__lookupGetter__";
-                break;
-            case Id___lookupSetter__:
-                arity = 1;
-                s = "__lookupSetter__";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
+    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+        if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
+            return cx.newObject(scope);
         }
-        initPrototypeMethod(OBJECT_TAG, id, s, arity);
-    }
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(OBJECT_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-        switch (id) {
-            case Id_constructor:
-                {
-                    if (thisObj != null) {
-                        // BaseFunction.construct will set up parent, proto
-                        return f.construct(cx, scope, args);
-                    }
-                    if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
-                        return cx.newObject(scope);
-                    }
-                    return ScriptRuntime.toObject(cx, scope, args[0]);
-                }
-
-            case Id_toLocaleString:
-                return js_toLocaleString(cx, scope, thisObj, args);
-            case Id_toString:
-                return js_toString(cx, scope, thisObj, args);
-            case Id_valueOf:
-                return js_valueOf(cx, scope, thisObj, args);
-            case Id_hasOwnProperty:
-                return js_hasOwnProperty(cx, scope, thisObj, args);
-            case Id_propertyIsEnumerable:
-                return js_propertyIsEnumerable(cx, scope, thisObj, args);
-            case Id_isPrototypeOf:
-                return js_isPrototypeOf(cx, scope, thisObj, args);
-            case Id_toSource:
-                return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
-            case Id___defineGetter__:
-            case Id___defineSetter__:
-                return js_defineGetterOrSetter(cx, scope, id == Id___defineSetter__, thisObj, args);
-            case Id___lookupGetter__:
-            case Id___lookupSetter__:
-                return js_lookupGetterOrSetter(cx, scope, id == Id___lookupSetter__, thisObj, args);
-            case ConstructorId_getPrototypeOf:
-                return js_getPrototypeOf(cx, scope, thisObj, args);
-            case ConstructorId_setPrototypeOf:
-                return js_setPrototypeOf(cx, scope, thisObj, args);
-            case ConstructorId_keys:
-                return js_keys(cx, scope, thisObj, args);
-            case ConstructorId_entries:
-                return js_entries(cx, scope, thisObj, args);
-            case ConstructorId_fromEntries:
-                return js_fromEntries(cx, scope, thisObj, args);
-            case ConstructorId_values:
-                return js_values(cx, scope, thisObj, args);
-            case ConstructorId_hasOwn:
-                return js_hasOwn(cx, scope, thisObj, args);
-            case ConstructorId_getOwnPropertyNames:
-                return js_getOwnPropertyNames(cx, scope, thisObj, args);
-            case ConstructorId_getOwnPropertySymbols:
-                return js_getOwnPropertySymbols(cx, scope, thisObj, args);
-            case ConstructorId_getOwnPropertyDescriptor:
-                return js_getOwnPropertyDescriptor(cx, scope, thisObj, args);
-            case ConstructorId_getOwnPropertyDescriptors:
-                return js_getOwnPropertyDescriptors(cx, scope, thisObj, args);
-            case ConstructorId_defineProperty:
-                return js_defineProperty(cx, scope, thisObj, args);
-            case ConstructorId_isExtensible:
-                return js_isExtensible(cx, scope, thisObj, args);
-            case ConstructorId_preventExtensions:
-                return js_preventExtensions(cx, scope, thisObj, args);
-            case ConstructorId_defineProperties:
-                return js_defineProperties(cx, scope, thisObj, args);
-            case ConstructorId_create:
-                return js_create(cx, scope, thisObj, args);
-            case ConstructorId_isSealed:
-                return js_isSealed(cx, scope, thisObj, args);
-            case ConstructorId_isFrozen:
-                return js_isFrozen(cx, scope, thisObj, args);
-            case ConstructorId_seal:
-                return js_seal(cx, scope, thisObj, args);
-            case ConstructorId_freeze:
-                return js_freeze(cx, scope, thisObj, args);
-            case ConstructorId_assign:
-                return js_assign(cx, scope, thisObj, args);
-            case ConstructorId_is:
-                return js_is(cx, scope, thisObj, args);
-            case ConstructorId_groupBy:
-                return js_groupBy(cx, scope, thisObj, args);
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
+        return ScriptRuntime.toObject(cx, scope, args[0]);
     }
 
     private static Object js_toLocaleString(
@@ -359,6 +420,16 @@ public class NativeObject extends IdScriptableObject implements Map {
         return ScriptRuntime.wrapBoolean(result);
     }
 
+    private static Object js_defineGetter(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_defineGetterOrSetter(cx, scope, false, thisObj, args);
+    }
+
+    private static Object js_defineSetter(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_defineGetterOrSetter(cx, scope, true, thisObj, args);
+    }
+
     private static Object js_defineGetterOrSetter(
             Context cx, Scriptable scope, boolean isSetter, Scriptable thisObj, Object[] args) {
         if (args.length < 2 || !(args[1] instanceof Callable)) {
@@ -379,6 +450,16 @@ public class NativeObject extends IdScriptableObject implements Map {
         if (so instanceof NativeArray) ((NativeArray) so).setDenseOnly(false);
 
         return Undefined.instance;
+    }
+
+    private static Object js_lookupGetter(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_lookupGetterOrSetter(cx, scope, false, thisObj, args);
+    }
+
+    private static Object js_lookupSetter(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_lookupGetterOrSetter(cx, scope, true, thisObj, args);
     }
 
     private static Object js_lookupGetterOrSetter(
@@ -1070,53 +1151,6 @@ public class NativeObject extends IdScriptableObject implements Map {
         public int size() {
             return NativeObject.this.size();
         }
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "toString":
-                id = Id_toString;
-                break;
-            case "toLocaleString":
-                id = Id_toLocaleString;
-                break;
-            case "valueOf":
-                id = Id_valueOf;
-                break;
-            case "hasOwnProperty":
-                id = Id_hasOwnProperty;
-                break;
-            case "propertyIsEnumerable":
-                id = Id_propertyIsEnumerable;
-                break;
-            case "isPrototypeOf":
-                id = Id_isPrototypeOf;
-                break;
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "__defineGetter__":
-                id = Id___defineGetter__;
-                break;
-            case "__defineSetter__":
-                id = Id___defineSetter__;
-                break;
-            case "__lookupGetter__":
-                id = Id___lookupGetter__;
-                break;
-            case "__lookupSetter__":
-                id = Id___lookupSetter__;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
     }
 
     private static final int ConstructorId_getPrototypeOf = -1,
