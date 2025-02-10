@@ -38,6 +38,30 @@ public class LambdaFunction extends BaseFunction {
         setupDefaultPrototype();
     }
 
+    /**
+     * Create a new function. The new object will have the Function prototype and no parent. The
+     * caller is responsible for binding this object to the appropriate scope.
+     *
+     * @param scope scope of the calling context
+     * @param name name of the function
+     * @param length the arity of the function
+     * @param prototype prototype to set for this function
+     * @param target an object that implements the function in Java. Since Callable is a
+     *     single-function interface this will typically be implemented as a lambda.
+     */
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target) {
+        this.target = target;
+        this.name = name;
+        this.length = length;
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
+        setPrototypeProperty(prototype);
+    }
+
     /** Create a new built-in function, with no name, and no default prototype. */
     public LambdaFunction(Scriptable scope, int length, SerializableCallable target) {
         this.target = target;
