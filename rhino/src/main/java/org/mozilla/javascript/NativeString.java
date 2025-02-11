@@ -28,14 +28,43 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  * @author Norris Boyd
  * @author Ronald Brill
  */
-final class NativeString extends IdScriptableObject {
+final class NativeString extends ScriptableObject {
     private static final long serialVersionUID = 920268368584188687L;
 
-    private static final Object STRING_TAG = "String";
+    private static final String CLASS_NAME = "String";
+
+    private final CharSequence string;
 
     static void init(Scriptable scope, boolean sealed) {
-        NativeString obj = new NativeString("");
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        LambdaConstructor c =
+                new LambdaConstructor(scope, CLASS_NAME, 1,
+                        NativeString::js_constructorFunc,
+                        NativeString::js_constructor);
+        c.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+
+        c.defineConstructorMethod(scope, "fromCharCode", 1,
+            NativeString::js_fromCharCode, ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "fromCodePoint", 1,
+                NativeString::js_fromCodePoint, ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "raw", 1,
+                NativeString::js_raw, ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "charAt", 1,
+                wrapConstructor(NativeString::js_charAt), ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "charCodeAt", 1,
+                wrapConstructor(NativeString::js_charCodeAt), ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "indexOf", 2,
+                wrapConstructor(NativeString::js_indexOf), ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "lastIndexOf", 2,
+                wrapConstructor(NativeString::js_lastIndexOf), ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "split", 3,
+                wrapConstructor(NativeString::js_split), ScriptableObject.DONTENUM);
+        c.defineConstructorMethod(scope, "substring", 3,
+                wrapConstructor(NativeString::js_substring), ScriptableObject.DONTENUM);
+
+        if (sealed) {
+            c.sealObject();
+        }
+        ScriptableObject.defineProperty(scope, CLASS_NAME, c, DONTENUM);
     }
 
     NativeString(CharSequence s) {
@@ -44,51 +73,138 @@ final class NativeString extends IdScriptableObject {
 
     @Override
     public String getClassName() {
-        return "String";
+        return CLASS_NAME;
     }
 
-    private static final int Id_length = 1, MAX_INSTANCE_ID = 1;
-
-    @Override
-    protected int getMaxInstanceId() {
-        return MAX_INSTANCE_ID;
+    private static SerializableCallable wrapConstructor(SerializableCallable target) {
+        return (Context cx, Scriptable scope, Scriptable origThis, Object[] origArgs) -> {
+            Scriptable thisObj;
+            Object[] newArgs;
+            if (origArgs.length > 0) {
+                thisObj =
+                        ScriptRuntime.toObject(
+                                cx, scope, ScriptRuntime.toCharSequence(origArgs[0]));
+                newArgs = new Object[origArgs.length - 1];
+                System.arraycopy(origArgs, 1, newArgs, 0, newArgs.length);
+            } else {
+                thisObj =
+                        ScriptRuntime.toObject(
+                                cx, scope, ScriptRuntime.toCharSequence(origThis));
+                newArgs = origArgs;
+            }
+            return target.call(cx, scope, thisObj, newArgs);
+        };
     }
 
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        if (s.equals("length")) {
-            return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
+    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+        CharSequence s;
+        if (args.length == 0) {
+            s = "";
+        } else {
+            s = ScriptRuntime.toCharSequence(args[0]);
         }
-        return super.findInstanceIdInfo(s);
+        NativeString obj = new NativeString(s);
+        obj.defineProperty("length",
+                s::length, null, DONTENUM | READONLY | PERMANENT);
+        return obj;
     }
 
-    @Override
-    protected String getInstanceIdName(int id) {
-        if (id == Id_length) {
-            return "length";
+    private static Object js_constructorFunc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        CharSequence s;
+        if (args.length == 0) {
+            s = "";
+        } else if (ScriptRuntime.isSymbol(args[0])) {
+            // 19.4.3.2 et.al. Convert a symbol to a string with String() but not
+            // new String()
+            s = args[0].toString();
+        } else {
+            s = ScriptRuntime.toCharSequence(args[0]);
         }
-        return super.getInstanceIdName(id);
+        // String(val) converts val to a string value.
+        return s instanceof String ? s : s.toString();
     }
 
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        if (id == Id_length) {
-            return ScriptRuntime.wrapInt(string.length());
+    private static Object js_fromCharCode(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        int n = args.length;
+        if (n < 1) {
+            return "";
         }
-        return super.getInstanceIdValue(id);
+        char[] chars = new char[n];
+        for (int i = 0; i != n; ++i) {
+            chars[i] = ScriptRuntime.toUint16(args[i]);
+        }
+        return new String(chars);
     }
 
-    @Override
+    private static Object js_fromCodePoint(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        int n = args.length;
+        if (n < 1) {
+            return "";
+        }
+        int[] codePoints = new int[n];
+        for (int i = 0; i != n; i++) {
+            Object arg = args[i];
+            int codePoint = ScriptRuntime.toInt32(arg);
+            double num = ScriptRuntime.toNumber(arg);
+            if (!ScriptRuntime.eqNumber(num, codePoint)
+                    || !Character.isValidCodePoint(codePoint)) {
+                throw rangeError(
+                        "Invalid code point " + ScriptRuntime.toString(arg));
+            }
+            codePoints[i] = codePoint;
+        }
+        return new String(codePoints, 0, n);
+    }
+
+    private static Object js_charAt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return charAt(cx, thisObj, args, false);
+    }
+
+    private static Object js_charCodeAt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return charAt(cx, thisObj, args, true);
+    }
+
+    private static Object charAt(Context cx, Scriptable thisObj, Object[] args, boolean getCode) {
+        // See ECMA 15.5.4.[4,5]
+        CharSequence target =
+                ScriptRuntime.toCharSequence(
+                        requireObjectCoercible(cx, thisObj, f));
+        double pos = ScriptRuntime.toInteger(args, 0);
+        if (pos < 0 || pos >= target.length()) {
+            if (!getCode) return "";
+            return ScriptRuntime.NaNobj;
+        }
+        char c = target.charAt((int) pos);
+        if (!getCode) return String.valueOf(c);
+        return ScriptRuntime.wrapInt(c);
+    }
+
+    private static Object js_indexOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        String target =
+                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+        String searchStr = ScriptRuntime.toString(args, 0);
+        double position = ScriptRuntime.toInteger(args, 1);
+
+        if (searchStr.isEmpty()) {
+            return position > target.length() ? target.length() : (int) position;
+        }
+        if (position > target.length()) {
+            return -1;
+        }
+        if (position < 0) position = 0;
+        else if (position > target.length()) position = target.length();
+        return target.indexOf(searchStr, (int) position);
+    }
+
+    private static Object js_split(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        String thisStr =
+                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+        return ScriptRuntime.checkRegExpProxy(cx)
+                .js_split(cx, scope, thisStr, args);
+    }
+
+        @Override
     protected void fillConstructorProperties(IdFunctionObject ctor) {
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode, "fromCharCode", 1);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCodePoint, "fromCodePoint", 1);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_raw, "raw", 1);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charAt, "charAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charCodeAt, "charCodeAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_indexOf, "indexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_lastIndexOf, "lastIndexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_split, "split", 3);
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_substring, "substring", 3);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toLowerCase, "toLowerCase", 1);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toUpperCase, "toUpperCase", 1);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_substr, "substr", 3);
@@ -367,54 +483,19 @@ final class NativeString extends IdScriptableObject {
                 case ConstructorId_localeCompare:
                 case ConstructorId_toLocaleLowerCase:
                     {
-                        if (args.length > 0) {
-                            thisObj =
-                                    ScriptRuntime.toObject(
-                                            cx, scope, ScriptRuntime.toCharSequence(args[0]));
-                            Object[] newArgs = new Object[args.length - 1];
-                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
-                            args = newArgs;
-                        } else {
-                            thisObj =
-                                    ScriptRuntime.toObject(
-                                            cx, scope, ScriptRuntime.toCharSequence(thisObj));
-                        }
+
                         id = -id;
                         continue again;
                     }
 
                 case ConstructorId_fromCodePoint:
                     {
-                        int n = args.length;
-                        if (n < 1) {
-                            return "";
-                        }
-                        int[] codePoints = new int[n];
-                        for (int i = 0; i != n; i++) {
-                            Object arg = args[i];
-                            int codePoint = ScriptRuntime.toInt32(arg);
-                            double num = ScriptRuntime.toNumber(arg);
-                            if (!ScriptRuntime.eqNumber(num, Integer.valueOf(codePoint))
-                                    || !Character.isValidCodePoint(codePoint)) {
-                                throw rangeError(
-                                        "Invalid code point " + ScriptRuntime.toString(arg));
-                            }
-                            codePoints[i] = codePoint;
-                        }
-                        return new String(codePoints, 0, n);
+
                     }
 
                 case ConstructorId_fromCharCode:
                     {
-                        int n = args.length;
-                        if (n < 1) {
-                            return "";
-                        }
-                        char[] chars = new char[n];
-                        for (int i = 0; i != n; ++i) {
-                            chars[i] = ScriptRuntime.toUint16(args[i]);
-                        }
-                        return new String(chars);
+
                     }
 
                 case ConstructorId_raw:
@@ -422,22 +503,7 @@ final class NativeString extends IdScriptableObject {
 
                 case Id_constructor:
                     {
-                        CharSequence s;
-                        if (args.length == 0) {
-                            s = "";
-                        } else if (ScriptRuntime.isSymbol(args[0]) && (thisObj != null)) {
-                            // 19.4.3.2 et.al. Convert a symbol to a string with String() but not
-                            // new String()
-                            s = args[0].toString();
-                        } else {
-                            s = ScriptRuntime.toCharSequence(args[0]);
-                        }
-                        if (thisObj == null) {
-                            // new String(val) creates a new String object.
-                            return new NativeString(s);
-                        }
-                        // String(val) converts val to a string value.
-                        return s instanceof String ? s : s.toString();
+
                     }
 
                 case Id_toString:
@@ -455,26 +521,12 @@ final class NativeString extends IdScriptableObject {
                 case Id_charAt:
                 case Id_charCodeAt:
                     {
-                        // See ECMA 15.5.4.[4,5]
-                        CharSequence target =
-                                ScriptRuntime.toCharSequence(
-                                        requireObjectCoercible(cx, thisObj, f));
-                        double pos = ScriptRuntime.toInteger(args, 0);
-                        if (pos < 0 || pos >= target.length()) {
-                            if (id == Id_charAt) return "";
-                            return ScriptRuntime.NaNobj;
-                        }
-                        char c = target.charAt((int) pos);
-                        if (id == Id_charAt) return String.valueOf(c);
-                        return ScriptRuntime.wrapInt(c);
+
                     }
 
                 case Id_indexOf:
                     {
-                        String thisString =
-                                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return ScriptRuntime.wrapInt(js_indexOf(Id_indexOf, thisString, args));
-                    }
+                         }
 
                 case Id_includes:
                 case Id_startsWith:
@@ -524,10 +576,7 @@ final class NativeString extends IdScriptableObject {
 
                 case Id_split:
                     {
-                        String thisStr =
-                                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return ScriptRuntime.checkRegExpProxy(cx)
-                                .js_split(cx, scope, thisStr, args);
+
                     }
 
                 case Id_substring:
@@ -1124,7 +1173,9 @@ final class NativeString extends IdScriptableObject {
      * See ECMA 15.5.4.7
      *
      */
-    private static int js_lastIndexOf(String target, Object[] args) {
+    private static Object js_lastIndexOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        String target =
+                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
         String search = ScriptRuntime.toString(args, 0);
         double end = ScriptRuntime.toNumber(args, 1);
 
@@ -1137,8 +1188,10 @@ final class NativeString extends IdScriptableObject {
     /*
      * See ECMA 15.5.4.15
      */
-    private static CharSequence js_substring(Context cx, CharSequence target, Object[] args) {
-        int length = target.length();
+    private static Object js_substring(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        CharSequence target =
+                ScriptRuntime.toCharSequence(
+                        requireObjectCoercible(cx, thisObj, f));int length = target.length();
         double start = ScriptRuntime.toInteger(args, 0);
         double end;
 
@@ -1350,7 +1403,7 @@ final class NativeString extends IdScriptableObject {
      *
      * <p>22.1.2.4 String.raw [Draft ECMA-262 / April 28, 2021]
      */
-    private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
+    private static Object js_raw(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         /* step 1-2 */
         Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
         Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
@@ -1637,6 +1690,4 @@ final class NativeString extends IdScriptableObject {
             ConstructorId_replaceAll = -Id_replaceAll,
             ConstructorId_localeCompare = -Id_localeCompare,
             ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
-
-    private CharSequence string;
 }
