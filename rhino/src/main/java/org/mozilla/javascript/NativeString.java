@@ -44,6 +44,7 @@ final class NativeString extends ScriptableObject {
                         NativeString::js_constructorFunc,
                         NativeString::js_constructor);
         c.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        c.setPrototypeScriptable(new NativeString(""));
 
         c.defineConstructorMethod(
                 scope, "fromCharCode", 1, NativeString::js_fromCharCode, DONTENUM);
@@ -226,7 +227,7 @@ final class NativeString extends ScriptableObject {
         c.definePrototypeMethod(
                 scope,
                 "replace",
-                1,
+                2,
                 NativeString::js_replace,
                 DONTENUM,
                 DONTENUM | READONLY,
@@ -234,7 +235,7 @@ final class NativeString extends ScriptableObject {
         c.definePrototypeMethod(
                 scope,
                 "replaceAll",
-                1,
+                2,
                 NativeString::js_replaceAll,
                 DONTENUM,
                 DONTENUM | READONLY,
@@ -318,6 +319,9 @@ final class NativeString extends ScriptableObject {
 
     NativeString(CharSequence s) {
         string = s;
+        // This needs to happen right here because ScriptRuntime sometimes
+        // constructs strings directly without using the JS constructor.
+        defineProperty("length", s::length, null, DONTENUM | READONLY | PERMANENT);
     }
 
     @Override
@@ -350,9 +354,7 @@ final class NativeString extends ScriptableObject {
         } else {
             s = ScriptRuntime.toCharSequence(args[0]);
         }
-        NativeString obj = new NativeString(s);
-        obj.defineProperty("length", s::length, null, DONTENUM | READONLY | PERMANENT);
-        return obj;
+        return new NativeString(s);
     }
 
     private static Object js_constructorFunc(
@@ -428,7 +430,10 @@ final class NativeString extends ScriptableObject {
         return ScriptRuntime.wrapInt(c);
     }
 
-    private static int indexOf(String target, Object[] args) {
+    private static Object js_indexOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        String target =
+                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "indexOf"));
         String searchStr = ScriptRuntime.toString(args, 0);
         double position = ScriptRuntime.toInteger(args, 1);
 
@@ -439,15 +444,7 @@ final class NativeString extends ScriptableObject {
             return -1;
         }
         if (position < 0) position = 0;
-        else if (position > target.length()) position = target.length();
         return target.indexOf(searchStr, (int) position);
-    }
-
-    private static Object js_indexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        String target =
-                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "indexOf"));
-        return indexOf(target, args);
     }
 
     private static Object js_startsWith(
@@ -485,11 +482,6 @@ final class NativeString extends ScriptableObject {
         String searchStr = ScriptRuntime.toString(args, 0);
         checkValidRegex(cx, args, 0, "includes");
         int position = (int) ScriptRuntime.toInteger(args, 1);
-        if (position < 0) position = 0;
-        if (position > target.length()) position = target.length();
-        if (searchStr.isEmpty()) {
-            return position < target.length();
-        }
         return target.indexOf(searchStr, position) != -1;
     }
 
@@ -1214,12 +1206,12 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_padStart(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return pad(cx, thisObj, "padStart", args, false);
+        return pad(cx, thisObj, "padStart", args, true);
     }
 
     private static Object js_padEnd(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return pad(cx, thisObj, "padEnd", args, true);
+        return pad(cx, thisObj, "padEnd", args, false);
     }
 
     /**
