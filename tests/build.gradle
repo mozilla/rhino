@@ -60,6 +60,13 @@ test {
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
     }
 
+    System.properties.each { k,v->
+        if (k.startsWith("rhino.")) {
+            systemProperty k, v
+        }
+    }
+
+
     jacoco {
         // These particular tests produce Jacoco exceptions because of their size
         excludes = ['**perlstress**', '**start_unicode**']
