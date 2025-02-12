@@ -31,8 +31,12 @@ public class LambdaFunction extends BaseFunction {
      *     single-function interface this will typically be implemented as a lambda.
      * @param defaultPrototype set up a prototype on the new function
      */
-    public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target,
-                          boolean defaultPrototype) {
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            boolean defaultPrototype) {
         this.target = target;
         this.name = name;
         this.length = length;

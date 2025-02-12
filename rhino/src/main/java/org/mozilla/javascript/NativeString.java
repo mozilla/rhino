@@ -50,6 +50,11 @@ final class NativeString extends ScriptableObject {
         c.defineConstructorMethod(
                 scope, "fromCodePoint", 1, NativeString::js_fromCodePoint, DONTENUM);
         c.defineConstructorMethod(scope, "raw", 1, NativeString::js_raw, DONTENUM);
+
+        /*
+         * All of the methods below are on the constructor for compatibility with ancient Rhino
+         * versions. They are no longer part of ECMAScript.
+         */
         c.defineConstructorMethod(
                 scope, "charAt", 1, wrapConstructor(NativeString::js_charAt), DONTENUM);
         c.defineConstructorMethod(
@@ -99,6 +104,7 @@ final class NativeString extends ScriptableObject {
                 wrapConstructor(NativeString::js_toLocaleLowerCase),
                 DONTENUM);
 
+        /* Back to prototype methods -- these are all part of ECMAScript */
         c.definePrototypeMethod(
                 scope,
                 SymbolKey.ITERATOR,
@@ -115,34 +121,55 @@ final class NativeString extends ScriptableObject {
         c.definePrototypeMethod(
                 scope, "charAt", 1, NativeString::js_charAt, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "charCodeAt", 1, NativeString::js_charCodeAt, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "charCodeAt",
+                1,
+                NativeString::js_charCodeAt,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
-                scope, "indexOf", 1, NativeString::js_indexOf, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "indexOf",
+                1,
+                NativeString::js_indexOf,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope,
                 "lastIndexOf",
                 1,
                 NativeString::js_lastIndexOf,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope, "split", 2, NativeString::js_split, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "substring", 2, NativeString::js_substring, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "substring",
+                2,
+                NativeString::js_substring,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope,
                 "toLowerCase",
                 0,
                 NativeString::js_toLowerCase,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope,
                 "toUpperCase",
                 0,
                 NativeString::js_toUpperCase,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope, "substr", 2, NativeString::js_substr, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
@@ -187,13 +214,31 @@ final class NativeString extends ScriptableObject {
         c.definePrototypeMethod(
                 scope, "match", 1, NativeString::js_match, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "matchAll", 1, NativeString::js_matchAll, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "matchAll",
+                1,
+                NativeString::js_matchAll,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope, "search", 1, NativeString::js_search, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "replace", 1, NativeString::js_replace, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "replace",
+                1,
+                NativeString::js_replace,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
-                scope, "replaceAll", 1, NativeString::js_replaceAll, DONTENUM, DONTENUM | READONLY, false);
+                scope,
+                "replaceAll",
+                1,
+                NativeString::js_replaceAll,
+                DONTENUM,
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(scope, "at", 1, NativeString::js_at, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
                 scope,
@@ -201,21 +246,24 @@ final class NativeString extends ScriptableObject {
                 1,
                 NativeString::js_localeCompare,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope,
                 "toLocaleLowerCase",
                 0,
                 NativeString::js_toLocaleLowerCase,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope,
                 "toLocaleUpperCase",
                 0,
                 NativeString::js_toLocaleUpperCase,
                 DONTENUM,
-                DONTENUM | READONLY, false);
+                DONTENUM | READONLY,
+                false);
         c.definePrototypeMethod(
                 scope, "trim", 0, NativeString::js_trim, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
@@ -423,11 +471,10 @@ final class NativeString extends ScriptableObject {
         String searchStr = ScriptRuntime.toString(args, 0);
         double position = ScriptRuntime.toInteger(args, 1);
         if (position < 0) position = 0;
-        else if (position > target.length()) position = target.length();
-        else if (Double.isNaN(position) || position > target.length())
-            position = target.length();
-        if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance))
-                position = target.length();
+        else if (Double.isNaN(position) || position > target.length()) position = target.length();
+        if (args.length == 0
+                || args.length == 1
+                || (args.length == 2 && Undefined.isUndefined(args[1]))) position = target.length();
         return target.substring(0, (int) position).endsWith(searchStr);
     }
 
@@ -435,18 +482,15 @@ final class NativeString extends ScriptableObject {
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "includes"));
-        checkValidRegex(cx, args, 0, "includes");
         String searchStr = ScriptRuntime.toString(args, 0);
-        double position = ScriptRuntime.toInteger(args, 1);
-        if (searchStr.isEmpty()) {
-            return position > target.length() ? target.length() : (int) position;
-        }
-        if (position > target.length()) {
-            return -1;
-        }
+        checkValidRegex(cx, args, 0, "includes");
+        int position = (int) ScriptRuntime.toInteger(args, 1);
         if (position < 0) position = 0;
-        else if (position > target.length()) position = target.length();
-        return target.indexOf(searchStr, (int) position) != 1;
+        if (position > target.length()) position = target.length();
+        if (searchStr.isEmpty()) {
+            return position < target.length();
+        }
+        return target.indexOf(searchStr, position) != -1;
     }
 
     private static void checkValidRegex(Context cx, Object[] args, int pos, String functionName) {
