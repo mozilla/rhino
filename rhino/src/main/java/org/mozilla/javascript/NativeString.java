@@ -113,42 +113,42 @@ final class NativeString extends ScriptableObject {
         c.definePrototypeMethod(
                 scope, "valueOf", 0, NativeString::js_toString, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
-                scope, "charAt", 1, NativeString::js_charAt, DONTENUM, DONTENUM | READONLY);
+                scope, "charAt", 1, NativeString::js_charAt, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "charCodeAt", 1, NativeString::js_charCodeAt, DONTENUM, DONTENUM | READONLY);
+                scope, "charCodeAt", 1, NativeString::js_charCodeAt, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "indexOf", 1, NativeString::js_indexOf, DONTENUM, DONTENUM | READONLY);
+                scope, "indexOf", 1, NativeString::js_indexOf, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope,
                 "lastIndexOf",
                 1,
                 NativeString::js_lastIndexOf,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "split", 2, NativeString::js_split, DONTENUM, DONTENUM | READONLY);
+                scope, "split", 2, NativeString::js_split, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "substring", 2, NativeString::js_substring, DONTENUM, DONTENUM | READONLY);
+                scope, "substring", 2, NativeString::js_substring, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope,
                 "toLowerCase",
                 0,
                 NativeString::js_toLowerCase,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope,
                 "toUpperCase",
                 0,
                 NativeString::js_toUpperCase,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "substr", 2, NativeString::js_substr, DONTENUM, DONTENUM | READONLY);
+                scope, "substr", 2, NativeString::js_substr, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "concat", 1, NativeString::js_concat, DONTENUM, DONTENUM | READONLY);
+                scope, "concat", 1, NativeString::js_concat, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "slice", 2, NativeString::js_slice, DONTENUM, DONTENUM | READONLY);
+                scope, "slice", 2, NativeString::js_slice, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope, "bold", 0, NativeString::js_bold, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
@@ -185,15 +185,15 @@ final class NativeString extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
         c.definePrototypeMethod(
-                scope, "match", 1, NativeString::js_match, DONTENUM, DONTENUM | READONLY);
+                scope, "match", 1, NativeString::js_match, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "matchAll", 1, NativeString::js_matchAll, DONTENUM, DONTENUM | READONLY);
+                scope, "matchAll", 1, NativeString::js_matchAll, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "search", 1, NativeString::js_search, DONTENUM, DONTENUM | READONLY);
+                scope, "search", 1, NativeString::js_search, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "replace", 1, NativeString::js_replace, DONTENUM, DONTENUM | READONLY);
+                scope, "replace", 1, NativeString::js_replace, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(
-                scope, "replaceAll", 1, NativeString::js_replaceAll, DONTENUM, DONTENUM | READONLY);
+                scope, "replaceAll", 1, NativeString::js_replaceAll, DONTENUM, DONTENUM | READONLY, false);
         c.definePrototypeMethod(scope, "at", 1, NativeString::js_at, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
                 scope,
@@ -201,21 +201,21 @@ final class NativeString extends ScriptableObject {
                 1,
                 NativeString::js_localeCompare,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope,
                 "toLocaleLowerCase",
                 0,
                 NativeString::js_toLocaleLowerCase,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope,
                 "toLocaleUpperCase",
                 0,
                 NativeString::js_toLocaleUpperCase,
                 DONTENUM,
-                DONTENUM | READONLY);
+                DONTENUM | READONLY, false);
         c.definePrototypeMethod(
                 scope, "trim", 0, NativeString::js_trim, DONTENUM, DONTENUM | READONLY);
         c.definePrototypeMethod(
@@ -402,23 +402,17 @@ final class NativeString extends ScriptableObject {
         return indexOf(target, args);
     }
 
-    private static Object js_includes(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        String target =
-                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "includes"));
-        checkValidRegex(cx, args, 0, "includes");
-        int idx = indexOf(target, args);
-        return idx != -1;
-    }
-
     private static Object js_startsWith(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "startsWith"));
         checkValidRegex(cx, args, 0, "startsWith");
-        int idx = indexOf(target, args);
-        return idx == 0;
+        String searchStr = ScriptRuntime.toString(args, 0);
+        double position = ScriptRuntime.toInteger(args, 1);
+        if (position < 0) position = 0;
+        else if (position > target.length()) position = target.length();
+        return target.startsWith(searchStr, (int) position);
     }
 
     private static Object js_endsWith(
@@ -426,8 +420,33 @@ final class NativeString extends ScriptableObject {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "endsWith"));
         checkValidRegex(cx, args, 0, "endsWith");
-        int idx = indexOf(target, args);
-        return idx != -1;
+        String searchStr = ScriptRuntime.toString(args, 0);
+        double position = ScriptRuntime.toInteger(args, 1);
+        if (position < 0) position = 0;
+        else if (position > target.length()) position = target.length();
+        else if (Double.isNaN(position) || position > target.length())
+            position = target.length();
+        if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance))
+                position = target.length();
+        return target.substring(0, (int) position).endsWith(searchStr);
+    }
+
+    private static Object js_includes(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        String target =
+                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "includes"));
+        checkValidRegex(cx, args, 0, "includes");
+        String searchStr = ScriptRuntime.toString(args, 0);
+        double position = ScriptRuntime.toInteger(args, 1);
+        if (searchStr.isEmpty()) {
+            return position > target.length() ? target.length() : (int) position;
+        }
+        if (position > target.length()) {
+            return -1;
+        }
+        if (position < 0) position = 0;
+        else if (position > target.length()) position = target.length();
+        return target.indexOf(searchStr, (int) position) != 1;
     }
 
     private static void checkValidRegex(Context cx, Object[] args, int pos, String functionName) {
