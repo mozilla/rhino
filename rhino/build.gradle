@@ -6,6 +6,12 @@ dependencies {
     testImplementation project(':testutils')
 }
 
+test {
+    systemProperty 'user.language', 'en'
+    systemProperty 'user.country', 'US'
+    systemProperty 'user.timezone', 'America/Los_Angeles'
+}
+
 publishing {
     publications {
         rhino(MavenPublication) {
