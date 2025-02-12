@@ -233,6 +233,7 @@ public final class Interpreter extends Icode implements Evaluator {
             if (length > stack.length) {
                 stack = Arrays.copyOf(stack, length);
                 sDbl = Arrays.copyOf(sDbl, length);
+                stackAttributes = Arrays.copyOf(stackAttributes, length);
                 // TODO: adjust idata idata.itsMaxFrameArray & idata.itsMaxStack so they start with
                 // larger stacks next time? Not clear this is always a good idea.
             }
