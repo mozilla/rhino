@@ -201,7 +201,7 @@ public abstract class SlotMapOwner {
             if (owner == null) {
                 throw new IllegalStateException();
             } else {
-                var newMap = new EmbeddedSlotMap();
+                var newMap = new OrderedSlotMap();
                 owner.setMap(newMap);
                 newMap.add(owner, slot);
                 newMap.add(owner, newSlot);
@@ -211,7 +211,7 @@ public abstract class SlotMapOwner {
         @Override
         public <S extends Slot> S compute(
                 SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newMap = new EmbeddedSlotMap();
+            var newMap = new OrderedSlotMap();
             owner.setMap(newMap);
             newMap.add(owner, slot);
             return newMap.compute(owner, key, index, c);
@@ -287,7 +287,7 @@ public abstract class SlotMapOwner {
         } else if (initialSize > LARGE_HASH_SIZE) {
             return new HashSlotMap();
         } else {
-            return new EmbeddedSlotMap();
+            return new OrderedSlotMap();
         }
     }
 
