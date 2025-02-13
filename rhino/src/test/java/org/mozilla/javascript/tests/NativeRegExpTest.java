@@ -420,6 +420,30 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6("3-a-a-a", script);
     }
 
+    @Test
+    public void execStickySymbol() throws Exception {
+        final String script =
+                "var regex = /[abc]/y;\n"
+                        + "var res = regex.exec('ab-c') + '-' + regex.lastIndex + '-'\n"
+                        + "res += regex.exec('ab-c') + '-' + regex.lastIndex + '-'\n"
+                        + "res += regex.exec('ab-c') + '-' + regex.lastIndex\n"
+                        + "res;";
+
+        Utils.assertWithAllModes_ES6("a-1-b-2-null-0", script);
+    }
+
+    @Test
+    public void exeGlobalStickySymbol() throws Exception {
+        final String script =
+                "var regex = /[abc]/gy;\n"
+                        + "var res = regex.exec('ab-c') + '-' + regex.lastIndex + '-'\n"
+                        + "res += regex.exec('ab-c') + '-' + regex.lastIndex + '-'\n"
+                        + "res += regex.exec('ab-c') + '-' + regex.lastIndex\n"
+                        + "res;";
+
+        Utils.assertWithAllModes_ES6("a-1-b-2-null-0", script);
+    }
+
     /**
      * @throws Exception if an error occurs
      */
