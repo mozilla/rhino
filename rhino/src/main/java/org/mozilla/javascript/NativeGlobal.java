@@ -20,12 +20,10 @@ import org.mozilla.javascript.xml.XMLLib;
  *
  * @author Mike Shaver
  */
-public class NativeGlobal implements Serializable, IdFunctionCall {
+public class NativeGlobal implements Serializable {
     static final long serialVersionUID = 6080442165748707530L;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeGlobal obj = new NativeGlobal();
-
         defineGlobalFunction(
                 scope,
                 sealed,
@@ -117,19 +115,57 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
             }
             String name = error.name();
             Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
-            IdFunctionObject ctor =
-                    (IdFunctionObject)
-                            TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
-            ScriptableObject errorProto = NativeError.makeProto(topLevelScope, ctor);
+            Function builtinErrorCtor =
+                    TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
+            ScriptableObject errorProto = NativeError.makeProto(topLevelScope, builtinErrorCtor);
             errorProto.defineProperty("name", name, DONTENUM);
             errorProto.defineProperty("message", "", DONTENUM);
 
+            BaseFunction ctor;
+
+            // Building errors is complex because of the prototype chain requirements. This is a bit
+            // arcane, but it's a combination that makes test262 happy.
             if (error == TopLevel.NativeErrors.AggregateError) {
-                ctor = new IdFunctionObject(obj, FTAG, Id_new_AggregateError, name, 2, scope);
+                var target =
+                        new SerializableConstructable() {
+                            // We need a reference to the LambdaFunction, so we use this "lateBound"
+                            // trick. It ain't great, but it's the only idea I have.
+                            private Function lateBoundCtor;
+
+                            @Override
+                            public Scriptable construct(
+                                    Context callCx, Scriptable callScope, Object[] args) {
+                                return NativeError.makeAggregate(
+                                        callCx, callScope, lateBoundCtor, args);
+                            }
+                        };
+                ctor =
+                        new LambdaConstructor(scope, name, 2, target) {
+                            // Necessary to make the test262 case
+                            // built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js work
+                            // correctly
+                            @Override
+                            public Scriptable createObject(Context cx, Scriptable scope) {
+                                return null;
+                            }
+                        };
+                target.lateBoundCtor = ctor;
             } else {
-                ctor = new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
+                var target =
+                        new SerializableConstructable() {
+                            private Function lateBoundCtor;
+
+                            @Override
+                            public Scriptable construct(
+                                    Context callCx, Scriptable callScope, Object[] args) {
+                                return NativeError.make(callCx, callScope, lateBoundCtor, args);
+                            }
+                        };
+                ctor = new LambdaConstructor(scope, name, 1, target);
+                target.lateBoundCtor = ctor;
             }
-            ctor.markAsConstructor(errorProto);
+
+            ctor.setImmunePrototypeProperty(errorProto);
             ctor.setPrototype(nativeError);
             errorProto.put("constructor", errorProto, ctor);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
@@ -140,7 +176,8 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
             }
             ctor.setAttributes("name", DONTENUM | READONLY);
             ctor.setAttributes("length", DONTENUM | READONLY);
-            ctor.exportAsScopeProperty();
+
+            ScriptableObject.defineProperty(scope, name, ctor, DONTENUM);
         }
     }
 
@@ -173,24 +210,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 
     static boolean isEvalFunction(Object functionObj) {
         return functionObj instanceof EvalLambdaFunction;
-    }
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (f.hasTag(FTAG)) {
-            int methodId = f.methodId();
-            switch (methodId) {
-                case Id_new_CommonError:
-                    // The implementation of all the ECMA error constructors
-                    // (SyntaxError, TypeError, etc.)
-                    return NativeError.make(cx, scope, f, args);
-
-                case Id_new_AggregateError:
-                    return NativeError.makeAggregate(cx, scope, f, args);
-            }
-        }
-        throw f.unknown();
     }
 
     private static String js_uneval(Context cx, Scriptable scope, Object[] args) {
@@ -766,25 +785,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
         }
         return utf8Length;
     }
-
-    private static final Object FTAG = "Global";
-
-    private static final int Id_decodeURI = 1,
-            Id_decodeURIComponent = 2,
-            Id_encodeURI = 3,
-            Id_encodeURIComponent = 4,
-            Id_escape = 5,
-            Id_eval = 6,
-            Id_isFinite = 7,
-            Id_isNaN = 8,
-            Id_isXMLName = 9,
-            Id_parseFloat = 10,
-            Id_parseInt = 11,
-            Id_unescape = 12,
-            Id_uneval = 13,
-            LAST_SCOPE_FUNCTION_ID = 13,
-            Id_new_CommonError = 14,
-            Id_new_AggregateError = 15;
 
     /**
      * A simple subclass of {@link LambdaFunction} used to "tag" eval, so that we can recognize it
