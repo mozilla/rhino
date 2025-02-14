@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.annotations.JSConstructor;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Test cases for the {@link ScriptRuntime} support for ScriptableObject#equivalentValues(Object)

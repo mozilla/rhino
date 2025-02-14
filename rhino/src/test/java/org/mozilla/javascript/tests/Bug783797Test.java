@@ -6,7 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import static org.mozilla.javascript.tests.Utils.runWithAllModes;
+import static org.mozilla.javascript.testutils.Utils.runWithAllModes;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;

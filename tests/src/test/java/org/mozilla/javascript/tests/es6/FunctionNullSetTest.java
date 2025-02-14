@@ -9,7 +9,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Checks if setting "functionName = null" is propagated to thisObject.

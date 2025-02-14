@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript.tests;
+package org.mozilla.javascript.testutils;
 
 import static org.junit.Assert.*;
 
@@ -40,7 +40,7 @@ public class Utils {
      *
      * @param script the script code
      */
-    static void executeScript(String script, boolean interpreted) {
+    public static void executeScript(String script, boolean interpreted) {
         Utils.runWithMode(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();

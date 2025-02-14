@@ -8,7 +8,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 public class NativeFunctionTest {
 

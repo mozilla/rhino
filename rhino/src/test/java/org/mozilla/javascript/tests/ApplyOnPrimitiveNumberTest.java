@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Primitive numbers are not wrapped before calling apply. Test for bug <a

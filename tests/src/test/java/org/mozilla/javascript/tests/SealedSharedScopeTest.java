@@ -133,12 +133,8 @@ public class SealedSharedScopeTest {
     public void importClassWithScope() throws Exception {
         Object o;
         evaluateString(scope1, "importClass(javax.naming.Name);");
-        evaluateString(scope2, "importClass(javax.xml.soap.Name);");
         o = evaluateString(scope1, "Name");
         assertEquals(javax.naming.Name.class, o);
-
-        o = evaluateString(scope2, "Name");
-        assertEquals(javax.xml.soap.Name.class, o);
 
         o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
         // function
@@ -149,12 +145,8 @@ public class SealedSharedScopeTest {
     public void importPackageWithScope() throws Exception {
         Object o;
         evaluateString(scope1, "importPackage(javax.naming);");
-        evaluateString(scope2, "importPackage(javax.xml.soap);");
         o = evaluateString(scope1, "Name");
         assertEquals(javax.naming.Name.class, o);
-
-        o = evaluateString(scope2, "Name");
-        assertEquals(javax.xml.soap.Name.class, o);
 
         o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
         // function

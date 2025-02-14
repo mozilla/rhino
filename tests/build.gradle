@@ -44,6 +44,8 @@ test {
     systemProperty 'user.timezone', 'America/Los_Angeles'
     systemProperty 'file.encoding', 'UTF-8'
 
+    // Required for Junit tests
+    jvmArgs += ['--add-opens', 'org.hamcrest']
     // Required for JWT GUI tests
     jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
     // Required for some reflection tests
