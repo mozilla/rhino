@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript.regexp;
 
-import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ES6Iterator;
 import org.mozilla.javascript.ScriptRuntime;
@@ -66,7 +65,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
             return true;
         }
 
-        next = regExpExec(cx, scope);
+        next = NativeRegExp.regExpExec(regexp, string, cx, scope);
         if (next == null) {
             // Done! Point ii of the spec
             next = Undefined.instance;
@@ -93,15 +92,6 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     @Override
     protected Object nextValue(Context cx, Scriptable scope) {
         return next;
-    }
-
-    private Object regExpExec(Context cx, Scriptable scope) {
-        // See ECMAScript spec 22.2.7.1
-        Object execMethod = ScriptRuntime.getObjectProp(regexp, "exec", cx);
-        if (execMethod instanceof Callable) {
-            return ((Callable) execMethod).call(cx, scope, regexp, new Object[] {string});
-        }
-        return NativeRegExp.js_exec(cx, scope, regexp, new Object[] {string});
     }
 
     @Override

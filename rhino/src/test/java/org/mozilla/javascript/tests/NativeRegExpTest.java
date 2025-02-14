@@ -408,7 +408,7 @@ public class NativeRegExpTest {
     /**
      * @throws Exception if an error occurs
      */
-    // TODO @Test
+    @Test
     public void matchGlobalSymbol() throws Exception {
         final String script =
                 "var result = /a/g[Symbol.match]('aaba');\n"
@@ -500,7 +500,7 @@ public class NativeRegExpTest {
     /**
      * @throws Exception if an error occurs
      */
-    // TODO @Test
+    @Test
     public void matchStickyAndGlobalSymbol() throws Exception {
         final String script =
                 "var result = /a/yg[Symbol.match]('aaba');\n"
