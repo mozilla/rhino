@@ -66,7 +66,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
             return true;
         }
 
-        next = regExpExec(cx, scope);
+        next = NativeRegExp.regExpExec(regexp, string, cx, scope);
         if (next == null) {
             // Done! Point ii of the spec
             next = Undefined.instance;
