@@ -13,6 +13,7 @@ import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.security.URIParameter;
 import java.util.Enumeration;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,7 +39,10 @@ public class SecurityControllerTest {
     /** Setup the security */
     @BeforeClass
     public static void setup() throws Exception {
-        Assume.assumeFalse("Skipping test for Java 21", Utils.isJavaVersionAtLeast(21));
+        Assume.assumeThat(
+                "Skipping test for Java 21",
+                Utils.isJavaVersionAtLeast(21),
+                CoreMatchers.is(false));
         URL url = SecurityControllerTest.class.getResource("grant-all-java.policy");
         if (url != null) {
             System.setProperty("java.security.policy", url.toString());
@@ -73,7 +77,10 @@ public class SecurityControllerTest {
     @Test
     public void barAccess() {
         // Security managers are out in Java 21, so skip.
-        Assume.assumeFalse("Skipping test for Java 21", Utils.isJavaVersionAtLeast(21));
+        Assume.assumeThat(
+                "Skipping test for Java 21",
+                Utils.isJavaVersionAtLeast(21),
+                CoreMatchers.is(false));
 
         // f.create produces "SomeClass extends ArrayList<String> implements
         // SomeInterface"
