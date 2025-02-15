@@ -38,9 +38,7 @@ public class SecurityControllerTest {
     /** Setup the security */
     @BeforeClass
     public static void setup() throws Exception {
-        Assume.assumeFalse(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21));
+        Assume.assumeFalse("Skipping test for Java 21", Utils.isJavaVersionAtLeast(21));
         URL url = SecurityControllerTest.class.getResource("grant-all-java.policy");
         if (url != null) {
             System.setProperty("java.security.policy", url.toString());
@@ -75,9 +73,7 @@ public class SecurityControllerTest {
     @Test
     public void barAccess() {
         // Security managers are out in Java 21, so skip.
-        Assume.assumeFalse(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21));
+        Assume.assumeFalse("Skipping test for Java 21", Utils.isJavaVersionAtLeast(21));
 
         // f.create produces "SomeClass extends ArrayList<String> implements
         // SomeInterface"

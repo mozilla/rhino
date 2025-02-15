@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':rhino')
+    testImplementation project(':testutils')
 }
 
 publishing {
