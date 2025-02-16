@@ -3,7 +3,7 @@ package org.mozilla.javascript;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 public class ScriptRuntimeEvalSpecialTest {
     @Test

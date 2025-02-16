@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 import java.lang.reflect.Method;
 import org.junit.Test;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Test of strict mode APIs.

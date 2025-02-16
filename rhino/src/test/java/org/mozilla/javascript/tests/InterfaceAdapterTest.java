@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.testutils.Utils;
 
 /*
  * This testcase tests the support of converting javascript functions to

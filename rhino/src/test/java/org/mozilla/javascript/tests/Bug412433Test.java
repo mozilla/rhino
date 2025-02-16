@@ -6,6 +6,7 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=412433

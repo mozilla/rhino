@@ -1,4 +1,4 @@
-package org.mozilla.javascript.xmlimpl;
+package org.mozilla.javascript.xmlimpl.tests;
 
 import java.io.IOException;
 import javax.xml.parsers.DocumentBuilder;

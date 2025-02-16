@@ -1,4 +1,4 @@
-package org.mozilla.kotlin
+package org.mozilla.kotlin.tests
 
 class KotlinClassWithOverloadedFunction {
     fun function(nullableParam: Int?, nonNullParam: Int, anotherNullableParam: KotlinClass?) {

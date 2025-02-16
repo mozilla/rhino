@@ -23,8 +23,10 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.hamcrest:hamcrest:3.0"
     testImplementation "org.yaml:snakeyaml:1.33"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
+    testImplementation "javax.activation:javax.activation-api:1.2.0"
 }
 
 tasks.withType(JavaCompile) {

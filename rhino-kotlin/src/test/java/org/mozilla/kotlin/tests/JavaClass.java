@@ -1,4 +1,4 @@
-package org.mozilla.kotlin;
+package org.mozilla.kotlin.tests;
 
 public class JavaClass {
     private final String property1;

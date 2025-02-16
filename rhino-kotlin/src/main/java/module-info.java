@@ -6,6 +6,8 @@ module org.mozilla.rhino.kotlin {
     requires kotlin.stdlib;
     requires org.mozilla.rhino;
 
+    exports org.mozilla.kotlin;
+
     provides NullabilityDetector with
             KotlinNullabilityDetector;
 }
