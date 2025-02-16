@@ -534,7 +534,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     return coerceToNumber(
                             jsTypeCode == JSTYPE_BIGINT ? BigInteger.class : Double.TYPE, value);
                 } else if ((type.isPrimitive() && type != Boolean.TYPE)
-                        || ScriptRuntime.NumberClass.isAssignableFrom(type)) {
+                        || ScriptRuntime.NumberClass.isAssignableFrom(type)
+                        || ScriptRuntime.CharacterClass.isAssignableFrom(type)) {
                     return coerceToNumber(type, value);
                 } else {
                     reportConversionError(value, type);
