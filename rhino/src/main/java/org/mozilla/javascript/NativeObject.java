@@ -273,6 +273,7 @@ public class NativeObject extends ScriptableObject implements Map {
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
+            ((NativeObject) constructor.getPrototypeProperty()).sealObject();
         }
     }
 
