@@ -27,15 +27,15 @@ dependencies {
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.release = 11
     options.compilerArgs = [
-        '-Xlint:deprecation,unchecked'
+            '-Xlint:deprecation,unchecked'
     ]
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     if (testJavaVersion > 0) {
         // We get here if RHINO_TEST_JAVA_VERSION was set and if we did then
         // we try to run the tests with that version if Gradle will let us
@@ -43,6 +43,11 @@ tasks.withType(Test) {
             languageVersion = JavaLanguageVersion.of(testJavaVersion)
         }
     }
+
+    systemProperty 'user.language', 'en'
+    systemProperty 'user.country', 'US'
+    systemProperty 'user.timezone', 'America/Los_Angeles'
+    systemProperty 'file.encoding', 'UTF-8'
 }
 
 test {
