@@ -1885,7 +1885,11 @@ public class NativeRegExp extends IdScriptableObject {
             boolean anchor = false;
             while (gData.cp <= end) {
                 int match = simpleMatch(gData, input, op, program, pc, end, true);
-                if (match >= 0) {
+                if (match < 0) {
+                    if ((gData.regexp.flags & JSREG_STICKY) != 0) {
+                        return false;
+                    }
+                } else {
                     anchor = true;
                     pc = match; /* accept skip to next opcode */
                     op = program[pc++];
