@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> parseInt
-function parseInt() { [native code for parseInt, arity=2] }
+function parseInt() {
+	[native code, arity=2]
+}
 js> parseInt("0");
 0
 js> parseInt("1")
