@@ -624,8 +624,6 @@ final class NativeString extends IdScriptableObject {
                         return ScriptRuntime.wrapBoolean(
                                 (id == Id_equals) ? s1.equals(s2) : s1.equalsIgnoreCase(s2));
                     }
-
-                case Id_match:
                 case Id_search:
                 case Id_replace:
                 case Id_replaceAll:
@@ -864,6 +862,9 @@ final class NativeString extends IdScriptableObject {
                 case SymbolId_iterator:
                     return new NativeStringIterator(scope, requireObjectCoercible(cx, thisObj, f));
 
+                case Id_match:
+                    return js_match(f, cx, scope, thisObj, args);
+
                 case Id_matchAll:
                     {
                         // See ECMAScript spec 22.1.3.14
@@ -1039,6 +1040,49 @@ final class NativeString extends IdScriptableObject {
         desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
         desc.defineProperty("configurable", Boolean.FALSE, EMPTY);
         return desc;
+    }
+
+    /*
+     *
+     * See ECMA 22.1.3.13
+     *
+     */
+    private static Object js_match(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Object o = requireObjectCoercible(cx, thisObj, f);
+        Object regexp = args.length > 0 ? args[0] : Undefined.instance;
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
+        if (regexp != null && !Undefined.isUndefined(regexp)) {
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.MATCH, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                if (!(matcher instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            regexp, matcher, SymbolKey.MATCH.getName());
+                }
+                return ((Callable) matcher)
+                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+            }
+        }
+
+        String s = ScriptRuntime.toString(o);
+        String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+
+        String flags = null;
+
+        // Not standard; Done for backward compatibility
+        if (cx.getLanguageVersion() < Context.VERSION_1_6 && args.length > 1) {
+            flags = ScriptRuntime.toString(args[1]);
+        }
+
+        Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, flags);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH, cx, scope);
+        if (!(method instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH.getName());
+        }
+        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
     }
 
     /*
