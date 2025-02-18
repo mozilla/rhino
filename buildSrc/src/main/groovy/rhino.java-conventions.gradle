@@ -31,7 +31,7 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.release = 11
     options.compilerArgs = [
-            '-Xlint:deprecation,unchecked'
+        '-Xlint:deprecation,unchecked'
     ]
 }
 
@@ -44,6 +44,9 @@ tasks.withType(Test).configureEach {
         }
     }
 
+    // Explicitly set locale, timezone, and encoding for all build and test phases
+    // to ensure consistent test execution no matter where. This affects many
+    // time- and date-related tests, which will fail otherwise.
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
