@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.EnumSet;
+
 /**
  * This class implements a single JavaScript function that has the prototype of the built-in
  * Function class, and which is implemented using a single function that can easily be implemented
@@ -18,6 +20,7 @@ public class LambdaFunction extends BaseFunction {
     // The target is expected to be a lambda -- lambdas should not be serialized.
     protected final SerializableCallable target;
     private final String name;
+    private final String className;
     private final int length;
 
     /**
@@ -31,11 +34,27 @@ public class LambdaFunction extends BaseFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target) {
-        this.target = target;
-        this.name = name;
-        this.length = length;
-        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
-        setupDefaultPrototype();
+        this(scope, name, null, length, target);
+    }
+
+    /**
+     * Create a new function. The new object will have the Function prototype and no parent. The
+     * caller is responsible for binding this object to the appropriate scope.
+     *
+     * @param scope scope of the calling context
+     * @param name name of the function
+     * @param length the arity of the function
+     * @param prototype prototype to set for this function
+     * @param target an object that implements the function in Java. Since Callable is a
+     *     single-function interface this will typically be implemented as a lambda.
+     */
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target) {
+        this(scope, name, null, length, prototype, target);
     }
 
     /** Create a new built-in function, with no name, and no default prototype. */
@@ -44,6 +63,36 @@ public class LambdaFunction extends BaseFunction {
         this.length = length;
         this.name = "";
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
+        this.className = null;
+    }
+
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            String className,
+            int length,
+            SerializableCallable target) {
+        this.target = target;
+        this.name = name;
+        this.length = length;
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
+        setupDefaultPrototype();
+        this.className = className;
+    }
+
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            String className,
+            int length,
+            Object prototype,
+            SerializableCallable target) {
+        this.target = target;
+        this.name = name;
+        this.length = length;
+        ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
+        setPrototypeProperty(prototype);
+        this.className = className;
     }
 
     @Override
@@ -73,5 +122,26 @@ public class LambdaFunction extends BaseFunction {
 
     Callable getTarget() {
         return target;
+    }
+
+    @Override
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+        StringBuilder sb = new StringBuilder();
+        boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
+        if (!justbody) {
+            sb.append("function ");
+            sb.append(getFunctionName());
+            sb.append("() { ");
+        }
+        sb.append("[native code for ");
+        if (className != null) {
+            sb.append(className);
+            sb.append('.');
+        }
+        sb.append(getFunctionName());
+        sb.append(", arity=");
+        sb.append(getArity());
+        sb.append(justbody ? "]\n" : "] }\n");
+        return sb.toString();
     }
 }
