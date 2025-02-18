@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Unit tests for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=549604">bug 549604</a>. This

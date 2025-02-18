@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for Symbol support. */
 public class Symbol3Test {

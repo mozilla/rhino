@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Test for {@link Context#decompileScript(Script, int)}.

@@ -16,6 +16,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 
 public class Bug421071Test {
     private ContextFactory factory;

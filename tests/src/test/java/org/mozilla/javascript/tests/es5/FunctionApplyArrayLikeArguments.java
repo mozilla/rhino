@@ -9,7 +9,7 @@ package org.mozilla.javascript.tests.es5;
 
 import org.junit.Test;
 import org.mozilla.javascript.Undefined;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 public class FunctionApplyArrayLikeArguments {
 

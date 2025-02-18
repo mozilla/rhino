@@ -21,6 +21,7 @@ import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.JavaPolicySecurity;
 

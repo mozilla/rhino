@@ -5,6 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.mozilla.javascript.testutils.Utils;
 
 public class ComputedPropertiesTest {
     @Test

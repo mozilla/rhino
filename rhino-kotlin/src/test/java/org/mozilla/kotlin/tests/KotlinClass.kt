@@ -1,4 +1,4 @@
-package org.mozilla.kotlin
+package org.mozilla.kotlin.tests
 
 class KotlinClass(
     val nonNullProperty: String,

@@ -13,7 +13,7 @@ import java.util.TimeZone;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 /** Test for NativeDate. */
 public class NativeDateTest {

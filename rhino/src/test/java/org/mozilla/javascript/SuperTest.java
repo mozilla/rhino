@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 class SuperTest {
     @Nested

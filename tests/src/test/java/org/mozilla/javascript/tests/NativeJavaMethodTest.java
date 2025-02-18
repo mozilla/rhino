@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * @author ZZZank

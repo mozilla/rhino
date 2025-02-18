@@ -14,6 +14,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 
 public class OverloadTest {
 

@@ -6,7 +6,7 @@
 package org.mozilla.javascript.tests.es2022;
 
 import org.junit.Test;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 public class NativeObjectTest {
 
