@@ -2331,6 +2331,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                                 cx, frame.scope, frame.fnOrScript, indexReg);
                                 if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
                                     Scriptable homeObject = getCurrentFrameHomeObject(frame);
+                                    if (fn.idata.itsNeedsActivation) {
+                                        fn.setHomeObject(homeObject);
+                                    }
+
                                     stack[++stackTop] =
                                             new ArrowFunction(
                                                     cx, frame.scope, fn, frame.thisObj, homeObject);
