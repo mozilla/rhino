@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.Utils;
 
 public class AssignSubclassTest {
     @Test

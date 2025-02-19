@@ -15,6 +15,7 @@ import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.SymbolScriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Tests for host objects implementing the iterable protocol.

@@ -5,7 +5,7 @@
 package org.mozilla.javascript.tests.es6;
 
 import org.junit.Test;
-import org.mozilla.javascript.tests.Utils;
+import org.mozilla.javascript.testutils.Utils;
 
 /** Test that we can redefine a function's name. */
 public class Issue1297FunctionNameTest {

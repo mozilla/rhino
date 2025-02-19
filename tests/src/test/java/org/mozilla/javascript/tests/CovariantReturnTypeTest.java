@@ -5,6 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**

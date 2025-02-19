@@ -15,6 +15,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.WrappedException;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Unit tests to check error handling. Especially, we expect to get a correct cause, when an error

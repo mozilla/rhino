@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Test for falling back to the interpreter if generated code is too large.

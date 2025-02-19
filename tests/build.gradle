@@ -27,7 +27,6 @@ tasks.withType(JavaCompile) {
 }
 
 test {
-    testLogging.showStandardStreams = true
     maxHeapSize = "1g"
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.

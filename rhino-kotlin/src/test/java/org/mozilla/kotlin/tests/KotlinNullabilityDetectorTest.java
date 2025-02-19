@@ -1,4 +1,4 @@
-package org.mozilla.kotlin;
+package org.mozilla.kotlin.tests;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import org.mozilla.kotlin.KotlinNullabilityDetector;
 
 public class KotlinNullabilityDetectorTest {
     private final KotlinNullabilityDetector detector = new KotlinNullabilityDetector();

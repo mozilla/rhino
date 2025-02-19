@@ -8,6 +8,7 @@ import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.testutils.Utils;
 
 /** This is a set of tests for parsing and using BigInts. */
 public class BigIntTest {
