@@ -10,6 +10,11 @@ import java.util.Objects;
 public abstract class SlotMapOwner {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * At this size, we switch from various cleverly optimized maps to an implementation based on
+     * java.util.HashMap, which is collision-resistant. This must be less than Short.MAX_VALUE or
+     * OrderedSlotMap will break.
+     */
     static final int LARGE_HASH_SIZE = 2000;
 
     static final SlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
