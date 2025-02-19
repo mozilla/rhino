@@ -1141,6 +1141,38 @@ class SuperTest {
 
             Utils.assertWithAllModes_ES6("object", script);
         }
+
+        @Test
+        void mixedCompileInterpret() {
+            String script =
+                    ""
+                            + "var proto = {\n"
+                            + "  x: 'proto',\n"
+                            + "  f() {\n"
+                            + "    return this.x;\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "var object = {\n"
+                            + "   x: 'object',\n"
+                            + "   f() {\n"
+                            + "    return () => { return super.f(); };\n"
+                            + "  }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n";
+            String script2 = "object.f()();";
+
+            try (Context cx = Context.enter()) {
+                cx.setLanguageVersion(Context.VERSION_ES6);
+                ScriptableObject scope = cx.initStandardObjects();
+
+                cx.setInterpretedMode(true);
+                cx.evaluateString(scope, script, "test", 1, null);
+
+                cx.setInterpretedMode(false);
+                Object res = cx.evaluateString(scope, script2, "test", 1, null);
+                assertEquals("object", res);
+            }
+        }
     }
 
     /**
