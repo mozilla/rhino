@@ -8,6 +8,7 @@ package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -2662,6 +2663,13 @@ public class NativeRegExp extends IdScriptableObject {
         return super.getInstanceIdValue(id);
     }
 
+    private void setLastIndex(ScriptableObject thisObj, Object value) {
+        if ((thisObj.getAttributes("lastIndex") & READONLY) != 0) {
+            throw ScriptRuntime.typeErrorById("msg.modify.readonly", "lastIndex");
+        }
+        ScriptableObject.putProperty(thisObj, "lastIndex", value);
+    }
+
     private void setLastIndex(Object value) {
         if ((lastIndexAttr & READONLY) != 0) {
             throw ScriptRuntime.typeErrorById("msg.modify.readonly", "lastIndex");
@@ -2784,7 +2792,7 @@ public class NativeRegExp extends IdScriptableObject {
                 return realThis(thisObj, f).execSub(cx, scope, args, PREFIX);
 
             case SymbolId_match:
-                return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+                return js_SymbolMatch(cx, scope, thisObj, args);
 
             case SymbolId_matchAll:
                 return js_SymbolMatchAll(cx, scope, thisObj, args);
@@ -2795,6 +2803,51 @@ public class NativeRegExp extends IdScriptableObject {
                 return scriptable == null ? -1 : scriptable.get("index", scriptable);
         }
         throw new IllegalArgumentException(String.valueOf(id));
+    }
+
+    public static Object regExpExec(
+            Scriptable regexp, String string, Context cx, Scriptable scope) {
+        // See ECMAScript spec 22.2.7.1
+        Object execMethod = ScriptRuntime.getObjectProp(regexp, "exec", cx, scope);
+        if (execMethod instanceof Callable) {
+            return ((Callable) execMethod).call(cx, scope, regexp, new Object[] {string});
+        }
+        return NativeRegExp.js_exec(cx, scope, regexp, new Object[] {string});
+    }
+
+    private Object js_SymbolMatch(
+            Context cx, Scriptable scope, Scriptable thisScriptable, Object[] args) {
+        // See ECMAScript spec 22.2.6.8
+        var thisObj = ScriptableObject.ensureScriptableObject(thisScriptable);
+
+        String string = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+
+        if (flags.indexOf('g') == -1) return regExpExec(thisObj, string, cx, scope);
+
+        setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        Scriptable result = cx.newArray(scope, 0);
+        int i = 0;
+        while (true) {
+            Object match = regExpExec(thisObj, string, cx, scope);
+            if (match == null) {
+                if (i == 0) return null;
+                else return result;
+            }
+
+            String matchStr =
+                    ScriptRuntime.toString(ScriptRuntime.getObjectIndex(match, 0, cx, scope));
+            result.put(i++, result, matchStr);
+
+            if (matchStr.isEmpty()) {
+                long thisIndex =
+                        ScriptRuntime.toLength(
+                                ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
+                long nextIndex = ScriptRuntime.advanceStringIndex(string, thisIndex, fullUnicode);
+                setLastIndex(thisObj, nextIndex);
+            }
+        }
     }
 
     static Object js_exec(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
