@@ -653,8 +653,8 @@ final class NativeString extends ScriptableObject {
      *
      */
     private static Object js_match(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Object o = requireObjectCoercible(cx, thisObj, f);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "match");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         if (regexp != null && !Undefined.isUndefined(regexp)) {
@@ -688,40 +688,6 @@ final class NativeString extends ScriptableObject {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH.getName());
         }
         return ((Callable) method).call(cx, scope, rx, new Object[] {s});
-    }
-
-    /*
-     *
-     * See ECMA 15.5.4.6.  Uses Java String.indexOf()
-     * OPT to add - BMH searching from jsstr.c.
-     */
-    private static int js_indexOf(int methodId, String target, Object[] args) {
-        String searchStr = ScriptRuntime.toString(args, 0);
-        double position = ScriptRuntime.toInteger(args, 1);
-
-        if (methodId != Id_startsWith && methodId != Id_endsWith && searchStr.length() == 0) {
-            return position > target.length() ? target.length() : (int) position;
-        }
-
-        if (methodId != Id_startsWith && methodId != Id_endsWith && position > target.length()) {
-            return -1;
-        }
-
-        if (position < 0) position = 0;
-        else if (position > target.length()) position = target.length();
-        else if (methodId == Id_endsWith && (Double.isNaN(position) || position > target.length()))
-            position = target.length();
-
-        if (Id_endsWith == methodId) {
-            if (args.length == 0
-                    || args.length == 1
-                    || (args.length == 2 && args[1] == Undefined.instance))
-                position = target.length();
-            return target.substring(0, (int) position).endsWith(searchStr) ? 0 : -1;
-        }
-        return methodId == Id_startsWith
-                ? target.startsWith(searchStr, (int) position) ? 0 : -1
-                : target.indexOf(searchStr, (int) position);
     }
 
     /*
@@ -934,13 +900,6 @@ final class NativeString extends ScriptableObject {
         String s1 = ScriptRuntime.toString(thisObj);
         String s2 = ScriptRuntime.toString(args, 0);
         return s1.equalsIgnoreCase(s2);
-    }
-
-    private static Object js_match(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "match");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_MATCH);
     }
 
     private static Object js_search(
