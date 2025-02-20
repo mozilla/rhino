@@ -289,6 +289,231 @@ public class NativeRegExp extends IdScriptableObject {
         return rval;
     }
 
+    private static void prettyPrintRE(RECompiled regexp) {
+        for (int pc = 0; regexp.program[pc] != REOP_END; ) {
+            System.out.print(pc + ": ");
+            byte op = regexp.program[pc];
+            pc++; // Increment pc after reading op
+            switch (op) {
+                case REOP_EMPTY:
+                    System.out.println("EMPTY");
+                    break;
+                case REOP_BOL:
+                    System.out.println("BOL");
+                    break;
+                case REOP_EOL:
+                    System.out.println("EOL");
+                    break;
+                case REOP_WBDRY:
+                    System.out.println("WBDRY");
+                    break;
+                case REOP_WNONBDRY:
+                    System.out.println("WNONBDRY");
+                    break;
+                case REOP_DOT:
+                    System.out.println("DOT");
+                    break;
+                case REOP_DIGIT:
+                    System.out.println("DIGIT");
+                    break;
+                case REOP_NONDIGIT:
+                    System.out.println("NONDIGIT");
+                    break;
+                case REOP_ALNUM:
+                    System.out.println("ALNUM");
+                    break;
+                case REOP_NONALNUM:
+                    System.out.println("NONALNUM");
+                    break;
+                case REOP_SPACE:
+                    System.out.println("SPACE");
+                    break;
+                case REOP_NONSPACE:
+                    System.out.println("NONSPACE");
+                    break;
+                case REOP_BACKREF:
+                    int backrefIndex = getIndex(regexp.program, pc);
+                    System.out.println("BACKREF " + backrefIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_FLAT:
+                    int flatIndex = getIndex(regexp.program, pc);
+                    int flatLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.print("FLAT: ");
+                    for (int i = 0; i < flatLength; i++) {
+                        System.out.print(regexp.source[flatIndex + i]);
+                    }
+                    System.out.println();
+                    pc += 2 * INDEX_LEN;
+                    break;
+                case REOP_FLAT1:
+                    char flat1Char = (char) (regexp.program[pc] & 0xFF);
+                    System.out.println("FLAT1: " + flat1Char);
+                    pc += 1;
+                    break;
+                case REOP_FLATi:
+                    int flatiIndex = getIndex(regexp.program, pc);
+                    int flatiLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.print("FLATi: ");
+                    for (int i = 0; i < flatiLength; i++) {
+                        System.out.print(regexp.source[flatiIndex + i]);
+                    }
+                    System.out.println();
+                    pc += 2 * INDEX_LEN;
+                    break;
+                case REOP_FLAT1i:
+                    char flat1iChar = (char) (regexp.program[pc] & 0xFF);
+                    System.out.println("FLAT1i: " + flat1iChar);
+                    pc += 1;
+                    break;
+                case REOP_UCFLAT1:
+                    char ucFlat1Char = (char) getIndex(regexp.program, pc);
+                    System.out.println("UCFLAT1: " + ucFlat1Char);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_UCFLAT1i:
+                    char ucFlat1iChar = (char) getIndex(regexp.program, pc);
+                    System.out.println("UCFLAT1i: " + ucFlat1iChar);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_CLASS:
+                    int classIndex = getIndex(regexp.program, pc);
+                    System.out.println("CLASS: " + classIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_NCLASS:
+                    int nclassIndex = getIndex(regexp.program, pc);
+                    System.out.println("NCLASS: " + nclassIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_STAR:
+                case REOP_PLUS:
+                case REOP_OPT:
+                case REOP_MINIMALSTAR:
+                case REOP_MINIMALPLUS:
+                case REOP_MINIMALOPT:
+                case REOP_MINIMALQUANT:
+                case REOP_QUANT:
+                    {
+                        String quantType;
+                        boolean greedy;
+                        int min, max;
+
+                        greedy =
+                                op == REOP_STAR
+                                        || op == REOP_PLUS
+                                        || op == REOP_OPT
+                                        || op == REOP_QUANT;
+
+                        // set min and max
+                        if (op == REOP_STAR || op == REOP_MINIMALSTAR) {
+                            min = 0;
+                            max = Integer.MAX_VALUE;
+                        } else if (op == REOP_PLUS || op == REOP_MINIMALPLUS) {
+                            min = 1;
+                            max = Integer.MAX_VALUE;
+                        } else if (op == REOP_OPT || op == REOP_MINIMALOPT) {
+                            min = 0;
+                            max = 1;
+                        } else {
+                            min = getIndex(regexp.program, pc);
+                            max = getIndex(regexp.program, pc + INDEX_LEN);
+                            pc += 2 * INDEX_LEN;
+                        }
+
+                        int parenCount = getIndex(regexp.program, pc);
+                        int parenIndex = getIndex(regexp.program, pc + INDEX_LEN);
+                        pc += 2 * INDEX_LEN;
+
+                        int next = getIndex(regexp.program, pc) + pc;
+                        System.out.println(
+                                "QUANT "
+                                        + "greedy="
+                                        + greedy
+                                        + " min="
+                                        + min
+                                        + " max="
+                                        + (max == Integer.MAX_VALUE ? "MAX" : max)
+                                        + " parenCount="
+                                        + parenCount
+                                        + " parenIndex="
+                                        + parenIndex
+                                        + " next="
+                                        + next);
+                        pc += INDEX_LEN;
+                    }
+                    break;
+                case REOP_LPAREN:
+                    int parenIndex = getIndex(regexp.program, pc);
+                    System.out.println("LPAREN: " + parenIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_RPAREN:
+                    System.out.println("RPAREN");
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ALT:
+                    int altIndex = getIndex(regexp.program, pc);
+                    System.out.println("ALT: " + altIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_JUMP:
+                    int jumpIndex = getIndex(regexp.program, pc) + pc;
+                    System.out.println("JUMP: " + jumpIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERT:
+                    int assertNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERT: " + assertNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERT_NOT:
+                    int assertNotNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERT_NOT: " + assertNotNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERTTEST:
+                    System.out.println("ASSERTTEST");
+                    break;
+                case REOP_ASSERTNOTTEST:
+                    System.out.println("ASSERTNOTTEST");
+                    break;
+                case REOP_ENDCHILD:
+                    System.out.println("ENDCHILD");
+                    break;
+                case REOP_REPEAT:
+                    System.out.println("REPEAT");
+                    break;
+                case REOP_MINIMALREPEAT:
+                    System.out.println("MINIMALREPEAT");
+                    break;
+                case REOP_ALTPREREQ:
+                case REOP_ALTPREREQi:
+                case REOP_ALTPREREQ2:
+                    String opCode =
+                            (op == REOP_ALTPREREQ)
+                                    ? "REOP_ALTPREREQ"
+                                    : (op == REOP_ALTPREREQi)
+                                            ? "REOP_ALTPREREQi"
+                                            : "REOP_ALTPREREQ2";
+                    char matchCh1 = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    char matchCh2 = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    int nextPc = pc + getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    System.out.println(opCode + " " + matchCh1 + " " + matchCh2 + " " + nextPc);
+                    break;
+                case REOP_END:
+                    System.out.println("END");
+                    break;
+                default:
+                    System.out.println("UNKNOWN: " + op);
+                    break;
+            }
+        }
+    }
+
     static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
         RECompiled regexp = new RECompiled(str);
         int length = str.length();
@@ -355,6 +580,8 @@ public class NativeRegExp extends IdScriptableObject {
                 if (i < (endPC - 1)) System.out.print(", ");
             }
             System.out.println();
+
+            prettyPrintRE(regexp);
         }
         regexp.parenCount = state.parenCount;
 
