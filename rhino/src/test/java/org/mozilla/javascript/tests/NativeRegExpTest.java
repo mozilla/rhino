@@ -5,10 +5,13 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.regexp.NativeRegExp;
 import org.mozilla.javascript.testutils.Utils;
 
 public class NativeRegExpTest {
@@ -552,5 +555,35 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
+    }
+
+    @Test
+    public void prettyPrinterDoesntBlowUp() {
+        final String regexp = "/(a{3,6})(?=\\1)/g";
+        Utils.runWithAllModes(
+                _cx -> {
+                    final ScriptableObject scope = _cx.initStandardObjects();
+                    final Object result = _cx.evaluateString(scope, regexp, "test script", 0, null);
+                    assertTrue(result instanceof NativeRegExp);
+
+                    NativeRegExp nr = (NativeRegExp) result;
+                    // use reflection to access the private member 're' of the nativeregexp object
+                    // of the NativeRegExp object and call the
+                    // private method prettyPrintRE static method with the 're' member
+                    // to make sure it doesn't blow up
+                    try {
+                        java.lang.reflect.Field reField = NativeRegExp.class.getDeclaredField("re");
+                        reField.setAccessible(true);
+                        Object re = reField.get(nr);
+                        java.lang.reflect.Method prettyPrintRE =
+                                NativeRegExp.class.getDeclaredMethod(
+                                        "prettyPrintRE", re.getClass());
+                        prettyPrintRE.setAccessible(true);
+                        prettyPrintRE.invoke(NativeRegExp.class, re);
+                    } catch (Exception e) {
+                        fail("NativeRegExp::prettyPrintRE blew up");
+                    }
+                    return null;
+                });
     }
 }
