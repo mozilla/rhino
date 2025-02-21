@@ -5,14 +5,18 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.isExtensible;
-function isExtensible() { [native code for Object.isExtensible, arity=1] }
+function isExtensible() {
+	[native code]
+}
 js> expectTypeError(function() { Object.isExtensible() });
 js> [undefined, null, true, 1, 'hello'].forEach(function(value) { 
   >   expectTypeError(function() { Object.isExtensible(value) }) 
   > })
 
 js> Object.preventExtensions;
-function preventExtensions() { [native code for Object.preventExtensions, arity=1] }
+function preventExtensions() {
+	[native code]
+}
 js> expectTypeError(function() { Object.preventExtensions() });
 js> [undefined, null, true, 1, 'hello'].forEach(function(value) { 
   >   expectTypeError(function() { Object.preventExtensions(value) }) 
