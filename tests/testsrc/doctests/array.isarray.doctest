@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> Array.isArray;
-function isArray() { [native code for Array.isArray, arity=1] }
+function isArray() {
+	[native code]
+}
 
 js> Array.isArray()
 false
