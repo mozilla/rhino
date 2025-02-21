@@ -98,28 +98,6 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
-        StringBuilder sb = new StringBuilder();
-        boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
-        if (!justbody) {
-            sb.append("function ");
-            sb.append(getFunctionName());
-            sb.append("() { ");
-        }
-        sb.append("[native code for ");
-        if (idcall instanceof Scriptable) {
-            Scriptable sobj = (Scriptable) idcall;
-            sb.append(sobj.getClassName());
-            sb.append('.');
-        }
-        sb.append(getFunctionName());
-        sb.append(", arity=");
-        sb.append(getArity());
-        sb.append(justbody ? "]\n" : "] }\n");
-        return sb.toString();
-    }
-
-    @Override
     public int getArity() {
         return arity;
     }

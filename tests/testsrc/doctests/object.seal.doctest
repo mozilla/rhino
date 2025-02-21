@@ -5,7 +5,9 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.seal;
-function seal() { [native code for Object.seal, arity=1] }
+function seal() {
+	[native code]
+}
 
 js> [undefined, null, true, 1, 'hello'].forEach(function(value) { 
   >   expectTypeError(function() { Object.seal(value) }) 
