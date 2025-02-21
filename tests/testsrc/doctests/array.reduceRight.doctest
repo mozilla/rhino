@@ -5,13 +5,17 @@
 js> function diff(acc, val) { return acc - val; };
 
 js> [1, 4, 9, 16].reduceRight;
-function reduceRight() { [native code for Array.reduceRight, arity=1] }
+function reduceRight() {
+	[native code]
+}
 
 js> [1, 4, 9, 16].reduceRight(diff);
 2
 
 js> Array.reduceRight;
-function reduceRight() { [native code for Array.reduceRight, arity=1] }
+function reduceRight() {
+	[native code]
+}
 
 js> Array.reduceRight([1, 4, 9, 16], diff);
 2

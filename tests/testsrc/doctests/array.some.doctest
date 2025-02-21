@@ -5,7 +5,9 @@
 js> function isSmall(n) { return n < 10; };
 
 js> [1, 4, 9, 16].some;
-function some() { [native code for Array.some, arity=1] }
+function some() {
+	[native code]
+}
 
 js> [1, 4, 9, 16].some(isSmall);
 true
@@ -14,7 +16,9 @@ js> [19, 42].some(isSmall);
 false
 
 js> Array.some;
-function some() { [native code for Array.some, arity=1] }
+function some() {
+	[native code]
+}
 
 js> Array.some([1, 4, 9, 16], isSmall);
 true

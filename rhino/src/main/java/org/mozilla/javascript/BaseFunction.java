@@ -391,7 +391,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
                                 ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
                                         .getPrototypeProperty();
                     else protoProp = ScriptableObject.getProperty(thisObj, "prototype");
-                    if (protoProp instanceof IdScriptableObject) {
+                    if (protoProp instanceof NativeObject
+                            || protoProp instanceof IdScriptableObject) {
                         return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
                     }
                     throw ScriptRuntime.typeErrorById(
@@ -505,9 +506,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
             sb.append(getFunctionName());
             sb.append("() {\n\t");
         }
-        sb.append("[native code, arity=");
-        sb.append(getArity());
-        sb.append("]\n");
+        sb.append("[native code]\n");
         if (!justbody) {
             sb.append("}\n");
         }
