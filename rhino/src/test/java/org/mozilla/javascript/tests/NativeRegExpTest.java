@@ -586,4 +586,118 @@ public class NativeRegExpTest {
                     return null;
                 });
     }
+
+    @Test
+    public void lookbehindPositive() throws Exception {
+        // matches numbers that are preceded by a dollar sign
+        final String script =
+                "var regex = /(?<=\\$)\\d+/g;\n"
+                        + "var result = '$123 $456 789'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("2-123-456", script);
+    }
+
+    @Test
+    public void lookbehindNegative() throws Exception {
+        // matches numbers that are not preceded by a dollar sign
+        final String script =
+                "var regex = /(?<!\\$)\\d/g;\n"
+                        + "var result = '$1 $4 7'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-7", script);
+    }
+
+    @Test
+    public void lookbehindCapture() throws Exception {
+        // This shows that the lookbehind matches the input backwards
+        // this is why, the second capture group is 'bc' and not 'c'
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+))$/;\n"
+                        + "var result = 'abc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("3-a-bc", script);
+    }
+
+    @Test
+    public void lookbehindQuantifiedCapture() throws Exception {
+        // When a lookbehind has quantified capture groups, the left-most match is captured
+        final String script =
+                "var regex = /(?<=(\\d)+)a/;\n"
+                        + "var result = '123a'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("2-a-1", script);
+    }
+
+    @Test
+    public void lookbehindBackreference2() throws Exception {
+        final String script =
+                "var regex = /(?<=(\\2)x(.))y/;\n"
+                        + "var result = '4x4y'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("3-y-4-4", script);
+    }
+
+    @Test
+    public void lookbehindNested() throws Exception {
+        // lookbehind inside a lookbehind matches the input backwards
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+)(?<=([ab]+)([bc]+)))$/;\n"
+                        + "var result = 'abcabc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res = res + '-' + result[3];\n"
+                        + "res = res + '-' + result[4];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("5--a-bc-a-bc", script);
+    }
+
+    @Test
+    public void lookbehindLookahead() throws Exception {
+        // lookahead inside a lookbehind matches forward
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+)(?=([xy]+)([yz]+)))/;\n"
+                        + "var result = 'abcxyz'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res = res + '-' + result[3];\n"
+                        + "res = res + '-' + result[4];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("5--a-bc-xy-z", script);
+    }
+
+    @Test
+    public void lookbehindFlatCaseInsensitive() throws Exception {
+        final String script =
+                "var regex = /abc(?<=ABC)/i;\n"
+                        + "var result = 'abc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-abc", script);
+    }
+
+    @Test
+    public void backwardFlatCaseInsensitiveNoMatch() throws Exception {
+        final String script = "var regex = /abc(?<=XYZ)/i;\n" + "'abc'.match(regex);";
+        Utils.assertWithAllModes_ES6(null, script);
+    }
 }
