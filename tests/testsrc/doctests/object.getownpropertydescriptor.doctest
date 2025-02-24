@@ -5,7 +5,9 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.getOwnPropertyDescriptor;
-function getOwnPropertyDescriptor() { [native code for Object.getOwnPropertyDescriptor, arity=2] }
+function getOwnPropertyDescriptor() {
+	[native code]
+}
 
 js> expectTypeError(function() { Object.getOwnPropertyDescriptor() })
 

@@ -5,7 +5,9 @@
 js> load('testsrc/doctests/util.js');
 
 js> String.prototype.trim;
-function trim() { [native code for String.trim, arity=0] }
+function trim() {
+	[native code]
+}
 
 js> String.prototype.trim.call({toString: function() { return "a" }});
 a
