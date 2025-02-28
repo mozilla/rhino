@@ -86,27 +86,33 @@ public interface TypeInfo {
 	}
 
 	static TypeInfo of(Class<?> c) {
-		if (c == null || c == Object.class) {
-			return OBJECT;
-		} else if (c == Void.TYPE) {
-			return PRIMITIVE_VOID;
-		} else if (c == Boolean.TYPE) {
-			return PRIMITIVE_BOOLEAN;
-		} else if (c == Byte.TYPE) {
-			return PRIMITIVE_BYTE;
-		} else if (c == Short.TYPE) {
-			return PRIMITIVE_SHORT;
-		} else if (c == Integer.TYPE) {
-			return PRIMITIVE_INT;
-		} else if (c == Long.TYPE) {
-			return PRIMITIVE_LONG;
-		} else if (c == Float.TYPE) {
-			return PRIMITIVE_FLOAT;
-		} else if (c == Double.TYPE) {
-			return PRIMITIVE_DOUBLE;
-		} else if (c == Character.TYPE) {
-			return PRIMITIVE_CHARACTER;
-		} else if (c == Void.class) {
+        if (c == null) {
+            return NONE;
+        } else if (c == Object.class) {
+            return OBJECT;
+        }
+		if (c.isPrimitive()) {
+            if (c == Void.TYPE) {
+                return PRIMITIVE_VOID;
+            } else if (c == Boolean.TYPE) {
+                return PRIMITIVE_BOOLEAN;
+            } else if (c == Byte.TYPE) {
+                return PRIMITIVE_BYTE;
+            } else if (c == Short.TYPE) {
+                return PRIMITIVE_SHORT;
+            } else if (c == Integer.TYPE) {
+                return PRIMITIVE_INT;
+            } else if (c == Long.TYPE) {
+                return PRIMITIVE_LONG;
+            } else if (c == Float.TYPE) {
+                return PRIMITIVE_FLOAT;
+            } else if (c == Double.TYPE) {
+                return PRIMITIVE_DOUBLE;
+            } else if (c == Character.TYPE) {
+                return PRIMITIVE_CHARACTER;
+            }
+		}
+		if (c == Void.class) {
 			return VOID;
 		} else if (c == Boolean.class) {
 			return BOOLEAN;

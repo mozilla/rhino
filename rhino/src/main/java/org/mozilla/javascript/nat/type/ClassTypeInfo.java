@@ -51,12 +51,12 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 
 	@Override
 	public boolean isVoid() {
-		return type == Void.class || type == Void.TYPE;
+		return type == Void.class;
 	}
 
 	@Override
 	public boolean isBoolean() {
-		return type == Boolean.class || type == Boolean.TYPE;
+		return type == Boolean.class;
 	}
 
 	@Override
@@ -66,37 +66,37 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 
 	@Override
 	public boolean isByte() {
-		return type == Byte.class || type == Byte.TYPE;
+		return type == Byte.class;
 	}
 
 	@Override
 	public boolean isShort() {
-		return type == Short.class || type == Short.TYPE;
+		return type == Short.class;
 	}
 
 	@Override
 	public boolean isInt() {
-		return type == Integer.class || type == Integer.TYPE;
+		return type == Integer.class;
 	}
 
 	@Override
 	public boolean isLong() {
-		return type == Long.class || type == Long.TYPE;
+		return type == Long.class;
 	}
 
 	@Override
 	public boolean isFloat() {
-		return type == Float.class || type == Float.TYPE;
+		return type == Float.class;
 	}
 
 	@Override
 	public boolean isDouble() {
-		return type == Double.class || type == Double.TYPE;
+		return type == Double.class;
 	}
 
 	@Override
 	public boolean isCharacter() {
-		return type == Character.class || type == Character.TYPE;
+		return type == Character.class;
 	}
 
 	@Override

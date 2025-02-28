@@ -17,4 +17,54 @@ public class PrimitiveClassTypeInfo extends ClassTypeInfo {
 	public Object createDefaultValue() {
 		return defaultValue;
 	}
+
+	@Override
+	public boolean isVoid() {
+		return asClass() == Void.TYPE;
+	}
+
+	@Override
+	public boolean isBoolean() {
+		return asClass() == Boolean.TYPE;
+	}
+
+	@Override
+	public boolean isNumber() {
+		return false;
+	}
+
+	@Override
+	public boolean isByte() {
+		return asClass() == Byte.TYPE;
+	}
+
+	@Override
+	public boolean isShort() {
+		return asClass() == Short.TYPE;
+	}
+
+	@Override
+	public boolean isInt() {
+		return asClass() == Integer.TYPE;
+	}
+
+	@Override
+	public boolean isLong() {
+		return asClass() == Long.TYPE;
+	}
+
+	@Override
+	public boolean isFloat() {
+		return asClass() == Float.TYPE;
+	}
+
+	@Override
+	public boolean isDouble() {
+		return asClass() == Double.TYPE;
+	}
+
+	@Override
+	public boolean isCharacter() {
+		return asClass() == Character.TYPE;
+	}
 }
