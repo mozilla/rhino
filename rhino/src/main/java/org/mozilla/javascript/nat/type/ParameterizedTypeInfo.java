@@ -49,25 +49,8 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public String toString() {
-		return TypeStringContext.DEFAULT.toString(this);
-	}
-
-	@Override
-	public void append(TypeStringContext ctx, StringBuilder sb) {
-		ctx.append(sb, rawType);
-		sb.append('<');
-
-		for (int i = 0; i < params.size(); i++) {
-			if (i > 0) {
-				sb.append(',');
-				ctx.appendSpace(sb);
-			}
-
-			ctx.append(sb, params.get(i));
-		}
-
-		sb.append('>');
+	public void append(TypeFormatContext ctx, StringBuilder builder) {
+		ctx.formatParameterized(builder, this);
 	}
 
 	@Override

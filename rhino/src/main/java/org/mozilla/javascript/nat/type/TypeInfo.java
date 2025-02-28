@@ -224,7 +224,12 @@ public interface TypeInfo {
 		return toString();
 	}
 
+	/**
+	 * @see #append(TypeFormatContext, StringBuilder)
+	 */
 	String toString();
+
+	void append(TypeFormatContext ctx, StringBuilder builder);
 
 	default TypeInfo componentType() {
 		return NONE;
@@ -252,10 +257,6 @@ public interface TypeInfo {
 
 	default List<Object> enumConstants() {
 		return List.of();
-	}
-
-	default void append(TypeStringContext ctx, StringBuilder sb) {
-		sb.append(this);
 	}
 
 	default Object createDefaultValue() {

@@ -49,8 +49,8 @@ public class VariableTypeInfo extends TypeInfoBase {
     }
 
     @Override
-    public String toString() {
-        return raw.getName();
+    public void append(TypeFormatContext ctx, StringBuilder builder) {
+        builder.append(raw.getName());
     }
 
     @Override

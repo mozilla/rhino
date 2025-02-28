@@ -30,8 +30,8 @@ final class NoTypeInfo implements TypeInfo {
 	}
 
 	@Override
-	public void append(TypeStringContext ctx, StringBuilder sb) {
-		sb.append('?');
+	public void append(TypeFormatContext ctx, StringBuilder builder) {
+		builder.append('?');
 	}
 
 	@Override

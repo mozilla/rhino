@@ -27,4 +27,11 @@ public abstract class TypeInfoBase implements TypeInfo {
 
 		return Array.newInstance(asClass(), length);
 	}
+
+	@Override
+	public String toString() {
+		var builder = new StringBuilder();
+		append(TypeFormatContext.DEFAULT, builder);
+		return builder.toString();
+	}
 }

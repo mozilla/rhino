@@ -45,8 +45,8 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public void append(TypeStringContext ctx, StringBuilder sb) {
-		ctx.appendClassName(sb, this);
+	public void append(TypeFormatContext ctx, StringBuilder builder) {
+		builder.append(ctx.getClassName(this.type));
 	}
 
 	@Override
