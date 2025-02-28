@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * @author Mike Shaver
@@ -102,7 +104,7 @@ class JavaMembers {
                 BeanProperty bp = (BeanProperty) member;
                 if (bp.getter == null) return Scriptable.NOT_FOUND;
                 rval = bp.getter.invoke(javaObject, ScriptRuntime.emptyArgs);
-                type = bp.getter.method().getReturnType();
+                type = bp.getter.getReturnType().asClass();
             } else {
                 Field field = (Field) member;
                 rval = field.get(isStatic ? null : javaObject);
@@ -139,7 +141,7 @@ class JavaMembers {
             // main setter. Otherwise, let the NativeJavaMethod decide which
             // setter to use:
             if (bp.setters == null || value == null) {
-                Class<?> setType = bp.setter.argTypes[0];
+                var setType = bp.setter.getArgTypes().get(0);
                 Object[] args = {Context.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
@@ -209,21 +211,24 @@ class JavaMembers {
         return sb.toString();
     }
 
-    static String liveConnectSignature(Class<?>[] argTypes) {
-        int N = argTypes.length;
-        if (N == 0) {
+    static String liveConnectSignature(List<TypeInfo> argTypes) {
+        if (argTypes.isEmpty()) {
             return "()";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append('(');
-        for (int i = 0; i != N; ++i) {
-            if (i != 0) {
-                sb.append(',');
+
+        var builder = new StringBuilder();
+
+        builder.append('(');
+        var iter = argTypes.iterator();
+        if (iter.hasNext()) {
+            builder.append(javaSignature(iter.next().asClass()));
+            while (iter.hasNext()) {
+                builder.append(',').append(javaSignature(iter.next().asClass()));
             }
-            sb.append(javaSignature(argTypes[i]));
         }
-        sb.append(')');
-        return sb.toString();
+        builder.append(')');
+
+        return builder.toString();
     }
 
     private MemberBox findExplicitFunction(String name, boolean isStatic) {
@@ -255,8 +260,7 @@ class JavaMembers {
 
         if (methodsOrCtors != null) {
             for (MemberBox methodsOrCtor : methodsOrCtors) {
-                Class<?>[] type = methodsOrCtor.argTypes;
-                String sig = liveConnectSignature(type);
+                String sig = liveConnectSignature(methodsOrCtor.getArgTypes());
                 if (sigStart + sig.length() == name.length()
                         && name.regionMatches(sigStart, sig, 0, sig.length())) {
                     return methodsOrCtor;
@@ -433,6 +437,7 @@ class JavaMembers {
         // We reflect methods first, because we want overloaded field/method
         // names to be allocated to the NativeJavaMethod before the field
         // gets in the way.
+        var typeFactory = TypeInfoFactory.get(scope);
 
         Method[] methods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
         for (Method method : methods) {
@@ -469,7 +474,7 @@ class JavaMembers {
                 Object value = entry.getValue();
                 if (value instanceof Method) {
                     methodBoxes = new MemberBox[1];
-                    methodBoxes[0] = new MemberBox((Method) value);
+                    methodBoxes[0] = new MemberBox((Method) value, typeFactory);
                 } else {
                     ArrayList<Object> overloadedMethods = (ArrayList<Object>) value;
                     int N = overloadedMethods.size();
@@ -477,7 +482,7 @@ class JavaMembers {
                     methodBoxes = new MemberBox[N];
                     for (int i = 0; i != N; ++i) {
                         Method method = (Method) overloadedMethods.get(i);
-                        methodBoxes[i] = new MemberBox(method);
+                        methodBoxes[i] = new MemberBox(method, typeFactory);
                     }
                 }
                 NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
@@ -609,7 +614,7 @@ class JavaMembers {
                         if (getter != null) {
                             // We have a getter. Now, do we have a matching
                             // setter?
-                            Class<?> type = getter.method().getReturnType();
+                            var type = getter.getReturnType();
                             setter = extractSetMethod(type, njmSet.methods, isStatic);
                         } else {
                             // No getter, find any set method
@@ -633,7 +638,7 @@ class JavaMembers {
         Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
         MemberBox[] ctorMembers = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
-            ctorMembers[i] = new MemberBox(constructors[i]);
+            ctorMembers[i] = new MemberBox(constructors[i], typeFactory);
         }
         ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
@@ -708,9 +713,9 @@ class JavaMembers {
         for (MemberBox method : methods) {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
-            if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
-                Class<?> type = method.method().getReturnType();
-                if (type != Void.TYPE) {
+            if (method.getArgTypes().isEmpty() && (!isStatic || method.isStatic())) {
+                var type = method.getReturnType();
+                if (!type.isVoid()) {
                     return method;
                 }
                 break;
@@ -720,7 +725,7 @@ class JavaMembers {
     }
 
     private static MemberBox extractSetMethod(
-            Class<?> type, MemberBox[] methods, boolean isStatic) {
+            TypeInfo type, MemberBox[] methods, boolean isStatic) {
         //
         // Note: it may be preferable to allow NativeJavaMethod.findFunction()
         //       to find the appropriate setter; unfortunately, it requires an
@@ -730,13 +735,14 @@ class JavaMembers {
         MemberBox acceptableMatch = null;
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
-                Class<?>[] params = method.argTypes;
-                if (params.length == 1) {
-                    if (params[0] == type) {
+                var argTypes = method.getArgTypes();
+                if (argTypes.size() == 1) {
+                    if (type.is(argTypes.get(0).asClass())) {
                         // perfect match, no need to continue scanning
                         return method;
                     }
-                    if (acceptableMatch == null && params[0].isAssignableFrom(type)) {
+                    if (acceptableMatch == null
+                            && argTypes.get(0).asClass().isAssignableFrom(type.asClass())) {
                         // do not return at this point, there can still be perfect match
                         acceptableMatch = method;
                     }
@@ -750,8 +756,8 @@ class JavaMembers {
 
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
-                if (method.method().getReturnType() == Void.TYPE) {
-                    if (method.argTypes.length == 1) {
+                if (method.getReturnType().isVoid()) {
+                    if (method.getArgTypes().size() == 1) {
                         return method;
                     }
                 }

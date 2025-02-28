@@ -15,6 +15,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -78,34 +80,36 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+        var typeInfoFactory = TypeInfoFactory.get(this);
+
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor);
+            member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor);
+            member = new MemberBox((Method) methodOrConstructor, typeInfoFactory);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
         this.functionName = name;
-        Class<?>[] types = member.argTypes;
-        int arity = types.length;
-        if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
+        var types = member.getArgTypes();
+        int arity = types.size();
+        if (arity == 4 && (types.get(1).isArray() || types.get(2).isArray())) {
             // Either variable args or an error.
-            if (types[1].isArray()) {
+            if (types.get(1).isArray()) {
                 if (!isStatic
-                        || types[0] != ScriptRuntime.ContextClass
-                        || types[1].getComponentType() != ScriptRuntime.ObjectClass
-                        || types[2] != ScriptRuntime.FunctionClass
-                        || types[3] != Boolean.TYPE) {
+                        || types.get(0).isNot(Context.class)
+                        || types.get(1).isNot(Object[].class)
+                        || types.get(2).isNot(Function.class)
+                        || types.get(3).isNot(boolean.class)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.ctor", methodName);
                 }
                 parmsLength = VARARGS_CTOR;
             } else {
                 if (!isStatic
-                        || types[0] != ScriptRuntime.ContextClass
-                        || types[1] != ScriptRuntime.ScriptableClass
-                        || types[2].getComponentType() != ScriptRuntime.ObjectClass
-                        || types[3] != ScriptRuntime.FunctionClass) {
+                        || types.get(0).isNot(Context.class)
+                        || types.get(1).isNot(Scriptable.class)
+                        || types.get(2).isNot(Object[].class)
+                        || types.get(3).isNot(Function.class)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.fun", methodName);
                 }
                 parmsLength = VARARGS_METHOD;
@@ -115,10 +119,10 @@ public class FunctionObject extends BaseFunction {
             if (arity > 0) {
                 typeTags = new byte[arity];
                 for (int i = 0; i != arity; ++i) {
-                    int tag = getTypeTag(types[i]);
+                    int tag = types.get(i).getTypeTag();
                     if (tag == JAVA_UNSUPPORTED_TYPE) {
                         throw Context.reportRuntimeErrorById(
-                                "msg.bad.parms", types[i].getName(), methodName);
+                                "msg.bad.parms", types.get(i).asClass().getName(), methodName);
                     }
                     typeTags[i] = (byte) tag;
                 }
@@ -146,6 +150,7 @@ public class FunctionObject extends BaseFunction {
     /**
      * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type or {@link
      *     #JAVA_UNSUPPORTED_TYPE} if the conversion is not possible
+     * @see TypeInfo#getTypeTag()
      */
     public static int getTypeTag(Class<?> type) {
         if (type == ScriptRuntime.StringClass) return JAVA_STRING_TYPE;
@@ -488,10 +493,10 @@ public class FunctionObject extends BaseFunction {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (parmsLength > 0) {
-            Class<?>[] types = member.argTypes;
+            var types = member.getArgTypes();
             typeTags = new byte[parmsLength];
             for (int i = 0; i != parmsLength; ++i) {
-                typeTags[i] = (byte) getTypeTag(types[i]);
+                typeTags[i] = (byte) types.get(i).getTypeTag();
             }
         }
         if (member.isMethod()) {
