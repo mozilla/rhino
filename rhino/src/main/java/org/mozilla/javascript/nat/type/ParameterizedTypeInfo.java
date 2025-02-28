@@ -19,8 +19,8 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public boolean is(TypeInfo info) {
-		return rawType.is(info);
+	public boolean is(Class<?> c) {
+		return rawType.is(c);
 	}
 
 	@Override

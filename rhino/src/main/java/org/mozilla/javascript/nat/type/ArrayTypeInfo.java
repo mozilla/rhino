@@ -12,8 +12,8 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public boolean is(TypeInfo info) {
-		return info.isArray() && super.is(info);
+	public boolean is(Class<?> c) {
+		return c.isArray() && asClass() == c;
 	}
 
 	@Override

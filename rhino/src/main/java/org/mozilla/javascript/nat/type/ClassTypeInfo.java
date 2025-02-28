@@ -17,11 +17,8 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public boolean is(TypeInfo info) {
-		if (info instanceof ParameterizedTypeInfo) {
-			return info.is(this);
-		}
-		return super.is(info);
+	public boolean is(Class<?> c) {
+		return type == c;
 	}
 
 	@Override
@@ -97,6 +94,11 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	@Override
 	public boolean isCharacter() {
 		return type == Character.class;
+	}
+
+	@Override
+	public boolean isObject() {
+		return type == Object.class;
 	}
 
 	@Override

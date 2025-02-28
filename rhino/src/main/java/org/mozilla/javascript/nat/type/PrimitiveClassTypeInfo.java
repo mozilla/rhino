@@ -9,6 +9,11 @@ public class PrimitiveClassTypeInfo extends ClassTypeInfo {
 	}
 
 	@Override
+	public boolean is(Class<?> c) {
+		return c.isPrimitive() && asClass() == c;
+	}
+
+	@Override
 	public boolean isPrimitive() {
 		return true;
 	}

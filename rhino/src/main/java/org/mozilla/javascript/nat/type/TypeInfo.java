@@ -73,8 +73,8 @@ public interface TypeInfo {
 		return NONE;
 	}
 
-	default boolean is(TypeInfo info) {
-		return this == info;
+	default boolean is(Class<?> c) {
+		return asClass() == c;
 	}
 
 	default boolean isPrimitive() {
@@ -241,6 +241,9 @@ public interface TypeInfo {
 		return NONE;
 	}
 
+	/**
+	 * create an array whose element type is the caller TypeInfo
+	 */
 	default Object newArray(int length) {
 		return Array.newInstance(asClass(), length);
 	}
@@ -306,6 +309,10 @@ public interface TypeInfo {
 	}
 
 	default boolean isCharacter() {
+		return false;
+	}
+
+	default boolean isObject() {
 		return false;
 	}
 
