@@ -1,18 +1,16 @@
 package org.mozilla.javascript.nat.type;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 public final class ParameterizedTypeInfo extends TypeInfoBase {
 	private final TypeInfo rawType;
-	private final TypeInfo[] params;
+	private final List<TypeInfo> params;
 	private int hashCode;
 
 	ParameterizedTypeInfo(TypeInfo rawType, TypeInfo[] params) {
 		this.rawType = rawType;
-		this.params = params;
+		this.params = List.of(params);
 	}
 
 	@Override
@@ -27,17 +25,17 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 
 	@Override
 	public TypeInfo param(int index) {
-		return index >= 0 && index < params.length && params[index] != TypeInfo.OBJECT ? params[index] : TypeInfo.NONE;
+		if (index < 0 || index >= params.size()) {
+			return TypeInfo.NONE;
+		}
+		var got = params.get(index);
+		return got == TypeInfo.OBJECT ? TypeInfo.NONE : got;
 	}
 
 	@Override
 	public int hashCode() {
 		if (hashCode == 0) {
-			hashCode = Objects.hash(rawType, Arrays.hashCode(params));
-
-			if (hashCode == 0) {
-				hashCode = 1;
-			}
+			hashCode = rawType.hashCode() * 31 + params.hashCode();
 		}
 
 		return hashCode;
@@ -46,9 +44,8 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	@Override
 	public boolean equals(Object object) {
 		return this == object || object instanceof ParameterizedTypeInfo
-            && params.length == ((ParameterizedTypeInfo) object).params.length
 			&& rawType.equals(((ParameterizedTypeInfo) object).rawType)
-			&& Arrays.deepEquals(params, ((ParameterizedTypeInfo) object).params);
+            && params.equals(((ParameterizedTypeInfo) object).params);
 	}
 
 	@Override
@@ -61,13 +58,13 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 		ctx.append(sb, rawType);
 		sb.append('<');
 
-		for (int i = 0; i < params.length; i++) {
+		for (int i = 0; i < params.size(); i++) {
 			if (i > 0) {
 				sb.append(',');
 				ctx.appendSpace(sb);
 			}
 
-			ctx.append(sb, params[i]);
+			ctx.append(sb, params.get(i));
 		}
 
 		sb.append('>');
@@ -82,7 +79,7 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 		return rawType;
 	}
 
-	public TypeInfo[] params() {
+	public List<TypeInfo> params() {
 		return params;
 	}
 
