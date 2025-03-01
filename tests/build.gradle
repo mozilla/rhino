@@ -15,7 +15,7 @@ dependencies {
     testImplementation("com.tngtech.archunit:archunit-junit4:1.4.0") {
         exclude group: 'junit'
     }
-    testImplementation("org.slf4j:slf4j-simple:2.0.16")
+    testImplementation("org.slf4j:slf4j-simple:2.0.17")
 }
 
 tasks.withType(JavaCompile) {
