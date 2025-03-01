@@ -100,7 +100,6 @@ public class Test262SuiteTest {
                             "new.target",
                             "object-rest",
                             "regexp-dotall",
-                            "regexp-lookbehind",
                             "regexp-named-groups",
                             "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
