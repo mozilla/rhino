@@ -5,7 +5,9 @@
 js> load('testsrc/doctests/util.js');
 
 js> Object.defineProperty
-function defineProperty() { [native code for Object.defineProperty, arity=3] }
+function defineProperty() {
+	[native code]
+}
 
 js> expectTypeError(function() { Object.defineProperty() });
 js> expectTypeError(function() { Object.defineProperty({}) });

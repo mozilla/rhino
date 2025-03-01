@@ -505,9 +505,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
             sb.append(getFunctionName());
             sb.append("() {\n\t");
         }
-        sb.append("[native code, arity=");
-        sb.append(getArity());
-        sb.append("]\n");
+        sb.append("[native code]\n");
         if (!justbody) {
             sb.append("}\n");
         }
