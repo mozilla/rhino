@@ -25,7 +25,7 @@ import java.lang.reflect.Modifier;
 final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
-    private transient Member memberObject;
+    private transient Executable memberObject;
     transient Class<?>[] argTypes;
     transient boolean[] argNullability;
     transient boolean vararg;
