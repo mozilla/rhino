@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.FunctionObject;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -68,5 +70,14 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	@Override
 	public boolean isArray() {
 		return true;
+	}
+
+	/**
+	 * array type is not any of the base types
+	 * @see TypeInfo#getTypeTag()
+	 */
+	@Override
+	public int getTypeTag() {
+		return FunctionObject.JAVA_UNSUPPORTED_TYPE;
 	}
 }

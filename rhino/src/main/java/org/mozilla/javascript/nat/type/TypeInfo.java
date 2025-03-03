@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
 
 import java.lang.reflect.Array;
@@ -332,6 +334,30 @@ public interface TypeInfo {
 
 	default boolean isArray() {
 		return false;
+	}
+
+	/**
+	 * @see FunctionObject#getTypeTag(Class)
+	 */
+	default int getTypeTag() {
+		if (is(String.class)) {
+			return FunctionObject.JAVA_STRING_TYPE;
+		} else if (isInt()) {
+			return FunctionObject.JAVA_INT_TYPE;
+		} else if (isBoolean()) {
+			return FunctionObject.JAVA_BOOLEAN_TYPE;
+		} else if (isDouble()) {
+			return FunctionObject.JAVA_DOUBLE_TYPE;
+		} else if (Scriptable.class.isAssignableFrom(asClass())) {
+			return FunctionObject.JAVA_SCRIPTABLE_TYPE;
+		} else if (isObject()) {
+			return FunctionObject.JAVA_OBJECT_TYPE;
+		}
+
+		// Note that the long type is not supported; see the javadoc for
+		// the constructor for this class
+
+		return FunctionObject.JAVA_UNSUPPORTED_TYPE;
 	}
 
 	default TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {

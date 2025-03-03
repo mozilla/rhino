@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.FunctionObject;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -98,5 +100,13 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	@Override
 	public boolean isInterface() {
 		return this.rawType.isInterface();
+	}
+
+	/**
+	 * none of the base types is parameterized
+	 */
+	@Override
+	public int getTypeTag() {
+		return FunctionObject.JAVA_UNSUPPORTED_TYPE;
 	}
 }
