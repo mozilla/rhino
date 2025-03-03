@@ -53,7 +53,7 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public TypeInfo componentType() {
+	public TypeInfo getComponentType() {
 		return component;
 	}
 

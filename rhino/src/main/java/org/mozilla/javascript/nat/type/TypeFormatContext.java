@@ -14,7 +14,7 @@ public interface TypeFormatContext {
     }
 
     default void formatArray(StringBuilder builder, ArrayTypeInfo type) {
-        type.componentType().append(this, builder);
+        type.getComponentType().append(this, builder);
         builder.append('[').append(']');
     }
 

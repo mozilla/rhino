@@ -239,7 +239,7 @@ public interface TypeInfo {
 
 	void append(TypeFormatContext ctx, StringBuilder builder);
 
-	default TypeInfo componentType() {
+	default TypeInfo getComponentType() {
 		return NONE;
 	}
 
