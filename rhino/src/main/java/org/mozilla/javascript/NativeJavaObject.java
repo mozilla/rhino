@@ -636,7 +636,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                                 || (value instanceof Callable
                                         && value instanceof ScriptableObject))) {
                     // Try to use function/object as implementation of Java interface.
-                    return createInterfaceAdapter(type, (ScriptableObject) value);
+                    return createInterfaceAdapter(type.asClass(), (ScriptableObject) value);
                 } else {
                     reportConversionError(value, type);
                 }
@@ -646,7 +646,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         return value;
     }
 
-    protected static Object createInterfaceAdapter(TypeInfo type, ScriptableObject so) {
+    protected static Object createInterfaceAdapter(Class<?> type, ScriptableObject so) {
         // XXX: Currently only instances of ScriptableObject are
         // supported since the resulting interface proxies should
         // be reused next time conversion is made and generic
@@ -660,7 +660,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             return old;
         }
         Context cx = Context.getContext();
-        Object glue = InterfaceAdapter.create(cx, type.asClass(), so);
+        Object glue = InterfaceAdapter.create(cx, type, so);
         // Store for later retrieval
         glue = so.associateValue(key, glue);
         return glue;
