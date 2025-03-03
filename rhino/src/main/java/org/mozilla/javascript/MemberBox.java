@@ -6,15 +6,14 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.nat.type.TypeInfo;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
+import java.util.List;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -27,6 +26,7 @@ final class MemberBox implements Serializable {
 
     private transient Executable memberObject;
     transient Class<?>[] argTypes;
+    private transient List<TypeInfo> argTypeInfos;
     transient boolean[] argNullability;
     transient boolean vararg;
 
@@ -99,6 +99,13 @@ final class MemberBox implements Serializable {
 
     Class<?> getDeclaringClass() {
         return memberObject.getDeclaringClass();
+    }
+
+    List<TypeInfo> getArgTypes() {
+        if (argTypeInfos == null) {
+            argTypeInfos = List.of(TypeInfo.ofArray(this.memberObject.getGenericParameterTypes()));
+        }
+        return argTypeInfos;
     }
 
     String toJavaDeclaration() {
@@ -195,8 +202,7 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]),
+                                                    nativeSetter.getArgTypes().getFirst().getTypeTag(),
                                                     nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {

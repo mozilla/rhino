@@ -139,7 +139,7 @@ class JavaMembers {
             // main setter. Otherwise, let the NativeJavaMethod decide which
             // setter to use:
             if (bp.setters == null || value == null) {
-                Class<?> setType = bp.setter.argTypes[0];
+                var setType = bp.setter.getArgTypes().getFirst();
                 Object[] args = {Context.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
@@ -708,7 +708,7 @@ class JavaMembers {
         for (MemberBox method : methods) {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
-            if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
+            if (method.getArgTypes().isEmpty() && (!isStatic || method.isStatic())) {
                 Class<?> type = method.method().getReturnType();
                 if (type != Void.TYPE) {
                     return method;
