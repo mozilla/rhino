@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.function.BiFunction;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
@@ -552,5 +553,36 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
+    }
+
+    @Test
+    public void quantifiedCaptureClearsPreviousCaptures() {
+        // With the pattern /(?:(\2)(\d))*/, the first capture group should be always empty
+        // when used with a quantifier
+        BiFunction<String, String, String> test =
+                (quantifier, input) -> {
+                    return "var regexStr = '(?:(\\\\2)(\\\\d))'\n"
+                            + "function test(quantifier, input) {\n"
+                            + "  var regexp = new RegExp(regexStr + quantifier + '$');\n"
+                            + "  var res = regexp.exec(input);\n"
+                            + "  return res != null && res.length == 3 && res[1] == '' && res[2] != '';\n"
+                            + "}\n"
+                            + "test('"
+                            + quantifier
+                            + "','"
+                            + input
+                            + "');";
+                };
+
+        Utils.assertWithAllModes_ES6("greedy-*", true, test.apply("*", "123"));
+        Utils.assertWithAllModes_ES6("greedy-+", true, test.apply("+", "123"));
+        Utils.assertWithAllModes_ES6("greedy-?", true, test.apply("?", "123"));
+        Utils.assertWithAllModes_ES6("greedy-{2}", true, test.apply("{2}", "123"));
+        Utils.assertWithAllModes_ES6("greedy-{2,3}", true, test.apply("{2,}", "123"));
+        Utils.assertWithAllModes_ES6("non-greedy-*", true, test.apply("*?", "123"));
+        Utils.assertWithAllModes_ES6("non-greedy-+", true, test.apply("+?", "123"));
+        Utils.assertWithAllModes_ES6("non-greedy-?", true, test.apply("??", "123"));
+        Utils.assertWithAllModes_ES6("non-greedy-{2}", true, test.apply("{2}?", "123"));
+        Utils.assertWithAllModes_ES6("non-greedy-{2,3}", true, test.apply("{2,}?", "123"));
     }
 }
