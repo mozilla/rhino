@@ -7,6 +7,10 @@
 package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
@@ -78,7 +82,11 @@ public class NativeRegExp extends IdScriptableObject {
     //    private static final byte REOP_UCFLATi       = 21; /* case-independent REOP_UCFLAT */
     private static final byte REOP_CLASS = 22; /* character class with index */
     private static final byte REOP_NCLASS = 23; /* negated character class with index */
-    private static final byte REOP_SIMPLE_END = 23; /* end of 'simple opcodes' */
+    private static final byte REOP_NAMED_BACKREF = 24; /* named back-reference */
+
+    // REOP_SIMPLE_END is not a real opcode; it is just a sentinel. It is therefore okay
+    // for it to share a constant with a real opcode
+    private static final byte REOP_SIMPLE_END = 24; /* end of 'simple opcodes' */
     private static final byte REOP_QUANT = 25; /* quantified atom: atom{1,2} */
     private static final byte REOP_STAR = 26; /* zero or more occurrences of kid */
     private static final byte REOP_PLUS = 27; /* one or more occurrences of kid */
@@ -343,6 +351,15 @@ public class NativeRegExp extends IdScriptableObject {
                     System.out.println("BACKREF " + backrefIndex);
                     pc += INDEX_LEN;
                     break;
+                case REOP_NAMED_BACKREF:
+                    int namedBackrefIndex = getIndex(regexp.program, pc);
+                    int namedBackrefLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.println(
+                            "NAMED_BACKREF "
+                                    + new String(
+                                            regexp.source, namedBackrefIndex, namedBackrefLength));
+                    pc += 2 * INDEX_LEN;
+                    break;
                 case REOP_FLAT:
                     int flatIndex = getIndex(regexp.program, pc);
                     int flatLength = getIndex(regexp.program, pc + INDEX_LEN);
@@ -536,6 +553,63 @@ public class NativeRegExp extends IdScriptableObject {
         }
     }
 
+    private static void extractNamedCaptureGroups(
+            char[] src, RENode re, Map<String, List<Integer>> namedCaptureGroups) {
+        RENode node = re;
+        while (node != null) {
+            if (node.op == REOP_LPAREN) {
+                if (node.captureGroupNameLength != 0) {
+                    String name =
+                            new String(
+                                    src, node.captureGroupNameIndex, node.captureGroupNameLength);
+                    // we set an initial capacity of 1 because we optimistically
+                    // do not expect duplicate group names
+                    ArrayList<Integer> entry = new ArrayList<>(1);
+
+                    if (namedCaptureGroups.putIfAbsent(name, entry) != null) {
+                        reportError("msg.duplicate.group.name", name);
+                    }
+                    entry.add(node.parenIndex);
+                    extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
+                }
+            } else if (node.op == REOP_ALT) {
+                // handle duplicate capture group names between kid1 and kid2
+                // by storing all the parenIndex values in a list
+                Map<String, List<Integer>> groupCaptures1 = new HashMap<>();
+                Map<String, List<Integer>> groupCaptures2;
+                extractNamedCaptureGroups(src, node.kid, groupCaptures1);
+
+                if (groupCaptures1
+                        .isEmpty()) { // then no duplicate group names are possible between kid1 and
+                    // kid2
+                    extractNamedCaptureGroups(src, node.kid2, namedCaptureGroups);
+                } else {
+                    groupCaptures2 = new HashMap<>();
+                    extractNamedCaptureGroups(src, node.kid2, groupCaptures2);
+
+                    for (Map.Entry<String, List<Integer>> entry : groupCaptures2.entrySet()) {
+                        groupCaptures1.merge(
+                                entry.getKey(),
+                                entry.getValue(),
+                                (v1, v2) -> {
+                                    v1.addAll(v2);
+                                    return v1;
+                                });
+                    }
+
+                    for (Map.Entry<String, List<Integer>> entry : groupCaptures1.entrySet()) {
+                        if (namedCaptureGroups.putIfAbsent(entry.getKey(), entry.getValue())
+                                != null) {
+                            reportError("msg.duplicate.group.name", entry.getKey());
+                        }
+                    }
+                }
+            } else extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
+
+            node = node.next;
+        }
+    }
+
     static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
         RECompiled regexp = new RECompiled(str);
         int length = str.length();
@@ -580,11 +654,24 @@ public class NativeRegExp extends IdScriptableObject {
             // Need to reparse if pattern contains invalid backreferences:
             // "Note: if the number of left parentheses is less than the number
             // specified in \#, the \# is taken as an octal escape"
+            boolean reParse = false;
             if (state.maxBackReference > state.parenCount) {
                 state = new CompilerState(cx, regexp.source, length, flags);
                 state.backReferenceLimit = state.parenCount;
+                reParse = true;
+            }
+            if (state.reparseIfNoNamedCaptureGroupFound && !state.namedCaptureGroupsFound) {
+                state.namedBackrefEnabled = false;
+                reParse = true;
+            }
+            if (reParse) {
                 if (!parseDisjunction(state)) return null;
             }
+        }
+
+        regexp.namedCaptureGroups = new HashMap<>();
+        if (state.namedCaptureGroupsFound) {
+            extractNamedCaptureGroups(regexp.source, state.result, regexp.namedCaptureGroups);
         }
 
         regexp.program = new byte[state.progLength + 1];
@@ -1061,6 +1148,38 @@ public class NativeRegExp extends IdScriptableObject {
         return prev;
     }
 
+    private static String extractCaptureGroupName(char[] src, int cpbegin, int cpend) {
+        // TODO: support capture group names consisting of unicode escape sequences
+        String srcString = new String(src);
+        // parse unicode identifier
+        int cp = cpbegin;
+        if (cp == cpend) {
+            return null;
+        }
+
+        if (src[cp++] != '<') return null;
+
+        if (!(src[cp] == '$'
+                || src[cp] == '_'
+                || Character.isUnicodeIdentifierStart(srcString.codePointAt(cp)))) {
+            return null;
+        }
+        cp += Character.charCount(srcString.codePointAt(cp));
+
+        while (cp < cpend && src[cp] != '>') {
+            int codePoint = srcString.codePointAt(cp);
+            if (!(src[cp] == '$' || Character.isUnicodeIdentifierPart(codePoint))) {
+                break;
+            }
+            cp += Character.charCount(codePoint);
+        }
+
+        if (cp < cpend && src[cp++] != '>') return null;
+
+        // strip the '<' and '>'
+        return String.copyValueOf(src, cpbegin + 1, cp - cpbegin - 2);
+    }
+
     private static boolean parseTerm(CompilerState state) {
         char[] src = state.cpbegin;
         char c = src[state.cp++];
@@ -1244,11 +1363,39 @@ public class NativeRegExp extends IdScriptableObject {
                             break;
                         /* IdentityEscape */
                         default:
-                            state.result = new RENode(REOP_FLAT);
-                            state.result.chr = c;
-                            state.result.length = 1;
-                            state.result.flatIndex = state.cp - 1;
-                            state.progLength += 3;
+                            {
+                                boolean asFlat = false;
+                                if (c == 'k' && state.namedBackrefEnabled) {
+                                    String groupName =
+                                            extractCaptureGroupName(src, state.cp, state.cpend);
+                                    if (groupName != null) {
+                                        state.result = new RENode(REOP_NAMED_BACKREF);
+                                        state.result.captureGroupNameIndex =
+                                                state.cp + 1; // skip '<'
+                                        state.result.captureGroupNameLength = groupName.length();
+                                        state.reparseIfNoNamedCaptureGroupFound = true;
+                                        state.cp += groupName.length() + 2; // include '<' and '>'
+
+                                        // REOP_NAMED_BACKREF GROUPNAMEINDEX GROUPNAMELENGTH
+                                        state.progLength += 5;
+                                    } else {
+                                        if (state.namedCaptureGroupsFound) {
+                                            reportError("msg.invalid.named.backref", "");
+                                        } else {
+                                            state.failIfNamedCaptureGroupFound = true;
+                                            asFlat = true;
+                                        }
+                                    }
+                                } else asFlat = true;
+
+                                if (asFlat) {
+                                    state.result = new RENode(REOP_FLAT);
+                                    state.result.chr = c;
+                                    state.result.length = 1;
+                                    state.result.flatIndex = state.cp - 1;
+                                    state.progLength += 3;
+                                }
+                            }
                             break;
                     }
                     break;
@@ -1289,6 +1436,26 @@ public class NativeRegExp extends IdScriptableObject {
                         }
                     } else {
                         result = new RENode(REOP_LPAREN);
+                        if (state.cp + 2 < state.cpend
+                                && src[state.cp] == '?'
+                                && src[state.cp + 1] == '<') {
+                            state.cp += 1;
+                            String name = extractCaptureGroupName(src, state.cp, state.cpend);
+                            if (name == null) {
+                                reportError("msg.invalid.group.name", "");
+                                return false;
+                            }
+
+                            if (state.failIfNamedCaptureGroupFound) {
+                                reportError("msg.invalid.named.backref", "");
+                                return false;
+                            }
+
+                            result.captureGroupNameIndex = state.cp + 1; // skip '<'
+                            result.captureGroupNameLength = name.length(); // skip '<' and '>'
+                            state.namedCaptureGroupsFound = true;
+                            state.cp += name.length() + 2; // include '<' and '>'
+                        }
                         /* LPAREN, <index>, ... RPAREN, <index> */
                         state.progLength += 6;
                         result.parenIndex = state.parenCount++;
@@ -1547,6 +1714,29 @@ public class NativeRegExp extends IdScriptableObject {
                     break;
                 case REOP_BACKREF:
                     pc = addIndex(program, pc, t.parenIndex);
+                    break;
+                case REOP_NAMED_BACKREF:
+                    {
+                        String backRefName =
+                                new String(
+                                        re.source,
+                                        t.captureGroupNameIndex,
+                                        t.captureGroupNameLength);
+                        List<Integer> indices = re.namedCaptureGroups.get(backRefName);
+                        if (indices == null) {
+                            reportError("msg.invalid.named.backref", "");
+                            return pc;
+                        }
+
+                        if (indices.size() == 1) { // optimization for unique backrefs
+                            program[pc - 1] = REOP_BACKREF;
+                            pc = addIndex(program, pc, indices.get(0));
+                        } else {
+                            // backref doesn't have a unique parenIndex
+                            pc = addIndex(program, pc, t.captureGroupNameIndex);
+                            pc = addIndex(program, pc, t.captureGroupNameLength);
+                        }
+                    }
                     break;
                 case REOP_ASSERT:
                 case REOP_ASSERTBACK:
@@ -2137,6 +2327,30 @@ public class NativeRegExp extends IdScriptableObject {
                     result = backrefMatcher(gData, parenIndex, input, end, matchBackward);
                 }
                 break;
+            case REOP_NAMED_BACKREF:
+                {
+                    int groupNameIndex = getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    int groupNameLength = getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    if (gData.parens == null) {
+                        break;
+                    }
+
+                    String backRefName =
+                            new String(gData.regexp.source, groupNameIndex, groupNameLength);
+                    List<Integer> indices = gData.regexp.namedCaptureGroups.get(backRefName);
+                    boolean failed = false;
+                    for (int i : indices) {
+                        if (gData.parensIndex(i) == -1) continue;
+                        result = backrefMatcher(gData, i, input, end, matchBackward);
+                        if (result) {
+                            break;
+                        } else failed = true;
+                    }
+                    if (!failed) result = true;
+                    break;
+                }
             case REOP_FLAT:
                 {
                     offset = getIndex(program, pc);
@@ -2902,6 +3116,7 @@ public class NativeRegExp extends IdScriptableObject {
         index -= matchlen;
         Object result;
         Scriptable obj;
+        Scriptable groups = Undefined.SCRIPTABLE_UNDEFINED;
 
         if (matchType == TEST) {
             /*
@@ -2930,6 +3145,23 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             SubString parsub = null;
             int num;
+            String[] namedCaptureGroups = null; // to ensure groups appear in source order
+
+            if (matchType != TEST) {
+                namedCaptureGroups = new String[re.parenCount];
+
+                // We do a new NativeObject() and not cx.newObject(scope)
+                // since we want the groups to have null as prototype
+                groups = new NativeObject();
+                for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
+                    String key = entry.getKey();
+                    List<Integer> indices = entry.getValue();
+                    for (int i : indices) {
+                        namedCaptureGroups[i] = key;
+                    }
+                }
+            }
+
             res.parens = new SubString[re.parenCount];
             for (num = 0; num < re.parenCount; num++) {
                 int cap_index = gData.parensIndex(num);
@@ -2937,9 +3169,20 @@ public class NativeRegExp extends IdScriptableObject {
                     int cap_length = gData.parensLength(num);
                     parsub = new SubString(str, cap_index, cap_length);
                     res.parens[num] = parsub;
-                    if (matchType != TEST) obj.put(num + 1, obj, parsub.toString());
+                    if (matchType != TEST) {
+                        obj.put(num + 1, obj, parsub.toString());
+                        if (namedCaptureGroups[num] != null) {
+                            groups.put(namedCaptureGroups[num], groups, parsub.toString());
+                        }
+                    }
                 } else {
-                    if (matchType != TEST) obj.put(num + 1, obj, Undefined.instance);
+                    if (matchType != TEST) {
+                        obj.put(num + 1, obj, Undefined.instance);
+                        if (namedCaptureGroups[num] != null
+                                && !groups.has(namedCaptureGroups[num], groups)) {
+                            groups.put(namedCaptureGroups[num], groups, Undefined.instance);
+                        }
+                    }
                 }
             }
             res.lastParen = parsub;
@@ -2952,6 +3195,7 @@ public class NativeRegExp extends IdScriptableObject {
              */
             obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
+            obj.put("groups", obj, groups);
         }
 
         if (res.lastMatch == null) {
@@ -3424,6 +3668,8 @@ class RECompiled implements Serializable {
 
     final char[] source; /* locked source string, sans // */
     int parenCount; /* number of parenthesized submatches */
+    Map<String, List<Integer>>
+            namedCaptureGroups; // List<Int> to handle duplicate names in disjunctions
     int flags; /* flags  */
     byte[] program; /* regular expression bytecode */
     int classCount; /* count [...] bitmaps */
@@ -3465,6 +3711,10 @@ class RENode {
     char chr; /* of one character */
     int length; /* or many (via the index) */
     int flatIndex; /* which is -1 if not sourced */
+
+    /* or a named capture group */
+    int captureGroupNameIndex;
+    int captureGroupNameLength;
 }
 
 class CompilerState {
@@ -3480,6 +3730,10 @@ class CompilerState {
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
+
+        this.namedBackrefEnabled = true;
+        this.failIfNamedCaptureGroupFound = false;
+        this.reparseIfNoNamedCaptureGroupFound = false;
     }
 
     Context cx;
@@ -3493,6 +3747,23 @@ class CompilerState {
     int parenNesting;
     int classCount; /* number of [] encountered */
     int progLength; /* estimated bytecode length */
+
+    boolean namedBackrefEnabled; // should \k be treated as a backreference?
+    boolean namedCaptureGroupsFound; // have we found any named capture groups?
+
+    // should we fail if a named capture group is found?
+    // If we find something in the regexp that starts with a
+    // \k but doesn't lead to a valid named backref, it is
+    // optimistically parsed as a FLAT. In this case, we want
+    // to fail if we eventually find a named capture group.
+    boolean failIfNamedCaptureGroupFound;
+
+    // if we find something in the regexp that is a valid
+    // named backref, we optimistically parse it as a BACKREF.
+    // However if we don't find any named capture groups in the regexp,
+    // we must fail and parse it as a FLAT.
+    boolean reparseIfNoNamedCaptureGroupFound;
+
     RENode result;
 }
 
