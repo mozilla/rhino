@@ -30,10 +30,10 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
 
-    static void init(Scriptable scope, boolean sealed) {
-        LambdaConstructor constructor =
+    static void init(Scriptable s, boolean sealed) {
+        LambdaConstructor ctor =
                 new LambdaConstructor(
-                        scope,
+                        s,
                         CLASS_NAME,
                         1,
                         NativeObject::js_constructorCall,
@@ -43,238 +43,71 @@ public class NativeObject extends ScriptableObject implements Map {
                         return js_constructor(cx, scope, args);
                     }
                 };
-        constructor.defineConstructorMethod(
-                scope,
-                "getPrototypeOf",
-                1,
-                null,
-                NativeObject::js_getPrototypeOf,
-                DONTENUM,
-                DONTENUM | READONLY);
+
+        defOnCtor(ctor, s, "getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
         if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
-            constructor.defineConstructorMethod(
-                    scope,
-                    "setPrototypeOf",
-                    2,
-                    null,
-                    NativeObject::js_setPrototypeOf,
-                    DONTENUM,
-                    DONTENUM | READONLY);
-            constructor.defineConstructorMethod(
-                    scope,
-                    "entries",
-                    1,
-                    null,
-                    NativeObject::js_entries,
-                    DONTENUM,
-                    DONTENUM | READONLY);
-            constructor.defineConstructorMethod(
-                    scope,
-                    "fromEntries",
-                    1,
-                    null,
-                    NativeObject::js_fromEntries,
-                    DONTENUM,
-                    DONTENUM | READONLY);
-            constructor.defineConstructorMethod(
-                    scope,
-                    "values",
-                    1,
-                    null,
-                    NativeObject::js_values,
-                    DONTENUM,
-                    DONTENUM | READONLY);
-            constructor.defineConstructorMethod(
-                    scope,
-                    "hasOwn",
-                    1,
-                    null,
-                    NativeObject::js_hasOwn,
-                    DONTENUM,
-                    DONTENUM | READONLY);
+            defOnCtor(ctor, s, "setPrototypeOf", 2, NativeObject::js_setPrototypeOf);
+            defOnCtor(ctor, s, "entries", 1, NativeObject::js_entries);
+            defOnCtor(ctor, s, "fromEntries", 1, NativeObject::js_fromEntries);
+            defOnCtor(ctor, s, "values", 1, NativeObject::js_values);
+            defOnCtor(ctor, s, "hasOwn", 1, NativeObject::js_hasOwn);
         }
-        constructor.defineConstructorMethod(
-                scope, "keys", 1, null, NativeObject::js_keys, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "getOwnPropertyNames",
-                1,
-                null,
-                NativeObject::js_getOwnPropertyNames,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "getOwnPropertySymbols",
-                1,
-                null,
-                NativeObject::js_getOwnPropertySymbols,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "getOwnPropertyDescriptor",
-                2,
-                null,
-                NativeObject::js_getOwnPropertyDescriptor,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "getOwnPropertyDescriptors",
-                1,
-                null,
-                NativeObject::js_getOwnPropertyDescriptors,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "defineProperty",
-                3,
-                null,
-                NativeObject::js_defineProperty,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "isExtensible",
-                1,
-                null,
-                NativeObject::js_isExtensible,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "preventExtensions",
-                1,
-                null,
-                NativeObject::js_preventExtensions,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "defineProperties",
-                2,
-                null,
-                NativeObject::js_defineProperties,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "create", 2, null, NativeObject::js_create, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "isSealed",
-                1,
-                null,
-                NativeObject::js_isSealed,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "isFrozen",
-                1,
-                null,
-                NativeObject::js_isFrozen,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "seal", 1, null, NativeObject::js_seal, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "freeze", 1, null, NativeObject::js_freeze, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "assign", 2, null, NativeObject::js_assign, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "is", 2, null, NativeObject::js_is, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "groupBy", 2, null, NativeObject::js_groupBy, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toString",
-                0,
-                null,
-                NativeObject::js_toString,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toLocaleString",
-                0,
-                null,
-                NativeObject::js_toLocaleString,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "__lookupGetter__",
-                1,
-                null,
-                NativeObject::js_lookupGetter,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "__lookupSetter__",
-                1,
-                null,
-                NativeObject::js_lookupSetter,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "__defineGetter__",
-                2,
-                null,
-                NativeObject::js_defineGetter,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "__defineSetter__",
-                2,
-                null,
-                NativeObject::js_defineSetter,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "hasOwnProperty",
-                1,
-                null,
-                NativeObject::js_hasOwnProperty,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "propertyIsEnumerable",
-                1,
-                null,
-                NativeObject::js_propertyIsEnumerable,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "valueOf", 0, null, NativeObject::js_valueOf, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "isPrototypeOf",
-                1,
-                null,
-                NativeObject::js_isPrototypeOf,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toSource",
-                0,
-                null,
-                ScriptRuntime::defaultObjectToSource,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
+        defOnCtor(ctor, s, "keys", 1, NativeObject::js_keys);
+        defOnCtor(ctor, s, "getOwnPropertyNames", 1, NativeObject::js_getOwnPropertyNames);
+        defOnCtor(ctor, s, "getOwnPropertySymbols", 1, NativeObject::js_getOwnPropertySymbols);
+        defOnCtor(ctor, s, "getOwnPropertyDescriptor", 2, NativeObject::js_getOwnPropDesc);
+        defOnCtor(ctor, s, "getOwnPropertyDescriptors", 1, NativeObject::js_getOwnPropDescs);
+        defOnCtor(ctor, s, "defineProperty", 3, NativeObject::js_defineProperty);
+        defOnCtor(ctor, s, "isExtensible", 1, NativeObject::js_isExtensible);
+        defOnCtor(ctor, s, "preventExtensions", 1, NativeObject::js_preventExtensions);
+        defOnCtor(ctor, s, "defineProperties", 2, NativeObject::js_defineProperties);
+        defOnCtor(ctor, s, "create", 2, NativeObject::js_create);
+        defOnCtor(ctor, s, "isSealed", 1, NativeObject::js_isSealed);
+        defOnCtor(ctor, s, "isFrozen", 1, NativeObject::js_isFrozen);
+        defOnCtor(ctor, s, "seal", 1, NativeObject::js_seal);
+        defOnCtor(ctor, s, "freeze", 1, NativeObject::js_freeze);
+        defOnCtor(ctor, s, "assign", 2, NativeObject::js_assign);
+        defOnCtor(ctor, s, "is", 2, NativeObject::js_is);
+        defOnCtor(ctor, s, "groupBy", 2, NativeObject::js_groupBy);
+
+        defOnProto(ctor, s, "toString", 0, NativeObject::js_toString);
+        defOnProto(ctor, s, "toLocaleString", 0, NativeObject::js_toLocaleString);
+        defOnProto(ctor, s, "__lookupGetter__", 1, NativeObject::js_lookupGetter);
+        defOnProto(ctor, s, "__lookupSetter__", 1, NativeObject::js_lookupSetter);
+        defOnProto(ctor, s, "__defineGetter__", 2, NativeObject::js_defineGetter);
+        defOnProto(ctor, s, "__defineSetter__", 2, NativeObject::js_defineSetter);
+        defOnProto(ctor, s, "hasOwnProperty", 1, NativeObject::js_hasOwnProperty);
+        defOnProto(ctor, s, "propertyIsEnumerable", 1, NativeObject::js_propertyIsEnumerable);
+        defOnProto(ctor, s, "valueOf", 0, NativeObject::js_valueOf);
+        defOnProto(ctor, s, "isPrototypeOf", 1, NativeObject::js_isPrototypeOf);
+        defOnProto(ctor, s, "toSource", 0, ScriptRuntime::defaultObjectToSource);
+
+        ctor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
+        ScriptableObject.defineProperty(s, CLASS_NAME, ctor, DONTENUM);
         if (sealed) {
-            constructor.sealObject();
-            ((NativeObject) constructor.getPrototypeProperty()).sealObject();
+            ctor.sealObject();
+            ((NativeObject) ctor.getPrototypeProperty()).sealObject();
         }
+    }
+
+    private static void defOnCtor(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.defineConstructorMethod(
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defOnProto(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.definePrototypeMethod(
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
     }
 
     @Override
@@ -659,7 +492,7 @@ public class NativeObject extends ScriptableObject implements Map {
         return cx.newArray(scope, syms.toArray());
     }
 
-    private static Object js_getOwnPropertyDescriptor(
+    private static Object js_getOwnPropDesc(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         // TODO(norris): There's a deeper issue here if
@@ -672,7 +505,7 @@ public class NativeObject extends ScriptableObject implements Map {
         return desc == null ? Undefined.instance : desc;
     }
 
-    private static Object js_getOwnPropertyDescriptors(
+    private static Object js_getOwnPropDescs(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable s = getCompatibleObject(cx, scope, arg);
