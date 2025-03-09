@@ -1644,6 +1644,32 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
         }
 
+        Slot aSlot = getMap().query(key, index);
+        if (aSlot instanceof BuiltInSlot) {
+            // 10.4.2.4 ArrayLengthSet requires we check that any new
+            // value is valid and throw a range error if not before
+            // checking attrributes. It also specifies subtly
+            // different behaviour round non-writable slots and the
+            // presence of "value", so we'll let such slots define
+            // their own semantics.
+
+            // We do this outside the compute block as some tests
+            // modify the current descriptor as part of operations
+            // performed as part of applying the descriptor.
+
+            return ((BuiltInSlot<?>) aSlot).applyNewDescriptor(id, desc, checkValid, key, index);
+        } else {
+            return defineOrdinaryProperty(this, id, desc, checkValid, key, index);
+        }
+    }
+
+    static boolean defineOrdinaryProperty(
+            ScriptableObject owner,
+            Object id,
+            ScriptableObject desc,
+            boolean checkValid,
+            Object key,
+            int index) {
         // this property lookup cannot happen from inside getMap().compute lambda
         // as it risks causing a deadlock if ThreadSafeSlotMapContainer is used
         // and `this` is in prototype chain of `desc`
@@ -1657,13 +1683,14 @@ public abstract class ScriptableObject extends SlotMapOwner
 
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
-        getMap().compute(
-                        this,
+        owner.getMap()
+                .compute(
+                        owner,
                         key,
                         index,
                         (k, ix, existing) -> {
                             if (checkValid) {
-                                checkPropertyChangeForSlot(id, existing, desc);
+                                owner.checkPropertyChangeForSlot(id, existing, desc);
                             }
 
                             Slot slot;
@@ -1703,6 +1730,10 @@ public abstract class ScriptableObject extends SlotMapOwner
                                     fslot.setter = new AccessorSlot.FunctionSetter(setter);
                                 }
                                 fslot.value = Undefined.instance;
+                            } else if (slot instanceof BuiltInSlot) {
+                                if (value != NOT_FOUND) {
+                                    slot.setValue(value, owner, owner, true);
+                                }
                             } else {
                                 if (!slot.isValueSlot() && isDataDescriptor(desc)) {
                                     // Replace a non-base slot with a regular slot
@@ -1869,7 +1900,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
     }
 
-    protected void checkPropertyChangeForSlot(Object id, Slot current, ScriptableObject desc) {
+    protected final void checkPropertyChangeForSlot(
+            Object id, Slot current, ScriptableObject desc) {
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
         } else {
@@ -1881,6 +1913,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.enumerable.with.configurable.false", id);
                 boolean isData = isDataDescriptor(desc);
+                boolean isBuiltIn = current instanceof BuiltInSlot;
                 boolean isAccessor = isAccessorDescriptor(desc);
                 if (!isData && !isAccessor) {
                     // no further validation required for generic descriptor
@@ -1890,8 +1923,11 @@ public abstract class ScriptableObject extends SlotMapOwner
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.writable.false.to.true.with.configurable.false",
                                     id);
-
-                        if (!sameValue(getProperty(desc, "value"), current.value))
+                        var currentValue =
+                                isBuiltIn
+                                        ? ((BuiltInSlot<?>) current).getValue(null)
+                                        : current.value;
+                        if (!sameValue(getProperty(desc, "value"), currentValue))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.value.with.writable.false", id);
                     }
@@ -1949,7 +1985,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         return ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    protected int applyDescriptorToAttributeBitset(
+    protected static int applyDescriptorToAttributeBitset(
             int attributes, Object enumerable, Object writable, Object configurable) {
         if (enumerable != NOT_FOUND) {
             attributes =
@@ -2956,7 +2992,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         return slot.getPropertyDescriptor(cx, this);
     }
 
-    protected Slot querySlot(Context cx, Object id) {
+    protected final Slot querySlot(Context cx, Object id) {
         if (id instanceof Symbol) {
             return getMap().query(id, 0);
         }
@@ -3021,5 +3057,40 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
             return 0;
         }
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner,
+            String name,
+            int attributes,
+            BuiltInSlot.Getter<T> getter,
+            BuiltInSlot.Setter<T> setter,
+            BuiltInSlot.AttributeSetter<T> attrSetter) {
+        owner.getMap()
+                .add(
+                        owner,
+                        new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter, attrSetter));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner,
+            String name,
+            int attributes,
+            BuiltInSlot.Getter<T> getter,
+            BuiltInSlot.Setter<T> setter,
+            BuiltInSlot.AttributeSetter<T> attrSetter,
+            BuiltInSlot.PropDescriptionSetter<T> propDescSetter) {
+        owner.getMap()
+                .add(
+                        owner,
+                        new BuiltInSlot<T>(
+                                name,
+                                0,
+                                attributes,
+                                owner,
+                                getter,
+                                setter,
+                                attrSetter,
+                                propDescSetter));
     }
 }

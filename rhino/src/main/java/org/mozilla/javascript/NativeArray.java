@@ -89,64 +89,19 @@ public class NativeArray extends IdScriptableObject implements List {
             Arrays.fill(dense, Scriptable.NOT_FOUND);
         }
         length = lengthArg;
+        createLengthProp();
     }
 
     public NativeArray(Object[] array) {
         denseOnly = true;
         dense = array;
         length = array.length;
+        createLengthProp();
     }
 
     @Override
     public String getClassName() {
         return "Array";
-    }
-
-    private static final int Id_length = 1, MAX_INSTANCE_ID = 1;
-
-    @Override
-    protected int getMaxInstanceId() {
-        return MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected void setInstanceIdAttributes(int id, int attr) {
-        if (id == Id_length) {
-            lengthAttr = attr;
-        }
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        if (s.equals("length")) {
-            return instanceIdInfo(lengthAttr, Id_length);
-        }
-        return super.findInstanceIdInfo(s);
-    }
-
-    @Override
-    protected String getInstanceIdName(int id) {
-        if (id == Id_length) {
-            return "length";
-        }
-        return super.getInstanceIdName(id);
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        if (id == Id_length) {
-            return ScriptRuntime.wrapNumber((double) length);
-        }
-        return super.getInstanceIdValue(id);
-    }
-
-    @Override
-    protected void setInstanceIdValue(int id, Object value) {
-        if (id == Id_length) {
-            setLength(value);
-            return;
-        }
-        super.setInstanceIdValue(id, value);
     }
 
     @Override
@@ -1036,19 +991,98 @@ public class NativeArray extends IdScriptableObject implements List {
         this.denseOnly = denseOnly;
     }
 
-    private void setLength(Object val) {
+    private void createLengthProp() {
+        ScriptableObject.defineBuiltInProperty(
+                this,
+                "length",
+                DONTENUM | PERMANENT,
+                NativeArray::lengthGetter,
+                NativeArray::lengthSetter,
+                NativeArray::lengthAttrSetter,
+                NativeArray::arraySetLength);
+    }
+
+    private static Object lengthGetter(NativeArray array, Scriptable start) {
+        return ScriptRuntime.wrapNumber((double) array.length);
+    }
+
+    private static boolean lengthSetter(
+            NativeArray builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        builtIn.setLength(value);
+        return true;
+    }
+
+    private static void lengthAttrSetter(NativeArray builtIn, int attrs) {
+        builtIn.lengthAttr = attrs;
+    }
+
+    protected static boolean arraySetLength(
+            NativeArray builtIn,
+            BuiltInSlot<NativeArray> current,
+            Object id,
+            ScriptableObject desc,
+            boolean checkValid,
+            Object key,
+            int index) {
+        // 10.2.4.2 Step 1.
+        Object value = getProperty(desc, "value");
+
+        if (value == NOT_FOUND) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    builtIn, id, desc, checkValid, key, index);
+        }
+
+        // 10.2.4.2 Steps 2 - 6
+        long newLength = checkLength(value);
+
+        Object writable = getProperty(desc, "writable");
+        // 10.2.4.2 9 is true by definition
+
+        // 10.2.4.2 10-11
+        if (newLength >= builtIn.length) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    builtIn, id, desc, checkValid, key, index);
+        }
+
+        boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
+        if (!currentWritable) {
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
+        }
+        boolean newWritable = false;
+        if (writable != NOT_FOUND) {
+            newWritable = isTrue(writable);
+            putProperty(desc, "writable", true);
+        }
+
+        // The standard set path that will be done by this call will
+        // clear any elements as required.
+        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, desc, checkValid, key, index)) {
+            var currentAttrs = current.getAttributes();
+            var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
+            current.setAttributes(newAttrs);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean setLength(Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
          * 2. If Result(1) is false, return.
          * ?
          */
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(val);
+
         if ((lengthAttr & READONLY) != 0) {
-            return;
+            return false;
         }
 
-        double d = ScriptRuntime.toNumber(val);
-        long longVal = ScriptRuntime.toUint32(d);
         if (longVal != d) {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
@@ -1060,13 +1094,13 @@ public class NativeArray extends IdScriptableObject implements List {
                 Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
                 length = longVal;
                 modCount++;
-                return;
+                return true;
             } else if (longVal < MAX_PRE_GROW_SIZE
                     && longVal < (length * GROW_FACTOR)
                     && ensureCapacity((int) longVal)) {
                 length = longVal;
                 modCount++;
-                return;
+                return true;
             } else {
                 denseOnly = false;
             }
@@ -1096,6 +1130,17 @@ public class NativeArray extends IdScriptableObject implements List {
         }
         length = longVal;
         modCount++;
+        return true;
+    }
+
+    private static long checkLength(Object val) {
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(val);
+        if (longVal != d) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        return longVal;
     }
 
     /* Support for generic Array-ish objects.  Most of the Array
