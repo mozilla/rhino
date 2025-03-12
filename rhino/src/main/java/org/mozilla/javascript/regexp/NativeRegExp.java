@@ -1846,11 +1846,19 @@ public class NativeRegExp extends IdScriptableObject {
                                 ^ ((gData.cp < end) && isWord(input.charAt(gData.cp))));
                 break;
             case REOP_DOT:
-                if (gData.cp != end
-                        && ((gData.regexp.flags & JSREG_DOTALL) != 0
-                                || !isLineTerm(input.charAt(gData.cp)))) {
-                    result = true;
-                    gData.cp++;
+                {
+                    if (gData.cp != end
+                            && ((gData.regexp.flags & JSREG_DOTALL) != 0
+                                    || !isLineTerm(input.charAt(gData.cp)))) {
+                        result = true;
+
+                        int charCount = Character.charCount(input.codePointAt(gData.cp));
+                        if (charCount > 1 && (gData.regexp.flags & JSREG_UNICODE) != 0) {
+                            gData.cp += charCount;
+                        } else {
+                            gData.cp++;
+                        }
+                    }
                 }
                 break;
             case REOP_DIGIT:
