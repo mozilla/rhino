@@ -1,9 +1,8 @@
 package org.mozilla.javascript.nat.type;
 
+import java.math.BigInteger;
 import org.mozilla.javascript.NativeIterator;
 import org.mozilla.javascript.Scriptable;
-
-import java.math.BigInteger;
 
 /**
  * @author ZZZank

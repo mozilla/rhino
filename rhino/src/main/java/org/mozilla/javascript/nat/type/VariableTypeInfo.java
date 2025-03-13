@@ -35,12 +35,13 @@ public class VariableTypeInfo extends TypeInfoBase {
     }
 
     /**
-     * The main bound is what a {@link TypeVariable} will become when converted to a {@link Class}, and
-     * what this type should be after Java erased generic type info
-     * <p>
-     * for {@code T}, the main bound will be {@link Object}, for {@code T extends XXX},
-     * the main bound will be {@code XXX}, for {@code T extends XXX & YYY & ZZZ}
-     * the main bound will still be {@code XXX}
+     * The main bound is what a {@link TypeVariable} will become when converted to a {@link Class},
+     * and what this type should be after Java erased generic type info
+     *
+     * <p>for {@code T}, the main bound will be {@link Object}, for {@code T extends XXX}, the main
+     * bound will be {@code XXX}, for {@code T extends XXX & YYY & ZZZ} the main bound will still be
+     * {@code XXX}
+     *
      * @see #asClass()
      */
     public TypeInfo getMainBound() {
