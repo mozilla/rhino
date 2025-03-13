@@ -6,9 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoExt;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -21,6 +18,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoExt;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
@@ -256,11 +255,16 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      * Determine whether we can/should convert between the given type and the desired one. This
      * should be superceded by a conversion-cost calculation function, but for now I'll hide behind
      * precedent.
+     *
+     * @deprecated use {@link #canConvert(Object, TypeInfo)} instead
      */
+    @Deprecated
     public static boolean canConvert(Object fromObj, Class<?> to) {
-        int weight = getConversionWeight(fromObj, to);
+        return canConvert(fromObj, TypeInfo.of(to));
+    }
 
-        return (weight < CONVERSION_NONE);
+    public static boolean canConvert(Object fromObj, TypeInfo to) {
+        return getConversionWeight(fromObj, to) < CONVERSION_NONE;
     }
 
     private static final int JSTYPE_UNDEFINED = 0; // undefined type
@@ -285,12 +289,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      * href="http://www.mozilla.org/js/liveconnect/lc3_method_overloading.html">"preferred method
      * conversions" from Live Connect 3</a>
      */
-    static int getConversionWeight(Object fromObj, Class<?> to) {
+    static int getConversionWeight(Object fromObj, TypeInfo to) {
         int fromCode = getJSTypeCode(fromObj);
 
         switch (fromCode) {
             case JSTYPE_UNDEFINED:
-                if (to == ScriptRuntime.StringClass || to == ScriptRuntime.ObjectClass) {
+                if (to == TypeInfo.STRING || to.isObject()) {
                     return 1;
                 }
                 break;
@@ -303,13 +307,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
             case JSTYPE_BOOLEAN:
                 // "boolean" is #1
-                if (to == Boolean.TYPE) {
+                if (to.is(boolean.class)) {
                     return 1;
-                } else if (to == ScriptRuntime.BooleanClass) {
+                } else if (to.isBoolean()) {
                     return 2;
-                } else if (to == ScriptRuntime.ObjectClass) {
+                } else if (to.isObject()) {
                     return 3;
-                } else if (to == ScriptRuntime.StringClass) {
+                } else if (to == TypeInfo.STRING) {
                     return 4;
                 }
                 break;
@@ -317,20 +321,20 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             case JSTYPE_NUMBER:
             case JSTYPE_BIGINT:
                 if (to.isPrimitive()) {
-                    if (to == Double.TYPE) {
+                    if (to.isDouble()) {
                         return 1;
-                    } else if (to != Boolean.TYPE) {
+                    } else if (!to.isBoolean()) {
                         return 1 + getSizeRank(to);
                     }
                 } else {
-                    if (to == ScriptRuntime.StringClass) {
+                    if (to == TypeInfo.STRING) {
                         // native numbers are #1-8
                         return 9;
-                    } else if (to == ScriptRuntime.BigIntegerClass) {
+                    } else if (to == TypeInfoExt.BIG_INT) {
                         return 10;
-                    } else if (to == ScriptRuntime.ObjectClass) {
+                    } else if (to.isObject()) {
                         return 11;
-                    } else if (ScriptRuntime.NumberClass.isAssignableFrom(to)) {
+                    } else if (Number.class.isAssignableFrom(to.asClass())) {
                         // "double" is #1
                         return 2;
                     }
@@ -338,25 +342,25 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 break;
 
             case JSTYPE_STRING:
-                if (to == ScriptRuntime.StringClass) {
+                if (to == TypeInfo.STRING) {
                     return 1;
                 } else if (to.isInstance(fromObj)) {
                     return 2;
                 } else if (to.isPrimitive()) {
-                    if (to == Character.TYPE) {
+                    if (to.isCharacter()) {
                         return 3;
-                    } else if (to != Boolean.TYPE) {
+                    } else if (!to.isBoolean()) {
                         return 4;
                     }
                 }
                 break;
 
             case JSTYPE_JAVA_CLASS:
-                if (to == ScriptRuntime.ClassClass) {
+                if (to.is(Class.class)) {
                     return 1;
-                } else if (to == ScriptRuntime.ObjectClass) {
+                } else if (to.isObject()) {
                     return 3;
-                } else if (to == ScriptRuntime.StringClass) {
+                } else if (to == TypeInfo.STRING) {
                     return 4;
                 }
                 break;
@@ -370,16 +374,16 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 if (to.isInstance(javaObj)) {
                     return CONVERSION_NONTRIVIAL;
                 }
-                if (to == ScriptRuntime.StringClass) {
+                if (to == TypeInfo.STRING) {
                     return 2;
-                } else if (to.isPrimitive() && to != Boolean.TYPE) {
+                } else if (to.isPrimitive() && !to.isBoolean()) {
                     return (fromCode == JSTYPE_JAVA_ARRAY) ? CONVERSION_NONE : 2 + getSizeRank(to);
                 }
                 break;
 
             case JSTYPE_OBJECT:
                 // Other objects takes #1-#3 spots
-                if (to != ScriptRuntime.ObjectClass && to.isInstance(fromObj)) {
+                if (!to.isObject() && to.isInstance(fromObj)) {
                     // No conversion required, but don't apply for java.lang.Object
                     return 1;
                 }
@@ -390,11 +394,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         // and string conversion, per LC3.
                         return 2;
                     }
-                } else if (to == ScriptRuntime.ObjectClass) {
+                } else if (to.isObject()) {
                     return 3;
-                } else if (to == ScriptRuntime.StringClass) {
+                } else if (to == TypeInfo.STRING) {
                     return 4;
-                } else if (to == ScriptRuntime.DateClass) {
+                } else if (to.is(ScriptRuntime.DateClass)) {
                     if (fromObj instanceof NativeDate) {
                         // This is a native date to java date conversion
                         return 1;
@@ -409,13 +413,20 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         return 2;
                     }
                     return 12;
-                } else if (to.isPrimitive() && to != Boolean.TYPE) {
+                } else if (to.isPrimitive() && !to.isBoolean()) {
                     return 4 + getSizeRank(to);
                 }
                 break;
         }
 
         return CONVERSION_NONE;
+    }
+
+    static int getSizeRank(TypeInfo type) {
+        if (type.isPrimitive()) {
+            return getSizeRank(type.asClass());
+        }
+        return 8;
     }
 
     static int getSizeRank(Class<?> aType) {
@@ -435,9 +446,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             return 7;
         } else if (aType == Boolean.TYPE) {
             return CONVERSION_NONE;
-        } else {
-            return 8;
         }
+        return 8;
     }
 
     private static int getJSTypeCode(Object value) {
@@ -492,6 +502,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         int jsTypeCode = getJSTypeCode(value);
+        assert (jsTypeCode == JSTYPE_NULL) == (value == null);
         switch (jsTypeCode) {
             case JSTYPE_NULL:
                 // raise error if type.isPrimitive()
@@ -501,7 +512,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 return null;
 
             case JSTYPE_UNDEFINED:
-                if (type.is(String.class) || type.isObject()) {
+                if (type == TypeInfo.STRING || type.isObject()) {
                     return "undefined";
                 }
                 reportConversionError("undefined", type);
@@ -511,7 +522,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 // Under LC3, only JS Booleans can be coerced into a Boolean value
                 if (type.isBoolean() || type.isObject()) {
                     return value;
-                } else if (type.is(String.class)) {
+                } else if (type == TypeInfo.STRING) {
                     return value.toString();
                 } else {
                     reportConversionError(value, type);
@@ -520,7 +531,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
             case JSTYPE_NUMBER:
             case JSTYPE_BIGINT:
-                if (type.is(String.class)) {
+                if (type == TypeInfo.STRING) {
                     return ScriptRuntime.toString(value);
                 } else if (type.isObject()) {
                     Context context = Context.getCurrentContext();
@@ -533,7 +544,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         }
                     }
                     return coerceToNumber(
-                            jsTypeCode == JSTYPE_BIGINT ? TypeInfoExt.BIG_INT : TypeInfo.DOUBLE, value);
+                            jsTypeCode == JSTYPE_BIGINT ? TypeInfoExt.BIG_INT : TypeInfo.DOUBLE,
+                            value);
                 } else if ((type.isPrimitive() && !type.isBoolean())
                         || type.isNumber()
                         || type.isCharacter()) {
@@ -544,7 +556,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 break;
 
             case JSTYPE_STRING:
-                if (type.is(String.class) || type.asClass().isInstance(value)) {
+                if (type == TypeInfo.STRING || type.asClass().isInstance(value)) {
                     return value.toString();
                 } else if (type.isCharacter()) {
                     // Special case for converting a single char string to a
@@ -555,8 +567,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         return Character.valueOf(((CharSequence) value).charAt(0));
                     }
                     return coerceToNumber(type, value);
-                } else if ((type.isPrimitive() && !type.isBoolean())
-                        || type.isNumber()) {
+                } else if ((type.isPrimitive() && !type.isBoolean()) || type.isNumber()) {
                     return coerceToNumber(type, value);
                 } else {
                     reportConversionError(value, type);
@@ -570,7 +581,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
                 if (type.is(Class.class) || type.isObject()) {
                     return value;
-                } else if (type.is(String.class)) {
+                } else if (type == TypeInfo.STRING) {
                     return value.toString();
                 } else {
                     reportConversionError(value, type);
@@ -588,7 +599,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     }
                     return coerceToNumber(type, value);
                 }
-                if (type.is(String.class)) {
+                if (type == TypeInfo.STRING) {
                     return value.toString();
                 }
                 if (type.asClass().isInstance(value)) {
@@ -598,7 +609,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 break;
 
             case JSTYPE_OBJECT:
-                if (type.is(String.class)) {
+                if (type == TypeInfo.STRING) {
                     return ScriptRuntime.toString(value);
                 } else if (type.isPrimitive()) {
                     if (type.isBoolean()) {
@@ -838,9 +849,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
         throw Context.reportRuntimeErrorById(
-            "msg.conversion.not.allowed",
-            String.valueOf(value),
-            JavaMembers.javaSignature(type));
+                "msg.conversion.not.allowed",
+                String.valueOf(value),
+                JavaMembers.javaSignature(type));
     }
 
     @SuppressWarnings("DoNotCallSuggester")
@@ -848,9 +859,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
         throw Context.reportRuntimeErrorById(
-            "msg.conversion.not.allowed",
-            String.valueOf(value),
-            type);
+                "msg.conversion.not.allowed", String.valueOf(value), type);
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

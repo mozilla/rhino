@@ -114,7 +114,7 @@ public class NativeJavaMethod extends BaseFunction {
             } else {
                 sb.append(methods[i].getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
+            sb.append(JavaMembers.liveConnectSignature(methods[i].getArgTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -434,15 +434,15 @@ public class NativeJavaMethod extends BaseFunction {
             int[] computedWeights1,
             MemberBox member2,
             int[] computedWeights2) {
-        final var types1 = member1.argTypes;
-        final var types2 = member2.argTypes;
+        final var types1 = member1.getArgTypes();
+        final var types2 = member2.getArgTypes();
 
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             final var type1 =
-                    member1.vararg && j >= types1.length ? types1[types1.length - 1] : types1[j];
+                    member1.vararg && j >= types1.size() ? types1.getLast() : types1.get(j);
             final var type2 =
-                    member2.vararg && j >= types2.length ? types2[types2.length - 1] : types2[j];
+                    member2.vararg && j >= types2.size() ? types2.getLast() : types2.get(j);
             if (type1 == type2) {
                 continue;
             }
@@ -496,12 +496,12 @@ public class NativeJavaMethod extends BaseFunction {
      * <p>3. otherwise -> return an int array holding all computed conversion weights, whose length
      * will be {@code args.length} for non-vararg member or {@code args.length-1} for vararg member
      *
-     * @see NativeJavaObject#getConversionWeight(Object, Class)
+     * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.nat.type.TypeInfo)
      * @see NativeJavaObject#canConvert(Object, Class)
      */
     static int[] failFastConversionWeights(Object[] args, MemberBox member) {
-        final var argTypes = member.argTypes;
-        var typeLen = argTypes.length;
+        final var argTypes = member.getArgTypes();
+        var typeLen = argTypes.size();
         if (member.vararg) {
             typeLen--;
             if (typeLen > args.length) {
@@ -514,7 +514,7 @@ public class NativeJavaMethod extends BaseFunction {
         }
         final var weights = new int[typeLen];
         for (int i = 0; i < typeLen; i++) {
-            final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes[i]);
+            final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes.get(i));
             if (weight >= NativeJavaObject.CONVERSION_NONE) {
                 if (debug) {
                     printDebug("Rejecting (args can't convert) ", member, args);
@@ -538,7 +538,7 @@ public class NativeJavaMethod extends BaseFunction {
             if (member.isMethod()) {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.argTypes));
+            sb.append(JavaMembers.liveConnectSignature(member.getArgTypes()));
             sb.append(" for arguments (");
             sb.append(scriptSignature(args));
             sb.append(')');

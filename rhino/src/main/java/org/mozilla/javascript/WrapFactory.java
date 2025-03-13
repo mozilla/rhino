@@ -50,7 +50,7 @@ public class WrapFactory {
         }
         if (staticType != null && staticType.isPrimitive()) {
             if (staticType == Void.TYPE) return Undefined.instance;
-            if (staticType == Character.TYPE) return Integer.valueOf(((Character) obj).charValue());
+            if (staticType == Character.TYPE) return (int) (Character) obj;
             return obj;
         }
         if (!isJavaPrimitiveWrap()) {

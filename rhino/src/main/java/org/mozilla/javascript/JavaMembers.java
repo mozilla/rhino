@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
-
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
 
@@ -26,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * @author Mike Shaver
@@ -211,21 +210,24 @@ class JavaMembers {
         return sb.toString();
     }
 
-    static String liveConnectSignature(Class<?>[] argTypes) {
-        int N = argTypes.length;
-        if (N == 0) {
+    static String liveConnectSignature(List<TypeInfo> argTypes) {
+        if (argTypes.isEmpty()) {
             return "()";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append('(');
-        for (int i = 0; i != N; ++i) {
-            if (i != 0) {
-                sb.append(',');
+
+        var builder = new StringBuilder();
+
+        builder.append('(');
+        var iter = argTypes.iterator();
+        if (iter.hasNext()) {
+            builder.append(iter.next().asClass());
+            while (iter.hasNext()) {
+                builder.append(',').append(iter.next().asClass());
             }
-            sb.append(javaSignature(argTypes[i]));
         }
-        sb.append(')');
-        return sb.toString();
+        builder.append(')');
+
+        return builder.toString();
     }
 
     private MemberBox findExplicitFunction(String name, boolean isStatic) {
@@ -257,8 +259,7 @@ class JavaMembers {
 
         if (methodsOrCtors != null) {
             for (MemberBox methodsOrCtor : methodsOrCtors) {
-                Class<?>[] type = methodsOrCtor.argTypes;
-                String sig = liveConnectSignature(type);
+                String sig = liveConnectSignature(methodsOrCtor.getArgTypes());
                 if (sigStart + sig.length() == name.length()
                         && name.regionMatches(sigStart, sig, 0, sig.length())) {
                     return methodsOrCtor;
@@ -738,7 +739,8 @@ class JavaMembers {
                         // perfect match, no need to continue scanning
                         return method;
                     }
-                    if (acceptableMatch == null && argTypes.getFirst().asClass().isAssignableFrom(type.asClass())) {
+                    if (acceptableMatch == null
+                            && argTypes.getFirst().asClass().isAssignableFrom(type.asClass())) {
                         // do not return at this point, there can still be perfect match
                         acceptableMatch = method;
                     }
@@ -753,7 +755,7 @@ class JavaMembers {
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
                 if (method.getReturnType().isVoid()) {
-                    if (method.argTypes.length == 1) {
+                    if (method.getArgTypes().size() == 1) {
                         return method;
                     }
                 }
