@@ -1,6 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
 import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.Scriptable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -102,10 +103,14 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	}
 
 	/**
-	 * none of the base types is parameterized
+	 * none of the base types is parameterized, unless this object is an implementation of
+	 * {@link Scriptable} with type variables
 	 */
 	@Override
 	public int getTypeTag() {
+		if (Scriptable.class.isAssignableFrom(asClass())) {
+			return FunctionObject.JAVA_SCRIPTABLE_TYPE;
+		}
 		return FunctionObject.JAVA_UNSUPPORTED_TYPE;
 	}
 }
