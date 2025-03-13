@@ -10,10 +10,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -318,14 +316,8 @@ public interface TypeInfo {
 		return false;
 	}
 
-	default void collectContainedComponentClasses(Collection<Class<?>> classes) {
-		classes.add(asClass());
-	}
-
-	default Set<Class<?>> getContainedComponentClasses() {
-		var set = new LinkedHashSet<Class<?>>();
-		collectContainedComponentClasses(set);
-		return set;
+	default void collectComponentClass(Consumer<Class<?>> collector) {
+		collector.accept(asClass());
 	}
 
 	default boolean isInterface() {

@@ -2,6 +2,7 @@ package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author ZZZank
@@ -60,6 +61,13 @@ public class VariableTypeInfo extends TypeInfoBase {
     @Override
     public void append(TypeFormatContext ctx, StringBuilder builder) {
         builder.append(raw.getName());
+    }
+
+    @Override
+    public void collectComponentClass(Consumer<Class<?>> collector) {
+        for (var bound : this.getBounds()) {
+            bound.collectComponentClass(collector);
+        }
     }
 
     @Override

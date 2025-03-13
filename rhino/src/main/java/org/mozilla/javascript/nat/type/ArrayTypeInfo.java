@@ -2,8 +2,7 @@ package org.mozilla.javascript.nat.type;
 
 import org.mozilla.javascript.FunctionObject;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.function.Consumer;
 
 public final class ArrayTypeInfo extends TypeInfoBase {
 	private final TypeInfo component;
@@ -58,13 +57,8 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
-		component.collectContainedComponentClasses(classes);
-	}
-
-	@Override
-	public Set<Class<?>> getContainedComponentClasses() {
-		return component.getContainedComponentClasses();
+	public void collectComponentClass(Consumer<Class<?>> collector) {
+		component.collectComponentClass(collector);
 	}
 
 	@Override

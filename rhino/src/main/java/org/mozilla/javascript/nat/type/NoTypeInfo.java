@@ -1,7 +1,6 @@
 package org.mozilla.javascript.nat.type;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.function.Consumer;
 
 public final class NoTypeInfo implements TypeInfo {
 	static final NoTypeInfo INSTANCE = new NoTypeInfo();
@@ -16,11 +15,6 @@ public final class NoTypeInfo implements TypeInfo {
 	@Override
 	public boolean shouldConvert() {
 		return false;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj == this;
 	}
 
 	@Override
@@ -49,11 +43,6 @@ public final class NoTypeInfo implements TypeInfo {
 	}
 
 	@Override
-	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
-	}
-
-	@Override
-	public Set<Class<?>> getContainedComponentClasses() {
-		return Set.of();
+	public void collectComponentClass(Consumer<Class<?>> collector) {
 	}
 }

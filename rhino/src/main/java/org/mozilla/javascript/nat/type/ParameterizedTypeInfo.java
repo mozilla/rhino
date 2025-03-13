@@ -2,8 +2,8 @@ package org.mozilla.javascript.nat.type;
 
 import org.mozilla.javascript.FunctionObject;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class ParameterizedTypeInfo extends TypeInfoBase {
 	private final TypeInfo rawType;
@@ -89,11 +89,10 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
-	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
-		rawType.collectContainedComponentClasses(classes);
-
+	public void collectComponentClass(Consumer<Class<?>> collector) {
+		rawType.collectComponentClass(collector);
 		for (var param : params) {
-			param.collectContainedComponentClasses(classes);
+			param.collectComponentClass(collector);
 		}
 	}
 

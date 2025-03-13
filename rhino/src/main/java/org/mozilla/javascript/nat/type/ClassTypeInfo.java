@@ -1,13 +1,9 @@
 package org.mozilla.javascript.nat.type;
 
-import java.util.Collections;
-import java.util.Set;
-
 public abstract class ClassTypeInfo extends TypeInfoBase {
 	private final Class<?> type;
-	private Set<Class<?>> typeSet;
 
-	ClassTypeInfo(Class<?> type) {
+    ClassTypeInfo(Class<?> type) {
 		this.type = type;
 	}
 
@@ -101,11 +97,4 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 		return type == Object.class;
 	}
 
-	@Override
-	public Set<Class<?>> getContainedComponentClasses() {
-		if (typeSet == null) {
-			typeSet = Collections.singleton(type);
-		}
-		return typeSet;
-	}
 }
