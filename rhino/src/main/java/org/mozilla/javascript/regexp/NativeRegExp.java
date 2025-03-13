@@ -557,6 +557,7 @@ public class NativeRegExp extends IdScriptableObject {
         int i;
         int max = 0;
         boolean inRange = false;
+        boolean unicodeMode = (state.flags & JSREG_UNICODE) != 0;
 
         target.bmsize = 0;
         target.sense = true;
@@ -600,20 +601,69 @@ public class NativeRegExp extends IdScriptableObject {
                         localMax = '\\';
                         break;
                     case 'u':
-                        nDigits += 2;
-                    // fall through
-                    case 'x':
-                        n = 0;
-                        for (i = 0; (i < nDigits) && (index < end); i++) {
-                            c = src[index++];
-                            n = Kit.xDigitToInt(c, n);
-                            if (n < 0) {
-                                // Back off to accepting the original
-                                // '\' as a literal
-                                index -= (i + 1);
-                                n = '\\';
-                                break;
+                        // if next char is '{', parse hex digits until '}' is found
+                        if (unicodeMode && index < end && src[index] == '{') {
+                            index++;
+
+                            // if we find a '}', we have a valid Unicode escape
+                            if (index < end && src[index] == '}') {
+                                reportError("msg.invalid.escape", "");
+                                return false;
                             }
+                            n = 0;
+                            while (index < end && src[index] != '}') {
+                                c = src[index++];
+                                int ret = Kit.xDigitToInt(c, n);
+                                if (ret < 0) {
+                                    break;
+                                }
+                                n = ret;
+                            }
+                            if (index < end && src[index] == '}') {
+                                ++index;
+                            } else {
+                                reportError("msg.invalid.escape", "");
+                                return false;
+                            }
+                            localMax = n;
+
+                        } else {
+                            n = readNHexDigits(src, index, end, 4);
+                            if (n >= 0)
+                                index += 4;
+
+                            // if n is lead surrogate
+                            if (unicodeMode && n >= 0xD800 && n <= 0xDBFF) {
+                                // if next char is '\\u', parse the next 4 hex digits
+                                if (index + 1 < end && src[index] == '\\' && src[index + 1] == 'u') {
+                                    index += 2;
+                                    int n2 = readNHexDigits(src, index, end, 4);
+                                    // if n2 is trail surrogate
+                                    if (n2 >= 0xDC00 && n2 <= 0xDFFF) {
+                                        index += 4;
+                                        // convert the surrogate pair to a single codepoint
+                                        localMax = Character.toCodePoint((char) n, (char) n2);
+                                    } else {
+                                        index -= 2;
+                                        localMax = n;
+                                    }
+                                }
+                            } else if (n == -1) {
+                                if (unicodeMode) {
+                                    reportError("msg.invalid.escape", "");
+                                    return false;
+                                } else {
+                                    index += 1;
+                                    localMax = '\\';
+                                }
+                            } else
+                                localMax = n;
+                        }
+                        break;
+                    case 'x':
+                        n = readNHexDigits(src, index, end, 2);
+                        if (n == -1) {
+                            n = '\\';
                         }
                         localMax = n;
                         break;
@@ -793,24 +843,29 @@ public class NativeRegExp extends IdScriptableObject {
         return value;
     }
 
-    private static int parseNHexDigits(CompilerState state, int nDigits) {
-        char c;
-        int n = 0;
+    private static int readNHexDigits(char[] src, int cp, int cpend, int nDigits) {
         int i;
-        char[] src = state.cpbegin;
-        int cpOriginal = state.cp;
+        int n = 0;
 
-        for (i = 0; (i < nDigits); i++) {
-            if (state.cp == state.cpend) {
-                state.cp = cpOriginal;
+        for (i = 0; i < nDigits; i++) {
+            if (cp == cpend) {
                 return -1;
             }
-            c = src[state.cp++];
-            n = Kit.xDigitToInt(c, n);
+            n = Kit.xDigitToInt(src[cp++], n);
             if (n < 0) {
-                state.cp = cpOriginal;
                 return -1;
             }
+        }
+        return n;
+    }
+
+    private static int parseNHexDigits(CompilerState state, int nDigits) {
+        int n;
+        char[] src = state.cpbegin;
+
+        n = readNHexDigits(src, state.cp, nDigits, nDigits);
+        if (n >= 0) {
+            state.cp += nDigits;
         }
 
         return n;
@@ -1540,7 +1595,7 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /* Add a single character to the RECharSet */
-    private static void addCharacterToCharSet(RECharSet cs, char c) {
+    private static void addCharacterToCharSet(RECharSet cs, int c) {
         int byteIndex = (c / 8);
         if (c >= cs.length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
@@ -1585,13 +1640,15 @@ public class NativeRegExp extends IdScriptableObject {
         int src = charSet.startIndex;
         int end = src + charSet.strlength;
 
-        char rangeStart = 0, thisCh;
+        char rangeStart = 0;
+        int thisCh = 0;
         int byteLength;
         char c;
         int n;
         int nDigits;
         int i;
         boolean inRange = false;
+        final boolean unicodeMode = (gData.regexp.flags & JSREG_UNICODE) != 0;
 
         byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
@@ -1638,24 +1695,69 @@ public class NativeRegExp extends IdScriptableObject {
                         }
                         break;
                     case 'u':
-                        nDigits += 2;
-                    // fall through
-                    case 'x':
-                        n = 0;
-                        for (i = 0; (i < nDigits) && (src < end); i++) {
-                            c = gData.regexp.source[src++];
-                            int digit = toASCIIHexDigit(c);
-                            if (digit < 0) {
-                                /* back off to accepting the original '\'
-                                 * as a literal
-                                 */
-                                src -= (i + 1);
-                                n = '\\';
+                    // if next char is '{', parse hex digits until '}' is found
+                        if (unicodeMode && src < end && (gData.regexp.source[src] == '{')) {
+                            src++;
+
+                            // if we find a '}', we have a valid Unicode escape
+                            if (src < end && gData.regexp.source[src] == '}') {
+                                reportError("msg.invalid.escape", "");
                                 break;
                             }
-                            n = (n << 4) | digit;
+                            n = 0;
+                            while (src < end && gData.regexp.source[src] != '}') {
+                                c = gData.regexp.source[src++];
+                                int ret = Kit.xDigitToInt(c, n);
+                                if (ret < 0) {
+                                    break;
+                                }
+                                n = ret;
+                            }
+                            if (src < end && (gData.regexp.source[src] == '}')) {
+                                ++src;
+                            } else {
+                                reportError("msg.invalid.escape", "");
+                                break;
+                            }
+                        } else {
+                            n = readNHexDigits(gData.regexp.source, src, end, 4);
+                            if (n >= 0)
+                                src += 4;
+
+                            // if n is lead surrogate
+                            if (unicodeMode && n >= 0xD800 && n <= 0xDBFF) {
+                                // if next char is '\\u', parse the next 4 hex digits
+                                if (src + 1 < end && gData.regexp.source[src] == '\\' && gData.regexp.source[src + 1] == 'u') {
+                                    src += 2;
+                                    int n2 = readNHexDigits(gData.regexp.source, src, end, 4);
+                                    // if n2 is trail surrogate
+                                    if (n2 >= 0xDC00 && n2 <= 0xDFFF) {
+                                        src += 4;
+                                        // convert the surrogate pair to a single codepoint
+                                        thisCh = Character.toCodePoint((char) n, (char) n2);
+                                    } else {
+                                        src -= 2;
+                                        thisCh = n;
+                                    }
+                                }
+                            } else if (n == -1) {
+                                if (unicodeMode) {
+                                    reportError("msg.invalid.escape", "");
+                                    break;
+                                } else {
+                                    src += 1;
+                                    thisCh = '\\';
+                                }
+                            } else
+                                thisCh = n;
                         }
-                        thisCh = (char) n;
+                        break;
+                    case 'x':
+                        n = readNHexDigits(gData.regexp.source, src, end, 2);
+                        if (n == -1) {
+                            n = '\\';
+                        }
+                        thisCh = n;
                         break;
                     case '0':
                     case '1':
@@ -1744,7 +1846,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
             if (inRange) {
                 if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-                    assert (rangeStart <= thisCh);
+                    assert (rangeStart <= (char) thisCh);
                     for (c = rangeStart; c <= thisCh; ) {
                         addCharacterToCharSet(charSet, c);
                         char uch = upcase(c);
@@ -1754,13 +1856,13 @@ public class NativeRegExp extends IdScriptableObject {
                         if (++c == 0) break; // overflow
                     }
                 } else {
-                    addCharacterRangeToCharSet(charSet, rangeStart, thisCh);
+                    addCharacterRangeToCharSet(charSet, rangeStart, (char) thisCh);
                 }
                 inRange = false;
             } else {
                 if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-                    addCharacterToCharSet(charSet, upcase(thisCh));
-                    addCharacterToCharSet(charSet, downcase(thisCh));
+                    addCharacterToCharSet(charSet, upcase((char) thisCh));
+                    addCharacterToCharSet(charSet, downcase((char) thisCh));
                 } else {
                     addCharacterToCharSet(charSet, thisCh);
                 }
@@ -1768,7 +1870,7 @@ public class NativeRegExp extends IdScriptableObject {
                     if (gData.regexp.source[src] == '-') {
                         ++src;
                         inRange = true;
-                        rangeStart = thisCh;
+                        rangeStart = (char) thisCh;
                     }
                 }
             }
@@ -1779,7 +1881,7 @@ public class NativeRegExp extends IdScriptableObject {
      *   Initialize the character set if it this is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
-    private static boolean classMatcher(REGlobalData gData, RECharSet charSet, char ch) {
+    private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int ch) {
         if (!charSet.converted) {
             processCharSet(gData, charSet);
         }
@@ -2007,8 +2109,8 @@ public class NativeRegExp extends IdScriptableObject {
                     pc += INDEX_LEN;
                     if (gData.cp != end) {
                         if (classMatcher(
-                                gData, gData.regexp.classList[index], input.charAt(gData.cp))) {
-                            gData.cp++;
+                                gData, gData.regexp.classList[index], input.codePointAt(gData.cp))) {
+                            gData.cp+= Character.charCount(input.codePointAt(gData.cp));
                             result = true;
                             break;
                         }
