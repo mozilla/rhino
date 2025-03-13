@@ -27,6 +27,7 @@ final class MemberBox implements Serializable {
     private transient Executable memberObject;
     transient Class<?>[] argTypes;
     private transient List<TypeInfo> argTypeInfos;
+    private TypeInfo returnTypeInfo;
     transient boolean[] argNullability;
     transient boolean vararg;
 
@@ -106,6 +107,15 @@ final class MemberBox implements Serializable {
             argTypeInfos = List.of(TypeInfo.ofArray(this.memberObject.getGenericParameterTypes()));
         }
         return argTypeInfos;
+    }
+
+    TypeInfo getReturnType() {
+        if (returnTypeInfo == null) {
+            returnTypeInfo = this.isMethod()
+                ? TypeInfo.of(this.method().getGenericReturnType())
+                : TypeInfo.NONE;
+        }
+        return returnTypeInfo;
     }
 
     String toJavaDeclaration() {

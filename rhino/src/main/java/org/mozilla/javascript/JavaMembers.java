@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.nat.type.TypeInfo;
+
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
 
@@ -102,7 +104,7 @@ class JavaMembers {
                 BeanProperty bp = (BeanProperty) member;
                 if (bp.getter == null) return Scriptable.NOT_FOUND;
                 rval = bp.getter.invoke(javaObject, ScriptRuntime.emptyArgs);
-                type = bp.getter.method().getReturnType();
+                type = bp.getter.getReturnType().asClass();
             } else {
                 Field field = (Field) member;
                 rval = field.get(isStatic ? null : javaObject);
@@ -609,7 +611,7 @@ class JavaMembers {
                         if (getter != null) {
                             // We have a getter. Now, do we have a matching
                             // setter?
-                            Class<?> type = getter.method().getReturnType();
+                            var type = getter.getReturnType();
                             setter = extractSetMethod(type, njmSet.methods, isStatic);
                         } else {
                             // No getter, find any set method
@@ -709,8 +711,8 @@ class JavaMembers {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
             if (method.getArgTypes().isEmpty() && (!isStatic || method.isStatic())) {
-                Class<?> type = method.method().getReturnType();
-                if (type != Void.TYPE) {
+                var type = method.getReturnType();
+                if (!type.isVoid()) {
                     return method;
                 }
                 break;
@@ -720,7 +722,7 @@ class JavaMembers {
     }
 
     private static MemberBox extractSetMethod(
-            Class<?> type, MemberBox[] methods, boolean isStatic) {
+            TypeInfo type, MemberBox[] methods, boolean isStatic) {
         //
         // Note: it may be preferable to allow NativeJavaMethod.findFunction()
         //       to find the appropriate setter; unfortunately, it requires an
@@ -730,13 +732,13 @@ class JavaMembers {
         MemberBox acceptableMatch = null;
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
-                Class<?>[] params = method.argTypes;
-                if (params.length == 1) {
-                    if (params[0] == type) {
+                var argTypes = method.getArgTypes();
+                if (argTypes.size() == 1) {
+                    if (type.is(argTypes.getFirst().asClass())) {
                         // perfect match, no need to continue scanning
                         return method;
                     }
-                    if (acceptableMatch == null && params[0].isAssignableFrom(type)) {
+                    if (acceptableMatch == null && argTypes.getFirst().asClass().isAssignableFrom(type.asClass())) {
                         // do not return at this point, there can still be perfect match
                         acceptableMatch = method;
                     }
@@ -750,7 +752,7 @@ class JavaMembers {
 
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
-                if (method.method().getReturnType() == Void.TYPE) {
+                if (method.getReturnType().isVoid()) {
                     if (method.argTypes.length == 1) {
                         return method;
                     }
