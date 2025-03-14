@@ -135,7 +135,7 @@ public class ArrayLikeAbstractOperations {
         Scriptable array = null;
         if (operation == IterativeOperation.FILTER || operation == IterativeOperation.MAP) {
             int resultLength = operation == IterativeOperation.MAP ? (int) length : 0;
-            array = cx.newArray(scope, resultLength);
+            array = arraySpeciesCreate(cx, scope, o, resultLength);
         }
         long j = 0;
         long start =
@@ -213,6 +213,28 @@ public class ArrayLikeAbstractOperations {
         }
     }
 
+    static Scriptable arraySpeciesCreate(Context cx, Scriptable scope, Scriptable o, int length) {
+        if (o instanceof NativeArray) {
+            Object c = ScriptableObject.getProperty(o, "constructor");
+            if (c instanceof Scriptable) {
+                c = ScriptableObject.getProperty((Scriptable) c, SymbolKey.SPECIES);
+                if (c == null || c == NOT_FOUND) {
+                    c = Undefined.instance;
+                }
+            }
+
+            if (!Undefined.isUndefined(c)) {
+                if (c instanceof Constructable) {
+                    return ((Constructable) c)
+                            .construct(cx, scope, new Object[] {Double.valueOf(length)});
+                } else {
+                    throw ScriptRuntime.typeErrorById("msg.ctor.not.found", o);
+                }
+            }
+        }
+        return cx.newArray(scope, length);
+    }
+
     static Function getCallbackArg(Context cx, Object callbackArg) {
         if (!(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
@@ -238,6 +260,17 @@ public class ArrayLikeAbstractOperations {
     }
 
     static void defineElem(Context cx, Scriptable target, long index, Object value) {
+        if (!(target instanceof NativeArray && ((NativeArray) target).getDenseOnly())
+                && target instanceof ScriptableObject) {
+            var so = (ScriptableObject) target;
+            ScriptableObject desc = new NativeObject();
+            desc.defineProperty("value", value, 0);
+            desc.defineProperty("writable", Boolean.TRUE, 0);
+            desc.defineProperty("enumerable", Boolean.TRUE, 0);
+            desc.defineProperty("configurable", Boolean.TRUE, 0);
+            so.defineOwnProperty(cx, index, desc);
+            return;
+        }
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
             target.put(id, target, value);
