@@ -140,7 +140,7 @@ class JavaMembers {
             // main setter. Otherwise, let the NativeJavaMethod decide which
             // setter to use:
             if (bp.setters == null || value == null) {
-                var setType = bp.setter.getArgTypes().getFirst();
+                var setType = bp.setter.getArgTypes().get(0);
                 Object[] args = {Context.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
@@ -735,12 +735,12 @@ class JavaMembers {
             if (!isStatic || method.isStatic()) {
                 var argTypes = method.getArgTypes();
                 if (argTypes.size() == 1) {
-                    if (type.is(argTypes.getFirst().asClass())) {
+                    if (type.is(argTypes.get(0).asClass())) {
                         // perfect match, no need to continue scanning
                         return method;
                     }
                     if (acceptableMatch == null
-                            && argTypes.getFirst().asClass().isAssignableFrom(type.asClass())) {
+                            && argTypes.get(0).asClass().isAssignableFrom(type.asClass())) {
                         // do not return at this point, there can still be perfect match
                         acceptableMatch = method;
                     }

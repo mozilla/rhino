@@ -207,10 +207,11 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
                             || args[args.length - 1] instanceof NativeArray
                             || args[args.length - 1] instanceof NativeJavaArray)) {
                 // convert the ECMA array into a native array
-                varArgs = Context.jsToJava(args[args.length - 1], argTypes.getLast());
+                varArgs =
+                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
             } else {
                 // marshall the variable parameter
-                var componentType = argTypes.getLast().getComponentType();
+                var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
                 varArgs = componentType.newArray(args.length - argTypes.size() + 1);
                 for (int i = 0; i < Array.getLength(varArgs); i++) {
                     Object value = Context.jsToJava(args[argTypes.size() - 1 + i], componentType);

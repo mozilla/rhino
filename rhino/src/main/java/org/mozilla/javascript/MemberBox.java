@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import org.mozilla.javascript.nat.type.TypeInfo;
 
@@ -23,7 +27,7 @@ import org.mozilla.javascript.nat.type.TypeInfo;
 final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
-    private transient Executable memberObject;
+    private transient Member memberObject;
     private transient List<TypeInfo> argTypeInfos;
     private TypeInfo returnTypeInfo;
     transient boolean[] argNullability;
@@ -100,7 +104,13 @@ final class MemberBox implements Serializable {
 
     List<TypeInfo> getArgTypes() {
         if (argTypeInfos == null) {
-            argTypeInfos = List.of(TypeInfo.ofArray(this.memberObject.getGenericParameterTypes()));
+            argTypeInfos =
+                    List.of(
+                            TypeInfo.ofArray(
+                                    this.memberObject instanceof Method
+                                            ? ((Method) memberObject).getGenericParameterTypes()
+                                            : ((Constructor<?>) memberObject)
+                                                    .getGenericParameterTypes()));
         }
         return argTypeInfos;
     }
@@ -209,10 +219,7 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    nativeSetter
-                                                            .getArgTypes()
-                                                            .getFirst()
-                                                            .getTypeTag(),
+                                                    nativeSetter.getArgTypes().get(0).getTypeTag(),
                                                     nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {

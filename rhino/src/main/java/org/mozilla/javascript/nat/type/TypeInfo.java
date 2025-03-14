@@ -231,6 +231,7 @@ public interface TypeInfo {
     /**
      * @see #append(TypeFormatContext, StringBuilder)
      */
+    @Override
     String toString();
 
     void append(TypeFormatContext ctx, StringBuilder builder);

@@ -27,9 +27,9 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 
     @Override
     public boolean equals(Object obj) {
-        return obj == this
-                || obj instanceof ArrayTypeInfo
-                        && component.equals(((ArrayTypeInfo) obj).component);
+        return (obj == this)
+                || ((obj instanceof ArrayTypeInfo)
+                        && component.equals(((ArrayTypeInfo) obj).component));
     }
 
     @Override

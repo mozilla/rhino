@@ -45,10 +45,10 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 
     @Override
     public boolean equals(Object object) {
-        return this == object
-                || object instanceof ParameterizedTypeInfo
+        return (this == object)
+                || ((object instanceof ParameterizedTypeInfo)
                         && rawType.equals(((ParameterizedTypeInfo) object).rawType)
-                        && params.equals(((ParameterizedTypeInfo) object).params);
+                        && params.equals(((ParameterizedTypeInfo) object).params));
     }
 
     @Override

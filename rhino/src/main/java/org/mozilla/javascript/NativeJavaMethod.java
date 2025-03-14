@@ -153,7 +153,8 @@ public class NativeJavaMethod extends BaseFunction {
                             || args[args.length - 1] instanceof NativeArray
                             || args[args.length - 1] instanceof NativeJavaArray)) {
                 // convert the ECMA array into a native array
-                varArgs = Context.jsToJava(args[args.length - 1], argTypes.getLast());
+                varArgs =
+                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
             } else {
                 // marshall the variable parameters
                 var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
@@ -440,9 +441,13 @@ public class NativeJavaMethod extends BaseFunction {
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             final var type1 =
-                    member1.vararg && j >= types1.size() ? types1.getLast() : types1.get(j);
+                    member1.vararg && j >= types1.size()
+                            ? types1.get(types1.size() - 1)
+                            : types1.get(j);
             final var type2 =
-                    member2.vararg && j >= types2.size() ? types2.getLast() : types2.get(j);
+                    member2.vararg && j >= types2.size()
+                            ? types2.get(types2.size() - 1)
+                            : types2.get(j);
             if (type1 == type2) {
                 continue;
             }

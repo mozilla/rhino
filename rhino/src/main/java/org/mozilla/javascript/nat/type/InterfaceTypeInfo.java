@@ -1,10 +1,17 @@
 package org.mozilla.javascript.nat.type;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.nat.ByteAsBool;
 
 public class InterfaceTypeInfo extends ClassTypeInfo {
+    /** Android device might not have {@link FunctionalInterface} class */
+    Class<? extends Annotation> FN_INTERFACE =
+            (Class<? extends Annotation>) Kit.classOrNull("java.lang.FunctionalInterface");
+
     static final Map<Class<?>, InterfaceTypeInfo> CACHE = new IdentityHashMap<>();
 
     private byte functional;
@@ -23,13 +30,15 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
         if (ByteAsBool.isUnknown(functional)) {
 
             try {
-                if (asClass().isAnnotationPresent(FunctionalInterface.class)) {
+                if (FN_INTERFACE != null && asClass().isAnnotationPresent(FN_INTERFACE)) {
                     functional = ByteAsBool.TRUE;
                 } else {
                     int count = 0;
 
                     for (var method : asClass().getMethods()) {
-                        if (!method.isDefault() && !method.isSynthetic() && !method.isBridge()) {
+                        if (Modifier.isAbstract(method.getModifiers())
+                                && !method.isSynthetic()
+                                && !method.isBridge()) {
                             count++;
                         }
 
