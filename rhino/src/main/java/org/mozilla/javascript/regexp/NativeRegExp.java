@@ -647,7 +647,8 @@ public class NativeRegExp extends IdScriptableObject {
                                         index -= 2;
                                         localMax = n;
                                     }
-                                }
+                                } else
+                                    localMax = n;
                             } else if (n == -1) {
                                 if (unicodeMode) {
                                     reportError("msg.invalid.escape", "");
@@ -717,7 +718,16 @@ public class NativeRegExp extends IdScriptableObject {
                         break;
                 }
             } else {
-                localMax = src[index++];
+                if (unicodeMode && Character.isHighSurrogate(src[index]) && index + 1 < end) {
+                    char c2 = src[index + 1];
+                    if (Character.isLowSurrogate(c2)) {
+                        localMax = Character.toCodePoint(src[index], c2);
+                        index += 2;
+                    } else {
+                        localMax = src[index++];
+                    }
+                } else
+                    localMax = src[index++];
             }
             if (inRange) {
                 if (rangeStart > localMax) {
@@ -863,7 +873,7 @@ public class NativeRegExp extends IdScriptableObject {
         int n;
         char[] src = state.cpbegin;
 
-        n = readNHexDigits(src, state.cp, nDigits, nDigits);
+        n = readNHexDigits(src, state.cp, state.cpend, nDigits);
         if (n >= 0) {
             state.cp += nDigits;
         }
@@ -1715,6 +1725,7 @@ public class NativeRegExp extends IdScriptableObject {
                             }
                             if (src < end && (gData.regexp.source[src] == '}')) {
                                 ++src;
+                                thisCh = n;
                             } else {
                                 reportError("msg.invalid.escape", "");
                                 break;
@@ -1739,7 +1750,8 @@ public class NativeRegExp extends IdScriptableObject {
                                         src -= 2;
                                         thisCh = n;
                                     }
-                                }
+                                } else
+                                    thisCh = n;
                             } else if (n == -1) {
                                 if (unicodeMode) {
                                     reportError("msg.invalid.escape", "");
@@ -1842,7 +1854,16 @@ public class NativeRegExp extends IdScriptableObject {
                         break;
                 }
             } else {
-                thisCh = gData.regexp.source[src++];
+                if (unicodeMode && Character.isHighSurrogate(gData.regexp.source[src]) && src + 1 < end) {
+                    char c2 = gData.regexp.source[src + 1];
+                    if (Character.isLowSurrogate(c2)) {
+                        thisCh = Character.toCodePoint(gData.regexp.source[src], c2);
+                        src += 2;
+                    } else {
+                        thisCh = gData.regexp.source[src++];
+                    }
+                } else
+                    thisCh = gData.regexp.source[src++];
             }
             if (inRange) {
                 if ((gData.regexp.flags & JSREG_FOLD) != 0) {
@@ -2157,8 +2178,13 @@ public class NativeRegExp extends IdScriptableObject {
                     op = program[pc++];
                     break;
                 }
-                gData.skipped++;
-                gData.cp++;
+                if ((gData.regexp.flags & JSREG_UNICODE) == 0 || gData.cp == end) {
+                    gData.skipped++;
+                    gData.cp++;
+                } else {
+                    gData.skipped += Character.charCount(input.codePointAt(gData.cp));
+                    gData.cp += Character.charCount(input.codePointAt(gData.cp));
+                }
             }
             if (!anchor) return false;
         }
