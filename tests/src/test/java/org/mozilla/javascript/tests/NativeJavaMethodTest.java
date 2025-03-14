@@ -136,17 +136,17 @@ public class NativeJavaMethodTest {
 
     @Test
     void explicit() {
-        Utils.assertWithAllModes("null", "const s = java.lang.String['valueOf(java.lang.Object)'](null);s + ''");
+        Utils.assertWithAllModes(
+                "null", "const s = java.lang.String['valueOf(java.lang.Object)'](null);s + ''");
     }
 
     @Test
     void explicitMultiArg() {
         var target = "examp";
-        var script = String.format(
-            "const s = java.lang.String['valueOf(char[],int,int)'](%s, 0, %s);",
-            Arrays.toString(target.getBytes()),
-            target.length()
-        );
+        var script =
+                String.format(
+                        "const s = java.lang.String['valueOf(char[],int,int)'](%s, 0, %s);",
+                        Arrays.toString(target.getBytes()), target.length());
         Utils.assertWithAllModes(target, script + "\ns + ''");
     }
 

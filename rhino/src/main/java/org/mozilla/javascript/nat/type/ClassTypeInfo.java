@@ -29,7 +29,7 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 
     @Override
     public boolean equals(Object o) {
-        return o == this || o instanceof ClassTypeInfo && type == ((ClassTypeInfo) o).type;
+        return (o == this) || ((o instanceof ClassTypeInfo) && (type == ((ClassTypeInfo) o).type));
     }
 
     @Override
