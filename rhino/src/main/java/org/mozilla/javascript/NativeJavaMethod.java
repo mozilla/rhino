@@ -448,7 +448,7 @@ public class NativeJavaMethod extends BaseFunction {
                     member2.vararg && j >= types2.size()
                             ? types2.get(types2.size() - 1)
                             : types2.get(j);
-            if (type1 == type2) {
+            if (type1.asClass() == type2.asClass()) {
                 continue;
             }
             final var arg = args[j];
