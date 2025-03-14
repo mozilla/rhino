@@ -220,9 +220,9 @@ class JavaMembers {
         builder.append('(');
         var iter = argTypes.iterator();
         if (iter.hasNext()) {
-            builder.append(iter.next().asClass());
+            builder.append(javaSignature(iter.next().asClass()));
             while (iter.hasNext()) {
-                builder.append(',').append(iter.next().asClass());
+                builder.append(',').append(javaSignature(iter.next().asClass()));
             }
         }
         builder.append(')');
