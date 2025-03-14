@@ -69,10 +69,12 @@ new TestCase( SECTION,
 	      0,     
 	      Array.prototype.reverse.length );
 
-new TestCase( SECTION,
-	      "delete Array.prototype.reverse.length",   
-	      false, 
-	      delete Array.prototype.reverse.length );
+// The following test is obsolete and conflicts with the current spec.
+
+// new TestCase( SECTION,
+// 	      "delete Array.prototype.reverse.length",   
+// 	      false, 
+// 	      delete Array.prototype.reverse.length );
 
 new TestCase( SECTION,
 	      "delete Array.prototype.reverse.length; Array.prototype.reverse.length",   
