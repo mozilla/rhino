@@ -5,10 +5,13 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.regexp.NativeRegExp;
 import org.mozilla.javascript.testutils.Utils;
 
 public class NativeRegExpTest {
@@ -552,5 +555,244 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
+    }
+
+    @Test
+    public void prettyPrinterDoesntBlowUp() {
+        final String regexp = "/(a{3,6})(?=\\1)/g";
+        Utils.runWithAllModes(
+                _cx -> {
+                    final ScriptableObject scope = _cx.initStandardObjects();
+                    final Object result = _cx.evaluateString(scope, regexp, "test script", 0, null);
+                    assertTrue(result instanceof NativeRegExp);
+
+                    NativeRegExp nr = (NativeRegExp) result;
+                    // use reflection to access the private member 're' of the nativeregexp object
+                    // of the NativeRegExp object and call the
+                    // private method prettyPrintRE static method with the 're' member
+                    // to make sure it doesn't blow up
+                    try {
+                        java.lang.reflect.Field reField = NativeRegExp.class.getDeclaredField("re");
+                        reField.setAccessible(true);
+                        Object re = reField.get(nr);
+                        java.lang.reflect.Method prettyPrintRE =
+                                NativeRegExp.class.getDeclaredMethod(
+                                        "prettyPrintRE", re.getClass());
+                        prettyPrintRE.setAccessible(true);
+                        prettyPrintRE.invoke(NativeRegExp.class, re);
+                    } catch (Exception e) {
+                        fail("NativeRegExp::prettyPrintRE blew up");
+                    }
+                    return null;
+                });
+    }
+
+    @Test
+    public void lookbehindPositive() throws Exception {
+        // matches numbers that are preceded by a dollar sign
+        final String script =
+                "var regex = /(?<=\\$)\\d+/g;\n"
+                        + "var result = '$123 $456 789'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("2-123-456", script);
+    }
+
+    @Test
+    public void lookbehindNegative() throws Exception {
+        // matches numbers that are not preceded by a dollar sign
+        final String script =
+                "var regex = /(?<!\\$)\\d/g;\n"
+                        + "var result = '$1 $4 7'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-7", script);
+    }
+
+    @Test
+    public void lookbehindCapture() throws Exception {
+        // This shows that the lookbehind matches the input backwards
+        // this is why, the second capture group is 'bc' and not 'c'
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+))$/;\n"
+                        + "var result = 'abc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("3-a-bc", script);
+    }
+
+    @Test
+    public void lookbehindQuantifiedCapture() throws Exception {
+        // When a lookbehind has quantified capture groups, the left-most match is captured
+        final String script =
+                "var regex = /(?<=(\\d)+)a/;\n"
+                        + "var result = '123a'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("2-a-1", script);
+    }
+
+    @Test
+    public void lookbehindBackreference2() throws Exception {
+        final String script =
+                "var regex = /(?<=(\\2)x(.))y/;\n"
+                        + "var result = '4x4y'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("3-y-4-4", script);
+    }
+
+    @Test
+    public void lookbehindNested() throws Exception {
+        // lookbehind inside a lookbehind matches the input backwards
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+)(?<=([ab]+)([bc]+)))$/;\n"
+                        + "var result = 'abcabc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res = res + '-' + result[3];\n"
+                        + "res = res + '-' + result[4];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("5--a-bc-a-bc", script);
+    }
+
+    @Test
+    public void lookbehindLookahead() throws Exception {
+        // lookahead inside a lookbehind matches forward
+        final String script =
+                "var regex = /(?<=([ab]+)([bc]+)(?=([xy]+)([yz]+)))/;\n"
+                        + "var result = 'abcxyz'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res = res + '-' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res = res + '-' + result[3];\n"
+                        + "res = res + '-' + result[4];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("5--a-bc-xy-z", script);
+    }
+
+    @Test
+    public void lookbehindFlatCaseInsensitive() throws Exception {
+        final String script =
+                "var regex = /abc(?<=ABC)/i;\n"
+                        + "var result = 'abc'.match(regex);\n"
+                        + "var res = '' + result.length;\n"
+                        + "res = res + '-' + result[0];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-abc", script);
+    }
+
+    @Test
+    public void backwardFlatCaseInsensitiveNoMatch() throws Exception {
+        final String script = "var regex = /abc(?<=XYZ)/i;\n" + "'abc'.match(regex);";
+        Utils.assertWithAllModes_ES6(null, script);
+    }
+
+    @Test
+    public void namedBackrefWithoutNamedCapture() {
+        final String script =
+                "var regex = /\\k<name>/;\n" + "var res = '' + regex.test('k<name>');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void invalidNamedBackrefWithoutNamedCapture() {
+        final String script =
+                "var regex = /\\k<nam/;\n" + "var res = '' + regex.test('k<nam');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void invalidNamedBackrefWithNamedCapture() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/\\k<nam(?<foo>)/.compile()");
+    }
+
+    @Test
+    public void duplicateNamedCapture() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name", "/(?<foo>)(?<foo>)/.compile()");
+    }
+
+    @Test
+    public void namedBackrefNotFound() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/(?<foo>)\\k<bar>/.compile()");
+    }
+
+    @Test
+    public void namedBackref() {
+        final String script =
+                "var regex = /(?<foo>\\d)\\k<foo>/m;\n"
+                        + "var res = '' + regex.test('11');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void duplicateNamedCapturesInDisjunction() {
+        final String script =
+                "var regex = /(?:(?<x>a)|(?<x>b))\\k<x>/;\n"
+                        + "var res = '' + regex.test('bb');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void duplicateNamedCaptures() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name \"x\"", "/(?<x>a)(?<x>b)/.compile()");
+    }
+
+    @Test
+    public void namedCaptureInDisjunction() {
+        final String script =
+                "var regex = /a|(?<x>b)/;\n"
+                        + "var result = regex.exec('b');\n"
+                        + "var res = '' + result.groups.x;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("b", script);
+    }
+
+    @Test
+    public void duplicateNamedCaptureInDisjunction() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name \"a\"",
+                "/(?<a>a)(?:(?<a>b)|(?<a>c))/.compile()");
+    }
+
+    @Test
+    public void execNamedCapture() {
+        final String script =
+                "var regex = /(?<foo>\\d)(?<bar>\\d)/;\n"
+                        + "var result = regex.exec('12');\n"
+                        + "var res = '' + result.groups.foo;\n"
+                        + "res = res + '-' + result.groups.bar;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-2", script);
+    }
+
+    @Test
+    public void execNamedCaptureBackref() {
+        final String script =
+                "var regex = /(?<foo>\\d)(?<bar>\\d)\\1\\2/;\n"
+                        + "var result = regex.exec('1212');\n"
+                        + "var res = '' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-2", script);
     }
 }

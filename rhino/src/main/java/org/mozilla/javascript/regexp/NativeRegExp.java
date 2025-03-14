@@ -7,6 +7,10 @@
 package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
@@ -78,7 +82,8 @@ public class NativeRegExp extends IdScriptableObject {
     //    private static final byte REOP_UCFLATi       = 21; /* case-independent REOP_UCFLAT */
     private static final byte REOP_CLASS = 22; /* character class with index */
     private static final byte REOP_NCLASS = 23; /* negated character class with index */
-    private static final byte REOP_SIMPLE_END = 23; /* end of 'simple opcodes' */
+    private static final byte REOP_NAMED_BACKREF = 24; /* named back-reference */
+    private static final byte REOP_SIMPLE_END = 24; /* end of 'simple opcodes' */
     private static final byte REOP_QUANT = 25; /* quantified atom: atom{1,2} */
     private static final byte REOP_STAR = 26; /* zero or more occurrences of kid */
     private static final byte REOP_PLUS = 27; /* one or more occurrences of kid */
@@ -112,7 +117,14 @@ public class NativeRegExp extends IdScriptableObject {
     private static final byte REOP_ALTPREREQi = 54; /* case-independent REOP_ALTPREREQ */
     private static final byte REOP_ALTPREREQ2 = 55; /* prerequisite for ALT, a char or a class */
     //    private static final byte REOP_ENDALT        = 56; /* end of final alternate */
-    private static final byte REOP_END = 57;
+
+    private static final byte REOP_ASSERTBACK = 57; /* zero width positive lookbehind assertion */
+    private static final byte REOP_ASSERTBACK_NOT =
+            58; /* zero width negative lookbehind assertion */
+    private static final byte REOP_ASSERTBACKTEST = 59; /* sentinel at end of assertion child */
+    private static final byte REOP_ASSERTBACKNOTTEST = 60; /* sentinel at end of !assertion child */
+
+    private static final byte REOP_END = 61;
 
     private static final int ANCHOR_BOL = -2;
 
@@ -289,6 +301,310 @@ public class NativeRegExp extends IdScriptableObject {
         return rval;
     }
 
+    private static void prettyPrintRE(RECompiled regexp) {
+        for (int pc = 0; regexp.program[pc] != REOP_END; ) {
+            System.out.print(pc + ": ");
+            byte op = regexp.program[pc];
+            pc++; // Increment pc after reading op
+            switch (op) {
+                case REOP_EMPTY:
+                    System.out.println("EMPTY");
+                    break;
+                case REOP_BOL:
+                    System.out.println("BOL");
+                    break;
+                case REOP_EOL:
+                    System.out.println("EOL");
+                    break;
+                case REOP_WBDRY:
+                    System.out.println("WBDRY");
+                    break;
+                case REOP_WNONBDRY:
+                    System.out.println("WNONBDRY");
+                    break;
+                case REOP_DOT:
+                    System.out.println("DOT");
+                    break;
+                case REOP_DIGIT:
+                    System.out.println("DIGIT");
+                    break;
+                case REOP_NONDIGIT:
+                    System.out.println("NONDIGIT");
+                    break;
+                case REOP_ALNUM:
+                    System.out.println("ALNUM");
+                    break;
+                case REOP_NONALNUM:
+                    System.out.println("NONALNUM");
+                    break;
+                case REOP_SPACE:
+                    System.out.println("SPACE");
+                    break;
+                case REOP_NONSPACE:
+                    System.out.println("NONSPACE");
+                    break;
+                case REOP_BACKREF:
+                    int backrefIndex = getIndex(regexp.program, pc);
+                    System.out.println("BACKREF " + backrefIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_NAMED_BACKREF:
+                    int namedBackrefIndex = getIndex(regexp.program, pc);
+                    int namedBackrefLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.println(
+                            "NAMED_BACKREF "
+                                    + new String(
+                                            regexp.source, namedBackrefIndex, namedBackrefLength));
+                    pc += 2 * INDEX_LEN;
+                    break;
+                case REOP_FLAT:
+                    int flatIndex = getIndex(regexp.program, pc);
+                    int flatLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.print("FLAT: ");
+                    for (int i = 0; i < flatLength; i++) {
+                        System.out.print(regexp.source[flatIndex + i]);
+                    }
+                    System.out.println();
+                    pc += 2 * INDEX_LEN;
+                    break;
+                case REOP_FLAT1:
+                    char flat1Char = (char) (regexp.program[pc] & 0xFF);
+                    System.out.println("FLAT1: " + flat1Char);
+                    pc += 1;
+                    break;
+                case REOP_FLATi:
+                    int flatiIndex = getIndex(regexp.program, pc);
+                    int flatiLength = getIndex(regexp.program, pc + INDEX_LEN);
+                    System.out.print("FLATi: ");
+                    for (int i = 0; i < flatiLength; i++) {
+                        System.out.print(regexp.source[flatiIndex + i]);
+                    }
+                    System.out.println();
+                    pc += 2 * INDEX_LEN;
+                    break;
+                case REOP_FLAT1i:
+                    char flat1iChar = (char) (regexp.program[pc] & 0xFF);
+                    System.out.println("FLAT1i: " + flat1iChar);
+                    pc += 1;
+                    break;
+                case REOP_UCFLAT1:
+                    char ucFlat1Char = (char) getIndex(regexp.program, pc);
+                    System.out.println("UCFLAT1: " + ucFlat1Char);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_UCFLAT1i:
+                    char ucFlat1iChar = (char) getIndex(regexp.program, pc);
+                    System.out.println("UCFLAT1i: " + ucFlat1iChar);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_CLASS:
+                    int classIndex = getIndex(regexp.program, pc);
+                    System.out.println("CLASS: " + classIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_NCLASS:
+                    int nclassIndex = getIndex(regexp.program, pc);
+                    System.out.println("NCLASS: " + nclassIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_STAR:
+                case REOP_PLUS:
+                case REOP_OPT:
+                case REOP_MINIMALSTAR:
+                case REOP_MINIMALPLUS:
+                case REOP_MINIMALOPT:
+                case REOP_MINIMALQUANT:
+                case REOP_QUANT:
+                    {
+                        boolean greedy;
+                        int min, max;
+
+                        greedy =
+                                op == REOP_STAR
+                                        || op == REOP_PLUS
+                                        || op == REOP_OPT
+                                        || op == REOP_QUANT;
+
+                        // set min and max
+                        if (op == REOP_STAR || op == REOP_MINIMALSTAR) {
+                            min = 0;
+                            max = Integer.MAX_VALUE;
+                        } else if (op == REOP_PLUS || op == REOP_MINIMALPLUS) {
+                            min = 1;
+                            max = Integer.MAX_VALUE;
+                        } else if (op == REOP_OPT || op == REOP_MINIMALOPT) {
+                            min = 0;
+                            max = 1;
+                        } else {
+                            min = getIndex(regexp.program, pc);
+                            max = getIndex(regexp.program, pc + INDEX_LEN);
+                            pc += 2 * INDEX_LEN;
+                        }
+
+                        int parenCount = getIndex(regexp.program, pc);
+                        int parenIndex = getIndex(regexp.program, pc + INDEX_LEN);
+                        pc += 2 * INDEX_LEN;
+
+                        int next = getIndex(regexp.program, pc) + pc;
+                        System.out.println(
+                                "QUANT "
+                                        + "greedy="
+                                        + greedy
+                                        + " min="
+                                        + min
+                                        + " max="
+                                        + (max == Integer.MAX_VALUE ? "MAX" : max)
+                                        + " parenCount="
+                                        + parenCount
+                                        + " parenIndex="
+                                        + parenIndex
+                                        + " next="
+                                        + next);
+                        pc += INDEX_LEN;
+                    }
+                    break;
+                case REOP_LPAREN:
+                    int parenIndex = getIndex(regexp.program, pc);
+                    System.out.println("LPAREN: " + parenIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_RPAREN:
+                    System.out.println("RPAREN");
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ALT:
+                    int altIndex = getIndex(regexp.program, pc);
+                    System.out.println("ALT: " + altIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_JUMP:
+                    int jumpIndex = getIndex(regexp.program, pc) + pc;
+                    System.out.println("JUMP: " + jumpIndex);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERT:
+                    int assertNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERT: " + assertNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERT_NOT:
+                    int assertNotNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERT_NOT: " + assertNotNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERTBACK:
+                    int assertBackNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERTBACK: " + assertBackNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERTBACK_NOT:
+                    int assertBackNotNextPc = pc + getIndex(regexp.program, pc);
+                    System.out.println("ASSERTBACK_NOT: " + assertBackNotNextPc);
+                    pc += INDEX_LEN;
+                    break;
+                case REOP_ASSERTTEST:
+                    System.out.println("ASSERTTEST");
+                    break;
+                case REOP_ASSERTNOTTEST:
+                    System.out.println("ASSERTNOTTEST");
+                    break;
+                case REOP_ASSERTBACKTEST:
+                    System.out.println("ASSERTBACKTEST");
+                    break;
+                case REOP_ASSERTBACKNOTTEST:
+                    System.out.println("ASSERTBACKNOTTEST");
+                    break;
+                case REOP_ENDCHILD:
+                    System.out.println("ENDCHILD");
+                    break;
+                case REOP_REPEAT:
+                    System.out.println("REPEAT");
+                    break;
+                case REOP_MINIMALREPEAT:
+                    System.out.println("MINIMALREPEAT");
+                    break;
+                case REOP_ALTPREREQ:
+                case REOP_ALTPREREQi:
+                case REOP_ALTPREREQ2:
+                    String opCode =
+                            (op == REOP_ALTPREREQ)
+                                    ? "REOP_ALTPREREQ"
+                                    : (op == REOP_ALTPREREQi)
+                                            ? "REOP_ALTPREREQi"
+                                            : "REOP_ALTPREREQ2";
+                    char matchCh1 = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    char matchCh2 = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    int nextPc = pc + getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    System.out.println(opCode + " " + matchCh1 + " " + matchCh2 + " " + nextPc);
+                    break;
+                case REOP_END:
+                    System.out.println("END");
+                    break;
+                default:
+                    System.out.println("UNKNOWN: " + op);
+                    break;
+            }
+        }
+    }
+
+    private static void extractNamedCaptureGroups(
+            char[] src, RENode re, Map<String, List<Integer>> namedCaptureGroups) {
+        RENode node = re;
+        while (node != null) {
+            if (node.op == REOP_LPAREN) {
+                if (node.captureGroupNameLength != 0) {
+                    String name =
+                            new String(
+                                    src, node.captureGroupNameIndex, node.captureGroupNameLength);
+                    ArrayList<Integer> entry = new ArrayList<>(1);
+
+                    if (namedCaptureGroups.putIfAbsent(name, entry) != null) {
+                        reportError("msg.duplicate.group.name", name);
+                    }
+                    entry.add(node.parenIndex);
+                    extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
+                }
+            } else if (node.op == REOP_ALT) {
+                // handle duplicate capture group names between kid1 and kid2
+                // by storing all the parenIndex values in a list
+                Map<String, List<Integer>> groupCaptures1 = new HashMap<>();
+                Map<String, List<Integer>> groupCaptures2;
+                extractNamedCaptureGroups(src, node.kid, groupCaptures1);
+
+                if (groupCaptures1
+                        .isEmpty()) { // then no duplicate group names are possible between kid1 and
+                    // kid2
+                    extractNamedCaptureGroups(src, node.kid2, namedCaptureGroups);
+                } else {
+                    groupCaptures2 = new HashMap<>();
+                    extractNamedCaptureGroups(src, node.kid2, groupCaptures2);
+
+                    for (Map.Entry<String, List<Integer>> entry : groupCaptures2.entrySet()) {
+                        groupCaptures1.merge(
+                                entry.getKey(),
+                                entry.getValue(),
+                                (v1, v2) -> {
+                                    v1.addAll(v2);
+                                    return v1;
+                                });
+                    }
+
+                    for (Map.Entry<String, List<Integer>> entry : groupCaptures1.entrySet()) {
+                        if (namedCaptureGroups.putIfAbsent(entry.getKey(), entry.getValue())
+                                != null) {
+                            reportError("msg.duplicate.group.name", entry.getKey());
+                        }
+                    }
+                }
+            } else extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
+
+            node = node.next;
+        }
+    }
+
     static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
         RECompiled regexp = new RECompiled(str);
         int length = str.length();
@@ -333,11 +649,24 @@ public class NativeRegExp extends IdScriptableObject {
             // Need to reparse if pattern contains invalid backreferences:
             // "Note: if the number of left parentheses is less than the number
             // specified in \#, the \# is taken as an octal escape"
+            boolean reParse = false;
             if (state.maxBackReference > state.parenCount) {
                 state = new CompilerState(cx, regexp.source, length, flags);
                 state.backReferenceLimit = state.parenCount;
+                reParse = true;
+            }
+            if (state.reparseIfNoNamedCaptureGroupFound && !state.namedCaptureGroupsFound) {
+                state.namedBackrefEnabled = false;
+                reParse = true;
+            }
+            if (reParse) {
                 if (!parseDisjunction(state)) return null;
             }
+        }
+
+        regexp.namedCaptureGroups = new HashMap<>();
+        if (state.namedCaptureGroupsFound) {
+            extractNamedCaptureGroups(regexp.source, state.result, regexp.namedCaptureGroups);
         }
 
         regexp.program = new byte[state.progLength + 1];
@@ -355,6 +684,8 @@ public class NativeRegExp extends IdScriptableObject {
                 if (i < (endPC - 1)) System.out.print(", ");
             }
             System.out.println();
+
+            prettyPrintRE(regexp);
         }
         regexp.parenCount = state.parenCount;
 
@@ -539,7 +870,19 @@ public class NativeRegExp extends IdScriptableObject {
                 headTerm = state.result;
                 tailTerm = headTerm;
             } else tailTerm.next = state.result;
-            while (tailTerm.next != null) tailTerm = tailTerm.next;
+            while (tailTerm.next != null) {
+                // concatenate FLATs if possible
+                RENode n = tailTerm.next;
+                if (tailTerm.op == REOP_FLAT
+                        && tailTerm.flatIndex != -1
+                        && n.op == REOP_FLAT
+                        && n.flatIndex == (tailTerm.flatIndex + tailTerm.length)) {
+                    tailTerm.length += n.length;
+                    tailTerm.next = n.next;
+                } else {
+                    tailTerm = n;
+                }
+            }
         }
     }
 
@@ -780,6 +1123,58 @@ public class NativeRegExp extends IdScriptableObject {
         return value;
     }
 
+    private static RENode reverseNodeList(RENode head) {
+        RENode prev = null;
+        RENode node = head;
+        while (node != null) {
+            /* Don't reverse lookahead assertions. Lookbehind assertions should already have been reversed */
+            if (node.kid != null
+                    && node.op != REOP_ASSERT
+                    && node.op != REOP_ASSERT_NOT
+                    && node.op != REOP_ASSERTBACK
+                    && node.op != REOP_ASSERTBACK_NOT) {
+                node.kid = reverseNodeList(node.kid);
+            }
+            RENode next = node.next;
+            node.next = prev;
+            prev = node;
+            node = next;
+        }
+        return prev;
+    }
+
+    private static String extractCaptureGroupName(char[] src, int cpbegin, int cpend) {
+        // TODO: support capture group names consisting of unicode escape sequences
+        String srcString = new String(src);
+        // parse unicode identifier
+        int cp = cpbegin;
+        if (cp == cpend) {
+            return null;
+        }
+
+        if (src[cp++] != '<') return null;
+
+        if (!(src[cp] == '$'
+                || src[cp] == '_'
+                || Character.isUnicodeIdentifierStart(srcString.codePointAt(cp)))) {
+            return null;
+        }
+        cp += Character.charCount(srcString.codePointAt(cp));
+
+        while (cp < cpend && src[cp] != '>') {
+            int codePoint = srcString.codePointAt(cp);
+            if (!(src[cp] == '$' || Character.isUnicodeIdentifierPart(codePoint))) {
+                break;
+            }
+            cp += Character.charCount(codePoint);
+        }
+
+        if (cp < cpend && src[cp++] != '>') return null;
+
+        // strip the '<' and '>'
+        return String.copyValueOf(src, cpbegin + 1, cp - cpbegin - 2);
+    }
+
     private static boolean parseTerm(CompilerState state) {
         char[] src = state.cpbegin;
         char c = src[state.cp++];
@@ -963,11 +1358,39 @@ public class NativeRegExp extends IdScriptableObject {
                             break;
                         /* IdentityEscape */
                         default:
-                            state.result = new RENode(REOP_FLAT);
-                            state.result.chr = c;
-                            state.result.length = 1;
-                            state.result.flatIndex = state.cp - 1;
-                            state.progLength += 3;
+                            {
+                                boolean asFlat = false;
+                                if (c == 'k' && state.namedBackrefEnabled) {
+                                    String groupName =
+                                            extractCaptureGroupName(src, state.cp, state.cpend);
+                                    if (groupName != null) {
+                                        state.result = new RENode(REOP_NAMED_BACKREF);
+                                        state.result.captureGroupNameIndex =
+                                                state.cp + 1; // skip '<'
+                                        state.result.captureGroupNameLength = groupName.length();
+                                        state.reparseIfNoNamedCaptureGroupFound = true;
+                                        state.cp += groupName.length() + 2; // include '<' and '>'
+
+                                        // REOP_NAMED_BACKREF GROUPNAMEINDEX GROUPNAMELENGTH
+                                        state.progLength += 5;
+                                    } else {
+                                        if (state.namedCaptureGroupsFound) {
+                                            reportError("msg.invalid.named.backref", "");
+                                        } else {
+                                            state.failIfNamedCaptureGroupFound = true;
+                                            asFlat = true;
+                                        }
+                                    }
+                                } else asFlat = true;
+
+                                if (asFlat) {
+                                    state.result = new RENode(REOP_FLAT);
+                                    state.result.chr = c;
+                                    state.result.length = 1;
+                                    state.result.flatIndex = state.cp - 1;
+                                    state.progLength += 3;
+                                }
+                            }
                             break;
                     }
                     break;
@@ -992,8 +1415,42 @@ public class NativeRegExp extends IdScriptableObject {
                             /* ASSERTNOT, <next>, ... ASSERTNOTTEST */
                             state.progLength += 4;
                         }
+                    } else if (state.cp + 2 < state.cpend
+                            && src[state.cp] == '?'
+                            && src[state.cp + 1] == '<'
+                            && ((c = src[state.cp + 2]) == '=' || c == '!')) {
+                        state.cp += 3;
+                        if (c == '=') {
+                            result = new RENode(REOP_ASSERTBACK);
+                            /* ASSERT, <next>, ... ASSERTBACKTEST */
+                            state.progLength += 4;
+                        } else { // c == '!'
+                            result = new RENode(REOP_ASSERTBACK_NOT);
+                            /* ASSERTNOT, <next>, ... ASSERTBACKNOTTEST */
+                            state.progLength += 4;
+                        }
                     } else {
                         result = new RENode(REOP_LPAREN);
+                        if (state.cp + 2 < state.cpend
+                                && src[state.cp] == '?'
+                                && src[state.cp + 1] == '<') {
+                            state.cp += 1;
+                            String name = extractCaptureGroupName(src, state.cp, state.cpend);
+                            if (name == null) {
+                                reportError("msg.invalid.group.name", "");
+                                return false;
+                            }
+
+                            if (state.failIfNamedCaptureGroupFound) {
+                                reportError("msg.invalid.named.backref", "");
+                                return false;
+                            }
+
+                            result.captureGroupNameIndex = state.cp + 1; // skip '<'
+                            result.captureGroupNameLength = name.length(); // skip '<' and '>'
+                            state.namedCaptureGroupsFound = true;
+                            state.cp += name.length() + 2; // include '<' and '>'
+                        }
                         /* LPAREN, <index>, ... RPAREN, <index> */
                         state.progLength += 6;
                         result.parenIndex = state.parenCount++;
@@ -1007,6 +1464,10 @@ public class NativeRegExp extends IdScriptableObject {
                     ++state.cp;
                     --state.parenNesting;
                     if (result != null) {
+                        /* if we have a lookbehind then we reverse state.result linked list */
+                        if (result.op == REOP_ASSERTBACK || result.op == REOP_ASSERTBACK_NOT) {
+                            state.result = reverseNodeList(state.result);
+                        }
                         result.kid = state.result;
                         state.result = result;
                     }
@@ -1145,6 +1606,11 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (!hasQ) return true;
 
+        if (term.op == REOP_ASSERTBACK || term.op == REOP_ASSERTBACK_NOT) {
+            reportError("msg.bad.quant", "");
+            return false;
+        }
+
         ++state.cp;
         state.result.kid = term;
         state.result.parenIndex = parenBaseCount;
@@ -1218,17 +1684,6 @@ public class NativeRegExp extends IdScriptableObject {
                     resolveForwardJump(program, nextAltFixup, pc);
                     break;
                 case REOP_FLAT:
-                    /*
-                     * Consecutize FLAT's if possible.
-                     */
-                    if (t.flatIndex != -1) {
-                        while ((t.next != null)
-                                && (t.next.op == REOP_FLAT)
-                                && ((t.flatIndex + t.length) == t.next.flatIndex)) {
-                            t.length += t.next.length;
-                            t.next = t.next.next;
-                        }
-                    }
                     if ((t.flatIndex != -1) && (t.length > 1)) {
                         if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_FLATi;
                         else program[pc - 1] = REOP_FLAT;
@@ -1255,18 +1710,44 @@ public class NativeRegExp extends IdScriptableObject {
                 case REOP_BACKREF:
                     pc = addIndex(program, pc, t.parenIndex);
                     break;
+                case REOP_NAMED_BACKREF:
+                    {
+                        String backRefName =
+                                new String(
+                                        re.source,
+                                        t.captureGroupNameIndex,
+                                        t.captureGroupNameLength);
+                        List<Integer> indices = re.namedCaptureGroups.get(backRefName);
+                        if (indices == null) {
+                            reportError("msg.invalid.named.backref", "");
+                            return pc;
+                        }
+
+                        if (indices.size() == 1) { // optimization for unique backrefs
+                            program[pc - 1] = REOP_BACKREF;
+                            pc = addIndex(program, pc, indices.get(0));
+                        } else {
+                            // backref doesn't have a unique parenIndex
+                            pc = addIndex(program, pc, t.captureGroupNameIndex);
+                            pc = addIndex(program, pc, t.captureGroupNameLength);
+                        }
+                    }
+                    break;
                 case REOP_ASSERT:
+                case REOP_ASSERTBACK:
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
                     pc = emitREBytecode(state, re, pc, t.kid);
-                    program[pc++] = REOP_ASSERTTEST;
+                    program[pc++] = t.op == REOP_ASSERT ? REOP_ASSERTTEST : REOP_ASSERTBACKTEST;
                     resolveForwardJump(program, nextTermFixup, pc);
                     break;
                 case REOP_ASSERT_NOT:
+                case REOP_ASSERTBACK_NOT:
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
                     pc = emitREBytecode(state, re, pc, t.kid);
-                    program[pc++] = REOP_ASSERTNOTTEST;
+                    program[pc++] =
+                            t.op == REOP_ASSERT_NOT ? REOP_ASSERTNOTTEST : REOP_ASSERTBACKNOTTEST;
                     resolveForwardJump(program, nextTermFixup, pc);
                     break;
                 case REOP_QUANT:
@@ -1311,6 +1792,7 @@ public class NativeRegExp extends IdScriptableObject {
             int min,
             int max,
             int cp,
+            boolean matchBackward,
             REBackTrackData backTrackLastToSave,
             int continuationOp,
             int continuationPc) {
@@ -1321,6 +1803,7 @@ public class NativeRegExp extends IdScriptableObject {
                         max,
                         cp,
                         backTrackLastToSave,
+                        matchBackward,
                         continuationOp,
                         continuationPc);
     }
@@ -1359,6 +1842,22 @@ public class NativeRegExp extends IdScriptableObject {
         return true;
     }
 
+    private static boolean flatNMatcherBackward(
+            REGlobalData gData, int matchChars, int length, String input) {
+        if ((gData.cp - length) < 0) return false;
+
+        // in the input, start from cp - 1 and go back length chars
+        // in the regex source, do it the other way
+        for (int i = 1; i <= length; i++) {
+            if (gData.regexp.source[matchChars + length - i] != input.charAt(gData.cp - i)) {
+                return false;
+            }
+        }
+
+        gData.cp -= length;
+        return true;
+    }
+
     private static boolean flatNIMatcher(
             REGlobalData gData, int matchChars, int length, String input, int end) {
         if ((gData.cp + length) > end) return false;
@@ -1371,6 +1870,24 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
         gData.cp += length;
+        return true;
+    }
+
+    private static boolean flatNIMatcherBackward(
+            REGlobalData gData, int matchChars, int length, String input) {
+        if ((gData.cp - length) < 0) return false;
+
+        // in the input, start from cp - 1 and go back length chars
+        // in the regex source, do it the other way
+        for (int i = 1; i <= length; i++) {
+            char c1 = gData.regexp.source[matchChars + length - i];
+            char c2 = input.charAt(gData.cp - i);
+            if (c1 != c2 && upcase(c1) != upcase(c2)) {
+                return false;
+            }
+        }
+
+        gData.cp -= length;
         return true;
     }
 
@@ -1398,7 +1915,7 @@ public class NativeRegExp extends IdScriptableObject {
         10. Call c(y) and return its result.
     */
     private static boolean backrefMatcher(
-            REGlobalData gData, int parenIndex, String input, int end) {
+            REGlobalData gData, int parenIndex, String input, int end, boolean matchBackward) {
         int len;
         int i;
         if (gData.parens == null || parenIndex >= gData.parens.length) return false;
@@ -1406,18 +1923,37 @@ public class NativeRegExp extends IdScriptableObject {
         if (parenContent == -1) return true;
 
         len = gData.parensLength(parenIndex);
-        if ((gData.cp + len) > end) return false;
 
-        if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-            for (i = 0; i < len; i++) {
-                char c1 = input.charAt(parenContent + i);
-                char c2 = input.charAt(gData.cp + i);
-                if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+        // The capture is always "forward", i.e., in
+        // the input order
+        if (matchBackward) {
+            if ((gData.cp - len) < 0) return false;
+
+            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+                // start from (cp - len) on the left and go to cp - 1 on the right
+                for (i = 0; i < len; i++) {
+                    char c1 = input.charAt(parenContent + i);
+                    char c2 = input.charAt(gData.cp + i - len);
+                    if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                }
+            } else if (!input.regionMatches(parenContent, input, gData.cp - len, len)) {
+                return false;
             }
-        } else if (!input.regionMatches(parenContent, input, gData.cp, len)) {
-            return false;
+            gData.cp -= len;
+        } else {
+            if ((gData.cp + len) > end) return false;
+
+            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+                for (i = 0; i < len; i++) {
+                    char c1 = input.charAt(parenContent + i);
+                    char c2 = input.charAt(gData.cp + i);
+                    if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                }
+            } else if (!input.regionMatches(parenContent, input, gData.cp, len)) {
+                return false;
+            }
+            gData.cp += len;
         }
-        gData.cp += len;
         return true;
     }
 
@@ -1690,17 +2226,25 @@ public class NativeRegExp extends IdScriptableObject {
             byte[] program,
             int pc,
             int end,
-            boolean updatecp) {
+            boolean updatecp,
+            boolean matchBackward) {
         boolean result = false;
         char matchCh;
         int parenIndex;
         int offset, length, index;
         int startcp = gData.cp;
+        int cpDelta = matchBackward ? -1 : 1;
+
+        final int cpToMatch = gData.cp + (matchBackward ? -1 : 0);
+        final boolean cpInBounds = cpToMatch >= 0 && cpToMatch < end;
 
         switch (op) {
             case REOP_EMPTY:
                 result = true;
                 break;
+
+            // We just use gData.cp and not cpToMatch in the BOL, EOL, WBDRY, WNONBDRY cases
+            // since their behaviour is identical in both forward and backward matching
             case REOP_BOL:
                 if (gData.cp != 0) {
                     if (!gData.multiline || !isLineTerm(input.charAt(gData.cp - 1))) {
@@ -1728,71 +2272,97 @@ public class NativeRegExp extends IdScriptableObject {
                                 ^ ((gData.cp < end) && isWord(input.charAt(gData.cp))));
                 break;
             case REOP_DOT:
-                if (gData.cp != end
+                if (cpInBounds
                         && ((gData.regexp.flags & JSREG_DOTALL) != 0
-                                || !isLineTerm(input.charAt(gData.cp)))) {
+                                || !isLineTerm(input.charAt(cpToMatch)))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_DIGIT:
-                if (gData.cp != end && isDigit(input.charAt(gData.cp))) {
+                if (cpInBounds && isDigit(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_NONDIGIT:
-                if (gData.cp != end && !isDigit(input.charAt(gData.cp))) {
+                if (cpInBounds && !isDigit(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_ALNUM:
-                if (gData.cp != end && isWord(input.charAt(gData.cp))) {
+                if (cpInBounds && isWord(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_NONALNUM:
-                if (gData.cp != end && !isWord(input.charAt(gData.cp))) {
+                if (cpInBounds && !isWord(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_SPACE:
-                if (gData.cp != end && isREWhiteSpace(input.charAt(gData.cp))) {
+                if (cpInBounds && isREWhiteSpace(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_NONSPACE:
-                if (gData.cp != end && !isREWhiteSpace(input.charAt(gData.cp))) {
+                if (cpInBounds && !isREWhiteSpace(input.charAt(cpToMatch))) {
                     result = true;
-                    gData.cp++;
+                    gData.cp += cpDelta;
                 }
                 break;
             case REOP_BACKREF:
                 {
                     parenIndex = getIndex(program, pc);
                     pc += INDEX_LEN;
-                    result = backrefMatcher(gData, parenIndex, input, end);
+                    result = backrefMatcher(gData, parenIndex, input, end, matchBackward);
                 }
                 break;
+            case REOP_NAMED_BACKREF:
+                {
+                    int groupNameIndex = getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    int groupNameLength = getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    if (gData.parens == null) {
+                        break;
+                    }
+
+                    String backRefName =
+                            new String(gData.regexp.source, groupNameIndex, groupNameLength);
+                    List<Integer> indices = gData.regexp.namedCaptureGroups.get(backRefName);
+                    boolean failed = false;
+                    for (int i : indices) {
+                        if (gData.parensIndex(i) == -1) continue;
+                        result = backrefMatcher(gData, i, input, end, matchBackward);
+                        if (result) {
+                            break;
+                        } else failed = true;
+                    }
+                    if (!failed) result = true;
+                    break;
+                }
             case REOP_FLAT:
                 {
                     offset = getIndex(program, pc);
                     pc += INDEX_LEN;
                     length = getIndex(program, pc);
                     pc += INDEX_LEN;
-                    result = flatNMatcher(gData, offset, length, input, end);
+
+                    if (matchBackward) result = flatNMatcherBackward(gData, offset, length, input);
+                    else result = flatNMatcher(gData, offset, length, input, end);
                 }
                 break;
             case REOP_FLAT1:
                 {
                     matchCh = (char) (program[pc++] & 0xFF);
-                    if (gData.cp != end && input.charAt(gData.cp) == matchCh) {
+                    if (cpInBounds && input.charAt(cpToMatch) == matchCh) {
                         result = true;
-                        gData.cp++;
+                        gData.cp += cpDelta;
                     }
                 }
                 break;
@@ -1802,17 +2372,19 @@ public class NativeRegExp extends IdScriptableObject {
                     pc += INDEX_LEN;
                     length = getIndex(program, pc);
                     pc += INDEX_LEN;
-                    result = flatNIMatcher(gData, offset, length, input, end);
+
+                    if (matchBackward) result = flatNIMatcherBackward(gData, offset, length, input);
+                    else result = flatNIMatcher(gData, offset, length, input, end);
                 }
                 break;
             case REOP_FLAT1i:
                 {
                     matchCh = (char) (program[pc++] & 0xFF);
-                    if (gData.cp != end) {
-                        char c = input.charAt(gData.cp);
+                    if (cpInBounds) {
+                        char c = input.charAt(cpToMatch);
                         if (matchCh == c || upcase(matchCh) == upcase(c)) {
                             result = true;
-                            gData.cp++;
+                            gData.cp += cpDelta;
                         }
                     }
                 }
@@ -1821,9 +2393,9 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     matchCh = (char) getIndex(program, pc);
                     pc += INDEX_LEN;
-                    if (gData.cp != end && input.charAt(gData.cp) == matchCh) {
+                    if (cpInBounds && input.charAt(cpToMatch) == matchCh) {
                         result = true;
-                        gData.cp++;
+                        gData.cp += cpDelta;
                     }
                 }
                 break;
@@ -1831,11 +2403,11 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     matchCh = (char) getIndex(program, pc);
                     pc += INDEX_LEN;
-                    if (gData.cp != end) {
-                        char c = input.charAt(gData.cp);
+                    if (cpInBounds) {
+                        char c = input.charAt(cpToMatch);
                         if (matchCh == c || upcase(matchCh) == upcase(c)) {
                             result = true;
-                            gData.cp++;
+                            gData.cp += cpDelta;
                         }
                     }
                 }
@@ -1846,10 +2418,10 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
-                    if (gData.cp != end) {
+                    if (cpInBounds) {
                         if (classMatcher(
-                                gData, gData.regexp.classList[index], input.charAt(gData.cp))) {
-                            gData.cp++;
+                                gData, gData.regexp.classList[index], input.charAt(cpToMatch))) {
+                            gData.cp += cpDelta;
                             result = true;
                             break;
                         }
@@ -1875,6 +2447,7 @@ public class NativeRegExp extends IdScriptableObject {
         int continuationOp = REOP_END;
         int continuationPc = 0;
         boolean result = false;
+        boolean matchBackward = false; /* match forward by default */
 
         int op = program[pc++];
 
@@ -1885,7 +2458,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (gData.regexp.anchorCh < 0 && reopIsSimple(op)) {
             boolean anchor = false;
             while (gData.cp <= end) {
-                int match = simpleMatch(gData, input, op, program, pc, end, true);
+                int match = simpleMatch(gData, input, op, program, pc, end, true, false);
                 if (match < 0) {
                     if ((gData.regexp.flags & JSREG_STICKY) != 0) {
                         return false;
@@ -1909,7 +2482,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
 
             if (reopIsSimple(op)) {
-                int match = simpleMatch(gData, input, op, program, pc, end, true);
+                int match = simpleMatch(gData, input, op, program, pc, end, true, matchBackward);
                 result = match >= 0;
                 if (result) pc = match; /* accept skip to next opcode */
             } else {
@@ -1924,11 +2497,14 @@ public class NativeRegExp extends IdScriptableObject {
                             char matchCh2 = (char) getIndex(program, pc);
                             pc += INDEX_LEN;
 
-                            if (gData.cp == end) {
+                            final int cpToMatch = gData.cp + (matchBackward ? -1 : 0);
+                            final boolean cpInBounds = cpToMatch >= 0 && cpToMatch < end;
+
+                            if (!cpInBounds) {
                                 result = false;
                                 break;
                             }
-                            char c = input.charAt(gData.cp);
+                            char c = input.charAt(cpToMatch);
                             if (op == REOP_ALTPREREQ2) {
                                 if (c != matchCh1
                                         && !classMatcher(
@@ -1953,7 +2529,16 @@ public class NativeRegExp extends IdScriptableObject {
                             op = program[pc++];
                             int startcp = gData.cp;
                             if (reopIsSimple(op)) {
-                                int match = simpleMatch(gData, input, op, program, pc, end, true);
+                                int match =
+                                        simpleMatch(
+                                                gData,
+                                                input,
+                                                op,
+                                                program,
+                                                pc,
+                                                end,
+                                                true,
+                                                matchBackward);
                                 if (match < 0) {
                                     op = program[nextpc++];
                                     pc = nextpc;
@@ -1990,11 +2575,85 @@ public class NativeRegExp extends IdScriptableObject {
                             int parenIndex = getIndex(program, pc);
                             pc += INDEX_LEN;
                             int cap_index = gData.parensIndex(parenIndex);
-                            gData.setParens(parenIndex, cap_index, gData.cp - cap_index);
+                            if (matchBackward)
+                                // paren content is captured backwards. Therefore we
+                                // reverse the capture here
+                                gData.setParens(parenIndex, gData.cp, cap_index - gData.cp);
+                            else gData.setParens(parenIndex, cap_index, gData.cp - cap_index);
                             op = program[pc++];
                         }
                         continue;
+                    case REOP_ASSERTBACK:
+                        {
+                            int nextpc =
+                                    pc + getIndex(program, pc); /* start of term after ASSERT */
+                            pc += INDEX_LEN; /* start of ASSERT child */
+                            op = program[pc++];
 
+                            if (reopIsSimple(op)
+                                    && simpleMatch(gData, input, op, program, pc, end, false, true)
+                                            < 0) {
+                                result = false;
+                                break;
+                            }
+
+                            pushProgState(
+                                    gData,
+                                    0,
+                                    0,
+                                    gData.cp,
+                                    matchBackward,
+                                    gData.backTrackStackTop,
+                                    continuationOp,
+                                    continuationPc);
+
+                            pushBackTrackState(
+                                    gData,
+                                    REOP_ASSERTBACKTEST,
+                                    nextpc,
+                                    gData.cp,
+                                    continuationOp,
+                                    continuationPc);
+                            matchBackward = true;
+                        }
+                        continue;
+                    case REOP_ASSERTBACK_NOT:
+                        {
+                            int nextpc =
+                                    pc + getIndex(program, pc); /* start of term after ASSERT */
+                            pc += INDEX_LEN; /* start of ASSERT child */
+                            op = program[pc++];
+
+                            if (reopIsSimple(op)) {
+                                int match =
+                                        simpleMatch(
+                                                gData, input, op, program, pc, end, false, true);
+                                if (match >= 0 && program[match] == REOP_ASSERTBACKNOTTEST) {
+                                    result = false;
+                                    break;
+                                }
+                            }
+
+                            pushProgState(
+                                    gData,
+                                    0,
+                                    0,
+                                    gData.cp,
+                                    matchBackward,
+                                    gData.backTrackStackTop,
+                                    continuationOp,
+                                    continuationPc);
+
+                            pushBackTrackState(
+                                    gData,
+                                    REOP_ASSERTBACKNOTTEST,
+                                    nextpc,
+                                    gData.cp,
+                                    continuationOp,
+                                    continuationPc);
+                            matchBackward = true;
+                        }
+                        continue;
                     case REOP_ASSERT:
                         {
                             int nextpc =
@@ -2002,7 +2661,8 @@ public class NativeRegExp extends IdScriptableObject {
                             pc += INDEX_LEN; /* start of ASSERT child */
                             op = program[pc++];
                             if (reopIsSimple(op)
-                                    && simpleMatch(gData, input, op, program, pc, end, false) < 0) {
+                                    && simpleMatch(gData, input, op, program, pc, end, false, false)
+                                            < 0) {
                                 result = false;
                                 break;
                             }
@@ -2011,10 +2671,12 @@ public class NativeRegExp extends IdScriptableObject {
                                     0,
                                     0,
                                     gData.cp,
+                                    matchBackward,
                                     gData.backTrackStackTop,
                                     continuationOp,
                                     continuationPc);
                             pushBackTrackState(gData, REOP_ASSERTTEST, nextpc);
+                            matchBackward = false;
                         }
                         continue;
                     case REOP_ASSERT_NOT:
@@ -2024,7 +2686,9 @@ public class NativeRegExp extends IdScriptableObject {
                             pc += INDEX_LEN; /* start of ASSERT child */
                             op = program[pc++];
                             if (reopIsSimple(op)) {
-                                int match = simpleMatch(gData, input, op, program, pc, end, false);
+                                int match =
+                                        simpleMatch(
+                                                gData, input, op, program, pc, end, false, false);
                                 if (match >= 0 && program[match] == REOP_ASSERTNOTTEST) {
                                     result = false;
                                     break;
@@ -2035,22 +2699,27 @@ public class NativeRegExp extends IdScriptableObject {
                                     0,
                                     0,
                                     gData.cp,
+                                    matchBackward,
                                     gData.backTrackStackTop,
                                     continuationOp,
                                     continuationPc);
                             pushBackTrackState(gData, REOP_ASSERTNOTTEST, nextpc);
+                            matchBackward = false;
                         }
                         continue;
 
                     case REOP_ASSERTTEST:
+                    case REOP_ASSERTBACKTEST:
                     case REOP_ASSERTNOTTEST:
+                    case REOP_ASSERTBACKNOTTEST:
                         {
                             REProgState state = popProgState(gData);
                             gData.cp = state.index;
                             gData.backTrackStackTop = state.backTrack;
+                            matchBackward = state.matchBackward;
                             continuationPc = state.continuationPc;
                             continuationOp = state.continuationOp;
-                            if (op == REOP_ASSERTNOTTEST) {
+                            if (op == REOP_ASSERTNOTTEST || op == REOP_ASSERTBACKNOTTEST) {
                                 result = !result;
                             }
                         }
@@ -2107,6 +2776,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     min,
                                     max,
                                     gData.cp,
+                                    matchBackward,
                                     null,
                                     continuationOp,
                                     continuationPc);
@@ -2184,8 +2854,14 @@ public class NativeRegExp extends IdScriptableObject {
                                     nextpc++;
                                     int match =
                                             simpleMatch(
-                                                    gData, input, nextop, program, nextpc, end,
-                                                    true);
+                                                    gData,
+                                                    input,
+                                                    nextop,
+                                                    program,
+                                                    nextpc,
+                                                    end,
+                                                    true,
+                                                    matchBackward);
                                     if (match < 0) {
                                         result = (new_min == 0);
                                         continuationPc = state.continuationPc;
@@ -2204,10 +2880,11 @@ public class NativeRegExp extends IdScriptableObject {
                                         new_min,
                                         new_max,
                                         startcp,
+                                        matchBackward,
                                         null,
                                         state.continuationOp,
                                         state.continuationPc);
-                                if (new_min == 0) {
+                                if (new_min == 0)
                                     pushBackTrackState(
                                             gData,
                                             REOP_REPEAT,
@@ -2215,11 +2892,10 @@ public class NativeRegExp extends IdScriptableObject {
                                             startcp,
                                             state.continuationOp,
                                             state.continuationPc);
-                                    int parenCount = getIndex(program, pc);
-                                    int parenIndex = getIndex(program, pc + INDEX_LEN);
-                                    for (int k = 0; k < parenCount; k++) {
-                                        gData.setParens(parenIndex + k, -1, 0);
-                                    }
+                                int parenCount = getIndex(program, pc);
+                                int parenIndex = getIndex(program, pc + INDEX_LEN);
+                                for (int k = 0; k < parenCount; k++) {
+                                    gData.setParens(parenIndex + k, -1, 0);
                                 }
                             } while (program[nextpc] == REOP_ENDCHILD);
 
@@ -2241,6 +2917,7 @@ public class NativeRegExp extends IdScriptableObject {
                                             state.min,
                                             state.max,
                                             gData.cp,
+                                            matchBackward,
                                             null,
                                             state.continuationOp,
                                             state.continuationPc);
@@ -2276,6 +2953,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     new_min,
                                     new_max,
                                     gData.cp,
+                                    matchBackward,
                                     null,
                                     state.continuationOp,
                                     state.continuationPc);
@@ -2432,6 +3110,7 @@ public class NativeRegExp extends IdScriptableObject {
         index -= matchlen;
         Object result;
         Scriptable obj;
+        Scriptable groups = Undefined.SCRIPTABLE_UNDEFINED;
 
         if (matchType == TEST) {
             /*
@@ -2460,6 +3139,23 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             SubString parsub = null;
             int num;
+            String[] namedCaptureGroups = null; // to ensure groups appear in source order
+
+            if (matchType != TEST) {
+                namedCaptureGroups = new String[re.parenCount];
+
+                // We do a new NativeObject() and not cx.newObject(scope)
+                // since we want the groups to have null as prototype
+                groups = new NativeObject();
+                for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
+                    String key = entry.getKey();
+                    List<Integer> indices = entry.getValue();
+                    for (int i : indices) {
+                        namedCaptureGroups[i] = key;
+                    }
+                }
+            }
+
             res.parens = new SubString[re.parenCount];
             for (num = 0; num < re.parenCount; num++) {
                 int cap_index = gData.parensIndex(num);
@@ -2467,9 +3163,20 @@ public class NativeRegExp extends IdScriptableObject {
                     int cap_length = gData.parensLength(num);
                     parsub = new SubString(str, cap_index, cap_length);
                     res.parens[num] = parsub;
-                    if (matchType != TEST) obj.put(num + 1, obj, parsub.toString());
+                    if (matchType != TEST) {
+                        obj.put(num + 1, obj, parsub.toString());
+                        if (namedCaptureGroups[num] != null) {
+                            groups.put(namedCaptureGroups[num], groups, parsub.toString());
+                        }
+                    }
                 } else {
-                    if (matchType != TEST) obj.put(num + 1, obj, Undefined.instance);
+                    if (matchType != TEST) {
+                        obj.put(num + 1, obj, Undefined.instance);
+                        if (namedCaptureGroups[num] != null
+                                && !groups.has(namedCaptureGroups[num], groups)) {
+                            groups.put(namedCaptureGroups[num], groups, Undefined.instance);
+                        }
+                    }
                 }
             }
             res.lastParen = parsub;
@@ -2482,6 +3189,7 @@ public class NativeRegExp extends IdScriptableObject {
              */
             obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
+            obj.put("groups", obj, groups);
         }
 
         if (res.lastMatch == null) {
@@ -2954,6 +3662,8 @@ class RECompiled implements Serializable {
 
     final char[] source; /* locked source string, sans // */
     int parenCount; /* number of parenthesized submatches */
+    Map<String, List<Integer>>
+            namedCaptureGroups; // List<Int> to handle duplicate names in disjunctions
     int flags; /* flags  */
     byte[] program; /* regular expression bytecode */
     int classCount; /* count [...] bitmaps */
@@ -2995,6 +3705,10 @@ class RENode {
     char chr; /* of one character */
     int length; /* or many (via the index) */
     int flatIndex; /* which is -1 if not sourced */
+
+    /* or a named capture group */
+    int captureGroupNameIndex;
+    int captureGroupNameLength;
 }
 
 class CompilerState {
@@ -3010,6 +3724,10 @@ class CompilerState {
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
+
+        this.namedBackrefEnabled = true;
+        this.failIfNamedCaptureGroupFound = false;
+        this.reparseIfNoNamedCaptureGroupFound = false;
     }
 
     Context cx;
@@ -3023,6 +3741,23 @@ class CompilerState {
     int parenNesting;
     int classCount; /* number of [] encountered */
     int progLength; /* estimated bytecode length */
+
+    boolean namedBackrefEnabled; // should \k be treated as a backreference?
+    boolean namedCaptureGroupsFound; // have we found any named capture groups?
+
+    // should we fail if a named capture group is found?
+    // If we find something in the regexp that starts with a
+    // \k but doesn't lead to a valid named backref, it is
+    // optimistically parsed as a FLAT. In this case, we want
+    // to fail if we eventually find a named capture group.
+    boolean failIfNamedCaptureGroupFound;
+
+    // if we find something in the regexp that is a valid
+    // named backref, we optimistically parse it as a BACKREF.
+    // However if we don't find any named capture groups in the regexp,
+    // we must fail and parse it as a FLAT.
+    boolean reparseIfNoNamedCaptureGroupFound;
+
     RENode result;
 }
 
@@ -3033,6 +3768,7 @@ class REProgState {
             int max,
             int index,
             REBackTrackData backTrack,
+            boolean matchBackward,
             int continuationOp,
             int continuationPc) {
         this.previous = previous;
@@ -3042,6 +3778,7 @@ class REProgState {
         this.continuationOp = continuationOp;
         this.continuationPc = continuationPc;
         this.backTrack = backTrack;
+        this.matchBackward = matchBackward;
     }
 
     final REProgState previous; // previous state in stack
@@ -3052,6 +3789,7 @@ class REProgState {
     final int continuationOp;
     final int continuationPc;
     final REBackTrackData backTrack; // used by ASSERT_  to recover state
+    final boolean matchBackward;
 }
 
 class REBackTrackData {
