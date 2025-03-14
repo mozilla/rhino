@@ -553,4 +553,63 @@ public class NativeRegExpTest {
                 "TypeError: Method \"toString\" called on incompatible object",
                 "var toString = RegExp.prototype.toString; try { toString(); } catch (e) { ('' + e).substr(0, 58) }");
     }
+
+    // tests that rhino lets /x and /u be treated as a literal if it finds any non-hex chars after the x or u
+    @Test
+    public void testInvalidSingleDigitHexEscape() {
+        final String script =
+                "'x1'.match(/\\x1/)[0] + 'u1'.match(/\\u1/)[0];";
+        Utils.assertWithAllModes_ES6("x1u1", script);
+    }
+
+    // tests that in non-unicode mode \\u{5} is treated as a quantifier
+    @Test
+    public void testUQuantifier() {
+        final String script = "'uu'.match(/\\u{2}/)[0];";
+        Utils.assertWithAllModes_ES6("uu", script);
+    }
+
+    @Test
+    public void testInvalidUnicodeEscape() {
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u{/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u{}/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u{1/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u{k}/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\ua/u" );
+        Utils.assertEcmaErrorES6("SyntaxError: Invalid Unicode escape", "/\\u}/u" );
+    }
+
+    // tests that a bunch of unicode escapes matches correctly
+    // high-low surrogate pair: /\uD83D\uDE00/u matches 😀
+    // high surrogate: /\uD83D/u matches '\uD83D'
+    // low surrogate: /\uDE00/u matches '\uDE00'
+    // non surrogate: /\u0000/u matches \u0000, /\\u0061/u matches a
+    // unicode code point inside the BMP: /\\u00A9/u matches ©
+    // unicode code point outside the BMP: /\\u{1F600}/u matches 😀
+    // /\\u{1F600}/gu with exec on a string with 2 one 😀 and some other char sets lastIndex to 2
+    @Test
+    // one assertion per script, with a message passed to assertWithAllModes_ES6
+    public void testUnicodeEscapes() {
+        Utils.assertWithAllModes_ES6("high-low surrogate pair", "😀", "'😀'.match(/\\uD83D\\uDE00/u)[0]");
+        Utils.assertWithAllModes_ES6("high surrogate", "\uD83D", "'\\uD83D'.match(/\\uD83D/u)[0]");
+        Utils.assertWithAllModes_ES6("low surrogate", "\uDE00", "'\\uDE00'.match(/\\uDE00/u)[0]");
+        Utils.assertWithAllModes_ES6("non surrogate", "\u0000", "'\\u0000'.match(/\\u0000/u)[0]");
+        Utils.assertWithAllModes_ES6("ASCII", "a", "'a'.match(/\\u0061/u)[0]");
+        Utils.assertWithAllModes_ES6("unicode code point inside the BMP", "©", "'©'.match(/\\u00A9/u)[0]");
+        Utils.assertWithAllModes_ES6("unicode code point outside the BMP", "😀", "'😀'.match(/\\u{1F600}/u)[0]");
+    }
+
+    // same as the above, but within a class
+    @Test
+    public void testUnicodeEscapesInClass() {
+        Utils.assertWithAllModes_ES6("high-low surrogate pair", "😀", "'😀'.match(/[\\uD83D\\uDE00]/u)[0]");
+        Utils.assertWithAllModes_ES6("high surrogate", "\uD83D", "'\\uD83D'.match(/[\\uD83D]/u)[0]");
+        Utils.assertWithAllModes_ES6("low surrogate", "\uDE00", "'\\uDE00'.match(/[\\uDE00]/u)[0]");
+        Utils.assertWithAllModes_ES6("non surrogate", "\u0000", "'\\u0000'.match(/[\\u0000]/u)[0]");
+        Utils.assertWithAllModes_ES6("ASCII", "a", "'a'.match(/[\\u0061]/u)[0]");
+        Utils.assertWithAllModes_ES6("unicode code point inside the BMP", "©", "'©'.match(/[\\u00A9]/u)[0]");
+        Utils.assertWithAllModes_ES6("unicode code point outside the BMP", "😀", "'😀'.match(/[\\u{1F600}]/u)[0]");
+    }
+
 }
