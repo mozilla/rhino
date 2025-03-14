@@ -72,6 +72,49 @@ public class ArrayLikeAbstractOperations {
             }
         }
 
+        return coercibleIterativeMethod(cx, operation, scope, args, o);
+    }
+
+    public static Object iterativeMethod(
+            Context cx,
+            Object tag,
+            String name,
+            IterativeOperation operation,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args) {
+        return iterativeMethod(cx, tag, name, operation, scope, thisObj, args, false);
+    }
+
+    private static Object iterativeMethod(
+            Context cx,
+            Object tag,
+            String name,
+            IterativeOperation operation,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object[] args,
+            boolean skipCoercibleCheck) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+
+        if (!skipCoercibleCheck) {
+            if (IterativeOperation.FIND == operation
+                    || IterativeOperation.FIND_INDEX == operation
+                    || IterativeOperation.FIND_LAST == operation
+                    || IterativeOperation.FIND_LAST_INDEX == operation) {
+                requireObjectCoercible(cx, o, tag, name);
+            }
+        }
+
+        return coercibleIterativeMethod(cx, operation, scope, args, o);
+    }
+
+    private static Object coercibleIterativeMethod(
+            Context cx,
+            IterativeOperation operation,
+            Scriptable scope,
+            Object[] args,
+            Scriptable o) {
         long length = getLengthProperty(cx, o);
         if (operation == IterativeOperation.MAP && length > Integer.MAX_VALUE) {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
