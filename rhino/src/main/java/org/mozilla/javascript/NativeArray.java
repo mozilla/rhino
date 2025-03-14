@@ -745,6 +745,10 @@ public class NativeArray extends ScriptableObject implements List {
         this.denseOnly = denseOnly;
     }
 
+    boolean getDenseOnly() {
+        return denseOnly;
+    }
+
     private boolean setLength(Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
@@ -1307,10 +1311,18 @@ public class NativeArray extends ScriptableObject implements List {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         NativeArray na = null;
-        boolean denseMode = false;
+        Object result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
+        NativeArray nar = null;
+        boolean denseFrom = false;
+        boolean denseRes = false;
+
         if (o instanceof NativeArray) {
             na = (NativeArray) o;
-            denseMode = na.denseOnly;
+            denseFrom = na.denseOnly;
+        }
+        if (result instanceof NativeArray) {
+            nar = (NativeArray) result;
+            denseRes = nar.denseOnly;
         }
 
         /* create an empty Array to return. */
@@ -1352,7 +1364,6 @@ public class NativeArray extends ScriptableObject implements List {
         }
 
         /* If there are elements to remove, put them into the return value. */
-        Object result;
         if (actualDeleteCount != 0) {
             if (actualDeleteCount == 1 && (cx.getLanguageVersion() == Context.VERSION_1_2)) {
                 /*
@@ -1368,35 +1379,33 @@ public class NativeArray extends ScriptableObject implements List {
                  */
                 result = getElem(cx, o, begin);
             } else {
-                if (denseMode) {
+                if (denseFrom && denseRes) {
                     int intLen = (int) (end - begin);
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
-                    result = cx.newArray(scope, copy);
+                    nar.dense = copy;
+                    nar.setLength(intLen);
                 } else {
-                    Scriptable resultArray = cx.newArray(scope, 0);
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);
                         if (temp != NOT_FOUND) {
-                            setElem(cx, resultArray, last - begin, temp);
+                            ArrayLikeAbstractOperations.defineElem(
+                                    cx, (ScriptableObject) result, last - begin, temp);
                         }
                     }
                     // Need to set length for sparse result array
-                    setLengthProperty(cx, resultArray, end - begin);
-                    result = resultArray;
+                    setLengthProperty(cx, (ScriptableObject) result, end - begin);
                 }
             }
         } else { // (actualDeleteCount == 0)
             if (cx.getLanguageVersion() == Context.VERSION_1_2) {
                 /* Emulate C JS1.2; if no elements are removed, return undefined. */
                 result = Undefined.instance;
-            } else {
-                result = cx.newArray(scope, 0);
             }
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
-        if (denseMode
+        if (denseFrom
                 && length + delta < Integer.MAX_VALUE
                 && na.ensureCapacity((int) (length + delta))) {
             System.arraycopy(
@@ -1526,7 +1535,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        final Scriptable result = cx.newArray(scope, 0);
+        final Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
 
         long length = doConcat(cx, scope, result, o, 0);
         for (Object arg : args) {
@@ -1563,7 +1572,7 @@ public class NativeArray extends ScriptableObject implements List {
             throw ScriptRuntime.rangeError(msg);
         }
 
-        Scriptable result = cx.newArray(scope, 0);
+        Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
         for (long slot = begin; slot < end; slot++) {
             Object temp = getRawElem(o, slot);
             if (temp != NOT_FOUND) {
@@ -1871,7 +1880,7 @@ public class NativeArray extends ScriptableObject implements List {
         long length = getLengthProperty(cx, source);
 
         Scriptable result;
-        result = cx.newArray(scope, 0);
+        result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, source, 0);
         long j = 0;
         for (long i = 0; i < length; i++) {
             Object elem = getRawElem(source, i);
@@ -1909,8 +1918,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         long length = getLengthProperty(cx, o);
 
-        Scriptable result;
-        result = cx.newArray(scope, 0);
+        Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
         long j = 0;
         for (long i = 0; i < length; i++) {
             Object elem = getRawElem(o, i);
