@@ -1,30 +1,29 @@
 package org.mozilla.javascript.tests;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.VariableTypeInfo;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
 /**
  * @author ZZZank
  */
 public class TypeInfoTest {
 
-    /**
-     * method name -> method return type
-     */
+    /** method name -> method return type */
     private static final Map<String, TypeInfo> TYPES = new HashMap<>();
 
     static {
         for (var method : Typing.class.getMethods()) {
             var old = TYPES.put(method.getName(), TypeInfo.of(method.getGenericReturnType()));
-            Assert.assertNull(String.format("duplicated method name '%s' in Typing.class", method.getName()), old);
+            Assert.assertNull(
+                    String.format("duplicated method name '%s' in Typing.class", method.getName()),
+                    old);
         }
     }
 
@@ -97,7 +96,8 @@ public class TypeInfoTest {
     @Test
     public void typeTag() {
         for (var typeInfo : TYPES.values()) {
-            Assert.assertEquals(FunctionObject.getTypeTag(typeInfo.asClass()), typeInfo.getTypeTag());
+            Assert.assertEquals(
+                    FunctionObject.getTypeTag(typeInfo.asClass()), typeInfo.getTypeTag());
         }
     }
 
