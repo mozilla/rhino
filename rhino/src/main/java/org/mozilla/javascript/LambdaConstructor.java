@@ -31,7 +31,7 @@ public class LambdaConstructor extends LambdaFunction {
     /** By default, the constructor may be invoked either way */
     public static final int CONSTRUCTOR_DEFAULT = CONSTRUCTOR_FUNCTION | CONSTRUCTOR_NEW;
 
-    // Lambdas should not be serialized.
+    // Lambdas may be serialized, which means that we need the target to be serializable.
     protected final SerializableConstructable targetConstructor;
     private final int flags;
 
