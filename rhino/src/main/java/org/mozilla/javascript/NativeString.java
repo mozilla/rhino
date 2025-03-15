@@ -46,275 +46,144 @@ final class NativeString extends ScriptableObject {
         c.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         c.setPrototypeScriptable(new NativeString(""));
 
-        c.defineConstructorMethod(
-                scope, "fromCharCode", 1, NativeString::js_fromCharCode, DONTENUM);
-        c.defineConstructorMethod(
-                scope, "fromCodePoint", 1, NativeString::js_fromCodePoint, DONTENUM);
-        c.defineConstructorMethod(scope, "raw", 1, NativeString::js_raw, DONTENUM);
+        defConsMethod(c, scope, "fromCharCode", 1, NativeString::js_fromCharCode);
+        defConsMethod(c, scope, "fromCodePoint", 1, NativeString::js_fromCodePoint);
+        defConsMethod(c, scope, "raw", 1, NativeString::js_raw);
 
         /*
          * All of the methods below are on the constructor for compatibility with ancient Rhino
-         * versions. They are no longer part of ECMAScript.
+         * versions. They are no longer part of ECMAScript. The "wrapConstructor" method is a
+         * technique used in the past in Rhino to adapt the instance functions so that they
+         * may be called on the constructor directly.
          */
-        c.defineConstructorMethod(
-                scope, "charAt", 1, wrapConstructor(NativeString::js_charAt), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "charCodeAt", 1, wrapConstructor(NativeString::js_charCodeAt), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "indexOf", 2, wrapConstructor(NativeString::js_indexOf), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "lastIndexOf", 2, wrapConstructor(NativeString::js_lastIndexOf), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "split", 3, wrapConstructor(NativeString::js_split), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "substring", 3, wrapConstructor(NativeString::js_substring), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "toLowerCase", 1, wrapConstructor(NativeString::js_toLowerCase), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "toUpperCase", 1, wrapConstructor(NativeString::js_toUpperCase), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "substr", 3, wrapConstructor(NativeString::js_substr), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "concat", 2, wrapConstructor(NativeString::js_concat), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "slice", 3, wrapConstructor(NativeString::js_slice), DONTENUM);
-        c.defineConstructorMethod(
+        defConsMethod(c, scope, "charAt", 1, wrapConstructor(NativeString::js_charAt));
+        defConsMethod(c, scope, "charCodeAt", 1, wrapConstructor(NativeString::js_charCodeAt));
+        defConsMethod(c, scope, "indexOf", 2, wrapConstructor(NativeString::js_indexOf));
+        defConsMethod(c, scope, "lastIndexOf", 2, wrapConstructor(NativeString::js_lastIndexOf));
+        defConsMethod(c, scope, "split", 3, wrapConstructor(NativeString::js_split));
+        defConsMethod(c, scope, "substring", 3, wrapConstructor(NativeString::js_substring));
+        defConsMethod(c, scope, "toLowerCase", 1, wrapConstructor(NativeString::js_toLowerCase));
+        defConsMethod(c, scope, "toUpperCase", 1, wrapConstructor(NativeString::js_toUpperCase));
+        defConsMethod(c, scope, "substr", 3, wrapConstructor(NativeString::js_substr));
+        defConsMethod(c, scope, "concat", 2, wrapConstructor(NativeString::js_concat));
+        defConsMethod(c, scope, "slice", 3, wrapConstructor(NativeString::js_slice));
+        defConsMethod(
+                c,
                 scope,
                 "equalsIgnoreCase",
                 2,
-                wrapConstructor(NativeString::js_equalsIgnoreCase),
-                DONTENUM);
-        c.defineConstructorMethod(
-                scope, "match", 2, wrapConstructor(NativeString::js_match), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "search", 2, wrapConstructor(NativeString::js_search), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "replace", 2, wrapConstructor(NativeString::js_replace), DONTENUM);
-        c.defineConstructorMethod(
-                scope, "replaceAll", 2, wrapConstructor(NativeString::js_replaceAll), DONTENUM);
-        c.defineConstructorMethod(
-                scope,
-                "localeCompare",
-                2,
-                wrapConstructor(NativeString::js_localeCompare),
-                DONTENUM);
-        c.defineConstructorMethod(
+                wrapConstructor(NativeString::js_equalsIgnoreCase));
+        defConsMethod(c, scope, "match", 2, wrapConstructor(NativeString::js_match));
+        defConsMethod(c, scope, "search", 2, wrapConstructor(NativeString::js_search));
+        defConsMethod(c, scope, "replace", 2, wrapConstructor(NativeString::js_replace));
+        defConsMethod(c, scope, "replaceAll", 2, wrapConstructor(NativeString::js_replaceAll));
+        defConsMethod(
+                c, scope, "localeCompare", 2, wrapConstructor(NativeString::js_localeCompare));
+        defConsMethod(
+                c,
                 scope,
                 "toLocaleLowerCase",
                 1,
-                wrapConstructor(NativeString::js_toLocaleLowerCase),
-                DONTENUM);
+                wrapConstructor(NativeString::js_toLocaleLowerCase));
 
         /* Back to prototype methods -- these are all part of ECMAScript */
-        c.definePrototypeMethod(
-                scope,
-                SymbolKey.ITERATOR,
-                0,
-                NativeString::js_iterator,
-                DONTENUM,
-                DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "toString", 0, NativeString::js_toString, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "toSource", 0, NativeString::js_toSource, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "valueOf", 0, NativeString::js_toString, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "charAt", 1, NativeString::js_charAt, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope,
-                "charCodeAt",
-                1,
-                NativeString::js_charCodeAt,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "indexOf",
-                1,
-                NativeString::js_indexOf,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "lastIndexOf",
-                1,
-                NativeString::js_lastIndexOf,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope, "split", 2, NativeString::js_split, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope,
-                "substring",
-                2,
-                NativeString::js_substring,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "toLowerCase",
-                0,
-                NativeString::js_toLowerCase,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "toUpperCase",
-                0,
-                NativeString::js_toUpperCase,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope, "substr", 2, NativeString::js_substr, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope, "concat", 1, NativeString::js_concat, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope, "slice", 2, NativeString::js_slice, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope, "bold", 0, NativeString::js_bold, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "italics", 0, NativeString::js_italics, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "fixed", 0, NativeString::js_fixed, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "strike", 0, NativeString::js_strike, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "small", 0, NativeString::js_small, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "big", 0, NativeString::js_big, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "blink", 0, NativeString::js_blink, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "sup", 0, NativeString::js_sup, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "sub", 0, NativeString::js_sub, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "fontsize", 0, NativeString::js_fontsize, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "fontcolor", 0, NativeString::js_fontcolor, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "link", 0, NativeString::js_link, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "anchor", 0, NativeString::js_anchor, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "equals", 1, NativeString::js_equals, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope,
-                "equalsIgnoreCase",
-                1,
-                NativeString::js_equalsIgnoreCase,
-                DONTENUM,
-                DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "match", 1, NativeString::js_match, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope,
-                "matchAll",
-                1,
-                NativeString::js_matchAll,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope, "search", 1, NativeString::js_search, DONTENUM, DONTENUM | READONLY, false);
-        c.definePrototypeMethod(
-                scope,
-                "replace",
-                2,
-                NativeString::js_replace,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "replaceAll",
-                2,
-                NativeString::js_replaceAll,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(scope, "at", 1, NativeString::js_at, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope,
-                "localeCompare",
-                1,
-                NativeString::js_localeCompare,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "toLocaleLowerCase",
-                0,
-                NativeString::js_toLocaleLowerCase,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope,
-                "toLocaleUpperCase",
-                0,
-                NativeString::js_toLocaleUpperCase,
-                DONTENUM,
-                DONTENUM | READONLY,
-                false);
-        c.definePrototypeMethod(
-                scope, "trim", 0, NativeString::js_trim, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "trimLeft", 0, NativeString::js_trimLeft, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "trimStart", 0, NativeString::js_trimLeft, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "trimRight", 0, NativeString::js_trimRight, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "trimEnd", 0, NativeString::js_trimRight, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "includes", 1, NativeString::js_includes, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "startsWith", 1, NativeString::js_startsWith, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "endsWith", 1, NativeString::js_endsWith, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "normalize", 0, NativeString::js_normalize, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "repeat", 1, NativeString::js_repeat, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope,
-                "codePointAt",
-                1,
-                NativeString::js_codePointAt,
-                DONTENUM,
-                DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "padStart", 1, NativeString::js_padStart, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope, "padEnd", 1, NativeString::js_padEnd, DONTENUM, DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope,
-                "isWellFormed",
-                0,
-                NativeString::js_isWellFormed,
-                DONTENUM,
-                DONTENUM | READONLY);
-        c.definePrototypeMethod(
-                scope,
-                "toWellFormed",
-                0,
-                NativeString::js_toWellFormed,
-                DONTENUM,
-                DONTENUM | READONLY);
+        defProtoMethod(c, scope, SymbolKey.ITERATOR, 0, NativeString::js_iterator);
+        defProtoMethod(c, scope, "toString", 0, NativeString::js_toString);
+        defProtoMethod(c, scope, "toSource", 0, NativeString::js_toSource);
+        defProtoMethod(c, scope, "valueOf", 0, NativeString::js_toString);
+        defProtoMethodWithoutProto(c, scope, "charAt", 1, NativeString::js_charAt);
+        defProtoMethodWithoutProto(c, scope, "charCodeAt", 1, NativeString::js_charCodeAt);
+        defProtoMethodWithoutProto(c, scope, "indexOf", 1, NativeString::js_indexOf);
+        defProtoMethodWithoutProto(c, scope, "lastIndexOf", 1, NativeString::js_lastIndexOf);
+        defProtoMethodWithoutProto(c, scope, "split", 2, NativeString::js_split);
+        defProtoMethodWithoutProto(c, scope, "substring", 2, NativeString::js_substring);
+        defProtoMethodWithoutProto(c, scope, "toLowerCase", 0, NativeString::js_toLowerCase);
+        defProtoMethodWithoutProto(c, scope, "toUpperCase", 0, NativeString::js_toUpperCase);
+        defProtoMethodWithoutProto(c, scope, "substr", 2, NativeString::js_substr);
+        defProtoMethodWithoutProto(c, scope, "concat", 1, NativeString::js_concat);
+        defProtoMethodWithoutProto(c, scope, "slice", 2, NativeString::js_slice);
+        defProtoMethod(c, scope, "bold", 0, NativeString::js_bold);
+        defProtoMethod(c, scope, "italics", 0, NativeString::js_italics);
+        defProtoMethod(c, scope, "fixed", 0, NativeString::js_fixed);
+        defProtoMethod(c, scope, "strike", 0, NativeString::js_strike);
+        defProtoMethod(c, scope, "small", 0, NativeString::js_small);
+        defProtoMethod(c, scope, "big", 0, NativeString::js_big);
+        defProtoMethod(c, scope, "blink", 0, NativeString::js_blink);
+        defProtoMethod(c, scope, "sup", 0, NativeString::js_sup);
+        defProtoMethod(c, scope, "sub", 0, NativeString::js_sub);
+        defProtoMethod(c, scope, "fontsize", 0, NativeString::js_fontsize);
+        defProtoMethod(c, scope, "fontcolor", 0, NativeString::js_fontcolor);
+        defProtoMethod(c, scope, "link", 0, NativeString::js_link);
+        defProtoMethod(c, scope, "anchor", 0, NativeString::js_anchor);
+        defProtoMethod(c, scope, "equals", 1, NativeString::js_equals);
+        defProtoMethod(c, scope, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase);
+        defProtoMethodWithoutProto(c, scope, "match", 1, NativeString::js_match);
+        defProtoMethodWithoutProto(c, scope, "matchAll", 1, NativeString::js_matchAll);
+        defProtoMethodWithoutProto(c, scope, "search", 1, NativeString::js_search);
+        defProtoMethodWithoutProto(c, scope, "replace", 2, NativeString::js_replace);
+        defProtoMethodWithoutProto(c, scope, "replaceAll", 2, NativeString::js_replaceAll);
+        defProtoMethod(c, scope, "at", 1, NativeString::js_at);
+        defProtoMethodWithoutProto(c, scope, "localeCompare", 1, NativeString::js_localeCompare);
+        defProtoMethodWithoutProto(
+                c, scope, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase);
+        defProtoMethodWithoutProto(
+                c, scope, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase);
+        defProtoMethod(c, scope, "trim", 0, NativeString::js_trim);
+        defProtoMethod(c, scope, "trimLeft", 0, NativeString::js_trimLeft);
+        defProtoMethod(c, scope, "trimStart", 0, NativeString::js_trimLeft);
+        defProtoMethod(c, scope, "trimRight", 0, NativeString::js_trimRight);
+        defProtoMethod(c, scope, "trimEnd", 0, NativeString::js_trimRight);
+        defProtoMethod(c, scope, "includes", 1, NativeString::js_includes);
+        defProtoMethod(c, scope, "startsWith", 1, NativeString::js_startsWith);
+        defProtoMethod(c, scope, "endsWith", 1, NativeString::js_endsWith);
+        defProtoMethod(c, scope, "normalize", 0, NativeString::js_normalize);
+        defProtoMethod(c, scope, "repeat", 1, NativeString::js_repeat);
+        defProtoMethod(c, scope, "codePointAt", 1, NativeString::js_codePointAt);
+        defProtoMethod(c, scope, "padStart", 1, NativeString::js_padStart);
+        defProtoMethod(c, scope, "padEnd", 1, NativeString::js_padEnd);
+        defProtoMethod(c, scope, "isWellFormed", 0, NativeString::js_isWellFormed);
+        defProtoMethod(c, scope, "toWellFormed", 0, NativeString::js_toWellFormed);
 
         if (sealed) {
             c.sealObject();
         }
         ScriptableObject.defineProperty(scope, CLASS_NAME, c, DONTENUM);
+    }
+
+    private static void defConsMethod(
+            LambdaConstructor c,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        c.defineConstructorMethod(scope, name, length, target, DONTENUM);
+    }
+
+    private static void defProtoMethod(
+            LambdaConstructor c,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY, true);
+    }
+
+    private static void defProtoMethod(
+            LambdaConstructor c,
+            Scriptable scope,
+            SymbolKey key,
+            int length,
+            SerializableCallable target) {
+        c.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defProtoMethodWithoutProto(
+            LambdaConstructor c,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY, false);
     }
 
     NativeString(CharSequence s) {
