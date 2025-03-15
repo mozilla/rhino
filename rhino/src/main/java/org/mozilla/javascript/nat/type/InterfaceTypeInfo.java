@@ -8,7 +8,8 @@ import org.mozilla.javascript.nat.ByteAsBool;
 
 public class InterfaceTypeInfo extends ClassTypeInfo {
     /** Android device might not have {@link FunctionalInterface} class */
-    Class<? extends Annotation> FN_INTERFACE =
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Annotation> FN_INTERFACE =
             (Class<? extends Annotation>) Kit.classOrNull("java.lang.FunctionalInterface");
 
     static final IdentityHashMap<Class<?>, InterfaceTypeInfo> CACHE = new IdentityHashMap<>();
