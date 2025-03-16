@@ -311,7 +311,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     return 1;
                 } else if (to == TypeInfo.BOOLEAN) {
                     return 2;
-                } else if (to == TypeInfo.OBJECT) {
+                } else if (to.isObjectExact()) {
                     return 3;
                 } else if (to == TypeInfo.STRING) {
                     return 4;
@@ -334,7 +334,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         return 10;
                     } else if (to.isObjectExact()) {
                         return 11;
-                    } else if (Number.class.isAssignableFrom(to.asClass())) {
+                    } else if (to.isNumber()) {
                         // "double" is #1
                         return 2;
                     }
@@ -358,7 +358,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             case JSTYPE_JAVA_CLASS:
                 if (to.is(Class.class)) {
                     return 1;
-                } else if (to == TypeInfo.OBJECT) {
+                } else if (to.isObjectExact()) {
                     return 3;
                 } else if (to == TypeInfo.STRING) {
                     return 4;
@@ -579,7 +579,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     value = ((Wrapper) value).unwrap();
                 }
 
-                if (type.is(Class.class) || type == TypeInfo.OBJECT) {
+                if (type.is(Class.class) || type.isObjectExact()) {
                     return value;
                 } else if (type == TypeInfo.STRING) {
                     return value.toString();

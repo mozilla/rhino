@@ -26,13 +26,19 @@ import org.mozilla.javascript.nat.ByteAsBool;
  *
  * @see TypeInfoExt : more predefined TypeInfo
  * @see #asClass() : how to convert TypeInfo back to Class
+ * @see #is(Class) : how to determine whether a TypeInfo represents a specific class
  */
 public interface TypeInfo {
     TypeInfo NONE = NoTypeInfo.INSTANCE;
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
+    /**
+     * use {@link TypeInfo#isObjectExact()} to determine whether a type represents a {@link Object}
+     * class, using `typeInfo == TypeInfo.OBJECT` might cause problem with VariableTypeInfo
+     */
     TypeInfo OBJECT = new BasicClassTypeInfo(Object.class);
+
     TypeInfo OBJECT_ARRAY = OBJECT.asArray();
 
     TypeInfo PRIMITIVE_VOID = new PrimitiveClassTypeInfo(Void.TYPE, null);
@@ -79,8 +85,20 @@ public interface TypeInfo {
         return NONE;
     }
 
+    /**
+     * @return true if this TypeInfo represents the same class as the {@link Class} parameter, false
+     *     otherwise
+     */
     default boolean is(Class<?> c) {
         return asClass() == c;
+    }
+
+    /**
+     * @return false if this TypeInfo does not represent the same class as the {@link Class}
+     *     parameter, true otherwise
+     */
+    default boolean isNot(Class<?> c) {
+        return !is(c);
     }
 
     default boolean isPrimitive() {
