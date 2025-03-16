@@ -307,11 +307,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
             case JSTYPE_BOOLEAN:
                 // "boolean" is #1
-                if (to.is(boolean.class)) {
+                if (to == TypeInfo.PRIMITIVE_BOOLEAN) {
                     return 1;
-                } else if (to.isBoolean()) {
+                } else if (to == TypeInfo.BOOLEAN) {
                     return 2;
-                } else if (to.isObjectExact()) {
+                } else if (to == TypeInfo.OBJECT) {
                     return 3;
                 } else if (to == TypeInfo.STRING) {
                     return 4;
@@ -356,9 +356,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 break;
 
             case JSTYPE_JAVA_CLASS:
-                if (to.is(Class.class)) {
+                if (to == TypeInfo.CLASS) {
                     return 1;
-                } else if (to.isObjectExact()) {
+                } else if (to == TypeInfo.OBJECT) {
                     return 3;
                 } else if (to == TypeInfo.STRING) {
                     return 4;
@@ -398,7 +398,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     return 3;
                 } else if (to == TypeInfo.STRING) {
                     return 4;
-                } else if (to.is(ScriptRuntime.DateClass)) {
+                } else if (to == TypeInfoExt.DATE) {
                     if (fromObj instanceof NativeDate) {
                         // This is a native date to java date conversion
                         return 1;
@@ -579,7 +579,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     value = ((Wrapper) value).unwrap();
                 }
 
-                if (type.is(Class.class) || type.isObjectExact()) {
+                if (type == TypeInfo.CLASS || type == TypeInfo.OBJECT) {
                     return value;
                 } else if (type == TypeInfo.STRING) {
                     return value.toString();
@@ -602,7 +602,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 if (type == TypeInfo.STRING) {
                     return value.toString();
                 }
-                if (type.asClass().isInstance(value)) {
+                if (type.isInstance(value)) {
                     return value;
                 }
                 reportConversionError(value, type);
@@ -616,9 +616,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         reportConversionError(value, type);
                     }
                     return coerceToNumber(type, value);
-                } else if (type.asClass().isInstance(value)) {
+                } else if (type.isInstance(value)) {
                     return value;
-                } else if (type.is(ScriptRuntime.DateClass) && value instanceof NativeDate) {
+                } else if (type == TypeInfoExt.DATE && value instanceof NativeDate) {
                     double time = ((NativeDate) value).getJSTimeValue();
                     // XXX: This will replace NaN by 0
                     return new Date((long) time);
@@ -703,7 +703,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             return Double.valueOf(toDouble(value));
         }
 
-        if (type.is(BigInteger.class)) {
+        if (type == TypeInfoExt.BIG_INT) {
             if (valueClass == BigInteger.class) {
                 return value;
             }

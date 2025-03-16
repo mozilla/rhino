@@ -20,6 +20,13 @@ import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
 
+/**
+ * A representation of Java type, aiming at preserving more type information than what a {@link
+ * Class} can provide
+ *
+ * @see TypeInfoExt : more predefined TypeInfo
+ * @see #asClass() : how to convert TypeInfo back to Class
+ */
 public interface TypeInfo {
     TypeInfo NONE = NoTypeInfo.INSTANCE;
 
