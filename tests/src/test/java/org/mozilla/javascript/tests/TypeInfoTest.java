@@ -79,6 +79,15 @@ public class TypeInfoTest {
     }
 
     @Test
+    public void integerArray() {
+        var typeInfo = TYPES.get("integerArray");
+        Assert.assertTrue(typeInfo.isArray());
+        Assert.assertTrue(typeInfo.getComponentType().isNumber());
+        Assert.assertTrue(typeInfo.getComponentType().isInt());
+        Assert.assertEquals(Integer.class, typeInfo.getComponentType().asClass());
+    }
+
+    @Test
     public void clazz() {
         var typeInfo = TYPES.get("clazz");
         Assert.assertEquals(String.class, typeInfo.asClass());
@@ -115,6 +124,8 @@ public class TypeInfoTest {
         float[] primitiveArray();
 
         <T> T[] genericArray(T input);
+
+        Integer[] integerArray();
 
         String clazz();
 

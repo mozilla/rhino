@@ -308,7 +308,9 @@ public interface TypeInfo {
      * @see #isAssignableFrom(TypeInfo)
      */
     default boolean isNumber() {
-        return false;
+        // the implementation here does not look like other `isXXX()` method because Number is not a
+        // final class, so we cannot match type directly
+        return Number.class.isAssignableFrom(asClass());
     }
 
     /**
