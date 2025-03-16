@@ -58,7 +58,7 @@ public interface TypeInfo {
     TypeInfo NUMBER = new BasicClassTypeInfo(Number.class);
     TypeInfo STRING = new BasicClassTypeInfo(String.class);
     TypeInfo STRING_ARRAY = STRING.asArray();
-    TypeInfo CLASS = new BasicClassTypeInfo(Class.class);
+    TypeInfo RAW_CLASS = new BasicClassTypeInfo(Class.class);
     TypeInfo DATE = new BasicClassTypeInfo(Date.class);
 
     TypeInfo RUNNABLE = new InterfaceTypeInfo(Runnable.class, ByteAsBool.TRUE);
@@ -141,7 +141,7 @@ public interface TypeInfo {
         } else if (c == String.class) {
             return STRING;
         } else if (c == Class.class) {
-            return CLASS;
+            return RAW_CLASS;
         } else if (c == Date.class) {
             return DATE;
         } else if (c == Optional.class) {
