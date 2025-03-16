@@ -93,7 +93,7 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
     }
 
     @Override
-    public boolean isObject() {
+    public boolean isObjectExact() {
         return type == Object.class;
     }
 }

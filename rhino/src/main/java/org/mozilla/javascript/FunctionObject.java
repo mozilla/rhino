@@ -97,7 +97,7 @@ public class FunctionObject extends BaseFunction {
             if (types.get(1).isArray()) {
                 if (!isStatic
                         || !types.get(0).is(ScriptRuntime.ContextClass)
-                        || !types.get(1).getComponentType().isObject()
+                        || !types.get(1).getComponentType().isObjectExact()
                         || !types.get(2).is(ScriptRuntime.FunctionClass)
                         || !types.get(3).is(Boolean.TYPE)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.ctor", methodName);
@@ -107,7 +107,7 @@ public class FunctionObject extends BaseFunction {
                 if (!isStatic
                         || !types.get(0).is(ScriptRuntime.ContextClass)
                         || !types.get(1).is(ScriptRuntime.ScriptableClass)
-                        || !types.get(2).getComponentType().isObject()
+                        || !types.get(2).getComponentType().isObjectExact()
                         || !types.get(3).is(ScriptRuntime.FunctionClass)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.fun", methodName);
                 }

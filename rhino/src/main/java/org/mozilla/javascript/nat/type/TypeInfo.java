@@ -236,19 +236,33 @@ public interface TypeInfo {
 
     void append(TypeFormatContext ctx, StringBuilder builder);
 
+    /**
+     * @see Class#getComponentType()
+     */
     default TypeInfo getComponentType() {
         return NONE;
     }
 
-    /** create an array whose element type is the caller TypeInfo */
+    /** get an array whose element type is the caller TypeInfo */
     default Object newArray(int length) {
         return Array.newInstance(asClass(), length);
     }
 
+    /**
+     * get an array TypeInfo whose component type is the caller TypeInfo
+     *
+     * @see #getComponentType()
+     */
     default TypeInfo asArray() {
         return new ArrayTypeInfo(this);
     }
 
+    /**
+     * get a parameterized TypeInfo whose raw type is the caller TypeInfo, with parameters provided
+     * by the `params` arg
+     *
+     * @see #param(int)
+     */
     default TypeInfo withParams(TypeInfo... params) {
         if (params.length == 0) {
             return this;
@@ -257,10 +271,16 @@ public interface TypeInfo {
         return new ParameterizedTypeInfo(this, params);
     }
 
+    /**
+     * @see FunctionalInterface
+     */
     default boolean isFunctionalInterface() {
         return false;
     }
 
+    /**
+     * @see Class#getEnumConstants()
+     */
     default List<Object> enumConstants() {
         return List.of();
     }
@@ -269,47 +289,81 @@ public interface TypeInfo {
         return null;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Void} class or {@code void} class
+     */
     default boolean isVoid() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Boolean} class or {@code boolean} class
+     */
     default boolean isBoolean() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents a type assignable to {@link Number} class
+     * @see #isAssignableFrom(TypeInfo)
+     */
     default boolean isNumber() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Byte} class or {@code byte} class
+     */
     default boolean isByte() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Short} class or {@code short} class
+     */
     default boolean isShort() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Integer} class or {@code int} class
+     */
     default boolean isInt() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Long} class or {@code long} class
+     */
     default boolean isLong() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Float} class or {@code float} class
+     */
     default boolean isFloat() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Double} class or {@code double} class
+     */
     default boolean isDouble() {
         return false;
     }
 
+    /**
+     * @return true if this TypeInfo represents {@link Character} class or {@code char} class
+     */
     default boolean isCharacter() {
         return false;
     }
 
-    default boolean isObject() {
+    /**
+     * @return true if this TypeInfo represents {@link Object} class
+     */
+    default boolean isObjectExact() {
         return false;
     }
 
@@ -317,15 +371,23 @@ public interface TypeInfo {
         collector.accept(asClass());
     }
 
+    /**
+     * @see Class#isInterface()
+     */
     default boolean isInterface() {
         return false;
     }
 
+    /**
+     * @see Class#isArray()
+     */
     default boolean isArray() {
         return false;
     }
 
     /**
+     * @return {@code true} if the caller TypeInfo represents the super class of the class
+     *     represented by {@code another} TypeInfo
      * @see Class#isAssignableFrom(Class)
      */
     default boolean isAssignableFrom(TypeInfo another) {
@@ -333,6 +395,7 @@ public interface TypeInfo {
     }
 
     /**
+     * @return true if {@code o} is an instance of this class represented by the caller TypeInfo
      * @see Class#isInstance(Object)
      */
     default boolean isInstance(Object o) {
@@ -353,7 +416,7 @@ public interface TypeInfo {
             return FunctionObject.JAVA_DOUBLE_TYPE;
         } else if (Scriptable.class.isAssignableFrom(asClass())) {
             return FunctionObject.JAVA_SCRIPTABLE_TYPE;
-        } else if (isObject()) {
+        } else if (isObjectExact()) {
             return FunctionObject.JAVA_OBJECT_TYPE;
         }
 

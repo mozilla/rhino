@@ -28,7 +28,6 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
     @Override
     public boolean isFunctionalInterface() {
         if (ByteAsBool.isUnknown(functional)) {
-
             try {
                 if (FN_INTERFACE != null && asClass().isAnnotationPresent(FN_INTERFACE)) {
                     functional = ByteAsBool.TRUE;
@@ -61,5 +60,60 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
     @Override
     public boolean isInterface() {
         return true;
+    }
+
+    @Override
+    public boolean isVoid() {
+        return false;
+    }
+
+    @Override
+    public boolean isBoolean() {
+        return false;
+    }
+
+    @Override
+    public boolean isNumber() {
+        return false;
+    }
+
+    @Override
+    public boolean isByte() {
+        return false;
+    }
+
+    @Override
+    public boolean isShort() {
+        return false;
+    }
+
+    @Override
+    public boolean isInt() {
+        return false;
+    }
+
+    @Override
+    public boolean isLong() {
+        return false;
+    }
+
+    @Override
+    public boolean isFloat() {
+        return false;
+    }
+
+    @Override
+    public boolean isDouble() {
+        return false;
+    }
+
+    @Override
+    public boolean isCharacter() {
+        return false;
+    }
+
+    @Override
+    public boolean isObjectExact() {
+        return false;
     }
 }

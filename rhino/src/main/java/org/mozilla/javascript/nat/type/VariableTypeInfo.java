@@ -73,8 +73,8 @@ public class VariableTypeInfo extends TypeInfoBase {
     }
 
     @Override
-    public boolean isObject() {
-        return getMainBound().isObject();
+    public boolean isObjectExact() {
+        return getMainBound().isObjectExact();
     }
 
     @Override
