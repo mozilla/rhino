@@ -98,7 +98,7 @@ public class FunctionObject extends BaseFunction {
             if (types.get(1).isArray()) {
                 if (!isStatic
                         || types.get(0) != TypeInfoExt.CONTEXT
-                        || types.get(1) != TypeInfo.OBJECT
+                        || types.get(1) != TypeInfo.OBJECT_ARRAY
                         || types.get(2) != TypeInfoExt.FUNCTION
                         || types.get(3) != TypeInfo.PRIMITIVE_BOOLEAN) {
                     throw Context.reportRuntimeErrorById("msg.varargs.ctor", methodName);
@@ -108,7 +108,7 @@ public class FunctionObject extends BaseFunction {
                 if (!isStatic
                         || types.get(0) != TypeInfoExt.CONTEXT
                         || types.get(1) != TypeInfoExt.SCRIPTABLE
-                        || types.get(2) != TypeInfo.OBJECT
+                        || types.get(2) != TypeInfo.OBJECT_ARRAY
                         || types.get(3) != TypeInfoExt.FUNCTION) {
                     throw Context.reportRuntimeErrorById("msg.varargs.fun", methodName);
                 }
