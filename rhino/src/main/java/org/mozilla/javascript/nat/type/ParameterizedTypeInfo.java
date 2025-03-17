@@ -1,11 +1,13 @@
 package org.mozilla.javascript.nat.type;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.nat.TypeConsolidator;
 
-public final class ParameterizedTypeInfo extends TypeInfoBase {
+public final class ParameterizedTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;
@@ -13,6 +15,11 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
     ParameterizedTypeInfo(TypeInfo rawType, TypeInfo[] params) {
         this.rawType = rawType;
         this.params = List.of(params);
+    }
+
+    ParameterizedTypeInfo(TypeInfo rawType, List<TypeInfo> params) {
+        this.rawType = rawType;
+        this.params = params;
     }
 
     @Override
@@ -122,5 +129,14 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
             return FunctionObject.JAVA_SCRIPTABLE_TYPE;
         }
         return FunctionObject.JAVA_UNSUPPORTED_TYPE;
+    }
+
+    @Override
+    protected TypeInfo consolidateImpl(Map<VariableTypeInfo, TypeInfo> mapping) {
+        var consolidatedParams = TypeConsolidator.consolidateOrNull(this.params, mapping);
+        if (consolidatedParams == null) {
+            return this;
+        }
+        return new ParameterizedTypeInfo(rawType, consolidatedParams);
     }
 }

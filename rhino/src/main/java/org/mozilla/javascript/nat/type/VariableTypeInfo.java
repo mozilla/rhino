@@ -84,6 +84,8 @@ public class VariableTypeInfo extends TypeInfoBase {
 
     @Override
     public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
+        // returning itself is allowed here, because there's no handling for variable types
+        // in Method/Constructor yet
         return mapping.getOrDefault(this, this);
     }
 }

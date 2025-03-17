@@ -39,6 +39,27 @@ public final class TypeConsolidator {
         return mapping.getOrDefault(variable, TypeInfo.NONE);
     }
 
+    public static List<TypeInfo> consolidateOrNull(List<TypeInfo> original, Map<VariableTypeInfo, TypeInfo> mapping) {
+        var len = original.size();
+        if (DEBUG) {
+            System.out.println("consolidating" + original);
+        }
+        if (len == 0) {
+            return original;
+        } else if (len == 1) {
+            var consolidated = original.get(0).consolidate(mapping);
+            return consolidated != original.get(0) ? List.of(consolidated) : original;
+        }
+        var different = false;
+        var consolidated = new ArrayList<TypeInfo>();
+        for (var typeInfo : original) {
+            var cons = typeInfo.consolidate(mapping);
+            different |= cons != typeInfo;
+            consolidated.add(cons);
+        }
+        return different ? consolidated : null;
+    }
+
     public static TypeInfo[] consolidateAll(
             TypeInfo[] original, Map<VariableTypeInfo, TypeInfo> mapping) {
         var len = original.length;

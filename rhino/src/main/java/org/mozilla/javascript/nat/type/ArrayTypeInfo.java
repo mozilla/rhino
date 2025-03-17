@@ -1,9 +1,10 @@
 package org.mozilla.javascript.nat.type;
 
+import java.util.Map;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 
-public final class ArrayTypeInfo extends TypeInfoBase {
+public final class ArrayTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
     private final TypeInfo component;
     private Class<?> asClass;
 
@@ -75,5 +76,13 @@ public final class ArrayTypeInfo extends TypeInfoBase {
     @Override
     public int getTypeTag() {
         return FunctionObject.JAVA_UNSUPPORTED_TYPE;
+    }
+
+    @Override
+    protected TypeInfo consolidateImpl(Map<VariableTypeInfo, TypeInfo> mapping) {
+        var consolidatedComponent = component.consolidate(mapping);
+        return consolidatedComponent == component
+            ? this
+            : new ArrayTypeInfo(consolidatedComponent);
     }
 }
