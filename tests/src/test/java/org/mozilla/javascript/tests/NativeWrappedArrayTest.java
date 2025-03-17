@@ -120,6 +120,7 @@ public class NativeWrappedArrayTest {
             super(scope, ScriptableObject.getArrayPrototype(scope));
             this.list = l;
             this.length = l.size();
+            createLengthProp();
         }
 
         @Override
@@ -133,14 +134,6 @@ public class NativeWrappedArrayTest {
         }
 
         @Override
-        public Object get(String n, Scriptable start) {
-            if ("length".equals(n)) {
-                return length;
-            }
-            return Scriptable.NOT_FOUND;
-        }
-
-        @Override
         public void put(int ix, Scriptable start, Object val) {
             // Ensure enough capacity for array expansion
             // by automatically expanding the array like JavaScript sort of does.
@@ -148,13 +141,6 @@ public class NativeWrappedArrayTest {
                 list.add(null);
             }
             list.set(ix, val.toString());
-        }
-
-        @Override
-        public void put(String n, Scriptable start, Object val) {
-            if ("length".equals(n)) {
-                length = ScriptRuntime.toInt32(val);
-            }
         }
 
         @Override
@@ -170,5 +156,31 @@ public class NativeWrappedArrayTest {
             }
             return ids;
         }
+
+        private void createLengthProp() {
+            ScriptableObject.defineBuiltInProperty(
+                    this,
+                    "length",
+                    DONTENUM | PERMANENT,
+                    WrappedArray::lengthGetter,
+                    WrappedArray::lengthSetter,
+                    WrappedArray::lengthAttrSetter);
+        }
+
+        private static Object lengthGetter(WrappedArray array, Scriptable start) {
+            return ScriptRuntime.wrapNumber(array.length);
+        }
+
+        private static boolean lengthSetter(
+                WrappedArray builtIn,
+                Object value,
+                Scriptable owner,
+                Scriptable start,
+                boolean isThrow) {
+            builtIn.length = ScriptRuntime.toInt32(value);
+            return true;
+        }
+
+        private static void lengthAttrSetter(WrappedArray builtIn, int attrs) {}
     }
 }
