@@ -50,7 +50,7 @@ public class FunctionObject extends BaseFunction {
      *      (Context cx, Object[] args, Function ctorObj,
      *       boolean inNewExpr)</pre>
      *
-     * and if it is a Method, be static and return an Object result.
+     * <p>and if it is a Method, be static and return an Object result.
      *
      * <p>Otherwise, if the FunctionObject will <i>not</i> be used to define a constructor, the
      * member must be a static Method with parameters
@@ -59,7 +59,7 @@ public class FunctionObject extends BaseFunction {
      *      (Context cx, Scriptable thisObj, Object[] args,
      *       Function funObj) </pre>
      *
-     * and an Object result.
+     * <p>and an Object result.
      *
      * <p>When the function varargs form is called as part of a function call, the <code>args</code>
      * parameter contains the arguments, with <code>thisObj</code> set to the JavaScript 'this'
@@ -79,14 +79,16 @@ public class FunctionObject extends BaseFunction {
      * @param methodOrConstructor a java.lang.reflect.Method or a java.lang.reflect.Constructor that
      *     defines the object
      * @param scope enclosing scope of function
+     * @param clazz the parent class of {@code methodOrConstructor}
      * @see org.mozilla.javascript.Scriptable
      */
-    public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+    public FunctionObject(
+            String name, Member methodOrConstructor, Scriptable scope, Class<?> clazz) {
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor);
+            member = new MemberBox((Constructor<?>) methodOrConstructor, clazz);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor);
+            member = new MemberBox((Method) methodOrConstructor, clazz);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
@@ -418,7 +420,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = args[i];
                     Object converted =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.getArgNullability()[i]);
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -433,7 +435,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = (i < argsLength) ? args[i] : Undefined.instance;
                     invokeArgs[i] =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.getArgNullability()[i]);
                 }
             }
 

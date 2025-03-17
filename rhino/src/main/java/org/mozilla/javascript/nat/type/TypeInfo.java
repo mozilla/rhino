@@ -454,8 +454,9 @@ public interface TypeInfo {
     }
 
     /**
-     * consolidate a type with provided mapping, that is, try to replace {@link VariableTypeInfo} in this type
-     * with corresponding type in the same mapping entry
+     * consolidate a type with provided mapping, that is, try to replace {@link VariableTypeInfo} in
+     * this type with corresponding type in the same mapping entry
+     *
      * @see org.mozilla.javascript.nat.TypeConsolidator#getMapping(Class)
      */
     default TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {

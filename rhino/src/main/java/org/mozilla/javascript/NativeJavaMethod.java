@@ -137,7 +137,7 @@ public class NativeJavaMethod extends BaseFunction {
         MemberBox meth = methods[index];
         var argTypes = meth.getArgTypes();
 
-        if (meth.vararg) {
+        if (meth.isVararg()) {
             // marshall the explicit parameters
             Object[] newArgs = new Object[argTypes.size()];
             for (int i = 0; i < argTypes.size() - 1; i++) {
@@ -441,11 +441,11 @@ public class NativeJavaMethod extends BaseFunction {
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             final var type1 =
-                    member1.vararg && j >= types1.size()
+                    member1.isVararg() && j >= types1.size()
                             ? types1.get(types1.size() - 1)
                             : types1.get(j);
             final var type2 =
-                    member2.vararg && j >= types2.size()
+                    member2.isVararg() && j >= types2.size()
                             ? types2.get(types2.size() - 1)
                             : types2.get(j);
             if (type1.asClass() == type2.asClass()) {
@@ -507,7 +507,7 @@ public class NativeJavaMethod extends BaseFunction {
     static int[] failFastConversionWeights(Object[] args, MemberBox member) {
         final var argTypes = member.getArgTypes();
         var typeLen = argTypes.size();
-        if (member.vararg) {
+        if (member.isVararg()) {
             typeLen--;
             if (typeLen > args.length) {
                 return null;

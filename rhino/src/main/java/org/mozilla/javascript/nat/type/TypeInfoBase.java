@@ -1,9 +1,8 @@
 package org.mozilla.javascript.nat.type;
 
-import org.mozilla.javascript.nat.ByteAsBool;
-
 import java.lang.reflect.Array;
 import java.util.Map;
+import org.mozilla.javascript.nat.ByteAsBool;
 
 public abstract class TypeInfoBase implements TypeInfo {
     private TypeInfo asArray;
@@ -38,7 +37,7 @@ public abstract class TypeInfoBase implements TypeInfo {
         return builder.toString();
     }
 
-    public static abstract class OptionallyConsolidatable extends TypeInfoBase {
+    public abstract static class OptionallyConsolidatable extends TypeInfoBase {
         private byte consolidatable = ByteAsBool.UNKNOWN;
 
         @Override
@@ -48,9 +47,7 @@ public abstract class TypeInfoBase implements TypeInfo {
                 consolidatable = ByteAsBool.fromBool(consolidated != this);
                 return consolidated;
             }
-            return ByteAsBool.isTrue(consolidatable)
-                ? consolidateImpl(mapping)
-                : this;
+            return ByteAsBool.isTrue(consolidatable) ? consolidateImpl(mapping) : this;
         }
 
         protected abstract TypeInfo consolidateImpl(Map<VariableTypeInfo, TypeInfo> mapping);

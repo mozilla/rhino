@@ -23,9 +23,7 @@ public final class TypeConsolidator {
 
     private TypeConsolidator() {}
 
-    /**
-     * create a mapping for usage in {@link TypeInfo#consolidate(Map)}
-     */
+    /** create a mapping for usage in {@link TypeInfo#consolidate(Map)} */
     public static Map<VariableTypeInfo, TypeInfo> getMapping(Class<?> type) {
         if (DEBUG) {
             System.out.println("getting mapping from: " + type);
@@ -39,7 +37,8 @@ public final class TypeConsolidator {
         return mapping.getOrDefault(variable, TypeInfo.NONE);
     }
 
-    public static List<TypeInfo> consolidateOrNull(List<TypeInfo> original, Map<VariableTypeInfo, TypeInfo> mapping) {
+    public static List<TypeInfo> consolidateOrNull(
+            List<TypeInfo> original, Map<VariableTypeInfo, TypeInfo> mapping) {
         var len = original.size();
         if (DEBUG) {
             System.out.println("consolidating" + original);

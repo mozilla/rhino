@@ -81,8 +81,6 @@ public final class ArrayTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
     @Override
     protected TypeInfo consolidateImpl(Map<VariableTypeInfo, TypeInfo> mapping) {
         var consolidatedComponent = component.consolidate(mapping);
-        return consolidatedComponent == component
-            ? this
-            : new ArrayTypeInfo(consolidatedComponent);
+        return consolidatedComponent == component ? this : new ArrayTypeInfo(consolidatedComponent);
     }
 }
