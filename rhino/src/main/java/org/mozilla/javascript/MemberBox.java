@@ -467,6 +467,10 @@ final class MemberBox implements Serializable {
         return parameters.isVarArg();
     }
 
+    public JavaParameters getParameters() {
+        return parameters;
+    }
+
     public boolean[] getArgNullability() {
         return parameters.getNullabilities();
     }
