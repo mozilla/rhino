@@ -2683,11 +2683,11 @@ public class NativeRegExp extends IdScriptableObject {
                                             startcp,
                                             state.continuationOp,
                                             state.continuationPc);
-                                    int parenCount = getIndex(program, pc);
-                                    int parenIndex = getIndex(program, pc + INDEX_LEN);
-                                    for (int k = 0; k < parenCount; k++) {
-                                        gData.setParens(parenIndex + k, -1, 0);
-                                    }
+                                }
+                                int parenCount = getIndex(program, pc);
+                                int parenIndex = getIndex(program, pc + INDEX_LEN);
+                                for (int k = 0; k < parenCount; k++) {
+                                    gData.setParens(parenIndex + k, -1, 0);
                                 }
                             } while (program[nextpc] == REOP_ENDCHILD);
 
