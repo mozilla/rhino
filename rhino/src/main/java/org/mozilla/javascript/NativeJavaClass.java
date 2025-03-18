@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.nat.type.TypeInfo;
+
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
@@ -34,7 +36,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter) {
-        super(scope, cl, null, isAdapter);
+        super(scope, cl, TypeInfo.NONE, isAdapter);
     }
 
     @Override
@@ -160,7 +162,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
                 Object obj =
                         createInterfaceAdapter(
                                 classObject, ScriptableObject.ensureScriptableObject(args[0]));
-                return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+                return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
             }
             // use JavaAdapter to construct a new class on the fly that
             // implements/extends this interface/abstract class.
