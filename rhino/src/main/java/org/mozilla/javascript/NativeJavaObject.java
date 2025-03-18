@@ -206,7 +206,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /**
      * @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
-     *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
+     *     WrapFactory#wrap(Context, Scriptable, Object, TypeInfo)}
      */
     @Deprecated
     public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
@@ -965,11 +965,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 if (!(thisObj instanceof NativeJavaObject)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
-                Object javaObject = ((NativeJavaObject) thisObj).javaObject;
+                var nativeObject = (NativeJavaObject) thisObj;
+                Object javaObject = nativeObject.javaObject;
                 if (!(javaObject instanceof Iterable)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
-                return new JavaIterableIterator(scope, (Iterable) javaObject);
+                return new JavaIterableIterator(scope, (Iterable) javaObject, nativeObject.staticType);
             };
 
     private static final class JavaIterableIterator extends ES6Iterator {
@@ -985,9 +986,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             super();
         }
 
-        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+        JavaIterableIterator(Scriptable scope, Iterable iterable, TypeInfo staticType) {
             super(scope, ITERATOR_TAG);
             this.iterator = iterable.iterator();
+            this.staticType = staticType;
         }
 
         @Override
@@ -1006,7 +1008,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 return Undefined.instance;
             }
             Object obj = iterator.next();
-            return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+            return cx.getWrapFactory().wrap(cx, this, obj, staticType);
         }
 
         @Override
@@ -1015,6 +1017,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         private Iterator iterator;
+        private TypeInfo staticType;
     }
 
     /** The prototype of this object. */

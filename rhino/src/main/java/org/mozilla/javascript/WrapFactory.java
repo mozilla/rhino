@@ -79,6 +79,7 @@ public class WrapFactory {
     /**
      * @deprecated use {@link #wrap(Context, Scriptable, Object, TypeInfo)} instead
      */
+    @Deprecated
     public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
         return wrap(cx, scope, obj, TypeInfo.of(staticType));
     }

@@ -6,11 +6,10 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with single method or multiple
