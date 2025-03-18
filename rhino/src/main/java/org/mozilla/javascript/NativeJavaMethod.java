@@ -134,7 +134,12 @@ public class NativeJavaMethod extends BaseFunction {
         }
 
         MemberBox meth = methods[index];
-        args = meth.getParameters().wrapArgs(args);
+        if (thisObj instanceof NativeJavaObject) {
+            var mapping = ((NativeJavaObject) thisObj).extractTypeConsolidationMapping();
+            args = meth.getParameters().wrapArgs(args, mapping);
+        } else {
+            args = meth.getParameters().wrapArgs(args);
+        }
 
         Object javaObject = null;
         if (!meth.isStatic()) {
@@ -162,53 +167,52 @@ public class NativeJavaMethod extends BaseFunction {
             printDebug("Calling ", meth, args);
         }
 
-        Object retval = meth.invoke(javaObject, args);
-        Class<?> staticType = meth.method().getReturnType();
+        var returned = meth.invoke(javaObject, args);
+        var staticType = meth.getReturnType();
 
         if (debug) {
-            Class<?> actualType = (retval == null) ? null : retval.getClass();
+            Class<?> actualType = (returned == null) ? null : returned.getClass();
             System.err.println(
                     " ----- Returned "
-                            + retval
+                            + returned
                             + " actual = "
                             + actualType
                             + " expect = "
-                            + staticType);
+                            + staticType.asClass());
         }
 
         Object wrapped =
                 cx.getWrapFactory()
                         .wrap(
                                 cx, scope,
-                                retval, staticType);
+                                returned, staticType);
         if (debug) {
             Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
             System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
         }
 
-        if (wrapped == null && staticType == Void.TYPE) {
+        if (wrapped == null && staticType.isVoid()) {
             wrapped = Undefined.instance;
         }
         return wrapped;
     }
 
     int findCachedFunction(Context cx, Object[] args) {
-        if (methods.length > 1) {
-            for (ResolvedOverload ovl : overloadCache) {
-                if (ovl.matches(args)) {
-                    return ovl.index;
-                }
-            }
-            int index = findFunction(cx, methods, args);
-            // As a sanity measure, don't let the lookup cache grow longer
-            // than twice the number of overloaded methods
-            if (overloadCache.size() < methods.length * 2) {
-                ResolvedOverload ovl = new ResolvedOverload(args, index);
-                overloadCache.addIfAbsent(ovl);
-            }
-            return index;
+        if (methods.length <= 1) {
+            return findFunction(cx, methods, args);
         }
-        return findFunction(cx, methods, args);
+        for (ResolvedOverload ovl : overloadCache) {
+            if (ovl.matches(args)) {
+                return ovl.index;
+            }
+        }
+        int index = findFunction(cx, methods, args);
+        // As a sanity measure, don't let the lookup cache grow longer
+        // than twice the number of overloaded methods
+        if (overloadCache.size() < methods.length * 2) {
+            overloadCache.addIfAbsent(new ResolvedOverload(args, index));
+        }
+        return index;
     }
 
     /**

@@ -14,12 +14,12 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoExt;
+import org.mozilla.javascript.nat.type.VariableTypeInfo;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
@@ -60,12 +60,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      */
     @Deprecated
     public NativeJavaObject(
-        Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
+            Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
         this(scope, javaObject, TypeInfo.of(staticType), isAdapter);
     }
 
     public NativeJavaObject(
-        Scriptable scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
+            Scriptable scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
@@ -266,6 +266,35 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             }
         }
         return value;
+    }
+
+    private Map<VariableTypeInfo, TypeInfo> typeConsolidationMapping;
+
+    /**
+     * @see org.mozilla.javascript.nat.TypeConsolidator#getMapping(Class)
+     * @see TypeInfo#consolidate(Map)
+     */
+    Map<VariableTypeInfo, TypeInfo> extractTypeConsolidationMapping() {
+        if (this.javaObject == null) {
+            return Collections.emptyMap();
+        }
+        if (typeConsolidationMapping != null) {
+            return typeConsolidationMapping;
+        }
+        if (staticType instanceof ParameterizedTypeInfo) {
+            var parameterized = (ParameterizedTypeInfo) staticType;
+            var variables = javaObject.getClass().getTypeParameters();
+            if (variables.length == 0) {
+                return Collections.emptyMap();
+            }
+            var params = parameterized.params();
+            var builder = new HashMap<VariableTypeInfo, TypeInfo>();
+            for (int i = 0; i < variables.length; i++) {
+                builder.put(TypeInfo.of(variables[i]), params.get(i));
+            }
+            return typeConsolidationMapping = Map.copyOf(builder);
+        }
+        return typeConsolidationMapping = Collections.emptyMap();
     }
 
     /**
