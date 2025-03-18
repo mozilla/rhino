@@ -30,20 +30,13 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         return new NativeJavaArray(scope, array);
     }
 
-    @Override
-    public Object unwrap() {
-        return array;
-    }
-
     public NativeJavaArray(Scriptable scope, Object array) {
-        super(scope, null, TypeInfo.OBJECT);
-        Class<?> cl = array.getClass();
-        if (!cl.isArray()) {
+        super(scope, array, TypeInfo.of(array.getClass()));
+        if (!staticType.isArray()) {
             throw new RuntimeException("Array expected");
         }
-        this.array = array;
         this.length = Array.getLength(array);
-        this.cls = TypeInfo.of(cl.getComponentType());
+        this.componentType = staticType.getComponentType();
     }
 
     @Override
@@ -67,7 +60,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         Object result = super.get(id, start);
         if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
             throw Context.reportRuntimeErrorById(
-                    "msg.java.member.not.found", array.getClass().getName(), id);
+                    "msg.java.member.not.found", javaObject.getClass().getName(), id);
         }
         return result;
     }
@@ -76,8 +69,8 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     public Object get(int index, Scriptable start) {
         if (0 <= index && index < length) {
             Context cx = Context.getContext();
-            Object obj = Array.get(array, index);
-            return cx.getWrapFactory().wrap(cx, this, obj, cls);
+            Object obj = Array.get(javaObject, index);
+            return cx.getWrapFactory().wrap(cx, this, obj, componentType);
         }
         return Undefined.instance;
     }
@@ -100,7 +93,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (0 <= index && index < length) {
-            Array.set(array, index, Context.jsToJava(value, cls));
+            Array.set(javaObject, index, Context.jsToJava(value, componentType));
         } else {
             throw Context.reportRuntimeErrorById(
                     "msg.java.array.index.out.of.bounds",
@@ -116,7 +109,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
     @Override
     public Object getDefaultValue(Class<?> hint) {
-        if (hint == null || hint == ScriptRuntime.StringClass) return array.toString();
+        if (hint == null || hint == ScriptRuntime.StringClass) return javaObject.toString();
         if (hint == ScriptRuntime.BooleanClass) return Boolean.TRUE;
         if (hint == ScriptRuntime.NumberClass) return ScriptRuntime.NaNobj;
         return this;
@@ -134,7 +127,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     public boolean hasInstance(Scriptable value) {
         if (!(value instanceof Wrapper)) return false;
         Object instance = ((Wrapper) value).unwrap();
-        return cls.isInstance(instance);
+        return componentType.isInstance(instance);
     }
 
     @Override
@@ -148,15 +141,9 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     @Override
     public boolean equals(Object obj) {
         return (obj instanceof NativeJavaArray)
-                && Objects.equals(((NativeJavaArray) obj).array, array);
+                && Objects.equals(((NativeJavaArray) obj).javaObject, javaObject);
     }
 
-    @Override
-    public int hashCode() {
-        return array == null ? 0 : array.hashCode();
-    }
-
-    Object array;
     int length;
-    TypeInfo cls;
+    TypeInfo componentType;
 }
