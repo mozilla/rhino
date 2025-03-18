@@ -37,8 +37,7 @@ public final class ParameterizedTypeInfo extends TypeInfoBase.OptionallyConsolid
         if (index < 0 || index >= params.size()) {
             return TypeInfo.NONE;
         }
-        var got = params.get(index);
-        return got == TypeInfo.OBJECT ? TypeInfo.NONE : got;
+        return params.get(index);
     }
 
     @Override

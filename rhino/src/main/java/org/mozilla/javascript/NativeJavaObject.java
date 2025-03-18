@@ -288,18 +288,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
         if (staticType instanceof ParameterizedTypeInfo) {
             var parameterized = (ParameterizedTypeInfo) staticType;
-            var clazz = javaObject.getClass();
-            TypeVariable<? extends Class<?>>[] variables = clazz.getTypeParameters();
+            TypeVariable<? extends Class<?>>[] variables =
+                    javaObject.getClass().getTypeParameters();
             if (variables.length == 0) {
-                if (!clazz.isSynthetic()) {
+                // try static type if dynamic type does not work
+                variables = parameterized.asClass().getTypeParameters();
+                if (variables.length == 0) {
                     return setMapping(Collections.emptyMap());
                 }
-                var interfaces = clazz.getInterfaces();
-                if (interfaces.length != 1 || !TypeInfo.of(interfaces[0]).isFunctionalInterface()) {
-                    return setMapping(Collections.emptyMap());
-                }
-                // special support for lambdas
-                variables = interfaces[0].getTypeParameters();
             }
             var params = parameterized.params();
             var builder = new HashMap<VariableTypeInfo, TypeInfo>();

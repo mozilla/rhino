@@ -49,7 +49,8 @@ public class JavaGenericsTest {
                 Utils.lines(
                         String.format("const exampl = new %s()", JavaGenericsTest.CLASS_REF),
                         "exampl.add(-123)",
-                        "exampl[0] + ''")); // force Rhino to convert wrapped java String object to string
+                        "exampl[0] + ''")); // force Rhino to convert wrapped java String object to
+        // string
     }
 
     /**
