@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -283,18 +284,33 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
         if (staticType instanceof ParameterizedTypeInfo) {
             var parameterized = (ParameterizedTypeInfo) staticType;
-            var variables = javaObject.getClass().getTypeParameters();
+            var clazz = javaObject.getClass();
+            TypeVariable<? extends Class<?>>[] variables = clazz.getTypeParameters();
             if (variables.length == 0) {
-                return Collections.emptyMap();
+                if (!clazz.isSynthetic()) {
+                    return setMapping(Collections.emptyMap());
+                }
+                var interfaces = clazz.getInterfaces();
+                if (interfaces.length != 1 || !TypeInfo.of(interfaces[0]).isFunctionalInterface()) {
+                    return setMapping(Collections.emptyMap());
+                }
+                // special support for lambdas
+                variables = interfaces[0].getTypeParameters();
             }
             var params = parameterized.params();
             var builder = new HashMap<VariableTypeInfo, TypeInfo>();
             for (int i = 0; i < variables.length; i++) {
                 builder.put(TypeInfo.of(variables[i]), params.get(i));
             }
-            return typeConsolidationMapping = Map.copyOf(builder);
+            return setMapping(Map.copyOf(builder));
         }
-        return typeConsolidationMapping = Collections.emptyMap();
+        return setMapping(Collections.emptyMap());
+    }
+
+    private Map<VariableTypeInfo, TypeInfo> setMapping(
+            Map<VariableTypeInfo, TypeInfo> typeConsolidationMapping) {
+        this.typeConsolidationMapping = typeConsolidationMapping;
+        return typeConsolidationMapping;
     }
 
     /**
