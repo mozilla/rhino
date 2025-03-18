@@ -7,6 +7,7 @@ package org.mozilla.javascript;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * <code>NativeJavaList</code> is a wrapper for java objects implementing <code>java.util.List
@@ -48,12 +49,18 @@ public class NativeJavaList extends NativeJavaObject {
     private static final long serialVersionUID = 660285467829047519L;
 
     private List<Object> list;
+    private final TypeInfo elementType;
+
+    public NativeJavaList(Scriptable scope, Object list) {
+        this(scope, list, TypeInfo.of(list.getClass()));
+    }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaList(Scriptable scope, Object list) {
-        super(scope, list, list.getClass());
+    public NativeJavaList(Scriptable scope, Object list, TypeInfo staticType) {
+        super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
+        this.elementType = staticType.param(0);
     }
 
     @Override
@@ -106,7 +113,7 @@ public class NativeJavaList extends NativeJavaObject {
             Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
             if (cx != null) {
-                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+                return cx.getWrapFactory().wrap(cx, this, obj, elementType);
             }
             return obj;
         }
@@ -172,7 +179,6 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public Object[] getIds() {
-        List<?> list = (List<?>) javaObject;
         Object[] result = new Object[list.size()];
         int i = list.size();
         while (--i >= 0) {

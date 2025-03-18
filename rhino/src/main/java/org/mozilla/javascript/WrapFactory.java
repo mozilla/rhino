@@ -8,11 +8,10 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
@@ -123,9 +122,9 @@ public class WrapFactory {
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
         if (List.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaList(scope, javaObject);
+            return new NativeJavaList(scope, javaObject, staticType);
         } else if (Map.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaMap(scope, javaObject);
+            return new NativeJavaMap(scope, javaObject, staticType);
         }
         return new NativeJavaObject(scope, javaObject, staticType);
     }
@@ -134,7 +133,7 @@ public class WrapFactory {
      * @deprecated use {@link #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)} instead
      */
     public Scriptable wrapAsJavaObject(
-        Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
+            Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
         return wrapAsJavaObject(cx, scope, javaObject, TypeInfo.of(staticType));
     }
 
