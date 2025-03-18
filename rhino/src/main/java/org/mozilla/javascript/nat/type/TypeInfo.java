@@ -88,6 +88,7 @@ public interface TypeInfo {
     /**
      * @return true if this TypeInfo represents the same class as the {@link Class} parameter, false
      *     otherwise
+     * @see #isNot(Class)
      */
     default boolean is(Class<?> c) {
         return asClass() == c;
@@ -96,6 +97,7 @@ public interface TypeInfo {
     /**
      * @return false if this TypeInfo does not represent the same class as the {@link Class}
      *     parameter, true otherwise
+     * @see #is(Class)
      */
     default boolean isNot(Class<?> c) {
         return !is(c);

@@ -114,6 +114,7 @@ class JavaMembers {
         }
         // Need to wrap the object before we return it.
         scope = ScriptableObject.getTopLevelScope(scope);
+        // TODO: use TypeInfo when rewriting field handling
         return cx.getWrapFactory().wrap(cx, scope, rval, type);
     }
 

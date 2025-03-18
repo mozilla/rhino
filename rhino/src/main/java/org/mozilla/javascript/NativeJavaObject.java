@@ -15,8 +15,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.math.BigInteger;
-import java.util.*;
-
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
 import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoExt;
@@ -986,7 +990,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 if (!(javaObject instanceof Iterable)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
-                return new JavaIterableIterator(scope, (Iterable) javaObject, nativeObject.staticType);
+                return new JavaIterableIterator(
+                        scope, (Iterable) javaObject, nativeObject.staticType);
             };
 
     private static final class JavaIterableIterator extends ES6Iterator {

@@ -16,7 +16,7 @@ import org.mozilla.javascript.nat.type.VariableTypeInfo;
  * @author ZZZank
  */
 public final class TypeConsolidator {
-    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS =
+    private static final IdentityHashMap<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS =
             new IdentityHashMap<>();
 
     private static final boolean DEBUG = false;
@@ -43,12 +43,14 @@ public final class TypeConsolidator {
         if (DEBUG) {
             System.out.println("consolidating" + original);
         }
+
         if (len == 0) {
             return original;
         } else if (len == 1) {
             var consolidated = original.get(0).consolidate(mapping);
             return consolidated != original.get(0) ? List.of(consolidated) : original;
         }
+
         var different = false;
         var consolidated = new ArrayList<TypeInfo>();
         for (var typeInfo : original) {
@@ -56,6 +58,7 @@ public final class TypeConsolidator {
             different |= cons != typeInfo;
             consolidated.add(cons);
         }
+
         return different ? consolidated : null;
     }
 
@@ -83,35 +86,6 @@ public final class TypeConsolidator {
                 consolidatedAll[i] = consolidated;
             } else if (consolidatedAll != null) {
                 consolidatedAll[i] = consolidated;
-            }
-        }
-        return consolidatedAll == null ? original : consolidatedAll;
-    }
-
-    public static List<TypeInfo> consolidateAll(
-            List<TypeInfo> original, Map<VariableTypeInfo, TypeInfo> mapping) {
-        var len = original.size();
-        if (DEBUG) {
-            System.out.println("consolidating" + original);
-        }
-        if (len == 0) {
-            return original;
-        } else if (len == 1) {
-            var consolidated = original.getFirst().consolidate(mapping);
-            return consolidated != original.getFirst() ? List.of(consolidated) : original;
-        }
-        List<TypeInfo> consolidatedAll = null;
-        for (int i = 0; i < len; i++) {
-            var type = original.get(i);
-            var consolidated = type.consolidate(mapping);
-            if (consolidated != type) {
-                if (consolidatedAll == null) {
-                    consolidatedAll = new ArrayList<>(len);
-                    consolidatedAll.addAll(original.subList(0, i));
-                }
-                consolidatedAll.set(i, consolidated);
-            } else if (consolidatedAll != null) {
-                consolidatedAll.set(i, consolidated);
             }
         }
         return consolidatedAll == null ? original : consolidatedAll;

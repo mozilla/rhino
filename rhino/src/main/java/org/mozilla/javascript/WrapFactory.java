@@ -133,6 +133,7 @@ public class WrapFactory {
     /**
      * @deprecated use {@link #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)} instead
      */
+    @Deprecated
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
         return wrapAsJavaObject(cx, scope, javaObject, TypeInfo.of(staticType));
