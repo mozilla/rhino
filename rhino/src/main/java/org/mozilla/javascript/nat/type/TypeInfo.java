@@ -295,7 +295,7 @@ public interface TypeInfo {
             return this;
         }
 
-        return new ParameterizedTypeInfo(this, params);
+        return new ParameterizedTypeInfo(this, List.of(params));
     }
 
     /**

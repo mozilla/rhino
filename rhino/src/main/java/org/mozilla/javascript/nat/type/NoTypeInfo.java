@@ -55,4 +55,9 @@ public final class NoTypeInfo implements TypeInfo {
     public boolean isInstance(Object o) {
         return o != null;
     }
+
+    @Override
+    public boolean isObjectExact() {
+        return true;
+    }
 }

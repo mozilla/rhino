@@ -12,11 +12,6 @@ public final class ParameterizedTypeInfo extends TypeInfoBase.OptionallyConsolid
     private final List<TypeInfo> params;
     private int hashCode;
 
-    ParameterizedTypeInfo(TypeInfo rawType, TypeInfo[] params) {
-        this.rawType = rawType;
-        this.params = List.of(params);
-    }
-
     ParameterizedTypeInfo(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
         this.params = params;
