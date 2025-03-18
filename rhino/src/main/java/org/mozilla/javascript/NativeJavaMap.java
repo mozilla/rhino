@@ -117,7 +117,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        Context cx = Context.getContext();
+        Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
         } else {
