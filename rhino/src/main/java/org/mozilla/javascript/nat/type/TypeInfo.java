@@ -189,23 +189,15 @@ public interface TypeInfo {
         } else if (c.isArray()) {
             return of(c.getComponentType()).asArray();
         } else if (c.isEnum()) {
-            synchronized (EnumTypeInfo.CACHE) {
-                return EnumTypeInfo.CACHE.computeIfAbsent(c, EnumTypeInfo::new);
-            }
+            return EnumTypeInfo.CACHE.computeIfAbsent(c, EnumTypeInfo::new);
         } else if (c.isInterface()) {
-            synchronized (InterfaceTypeInfo.CACHE) {
-                return InterfaceTypeInfo.CACHE.computeIfAbsent(c, InterfaceTypeInfo::new);
-            }
+            return InterfaceTypeInfo.CACHE.computeIfAbsent(c, InterfaceTypeInfo::new);
         }
-        synchronized (BasicClassTypeInfo.CACHE) {
-            return BasicClassTypeInfo.CACHE.computeIfAbsent(c, BasicClassTypeInfo::new);
-        }
+        return BasicClassTypeInfo.CACHE.computeIfAbsent(c, BasicClassTypeInfo::new);
     }
 
     static VariableTypeInfo of(TypeVariable<?> variable) {
-        synchronized (VariableTypeInfo.CACHE) {
-            return VariableTypeInfo.CACHE.computeIfAbsent(variable, VariableTypeInfo::new);
-        }
+        return VariableTypeInfo.CACHE.computeIfAbsent(variable, VariableTypeInfo::new);
     }
 
     static TypeInfo of(Type type) {

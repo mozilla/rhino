@@ -1,15 +1,15 @@
 package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.TypeVariable;
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
  * @author ZZZank
  */
 public class VariableTypeInfo extends TypeInfoBase {
-    static final IdentityHashMap<TypeVariable<?>, VariableTypeInfo> CACHE = new IdentityHashMap<>();
+    static final Map<TypeVariable<?>, VariableTypeInfo> CACHE = new ConcurrentHashMap<>();
 
     private final TypeVariable<?> raw;
     private TypeInfo mainBound = null;
