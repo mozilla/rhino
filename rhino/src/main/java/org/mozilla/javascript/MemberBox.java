@@ -28,8 +28,8 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
-    private transient List<TypeInfo> argTypeInfos;
-    private TypeInfo returnTypeInfo;
+    private transient volatile List<TypeInfo> argTypeInfos;
+    private transient volatile TypeInfo returnTypeInfo;
     transient boolean[] argNullability;
     transient boolean vararg;
 
@@ -104,24 +104,31 @@ final class MemberBox implements Serializable {
 
     List<TypeInfo> getArgTypes() {
         if (argTypeInfos == null) {
-            argTypeInfos =
-                    List.of(
-                            TypeInfo.ofArray(
-                                    this.memberObject instanceof Method
-                                            ? ((Method) memberObject).getGenericParameterTypes()
-                                            : ((Constructor<?>) memberObject)
-                                                    .getGenericParameterTypes()));
+            synchronized (this) {
+                if (argTypeInfos == null) {
+                    final var rawTypes =
+                            this.memberObject instanceof Method
+                                    ? ((Method) memberObject).getGenericParameterTypes()
+                                    : ((Constructor<?>) memberObject).getGenericParameterTypes();
+                    argTypeInfos = List.of(TypeInfo.ofArray(rawTypes));
+                }
+            }
         }
         return argTypeInfos;
     }
 
     TypeInfo getReturnType() {
         if (returnTypeInfo == null) {
-            returnTypeInfo =
-                    this.isMethod()
-                            ? TypeInfo.of(this.method().getGenericReturnType())
-                            : TypeInfo.NONE;
+            synchronized (this) {
+                if (returnTypeInfo == null) {
+                    returnTypeInfo =
+                            this.isMethod()
+                                    ? TypeInfo.of(this.method().getGenericReturnType())
+                                    : TypeInfo.NONE;
+                }
+            }
         }
+
         return returnTypeInfo;
     }
 

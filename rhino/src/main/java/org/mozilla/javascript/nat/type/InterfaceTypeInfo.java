@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.nat.ByteAsBool;
 
