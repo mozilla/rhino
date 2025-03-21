@@ -604,8 +604,9 @@ public class NativeRegExp extends IdScriptableObject {
                         }
                     }
                 }
-            } else extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
-
+            } else {
+                extractNamedCaptureGroups(src, node.kid, namedCaptureGroups);
+            }
             node = node.next;
         }
     }
@@ -650,22 +651,25 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            if (!parseDisjunction(state)) return null;
+            ParserParameters params = new ParserParameters(false);
+            if (!parseDisjunction(state, params)) return null;
             // Need to reparse if pattern contains invalid backreferences:
             // "Note: if the number of left parentheses is less than the number
             // specified in \#, the \# is taken as an octal escape"
-            boolean reParse = false;
+            CompilerState reParseState = null;
             if (state.maxBackReference > state.parenCount) {
-                state = new CompilerState(cx, regexp.source, length, flags);
-                state.backReferenceLimit = state.parenCount;
-                reParse = true;
+                reParseState = new CompilerState(cx, regexp.source, length, flags);
+                reParseState.backReferenceLimit = state.parenCount;
             }
-            if (state.reparseIfNoNamedCaptureGroupFound && !state.namedCaptureGroupsFound) {
-                state.namedBackrefEnabled = false;
-                reParse = true;
+            if (state.namedCaptureGroupsFound) {
+                params.namedCaptureGroups = true;
+                if (reParseState == null) {
+                    reParseState = new CompilerState(cx, regexp.source, length, flags);
+                }
             }
-            if (reParse) {
-                if (!parseDisjunction(state)) return null;
+            if (reParseState != null) {
+                state = reParseState;
+                if (!parseDisjunction(state, params)) return null;
             }
         }
 
@@ -781,19 +785,12 @@ public class NativeRegExp extends IdScriptableObject {
         return (cl < 128) ? ch : cl;
     }
 
-    /*
-     * Validates and converts hex ascii value.
-     */
-    private static int toASCIIHexDigit(int c) {
-        if (c < '0') return -1;
-        if (c <= '9') {
-            return c - '0';
+    static class ParserParameters {
+        boolean namedCaptureGroups;
+
+        ParserParameters(boolean namedCaptureGroups) {
+            this.namedCaptureGroups = namedCaptureGroups;
         }
-        c |= 0x20;
-        if ('a' <= c && c <= 'f') {
-            return c - 'a' + 10;
-        }
-        return -1;
     }
 
     /*
@@ -802,8 +799,8 @@ public class NativeRegExp extends IdScriptableObject {
      *  regexp:     altern                  A regular expression is one or more
      *              altern '|' regexp       alternatives separated by vertical bar.
      */
-    private static boolean parseDisjunction(CompilerState state) {
-        if (!parseAlternative(state)) return false;
+    private static boolean parseDisjunction(CompilerState state, ParserParameters params) {
+        if (!parseAlternative(state, params)) return false;
         char[] source = state.cpbegin;
         int index = state.cp;
         if (index != source.length && source[index] == '|') {
@@ -811,7 +808,7 @@ public class NativeRegExp extends IdScriptableObject {
             ++state.cp;
             result = new RENode(REOP_ALT);
             result.kid = state.result;
-            if (!parseDisjunction(state)) return false;
+            if (!parseDisjunction(state, params)) return false;
             result.kid2 = state.result;
             state.result = result;
             /*
@@ -857,7 +854,7 @@ public class NativeRegExp extends IdScriptableObject {
      *  altern:     item                    An alternative is one or more items,
      *              item altern             concatenated together.
      */
-    private static boolean parseAlternative(CompilerState state) {
+    private static boolean parseAlternative(CompilerState state, ParserParameters params) {
         RENode headTerm = null;
         RENode tailTerm = null;
         char[] source = state.cpbegin;
@@ -870,7 +867,7 @@ public class NativeRegExp extends IdScriptableObject {
                 } else state.result = headTerm;
                 return true;
             }
-            if (!parseTerm(state)) return false;
+            if (!parseTerm(state, params)) return false;
             if (headTerm == null) {
                 headTerm = state.result;
                 tailTerm = headTerm;
@@ -893,150 +890,46 @@ public class NativeRegExp extends IdScriptableObject {
 
     /* calculate the total size of the bitmap required for a class expression */
     private static boolean calculateBitmapSize(
-            CompilerState state, RENode target, char[] src, int index, int end) {
-        char rangeStart = 0;
-        char c;
-        int n;
-        int nDigits;
-        int i;
+            int flags, ClassContents classContents, RENode target) {
         int max = 0;
-        boolean inRange = false;
 
-        target.bmsize = 0;
-        target.sense = true;
-
-        if (index == end) return true;
-
-        if (src[index] == '^') {
-            ++index;
-            target.sense = false;
+        for (char ch : classContents.chars) {
+            if (ch > max) {
+                max = ch;
+            }
+            if ((flags & JSREG_FOLD) != 0) {
+                char cu = upcase(ch);
+                char cd = downcase(ch);
+                int n = (cu >= cd) ? cu : cd;
+                if (n > max) {
+                    max = n;
+                }
+            }
         }
 
-        while (index != end) {
-            int localMax = 0;
-            nDigits = 2;
-            if (src[index] == '\\') {
-                ++index;
-                c = src[index++];
-                switch (c) {
-                    case 'b':
-                        localMax = 0x8;
-                        break;
-                    case 'f':
-                        localMax = 0xC;
-                        break;
-                    case 'n':
-                        localMax = 0xA;
-                        break;
-                    case 'r':
-                        localMax = 0xD;
-                        break;
-                    case 't':
-                        localMax = 0x9;
-                        break;
-                    case 'v':
-                        localMax = 0xB;
-                        break;
-                    case 'c':
-                        if ((index < end) && isControlLetter(src[index]))
-                            localMax = (char) (src[index++] & 0x1F);
-                        else --index;
-                        localMax = '\\';
-                        break;
-                    case 'u':
-                        nDigits += 2;
-                    // fall through
-                    case 'x':
-                        n = 0;
-                        for (i = 0; (i < nDigits) && (index < end); i++) {
-                            c = src[index++];
-                            n = Kit.xDigitToInt(c, n);
-                            if (n < 0) {
-                                // Back off to accepting the original
-                                // '\' as a literal
-                                index -= (i + 1);
-                                n = '\\';
-                                break;
-                            }
-                        }
-                        localMax = n;
-                        break;
-                    case 'd':
-                        if (inRange) {
-                            target.bmsize = 65536;
-                            return true;
-                        }
-                        localMax = '9';
-                        break;
-                    case 'D':
-                    case 'w':
-                    case 'W':
-                    case 'S':
-                    case 's':
-                        target.bmsize = 65536;
-                        return true;
-
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                        /*
-                         *  This is a non-ECMA extension - decimal escapes (in this
-                         *  case, octal!) are supposed to be an error inside class
-                         *  ranges, but supported here for backwards compatibility.
-                         *
-                         */
-                        n = (c - '0');
-                        c = src[index];
-                        if ('0' <= c && c <= '7') {
-                            index++;
-                            n = 8 * n + (c - '0');
-                            c = src[index];
-                            if ('0' <= c && c <= '7') {
-                                index++;
-                                i = 8 * n + (c - '0');
-                                if (i <= 0377) n = i;
-                                else index--;
-                            }
-                        }
-                        localMax = n;
-                        break;
-
-                    default:
-                        localMax = c;
-                        break;
-                }
-            } else {
-                localMax = src[index++];
+        for (int i = 1; i < classContents.ranges.size(); i += 2) {
+            char rangeEnd = classContents.ranges.get(i);
+            if (rangeEnd > max) {
+                max = rangeEnd;
             }
-            if (inRange) {
-                if (rangeStart > localMax) {
-                    reportError("msg.bad.range", "");
-                    return false;
-                }
-                inRange = false;
-            } else {
-                if (index < (end - 1)) {
-                    if (src[index] == '-') {
-                        ++index;
-                        inRange = true;
-                        rangeStart = (char) localMax;
-                        continue;
-                    }
+            if ((flags & JSREG_FOLD) != 0) {
+                char cu = upcase(rangeEnd);
+                char cd = downcase(rangeEnd);
+                int n = (cu >= cd) ? cu : cd;
+                if (n > max) {
+                    max = n;
                 }
             }
-            if ((state.flags & JSREG_FOLD) != 0) {
-                char cu = upcase((char) localMax);
-                char cd = downcase((char) localMax);
-                localMax = (cu >= cd) ? cu : cd;
-            }
-            if (localMax > max) max = localMax;
         }
-        target.bmsize = max + 1;
+
+        for (RENode node : classContents.escapeNodes) {
+            if (node.op != REOP_FLAT) {
+                target.bmsize = Character.MAX_VALUE + 1;
+                break;
+            }
+        }
+
+        target.bmsize = Math.max(target.bmsize, max + 1);
         return true;
     }
 
@@ -1150,7 +1043,6 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static String extractCaptureGroupName(char[] src, int cpbegin, int cpend) {
         // TODO: support capture group names consisting of unicode escape sequences
-        String srcString = new String(src);
         // parse unicode identifier
         int cp = cpbegin;
         if (cp == cpend) {
@@ -1161,13 +1053,13 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (!(src[cp] == '$'
                 || src[cp] == '_'
-                || Character.isUnicodeIdentifierStart(srcString.codePointAt(cp)))) {
+                || Character.isUnicodeIdentifierStart(Character.codePointAt(src, cp)))) {
             return null;
         }
-        cp += Character.charCount(srcString.codePointAt(cp));
+        cp += Character.charCount(Character.codePointAt(src, cp));
 
         while (cp < cpend && src[cp] != '>') {
-            int codePoint = srcString.codePointAt(cp);
+            int codePoint = Character.codePointAt(src, cp, cpend);
             if (!(src[cp] == '$' || Character.isUnicodeIdentifierPart(codePoint))) {
                 break;
             }
@@ -1180,10 +1072,284 @@ public class NativeRegExp extends IdScriptableObject {
         return String.copyValueOf(src, cpbegin + 1, cp - cpbegin - 2);
     }
 
-    private static boolean parseTerm(CompilerState state) {
+    // assume that the cp points to a decimal digit.
+    // consumes as many octal characters as possible such that the resulting number is <= 0xFF
+    private static boolean parseLegacyOctalEscapeSequence(CompilerState state) {
+        char[] src = state.cpbegin;
+        int num;
+        int nDigits;
+        char c = src[state.cp];
+
+        if (c < '0' || c > '7') {
+            return false;
+        }
+        num = c - '0';
+        state.cp++;
+        nDigits = 1;
+
+        while (nDigits < 3 && num < 040 && state.cp < state.cpend) {
+            c = src[state.cp];
+            nDigits++;
+            if ((c >= '0') && (c <= '7')) {
+                state.cp++;
+                num = 8 * num + (c - '0');
+            } else break;
+        }
+        c = (char) num;
+        doFlat(state, c);
+        return true;
+    }
+
+    private static boolean parseIdentityEscape(CompilerState state, ParserParameters params) {
+        // k is not a valid identity escape when named capture groups are enabled
+        char[] src = state.cpbegin;
+
+        if (state.cp < state.cpend) {
+            switch (src[state.cp]) {
+                case 'c':
+                    return false;
+                case 'k':
+                    if (params.namedCaptureGroups) {
+                        return false;
+                    }
+            }
+        }
+        state.result = new RENode(REOP_FLAT);
+        state.result.chr = src[state.cp++];
+        state.result.length = 1;
+        state.result.flatIndex = state.cp - 1;
+        state.progLength += 3;
+
+        return true;
+    }
+
+    // Follows Annex B.1.2 of the ECMAScript specification
+    private static boolean parseCharacterAndCharacterClassEscape(
+            CompilerState state, ParserParameters params) {
+        char c;
+        char[] src = state.cpbegin;
+        int nDigits = 2;
+        int termBegin = state.cp;
+
+        if (state.cp >= state.cpend) {
+            /* a trailing '\' is an error */
+            reportError("msg.trail.backslash", "");
+            return false;
+        }
+
+        c = src[state.cp++];
+        switch (c) {
+            case '0':
+                // if next character is a decimal digit, then it must be an octal escape.
+                if (state.cp < state.cpend && isDigit(src[state.cp])) {
+                    state.cp--;
+                    if (!parseLegacyOctalEscapeSequence(state)) {
+                        throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
+                    }
+                } else {
+                    doFlat(state, (char) 0);
+                }
+                break;
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+                state.cp--;
+                if (!parseLegacyOctalEscapeSequence(state)) {
+                    throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
+                }
+                ;
+                break;
+            /* Control escape */
+            case 'f':
+                c = 0xC;
+                doFlat(state, c);
+                break;
+            case 'n':
+                c = 0xA;
+                doFlat(state, c);
+                break;
+            case 'r':
+                c = 0xD;
+                doFlat(state, c);
+                break;
+            case 't':
+                c = 0x9;
+                doFlat(state, c);
+                break;
+            case 'v':
+                c = 0xB;
+                doFlat(state, c);
+                break;
+            /* Control letter */
+            case 'c':
+                if ((state.cp < state.cpend) && isControlLetter(src[state.cp]))
+                    c = (char) (src[state.cp++] & 0x1F);
+                else {
+                    state.cp = termBegin;
+                    return false;
+                }
+                doFlat(state, c);
+                break;
+            /* UnicodeEscapeSequence */
+            case 'u':
+                nDigits += 2;
+            /* fall through */ case 'x': /* HexEscapeSequence */
+                {
+                    int n = 0;
+                    int i;
+                    for (i = 0; (i < nDigits) && (state.cp < state.cpend); i++) {
+                        c = src[state.cp++];
+                        n = Kit.xDigitToInt(c, n);
+                        if (n < 0) {
+                            // Back off to accepting the original
+                            // 'u' or 'x' as a literal
+                            state.cp -= (i + 2);
+                            n = src[state.cp++];
+                            break;
+                        }
+                    }
+                    c = (char) n;
+                }
+                doFlat(state, c);
+                break;
+            /* Character class escapes */
+            case 'd':
+                state.result = new RENode(REOP_DIGIT);
+                state.progLength++;
+                break;
+            case 'D':
+                state.result = new RENode(REOP_NONDIGIT);
+                state.progLength++;
+                break;
+            case 's':
+                state.result = new RENode(REOP_SPACE);
+                state.progLength++;
+                break;
+            case 'S':
+                state.result = new RENode(REOP_NONSPACE);
+                state.progLength++;
+                break;
+            case 'w':
+                state.result = new RENode(REOP_ALNUM);
+                state.progLength++;
+                break;
+            case 'W':
+                state.result = new RENode(REOP_NONALNUM);
+                state.progLength++;
+                break;
+            /* IdentityEscape */
+            default:
+                state.cp--;
+                return parseIdentityEscape(state, params);
+        }
+
+        return true;
+    }
+
+    // to be called when the current and next characters are '0'
+    private static void parseMultipleLeadingZerosAsOctalEscape(CompilerState state) {
+        char[] src = state.cpbegin;
+        int num = 0;
+        char c;
+        reportWarning(state.cx, "msg.bad.backref", "");
+        while (num < 040 && state.cp < state.cpend) {
+            c = src[state.cp];
+            if ((c >= '0') && (c <= '7')) {
+                state.cp++;
+                num = 8 * num + (c - '0');
+            } else break;
+        }
+        c = (char) num;
+        doFlat(state, c);
+    }
+
+    static class ClassContents {
+        boolean sense = true;
+        ArrayList<Character> chars = new ArrayList<>();
+        ArrayList<Character> ranges =
+                new ArrayList<>(); // ranges stored as (start1, end1, start2, end2, ...)
+        ArrayList<RENode> escapeNodes = new ArrayList<>();
+    }
+
+    private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
+        char[] src = state.cpbegin;
+        char rangeStart = 0;
+        boolean inRange = false;
+        char thisChar = 0;
+        ClassContents contents = new ClassContents();
+
+        if (state.cp >= state.cpend) return null;
+
+        if (src[state.cp] == ']') return contents;
+
+        if (src[state.cp] == '^') {
+            state.cp++;
+            contents.sense = false;
+        }
+
+        while (state.cp != state.cpend && src[state.cp] != ']') {
+            if (src[state.cp] == '\\') {
+                state.cp++;
+                if (state.cp < state.cpend && src[state.cp] == 'b') {
+                    state.cp++;
+                    contents.chars.add((char) 0x8);
+                } else {
+                    if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                        if (src[state.cp] == 'c') { // when lookahead=c, parse the \\ as a literal
+                            thisChar = '\\';
+                        } else {
+                            reportError("msg.invalid.escape", "");
+                            return null;
+                        }
+                    } else {
+                        if (state.result.op == REOP_FLAT) {
+                            thisChar = state.result.chr;
+                        } else {
+                            contents.escapeNodes.add(state.result);
+                            if (inRange) {
+                                contents.chars.add('-');
+                                inRange = false;
+                            }
+                        }
+                    }
+                }
+            } else {
+                thisChar = src[state.cp++];
+            }
+            if (inRange) {
+                if (rangeStart > thisChar) {
+                    reportError("msg.bad.range", "");
+                    return null;
+                }
+                inRange = false;
+                contents.ranges.add(rangeStart);
+                contents.ranges.add(thisChar);
+            } else {
+                contents.chars.add(thisChar);
+                if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
+                    if (src[state.cp] == '-') {
+                        state.cp++;
+                        inRange = true;
+                        rangeStart = thisChar;
+                    }
+                }
+            }
+        }
+
+        if (state.cp < state.cpend && src[state.cp] == ']') {
+            state.cp++;
+        }
+
+        return contents;
+    }
+
+    private static boolean parseTerm(CompilerState state, ParserParameters params) {
         char[] src = state.cpbegin;
         char c = src[state.cp++];
-        int nDigits = 2;
         int parenBaseCount = state.parenCount;
         int num;
         RENode term;
@@ -1200,6 +1366,7 @@ public class NativeRegExp extends IdScriptableObject {
                 state.progLength++;
                 return true;
             case '\\':
+                // atom escape; B.1.2 of the ECMAScript specification
                 if (state.cp < state.cpend) {
                     c = src[state.cp++];
                     switch (c) {
@@ -1212,29 +1379,6 @@ public class NativeRegExp extends IdScriptableObject {
                             state.result = new RENode(REOP_WNONBDRY);
                             state.progLength++;
                             return true;
-                        /* Decimal escape */
-                        case '0':
-                            /*
-                             * We're deliberately violating the ECMA 5.1 specification and allow octal
-                             * escapes to follow spidermonkey and general 'web reality':
-                             * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
-                             * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
-                             */
-                            reportWarning(state.cx, "msg.bad.backref", "");
-                            /* octal escape */
-                            num = 0;
-                            // follow spidermonkey and allow multiple leading zeros,
-                            // e.g. let /\0000/ match the string "\0"
-                            while (num < 040 && state.cp < state.cpend) {
-                                c = src[state.cp];
-                                if ((c >= '0') && (c <= '7')) {
-                                    state.cp++;
-                                    num = 8 * num + (c - '0');
-                                } else break;
-                            }
-                            c = (char) num;
-                            doFlat(state, c);
-                            break;
                         case '1':
                         case '2':
                         case '3':
@@ -1244,128 +1388,43 @@ public class NativeRegExp extends IdScriptableObject {
                         case '7':
                         case '8':
                         case '9':
+                            // decimal escape
                             termStart = state.cp - 1;
                             num = getDecimalValue(c, state, "msg.overlarge.backref");
-                            if (num > state.backReferenceLimit)
-                                reportWarning(state.cx, "msg.bad.backref", "");
-                            /*
-                             * n > count of parentheses, then treat as octal instead.
-                             * Also see note above concerning 'web reality'
-                             */
                             if (num > state.backReferenceLimit) {
+                                reportWarning(state.cx, "msg.bad.backref", "");
                                 state.cp = termStart;
-                                if (c >= '8') {
-                                    // invalid octal escape, follow spidermonkey and
-                                    // treat as \\8 resp. \\9
-                                    c = '\\';
-                                    doFlat(state, c);
-                                    break;
+                                if (!parseCharacterAndCharacterClassEscape(state, params))
+                                    return false;
+                            } else {
+                                state.result = new RENode(REOP_BACKREF);
+                                state.result.parenIndex = num - 1;
+                                state.progLength += 3;
+                                if (state.maxBackReference < num) {
+                                    state.maxBackReference = num;
                                 }
-                                state.cp++;
-                                num = c - '0';
-                                while (num < 040 && state.cp < state.cpend) {
-                                    c = src[state.cp];
-                                    if ((c >= '0') && (c <= '7')) {
-                                        state.cp++;
-                                        num = 8 * num + (c - '0');
-                                    } else break;
-                                }
-                                c = (char) num;
-                                doFlat(state, c);
+                            }
+                            break;
+                        case '0':
+                            if (state.cp < state.cpend && src[state.cp] == '0') {
+                                /*
+                                 * We're deliberately violating the ECMA 5.1 specification and allow octal
+                                 * escapes to follow spidermonkey and general 'web reality':
+                                 * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+                                 * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
+                                 */
+
+                                // follow spidermonkey and allow multiple leading zeros,
+                                // e.g. let /\0000/ match the string "\0"
+                                parseMultipleLeadingZerosAsOctalEscape(state);
                                 break;
                             }
-                            /* otherwise, it's a back-reference */
-                            state.result = new RENode(REOP_BACKREF);
-                            state.result.parenIndex = num - 1;
-                            state.progLength += 3;
-                            if (state.maxBackReference < num) {
-                                state.maxBackReference = num;
-                            }
-                            break;
-                        /* Control escape */
-                        case 'f':
-                            c = 0xC;
-                            doFlat(state, c);
-                            break;
-                        case 'n':
-                            c = 0xA;
-                            doFlat(state, c);
-                            break;
-                        case 'r':
-                            c = 0xD;
-                            doFlat(state, c);
-                            break;
-                        case 't':
-                            c = 0x9;
-                            doFlat(state, c);
-                            break;
-                        case 'v':
-                            c = 0xB;
-                            doFlat(state, c);
-                            break;
-                        /* Control letter */
-                        case 'c':
-                            if ((state.cp < state.cpend) && isControlLetter(src[state.cp]))
-                                c = (char) (src[state.cp++] & 0x1F);
-                            else {
-                                /* back off to accepting the original '\' as a literal */
-                                --state.cp;
-                                c = '\\';
-                            }
-                            doFlat(state, c);
-                            break;
-                        /* UnicodeEscapeSequence */
-                        case 'u':
-                            nDigits += 2;
-                        /* fall through */ case 'x': /* HexEscapeSequence */
-                            {
-                                int n = 0;
-                                int i;
-                                for (i = 0; (i < nDigits) && (state.cp < state.cpend); i++) {
-                                    c = src[state.cp++];
-                                    n = Kit.xDigitToInt(c, n);
-                                    if (n < 0) {
-                                        // Back off to accepting the original
-                                        // 'u' or 'x' as a literal
-                                        state.cp -= (i + 2);
-                                        n = src[state.cp++];
-                                        break;
-                                    }
-                                }
-                                c = (char) n;
-                            }
-                            doFlat(state, c);
-                            break;
-                        /* Character class escapes */
-                        case 'd':
-                            state.result = new RENode(REOP_DIGIT);
-                            state.progLength++;
-                            break;
-                        case 'D':
-                            state.result = new RENode(REOP_NONDIGIT);
-                            state.progLength++;
-                            break;
-                        case 's':
-                            state.result = new RENode(REOP_SPACE);
-                            state.progLength++;
-                            break;
-                        case 'S':
-                            state.result = new RENode(REOP_NONSPACE);
-                            state.progLength++;
-                            break;
-                        case 'w':
-                            state.result = new RENode(REOP_ALNUM);
-                            state.progLength++;
-                            break;
-                        case 'W':
-                            state.result = new RENode(REOP_NONALNUM);
-                            state.progLength++;
-                            break;
-                        /* IdentityEscape */
+                        /* fall through */
                         default:
-                            {
-                                boolean asFlat = false;
-                                if (c == 'k' && state.namedBackrefEnabled) {
+                            state.cp--;
+                            if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                                if (c == 'k' && params.namedCaptureGroups) {
+                                    state.cp++;
                                     String groupName =
                                             extractCaptureGroupName(src, state.cp, state.cpend);
                                     if (groupName != null) {
@@ -1373,40 +1432,26 @@ public class NativeRegExp extends IdScriptableObject {
                                         state.result.captureGroupNameIndex =
                                                 state.cp + 1; // skip '<'
                                         state.result.captureGroupNameLength = groupName.length();
-                                        state.reparseIfNoNamedCaptureGroupFound = true;
                                         state.cp += groupName.length() + 2; // include '<' and '>'
-
                                         // REOP_NAMED_BACKREF GROUPNAMEINDEX GROUPNAMELENGTH
                                         state.progLength += 5;
-                                    } else {
-                                        if (state.namedCaptureGroupsFound) {
-                                            reportError("msg.invalid.named.backref", "");
-                                        } else {
-                                            state.failIfNamedCaptureGroupFound = true;
-                                            asFlat = true;
-                                        }
-                                    }
-                                } else asFlat = true;
-
-                                if (asFlat) {
-                                    state.result = new RENode(REOP_FLAT);
-                                    state.result.chr = c;
-                                    state.result.length = 1;
-                                    state.result.flatIndex = state.cp - 1;
-                                    state.progLength += 3;
+                                    } else reportError("msg.invalid.named.backref", "");
+                                } else if ('c'
+                                        == c) { // when lookahead=c, parse the \\ as a literal
+                                    doFlat(state, '\\');
+                                } else {
+                                    return false;
                                 }
                             }
-                            break;
                     }
                     break;
                 }
                 /* a trailing '\' is an error */
                 reportError("msg.trail.backslash", "");
-                return false;
+                break;
             case '(':
                 {
                     RENode result = null;
-                    termStart = state.cp;
                     if (state.cp + 1 < state.cpend
                             && src[state.cp] == '?'
                             && ((c = src[state.cp + 1]) == '=' || c == '!' || c == ':')) {
@@ -1446,11 +1491,6 @@ public class NativeRegExp extends IdScriptableObject {
                                 return false;
                             }
 
-                            if (state.failIfNamedCaptureGroupFound) {
-                                reportError("msg.invalid.named.backref", "");
-                                return false;
-                            }
-
                             result.captureGroupNameIndex = state.cp + 1; // skip '<'
                             result.captureGroupNameLength = name.length(); // skip '<' and '>'
                             state.namedCaptureGroupsFound = true;
@@ -1461,7 +1501,7 @@ public class NativeRegExp extends IdScriptableObject {
                         result.parenIndex = state.parenCount++;
                     }
                     ++state.parenNesting;
-                    if (!parseDisjunction(state)) return false;
+                    if (!parseDisjunction(state, params)) return false;
                     if (state.cp == state.cpend || src[state.cp] != ')') {
                         reportError("msg.unterm.paren", "");
                         return false;
@@ -1482,30 +1522,18 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError("msg.re.unmatched.right.paren", "");
                 return false;
             case '[':
-                state.result = new RENode(REOP_CLASS);
-                termStart = state.cp;
-                state.result.startIndex = termStart;
-                while (true) {
-                    if (state.cp == state.cpend) {
-                        reportError("msg.unterm.class", "");
-                        return false;
-                    }
-                    if (src[state.cp] == '\\') state.cp++;
-                    else {
-                        if (src[state.cp] == ']') {
-                            state.result.kidlen = state.cp - termStart;
-                            break;
-                        }
-                    }
-                    state.cp++;
+                ClassContents classContents = parseClassContents(state, params);
+                if (classContents == null) {
+                    return false;
                 }
+                state.result = new RENode(REOP_CLASS);
+                state.result.classContents = classContents;
                 state.result.index = state.classCount++;
                 /*
                  * Call calculateBitmapSize now as we want any errors it finds
                  * to be reported during the parse phase, not at execution.
                  */
-                if (!calculateBitmapSize(state, state.result, src, termStart, state.cp++))
-                    return false;
+                if (!calculateBitmapSize(state.flags, classContents, state.result)) return false;
                 state.progLength += 3; /* CLASS, <index> */
                 break;
 
@@ -1777,12 +1805,9 @@ public class NativeRegExp extends IdScriptableObject {
                     resolveForwardJump(program, nextTermFixup, pc);
                     break;
                 case REOP_CLASS:
-                    if (!t.sense) program[pc - 1] = REOP_NCLASS;
+                    if (!t.classContents.sense) program[pc - 1] = REOP_NCLASS;
                     pc = addIndex(program, pc, t.index);
-                    re.classList[t.index] =
-                            new RECharSet(
-                                    t.bmsize, t.startIndex,
-                                    t.kidlen, t.sense);
+                    re.classList[t.index] = new RECharSet(t.classContents, t.bmsize);
                     break;
                 default:
                     break;
@@ -2005,195 +2030,67 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private static void processCharSetImpl(REGlobalData gData, RECharSet charSet) {
-        int src = charSet.startIndex;
-        int end = src + charSet.strlength;
-
-        char rangeStart = 0, thisCh;
+        char thisCh;
         int byteLength;
-        char c;
-        int n;
-        int nDigits;
         int i;
-        boolean inRange = false;
+        ClassContents classContents = charSet.classContents;
 
         byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
 
-        if (src == end) return;
-
-        if (gData.regexp.source[src] == '^') {
-            assert !charSet.sense;
-            ++src;
-        } else {
-            assert charSet.sense;
+        for (char ch : classContents.chars) {
+            addCharacterToCharSet(charSet, ch);
+            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+                char uch = upcase(ch);
+                char dch = downcase(ch);
+                if (ch != uch) addCharacterToCharSet(charSet, uch);
+                if (ch != dch) addCharacterToCharSet(charSet, dch);
+            }
         }
 
-        while (src != end) {
-            nDigits = 2;
-            if (gData.regexp.source[src] == '\\') {
-                ++src;
-                c = gData.regexp.source[src++];
-                switch (c) {
-                    case 'b':
-                        thisCh = 0x8;
-                        break;
-                    case 'f':
-                        thisCh = 0xC;
-                        break;
-                    case 'n':
-                        thisCh = 0xA;
-                        break;
-                    case 'r':
-                        thisCh = 0xD;
-                        break;
-                    case 't':
-                        thisCh = 0x9;
-                        break;
-                    case 'v':
-                        thisCh = 0xB;
-                        break;
-                    case 'c':
-                        if ((src < end) && isControlLetter(gData.regexp.source[src]))
-                            thisCh = (char) (gData.regexp.source[src++] & 0x1F);
-                        else {
-                            --src;
-                            thisCh = '\\';
-                        }
-                        break;
-                    case 'u':
-                        nDigits += 2;
-                    // fall through
-                    case 'x':
-                        n = 0;
-                        for (i = 0; (i < nDigits) && (src < end); i++) {
-                            c = gData.regexp.source[src++];
-                            int digit = toASCIIHexDigit(c);
-                            if (digit < 0) {
-                                /* back off to accepting the original '\'
-                                 * as a literal
-                                 */
-                                src -= (i + 1);
-                                n = '\\';
-                                break;
-                            }
-                            n = (n << 4) | digit;
-                        }
-                        thisCh = (char) n;
-                        break;
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                        /*
-                         *  This is a non-ECMA extension - decimal escapes (in this
-                         *  case, octal!) are supposed to be an error inside class
-                         *  ranges, but supported here for backwards compatibility.
-                         *
-                         */
-                        n = (c - '0');
-                        c = gData.regexp.source[src];
-                        if ('0' <= c && c <= '7') {
-                            src++;
-                            n = 8 * n + (c - '0');
-                            c = gData.regexp.source[src];
-                            if ('0' <= c && c <= '7') {
-                                src++;
-                                i = 8 * n + (c - '0');
-                                if (i <= 0377) n = i;
-                                else src--;
-                            }
-                        }
-                        thisCh = (char) n;
-                        break;
+        for (int j = 0; j < classContents.ranges.size(); j += 2) {
+            char start = classContents.ranges.get(j);
+            char end = classContents.ranges.get(j + 1);
+            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+                for (char ch = start; ch <= end; ) {
+                    addCharacterToCharSet(charSet, ch);
+                    char uch = upcase(ch);
+                    char dch = downcase(ch);
+                    if (ch != uch) addCharacterToCharSet(charSet, uch);
+                    if (ch != dch) addCharacterToCharSet(charSet, dch);
+                    if (++ch == 0) break; // overflow
+                }
+            } else addCharacterRangeToCharSet(charSet, start, end);
+        }
 
-                    case 'd':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        addCharacterRangeToCharSet(charSet, '0', '9');
-                        continue; /* don't need range processing */
-                    case 'D':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1));
-                        addCharacterRangeToCharSet(
-                                charSet, (char) ('9' + 1), (char) (charSet.length - 1));
-                        continue;
-                    case 's':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        for (i = (charSet.length - 1); i >= 0; i--)
-                            if (isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
-                        continue;
-                    case 'S':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        for (i = (charSet.length - 1); i >= 0; i--)
-                            if (!isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
-                        continue;
-                    case 'w':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        for (i = (charSet.length - 1); i >= 0; i--)
-                            if (isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
-                        continue;
-                    case 'W':
-                        if (inRange) {
-                            addCharacterToCharSet(charSet, '-');
-                            inRange = false;
-                        }
-                        for (i = (charSet.length - 1); i >= 0; i--)
-                            if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
-                        continue;
-                    default:
-                        thisCh = c;
-                        break;
-                }
-            } else {
-                thisCh = gData.regexp.source[src++];
-            }
-            if (inRange) {
-                if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-                    assert (rangeStart <= thisCh);
-                    for (c = rangeStart; c <= thisCh; ) {
-                        addCharacterToCharSet(charSet, c);
-                        char uch = upcase(c);
-                        char dch = downcase(c);
-                        if (c != uch) addCharacterToCharSet(charSet, uch);
-                        if (c != dch) addCharacterToCharSet(charSet, dch);
-                        if (++c == 0) break; // overflow
-                    }
-                } else {
-                    addCharacterRangeToCharSet(charSet, rangeStart, thisCh);
-                }
-                inRange = false;
-            } else {
-                if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-                    addCharacterToCharSet(charSet, upcase(thisCh));
-                    addCharacterToCharSet(charSet, downcase(thisCh));
-                } else {
-                    addCharacterToCharSet(charSet, thisCh);
-                }
-                if (src < (end - 1)) {
-                    if (gData.regexp.source[src] == '-') {
-                        ++src;
-                        inRange = true;
-                        rangeStart = thisCh;
-                    }
-                }
+        for (RENode escape : classContents.escapeNodes) {
+            switch (escape.op) {
+                case REOP_DIGIT:
+                    addCharacterRangeToCharSet(charSet, '0', '9');
+                    break;
+                case REOP_NONDIGIT:
+                    addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1));
+                    addCharacterRangeToCharSet(
+                            charSet, (char) ('9' + 1), (char) (charSet.length - 1));
+                    break;
+                case REOP_SPACE:
+                    for (i = (charSet.length - 1); i >= 0; i--)
+                        if (isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
+                    break;
+                case REOP_NONSPACE:
+                    for (i = (charSet.length - 1); i >= 0; i--)
+                        if (!isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
+                    break;
+                case REOP_ALNUM:
+                    for (i = (charSet.length - 1); i >= 0; i--)
+                        if (isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
+                    break;
+                case REOP_NONALNUM:
+                    for (i = (charSet.length - 1); i >= 0; i--)
+                        if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
+                    break;
+                default:
+                    Kit.codeBug("classContents contains invalid escape node type");
             }
         }
     }
@@ -2211,7 +2108,7 @@ public class NativeRegExp extends IdScriptableObject {
         return (charSet.length == 0
                         || ch >= charSet.length
                         || (charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0)
-                ^ charSet.sense;
+                ^ charSet.classContents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -3701,11 +3598,9 @@ class RENode {
     boolean greedy;
 
     /* or a character class */
-    int startIndex;
-    int kidlen; /* length of string at kid, in chars */
     int bmsize; /* bitmap size, based on max char code */
     int index; /* index into class list */
-    boolean sense;
+    NativeRegExp.ClassContents classContents;
 
     /* or a literal sequence */
     char chr; /* of one character */
@@ -3730,10 +3625,7 @@ class CompilerState {
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
-
-        this.namedBackrefEnabled = true;
-        this.failIfNamedCaptureGroupFound = false;
-        this.reparseIfNoNamedCaptureGroupFound = false;
+        this.namedCaptureGroupsFound = false;
     }
 
     Context cx;
@@ -3748,22 +3640,7 @@ class CompilerState {
     int classCount; /* number of [] encountered */
     int progLength; /* estimated bytecode length */
 
-    boolean namedBackrefEnabled; // should \k be treated as a backreference?
     boolean namedCaptureGroupsFound; // have we found any named capture groups?
-
-    // should we fail if a named capture group is found?
-    // If we find something in the regexp that starts with a
-    // \k but doesn't lead to a valid named backref, it is
-    // optimistically parsed as a FLAT. In this case, we want
-    // to fail if we eventually find a named capture group.
-    boolean failIfNamedCaptureGroupFound;
-
-    // if we find something in the regexp that is a valid
-    // named backref, we optimistically parse it as a BACKREF.
-    // However if we don't find any named capture groups in the regexp,
-    // we must fail and parse it as a FLAT.
-    boolean reparseIfNoNamedCaptureGroupFound;
-
     RENode result;
 }
 
@@ -3865,17 +3742,13 @@ class REGlobalData {
 final class RECharSet implements Serializable {
     private static final long serialVersionUID = 7931787979395898394L;
 
-    RECharSet(int length, int startIndex, int strlength, boolean sense) {
+    RECharSet(NativeRegExp.ClassContents classContents, int length) {
         this.length = length;
-        this.startIndex = startIndex;
-        this.strlength = strlength;
-        this.sense = sense;
+        this.classContents = classContents;
     }
 
     final int length;
-    final int startIndex;
-    final int strlength;
-    final boolean sense;
+    final NativeRegExp.ClassContents classContents;
 
     transient volatile boolean converted;
     transient volatile byte[] bits;

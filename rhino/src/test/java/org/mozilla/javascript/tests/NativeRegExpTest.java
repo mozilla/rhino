@@ -831,4 +831,57 @@ public class NativeRegExpTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("1-2", script);
     }
+
+    // just a \k without a name is invalid when there is a named capture group
+    @Test
+    public void invalidNamedBackref() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/(?<a>.)\\k/.compile()");
+    }
+
+    @Test
+    public void slashKInCharClass() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: invalid Unicode escape sequence", "/(?<a>.)[\\k]/.compile()");
+    }
+
+    // test that \0000 is octal escape for 0 (only supported by Rhino, inherited from SpiderMonkey)
+    @Test
+    public void octalEscapeSpiderMonkey() {
+        final String script =
+                "var regex = /\\0000101/;\n" + "var res = '' + regex.test('A');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    // test that \0000 in character class is two chars \000 and 0
+    @Test
+    public void octalEscapeInCharacterClass() {
+        final String script =
+                "var regex = /[\\0000]/;\n"
+                        + "var res = '' + regex.test('\\0') + '-' + regex.test('0');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true", script);
+    }
+
+    @Test
+    public void controlEscapeInCharacterClass() {
+        final String script =
+                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\\\');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void unterminatedBackslash() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Trailing \\ in regular expression", "new RegExp('[\\\\')");
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Trailing \\ in regular expression", "new RegExp('\\\\')");
+    }
+
+    // test z-a is invalid character range
+    @Test
+    public void invalidCharacterRange() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid range in character class", "/[z-a]/.compile()");
+    }
 }
