@@ -4,240 +4,225 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.HashMap;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.mozilla.javascript.BaseFunction;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.testutils.Utils;
 
-public class UndefinedOrNullThisInFunctionCallOrApplyTest {
+class UndefinedOrNullThisInFunctionCallOrApplyTest {
+    @Nested
+    class LegacyVersion {
+        @Test
+        void applyStrictOrNonStrict() {
+            // Legacy mode replaces missing this with global object always, strict or non-strict
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_7);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-    private Context cx;
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
 
-    private BaseFunction function;
+                        arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {'use strict'; return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-    @Before
-    public void setUp() throws Exception {
-        cx = Context.enter();
-        function =
-                new BaseFunction() {
-                    @Override
-                    public Object call(
-                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                        System.out.println("QWE");
-                        return thisObj;
-                    }
-                };
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
+
+                        return null;
+                    });
+        }
+
+        @Test
+        void applyBuiltIn() {
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_7);
+
+                        Object res = Evaluator.eval("Array.prototype.at.apply(undefined);");
+                        assertTrue(Undefined.isUndefined(res));
+
+                        return null;
+                    });
+        }
+
+        @Test
+        void callStrictOrNonStrict() {
+            // Legacy mode replaces missing this with global object always, strict or non strict
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_7);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
+
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
+
+                        arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {'use strict'; return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
+
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
+
+                        return null;
+                    });
+        }
+
+        @Test
+        void callBuiltIn() {
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_7);
+
+                        Object res = Evaluator.eval("Array.prototype.at.call(undefined);");
+                        assertTrue(Undefined.isUndefined(res));
+
+                        return null;
+                    });
+        }
     }
 
-    @After
-    public void tearDown() throws Exception {
-        Context.exit();
-    }
+    @Nested
+    class ModernVersion {
+        @Test
+        void applyStrict() {
+            // Preserves null/undefined arguments
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {'use strict'; return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
+                        assertNotEquals(arr.get(0), arr.get(1));
+                        assertNotEquals(arr.get(0), arr.get(2));
+                        assertNotEquals(arr.get(0), arr.get(3));
+                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(1));
+                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
+                        assertNull(arr.get(3));
 
-    @Test
-    @Ignore
-    public void whenVersionGt17ThenPassNullAsThisObjJavaFunc() {
-        HashMap<String, Scriptable> bindings = new HashMap<String, Scriptable>();
-        bindings.put("F2", function);
+                        return null;
+                    });
+        }
 
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        NativeArray arr =
-                (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(undefined)];", bindings);
+        @Test
+        void applyNonStrict() {
+            // Replaces missing this with global object for non-strict functions
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
 
-        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        return null;
+                    });
+        }
 
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(undefined)];", bindings);
+        @Test
+        void applyBuiltIn() {
+            // Preserves null/undefined arguments, and thus throws an error
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
 
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        assertThrows(
+                                EcmaError.class,
+                                () -> Evaluator.eval("Array.prototype.at.apply(undefined);"));
 
-        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-    }
+                        return null;
+                    });
+        }
 
-    @Test
-    @Ignore
-    public void whenVersionLtEq17ThenPassGlobalThisObjJavaFunc() {
-        HashMap<String, Scriptable> bindings = new HashMap<String, Scriptable>();
-        bindings.put("F2", function);
+        @Test
+        void callStrict() {
+            // Preserves null/undefined arguments
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {'use strict'; return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-        cx.setLanguageVersion(Context.VERSION_1_7);
-        NativeArray arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                "{return this;};[this, F2.apply(), F2.apply(undefined)];",
-                                bindings);
+                        assertNotEquals(arr.get(0), arr.get(1));
+                        assertNotEquals(arr.get(0), arr.get(2));
+                        assertNotEquals(arr.get(0), arr.get(3));
+                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(1));
+                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
+                        assertNull(arr.get(3));
 
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        return null;
+                    });
+        }
 
-        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
+        @Test
+        void callNonStrict() {
+            // Replaces missing this with global object for non-strict functions
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
+                        NativeArray arr =
+                                (NativeArray)
+                                        Evaluator.eval(
+                                                cx,
+                                                "function F2() {return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-    }
+                        assertSame(arr.get(0), arr.get(1));
+                        assertSame(arr.get(0), arr.get(2));
+                        assertSame(arr.get(0), arr.get(3));
 
-    @Test
-    public void whenVersionGt17ThenPassNullAsThisObjForApplyJS() {
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        NativeArray arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
+                        return null;
+                    });
+        }
 
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertNotEquals(arr.get(1), arr.get(2));
-        assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
+        @Test
+        void callBuiltIn() {
+            // Preserves null/undefined arguments, and thus throws an error
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
 
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        assertThrows(
+                                EcmaError.class,
+                                () -> Evaluator.eval("Array.prototype.at.call(undefined);"));
 
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
-
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertNotEquals(arr.get(1), arr.get(2));
-        assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
-
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-    }
-
-    @Test
-    public void whenVersionLtEq17ThenPassGlobalThisObjForApplyJS() {
-        cx.setLanguageVersion(Context.VERSION_1_7);
-        NativeArray arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
-
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
-
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-    }
-
-    @Test
-    public void whenVersionGt17ThenPassNullAsThisObjForCallJS() {
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        NativeArray arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
-
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertNotEquals(arr.get(1), arr.get(2));
-        assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
-
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(null)];");
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
-
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertNotEquals(arr.get(1), arr.get(2));
-        assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
-
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(null)];");
-        assertNotEquals(arr.get(0), arr.get(1));
-        assertNotEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-    }
-
-    @Test
-    public void whenVersionLtEq17ThenPassGlobalThisObjForCallJS() {
-        cx.setLanguageVersion(Context.VERSION_1_7);
-        NativeArray arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(undefined)];");
-
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
-
-        arr =
-                (NativeArray)
-                        Evaluator.eval(
-                                cx,
-                                "function F2() {return this;};[this, F2.call(), F2.call(null)];");
-
-        assertEquals(arr.get(0), arr.get(1));
-        assertEquals(arr.get(0), arr.get(2));
-        assertEquals(arr.get(1), arr.get(2));
+                        return null;
+                    });
+        }
     }
 }

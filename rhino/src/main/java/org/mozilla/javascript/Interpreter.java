@@ -2875,45 +2875,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     indexReg += blen;
                 }
             } else if (fun instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) fun;
-                // Bug 405654 -- make the best effort to keep
-                // Function.apply and Function.call within this
-                // interpreter loop invocation
-                if (BaseFunction.isApplyOrCall(ifun)) {
-                    // funThisObj becomes fun
-                    fun = ScriptRuntime.getCallable(funThisObj);
-                    // first arg becomes thisObj
-                    funThisObj = getApplyThis(cx, stack, sDbl, stackTop + 2, indexReg, fun, frame);
-                    if (BaseFunction.isApply(ifun)) {
-                        // Apply: second argument after new "this"
-                        // should be array-like
-                        // and we'll spread its elements on the stack
-                        Object[] callArgs =
-                                indexReg < 2
-                                        ? ScriptRuntime.emptyArgs
-                                        : ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
-                        int alen = callArgs.length;
-                        stack = frame.ensureStackLength(alen + stackTop + 2);
-                        sDbl = frame.sDbl;
-                        System.arraycopy(callArgs, 0, stack, stackTop + 2, alen);
-                        indexReg = alen;
-                    } else {
-                        // Call: shift args left, starting from 2nd
-                        if (indexReg > 0) {
-                            if (indexReg > 1) {
-                                System.arraycopy(
-                                        stack, stackTop + 3, stack, stackTop + 2, indexReg - 1);
-                                System.arraycopy(
-                                        sDbl, stackTop + 3, sDbl, stackTop + 2, indexReg - 1);
-                            }
-                            indexReg--;
-                        }
-                    }
-                } else {
-                    // Some other IdFunctionObject we don't know how to
-                    // reduce.
-                    break;
-                }
+                break;
             } else if (fun instanceof NoSuchMethodShim) {
                 NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;
                 // Bug 447697 -- make best effort to keep
@@ -3649,44 +3611,6 @@ public final class Interpreter extends Icode implements Evaluator {
             frame.stack[stackTop] = generatorState.value;
         }
         return Scriptable.NOT_FOUND;
-    }
-
-    private static Scriptable getApplyThis(
-            Context cx,
-            Object[] stack,
-            double[] sDbl,
-            int thisIdx,
-            int indexReg,
-            Callable target,
-            CallFrame frame) {
-        // This is a workaround for what is most likely a bug. We compute applyThis differently for
-        // interpreted and non-interpreted functions. It feels like exactly one of these two
-        // strategies should be correct, but choosing one or the other for all functions will break
-        // different sets of test262 tests.
-        if (target instanceof InterpretedFunction) {
-            Scriptable applyThis;
-            if (indexReg != 0) {
-                Object obj = stack[thisIdx];
-                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
-                applyThis = ScriptRuntime.toObjectOrNull(cx, obj, frame.scope);
-            } else {
-                applyThis = null;
-            }
-            if (applyThis == null) {
-                // This covers the case of args[0] == (null|undefined) as well.
-                applyThis = ScriptRuntime.getTopCallScope(cx);
-            }
-            return applyThis;
-        } else {
-            Object obj;
-            if (indexReg != 0) {
-                obj = stack[thisIdx];
-                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
-            } else {
-                obj = null;
-            }
-            return ScriptRuntime.getApplyOrCallThis(cx, frame.scope, obj, indexReg);
-        }
     }
 
     private static CallFrame initFrame(
