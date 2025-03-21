@@ -827,4 +827,22 @@ public class NativeRegExpTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("1-2", script);
     }
+
+    // test that \0000 is octal escape for 0 (only supported by Rhino, inherited from SpiderMonkey)
+    @Test
+    public void octalEscapeSpiderMonkey() {
+        final String script =
+                "var regex = /\\0000101/;\n" + "var res = '' + regex.test('A');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    // test that \0000 in character class is two chars \000 and 0
+    @Test
+    public void octalEscapeInCharacterClass() {
+        final String script =
+                "var regex = /[\\0000]/;\n"
+                        + "var res = '' + regex.test('\\0') + '-' + regex.test('0');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true", script);
+    }
 }
