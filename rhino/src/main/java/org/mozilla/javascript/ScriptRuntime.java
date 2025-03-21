@@ -3116,9 +3116,11 @@ public class ScriptRuntime {
             }
 
             // Replace missing this with global object only for non-strict functions
-            if ((callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED)
-                    && !(!(target instanceof NativeFunction)
-                            || ((NativeFunction) target).isStrict())) {
+            boolean missingCallThis =
+                    callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
+            boolean isFunctionStrict =
+                    !(target instanceof NativeFunction) || ((NativeFunction) target).isStrict();
+            if (missingCallThis && !isFunctionStrict) {
                 callThis = getTopCallScope(cx);
             }
         }
