@@ -15,7 +15,8 @@ public class LambdaFunction extends BaseFunction {
 
     private static final long serialVersionUID = -8388132362854748293L;
 
-    // The target is expected to be a lambda -- lambdas should not be serialized.
+    // The target is expected to be a lambda. Lambdas may be serialized, which
+    // requires this special interface.
     protected final SerializableCallable target;
     private final String name;
     private final int length;
@@ -29,13 +30,35 @@ public class LambdaFunction extends BaseFunction {
      * @param length the arity of the function
      * @param target an object that implements the function in Java. Since Callable is a
      *     single-function interface this will typically be implemented as a lambda.
+     * @param defaultPrototype set up a prototype on the new function
      */
-    public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target) {
+    public LambdaFunction(
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            boolean defaultPrototype) {
         this.target = target;
         this.name = name;
         this.length = length;
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
-        setupDefaultPrototype();
+        if (defaultPrototype) {
+            setupDefaultPrototype();
+        }
+    }
+
+    /**
+     * Create a new function. The new object will have the Function prototype and no parent. The
+     * caller is responsible for binding this object to the appropriate scope.
+     *
+     * @param scope scope of the calling context
+     * @param name name of the function
+     * @param length the arity of the function
+     * @param target an object that implements the function in Java. Since Callable is a
+     *     single-function interface this will typically be implemented as a lambda.
+     */
+    public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target) {
+        this(scope, name, length, target, true);
     }
 
     /**

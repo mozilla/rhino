@@ -34,8 +34,9 @@ var TITLE   = "String.prototype.toLowerCase()";
 writeHeaderToLog( SECTION + " "+ TITLE);
 
 new TestCase( SECTION,  "String.prototype.toLowerCase.length",        0,          String.prototype.toLowerCase.length );
-new TestCase( SECTION,  "delete String.prototype.toLowerCase.length", false,      delete String.prototype.toLowerCase.length );
-new TestCase( SECTION,  "delete String.prototype.toLowerCase.length; String.prototype.toLowerCase.length", 0,      eval("delete String.prototype.toLowerCase.length; String.prototype.toLowerCase.length") );
+// These are no longer valid ECMAScript tests
+//new TestCase( SECTION,  "delete String.prototype.toLowerCase.length", false,      delete String.prototype.toLowerCase.length );
+//new TestCase( SECTION,  "delete String.prototype.toLowerCase.length; String.prototype.toLowerCase.length", 0,      eval("delete String.prototype.toLowerCase.length; String.prototype.toLowerCase.length") );
 
 // Basic Latin, Latin-1 Supplement, Latin Extended A
 for ( var i = 0; i <= 0x017f; i++ ) {
