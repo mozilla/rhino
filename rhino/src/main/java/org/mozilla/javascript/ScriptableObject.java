@@ -939,7 +939,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * <p>If the method's name is "jsConstructor", the method is considered to define the body of
      * the constructor. Only one method of this name may be defined. You may use the varargs forms
      * for constructors documented in {@link FunctionObject#FunctionObject(String, Member,
-     * Scriptable)}
+     * Scriptable, Class)}
      *
      * <p>If no method is found that can serve as constructor, a Java constructor will be selected
      * to serve as the JavaScript constructor in the following manner. If the class has only one
@@ -1137,7 +1137,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
         }
 
-        FunctionObject ctor = new FunctionObject(className, ctorMember, scope);
+        FunctionObject ctor = new FunctionObject(className, ctorMember, scope, clazz);
         if (ctor.isVarArgsMethod()) {
             throw Context.reportRuntimeErrorById("msg.varargs.ctor", ctorMember.getName());
         }
@@ -1224,7 +1224,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                         "jsStaticFunction must be used with static method.");
             }
 
-            FunctionObject f = new FunctionObject(name, method, proto);
+            FunctionObject f = new FunctionObject(name, method, proto, clazz);
             if (f.isVarArgsConstructor()) {
                 throw Context.reportRuntimeErrorById("msg.varargs.fun", ctorMember.getName());
             }
@@ -2054,7 +2054,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (m == null) {
                 throw Context.reportRuntimeErrorById("msg.method.not.found", name, clazz.getName());
             }
-            FunctionObject f = new FunctionObject(name, m, this);
+            FunctionObject f = new FunctionObject(name, m, this, clazz);
             defineProperty(name, f, attributes);
         }
     }
