@@ -47,12 +47,11 @@ public class ScriptRuntimeES6 {
 
     /** Registers the symbol <code>[Symbol.unscopables]</code> on the given constructor function. */
     public static void addSymbolUnscopables(
-            Context cx, Scriptable scope, ScriptableObject constructor, Object value) {
-        ScriptableObject unScopablesDescriptor = (ScriptableObject) cx.newObject(scope);
-        ScriptableObject.putProperty(unScopablesDescriptor, "enumerable", false);
-        ScriptableObject.putProperty(unScopablesDescriptor, "configurable", true);
-        ScriptableObject.putProperty(unScopablesDescriptor, "writable", false);
-        ScriptableObject.putProperty(unScopablesDescriptor, "value", value);
-        constructor.defineOwnProperty(cx, SymbolKey.UNSCOPABLES, unScopablesDescriptor, false);
+            Context cx, Scriptable scope, ScriptableObject constructor, LazilyLoadedCtor value) {
+        constructor.addLazilyInitializedValue(
+                SymbolKey.UNSCOPABLES,
+                0,
+                value,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 }

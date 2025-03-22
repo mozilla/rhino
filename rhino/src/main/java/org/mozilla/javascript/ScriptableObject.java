@@ -680,6 +680,14 @@ public abstract class ScriptableObject extends SlotMapOwner
         lslot.value = init;
     }
 
+    void addLazilyInitializedValue(Symbol key, int index, LazilyLoadedCtor init, int attributes) {
+        if (key != null && index != 0) throw new IllegalArgumentException(key.toString());
+        checkNotSealed(key, index);
+        LazyLoadSlot lslot = getMap().compute(this, key, index, ScriptableObject::ensureLazySlot);
+        lslot.setAttributes(attributes);
+        lslot.value = init;
+    }
+
     /**
      * Attach the specified object to this object, and delegate all indexed property lookups to it.
      * In other words, if the object has 3 elements, then an attempt to look up or modify "[0]",

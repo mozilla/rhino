@@ -147,7 +147,12 @@ public class NativeArray extends ScriptableObject implements List {
 
         ctor.definePrototypeAlias("values", SymbolKey.ITERATOR, DONTENUM);
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, ctor);
-        ScriptRuntimeES6.addSymbolUnscopables(cx, scope, proto, makeUnscopables(cx, scope));
+        ScriptRuntimeES6.addSymbolUnscopables(
+                cx,
+                scope,
+                proto,
+                new LazilyLoadedCtor(
+                        proto, "", false, false, (c, s, sld) -> makeUnscopables(c, s)));
 
         ctor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
         ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
