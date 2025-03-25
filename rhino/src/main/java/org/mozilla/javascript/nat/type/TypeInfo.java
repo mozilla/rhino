@@ -377,6 +377,13 @@ public interface TypeInfo {
     }
 
     /**
+     * @return true if this TypeInfo represents {@link String} class
+     */
+    default boolean isString() {
+        return false;
+    }
+
+    /**
      * @return true if this TypeInfo represents {@link Object} class
      */
     default boolean isObjectExact() {
