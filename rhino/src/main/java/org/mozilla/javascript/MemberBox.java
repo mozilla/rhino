@@ -55,6 +55,8 @@ final class MemberBox implements Serializable {
                         ? new boolean[method.getParameters().length]
                         : nullDetector.getParameterNullability(method);
         this.vararg = method.isVarArgs();
+        this.argTypeInfos = List.of(TypeInfo.ofArray(method.getGenericParameterTypes()));
+        this.returnTypeInfo = TypeInfo.of(method.getGenericReturnType());
     }
 
     private void init(Constructor<?> constructor) {
@@ -64,6 +66,8 @@ final class MemberBox implements Serializable {
                         ? new boolean[constructor.getParameters().length]
                         : nullDetector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
+        this.argTypeInfos = List.of(TypeInfo.ofArray(constructor.getGenericParameterTypes()));
+        this.returnTypeInfo = TypeInfo.NONE;
     }
 
     Method method() {
@@ -103,32 +107,10 @@ final class MemberBox implements Serializable {
     }
 
     List<TypeInfo> getArgTypes() {
-        if (argTypeInfos == null) {
-            synchronized (this) {
-                if (argTypeInfos == null) {
-                    final var rawTypes =
-                            this.memberObject instanceof Method
-                                    ? ((Method) memberObject).getGenericParameterTypes()
-                                    : ((Constructor<?>) memberObject).getGenericParameterTypes();
-                    argTypeInfos = List.of(TypeInfo.ofArray(rawTypes));
-                }
-            }
-        }
         return argTypeInfos;
     }
 
     TypeInfo getReturnType() {
-        if (returnTypeInfo == null) {
-            synchronized (this) {
-                if (returnTypeInfo == null) {
-                    returnTypeInfo =
-                            this.isMethod()
-                                    ? TypeInfo.of(this.method().getGenericReturnType())
-                                    : TypeInfo.NONE;
-                }
-            }
-        }
-
         return returnTypeInfo;
     }
 
