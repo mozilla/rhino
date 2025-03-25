@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
 import org.mozilla.javascript.ast.ArrayLiteral;
@@ -1421,6 +1422,7 @@ public final class IRFactory {
         if (functionCount != 0) {
             // Functions containing other functions require activation objects
             fnNode.setRequiresActivation();
+            propagateNeedsArgumentsFromNestedArrowFunctions(fnNode);
         }
 
         if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
@@ -1456,6 +1458,27 @@ public final class IRFactory {
         Node result = Node.newString(Token.FUNCTION, fnNode.getName());
         result.putIntProp(Node.FUNCTION_PROP, functionIndex);
         return result;
+    }
+
+    private static void propagateNeedsArgumentsFromNestedArrowFunctions(FunctionNode fnNode) {
+        if (fnNode.needsArguments()) {
+            return;
+        }
+
+        // If a nested lambda needs arguments, the outer function needs them too.
+        Queue<FunctionNode> toVisit = new ArrayDeque<>(fnNode.getFunctions());
+        while (!toVisit.isEmpty()) {
+            FunctionNode nestedFunction = toVisit.poll();
+            if (nestedFunction.getFunctionType() == FunctionNode.ARROW_FUNCTION) {
+                if (nestedFunction.needsArguments()) {
+                    fnNode.setNeedsArguments();
+                    return;
+                }
+
+                // All nested arrow functions, recursively
+                toVisit.addAll(nestedFunction.getFunctions());
+            }
+        }
     }
 
     /**

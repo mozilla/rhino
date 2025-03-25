@@ -120,6 +120,9 @@ class BodyCodegen {
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addPush(scriptOrFn.hasRestParameter());
+        cfw.addPush(
+                !(scriptOrFn instanceof FunctionNode)
+                        || ((FunctionNode) scriptOrFn).needsArguments());
         cfw.addLoadThis();
         cfw.addInvoke(
                 ByteCode.INVOKEVIRTUAL,
@@ -132,6 +135,7 @@ class BodyCodegen {
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "[Ljava/lang/Object;"
+                        + "Z"
                         + "Z"
                         + "Z"
                         + "Lorg/mozilla/javascript/Scriptable;"
@@ -432,6 +436,9 @@ class BodyCodegen {
             cfw.addALoad(argsLocal);
             cfw.addPush(scriptOrFn.isInStrictMode());
             cfw.addPush(scriptOrFn.hasRestParameter());
+            cfw.addPush(
+                    !(scriptOrFn instanceof FunctionNode)
+                            || ((FunctionNode) scriptOrFn).needsArguments());
 
             if (!isArrow) {
                 // Just pass the home object of the function
@@ -473,6 +480,7 @@ class BodyCodegen {
                             + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "[Ljava/lang/Object;"
+                            + "Z"
                             + "Z"
                             + "Z"
                             + "Lorg/mozilla/javascript/Scriptable;"
