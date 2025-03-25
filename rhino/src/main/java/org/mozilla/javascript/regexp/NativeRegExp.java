@@ -49,6 +49,7 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
     public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
     public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
 
     // type of match to perform
     public static final int TEST = 0;
@@ -237,6 +238,7 @@ public class NativeRegExp extends IdScriptableObject {
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
         if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
+        if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
     }
 
     NativeRegExp() {}
@@ -629,6 +631,8 @@ public class NativeRegExp extends IdScriptableObject {
                     f = JSREG_DOTALL;
                 } else if (c == 'y') {
                     f = JSREG_STICKY;
+                } else if (c == 'u') {
+                    f = JSREG_UNICODE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
@@ -651,7 +655,8 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            ParserParameters params = new ParserParameters(false);
+            boolean unicodeMode = (flags & JSREG_UNICODE) != 0;
+            ParserParameters params = new ParserParameters(false, unicodeMode);
             if (!parseDisjunction(state, params)) return null;
             // Need to reparse if pattern contains invalid backreferences:
             // "Note: if the number of left parentheses is less than the number
@@ -787,9 +792,11 @@ public class NativeRegExp extends IdScriptableObject {
 
     static class ParserParameters {
         boolean namedCaptureGroups;
+        boolean unicodeMode;
 
-        ParserParameters(boolean namedCaptureGroups) {
+        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode) {
             this.namedCaptureGroups = namedCaptureGroups;
+            this.unicodeMode = unicodeMode;
         }
     }
 
