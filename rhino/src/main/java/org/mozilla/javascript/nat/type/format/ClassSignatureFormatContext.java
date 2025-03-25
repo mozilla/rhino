@@ -1,7 +1,6 @@
 package org.mozilla.javascript.nat.type.format;
 
-import org.mozilla.javascript.nat.type.ArrayTypeInfo;
-import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo;
 
 /**
  * @author ZZZank

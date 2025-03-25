@@ -1,23 +1,28 @@
 package org.mozilla.javascript.nat.type;
 
-import org.mozilla.javascript.nat.type.format.TypeFormatContext;
-
 import java.lang.reflect.TypeVariable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+
 /**
  * @author ZZZank
  */
-public class VariableTypeInfo extends TypeInfoBase {
+public class VariableTypeInfo extends TypeInfoBase implements
+    org.mozilla.javascript.nat.type.definition.VariableTypeInfo {
     static final Map<TypeVariable<?>, VariableTypeInfo> CACHE = new ConcurrentHashMap<>();
 
     private final TypeVariable<?> raw;
-    private TypeInfo mainBound = null;
+    private final TypeInfo mainBound;
 
     VariableTypeInfo(TypeVariable<?> raw) {
         this.raw = raw;
+        this.mainBound = TypeInfo.of(raw.getBounds()[0]);
     }
 
     /**
@@ -33,33 +38,27 @@ public class VariableTypeInfo extends TypeInfoBase {
         return TypeInfo.ofArray(rawBounds);
     }
 
-    public String getName() {
+    @Override
+    public String name() {
         return raw.getName();
     }
 
-    /**
-     * The main bound is what a {@link TypeVariable} will become when converted to a {@link Class},
-     * and what this type should be after Java erased generic type info
-     *
-     * <p>for {@code T}, the main bound will be {@link Object}, for {@code T extends XXX}, the main
-     * bound will be {@code XXX}, for {@code T extends XXX & YYY & ZZZ} the main bound will still be
-     * {@code XXX}
-     *
-     * @see #asClass()
-     */
-    public TypeInfo getMainBound() {
-        if (mainBound == null) {
-            mainBound = TypeInfo.of(raw.getBounds()[0]);
-        }
+    @Override
+    public List<TypeInfo> bounds(TypeInfoFactory factory) {
+        return Arrays.asList(getBounds());
+    }
+
+    @Override
+    public TypeInfo mainBound() {
         return mainBound;
     }
 
     /**
-     * @see #getMainBound()
+     * @see #mainBound()
      */
     @Override
     public Class<?> asClass() {
-        return getMainBound().asClass();
+        return mainBound().asClass();
     }
 
     @Override
@@ -76,12 +75,12 @@ public class VariableTypeInfo extends TypeInfoBase {
 
     @Override
     public boolean isObjectExact() {
-        return getMainBound().isObjectExact();
+        return mainBound().isObjectExact();
     }
 
     @Override
     public int getTypeTag() {
-        return getMainBound().getTypeTag();
+        return mainBound().getTypeTag();
     }
 
     @Override

@@ -1,7 +1,7 @@
 package org.mozilla.javascript.nat.type.format;
 
-import org.mozilla.javascript.nat.type.ArrayTypeInfo;
-import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo;
 
 /**
  * @author ZZZank
@@ -17,8 +17,8 @@ public interface TypeFormatContext {
         builder.append(' ');
     }
 
-    default void formatArray(StringBuilder builder, ArrayTypeInfo type) {
-        type.getComponentType().append(this, builder);
+    default void formatArray(StringBuilder builder, TypeInfo arrayType) {
+        arrayType.getComponentType().append(this, builder);
         builder.append('[').append(']');
     }
 
