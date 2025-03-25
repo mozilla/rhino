@@ -145,7 +145,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        idata.isStrict,
+                                        fnOrScript.isStrict(),
                                         idata.argsHasRest,
                                         homeObject);
                     } else {
@@ -155,7 +155,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        idata.isStrict,
+                                        fnOrScript.isStrict(),
                                         idata.argsHasRest,
                                         homeObject);
                     }
@@ -315,7 +315,7 @@ public final class Interpreter extends Icode implements Evaluator {
             for (; ; ) {
                 final CallFrame p = f.parentFrame;
                 if (p == null) {
-                    return f.idata.isStrict;
+                    return f.fnOrScript.isStrict();
                 }
                 f = p;
             }
