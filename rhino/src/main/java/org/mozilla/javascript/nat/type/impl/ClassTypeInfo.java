@@ -1,6 +1,5 @@
 package org.mozilla.javascript.nat.type.impl;
 
-import org.mozilla.javascript.nat.type.TypeInfoBase;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 public abstract class ClassTypeInfo extends TypeInfoBase {

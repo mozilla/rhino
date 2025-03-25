@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoBase;
 import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 

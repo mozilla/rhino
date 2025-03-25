@@ -3,7 +3,6 @@ package org.mozilla.javascript.nat.type.impl;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoBase;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 public final class ArrayTypeInfo extends TypeInfoBase {
