@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo;
-import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 /**
  * @author ZZZank

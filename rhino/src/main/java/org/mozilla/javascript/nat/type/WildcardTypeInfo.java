@@ -1,6 +1,4 @@
-package org.mozilla.javascript.nat.type.definition;
-
-import org.mozilla.javascript.nat.type.TypeInfo;
+package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.WildcardType;
 import java.util.List;

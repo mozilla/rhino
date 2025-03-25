@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type.definition;
+package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -7,7 +7,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.impl.DefaultFactory;
 
 /**
@@ -48,7 +47,7 @@ public interface TypeInfoFactory {
     /**
      * @see TypeInfo#consolidate(Map)
      */
-    default Map<TypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {
+    default Map<VariableTypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {
         return Map.of();
     }
 

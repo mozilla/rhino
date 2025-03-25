@@ -1,7 +1,6 @@
 package org.mozilla.javascript.nat.type;
 
 import java.util.function.Consumer;
-import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 /**
  * @see TypeInfo#NONE

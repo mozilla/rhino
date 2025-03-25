@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import org.mozilla.javascript.nat.type.impl.DefaultFactory;
-import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 import java.io.Serializable;
 import java.util.Map;

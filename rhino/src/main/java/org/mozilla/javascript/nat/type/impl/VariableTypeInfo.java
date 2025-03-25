@@ -7,14 +7,14 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.TypeFormatContext;
 
 /**
  * @author ZZZank
  */
 public class VariableTypeInfo extends TypeInfoBase implements
-    org.mozilla.javascript.nat.type.definition.VariableTypeInfo {
+    org.mozilla.javascript.nat.type.VariableTypeInfo {
 
     private final TypeVariable<?> raw;
     private final TypeInfo mainBound;
@@ -83,7 +83,7 @@ public class VariableTypeInfo extends TypeInfoBase implements
     }
 
     @Override
-    public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
+    public TypeInfo consolidate(Map<org.mozilla.javascript.nat.type.VariableTypeInfo, TypeInfo> mapping) {
         return mapping.getOrDefault(this, this);
     }
 }

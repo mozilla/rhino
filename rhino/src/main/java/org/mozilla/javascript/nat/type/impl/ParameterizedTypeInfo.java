@@ -5,10 +5,10 @@ import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+import org.mozilla.javascript.nat.type.TypeFormatContext;
 
 public final class ParameterizedTypeInfo extends TypeInfoBase implements
-    org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo {
+    org.mozilla.javascript.nat.type.ParameterizedTypeInfo {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;

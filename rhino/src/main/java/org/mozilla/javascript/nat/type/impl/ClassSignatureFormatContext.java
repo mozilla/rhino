@@ -1,6 +1,7 @@
-package org.mozilla.javascript.nat.type.format;
+package org.mozilla.javascript.nat.type.impl;
 
-import org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.TypeFormatContext;
 
 /**
  * @author ZZZank

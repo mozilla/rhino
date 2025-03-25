@@ -15,8 +15,6 @@ import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
-import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 import org.mozilla.javascript.nat.type.impl.*;
 
 /**

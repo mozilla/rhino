@@ -1,7 +1,6 @@
-package org.mozilla.javascript.nat.type.format;
+package org.mozilla.javascript.nat.type;
 
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.definition.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.impl.ClassSignatureFormatContext;
 
 /**
  * @author ZZZank
