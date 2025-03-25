@@ -147,6 +147,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         args,
                                         fnOrScript.isStrict(),
                                         idata.argsHasRest,
+                                        idata.itsNeedsArguments,
                                         homeObject);
                     } else {
                         scope =
@@ -157,6 +158,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         args,
                                         fnOrScript.isStrict(),
                                         idata.argsHasRest,
+                                        idata.itsNeedsArguments,
                                         homeObject);
                     }
                 }

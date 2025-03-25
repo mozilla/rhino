@@ -4168,6 +4168,10 @@ public class Parser {
     }
 
     protected void checkActivationName(String name, int token) {
+        if ("arguments".equals(name) && currentScriptOrFn instanceof FunctionNode) {
+            ((FunctionNode) currentScriptOrFn).setNeedsArguments();
+        }
+
         if (!insideFunctionBody()) {
             return;
         }
@@ -4203,6 +4207,9 @@ public class Parser {
                 || (pn.getType() == Token.GETPROP
                         && "eval".equals(((PropertyGet) pn).getProperty().getIdentifier())))
             setRequiresActivation();
+        if (insideFunctionBody()) {
+            ((FunctionNode) currentScriptOrFn).setNeedsArguments();
+        }
     }
 
     protected void setIsGenerator() {

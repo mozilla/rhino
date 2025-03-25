@@ -46,4 +46,28 @@ public class ArgumentsTest {
 
         Utils.assertWithAllModes_ES6("1235", code);
     }
+
+    @Test
+    public void argumentsNestedLambdas() {
+        String code =
+                "var foo = (function foo() {\n"
+                        + "    return () => arguments[0];\n"
+                        + "})(1);\n"
+                        + "foo()";
+
+        Utils.assertWithAllModes_ES6(1, code);
+    }
+
+    @Test
+    public void argumentsNestedNestedLambdas() {
+        String code =
+                "var foo = (function foo() {\n"
+                        + "   return () => {"
+                        + "       return () => arguments[0];\n"
+                        + "   }\n"
+                        + "})(1);\n"
+                        + "foo()()";
+
+        Utils.assertWithAllModes_ES6(1, code);
+    }
 }
