@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

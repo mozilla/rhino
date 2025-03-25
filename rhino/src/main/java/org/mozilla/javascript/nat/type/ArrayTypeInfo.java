@@ -2,6 +2,7 @@ package org.mozilla.javascript.nat.type;
 
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 public final class ArrayTypeInfo extends TypeInfoBase {
     private final TypeInfo component;
@@ -38,18 +39,8 @@ public final class ArrayTypeInfo extends TypeInfoBase {
     }
 
     @Override
-    public String toString() {
-        return component + "[]";
-    }
-
-    @Override
     public void append(TypeFormatContext ctx, StringBuilder builder) {
         ctx.formatArray(builder, this);
-    }
-
-    @Override
-    public String signature() {
-        return component.signature() + "[]";
     }
 
     @Override

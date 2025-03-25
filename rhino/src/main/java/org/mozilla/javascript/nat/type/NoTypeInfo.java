@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+
 import java.util.function.Consumer;
 
 public final class NoTypeInfo implements TypeInfo {
@@ -24,12 +26,12 @@ public final class NoTypeInfo implements TypeInfo {
 
     @Override
     public String toString() {
-        return "?";
+        return TypeFormatContext.DEFAULT.getFormattedNone();
     }
 
     @Override
     public void append(TypeFormatContext ctx, StringBuilder builder) {
-        builder.append('?');
+        builder.append(ctx.getFormattedNone());
     }
 
     @Override

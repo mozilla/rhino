@@ -1,5 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+
 public abstract class ClassTypeInfo extends TypeInfoBase {
     private final Class<?> type;
 
@@ -30,11 +32,6 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
     @Override
     public boolean equals(Object o) {
         return (o == this) || ((o instanceof ClassTypeInfo) && (type == ((ClassTypeInfo) o).type));
-    }
-
-    @Override
-    public String toString() {
-        return type.getName();
     }
 
     @Override

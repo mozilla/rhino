@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 public final class ParameterizedTypeInfo extends TypeInfoBase {
     private final TypeInfo rawType;
@@ -54,11 +55,6 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
     @Override
     public void append(TypeFormatContext ctx, StringBuilder builder) {
         ctx.formatParameterized(builder, this);
-    }
-
-    @Override
-    public String signature() {
-        return rawType.signature();
     }
 
     public TypeInfo rawType() {

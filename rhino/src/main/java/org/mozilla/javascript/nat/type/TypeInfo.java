@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
+import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 /**
  * A representation of Java type, aiming at preserving more type information than what a {@link
@@ -239,10 +240,6 @@ public interface TypeInfo {
             arr[i] = of(array[i]);
         }
         return arr;
-    }
-
-    default String signature() {
-        return toString();
     }
 
     /**

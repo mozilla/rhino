@@ -1,4 +1,7 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.format;
+
+import org.mozilla.javascript.nat.type.ArrayTypeInfo;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 
 /**
  * @author ZZZank
@@ -6,6 +9,7 @@ package org.mozilla.javascript.nat.type;
 public interface TypeFormatContext {
     TypeFormatContext DEFAULT = Class::getName;
     TypeFormatContext SIMPLE = Class::getSimpleName;
+    TypeFormatContext CLASS_SIG = new ClassSignatureFormatContext();
 
     String getClassName(Class<?> c);
 
@@ -32,5 +36,13 @@ public interface TypeFormatContext {
             }
         }
         builder.append('>');
+    }
+
+    /**
+     * @see org.mozilla.javascript.nat.type.NoTypeInfo
+     * @see org.mozilla.javascript.nat.type.TypeInfo#NONE
+     */
+    default String getFormattedNone() {
+        return "?";
     }
 }
