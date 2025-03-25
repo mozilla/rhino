@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -40,8 +42,9 @@ public class NativeJavaMethod extends BaseFunction {
         this.methods = new MemberBox[] {method};
     }
 
+    @Deprecated
     public NativeJavaMethod(Method method, String name) {
-        this(new MemberBox(method), name);
+        this(new MemberBox(method, TypeInfoFactory.GLOBAL), name);
     }
 
     @Override

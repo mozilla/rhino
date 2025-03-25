@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -41,32 +42,40 @@ final class MemberBox implements Serializable {
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
     MemberBox(Method method) {
-        init(method);
+        init(method, null);
+    }
+
+    MemberBox(Method method, TypeInfoFactory factory) {
+        init(method, factory);
     }
 
     MemberBox(Constructor<?> constructor) {
-        init(constructor);
+        init(constructor, null);
     }
 
-    private void init(Method method) {
+    MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
+        init(constructor, factory);
+    }
+
+    private void init(Method method, TypeInfoFactory factory) {
         this.memberObject = method;
         this.argNullability =
                 nullDetector == null
                         ? new boolean[method.getParameters().length]
                         : nullDetector.getParameterNullability(method);
         this.vararg = method.isVarArgs();
-        this.argTypeInfos = List.of(TypeInfo.ofArray(method.getGenericParameterTypes()));
-        this.returnTypeInfo = TypeInfo.of(method.getGenericReturnType());
+        this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
+        this.returnTypeInfo = factory.create(method.getGenericReturnType());
     }
 
-    private void init(Constructor<?> constructor) {
+    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
         this.argNullability =
                 nullDetector == null
                         ? new boolean[constructor.getParameters().length]
                         : nullDetector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
-        this.argTypeInfos = List.of(TypeInfo.ofArray(constructor.getGenericParameterTypes()));
+        this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
     }
 
@@ -338,9 +347,9 @@ final class MemberBox implements Serializable {
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
-            init((Method) member);
+            init((Method) member, TypeInfoFactory.GLOBAL);
         } else {
-            init((Constructor<?>) member);
+            init((Constructor<?>) member, TypeInfoFactory.GLOBAL);
         }
     }
 

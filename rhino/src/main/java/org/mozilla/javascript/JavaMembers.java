@@ -436,6 +436,7 @@ class JavaMembers {
         // We reflect methods first, because we want overloaded field/method
         // names to be allocated to the NativeJavaMethod before the field
         // gets in the way.
+        var typeFactory = ClassCache.get(scope).getTypeFactory();
 
         Method[] methods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
         for (Method method : methods) {
@@ -472,7 +473,7 @@ class JavaMembers {
                 Object value = entry.getValue();
                 if (value instanceof Method) {
                     methodBoxes = new MemberBox[1];
-                    methodBoxes[0] = new MemberBox((Method) value);
+                    methodBoxes[0] = new MemberBox((Method) value, typeFactory);
                 } else {
                     ArrayList<Object> overloadedMethods = (ArrayList<Object>) value;
                     int N = overloadedMethods.size();
@@ -480,7 +481,7 @@ class JavaMembers {
                     methodBoxes = new MemberBox[N];
                     for (int i = 0; i != N; ++i) {
                         Method method = (Method) overloadedMethods.get(i);
-                        methodBoxes[i] = new MemberBox(method);
+                        methodBoxes[i] = new MemberBox(method, typeFactory);
                     }
                 }
                 NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
@@ -636,7 +637,7 @@ class JavaMembers {
         Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
         MemberBox[] ctorMembers = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
-            ctorMembers[i] = new MemberBox(constructors[i]);
+            ctorMembers[i] = new MemberBox(constructors[i], typeFactory);
         }
         ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
