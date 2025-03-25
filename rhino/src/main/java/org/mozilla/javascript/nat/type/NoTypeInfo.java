@@ -1,9 +1,11 @@
 package org.mozilla.javascript.nat.type;
 
+import java.util.function.Consumer;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
-import java.util.function.Consumer;
-
+/**
+ * @see TypeInfo#NONE
+ */
 public final class NoTypeInfo implements TypeInfo {
     static final NoTypeInfo INSTANCE = new NoTypeInfo();
 
@@ -32,16 +34,6 @@ public final class NoTypeInfo implements TypeInfo {
     @Override
     public void append(TypeFormatContext ctx, StringBuilder builder) {
         builder.append(ctx.getFormattedNone());
-    }
-
-    @Override
-    public TypeInfo asArray() {
-        return this;
-    }
-
-    @Override
-    public TypeInfo withParams(TypeInfo... params) {
-        return this;
     }
 
     @Override

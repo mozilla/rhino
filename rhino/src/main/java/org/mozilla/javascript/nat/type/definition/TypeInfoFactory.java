@@ -1,9 +1,12 @@
 package org.mozilla.javascript.nat.type.definition;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.impl.DefaultFactory;
 
@@ -98,5 +101,86 @@ public interface TypeInfoFactory {
 
     default <T extends Type> List<TypeInfo> createList(T[] types) {
         return List.of(createArray(types));
+    }
+
+    default TypeInfo matchPredefined(Class<?> clazz) {
+        if (clazz == null) {
+            return TypeInfo.NONE;
+        } else if (clazz == Object.class) {
+            return TypeInfo.OBJECT;
+        }
+        if (clazz.isPrimitive()) {
+            if (clazz == Void.TYPE) {
+                return TypeInfo.PRIMITIVE_VOID;
+            } else if (clazz == Boolean.TYPE) {
+                return TypeInfo.PRIMITIVE_BOOLEAN;
+            } else if (clazz == Byte.TYPE) {
+                return TypeInfo.PRIMITIVE_BYTE;
+            } else if (clazz == Short.TYPE) {
+                return TypeInfo.PRIMITIVE_SHORT;
+            } else if (clazz == Integer.TYPE) {
+                return TypeInfo.PRIMITIVE_INT;
+            } else if (clazz == Long.TYPE) {
+                return TypeInfo.PRIMITIVE_LONG;
+            } else if (clazz == Float.TYPE) {
+                return TypeInfo.PRIMITIVE_FLOAT;
+            } else if (clazz == Double.TYPE) {
+                return TypeInfo.PRIMITIVE_DOUBLE;
+            } else if (clazz == Character.TYPE) {
+                return TypeInfo.PRIMITIVE_CHARACTER;
+            }
+        }
+        if (clazz == Void.class) {
+            return TypeInfo.VOID;
+        } else if (clazz == Boolean.class) {
+            return TypeInfo.BOOLEAN;
+        } else if (clazz == Byte.class) {
+            return TypeInfo.BYTE;
+        } else if (clazz == Short.class) {
+            return TypeInfo.SHORT;
+        } else if (clazz == Integer.class) {
+            return TypeInfo.INT;
+        } else if (clazz == Long.class) {
+            return TypeInfo.LONG;
+        } else if (clazz == Float.class) {
+            return TypeInfo.FLOAT;
+        } else if (clazz == Double.class) {
+            return TypeInfo.DOUBLE;
+        } else if (clazz == Character.class) {
+            return TypeInfo.CHARACTER;
+        } else if (clazz == Number.class) {
+            return TypeInfo.NUMBER;
+        } else if (clazz == String.class) {
+            return TypeInfo.STRING;
+        } else if (clazz == Class.class) {
+            return TypeInfo.RAW_CLASS;
+        } else if (clazz == Date.class) {
+            return TypeInfo.DATE;
+        } else if (clazz == Optional.class) {
+            return TypeInfo.RAW_OPTIONAL;
+        } else if (clazz == EnumSet.class) {
+            return TypeInfo.RAW_ENUM_SET;
+        } else if (clazz == Runnable.class) {
+            return TypeInfo.RUNNABLE;
+        } else if (clazz == Consumer.class) {
+            return TypeInfo.RAW_CONSUMER;
+        } else if (clazz == Supplier.class) {
+            return TypeInfo.RAW_SUPPLIER;
+        } else if (clazz == Function.class) {
+            return TypeInfo.RAW_FUNCTION;
+        } else if (clazz == Predicate.class) {
+            return TypeInfo.RAW_PREDICATE;
+        } else if (clazz == List.class) {
+            return TypeInfo.RAW_LIST;
+        } else if (clazz == Set.class) {
+            return TypeInfo.RAW_SET;
+        } else if (clazz == Map.class) {
+            return TypeInfo.RAW_MAP;
+        } else if (clazz == Object[].class) {
+            return TypeInfo.OBJECT_ARRAY;
+        } else if (clazz == String[].class) {
+            return TypeInfo.STRING_ARRAY;
+        }
+        return null;
     }
 }

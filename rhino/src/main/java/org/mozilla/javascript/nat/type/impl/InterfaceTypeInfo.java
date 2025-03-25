@@ -2,8 +2,7 @@ package org.mozilla.javascript.nat.type.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.nat.ByteAsBool;
 
@@ -12,8 +11,6 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
     @SuppressWarnings("unchecked")
     private static final Class<? extends Annotation> FN_INTERFACE =
             (Class<? extends Annotation>) Kit.classOrNull("java.lang.FunctionalInterface");
-
-    static final Map<Class<?>, InterfaceTypeInfo> CACHE = new ConcurrentHashMap<>();
 
     private byte functional;
 

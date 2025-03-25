@@ -74,11 +74,6 @@ public final class ParameterizedTypeInfo extends TypeInfoBase implements
     }
 
     @Override
-    public TypeInfo withParams(TypeInfo... params) {
-        return rawType.withParams(params);
-    }
-
-    @Override
     public boolean isFunctionalInterface() {
         return rawType.isFunctionalInterface();
     }

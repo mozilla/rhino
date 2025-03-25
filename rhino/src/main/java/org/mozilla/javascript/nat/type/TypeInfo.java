@@ -1,11 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -19,7 +15,9 @@ import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
+import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
+import org.mozilla.javascript.nat.type.impl.*;
 
 /**
  * A representation of Java type, aiming at preserving more type information than what a {@link
@@ -28,6 +26,7 @@ import org.mozilla.javascript.nat.type.format.TypeFormatContext;
  * @see TypeInfoExt : more predefined TypeInfo
  * @see #asClass() : how to convert TypeInfo back to Class
  * @see #is(Class) : how to determine whether a TypeInfo represents a specific class
+ * @see NoTypeInfo : how to represent null
  */
 public interface TypeInfo {
     TypeInfo NONE = NoTypeInfo.INSTANCE;
@@ -39,8 +38,7 @@ public interface TypeInfo {
      * class, using `typeInfo == TypeInfo.OBJECT` might cause problem with VariableTypeInfo
      */
     TypeInfo OBJECT = new BasicClassTypeInfo(Object.class);
-
-    TypeInfo OBJECT_ARRAY = OBJECT.asArray();
+    TypeInfo OBJECT_ARRAY = new ArrayTypeInfo(OBJECT);
 
     TypeInfo PRIMITIVE_VOID = new PrimitiveClassTypeInfo(Void.TYPE, null);
     TypeInfo PRIMITIVE_BOOLEAN = new PrimitiveClassTypeInfo(Boolean.TYPE, false);
@@ -64,7 +62,7 @@ public interface TypeInfo {
 
     TypeInfo NUMBER = new BasicClassTypeInfo(Number.class);
     TypeInfo STRING = new BasicClassTypeInfo(String.class);
-    TypeInfo STRING_ARRAY = STRING.asArray();
+    TypeInfo STRING_ARRAY = new ArrayTypeInfo(STRING);
     TypeInfo RAW_CLASS = new BasicClassTypeInfo(Class.class);
     TypeInfo DATE = new BasicClassTypeInfo(Date.class);
 
@@ -111,123 +109,11 @@ public interface TypeInfo {
     }
 
     static TypeInfo of(Class<?> c) {
-        if (c == null) {
-            return NONE;
-        } else if (c == Object.class) {
-            return OBJECT;
-        }
-        if (c.isPrimitive()) {
-            if (c == Void.TYPE) {
-                return PRIMITIVE_VOID;
-            } else if (c == Boolean.TYPE) {
-                return PRIMITIVE_BOOLEAN;
-            } else if (c == Byte.TYPE) {
-                return PRIMITIVE_BYTE;
-            } else if (c == Short.TYPE) {
-                return PRIMITIVE_SHORT;
-            } else if (c == Integer.TYPE) {
-                return PRIMITIVE_INT;
-            } else if (c == Long.TYPE) {
-                return PRIMITIVE_LONG;
-            } else if (c == Float.TYPE) {
-                return PRIMITIVE_FLOAT;
-            } else if (c == Double.TYPE) {
-                return PRIMITIVE_DOUBLE;
-            } else if (c == Character.TYPE) {
-                return PRIMITIVE_CHARACTER;
-            }
-        }
-        if (c == Void.class) {
-            return VOID;
-        } else if (c == Boolean.class) {
-            return BOOLEAN;
-        } else if (c == Byte.class) {
-            return BYTE;
-        } else if (c == Short.class) {
-            return SHORT;
-        } else if (c == Integer.class) {
-            return INT;
-        } else if (c == Long.class) {
-            return LONG;
-        } else if (c == Float.class) {
-            return FLOAT;
-        } else if (c == Double.class) {
-            return DOUBLE;
-        } else if (c == Character.class) {
-            return CHARACTER;
-        } else if (c == Number.class) {
-            return NUMBER;
-        } else if (c == String.class) {
-            return STRING;
-        } else if (c == Class.class) {
-            return RAW_CLASS;
-        } else if (c == Date.class) {
-            return DATE;
-        } else if (c == Optional.class) {
-            return RAW_OPTIONAL;
-        } else if (c == EnumSet.class) {
-            return RAW_ENUM_SET;
-        } else if (c == Runnable.class) {
-            return RUNNABLE;
-        } else if (c == Consumer.class) {
-            return RAW_CONSUMER;
-        } else if (c == Supplier.class) {
-            return RAW_SUPPLIER;
-        } else if (c == Function.class) {
-            return RAW_FUNCTION;
-        } else if (c == Predicate.class) {
-            return RAW_PREDICATE;
-        } else if (c == List.class) {
-            return RAW_LIST;
-        } else if (c == Set.class) {
-            return RAW_SET;
-        } else if (c == Map.class) {
-            return RAW_MAP;
-        } else if (c == Object[].class) {
-            return OBJECT_ARRAY;
-        } else if (c == String[].class) {
-            return STRING_ARRAY;
-        } else if (c.isArray()) {
-            return of(c.getComponentType()).asArray();
-        } else if (c.isEnum()) {
-            return EnumTypeInfo.CACHE.computeIfAbsent(c, EnumTypeInfo::new);
-        } else if (c.isInterface()) {
-            return InterfaceTypeInfo.CACHE.computeIfAbsent(c, InterfaceTypeInfo::new);
-        }
-        return BasicClassTypeInfo.CACHE.computeIfAbsent(c, BasicClassTypeInfo::new);
-    }
-
-    static VariableTypeInfo of(TypeVariable<?> variable) {
-        return VariableTypeInfo.CACHE.computeIfAbsent(variable, VariableTypeInfo::new);
+        return TypeInfoFactory.GLOBAL.create(c);
     }
 
     static TypeInfo of(Type type) {
-        if (type instanceof Class<?>) {
-            Class<?> clz = (Class<?>) type;
-            return of(clz);
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType paramType = (ParameterizedType) type;
-            return of(paramType.getRawType())
-                    .withParams(ofArray(paramType.getActualTypeArguments()));
-        } else if (type instanceof GenericArrayType) {
-            GenericArrayType arrType = (GenericArrayType) type;
-            return of(arrType.getGenericComponentType()).asArray();
-        } else if (type instanceof TypeVariable<?>) {
-            TypeVariable<?> variable = (TypeVariable<?>) type;
-            return of(variable);
-        } else if (type instanceof WildcardType) {
-            WildcardType wildcard = (WildcardType) type;
-            var upper = wildcard.getUpperBounds();
-            if (upper.length != 0 && upper[0] != Object.class) {
-                return of(upper[0]);
-            }
-
-            var lower = wildcard.getLowerBounds();
-            if (lower.length != 0) {
-                return of(lower[0]);
-            }
-        }
-        return NONE;
+        return TypeInfoFactory.GLOBAL.create(type);
     }
 
     static TypeInfo[] ofArray(Type[] array) {
@@ -260,29 +146,6 @@ public interface TypeInfo {
     /** get an array whose element type is the caller TypeInfo */
     default Object newArray(int length) {
         return Array.newInstance(asClass(), length);
-    }
-
-    /**
-     * get an array TypeInfo whose component type is the caller TypeInfo
-     *
-     * @see #getComponentType()
-     */
-    default TypeInfo asArray() {
-        return new ArrayTypeInfo(this);
-    }
-
-    /**
-     * get a parameterized TypeInfo whose raw type is the caller TypeInfo, with parameters provided
-     * by the `params` arg
-     *
-     * @see #param(int)
-     */
-    default TypeInfo withParams(TypeInfo... params) {
-        if (params.length == 0) {
-            return this;
-        }
-
-        return new ParameterizedTypeInfo(this, params);
     }
 
     /**

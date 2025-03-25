@@ -1,25 +1,10 @@
 package org.mozilla.javascript.nat.type;
 
+import java.lang.reflect.Array;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
-import java.lang.reflect.Array;
-
 public abstract class TypeInfoBase implements TypeInfo {
-    private volatile TypeInfo asArray;
     private volatile Object emptyArray;
-
-    @Override
-    public TypeInfo asArray() {
-        if (asArray == null) {
-            synchronized (this) {
-                if (asArray == null) {
-                    asArray = new ArrayTypeInfo(this);
-                }
-            }
-        }
-
-        return asArray;
-    }
 
     @Override
     public Object newArray(int length) {

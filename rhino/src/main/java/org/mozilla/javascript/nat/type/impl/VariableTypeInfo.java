@@ -4,7 +4,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.mozilla.javascript.nat.type.TypeInfo;
@@ -17,7 +16,6 @@ import org.mozilla.javascript.nat.type.format.TypeFormatContext;
  */
 public class VariableTypeInfo extends TypeInfoBase implements
     org.mozilla.javascript.nat.type.definition.VariableTypeInfo {
-    static final Map<TypeVariable<?>, VariableTypeInfo> CACHE = new ConcurrentHashMap<>();
 
     private final TypeVariable<?> raw;
     private final TypeInfo mainBound;
