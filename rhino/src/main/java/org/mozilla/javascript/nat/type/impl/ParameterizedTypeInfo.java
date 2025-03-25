@@ -1,9 +1,11 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.impl;
 
 import java.util.List;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoBase;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
 public final class ParameterizedTypeInfo extends TypeInfoBase implements
@@ -12,9 +14,9 @@ public final class ParameterizedTypeInfo extends TypeInfoBase implements
     private final List<TypeInfo> params;
     private int hashCode;
 
-    ParameterizedTypeInfo(TypeInfo rawType, TypeInfo[] params) {
+    public ParameterizedTypeInfo(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
-        this.params = List.of(params);
+        this.params = params;
     }
 
     @Override

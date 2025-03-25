@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.impl;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +13,7 @@ public class EnumTypeInfo extends ClassTypeInfo {
 
     private List<Object> constants;
 
-    EnumTypeInfo(Class<?> type) {
+    public EnumTypeInfo(Class<?> type) {
         super(type);
     }
 

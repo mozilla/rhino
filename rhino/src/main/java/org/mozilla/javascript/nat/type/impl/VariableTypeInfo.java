@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.impl;
 
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoBase;
 import org.mozilla.javascript.nat.type.definition.TypeInfoFactory;
 import org.mozilla.javascript.nat.type.format.TypeFormatContext;
 
@@ -20,7 +22,7 @@ public class VariableTypeInfo extends TypeInfoBase implements
     private final TypeVariable<?> raw;
     private final TypeInfo mainBound;
 
-    VariableTypeInfo(TypeVariable<?> raw) {
+    public VariableTypeInfo(TypeVariable<?> raw) {
         this.raw = raw;
         this.mainBound = TypeInfo.of(raw.getBounds()[0]);
     }

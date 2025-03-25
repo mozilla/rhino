@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
@@ -17,11 +17,11 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
 
     private byte functional;
 
-    InterfaceTypeInfo(Class<?> type) {
+    public InterfaceTypeInfo(Class<?> type) {
         this(type, ByteAsBool.UNKNOWN);
     }
 
-    InterfaceTypeInfo(Class<?> type, byte functional) {
+    public InterfaceTypeInfo(Class<?> type, byte functional) {
         super(type);
         this.functional = functional;
     }
