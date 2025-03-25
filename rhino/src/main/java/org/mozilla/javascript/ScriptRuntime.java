@@ -163,7 +163,7 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache().associate(scope);
+        new ClassCache(cx.getFactory().getTypeFactoryProvider().apply(cx)).associate(scope);
 
         BaseFunction.init(cx, scope, sealed);
         NativeObject.init(scope, sealed);
