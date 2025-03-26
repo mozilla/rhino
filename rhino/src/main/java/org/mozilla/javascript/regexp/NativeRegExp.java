@@ -1284,7 +1284,10 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (state.cp >= state.cpend) return null;
 
-        if (src[state.cp] == ']') return contents;
+        if (src[state.cp] == ']') {
+            state.cp++;
+            return contents;
+        }
 
         if (src[state.cp] == '^') {
             state.cp++;
