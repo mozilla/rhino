@@ -40,6 +40,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
@@ -783,6 +784,7 @@ public class Test262SuiteTest {
         List<File> testFiles = new LinkedList<File>();
         Map<File, String> failingFiles = new HashMap<File, String>();
         addTestFiles(testFiles, failingFiles);
+//        testFiles.add(    new File(testDir, "harness/nativeFunctionMatcher.js"));
 
         fileLoop:
         for (File testFile : testFiles) {
