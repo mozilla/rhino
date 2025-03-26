@@ -732,4 +732,156 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6("non-greedy-{2}", true, test.apply("{2}?", "123"));
         Utils.assertWithAllModes_ES6("non-greedy-{2,3}", true, test.apply("{2,}?", "123"));
     }
+
+    @Test
+    public void namedBackrefWithoutNamedCapture() {
+        final String script =
+                "var regex = /\\k<name>/;\n" + "var res = '' + regex.test('k<name>');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void invalidNamedBackrefWithoutNamedCapture() {
+        final String script =
+                "var regex = /\\k<nam/;\n" + "var res = '' + regex.test('k<nam');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void invalidNamedBackrefWithNamedCapture() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/\\k<nam(?<foo>)/.compile()");
+    }
+
+    @Test
+    public void duplicateNamedCapture() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name", "/(?<foo>)(?<foo>)/.compile()");
+    }
+
+    @Test
+    public void namedBackrefNotFound() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/(?<foo>)\\k<bar>/.compile()");
+    }
+
+    @Test
+    public void namedBackref() {
+        final String script =
+                "var regex = /(?<foo>\\d)\\k<foo>/m;\n"
+                        + "var res = '' + regex.test('11');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void duplicateNamedCapturesInDisjunction() {
+        final String script =
+                "var regex = /(?:(?<x>a)|(?<x>b))\\k<x>/;\n"
+                        + "var res = '' + regex.test('bb');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void duplicateNamedCaptures() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name \"x\"", "/(?<x>a)(?<x>b)/.compile()");
+
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name \"x\"",
+                "/(?<x>a)(?:b|(?<x>c))/.compile()");
+    }
+
+    @Test
+    public void namedCaptureInDisjunction() {
+        final String script =
+                "var regex = /a|(?<x>b)/;\n"
+                        + "var result = regex.exec('b');\n"
+                        + "var res = '' + result.groups.x;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("b", script);
+    }
+
+    @Test
+    public void duplicateNamedCaptureInDisjunction() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Duplicate capture group name \"a\"",
+                "/(?<a>a)(?:(?<a>b)|(?<a>c))/.compile()");
+    }
+
+    @Test
+    public void execNamedCapture() {
+        final String script =
+                "var regex = /(?<foo>\\d)(?<bar>\\d)/;\n"
+                        + "var result = regex.exec('12');\n"
+                        + "var res = '' + result.groups.foo;\n"
+                        + "res = res + '-' + result.groups.bar;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-2", script);
+    }
+
+    @Test
+    public void execNamedCaptureBackref() {
+        final String script =
+                "var regex = /(?<foo>\\d)(?<bar>\\d)\\1\\2/;\n"
+                        + "var result = regex.exec('1212');\n"
+                        + "var res = '' + result[1];\n"
+                        + "res = res + '-' + result[2];\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("1-2", script);
+    }
+
+    // just a \k without a name is invalid when there is a named capture group
+    @Test
+    public void invalidNamedBackref() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid named capture referenced", "/(?<a>.)\\k/.compile()");
+    }
+
+    @Test
+    public void slashKInCharClass() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: invalid Unicode escape sequence", "/(?<a>.)[\\k]/.compile()");
+    }
+
+    // test that \0000 is octal escape for 0 (only supported by Rhino, inherited from SpiderMonkey)
+    @Test
+    public void octalEscapeSpiderMonkey() {
+        final String script =
+                "var regex = /\\0000101/;\n" + "var res = '' + regex.test('A');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    // test that \0000 in character class is two chars \000 and 0
+    @Test
+    public void octalEscapeInCharacterClass() {
+        final String script =
+                "var regex = /[\\0000]/;\n"
+                        + "var res = '' + regex.test('\\0') + '-' + regex.test('0');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true", script);
+    }
+
+    @Test
+    public void controlEscapeInCharacterClass() {
+        final String script =
+                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\\\');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    @Test
+    public void unterminatedBackslash() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Trailing \\ in regular expression", "new RegExp('[\\\\')");
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Trailing \\ in regular expression", "new RegExp('\\\\')");
+    }
+
+    // test z-a is invalid character range
+    @Test
+    public void invalidCharacterRange() {
+        Utils.assertEcmaErrorES6(
+                "SyntaxError: Invalid range in character class", "/[z-a]/.compile()");
+    }
 }
