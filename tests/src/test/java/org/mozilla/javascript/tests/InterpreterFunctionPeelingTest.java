@@ -36,8 +36,38 @@ public class InterpreterFunctionPeelingTest {
     }
 
     @Test
+    public void testBindCall() {
+        executeScript("function capture(){c.run()};capture.bind(this).call()");
+    }
+
+    @Test
+    public void testBindApply() {
+        executeScript("function capture(){c.run()};capture.bind(this).apply()");
+    }
+
+    @Test
     public void testArrow() {
         executeScript("capture=()=>{c.run()};capture()");
+    }
+
+    @Test
+    public void testArrowCall() {
+        executeScript("capture=()=>{c.run()};capture.call()");
+    }
+
+    @Test
+    public void testArrowApply() {
+        executeScript("capture=()=>{c.run()};capture.apply()");
+    }
+
+    @Test
+    public void testArrowBindCall() {
+        executeScript("capture=()=>{c.run()};capture.bind(this).call()");
+    }
+
+    @Test
+    public void testArrowBindApply() {
+        executeScript("capture=()=>{c.run()};capture.bind(this).apply()");
     }
 
     @Test
