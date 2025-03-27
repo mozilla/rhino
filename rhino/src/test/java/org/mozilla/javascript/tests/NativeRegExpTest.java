@@ -919,4 +919,24 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(true, "/[]*/.test('')");
         Utils.assertWithAllModes_ES6(true, "/[]*/.test('abc')");
     }
+
+    @Test
+    public void characterClassRangeWithSingleItemCharacterClasses() {
+        final String script =
+                "var regex = /[\\b-\\x10]/;\n"
+                        + "var res = '' + regex.test('\\x09') + '-' + regex.test('\\x07') + '-' + regex.test('\\x11');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-false-false", script);
+    }
+
+    @Test
+    public void characterClassWithMultiCharacterEscape() {
+        // [\d-A] should be parsed as a union of 3 character sets - digits,  '-', and 'A'.
+        // Therefore it shouldn't match something in between '9' and 'A', say ';'
+        final String script =
+                "var regex = /[\\d-A]/;\n"
+                        + "var res = '' + regex.test('5') + '-' + regex.test('A') + '-' + regex.test('-') + '-' + regex.test(';');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true-true-false", script);
+    }
 }

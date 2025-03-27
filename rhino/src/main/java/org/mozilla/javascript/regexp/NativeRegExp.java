@@ -1299,7 +1299,7 @@ public class NativeRegExp extends IdScriptableObject {
                 state.cp++;
                 if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
-                    contents.chars.add((char) 0x8);
+                    thisChar = (char) 0x08;
                 } else {
                     if (!parseCharacterAndCharacterClassEscape(state, params)) {
                         if (src[state.cp] == 'c') { // when lookahead=c, parse the \\ as a literal
@@ -1317,6 +1317,8 @@ public class NativeRegExp extends IdScriptableObject {
                                 contents.chars.add('-');
                                 inRange = false;
                             }
+                            // multi-character character escapes don't need range handling
+                            continue;
                         }
                     }
                 }
