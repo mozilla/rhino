@@ -129,4 +129,31 @@ public class NativeRegExpTest {
                         + "re.global && re.lastIndex === 0";
         Utils.assertWithAllModes_ES6(true, script);
     }
+
+    @Test
+    public void matchEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6("", "''.match(/[]*/)[0]");
+        Utils.assertWithAllModes_ES6(1, "''.match(/[]*/).length");
+
+        Utils.assertWithAllModes_ES6("", "'abc'.match(/[]*/)[0]");
+        Utils.assertWithAllModes_ES6(1, "'abc'.match(/[]*/).length");
+    }
+
+    @Test
+    public void replaceEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6("x", "''.replace(/[]*/, 'x')");
+        Utils.assertWithAllModes_ES6("xabc", "'abc'.replace(/[]*/, 'x')");
+
+        Utils.assertWithAllModes_ES6("x", "''.replace(/[]*/g, 'x')");
+        Utils.assertWithAllModes_ES6("xaxbxcx", "'abc'.replace(/[]*/g, 'x')");
+
+        Utils.assertWithAllModes_ES6("xaxbxxcx*xdx", "'ab]c*d'.replace(/[]*]*/g, 'x')");
+
+    }
+
+    @Test
+    public void testEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6(true, "/[]*/.test('')");
+        Utils.assertWithAllModes_ES6(true, "/[]*/.test('abc')");
+    }
 }
