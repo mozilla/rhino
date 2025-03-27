@@ -132,6 +132,9 @@ public class NativeRegExpTest {
 
     @Test
     public void matchEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6(null, "''.match(/[]/)");
+        Utils.assertWithAllModes_ES6(null, "'abc'.match(/[]/)");
+
         Utils.assertWithAllModes_ES6("", "''.match(/[]*/)[0]");
         Utils.assertWithAllModes_ES6(1, "''.match(/[]*/).length");
 
@@ -141,6 +144,9 @@ public class NativeRegExpTest {
 
     @Test
     public void replaceEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6("", "''.replace(/[]/, 'x')");
+        Utils.assertWithAllModes_ES6("abc", "'abc'.replace(/[]/, 'x')");
+
         Utils.assertWithAllModes_ES6("x", "''.replace(/[]*/, 'x')");
         Utils.assertWithAllModes_ES6("xabc", "'abc'.replace(/[]*/, 'x')");
 
@@ -153,6 +159,9 @@ public class NativeRegExpTest {
 
     @Test
     public void testEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6(false, "/[]/.test('')");
+        Utils.assertWithAllModes_ES6(false, "/[]/.test('abc')");
+
         Utils.assertWithAllModes_ES6(true, "/[]*/.test('')");
         Utils.assertWithAllModes_ES6(true, "/[]*/.test('abc')");
     }
