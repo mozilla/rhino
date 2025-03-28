@@ -884,4 +884,59 @@ public class NativeRegExpTest {
         Utils.assertEcmaErrorES6(
                 "SyntaxError: Invalid range in character class", "/[z-a]/.compile()");
     }
+
+    @Test
+    public void matchEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6(null, "''.match(/[]/)");
+        Utils.assertWithAllModes_ES6(null, "'abc'.match(/[]/)");
+
+        Utils.assertWithAllModes_ES6("", "''.match(/[]*/)[0]");
+        Utils.assertWithAllModes_ES6(1, "''.match(/[]*/).length");
+
+        Utils.assertWithAllModes_ES6("", "'abc'.match(/[]*/)[0]");
+        Utils.assertWithAllModes_ES6(1, "'abc'.match(/[]*/).length");
+    }
+
+    @Test
+    public void replaceEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6("", "''.replace(/[]/, 'x')");
+        Utils.assertWithAllModes_ES6("abc", "'abc'.replace(/[]/, 'x')");
+
+        Utils.assertWithAllModes_ES6("x", "''.replace(/[]*/, 'x')");
+        Utils.assertWithAllModes_ES6("xabc", "'abc'.replace(/[]*/, 'x')");
+
+        Utils.assertWithAllModes_ES6("x", "''.replace(/[]*/g, 'x')");
+        Utils.assertWithAllModes_ES6("xaxbxcx", "'abc'.replace(/[]*/g, 'x')");
+
+        Utils.assertWithAllModes_ES6("xaxbxxcx*xdx", "'ab]c*d'.replace(/[]*]*/g, 'x')");
+    }
+
+    @Test
+    public void testEmptyCharacterClass() {
+        Utils.assertWithAllModes_ES6(false, "/[]/.test('')");
+        Utils.assertWithAllModes_ES6(false, "/[]/.test('abc')");
+
+        Utils.assertWithAllModes_ES6(true, "/[]*/.test('')");
+        Utils.assertWithAllModes_ES6(true, "/[]*/.test('abc')");
+    }
+
+    @Test
+    public void characterClassRangeWithSingleItemCharacterClasses() {
+        final String script =
+                "var regex = /[\\b-\\x10]/;\n"
+                        + "var res = '' + regex.test('\\x09') + '-' + regex.test('\\x07') + '-' + regex.test('\\x11');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-false-false", script);
+    }
+
+    @Test
+    public void characterClassWithMultiCharacterEscape() {
+        // [\d-A] should be parsed as a union of 3 character sets - digits,  '-', and 'A'.
+        // Therefore it shouldn't match something in between '9' and 'A', say ';'
+        final String script =
+                "var regex = /[\\d-A]/;\n"
+                        + "var res = '' + regex.test('5') + '-' + regex.test('A') + '-' + regex.test('-') + '-' + regex.test(';');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true-true-false", script);
+    }
 }
