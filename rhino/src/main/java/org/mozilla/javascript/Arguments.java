@@ -402,10 +402,10 @@ final class Arguments extends IdScriptableObject {
         if (!cx.isStrictMode()) {
             return;
         }
-        setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), true);
-        setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), false);
-        setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), true);
-        setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), false);
+        setGetterOrSetter("caller", 0, ThrowTypeError.Caller, true);
+        setGetterOrSetter("caller", 0, ThrowTypeError.Caller, false);
+        setGetterOrSetter("callee", 0, ThrowTypeError.Callee, true);
+        setGetterOrSetter("callee", 0, ThrowTypeError.Callee, false);
         setAttributes("caller", DONTENUM | PERMANENT);
         setAttributes("callee", DONTENUM | PERMANENT);
         callerObj = null;
@@ -414,6 +414,10 @@ final class Arguments extends IdScriptableObject {
 
     private static class ThrowTypeError extends BaseFunction {
         private static final long serialVersionUID = -744615873947395749L;
+
+        private static final ThrowTypeError Caller = new ThrowTypeError("caller");
+        private static final ThrowTypeError Callee = new ThrowTypeError("callee");
+
         private String propertyName;
 
         ThrowTypeError(String propertyName) {
