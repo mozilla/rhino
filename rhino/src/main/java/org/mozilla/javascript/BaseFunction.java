@@ -335,7 +335,21 @@ public class BaseFunction extends IdScriptableObject implements Function {
         int id = f.methodId();
         switch (id) {
             case Id_constructor:
-                return jsConstructor(cx, scope, args);
+                if (cx.isStrictMode()) {
+                    // Disable strict mode forcefully, and restore it after the call
+                    NativeCall activation = cx.currentActivationCall;
+                    boolean strictMode = cx.isTopLevelStrict;
+                    try {
+                        cx.currentActivationCall = null;
+                        cx.isTopLevelStrict = false;
+                        return jsConstructor(cx, scope, args);
+                    } finally {
+                        cx.isTopLevelStrict = strictMode;
+                        cx.currentActivationCall = activation;
+                    }
+                } else {
+                    return jsConstructor(cx, scope, args);
+                }
 
             case Id_toString:
                 {
