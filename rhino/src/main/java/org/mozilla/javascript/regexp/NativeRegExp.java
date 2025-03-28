@@ -52,6 +52,7 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
     public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
     public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
 
     // type of match to perform
     public static final int TEST = 0;
@@ -246,6 +247,7 @@ public class NativeRegExp extends IdScriptableObject {
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
         if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
+        if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
     }
 
     NativeRegExp() {}
@@ -638,6 +640,8 @@ public class NativeRegExp extends IdScriptableObject {
                     f = JSREG_DOTALL;
                 } else if (c == 'y') {
                     f = JSREG_STICKY;
+                } else if (c == 'u') {
+                    f = JSREG_UNICODE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
@@ -647,6 +651,17 @@ public class NativeRegExp extends IdScriptableObject {
                 flags |= f;
             }
         }
+
+        // We don't support u and i flags together, yet.
+        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
+            reportError("msg.invalid.re.flag", "u and i");
+        }
+
+        // We support unicode mode in ES6 and later.
+        if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
+            reportError("msg.invalid.re.flag", "u");
+        }
+
         regexp.flags = flags;
 
         CompilerState state = new CompilerState(cx, regexp.source, length, flags);
@@ -3185,7 +3200,8 @@ public class NativeRegExp extends IdScriptableObject {
             Id_multiline = 6,
             Id_dotAll = 7,
             Id_sticky = 8,
-            MAX_INSTANCE_ID = 8;
+            Id_unicode = 9,
+            MAX_INSTANCE_ID = 9;
 
     @Override
     protected int getMaxInstanceId() {
@@ -3220,6 +3236,9 @@ public class NativeRegExp extends IdScriptableObject {
             case "sticky":
                 id = Id_sticky;
                 break;
+            case "unicode":
+                id = Id_unicode;
+                break;
             default:
                 id = 0;
                 break;
@@ -3239,6 +3258,7 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_multiline:
             case Id_dotAll:
             case Id_sticky:
+            case Id_unicode:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
             default:
@@ -3266,6 +3286,8 @@ public class NativeRegExp extends IdScriptableObject {
                 return "dotAll";
             case Id_sticky:
                 return "sticky";
+            case Id_unicode:
+                return "unicode";
         }
         return super.getInstanceIdName(id);
     }
@@ -3293,6 +3315,8 @@ public class NativeRegExp extends IdScriptableObject {
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_DOTALL) != 0);
             case Id_sticky:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
+            case Id_unicode:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODE) != 0);
         }
         return super.getInstanceIdValue(id);
     }
