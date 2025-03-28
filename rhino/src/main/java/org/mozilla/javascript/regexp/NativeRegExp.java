@@ -50,6 +50,7 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
     public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
     public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
 
     // type of match to perform
     public static final int TEST = 0;
@@ -244,6 +245,7 @@ public class NativeRegExp extends IdScriptableObject {
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
         if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
+        if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
     }
 
     NativeRegExp() {}
@@ -636,6 +638,8 @@ public class NativeRegExp extends IdScriptableObject {
                     f = JSREG_DOTALL;
                 } else if (c == 'y') {
                     f = JSREG_STICKY;
+                } else if (c == 'u') {
+                    f = JSREG_UNICODE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
@@ -645,6 +649,17 @@ public class NativeRegExp extends IdScriptableObject {
                 flags |= f;
             }
         }
+
+        // We don't support u and i flags together, yet.
+        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
+            reportError("msg.invalid.re.flag", "u and i");
+        }
+
+        // We support unicode mode in ES6 and later.
+        if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
+            reportError("msg.invalid.re.flag", "u");
+        }
+
         regexp.flags = flags;
 
         CompilerState state = new CompilerState(cx, regexp.source, length, flags);
