@@ -28,6 +28,7 @@ import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * This class implements the RegExp native object.
@@ -55,7 +56,7 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int MATCH = 1;
     public static final int PREFIX = 2;
 
-    private static final boolean debug = false;
+    private static final boolean debug = RhinoConfig.get("rhino.debugRegexp", false);
 
     private static final byte REOP_SIMPLE_START = 1; /* start of 'simple opcodes' */
     private static final byte REOP_EMPTY = 1; /* match rest of input against rest of r.e. */
