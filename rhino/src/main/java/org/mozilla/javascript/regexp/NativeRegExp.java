@@ -3296,6 +3296,10 @@ public class NativeRegExp extends IdScriptableObject {
         if ((thisObj.getAttributes("lastIndex") & READONLY) != 0) {
             throw ScriptRuntime.typeErrorById("msg.modify.readonly", "lastIndex");
         }
+        setLastIndex((Scriptable) thisObj, value);
+    }
+
+    private void setLastIndex(Scriptable thisObj, Object value) {
         ScriptableObject.putProperty(thisObj, "lastIndex", value);
     }
 
@@ -3427,9 +3431,7 @@ public class NativeRegExp extends IdScriptableObject {
                 return js_SymbolMatchAll(cx, scope, thisObj, args);
 
             case SymbolId_search:
-                Scriptable scriptable =
-                        (Scriptable) realThis(thisObj, f).execSub(cx, scope, args, MATCH);
-                return scriptable == null ? -1 : scriptable.get("index", scriptable);
+                return js_SymbolSearch(cx, scope, thisObj, args);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -3470,12 +3472,37 @@ public class NativeRegExp extends IdScriptableObject {
             result.put(i++, result, matchStr);
 
             if (matchStr.isEmpty()) {
-                long thisIndex =
-                        ScriptRuntime.toLength(
-                                ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
+                long thisIndex = getLastIndex(cx, thisObj);
                 long nextIndex = ScriptRuntime.advanceStringIndex(string, thisIndex, fullUnicode);
                 setLastIndex(thisObj, nextIndex);
             }
+        }
+    }
+
+    private Object js_SymbolSearch(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // See ECMAScript spec 22.2.6.12
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+
+        String string = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        long previousLastIndex = getLastIndex(cx, thisObj);
+        if (previousLastIndex != 0) {
+            setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        }
+
+        Object result = regExpExec(thisObj, string, cx, scope);
+
+        long currentLastIndex = getLastIndex(cx, thisObj);
+        if (previousLastIndex != currentLastIndex) {
+            setLastIndex(thisObj, previousLastIndex);
+        }
+
+        if (result == null) {
+            return -1;
+        } else {
+            return ScriptRuntime.getObjectProp(result, "index", cx, scope);
         }
     }
 
@@ -3502,13 +3529,16 @@ public class NativeRegExp extends IdScriptableObject {
 
         Scriptable matcher = c.construct(cx, scope, new Object[] {thisObj, flags});
 
-        long lastIndex =
-                ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
-        ScriptRuntime.setObjectProp(matcher, "lastIndex", lastIndex, cx);
+        long lastIndex = getLastIndex(cx, thisObj);
+        setLastIndex(matcher, lastIndex);
         boolean global = flags.indexOf('g') != -1;
         boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
 
         return new NativeRegExpStringIterator(scope, matcher, s, global, fullUnicode);
+    }
+
+    private static long getLastIndex(Context cx, Scriptable thisObj) {
+        return ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
     }
 
     private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
