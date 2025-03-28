@@ -29,7 +29,7 @@ import org.mozilla.javascript.xml.XMLObject;
  * @author Norris Boyd
  * @author Mike McCabe
  */
-public class NativeArray extends IdScriptableObject implements List {
+public class NativeArray extends ScriptableObject implements List {
     private static final long serialVersionUID = 7331366857676127338L;
 
     /*
@@ -45,6 +45,7 @@ public class NativeArray extends IdScriptableObject implements List {
      */
 
     private static final Object ARRAY_TAG = "Array";
+    private static final String CLASS_NAME = "Array";
     private static final Long NEGATIVE_ONE = Long.valueOf(-1);
     private static final String[] UNSCOPABLES = {
         "at",
@@ -66,10 +67,139 @@ public class NativeArray extends IdScriptableObject implements List {
     };
 
     static void init(Context cx, Scriptable scope, boolean sealed) {
-        NativeArray obj = new NativeArray(0);
-        IdFunctionObject constructor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        ScriptRuntimeES6.addSymbolUnscopables(cx, scope, constructor);
+        LambdaConstructor ctor =
+                new LambdaConstructor(scope, CLASS_NAME, 1, NativeArray::jsConstructor);
+
+        var proto = new NativeArray(0);
+        ctor.setPrototypeScriptable(proto);
+
+        defineMethodOnConstructor(ctor, scope, "of", 0, NativeArray::js_of);
+        defineMethodOnConstructor(ctor, scope, "from", 1, NativeArray::js_from);
+        defineMethodOnConstructor(ctor, scope, "isArray", 1, NativeArray::js_isArrayMethod);
+
+        // The following need to appear on the constructor for
+        // historical reasons even thought they should no tbe there
+        // according to the spec.
+
+        exposeMethodOnConstructor(ctor, scope, "join", 1, NativeArray::js_join);
+        exposeMethodOnConstructor(ctor, scope, "reverse", 0, NativeArray::js_reverse);
+        exposeMethodOnConstructor(ctor, scope, "sort", 1, NativeArray::js_sort);
+        exposeMethodOnConstructor(ctor, scope, "push", 1, NativeArray::js_push);
+        exposeMethodOnConstructor(ctor, scope, "pop", 0, NativeArray::js_pop);
+        exposeMethodOnConstructor(ctor, scope, "shift", 0, NativeArray::js_shift);
+        exposeMethodOnConstructor(ctor, scope, "unshift", 1, NativeArray::js_unshift);
+        exposeMethodOnConstructor(ctor, scope, "splice", 2, NativeArray::js_splice);
+        exposeMethodOnConstructor(ctor, scope, "concat", 1, NativeArray::js_concat);
+        exposeMethodOnConstructor(ctor, scope, "slice", 2, NativeArray::js_slice);
+        exposeMethodOnConstructor(ctor, scope, "indexOf", 1, NativeArray::js_indexOf);
+        exposeMethodOnConstructor(ctor, scope, "lastIndexOf", 1, NativeArray::js_lastIndexOf);
+        exposeMethodOnConstructor(ctor, scope, "every", 1, NativeArray::js_every);
+        exposeMethodOnConstructor(ctor, scope, "filter", 1, NativeArray::js_filter);
+        exposeMethodOnConstructor(ctor, scope, "forEach", 1, NativeArray::js_forEach);
+        exposeMethodOnConstructor(ctor, scope, "map", 1, NativeArray::js_map);
+        exposeMethodOnConstructor(ctor, scope, "some", 1, NativeArray::js_some);
+        exposeMethodOnConstructor(ctor, scope, "find", 1, NativeArray::js_find);
+        exposeMethodOnConstructor(ctor, scope, "findIndex", 1, NativeArray::js_findIndex);
+        exposeMethodOnConstructor(ctor, scope, "findLast", 1, NativeArray::js_findLast);
+        exposeMethodOnConstructor(ctor, scope, "findLastIndex", 1, NativeArray::js_findLastIndex);
+        exposeMethodOnConstructor(ctor, scope, "reduce", 1, NativeArray::js_reduce);
+        exposeMethodOnConstructor(ctor, scope, "reduceRight", 1, NativeArray::js_reduceRight);
+
+        defineMethodOnPrototype(ctor, scope, "toString", 0, NativeArray::js_toString);
+        defineMethodOnPrototype(ctor, scope, "toLocaleString", 0, NativeArray::js_toLocaleString);
+        defineMethodOnPrototype(ctor, scope, "toSource", 0, NativeArray::js_toSource);
+        defineMethodOnPrototype(ctor, scope, "join", 1, NativeArray::js_join);
+        defineMethodOnPrototype(ctor, scope, "reverse", 0, NativeArray::js_reverse);
+        defineMethodOnPrototype(ctor, scope, "sort", 1, NativeArray::js_sort);
+        defineMethodOnPrototype(ctor, scope, "push", 1, NativeArray::js_push);
+        defineMethodOnPrototype(ctor, scope, "pop", 0, NativeArray::js_pop);
+        defineMethodOnPrototype(ctor, scope, "shift", 0, NativeArray::js_shift);
+        defineMethodOnPrototype(ctor, scope, "unshift", 1, NativeArray::js_unshift);
+        defineMethodOnPrototype(ctor, scope, "splice", 2, NativeArray::js_splice);
+        defineMethodOnPrototype(ctor, scope, "concat", 1, NativeArray::js_concat);
+        defineMethodOnPrototype(ctor, scope, "slice", 2, NativeArray::js_slice);
+        defineMethodOnPrototype(ctor, scope, "indexOf", 1, NativeArray::js_indexOf);
+        defineMethodOnPrototype(ctor, scope, "lastIndexOf", 1, NativeArray::js_lastIndexOf);
+        defineMethodOnPrototype(ctor, scope, "includes", 1, NativeArray::js_includes);
+        defineMethodOnPrototype(ctor, scope, "fill", 1, NativeArray::js_fill);
+        defineMethodOnPrototype(ctor, scope, "copyWithin", 2, NativeArray::js_copyWithin);
+        defineMethodOnPrototype(ctor, scope, "at", 1, NativeArray::js_at);
+        defineMethodOnPrototype(ctor, scope, "flat", 0, NativeArray::js_flat);
+        defineMethodOnPrototype(ctor, scope, "flatMap", 1, NativeArray::js_flatMap);
+        defineMethodOnPrototype(ctor, scope, "every", 1, NativeArray::js_every);
+        defineMethodOnPrototype(ctor, scope, "filter", 1, NativeArray::js_filter);
+        defineMethodOnPrototype(ctor, scope, "forEach", 1, NativeArray::js_forEach);
+        defineMethodOnPrototype(ctor, scope, "map", 1, NativeArray::js_map);
+        defineMethodOnPrototype(ctor, scope, "some", 1, NativeArray::js_some);
+        defineMethodOnPrototype(ctor, scope, "find", 1, NativeArray::js_find);
+        defineMethodOnPrototype(ctor, scope, "findIndex", 1, NativeArray::js_findIndex);
+        defineMethodOnPrototype(ctor, scope, "findLast", 1, NativeArray::js_findLast);
+        defineMethodOnPrototype(ctor, scope, "findLastIndex", 1, NativeArray::js_findLastIndex);
+        defineMethodOnPrototype(ctor, scope, "reduce", 1, NativeArray::js_reduce);
+        defineMethodOnPrototype(ctor, scope, "reduceRight", 1, NativeArray::js_reduceRight);
+        defineMethodOnPrototype(ctor, scope, "keys", 0, NativeArray::js_keys);
+        defineMethodOnPrototype(ctor, scope, "entries", 0, NativeArray::js_entries);
+        defineMethodOnPrototype(ctor, scope, "values", 0, NativeArray::js_values);
+        defineMethodOnPrototype(ctor, scope, "toReversed", 0, NativeArray::js_toReversed);
+        defineMethodOnPrototype(ctor, scope, "toSorted", 1, NativeArray::js_toSorted);
+        defineMethodOnPrototype(ctor, scope, "toSpliced", 2, NativeArray::js_toSpliced);
+        defineMethodOnPrototype(ctor, scope, "with", 2, NativeArray::js_with);
+
+        ctor.definePrototypeAlias("values", SymbolKey.ITERATOR, DONTENUM);
+        ScriptRuntimeES6.addSymbolSpecies(cx, scope, ctor);
+        ScriptRuntimeES6.addSymbolUnscopables(
+                cx,
+                scope,
+                proto,
+                new LazilyLoadedCtor(
+                        proto, "", false, false, (c, s, sld) -> makeUnscopables(c, s)));
+
+        ctor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
+        ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
+        if (sealed) {
+            ctor.sealObject();
+            ((NativeArray) ctor.getPrototypeProperty()).sealObject();
+        }
+    }
+
+    private static void defineMethodOnConstructor(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.defineConstructorMethod(
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defineMethodOnPrototype(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.definePrototypeMethod(
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void exposeMethodOnConstructor(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.defineConstructorMethod(
+                scope,
+                name,
+                length,
+                null,
+                (cx, s, thisObj, args) -> {
+                    var realThis = ScriptRuntime.toObject(cx, scope, args[0]);
+                    var realArgs = Arrays.copyOfRange(args, 1, args.length);
+                    return target.call(cx, s, realThis, realArgs);
+                },
+                DONTENUM,
+                DONTENUM | READONLY);
     }
 
     static int getMaximumInitialCapacity() {
@@ -89,12 +219,14 @@ public class NativeArray extends IdScriptableObject implements List {
             Arrays.fill(dense, Scriptable.NOT_FOUND);
         }
         length = lengthArg;
+        createLengthProp();
     }
 
     public NativeArray(Object[] array) {
         denseOnly = true;
         dense = array;
         length = array.length;
+        createLengthProp();
     }
 
     @Override
@@ -105,465 +237,6 @@ public class NativeArray extends IdScriptableObject implements List {
     private static final int Id_length = 1, MAX_INSTANCE_ID = 1;
 
     @Override
-    protected int getMaxInstanceId() {
-        return MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected void setInstanceIdAttributes(int id, int attr) {
-        if (id == Id_length) {
-            lengthAttr = attr;
-        }
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        if (s.equals("length")) {
-            return instanceIdInfo(lengthAttr, Id_length);
-        }
-        return super.findInstanceIdInfo(s);
-    }
-
-    @Override
-    protected String getInstanceIdName(int id) {
-        if (id == Id_length) {
-            return "length";
-        }
-        return super.getInstanceIdName(id);
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        if (id == Id_length) {
-            return ScriptRuntime.wrapNumber((double) length);
-        }
-        return super.getInstanceIdValue(id);
-    }
-
-    @Override
-    protected void setInstanceIdValue(int id, Object value) {
-        if (id == Id_length) {
-            setLength(value);
-            return;
-        }
-        super.setInstanceIdValue(id, value);
-    }
-
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor) {
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join, "join", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse, "reverse", 0);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort, "sort", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push, "push", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop, "pop", 0);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift, "shift", 0);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift, "unshift", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice, "splice", 2);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat, "concat", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice, "slice", 2);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf, "indexOf", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf, "lastIndexOf", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every, "every", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter, "filter", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach, "forEach", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map, "map", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some, "some", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find, "find", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex, "findIndex", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findLast, "findLast", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findLastIndex, "findLastIndex", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce, "reduce", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight, "reduceRight", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
-        super.fillConstructorProperties(ctor);
-    }
-
-    @Override
-    protected void initPrototypeId(int id) {
-        if (id == SymbolId_unscopables) {
-            initPrototypeValue(id, SymbolKey.UNSCOPABLES, makeUnscopables(), DONTENUM | READONLY);
-            return;
-        }
-
-        String s, fnName = null;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 1;
-                s = "constructor";
-                break;
-            case Id_toString:
-                arity = 0;
-                s = "toString";
-                break;
-            case Id_toLocaleString:
-                arity = 0;
-                s = "toLocaleString";
-                break;
-            case Id_toSource:
-                arity = 0;
-                s = "toSource";
-                break;
-            case Id_join:
-                arity = 1;
-                s = "join";
-                break;
-            case Id_reverse:
-                arity = 0;
-                s = "reverse";
-                break;
-            case Id_sort:
-                arity = 1;
-                s = "sort";
-                break;
-            case Id_push:
-                arity = 1;
-                s = "push";
-                break;
-            case Id_pop:
-                arity = 0;
-                s = "pop";
-                break;
-            case Id_shift:
-                arity = 0;
-                s = "shift";
-                break;
-            case Id_unshift:
-                arity = 1;
-                s = "unshift";
-                break;
-            case Id_splice:
-                arity = 2;
-                s = "splice";
-                break;
-            case Id_concat:
-                arity = 1;
-                s = "concat";
-                break;
-            case Id_slice:
-                arity = 2;
-                s = "slice";
-                break;
-            case Id_indexOf:
-                arity = 1;
-                s = "indexOf";
-                break;
-            case Id_lastIndexOf:
-                arity = 1;
-                s = "lastIndexOf";
-                break;
-            case Id_every:
-                arity = 1;
-                s = "every";
-                break;
-            case Id_filter:
-                arity = 1;
-                s = "filter";
-                break;
-            case Id_forEach:
-                arity = 1;
-                s = "forEach";
-                break;
-            case Id_map:
-                arity = 1;
-                s = "map";
-                break;
-            case Id_some:
-                arity = 1;
-                s = "some";
-                break;
-            case Id_find:
-                arity = 1;
-                s = "find";
-                break;
-            case Id_findIndex:
-                arity = 1;
-                s = "findIndex";
-                break;
-            case Id_findLast:
-                arity = 1;
-                s = "findLast";
-                break;
-            case Id_findLastIndex:
-                arity = 1;
-                s = "findLastIndex";
-                break;
-            case Id_reduce:
-                arity = 1;
-                s = "reduce";
-                break;
-            case Id_reduceRight:
-                arity = 1;
-                s = "reduceRight";
-                break;
-            case Id_fill:
-                arity = 1;
-                s = "fill";
-                break;
-            case Id_keys:
-                arity = 0;
-                s = "keys";
-                break;
-            case Id_values:
-                arity = 0;
-                s = "values";
-                break;
-            case Id_entries:
-                arity = 0;
-                s = "entries";
-                break;
-            case Id_includes:
-                arity = 1;
-                s = "includes";
-                break;
-            case Id_copyWithin:
-                arity = 2;
-                s = "copyWithin";
-                break;
-            case Id_at:
-                arity = 1;
-                s = "at";
-                break;
-            case Id_flat:
-                arity = 0;
-                s = "flat";
-                break;
-            case Id_flatMap:
-                arity = 1;
-                s = "flatMap";
-                break;
-            case Id_toReversed:
-                arity = 0;
-                s = "toReversed";
-                break;
-            case Id_toSorted:
-                arity = 1;
-                s = "toSorted";
-                break;
-            case Id_toSpliced:
-                arity = 2;
-                s = "toSpliced";
-                break;
-            case Id_with:
-                arity = 2;
-                s = "with";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-
-        initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
-    }
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(ARRAY_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-        again:
-        for (; ; ) {
-            switch (id) {
-                case ConstructorId_join:
-                case ConstructorId_reverse:
-                case ConstructorId_sort:
-                case ConstructorId_push:
-                case ConstructorId_pop:
-                case ConstructorId_shift:
-                case ConstructorId_unshift:
-                case ConstructorId_splice:
-                case ConstructorId_concat:
-                case ConstructorId_slice:
-                case ConstructorId_indexOf:
-                case ConstructorId_lastIndexOf:
-                case ConstructorId_every:
-                case ConstructorId_filter:
-                case ConstructorId_forEach:
-                case ConstructorId_map:
-                case ConstructorId_some:
-                case ConstructorId_find:
-                case ConstructorId_findIndex:
-                case ConstructorId_findLast:
-                case ConstructorId_findLastIndex:
-                case ConstructorId_reduce:
-                case ConstructorId_reduceRight:
-                    {
-                        // this is a small trick; we will handle all the ConstructorId_xxx calls
-                        // the same way the object calls are processed
-                        // so we adjust the args, inverting the id and
-                        // restarting the method selection
-                        // Attention: the implementations have to be aware of this
-                        if (args.length > 0) {
-                            thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
-                            Object[] newArgs = new Object[args.length - 1];
-                            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
-                            args = newArgs;
-                        }
-                        id = -id;
-                        continue again;
-                    }
-
-                case ConstructorId_isArray:
-                    return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
-
-                case ConstructorId_of:
-                    {
-                        return js_of(cx, scope, thisObj, args);
-                    }
-
-                case ConstructorId_from:
-                    {
-                        return js_from(cx, scope, thisObj, args);
-                    }
-
-                case Id_constructor:
-                    {
-                        boolean inNewExpr = (thisObj == null);
-                        if (!inNewExpr) {
-                            // IdFunctionObject.construct will set up parent, proto
-                            return f.construct(cx, scope, args);
-                        }
-                        return jsConstructor(cx, scope, args);
-                    }
-
-                case Id_toString:
-                    return toStringHelper(
-                            cx,
-                            scope,
-                            thisObj,
-                            cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE),
-                            false);
-
-                case Id_toLocaleString:
-                    return toStringHelper(cx, scope, thisObj, false, true);
-
-                case Id_toSource:
-                    return toStringHelper(cx, scope, thisObj, true, false);
-
-                case Id_join:
-                    return js_join(cx, scope, thisObj, args);
-
-                case Id_reverse:
-                    return js_reverse(cx, scope, thisObj, args);
-
-                case Id_sort:
-                    return js_sort(cx, scope, thisObj, args);
-
-                case Id_push:
-                    return js_push(cx, scope, thisObj, args);
-
-                case Id_pop:
-                    return js_pop(cx, scope, thisObj, args);
-
-                case Id_shift:
-                    return js_shift(cx, scope, thisObj, args);
-
-                case Id_unshift:
-                    return js_unshift(cx, scope, thisObj, args);
-
-                case Id_splice:
-                    return js_splice(cx, scope, thisObj, args);
-
-                case Id_concat:
-                    return js_concat(cx, scope, thisObj, args);
-
-                case Id_slice:
-                    return js_slice(cx, scope, thisObj, args);
-
-                case Id_indexOf:
-                    return js_indexOf(cx, scope, thisObj, args);
-
-                case Id_lastIndexOf:
-                    return js_lastIndexOf(cx, scope, thisObj, args);
-
-                case Id_includes:
-                    return js_includes(cx, scope, thisObj, args);
-
-                case Id_fill:
-                    return js_fill(cx, scope, thisObj, args);
-
-                case Id_copyWithin:
-                    return js_copyWithin(cx, scope, thisObj, args);
-
-                case Id_at:
-                    return js_at(cx, scope, thisObj, args);
-
-                case Id_flat:
-                    return js_flat(cx, scope, thisObj, args);
-
-                case Id_flatMap:
-                    return js_flatMap(cx, scope, thisObj, args);
-
-                case Id_every:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.EVERY, scope, thisObj, args);
-
-                case Id_filter:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FILTER, scope, thisObj, args);
-                case Id_forEach:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FOR_EACH, scope, thisObj, args);
-                case Id_map:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.MAP, scope, thisObj, args);
-
-                case Id_some:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.SOME, scope, thisObj, args);
-                case Id_find:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FIND, scope, thisObj, args);
-                case Id_findIndex:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FIND_INDEX, scope, thisObj, args);
-                case Id_findLast:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FIND_LAST, scope, thisObj, args);
-                case Id_findLastIndex:
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            cx, f, IterativeOperation.FIND_LAST_INDEX, scope, thisObj, args);
-
-                case Id_reduce:
-                    return ArrayLikeAbstractOperations.reduceMethod(
-                            cx, ReduceOperation.REDUCE, scope, thisObj, args);
-                case Id_reduceRight:
-                    return ArrayLikeAbstractOperations.reduceMethod(
-                            cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
-
-                case Id_keys:
-                    thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-                    return new NativeArrayIterator(
-                            scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
-
-                case Id_entries:
-                    thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-                    return new NativeArrayIterator(
-                            scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
-
-                case Id_values:
-                    thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-                    return new NativeArrayIterator(
-                            scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
-
-                case Id_toReversed:
-                    return js_toReversed(cx, scope, thisObj, args);
-                case Id_toSorted:
-                    return js_toSorted(cx, scope, thisObj, args);
-                case Id_toSpliced:
-                    return js_toSpliced(cx, scope, thisObj, args);
-                case Id_with:
-                    return js_with(cx, scope, thisObj, args);
-            }
-            throw new IllegalArgumentException(
-                    "Array.prototype has no method: " + f.getFunctionName());
-        }
-    }
-
-    @Override
     public void setPrototype(Scriptable p) {
         super.setPrototype(p);
         if (!(p instanceof NativeArray)) {
@@ -571,16 +244,10 @@ public class NativeArray extends IdScriptableObject implements List {
         }
     }
 
-    private Object makeUnscopables() {
-        Context cx = Context.getCurrentContext();
+    private static Object makeUnscopables(Context cx, Scriptable scope) {
         NativeObject obj;
 
-        if (cx != null) {
-            Scriptable scope = this.getParentScope();
-            obj = (NativeObject) cx.newObject(scope);
-        } else {
-            obj = new NativeObject();
-        }
+        obj = (NativeObject) cx.newObject(scope);
 
         ScriptableObject desc = ScriptableObject.buildDataDescriptor(obj, true, EMPTY);
         for (var k : UNSCOPABLES) {
@@ -602,42 +269,6 @@ public class NativeArray extends IdScriptableObject implements List {
         if (!denseOnly && isGetterOrSetter(null, index, false)) return super.has(index, start);
         if (dense != null && 0 <= index && index < dense.length) return dense[index] != NOT_FOUND;
         return super.has(index, start);
-    }
-
-    @Override
-    public boolean has(Symbol key, Scriptable start) {
-        if (SymbolKey.ITERATOR.equals(key)) {
-            return super.has("values", start);
-        }
-
-        return super.has(key, start);
-    }
-
-    @Override
-    public Object get(Symbol key, Scriptable start) {
-        if (SymbolKey.ITERATOR.equals(key)) {
-            return super.get("values", start);
-        }
-
-        return super.get(key, start);
-    }
-
-    @Override
-    public void put(Symbol key, Scriptable start, Object value) {
-        if (SymbolKey.ITERATOR.equals(key)) {
-            super.put("values", start, value);
-        }
-
-        super.put(key, start, value);
-    }
-
-    @Override
-    public void delete(Symbol key) {
-        if (SymbolKey.ITERATOR.equals(key)) {
-            super.delete("values");
-        }
-
-        super.delete(key);
     }
 
     private static long toArrayIndex(Object id) {
@@ -881,25 +512,108 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     /** See ECMA 15.4.1,2 */
-    private static Object jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
         // Only use 1 arg as first element for version 1.2; for
         // any other version (including 1.3) follow ECMA and use it as
         // a length.
+        NativeArray res;
         if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-            return new NativeArray(args);
+            res = new NativeArray(args);
+        } else {
+            Object arg0 = args[0];
+            if (args.length > 1 || !(arg0 instanceof Number)) {
+                res = new NativeArray(args);
+            } else {
+                long len = ScriptRuntime.toUint32(arg0);
+                if (len != ((Number) arg0).doubleValue()) {
+                    String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+                    throw ScriptRuntime.rangeError(msg);
+                }
+                res = new NativeArray(len);
+            }
         }
-        Object arg0 = args[0];
-        if (args.length > 1 || !(arg0 instanceof Number)) {
-            return new NativeArray(args);
+
+        return res;
+    }
+
+    private void createLengthProp() {
+        ScriptableObject.defineBuiltInProperty(
+                this,
+                "length",
+                DONTENUM | PERMANENT,
+                NativeArray::lengthGetter,
+                NativeArray::lengthSetter,
+                NativeArray::lengthAttrSetter,
+                NativeArray::arraySetLength);
+    }
+
+    private static Object lengthGetter(NativeArray array, Scriptable start) {
+        return ScriptRuntime.wrapNumber((double) array.length);
+    }
+
+    private static boolean lengthSetter(
+            NativeArray builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        builtIn.setLength(value);
+        return true;
+    }
+
+    private static void lengthAttrSetter(NativeArray builtIn, int attrs) {
+        builtIn.lengthAttr = attrs;
+    }
+
+    protected static boolean arraySetLength(
+            NativeArray builtIn,
+            BuiltInSlot<NativeArray> current,
+            Object id,
+            ScriptableObject desc,
+            boolean checkValid,
+            Object key,
+            int index) {
+        // 10.2.4.2 Step 1.
+        Object value = getProperty(desc, "value");
+
+        if (value == NOT_FOUND) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    builtIn, id, desc, checkValid, key, index);
         }
-        long len = ScriptRuntime.toUint32(arg0);
-        if (len != ((Number) arg0).doubleValue()) {
-            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
-            throw ScriptRuntime.rangeError(msg);
+
+        // 10.2.4.2 Steps 2 - 6
+        long newLength = checkLength(value);
+
+        Object writable = getProperty(desc, "writable");
+        // 10.2.4.2 9 is true by definition
+
+        // 10.2.4.2 10-11
+        if (newLength >= builtIn.length) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    builtIn, id, desc, checkValid, key, index);
         }
-        return new NativeArray(len);
+
+        boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
+        if (!currentWritable) {
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
+        }
+        boolean newWritable = true;
+        if (writable != NOT_FOUND) {
+            newWritable = isTrue(writable);
+            putProperty(desc, "writable", true);
+        }
+
+        // The standard set path that will be done by this call will
+        // clear any elements as required.
+        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, desc, checkValid, key, index)) {
+            var currentAttrs = current.getAttributes();
+            var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
+            current.setAttributes(newAttrs);
+            return true;
+        }
+        return false;
     }
 
     private static Scriptable callConstructorOrCreateArray(
@@ -1036,19 +750,24 @@ public class NativeArray extends IdScriptableObject implements List {
         this.denseOnly = denseOnly;
     }
 
-    private void setLength(Object val) {
+    boolean getDenseOnly() {
+        return denseOnly;
+    }
+
+    private boolean setLength(Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
          * 2. If Result(1) is false, return.
          * ?
          */
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(val);
+
         if ((lengthAttr & READONLY) != 0) {
-            return;
+            return false;
         }
 
-        double d = ScriptRuntime.toNumber(val);
-        long longVal = ScriptRuntime.toUint32(d);
         if (longVal != d) {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
@@ -1060,13 +779,13 @@ public class NativeArray extends IdScriptableObject implements List {
                 Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
                 length = longVal;
                 modCount++;
-                return;
+                return true;
             } else if (longVal < MAX_PRE_GROW_SIZE
                     && longVal < (length * GROW_FACTOR)
                     && ensureCapacity((int) longVal)) {
                 length = longVal;
                 modCount++;
-                return;
+                return true;
             } else {
                 denseOnly = false;
             }
@@ -1096,6 +815,17 @@ public class NativeArray extends IdScriptableObject implements List {
         }
         length = longVal;
         modCount++;
+        return true;
+    }
+
+    private static long checkLength(Object val) {
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(val);
+        if (longVal != d) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        return longVal;
     }
 
     /* Support for generic Array-ish objects.  Most of the Array
@@ -1184,6 +914,22 @@ public class NativeArray extends IdScriptableObject implements List {
         } else {
             setElem(cx, target, index, value);
         }
+    }
+
+    private static String js_toString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toStringHelper(
+                cx, scope, thisObj, cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
+    }
+
+    private static String js_toLocaleString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toStringHelper(cx, scope, thisObj, false, true);
+    }
+
+    private static String js_toSource(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toStringHelper(cx, scope, thisObj, true, false);
     }
 
     private static String toStringHelper(
@@ -1570,10 +1316,18 @@ public class NativeArray extends IdScriptableObject implements List {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         NativeArray na = null;
-        boolean denseMode = false;
+        Object result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
+        NativeArray nar = null;
+        boolean denseFrom = false;
+        boolean denseRes = false;
+
         if (o instanceof NativeArray) {
             na = (NativeArray) o;
-            denseMode = na.denseOnly;
+            denseFrom = na.denseOnly;
+        }
+        if (result instanceof NativeArray) {
+            nar = (NativeArray) result;
+            denseRes = nar.denseOnly;
         }
 
         /* create an empty Array to return. */
@@ -1615,7 +1369,6 @@ public class NativeArray extends IdScriptableObject implements List {
         }
 
         /* If there are elements to remove, put them into the return value. */
-        Object result;
         if (actualDeleteCount != 0) {
             if (actualDeleteCount == 1 && (cx.getLanguageVersion() == Context.VERSION_1_2)) {
                 /*
@@ -1631,35 +1384,33 @@ public class NativeArray extends IdScriptableObject implements List {
                  */
                 result = getElem(cx, o, begin);
             } else {
-                if (denseMode) {
+                if (denseFrom && denseRes) {
                     int intLen = (int) (end - begin);
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
-                    result = cx.newArray(scope, copy);
+                    nar.dense = copy;
+                    nar.setLength(intLen);
                 } else {
-                    Scriptable resultArray = cx.newArray(scope, 0);
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);
                         if (temp != NOT_FOUND) {
-                            setElem(cx, resultArray, last - begin, temp);
+                            ArrayLikeAbstractOperations.defineElem(
+                                    cx, (ScriptableObject) result, last - begin, temp);
                         }
                     }
                     // Need to set length for sparse result array
-                    setLengthProperty(cx, resultArray, end - begin);
-                    result = resultArray;
+                    setLengthProperty(cx, (ScriptableObject) result, end - begin);
                 }
             }
         } else { // (actualDeleteCount == 0)
             if (cx.getLanguageVersion() == Context.VERSION_1_2) {
                 /* Emulate C JS1.2; if no elements are removed, return undefined. */
                 result = Undefined.instance;
-            } else {
-                result = cx.newArray(scope, 0);
             }
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
-        if (denseMode
+        if (denseFrom
                 && length + delta < Integer.MAX_VALUE
                 && na.ensureCapacity((int) (length + delta))) {
             System.arraycopy(
@@ -1789,7 +1540,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        final Scriptable result = cx.newArray(scope, 0);
+        final Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
 
         long length = doConcat(cx, scope, result, o, 0);
         for (Object arg : args) {
@@ -1826,7 +1577,7 @@ public class NativeArray extends IdScriptableObject implements List {
             throw ScriptRuntime.rangeError(msg);
         }
 
-        Scriptable result = cx.newArray(scope, 0);
+        Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
         for (long slot = begin; slot < end; slot++) {
             Object temp = getRawElem(o, slot);
             if (temp != NOT_FOUND) {
@@ -2134,7 +1885,7 @@ public class NativeArray extends IdScriptableObject implements List {
         long length = getLengthProperty(cx, source);
 
         Scriptable result;
-        result = cx.newArray(scope, 0);
+        result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, source, 0);
         long j = 0;
         for (long i = 0; i < length; i++) {
             Object elem = getRawElem(source, i);
@@ -2172,8 +1923,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
         long length = getLengthProperty(cx, o);
 
-        Scriptable result;
-        result = cx.newArray(scope, 0);
+        Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, o, 0);
         long j = 0;
         for (long i = 0; i < length; i++) {
             Object elem = getRawElem(o, i);
@@ -2195,6 +1945,100 @@ public class NativeArray extends IdScriptableObject implements List {
         }
         setLengthProperty(cx, result, j);
         return result;
+    }
+
+    private static Object js_every(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "every", IterativeOperation.EVERY, scope, thisObj, args);
+    }
+
+    private static Object js_filter(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "filter", IterativeOperation.FILTER, scope, thisObj, args);
+    }
+
+    private static Object js_forEach(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "forEach", IterativeOperation.FOR_EACH, scope, thisObj, args);
+    }
+
+    private static Object js_map(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "map", IterativeOperation.MAP, scope, thisObj, args);
+    }
+
+    private static Object js_some(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "some", IterativeOperation.SOME, scope, thisObj, args);
+    }
+
+    private static Object js_find(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "find", IterativeOperation.FIND, scope, thisObj, args);
+    }
+
+    private static Object js_findIndex(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "findIndex", IterativeOperation.FIND_INDEX, scope, thisObj, args);
+    }
+
+    private static Object js_findLast(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx, ARRAY_TAG, "findLast", IterativeOperation.FIND_LAST, scope, thisObj, args);
+    }
+
+    private static Object js_findLastIndex(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.iterativeMethod(
+                cx,
+                ARRAY_TAG,
+                "findLastIndex",
+                IterativeOperation.FIND_LAST_INDEX,
+                scope,
+                thisObj,
+                args);
+    }
+
+    private static Object js_reduce(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.reduceMethod(
+                cx, ReduceOperation.REDUCE, scope, thisObj, args);
+    }
+
+    private static Object js_reduceRight(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ArrayLikeAbstractOperations.reduceMethod(
+                cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
+    }
+
+    private static Object js_keys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(
+                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
+    }
+
+    private static Object js_entries(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(
+                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
+    }
+
+    private static Object js_values(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(
+                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+    }
+
+    private static Object js_isArrayMethod(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
     }
 
     private static boolean js_isArray(Object o) {
@@ -2600,219 +2444,6 @@ public class NativeArray extends IdScriptableObject implements List {
             throw new ConcurrentModificationException();
         }
     }
-
-    @Override
-    protected int findPrototypeId(Symbol k) {
-        if (SymbolKey.ITERATOR.equals(k)) {
-            // "Symbol.iterator" property of the prototype has the "same value"
-            // as the "values" property. We implement this by returning the
-            // ID of "values" when the iterator symbol is accessed.
-            return Id_values;
-        } else if (SymbolKey.UNSCOPABLES.equals(k)) {
-            return SymbolId_unscopables;
-        }
-        return 0;
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "toString":
-                id = Id_toString;
-                break;
-            case "toLocaleString":
-                id = Id_toLocaleString;
-                break;
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "join":
-                id = Id_join;
-                break;
-            case "reverse":
-                id = Id_reverse;
-                break;
-            case "sort":
-                id = Id_sort;
-                break;
-            case "push":
-                id = Id_push;
-                break;
-            case "pop":
-                id = Id_pop;
-                break;
-            case "shift":
-                id = Id_shift;
-                break;
-            case "unshift":
-                id = Id_unshift;
-                break;
-            case "splice":
-                id = Id_splice;
-                break;
-            case "concat":
-                id = Id_concat;
-                break;
-            case "slice":
-                id = Id_slice;
-                break;
-            case "indexOf":
-                id = Id_indexOf;
-                break;
-            case "lastIndexOf":
-                id = Id_lastIndexOf;
-                break;
-            case "every":
-                id = Id_every;
-                break;
-            case "filter":
-                id = Id_filter;
-                break;
-            case "forEach":
-                id = Id_forEach;
-                break;
-            case "map":
-                id = Id_map;
-                break;
-            case "some":
-                id = Id_some;
-                break;
-            case "find":
-                id = Id_find;
-                break;
-            case "findIndex":
-                id = Id_findIndex;
-                break;
-            case "findLast":
-                id = Id_findLast;
-                break;
-            case "findLastIndex":
-                id = Id_findLastIndex;
-                break;
-            case "reduce":
-                id = Id_reduce;
-                break;
-            case "reduceRight":
-                id = Id_reduceRight;
-                break;
-            case "fill":
-                id = Id_fill;
-                break;
-            case "keys":
-                id = Id_keys;
-                break;
-            case "values":
-                id = Id_values;
-                break;
-            case "entries":
-                id = Id_entries;
-                break;
-            case "includes":
-                id = Id_includes;
-                break;
-            case "copyWithin":
-                id = Id_copyWithin;
-                break;
-            case "at":
-                id = Id_at;
-                break;
-            case "flat":
-                id = Id_flat;
-                break;
-            case "flatMap":
-                id = Id_flatMap;
-                break;
-            case "toReversed":
-                id = Id_toReversed;
-                break;
-            case "toSorted":
-                id = Id_toSorted;
-                break;
-            case "toSpliced":
-                id = Id_toSpliced;
-                break;
-            case "with":
-                id = Id_with;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    private static final int Id_constructor = 1,
-            Id_toString = 2,
-            Id_toLocaleString = 3,
-            Id_toSource = 4,
-            Id_join = 5,
-            Id_reverse = 6,
-            Id_sort = 7,
-            Id_push = 8,
-            Id_pop = 9,
-            Id_shift = 10,
-            Id_unshift = 11,
-            Id_splice = 12,
-            Id_concat = 13,
-            Id_slice = 14,
-            Id_indexOf = 15,
-            Id_lastIndexOf = 16,
-            Id_every = 17,
-            Id_filter = 18,
-            Id_forEach = 19,
-            Id_map = 20,
-            Id_some = 21,
-            Id_find = 22,
-            Id_findIndex = 23,
-            Id_findLast = 24,
-            Id_findLastIndex = 25,
-            Id_reduce = 26,
-            Id_reduceRight = 27,
-            Id_fill = 28,
-            Id_keys = 29,
-            Id_values = 30,
-            Id_entries = 31,
-            Id_includes = 32,
-            Id_copyWithin = 33,
-            Id_at = 34,
-            Id_flat = 35,
-            Id_flatMap = 36,
-            Id_toReversed = 37,
-            Id_toSorted = 38,
-            Id_toSpliced = 39,
-            Id_with = 40,
-            SymbolId_unscopables = 41,
-            MAX_PROTOTYPE_ID = SymbolId_unscopables;
-    private static final int ConstructorId_join = -Id_join,
-            ConstructorId_reverse = -Id_reverse,
-            ConstructorId_sort = -Id_sort,
-            ConstructorId_push = -Id_push,
-            ConstructorId_pop = -Id_pop,
-            ConstructorId_shift = -Id_shift,
-            ConstructorId_unshift = -Id_unshift,
-            ConstructorId_splice = -Id_splice,
-            ConstructorId_concat = -Id_concat,
-            ConstructorId_slice = -Id_slice,
-            ConstructorId_indexOf = -Id_indexOf,
-            ConstructorId_lastIndexOf = -Id_lastIndexOf,
-            ConstructorId_every = -Id_every,
-            ConstructorId_filter = -Id_filter,
-            ConstructorId_forEach = -Id_forEach,
-            ConstructorId_map = -Id_map,
-            ConstructorId_some = -Id_some,
-            ConstructorId_find = -Id_find,
-            ConstructorId_findIndex = -Id_findIndex,
-            ConstructorId_findLast = -Id_findLast,
-            ConstructorId_findLastIndex = -Id_findLastIndex,
-            ConstructorId_reduce = -Id_reduce,
-            ConstructorId_reduceRight = -Id_reduceRight,
-            ConstructorId_isArray = -28,
-            ConstructorId_of = -29,
-            ConstructorId_from = -30;
 
     /** Internal representation of the JavaScript array's length property. */
     private long length;
