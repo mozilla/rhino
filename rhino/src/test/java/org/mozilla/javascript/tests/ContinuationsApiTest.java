@@ -225,8 +225,8 @@ public class ContinuationsApiTest {
 
                 // serialize
                 try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                     ScriptableOutputStream sos =
-                             new ScriptableOutputStream(baos, globalScope)) {
+                        ScriptableOutputStream sos =
+                                new ScriptableOutputStream(baos, globalScope)) {
                     sos.writeObject(globalScope);
                     sos.writeObject(pending.getContinuation());
                     sos.close();
@@ -236,7 +236,7 @@ public class ContinuationsApiTest {
 
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
-                     ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
+                        ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
                     globalScope = (Scriptable) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
@@ -280,7 +280,7 @@ public class ContinuationsApiTest {
             } catch (ContinuationPending pending) {
                 // serialize
                 try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                     ObjectOutputStream sos = new ObjectOutputStream(baos)) {
+                        ObjectOutputStream sos = new ObjectOutputStream(baos)) {
                     sos.writeObject(globalScope);
                     sos.writeObject(pending.getContinuation());
                     sos.close();
@@ -296,7 +296,7 @@ public class ContinuationsApiTest {
 
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
-                     ObjectInputStream sis = new ObjectInputStream(bais)) {
+                        ObjectInputStream sis = new ObjectInputStream(bais)) {
                     globalScope = (Scriptable) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
@@ -343,8 +343,8 @@ public class ContinuationsApiTest {
 
                 // serialize
                 try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                     ScriptableOutputStream sos =
-                             new ScriptableOutputStream(baos, globalScope)) {
+                        ScriptableOutputStream sos =
+                                new ScriptableOutputStream(baos, globalScope)) {
                     sos.writeObject(globalScope);
                     sos.writeObject(pending.getContinuation());
                     sos.close();
@@ -354,7 +354,7 @@ public class ContinuationsApiTest {
 
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
-                     ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
+                        ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
                     globalScope = (Scriptable) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
@@ -391,17 +391,17 @@ public class ContinuationsApiTest {
     public void abcd() {
         String jsSource =
                 "let array1 = [];\n"
-                + "let array2 = [];\n"
-                // add enough items to inc stack size
-                + "for (let i = 0; i < 42; i++) {\n"
-                + "    array1.push(i);\n"
-                + "    array2.push(i);\n"
-                + "}\n"
+                        + "let array2 = [];\n"
+                        // add enough items to inc stack size
+                        + "for (let i = 0; i < 42; i++) {\n"
+                        + "    array1.push(i);\n"
+                        + "    array2.push(i);\n"
+                        + "}\n"
 
-                // this will cause ensureStackLength to be called
-                + "Array.prototype.push.apply(array1, array1)\n"
-                // this will cause ArrayIndexOutOfBoundsException
-                + "let select = myObject.directThrow()\n";
+                        // this will cause ensureStackLength to be called
+                        + "Array.prototype.push.apply(array1, array1)\n"
+                        // this will cause ArrayIndexOutOfBoundsException
+                        + "let select = myObject.directThrow()\n";
 
         try (Context cx = Context.enter()) {
             cx.setInterpretedMode(true); // must use interpreter mode
