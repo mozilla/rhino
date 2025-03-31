@@ -387,8 +387,12 @@ public class ContinuationsApiTest {
         assertEquals("still the same at the other end", r1.toString(), r2.toString());
     }
 
+    /**
+     * Method ensureStackLength() has to take care of stack, sDbl, and stackAttributes.
+     * see PR#1815
+     */
     @Test
-    public void abcd() {
+    public void ensureStackLength() {
         String jsSource =
                 "let array1 = [];\n"
                         + "let array2 = [];\n"
