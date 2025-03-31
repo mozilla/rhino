@@ -58,76 +58,82 @@ public class NativeRegExp extends IdScriptableObject {
     private static final boolean debug = false;
 
     private static final byte REOP_SIMPLE_START = 1; /* start of 'simple opcodes' */
-    private static final byte REOP_EMPTY = 1; /* match rest of input against rest of r.e. */
-    private static final byte REOP_BOL = 2; /* beginning of input (or line if multiline) */
-    private static final byte REOP_EOL = 3; /* end of input (or line if multiline) */
-    private static final byte REOP_WBDRY = 4; /* match "" at word boundary */
-    private static final byte REOP_WNONBDRY = 5; /* match "" at word non-boundary */
-    private static final byte REOP_DOT = 6; /* stands for any character */
-    private static final byte REOP_DIGIT = 7; /* match a digit char: [0-9] */
-    private static final byte REOP_NONDIGIT = 8; /* match a non-digit char: [^0-9] */
-    private static final byte REOP_ALNUM = 9; /* match an alphanumeric char: [0-9a-z_A-Z] */
-    private static final byte REOP_NONALNUM = 10; /* match a non-alphanumeric char: [^0-9a-z_A-Z] */
-    private static final byte REOP_SPACE = 11; /* match a whitespace char */
-    private static final byte REOP_NONSPACE = 12; /* match a non-whitespace char */
-    private static final byte REOP_BACKREF = 13; /* back-reference (e.g., \1) to a parenthetical */
-    private static final byte REOP_FLAT = 14; /* match a flat string */
-    private static final byte REOP_FLAT1 = 15; /* match a single char */
-    private static final byte REOP_FLATi = 16; /* case-independent REOP_FLAT */
-    private static final byte REOP_FLAT1i = 17; /* case-independent REOP_FLAT1 */
-    private static final byte REOP_UCFLAT1 = 18; /* single Unicode char */
-    private static final byte REOP_UCFLAT1i = 19; /* case-independent REOP_UCFLAT1 */
-    //    private static final byte REOP_UCFLAT        = 20; /* flat Unicode string; len immediate
-    // counts chars */
-    //    private static final byte REOP_UCFLATi       = 21; /* case-independent REOP_UCFLAT */
-    private static final byte REOP_CLASS = 22; /* character class with index */
-    private static final byte REOP_NCLASS = 23; /* negated character class with index */
-    private static final byte REOP_NAMED_BACKREF = 24; /* named back-reference */
+    private static final byte REOP_EMPTY =
+            REOP_SIMPLE_START; /* match rest of input against rest of r.e. */
+    private static final byte REOP_BOL =
+            REOP_EMPTY + 1; /* beginning of input (or line if multiline) */
+    private static final byte REOP_EOL = REOP_BOL + 1; /* end of input (or line if multiline) */
+    private static final byte REOP_WBDRY = REOP_EOL + 1; /* match "" at word boundary */
+    private static final byte REOP_WNONBDRY = REOP_WBDRY + 1; /* match "" at word non-boundary */
+    private static final byte REOP_DOT = REOP_WNONBDRY + 1; /* stands for any character */
+    private static final byte REOP_DIGIT = REOP_DOT + 1; /* match a digit char: [0-9] */
+    private static final byte REOP_NONDIGIT = REOP_DIGIT + 1; /* match a non-digit char: [^0-9] */
+    private static final byte REOP_ALNUM =
+            REOP_NONDIGIT + 1; /* match an alphanumeric char: [0-9a-z_A-Z] */
+    private static final byte REOP_NONALNUM =
+            REOP_ALNUM + 1; /* match a non-alphanumeric char: [^0-9a-z_A-Z] */
+    private static final byte REOP_SPACE = REOP_NONALNUM + 1; /* match a whitespace char */
+    private static final byte REOP_NONSPACE = REOP_SPACE + 1; /* match a non-whitespace char */
+    private static final byte REOP_BACKREF =
+            REOP_NONSPACE + 1; /* back-reference (e.g., \1) to a parenthetical */
+    private static final byte REOP_FLAT = REOP_BACKREF + 1; /* match a flat string */
+    private static final byte REOP_FLAT1 = REOP_FLAT + 1; /* match a single char */
+    private static final byte REOP_FLATi = REOP_FLAT1 + 1; /* case-independent REOP_FLAT */
+    private static final byte REOP_FLAT1i = REOP_FLATi + 1; /* case-independent REOP_FLAT1 */
+    private static final byte REOP_UCFLAT1 = REOP_FLAT1i + 1; /* single Unicode char */
+    private static final byte REOP_UCFLAT1i = REOP_UCFLAT1 + 1; /* case-independent REOP_UCFLAT1 */
+    private static final byte REOP_CLASS = REOP_UCFLAT1i + 1; /* character class with index */
+    private static final byte REOP_NCLASS = REOP_CLASS + 1; /* negated character class with index */
+    private static final byte REOP_NAMED_BACKREF = REOP_NCLASS + 1; /* named back-reference */
+    private static final byte REOP_SIMPLE_END = REOP_NAMED_BACKREF; /* end of 'simple opcodes' */
+    // REOP_SIMPLE_END is not a real opcode, but a sentinel for the end of the simple opcodes
 
-    // REOP_SIMPLE_END is not a real opcode; it is just a sentinel. It is therefore okay
-    // for it to share a constant with a real opcode
-    private static final byte REOP_SIMPLE_END = 24; /* end of 'simple opcodes' */
-    private static final byte REOP_QUANT = 25; /* quantified atom: atom{1,2} */
-    private static final byte REOP_STAR = 26; /* zero or more occurrences of kid */
-    private static final byte REOP_PLUS = 27; /* one or more occurrences of kid */
-    private static final byte REOP_OPT = 28; /* optional subexpression in kid */
+    private static final byte REOP_QUANT = REOP_SIMPLE_END + 1; /* quantified atom: atom{1,2} */
+    private static final byte REOP_STAR = REOP_QUANT + 1; /* zero or more occurrences of kid */
+    private static final byte REOP_PLUS = REOP_STAR + 1; /* one or more occurrences of kid */
+    private static final byte REOP_OPT = REOP_PLUS + 1; /* optional subexpression in kid */
     private static final byte REOP_LPAREN =
-            29; /* left paren bytecode: kid is u.num'th sub-regexp */
-    private static final byte REOP_RPAREN = 30; /* right paren bytecode */
-    private static final byte REOP_ALT = 31; /* alternative subexpressions in kid and next */
-    private static final byte REOP_JUMP = 32; /* for deoptimized closure loops */
-    //    private static final byte REOP_DOTSTAR       = 33; /* optimize .* to use a single opcode
-    // */
-    //    private static final byte REOP_ANCHOR        = 34; /* like .* but skips left context to
-    // unanchored r.e. */
-    //    private static final byte REOP_EOLONLY       = 35; /* $ not preceded by any pattern */
-    //    private static final byte REOP_BACKREFi      = 37; /* case-independent REOP_BACKREF */
-    //    private static final byte REOP_LPARENNON     = 40; /* non-capturing version of REOP_LPAREN
-    // */
-    private static final byte REOP_ASSERT = 41; /* zero width positive lookahead assertion */
-    private static final byte REOP_ASSERT_NOT = 42; /* zero width negative lookahead assertion */
-    private static final byte REOP_ASSERTTEST = 43; /* sentinel at end of assertion child */
-    private static final byte REOP_ASSERTNOTTEST = 44; /* sentinel at end of !assertion child */
-    private static final byte REOP_MINIMALSTAR = 45; /* non-greedy version of * */
-    private static final byte REOP_MINIMALPLUS = 46; /* non-greedy version of + */
-    private static final byte REOP_MINIMALOPT = 47; /* non-greedy version of ? */
-    private static final byte REOP_MINIMALQUANT = 48; /* non-greedy version of {} */
-    private static final byte REOP_ENDCHILD = 49; /* sentinel at end of quantifier child */
-    private static final byte REOP_REPEAT = 51; /* directs execution of greedy quantifier */
+            REOP_OPT + 1; /* left paren bytecode: kid is u.num'th sub-regexp */
+    private static final byte REOP_RPAREN = REOP_LPAREN + 1; /* right paren bytecode */
+    private static final byte REOP_ALT =
+            REOP_RPAREN + 1; /* alternative subexpressions in kid and next */
+    private static final byte REOP_JUMP = REOP_ALT + 1; /* for deoptimized closure loops */
+    private static final byte REOP_ASSERT =
+            REOP_JUMP + 1; /* zero width positive lookahead assertion */
+    private static final byte REOP_ASSERT_NOT =
+            REOP_ASSERT + 1; /* zero width negative lookahead assertion */
+    private static final byte REOP_ASSERTTEST =
+            REOP_ASSERT_NOT + 1; /* sentinel at end of assertion child */
+    private static final byte REOP_ASSERTNOTTEST =
+            REOP_ASSERTTEST + 1; /* sentinel at end of !assertion child */
+    private static final byte REOP_MINIMALSTAR =
+            REOP_ASSERTNOTTEST + 1; /* non-greedy version of * */
+    private static final byte REOP_MINIMALPLUS = REOP_MINIMALSTAR + 1; /* non-greedy version of + */
+    private static final byte REOP_MINIMALOPT = REOP_MINIMALPLUS + 1; /* non-greedy version of ? */
+    private static final byte REOP_MINIMALQUANT =
+            REOP_MINIMALOPT + 1; /* non-greedy version of {} */
+    private static final byte REOP_ENDCHILD =
+            REOP_MINIMALQUANT + 1; /* sentinel at end of quantifier child */
+    private static final byte REOP_REPEAT =
+            REOP_ENDCHILD + 1; /* directs execution of greedy quantifier */
     private static final byte REOP_MINIMALREPEAT =
-            52; /* directs execution of non-greedy quantifier */
-    private static final byte REOP_ALTPREREQ = 53; /* prerequisite for ALT, either of two chars */
-    private static final byte REOP_ALTPREREQi = 54; /* case-independent REOP_ALTPREREQ */
-    private static final byte REOP_ALTPREREQ2 = 55; /* prerequisite for ALT, a char or a class */
-    //    private static final byte REOP_ENDALT        = 56; /* end of final alternate */
-
-    private static final byte REOP_ASSERTBACK = 57; /* zero width positive lookbehind assertion */
+            REOP_REPEAT + 1; /* directs execution of non-greedy quantifier */
+    private static final byte REOP_ALTPREREQ =
+            REOP_MINIMALREPEAT + 1; /* prerequisite for ALT, either of two chars */
+    private static final byte REOP_ALTPREREQi =
+            REOP_ALTPREREQ + 1; /* case-independent REOP_ALTPREREQ */
+    private static final byte REOP_ALTPREREQ2 =
+            REOP_ALTPREREQi + 1; /* prerequisite for ALT, a char or a class */
+    private static final byte REOP_ASSERTBACK =
+            REOP_ALTPREREQ2 + 1; /* zero width positive lookbehind assertion */
     private static final byte REOP_ASSERTBACK_NOT =
-            58; /* zero width negative lookbehind assertion */
-    private static final byte REOP_ASSERTBACKTEST = 59; /* sentinel at end of assertion child */
-    private static final byte REOP_ASSERTBACKNOTTEST = 60; /* sentinel at end of !assertion child */
+            REOP_ASSERTBACK + 1; /* zero width negative lookbehind assertion */
+    private static final byte REOP_ASSERTBACKTEST =
+            REOP_ASSERTBACK_NOT + 1; /* sentinel at end of assertion child */
+    private static final byte REOP_ASSERTBACKNOTTEST =
+            REOP_ASSERTBACKTEST + 1; /* sentinel at end of !assertion child */
 
-    private static final byte REOP_END = 61;
+    private static final byte REOP_END = REOP_ASSERTBACKNOTTEST + 1;
 
     private static final int ANCHOR_BOL = -2;
 
