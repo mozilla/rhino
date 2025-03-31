@@ -114,7 +114,7 @@ public class FunctionNode extends ScriptNode {
     // codegen variables
     private int functionType;
     private boolean needsActivation;
-    private boolean needsArguments;
+    private boolean requiresArgumentObject;
     private boolean isGenerator;
     private boolean isES6Generator;
     private List<Node> generatorResumePoints;
@@ -298,12 +298,12 @@ public class FunctionNode extends ScriptNode {
         needsActivation = true;
     }
 
-    public boolean needsArguments() {
-        return needsArguments;
+    public boolean requiresArgumentObject() {
+        return requiresArgumentObject;
     }
 
-    public void setNeedsArguments() {
-        this.needsArguments = true;
+    public void setRequiresArgumentObject() {
+        this.requiresArgumentObject = true;
     }
 
     public boolean isGenerator() {

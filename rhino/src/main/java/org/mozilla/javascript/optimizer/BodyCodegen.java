@@ -122,7 +122,7 @@ class BodyCodegen {
         cfw.addPush(scriptOrFn.hasRestParameter());
         cfw.addPush(
                 !(scriptOrFn instanceof FunctionNode)
-                        || ((FunctionNode) scriptOrFn).needsArguments());
+                        || ((FunctionNode) scriptOrFn).requiresArgumentObject());
         cfw.addLoadThis();
         cfw.addInvoke(
                 ByteCode.INVOKEVIRTUAL,
@@ -438,7 +438,7 @@ class BodyCodegen {
             cfw.addPush(scriptOrFn.hasRestParameter());
             cfw.addPush(
                     !(scriptOrFn instanceof FunctionNode)
-                            || ((FunctionNode) scriptOrFn).needsArguments());
+                            || ((FunctionNode) scriptOrFn).requiresArgumentObject());
 
             if (!isArrow) {
                 // Just pass the home object of the function

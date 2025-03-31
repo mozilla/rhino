@@ -34,7 +34,7 @@ public final class NativeCall extends IdScriptableObject {
             boolean isArrow,
             boolean isStrict,
             boolean argsHasRest,
-            boolean needsArguments,
+            boolean requiresArgumentObject,
             Scriptable homeObject) {
         this.function = function;
         this.homeObject = homeObject;
@@ -77,7 +77,7 @@ public final class NativeCall extends IdScriptableObject {
             }
         }
 
-        if (needsArguments) {
+        if (requiresArgumentObject) {
             // initialize "arguments" property but only if it was not overridden by
             // the parameter with the same name
             if (!super.has("arguments", this) && !isArrow) {

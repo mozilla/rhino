@@ -4571,10 +4571,18 @@ public class ScriptRuntime {
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean needsArguments,
+            boolean requiresArgumentObject,
             Scriptable homeObject) {
         return new NativeCall(
-                funObj, cx, scope, args, false, isStrict, argsHasRest, needsArguments, homeObject);
+                funObj,
+                cx,
+                scope,
+                args,
+                false,
+                isStrict,
+                argsHasRest,
+                requiresArgumentObject,
+                homeObject);
     }
 
     /**
@@ -4620,10 +4628,18 @@ public class ScriptRuntime {
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean needsArguments,
+            boolean requiresArgumentObject,
             Scriptable homeObject) {
         return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, needsArguments, homeObject);
+                funObj,
+                cx,
+                scope,
+                args,
+                true,
+                isStrict,
+                argsHasRest,
+                requiresArgumentObject,
+                homeObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {

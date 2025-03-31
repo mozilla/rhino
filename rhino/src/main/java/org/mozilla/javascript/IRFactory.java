@@ -1422,7 +1422,7 @@ public final class IRFactory {
         if (functionCount != 0) {
             // Functions containing other functions require activation objects
             fnNode.setRequiresActivation();
-            propagateNeedsArgumentsFromNestedArrowFunctions(fnNode);
+            propagateRequiresArgumentObjectFromNestedArrowFunctions(fnNode);
         }
 
         if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
@@ -1460,8 +1460,9 @@ public final class IRFactory {
         return result;
     }
 
-    private static void propagateNeedsArgumentsFromNestedArrowFunctions(FunctionNode fnNode) {
-        if (fnNode.needsArguments()) {
+    private static void propagateRequiresArgumentObjectFromNestedArrowFunctions(
+            FunctionNode fnNode) {
+        if (fnNode.requiresArgumentObject()) {
             return;
         }
 
@@ -1470,8 +1471,8 @@ public final class IRFactory {
         while (!toVisit.isEmpty()) {
             FunctionNode nestedFunction = toVisit.poll();
             if (nestedFunction.getFunctionType() == FunctionNode.ARROW_FUNCTION) {
-                if (nestedFunction.needsArguments()) {
-                    fnNode.setNeedsArguments();
+                if (nestedFunction.requiresArgumentObject()) {
+                    fnNode.setRequiresArgumentObject();
                     return;
                 }
 
