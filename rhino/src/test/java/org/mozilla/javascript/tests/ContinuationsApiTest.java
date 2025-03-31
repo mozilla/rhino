@@ -388,8 +388,7 @@ public class ContinuationsApiTest {
     }
 
     /**
-     * Method ensureStackLength() has to take care of stack, sDbl, and stackAttributes.
-     * see PR#1815
+     * Method ensureStackLength() has to take care of stack, sDbl, and stackAttributes. see PR#1815
      */
     @Test
     public void ensureStackLength() {
