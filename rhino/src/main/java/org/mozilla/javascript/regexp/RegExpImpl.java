@@ -50,29 +50,6 @@ public class RegExpImpl implements RegExpProxy {
         data.str = ScriptRuntime.toString(thisObj);
 
         switch (actionType) {
-            case RA_MATCH:
-                {
-                    int optarg = Integer.MAX_VALUE;
-                    if (cx.getLanguageVersion() < Context.VERSION_1_6) {
-                        optarg = 1;
-                    }
-
-                    NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
-                    Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
-                    return data.arrayobj == null ? rval : data.arrayobj;
-                }
-
-            case RA_SEARCH:
-                {
-                    int optarg = Integer.MAX_VALUE;
-                    if (cx.getLanguageVersion() < Context.VERSION_1_6) {
-                        optarg = 1;
-                    }
-
-                    NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
-                    return matchOrReplace(cx, scope, thisObj, args, this, data, re);
-                }
-
             case RA_REPLACE:
             case RA_REPLACE_ALL:
                 {
@@ -214,26 +191,17 @@ public class RegExpImpl implements RegExpProxy {
         data.global = (re.getFlags() & NativeRegExp.JSREG_GLOB) != 0;
         int[] indexp = {0};
         Object result = null;
-        if (data.mode == RA_SEARCH) {
-            result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
-            if (result != null && result.equals(Boolean.TRUE))
-                result = Integer.valueOf(reImpl.leftContext.length);
-            else result = Integer.valueOf(-1);
-        } else if (data.global) {
+        if (data.global) {
             re.lastIndex = ScriptRuntime.zeroObj;
             for (int count = 0; indexp[0] <= str.length(); count++) {
                 result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
                 if (result == null || !result.equals(Boolean.TRUE)) break;
-                if (data.mode == RA_MATCH) {
-                    match_glob(data, cx, scope, count, reImpl);
-                } else {
-                    if (data.mode != RA_REPLACE && data.mode != RA_REPLACE_ALL) Kit.codeBug();
-                    SubString lastMatch = reImpl.lastMatch;
-                    int leftIndex = data.leftIndex;
-                    int leftlen = lastMatch.index - leftIndex;
-                    data.leftIndex = lastMatch.index + lastMatch.length;
-                    replace_glob(data, cx, scope, reImpl, leftIndex, leftlen);
-                }
+                if (data.mode != RA_REPLACE && data.mode != RA_REPLACE_ALL) Kit.codeBug();
+                SubString lastMatch = reImpl.lastMatch;
+                int leftIndex = data.leftIndex;
+                int leftlen = lastMatch.index - leftIndex;
+                data.leftIndex = lastMatch.index + lastMatch.length;
+                replace_glob(data, cx, scope, reImpl, leftIndex, leftlen);
                 if (reImpl.lastMatch.length == 0) {
                     if (indexp[0] == str.length()) break;
                     indexp[0]++;
