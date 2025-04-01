@@ -35,7 +35,6 @@ import org.mozilla.javascript.serialize.ScriptableOutputStream;
  * @author Norris Boyd
  */
 public class ContinuationsApiTest {
-
     Scriptable globalScope;
 
     public static class MyClass implements Serializable {
@@ -63,6 +62,12 @@ public class ContinuationsApiTest {
                 ContinuationPending pending = cx.captureContinuation();
                 pending.setApplicationState("2*3");
                 throw pending;
+            }
+        }
+
+        public void directThrow() {
+            try (Context cx = Context.enter()) {
+                throw cx.captureContinuation();
             }
         }
     }
@@ -380,5 +385,33 @@ public class ContinuationsApiTest {
         CharSequence r2 = (CharSequence) ois.readObject();
 
         assertEquals("still the same at the other end", r1.toString(), r2.toString());
+    }
+
+    /**
+     * Method ensureStackLength() has to take care of stack, sDbl, and stackAttributes. see PR#1815
+     */
+    @Test
+    public void ensureStackLength() {
+        String jsSource =
+                "let array1 = [];\n"
+                        + "let array2 = [];\n"
+                        // add enough items to inc stack size
+                        + "for (let i = 0; i < 42; i++) {\n"
+                        + "    array1.push(i);\n"
+                        + "    array2.push(i);\n"
+                        + "}\n"
+
+                        // this will cause ensureStackLength to be called
+                        + "Array.prototype.push.apply(array1, array1)\n"
+                        // this will cause ArrayIndexOutOfBoundsException
+                        + "let select = myObject.directThrow()\n";
+
+        try (Context cx = Context.enter()) {
+            cx.setInterpretedMode(true); // must use interpreter mode
+            Script script = cx.compileString(jsSource, "test source", 1, null);
+            cx.executeScriptWithContinuations(script, globalScope);
+        } catch (ContinuationPending e) {
+            e.getContinuation();
+        }
     }
 }
