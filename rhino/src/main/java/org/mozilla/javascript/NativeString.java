@@ -773,9 +773,39 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_search(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_SEARCH);
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
+        Object regexp = args.length > 0 ? args[0] : Undefined.instance;
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
+        if (regexp != null && !Undefined.isUndefined(regexp)) {
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.SEARCH, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                if (!(matcher instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            regexp, matcher, SymbolKey.SEARCH.getName());
+                }
+                return ((Callable) matcher)
+                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+            }
+        }
+
+        String s = ScriptRuntime.toString(o);
+        String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+
+        String flags = null;
+        // Not standard; Done for backward compatibility
+        if (cx.getLanguageVersion() < Context.VERSION_1_6 && args.length > 1) {
+            flags = ScriptRuntime.toString(args[1]);
+        }
+
+        Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, flags);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.SEARCH, cx, scope);
+        if (!(method instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.SEARCH.getName());
+        }
+        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
     }
 
     private static Object js_replace(
