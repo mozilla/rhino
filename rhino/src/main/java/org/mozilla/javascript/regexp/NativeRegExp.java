@@ -19,6 +19,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -3065,9 +3066,11 @@ public class NativeRegExp extends IdScriptableObject {
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
 
-                // We do a new NativeObject() and not cx.newObject(scope)
-                // since we want the groups to have null as prototype
-                groups = new NativeObject();
+                if (!re.namedCaptureGroups.isEmpty()) {
+                    // We do a new NativeObject() and not cx.newObject(scope)
+                    // since we want the groups to have null as prototype
+                    groups = new NativeObject();
+                }
                 for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
                     String key = entry.getKey();
                     List<Integer> indices = entry.getValue();
@@ -3351,6 +3354,10 @@ public class NativeRegExp extends IdScriptableObject {
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
             return;
         }
+        if (id == SymbolId_replace) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.REPLACE, "[Symbol.replace]", 2);
+            return;
+        }
 
         String s;
         int arity;
@@ -3432,6 +3439,9 @@ public class NativeRegExp extends IdScriptableObject {
 
             case SymbolId_search:
                 return js_SymbolSearch(cx, scope, thisObj, args);
+
+            case SymbolId_replace:
+                return js_SymbolReplace(cx, scope, thisObj, args);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -3537,6 +3547,260 @@ public class NativeRegExp extends IdScriptableObject {
         return new NativeRegExpStringIterator(scope, matcher, s, global, fullUnicode);
     }
 
+    private Object js_SymbolReplace(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // See ECMAScript spec 22.2.6.11
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        int lengthS = s.length();
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+        boolean global = flags.indexOf('g') != -1;
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+        if (global) {
+            setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        }
+
+        List<Object> results = new ArrayList<>();
+        boolean done = false;
+        while (!done) {
+            Object result = regExpExec(thisObj, s, cx, scope);
+            if (result == null) {
+                done = true;
+            } else {
+                results.add(result);
+                if (!global) {
+                    done = true;
+                } else {
+                    String matchStr =
+                            ScriptRuntime.toString(
+                                    ScriptRuntime.getObjectIndex(result, 0, cx, scope));
+                    if (matchStr.isEmpty()) {
+                        long thisIndex = getLastIndex(cx, thisObj);
+                        long nextIndex =
+                                ScriptRuntime.advanceStringIndex(s, thisIndex, fullUnicode);
+                        setLastIndex(thisObj, nextIndex);
+                    }
+                }
+            }
+        }
+
+        StringBuilder accumulatedResult = new StringBuilder();
+        int nextSourcePosition = 0;
+        for (Object result : results) {
+            long resultLength =
+                    ScriptRuntime.toLength(
+                            ScriptRuntime.getObjectProp(result, "length", cx, scope));
+            long nCaptures = Math.max(resultLength - 1, 0);
+            String matched =
+                    ScriptRuntime.toString(ScriptRuntime.getObjectIndex(result, 0, cx, scope));
+            int matchLength = matched.length();
+            double positionDbl =
+                    ScriptRuntime.toInteger(
+                            ScriptRuntime.getObjectProp(result, "index", cx, scope));
+            int position;
+            if (positionDbl < 0) {
+                position = 0;
+            } else if (positionDbl > lengthS) {
+                position = lengthS;
+            } else {
+                position = (int) positionDbl;
+            }
+
+            List<Object> captures = new ArrayList<>();
+            int n = 1;
+            while (n <= nCaptures) {
+                Object capN = ScriptRuntime.getObjectElem(result, n, cx, scope);
+                if (!Undefined.isUndefined(capN)) {
+                    capN = ScriptRuntime.toString(capN);
+                }
+                captures.add(capN);
+                ++n;
+            }
+            NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
+
+            Object namedCaptures = ScriptRuntime.getObjectProp(result, "groups", cx, scope);
+            String replacementString;
+
+            if (functionalReplace) {
+                List<Object> replacerArgs = new ArrayList<>();
+                replacerArgs.add(matched);
+                replacerArgs.addAll(capturesArray);
+                replacerArgs.add(position);
+                replacerArgs.add(s);
+                if (!Undefined.isUndefined(namedCaptures)) {
+                    replacerArgs.add(namedCaptures);
+                }
+
+                Scriptable callThis =
+                        ScriptRuntime.getApplyOrCallThis(
+                                cx, scope, null, 0, (Callable) replaceValue);
+                Object replacementValue =
+                        ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs.toArray());
+                replacementString = ScriptRuntime.toString(replacementValue);
+            } else {
+                if (!Undefined.isUndefined(namedCaptures)) {
+                    namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
+                }
+
+                replacementString =
+                        getSubstitution(
+                                cx,
+                                scope,
+                                matched,
+                                s,
+                                position,
+                                capturesArray,
+                                namedCaptures,
+                                (String) replaceValue);
+            }
+
+            if (position >= nextSourcePosition) {
+                accumulatedResult.append(s.substring(nextSourcePosition, position));
+                accumulatedResult.append(replacementString);
+                nextSourcePosition = position + matchLength;
+            }
+        }
+
+        if (nextSourcePosition >= lengthS) {
+            return accumulatedResult.toString();
+        } else {
+            accumulatedResult.append(s.substring(nextSourcePosition));
+            return accumulatedResult.toString();
+        }
+    }
+
+    private static String getSubstitution(
+            Context cx,
+            Scriptable scope,
+            String matched,
+            String str,
+            int position,
+            NativeArray capturesArray,
+            Object namedCaptures,
+            String replacementTemplate) {
+        // See ECMAScript spec 22.1.3.19.1
+        int stringLength = str.length();
+        // TODO: assert(position <= stringLength)
+        StringBuilder result = new StringBuilder();
+        String templateRemainder = replacementTemplate;
+        while (!templateRemainder.isEmpty()) {
+            String ref = templateRemainder.substring(0, 1);
+            String refReplacement = ref;
+
+            if (templateRemainder.charAt(0) == '$') {
+                if (templateRemainder.length() > 1) {
+                    char c = templateRemainder.charAt(1);
+                    switch (c) {
+                        case '$':
+                            ref = "$$";
+                            refReplacement = "$";
+                            break;
+
+                        case '`':
+                            ref = "$`";
+                            refReplacement = str.substring(0, position);
+                            break;
+
+                        case '&':
+                            ref = "$&";
+                            refReplacement = matched;
+                            break;
+
+                        case '\'':
+                            {
+                                ref = "$'";
+                                int matchLength = matched.length();
+                                int tailPos = position + matchLength;
+                                refReplacement = str.substring(Math.min(tailPos, stringLength));
+                                break;
+                            }
+
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            {
+                                int digitCount = 1;
+                                if (templateRemainder.length() > 2) {
+                                    char c2 = templateRemainder.charAt(2);
+                                    if (c2 == '0' || c2 == '1' || c2 == '2' || c2 == '3'
+                                            || c2 == '4' || c2 == '5' || c2 == '6' || c2 == '7'
+                                            || c2 == '8' || c2 == '9') {
+                                        digitCount = 2;
+                                    }
+                                }
+                                String digits = templateRemainder.substring(1, 1 + digitCount);
+
+                                // No need for ScriptRuntime version; we know the string is one or
+                                // two characters and
+                                // contains only [0-9]
+                                int index = Integer.parseInt(digits);
+                                long captureLen = capturesArray.getLength();
+                                if (index > captureLen && digitCount == 2) {
+                                    digitCount = 1;
+                                    digits = digits.substring(0, 1);
+                                    index = Integer.parseInt(digits);
+                                }
+                                ref = templateRemainder.substring(0, 1 + digitCount);
+                                if (1 <= index && index <= captureLen) {
+                                    Object capture = capturesArray.get(index - 1);
+                                    if (capture
+                                            == null) { // Undefined or missing are returned as null
+                                        refReplacement = "";
+                                    } else {
+                                        refReplacement = ScriptRuntime.toString(capture);
+                                    }
+                                } else {
+                                    refReplacement = ref;
+                                }
+                                break;
+                            }
+
+                        case '<':
+                            {
+                                int gtPos = templateRemainder.indexOf('>');
+                                if (gtPos == -1 || Undefined.isUndefined(namedCaptures)) {
+                                    ref = "$<";
+                                    refReplacement = ref;
+                                } else {
+                                    ref = templateRemainder.substring(0, gtPos + 1);
+                                    String groupName = templateRemainder.substring(2, gtPos);
+                                    Object capture =
+                                            ScriptRuntime.getObjectProp(
+                                                    namedCaptures, groupName, cx, scope);
+                                    if (Undefined.isUndefined(capture)) {
+                                        refReplacement = "";
+                                    } else {
+                                        refReplacement = ScriptRuntime.toString(capture);
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                }
+            }
+
+            int refLength = ref.length();
+            templateRemainder = templateRemainder.substring(refLength);
+            result.append(refReplacement);
+        }
+        return result.toString();
+    }
+
     private static long getLastIndex(Context cx, Scriptable thisObj) {
         return ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
     }
@@ -3559,6 +3823,9 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (SymbolKey.SEARCH.equals(k)) {
             return SymbolId_search;
+        }
+        if (SymbolKey.REPLACE.equals(k)) {
+            return SymbolId_replace;
         }
         return 0;
     }
@@ -3601,7 +3868,8 @@ public class NativeRegExp extends IdScriptableObject {
             SymbolId_match = 7,
             SymbolId_matchAll = 8,
             SymbolId_search = 9,
-            MAX_PROTOTYPE_ID = SymbolId_search;
+            SymbolId_replace = 10,
+            MAX_PROTOTYPE_ID = SymbolId_replace;
 
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */
