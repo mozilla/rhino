@@ -1422,7 +1422,7 @@ public class ScriptRuntime {
 
     /** Implements the abstract operation AdvanceStringIndex. See ECMAScript spec 22.2.7.3 */
     public static long advanceStringIndex(String string, long index, boolean unicode) {
-        if (index >= NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
+        if (index > NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
         if (!unicode) {
             return index + 1;
         }
@@ -3090,7 +3090,7 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    static Scriptable getApplyOrCallThis(
+    public static Scriptable getApplyOrCallThis(
             Context cx, Scriptable scope, Object arg0, int l, Callable target) {
         Scriptable callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
