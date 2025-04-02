@@ -996,10 +996,8 @@ final class NativeString extends ScriptableObject {
         // See ECMAScript spec 22.1.3.14
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "matchAll");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
-        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         if (regexp != null && !Undefined.isUndefined(regexp)) {
-            boolean isRegExp =
-                    regexp instanceof Scriptable && regExpProxy.isRegExp((Scriptable) regexp);
+            boolean isRegExp = AbstractEcmaObjectOperations.isRegExp(cx, scope, regexp);
             if (isRegExp) {
                 Object flags = ScriptRuntime.getObjectProp(regexp, "flags", cx, scope);
                 requireObjectCoercible(cx, flags, CLASS_NAME, "matchAll");
@@ -1023,6 +1021,7 @@ final class NativeString extends ScriptableObject {
 
         String s = ScriptRuntime.toString(o);
         String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, "g");
         Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
 
