@@ -89,8 +89,7 @@ public class RegExpImpl implements RegExpProxy {
                         re = createRegExp(cx, scope, args, 2, true);
                         if (RA_REPLACE_ALL == actionType
                                 && (re.getFlags() & NativeRegExp.JSREG_GLOB) == 0) {
-                            throw ScriptRuntime.typeError(
-                                    "replaceAll must be called with a global RegExp");
+                            throw ScriptRuntime.typeErrorById("msg.str.replace.all.no.global.flag");
                         }
                     } else {
                         Object arg0 = args.length < 1 ? Undefined.instance : args[0];
