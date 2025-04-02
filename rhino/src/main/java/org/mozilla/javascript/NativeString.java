@@ -11,7 +11,9 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -831,7 +833,7 @@ final class NativeString extends ScriptableObject {
             if (replacer != null && !Undefined.isUndefined(replacer)) {
                 if (!(replacer instanceof Callable)) {
                     throw ScriptRuntime.notFunctionError(
-                            searchValue, replacer, SymbolKey.SEARCH.getName());
+                            searchValue, replacer, SymbolKey.REPLACE.getName());
                 }
                 return ((Callable) replacer)
                         .call(
@@ -892,9 +894,101 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_replaceAll(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE_ALL);
+        // See ECMAScript spec 22.1.3.20
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
+
+        Object searchValue = args.length > 0 ? args[0] : Undefined.instance;
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+
+        if (searchValue != null && !Undefined.isUndefined(searchValue)) {
+            boolean isRegExp =
+                    searchValue instanceof Scriptable
+                            && AbstractEcmaObjectOperations.isRegExp(cx, scope, searchValue);
+            if (isRegExp) {
+                Object flags = ScriptRuntime.getObjectProp(searchValue, "flags", cx, scope);
+                requireObjectCoercible(cx, flags, CLASS_NAME, "replaceAll");
+                String flagsStr = ScriptRuntime.toString(flags);
+                if (!flagsStr.contains("g")) {
+                    throw ScriptRuntime.typeErrorById("msg.str.replace.all.no.global.flag");
+                }
+            }
+
+            Object matcher = ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                if (!(matcher instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            searchValue, matcher, SymbolKey.REPLACE.getName());
+                }
+                return ((Callable) matcher)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, searchValue),
+                                new Object[] {o, replaceValue});
+            }
+        }
+
+        String string = ScriptRuntime.toString(o);
+        String searchString = ScriptRuntime.toString(searchValue);
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        int searchLength = searchString.length();
+        int advanceBy = Math.max(1, searchLength);
+
+        List<Integer> matchPositions = new ArrayList<>();
+        int position = string.indexOf(searchString);
+        while (position != -1) {
+            matchPositions.add(position);
+            int newPosition = string.indexOf(searchString, position + advanceBy);
+            if (newPosition == position) {
+                break;
+            }
+            position = newPosition;
+        }
+        int endOfLastMatch = 0;
+        StringBuilder result = new StringBuilder();
+        for (Integer p : matchPositions) {
+            String preserved = string.substring(endOfLastMatch, p);
+            String replacement;
+            if (functionalReplace) {
+                Scriptable callThis =
+                        ScriptRuntime.getApplyOrCallThis(
+                                cx, scope, null, 0, (Callable) replaceValue);
+
+                Object replacementObj =
+                        ((Callable) replaceValue)
+                                .call(
+                                        cx,
+                                        scope,
+                                        callThis,
+                                        new Object[] {
+                                            searchString, p, string,
+                                        });
+                replacement = ScriptRuntime.toString(replacementObj);
+            } else {
+                NativeArray captures = (NativeArray) cx.newArray(scope, 0);
+                replacement =
+                        AbstractEcmaStringOperations.getSubstitution(
+                                cx,
+                                scope,
+                                searchString,
+                                string,
+                                p,
+                                captures,
+                                Undefined.SCRIPTABLE_UNDEFINED,
+                                (String) replaceValue);
+            }
+            result.append(preserved);
+            result.append(replacement);
+            endOfLastMatch = p + searchLength;
+        }
+        if (endOfLastMatch < string.length()) {
+            result.append(string.substring(endOfLastMatch));
+        }
+        return result.toString();
     }
 
     private static Object js_matchAll(
