@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
+import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
@@ -3624,7 +3625,6 @@ public class NativeRegExp extends IdScriptableObject {
                 captures.add(capN);
                 ++n;
             }
-            NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
 
             Object namedCaptures = ScriptRuntime.getObjectProp(result, "groups", cx, scope);
             String replacementString;
@@ -3632,7 +3632,7 @@ public class NativeRegExp extends IdScriptableObject {
             if (functionalReplace) {
                 List<Object> replacerArgs = new ArrayList<>();
                 replacerArgs.add(matched);
-                replacerArgs.addAll(capturesArray);
+                replacerArgs.addAll(captures);
                 replacerArgs.add(position);
                 replacerArgs.add(s);
                 if (!Undefined.isUndefined(namedCaptures)) {
@@ -3650,8 +3650,9 @@ public class NativeRegExp extends IdScriptableObject {
                     namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
                 }
 
+                NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
                 replacementString =
-                        getSubstitution(
+                        AbstractEcmaStringOperations.getSubstitution(
                                 cx,
                                 scope,
                                 matched,
@@ -3675,130 +3676,6 @@ public class NativeRegExp extends IdScriptableObject {
             accumulatedResult.append(s.substring(nextSourcePosition));
             return accumulatedResult.toString();
         }
-    }
-
-    private static String getSubstitution(
-            Context cx,
-            Scriptable scope,
-            String matched,
-            String str,
-            int position,
-            NativeArray capturesArray,
-            Object namedCaptures,
-            String replacementTemplate) {
-        // See ECMAScript spec 22.1.3.19.1
-        int stringLength = str.length();
-        // TODO: assert(position <= stringLength)
-        StringBuilder result = new StringBuilder();
-        String templateRemainder = replacementTemplate;
-        while (!templateRemainder.isEmpty()) {
-            String ref = templateRemainder.substring(0, 1);
-            String refReplacement = ref;
-
-            if (templateRemainder.charAt(0) == '$') {
-                if (templateRemainder.length() > 1) {
-                    char c = templateRemainder.charAt(1);
-                    switch (c) {
-                        case '$':
-                            ref = "$$";
-                            refReplacement = "$";
-                            break;
-
-                        case '`':
-                            ref = "$`";
-                            refReplacement = str.substring(0, position);
-                            break;
-
-                        case '&':
-                            ref = "$&";
-                            refReplacement = matched;
-                            break;
-
-                        case '\'':
-                            {
-                                ref = "$'";
-                                int matchLength = matched.length();
-                                int tailPos = position + matchLength;
-                                refReplacement = str.substring(Math.min(tailPos, stringLength));
-                                break;
-                            }
-
-                        case '0':
-                        case '1':
-                        case '2':
-                        case '3':
-                        case '4':
-                        case '5':
-                        case '6':
-                        case '7':
-                        case '8':
-                        case '9':
-                            {
-                                int digitCount = 1;
-                                if (templateRemainder.length() > 2) {
-                                    char c2 = templateRemainder.charAt(2);
-                                    if (c2 == '0' || c2 == '1' || c2 == '2' || c2 == '3'
-                                            || c2 == '4' || c2 == '5' || c2 == '6' || c2 == '7'
-                                            || c2 == '8' || c2 == '9') {
-                                        digitCount = 2;
-                                    }
-                                }
-                                String digits = templateRemainder.substring(1, 1 + digitCount);
-
-                                // No need for ScriptRuntime version; we know the string is one or
-                                // two characters and
-                                // contains only [0-9]
-                                int index = Integer.parseInt(digits);
-                                long captureLen = capturesArray.getLength();
-                                if (index > captureLen && digitCount == 2) {
-                                    digitCount = 1;
-                                    digits = digits.substring(0, 1);
-                                    index = Integer.parseInt(digits);
-                                }
-                                ref = templateRemainder.substring(0, 1 + digitCount);
-                                if (1 <= index && index <= captureLen) {
-                                    Object capture = capturesArray.get(index - 1);
-                                    if (capture
-                                            == null) { // Undefined or missing are returned as null
-                                        refReplacement = "";
-                                    } else {
-                                        refReplacement = ScriptRuntime.toString(capture);
-                                    }
-                                } else {
-                                    refReplacement = ref;
-                                }
-                                break;
-                            }
-
-                        case '<':
-                            {
-                                int gtPos = templateRemainder.indexOf('>');
-                                if (gtPos == -1 || Undefined.isUndefined(namedCaptures)) {
-                                    ref = "$<";
-                                    refReplacement = ref;
-                                } else {
-                                    ref = templateRemainder.substring(0, gtPos + 1);
-                                    String groupName = templateRemainder.substring(2, gtPos);
-                                    Object capture =
-                                            ScriptRuntime.getObjectProp(
-                                                    namedCaptures, groupName, cx, scope);
-                                    if (Undefined.isUndefined(capture)) {
-                                        refReplacement = "";
-                                    } else {
-                                        refReplacement = ScriptRuntime.toString(capture);
-                                    }
-                                }
-                            }
-                            break;
-                    }
-                }
-            }
-
-            int refLength = ref.length();
-            templateRemainder = templateRemainder.substring(refLength);
-            result.append(refReplacement);
-        }
-        return result.toString();
     }
 
     private static long getLastIndex(Context cx, Scriptable thisObj) {
