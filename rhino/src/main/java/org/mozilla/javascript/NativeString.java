@@ -374,9 +374,95 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_split(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        String thisStr =
-                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "split"));
-        return ScriptRuntime.checkRegExpProxy(cx).js_split(cx, scope, thisStr, args);
+        // See ECMAScript spec 22.1.3.23
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "split");
+
+        if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
+            // Use old algorithm for backward compatibility
+            return ScriptRuntime.checkRegExpProxy(cx)
+                    .js_split(cx, scope, ScriptRuntime.toString(o), args);
+        }
+
+        Object separator = args.length > 0 ? args[0] : Undefined.instance;
+        Object limit = args.length > 1 ? args[1] : Undefined.instance;
+        if (!Undefined.isUndefined(separator) && separator != null) {
+            Object splitter = ScriptRuntime.getObjectElem(separator, SymbolKey.SPLIT, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (splitter != null && !Undefined.isUndefined(splitter)) {
+                if (!(splitter instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            separator, splitter, SymbolKey.SPLIT.getName());
+                }
+                return ((Callable) splitter)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, separator),
+                                new Object[] {
+                                    o instanceof NativeString ? ((NativeString) o).string : o,
+                                    limit,
+                                });
+            }
+        }
+
+        String s = ScriptRuntime.toString(o);
+        long lim;
+        if (Undefined.isUndefined(limit)) {
+            lim = Integer.MAX_VALUE;
+        } else {
+            lim = ScriptRuntime.toUint32(limit);
+        }
+        String r = ScriptRuntime.toString(separator);
+        if (lim == 0) {
+            return cx.newArray(scope, 0);
+        }
+        if (Undefined.isUndefined(separator)) {
+            return cx.newArray(scope, new Object[] {s});
+        }
+
+        int separatorLength = r.length();
+        if (separatorLength == 0) {
+            int strLen = s.length();
+            long outLen;
+            if (lim < 0) {
+                outLen = 0;
+            } else if (lim > strLen) {
+                outLen = strLen;
+            } else {
+                outLen = lim;
+            }
+
+            String head = s.substring(0, (int) outLen);
+
+            List<Object> codeUnits = new ArrayList<>();
+            for (int i = 0; i < head.length(); ) {
+                char c = head.charAt(i);
+                codeUnits.add(Character.toString(c));
+                i += Character.charCount(c);
+            }
+            return cx.newArray(scope, codeUnits.toArray());
+        }
+
+        if (s.isEmpty()) {
+            return cx.newArray(scope, new Object[] {s});
+        }
+
+        List<String> substrings = new ArrayList<>();
+        int i = 0;
+        int j = s.indexOf(r);
+        while (j != -1) {
+            String t = s.substring(i, j);
+            substrings.add(t);
+            if (substrings.size() >= lim) {
+                return cx.newArray(scope, substrings.toArray());
+            }
+            i = j + separatorLength;
+            j = s.indexOf(r, i);
+        }
+        String t = s.substring(i);
+        substrings.add(t);
+
+        return cx.newArray(scope, substrings.toArray());
     }
 
     private static NativeString realThis(Scriptable thisObj) {
