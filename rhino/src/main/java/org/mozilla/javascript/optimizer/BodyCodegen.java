@@ -2508,16 +2508,10 @@ class BodyCodegen {
         int childType = child.getType();
         boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
 
-        String methodName;
-        String signature;
         Integer afterLabel = null;
 
         if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-            // Just one general case, non optimized depending on the number of arguments
-
-            int argCount = countArguments(firstArgChild);
             generateFunctionAndThisObj(child, node);
-
             // stack: ... functionObj, superObj is stored on scratch last scriptable
             // We discard the last scriptable, and then push the thisObj. So we have resolved the
             // function on the super object, but we invoke it with the current this.
@@ -2527,155 +2521,79 @@ class BodyCodegen {
                     "org/mozilla/javascript/ScriptRuntime",
                     "discardLastStoredScriptable",
                     "(Lorg/mozilla/javascript/Context;)V");
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
-
-            if (argCount == 0) {
-                methodName = "call0";
-                signature = SIGNATURE_CALL0;
-            } else if (argCount == 1) {
-                generateExpression(firstArgChild, node);
-                methodName = "call1";
-                signature = SIGNATURE_CALL1;
-            } else {
-                if (argCount == 2) {
-                    generateExpression(firstArgChild, node);
-                    generateExpression(firstArgChild.getNext(), node);
-                    methodName = "call2";
-                    signature = SIGNATURE_CALL2;
-                } else {
-                    generateCallArgArray(node, firstArgChild, false);
-                    methodName = "callN";
-                    signature = SIGNATURE_CALLN;
-                }
-            }
-        } else if (firstArgChild == null) {
-            if (childType == Token.NAME) {
-                // name() call
-                String name = child.getString();
-                cfw.addPush(name);
-                methodName = isOptionalChainingCall ? "callName0Optional" : "callName0";
-                signature =
-                        "(Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
-            } else if (childType == Token.GETPROP) {
-                // x.name() call
-                Node propTarget = child.getFirstChild();
-                generateExpression(propTarget, node);
-                Node id = propTarget.getNext();
-                String property = id.getString();
-                cfw.addPush(property);
-                methodName = isOptionalChainingCall ? "callProp0Optional" : "callProp0";
-                signature =
-                        "(Ljava/lang/Object;"
-                                + "Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
-            } else if (childType == Token.GETPROPNOWARN) {
-                throw Kit.codeBug();
-            } else {
-                generateFunctionAndThisObj(child, node);
-                pushThisFromLastScriptable();
-                methodName = isOptionalChainingCall ? "call0Optional" : "call0";
-                signature = SIGNATURE_CALL0;
-            }
-
-        } else if (childType == Token.NAME) {
-            // XXX: this optimization is only possible if name
-            // resolution
-            // is not affected by arguments evaluation and currently
-            // there are no checks for it
-            String name = child.getString();
-            if (isOptionalChainingCall) { // name?.()
-                // eval name and this and put name in dynamic signature just like
-                // with "GETWITHTHIS".
-                cfw.addALoad(variableObjectLocal);
-                cfw.addALoad(contextLocal);
-                addDynamicInvoke("NAME:GETWITHTHISOPTIONAL:" + name, Signatures.NAME_GET_THIS);
-
-                // jump to afterLabel is name is not null and not undefined
-                afterLabel = cfw.acquireLabel();
-                int doCallLabel = cfw.acquireLabel();
-                cfw.add(ByteCode.DUP);
-                addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
-                cfw.add(ByteCode.IFEQ, doCallLabel);
-
-                // push undefined and jump to end
-                cfw.add(ByteCode.POP);
-                cfw.add(
-                        ByteCode.GETSTATIC,
-                        "org/mozilla/javascript/Undefined",
-                        "instance",
-                        "Ljava/lang/Object;");
-                cfw.add(ByteCode.GOTO, afterLabel);
-
-                // push this, arguments, and do call
-                cfw.markLabel(doCallLabel);
-                pushThisFromLastScriptable();
-                methodName = "callN";
-                generateCallArgArray(node, firstArgChild, false);
-                signature = SIGNATURE_CALLN;
+            if (firstArgChild == null) {
+                addDynamicInvoke("METHOD:CALL_0", Signatures.METHOD_CALL_0);
             } else {
                 generateCallArgArray(node, firstArgChild, false);
-                cfw.addPush(name);
-                methodName = "callName";
-                signature =
-                        "([Ljava/lang/Object;"
-                                + "Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Ljava/lang/Object;";
+                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
             }
-        } else {
-            int argCount = countArguments(firstArgChild);
+
+        } else if (isOptionalChainingCall) {
             generateFunctionAndThisObj(child, node);
             // stack: ... functionObj, thisObj is stored on scratch last scriptable
+            // jump to afterLabel is name is not null and not undefined
+            afterLabel = cfw.acquireLabel();
+            int doCallLabel = cfw.acquireLabel();
+            cfw.add(ByteCode.DUP);
+            addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
+            cfw.add(ByteCode.IFEQ, doCallLabel);
 
-            if (isOptionalChainingCall) {
-                // jump to afterLabel is name is not null and not undefined
-                afterLabel = cfw.acquireLabel();
-                int doCallLabel = cfw.acquireLabel();
-                cfw.add(ByteCode.DUP);
-                addOptRuntimeInvoke("isNullOrUndefined", "(Ljava/lang/Object;)Z");
-                cfw.add(ByteCode.IFEQ, doCallLabel);
+            // push undefined and jump to end
+            cfw.add(ByteCode.POP);
+            cfw.add(
+                    ByteCode.GETSTATIC,
+                    "org/mozilla/javascript/Undefined",
+                    "instance",
+                    "Ljava/lang/Object;");
+            cfw.add(ByteCode.GOTO, afterLabel);
 
-                // push undefined and jump to end
-                cfw.add(ByteCode.POP);
-                cfw.add(
-                        ByteCode.GETSTATIC,
-                        "org/mozilla/javascript/Undefined",
-                        "instance",
-                        "Ljava/lang/Object;");
-                cfw.add(ByteCode.GOTO, afterLabel);
+            cfw.markLabel(doCallLabel);
+            cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Callable");
 
-                cfw.markLabel(doCallLabel);
-                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Callable");
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            pushThisFromLastScriptable();
+
+            if (firstArgChild == null) {
+                addDynamicInvoke("METHOD:CALL_0_OPT", Signatures.METHOD_CALL_0);
+            } else {
+                generateCallArgArray(node, firstArgChild, false);
+                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
             }
 
+        } else if (childType == Token.NAME && firstArgChild == null) {
+            // Streamline, or at least reduce bytecode size a bit, but only
+            // safe if there are no arguments.
+            String name = child.getString();
+            cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(contextLocal);
+            addDynamicInvoke("NAME:CALL_0:" + name, Signatures.NAME_CALL_0);
+
+        } else if (childType == Token.GETPROP && firstArgChild == null) {
+            Node propTarget = child.getFirstChild();
+            generateExpression(propTarget, node);
+            Node id = propTarget.getNext();
+            String property = id.getString();
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            addDynamicInvoke("PROP:CALL_0:" + property, Signatures.PROP_CALL_0);
+
+        } else {
+            generateFunctionAndThisObj(child, node);
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
             pushThisFromLastScriptable();
-            if (argCount == 1) {
-                generateExpression(firstArgChild, node);
-                methodName = "call1";
-                signature = SIGNATURE_CALL1;
+            if (firstArgChild == null) {
+                addDynamicInvoke("METHOD:CALL_0", Signatures.METHOD_CALL_0);
             } else {
-                if (argCount == 2) {
-                    generateExpression(firstArgChild, node);
-                    generateExpression(firstArgChild.getNext(), node);
-                    methodName = "call2";
-                    signature = SIGNATURE_CALL2;
-                } else {
-                    generateCallArgArray(node, firstArgChild, false);
-                    methodName = "callN";
-                    signature = SIGNATURE_CALLN;
-                }
+                generateCallArgArray(node, firstArgChild, false);
+                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
             }
         }
 
-        cfw.addALoad(contextLocal);
-        cfw.addALoad(variableObjectLocal);
-        addOptRuntimeInvoke(methodName, signature);
         if (afterLabel != null) {
             cfw.markLabel(afterLabel);
         }
@@ -4696,35 +4614,6 @@ class BodyCodegen {
         if (local < firstFreeLocal) firstFreeLocal = local;
         locals[local] = 0;
     }
-
-    private static final String SIGNATURE_CALL1 =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
-    private static final String SIGNATURE_CALL2 =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Ljava/lang/Object;"
-                    + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
-    private static final String SIGNATURE_CALLN =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "[Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
-    private static final String SIGNATURE_CALL0 =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
 
     static final int GENERATOR_TERMINATE = -1;
     static final int GENERATOR_START = 0;

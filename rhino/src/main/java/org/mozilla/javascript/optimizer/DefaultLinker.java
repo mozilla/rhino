@@ -14,6 +14,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.config.RhinoConfig;
 
 /**
@@ -54,6 +55,8 @@ class DefaultLinker implements GuardingDynamicLinker {
             return getPropertyInvocation(lookup, mType, op);
         } else if (op.isNamespace(RhinoNamespace.NAME)) {
             return getNameInvocation(lookup, mType, op);
+        } else if (op.isNamespace(StandardNamespace.METHOD)) {
+            return getMethodInvocation(lookup, mType, op);
         } else if (op.isNamespace(RhinoNamespace.MATH)) {
             return getMathInvocation(lookup, mType, op);
         }
@@ -124,6 +127,12 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh = lookup.findStatic(ScriptRuntime.class, "setSuperElem", mType);
         } else if (op.isOperation(RhinoOperation.SETINDEX)) {
             mh = lookup.findStatic(ScriptRuntime.class, "setObjectIndex", mType);
+        } else if (op.isOperation(RhinoOperation.CALL_0)) {
+            mh = bindStringParameter(lookup, mType, OptRuntime.class, "callProp0", 1, op.getName());
+        } else if (op.isOperation(RhinoOperation.CALL_0_OPTIONAL)) {
+            mh =
+                    bindStringParameter(
+                            lookup, mType, OptRuntime.class, "callProp0Optional", 1, op.getName());
         }
 
         if (mh != null) {
@@ -175,12 +184,66 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "strictSetName", 4, name);
         } else if (op.isOperation(RhinoOperation.SETCONST)) {
             mh = bindStringParameter(lookup, mType, ScriptRuntime.class, "setConst", 3, name);
+        } else if (op.isOperation(RhinoOperation.CALL_0)) {
+            tt = MethodType.methodType(Object.class, String.class, Context.class, Scriptable.class);
+            mh = lookup.findStatic(OptRuntime.class, "callName0", tt);
+            mh = MethodHandles.insertArguments(mh, 0, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
+        } else if (op.isOperation(RhinoOperation.CALL_0_OPTIONAL)) {
+            tt = MethodType.methodType(Object.class, String.class, Context.class, Scriptable.class);
+            mh = lookup.findStatic(OptRuntime.class, "callName0Optional", tt);
+            mh = MethodHandles.insertArguments(mh, 0, name);
+            mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         }
 
         if (mh != null) {
             return new GuardedInvocation(mh);
         }
         throw new UnsupportedOperationException(op.toString());
+    }
+
+    private GuardedInvocation getMethodInvocation(
+            MethodHandles.Lookup lookup, MethodType mType, ParsedOperation op)
+            throws NoSuchMethodException, IllegalAccessException {
+        MethodHandle mh = null;
+
+        // Bind this method to the virtual "call" operation without
+        // introducing a special "wrapper" function
+        if (op.isOperation(StandardOperation.CALL)) {
+            // Bind to the virtual "call" method with the same signature
+            MethodType mt = mType.dropParameterTypes(0, 1);
+            mh = lookup.findVirtual(Callable.class, "call", mt);
+        } else if (op.isOperation(RhinoOperation.CALL_0)) {
+            // Bind to the virtual "call" method and add in empty args
+            MethodType mt = mType.appendParameterTypes(Object[].class);
+            mt = mt.dropParameterTypes(0, 1);
+            mh = lookup.findVirtual(Callable.class, "call", mt);
+            mh = MethodHandles.insertArguments(mh, 4, OptRuntime.emptyArgsForVarargs());
+        } else if (op.isOperation(RhinoOperation.CALL_0_OPTIONAL)) {
+            // The target method calls "call" virtually with empty arguments
+            MethodType mt = mType.appendParameterTypes(Object[].class);
+            mt = mt.dropParameterTypes(0, 1);
+            MethodHandle target = lookup.findVirtual(Callable.class, "call", mt);
+            target = MethodHandles.insertArguments(target, 4, OptRuntime.emptyArgsForVarargs());
+            // The fallback method just returns undefined
+            MethodHandle fallback = MethodHandles.constant(Object.class, Undefined.instance);
+            fallback = MethodHandles.dropArguments(fallback, 0, target.type().parameterList());
+            // The guard method tests for null
+            MethodType tt = mType.changeReturnType(Boolean.TYPE);
+            MethodHandle guard = lookup.findStatic(DefaultLinker.class, "isNotNullCallable", tt);
+            mh = MethodHandles.guardWithTest(guard, target, fallback);
+        }
+
+        if (mh != null) {
+            return new GuardedInvocation(mh);
+        }
+        throw new UnsupportedOperationException(op.toString());
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean isNotNullCallable(
+            Callable c, Context cx, Scriptable scope, Scriptable thisObj) {
+        return (c != null);
     }
 
     private GuardedInvocation getMathInvocation(
