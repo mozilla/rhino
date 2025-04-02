@@ -939,4 +939,14 @@ public class NativeRegExpTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("true-true-true-false", script);
     }
+
+    @Test
+    public void unicodeEscapeFallback() {
+        final String script = "var regex = /\\u/;\n" + "var res = '' + regex.test('u');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+
+        final String script2 =
+                "var regex = /\\x/;\n" + "var res = '' + regex.test('x');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script2);
+    }
 }
