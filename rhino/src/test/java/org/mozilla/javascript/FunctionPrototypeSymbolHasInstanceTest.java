@@ -149,4 +149,44 @@ public class FunctionPrototypeSymbolHasInstanceTest {
         Utils.assertEcmaErrorES6(
                 "TypeError: 'prototype' property of  is not an object. (test#3)", script);
     }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceOnString() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new String(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceOnBoolean() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Boolean(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceOnArray() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Array(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceOnNumber() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Number(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
 }
