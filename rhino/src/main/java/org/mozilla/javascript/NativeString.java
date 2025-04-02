@@ -810,9 +810,84 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_replace(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE);
+        // See ECMAScript spec 22.1.3.19
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
+
+        if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
+            // Use old algorithm for backward compatibility
+            return ScriptRuntime.checkRegExpProxy(cx)
+                    .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE);
+        }
+
+        // Spec-compliant algorithm
+
+        Object searchValue = args.length > 0 ? args[0] : Undefined.instance;
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+
+        if (!Undefined.isUndefined(searchValue) && searchValue != null) {
+            Object replacer =
+                    ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (replacer != null && !Undefined.isUndefined(replacer)) {
+                if (!(replacer instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            searchValue, replacer, SymbolKey.SEARCH.getName());
+                }
+                return ((Callable) replacer)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, searchValue),
+                                new Object[] {
+                                    o instanceof NativeString ? ((NativeString) o).string : o,
+                                    replaceValue
+                                });
+            }
+        }
+
+        String string = ScriptRuntime.toString(o);
+        String searchString = ScriptRuntime.toString(searchValue);
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        int searchLength = searchString.length();
+        int position = string.indexOf(searchString);
+        if (position == -1) {
+            return string;
+        }
+        String preceding = string.substring(0, position);
+        String following = string.substring(position + searchLength);
+
+        String replacement;
+        if (functionalReplace) {
+            Scriptable callThis =
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+
+            Object replacementObj =
+                    ((Callable) replaceValue)
+                            .call(
+                                    cx,
+                                    scope,
+                                    callThis,
+                                    new Object[] {
+                                        searchString, position, string,
+                                    });
+            replacement = ScriptRuntime.toString(replacementObj);
+        } else {
+            NativeArray captures = (NativeArray) cx.newArray(scope, 0);
+            replacement =
+                    AbstractEcmaStringOperations.getSubstitution(
+                            cx,
+                            scope,
+                            searchString,
+                            string,
+                            position,
+                            captures,
+                            Undefined.SCRIPTABLE_UNDEFINED,
+                            (String) replaceValue);
+        }
+        return preceding + replacement + following;
     }
 
     private static Object js_replaceAll(
