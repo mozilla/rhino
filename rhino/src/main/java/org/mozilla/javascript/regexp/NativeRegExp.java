@@ -86,7 +86,9 @@ public class NativeRegExp extends IdScriptableObject {
     private static final byte REOP_FLAT1i = REOP_FLATi + 1; /* case-independent REOP_FLAT1 */
     private static final byte REOP_UCFLAT1 = REOP_FLAT1i + 1; /* single Unicode char */
     private static final byte REOP_UCFLAT1i = REOP_UCFLAT1 + 1; /* case-independent REOP_UCFLAT1 */
-    private static final byte REOP_CLASS = REOP_UCFLAT1i + 1; /* character class with index */
+    private static final byte REOP_UCSPFLAT1 =
+            REOP_UCFLAT1i + 1; /* single Unicode surrogate pair */
+    private static final byte REOP_CLASS = REOP_UCSPFLAT1 + 1; /* character class with index */
     private static final byte REOP_NCLASS = REOP_CLASS + 1; /* negated character class with index */
     private static final byte REOP_NAMED_BACKREF = REOP_NCLASS + 1; /* named back-reference */
     private static final byte REOP_SIMPLE_END = REOP_NAMED_BACKREF; /* end of 'simple opcodes' */
@@ -411,6 +413,17 @@ public class NativeRegExp extends IdScriptableObject {
                     System.out.println("UCFLAT1i: " + ucFlat1iChar);
                     pc += INDEX_LEN;
                     break;
+                case REOP_UCSPFLAT1:
+                    // high and low surrogates
+                    char highSurrogate = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogate = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    System.out.println(
+                            "UCSPFLAT1: "
+                                    + Character.toString(
+                                            Character.toCodePoint(highSurrogate, lowSurrogate)));
+                    break;
                 case REOP_CLASS:
                     int classIndex = getIndex(regexp.program, pc);
                     System.out.println("CLASS: " + classIndex);
@@ -675,7 +688,10 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            ParserParameters params = new ParserParameters(false);
+            boolean unicodeMode = (flags & JSREG_UNICODE) != 0;
+            // if unicode mode is on, named capture groups are always on
+            ParserParameters params = new ParserParameters(unicodeMode, unicodeMode);
+
             if (!parseDisjunction(state, params)) return null;
             // Need to reparse if pattern contains invalid backreferences:
             // "Note: if the number of left parentheses is less than the number
@@ -685,7 +701,7 @@ public class NativeRegExp extends IdScriptableObject {
                 reParseState = new CompilerState(cx, regexp.source, length, flags);
                 reParseState.backReferenceLimit = state.parenCount;
             }
-            if (state.namedCaptureGroupsFound) {
+            if (state.namedCaptureGroupsFound && !params.namedCaptureGroups) {
                 params.namedCaptureGroups = true;
                 if (reParseState == null) {
                     reParseState = new CompilerState(cx, regexp.source, length, flags);
@@ -811,9 +827,11 @@ public class NativeRegExp extends IdScriptableObject {
 
     static class ParserParameters {
         boolean namedCaptureGroups;
+        boolean unicodeMode;
 
-        ParserParameters(boolean namedCaptureGroups) {
+        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode) {
             this.namedCaptureGroups = namedCaptureGroups;
+            this.unicodeMode = unicodeMode;
         }
     }
 
@@ -1014,9 +1032,19 @@ public class NativeRegExp extends IdScriptableObject {
     private static void doFlat(CompilerState state, char c) {
         state.result = new RENode(REOP_FLAT);
         state.result.chr = c;
+        state.result.lowSurrogate = 0; /* valid range is 0xD800-0xDFFF */
         state.result.length = 1;
         state.result.flatIndex = -1;
         state.progLength += 3;
+    }
+
+    private static void doFlatSurrogatePair(CompilerState state, char high, char low) {
+        state.result = new RENode(REOP_FLAT);
+        state.result.chr = high;
+        state.result.lowSurrogate = low;
+        state.result.length = 2;
+        state.result.flatIndex = -1;
+        state.progLength += 5;
     }
 
     private static int getDecimalValue(char c, CompilerState state, String overflowMessageId) {
@@ -1129,21 +1157,158 @@ public class NativeRegExp extends IdScriptableObject {
         char[] src = state.cpbegin;
 
         if (state.cp < state.cpend) {
-            switch (src[state.cp]) {
-                case 'c':
-                    return false;
-                case 'k':
-                    if (params.namedCaptureGroups) {
+            char c = src[state.cp++];
+
+            if (params.unicodeMode) {
+                switch (c) {
+                    case '^':
+                    case '$':
+                    case '\\':
+                    case '.':
+                    case '*':
+                    case '+':
+                    case '?':
+                    case '(':
+                    case ')':
+                    case '[':
+                    case ']':
+                    case '{':
+                    case '}':
+                    case '|':
+                    case '/':
+                        {
+                            doFlat(state, c);
+                            state.result.flatIndex = state.cp - 1;
+                            return true;
+                        }
+                    case '8':
+                    case '9':
+                    default:
+                        reportError("msg.invalid.escape", "");
                         return false;
+                }
+            } else {
+                if ('c' != c) {
+                    if (params.namedCaptureGroups) {
+                        if ('k' != c) {
+                            doFlat(state, c);
+                            state.result.flatIndex = state.cp - 1;
+                            return true;
+                        }
+                    } else {
+                        doFlat(state, c);
+                        state.result.flatIndex = state.cp - 1;
+                        return true;
                     }
+                }
             }
         }
-        state.result = new RENode(REOP_FLAT);
-        state.result.chr = src[state.cp++];
-        state.result.length = 1;
-        state.result.flatIndex = state.cp - 1;
-        state.progLength += 3;
 
+        state.cp--;
+        return false;
+    }
+
+    // returns -1 on failure
+    // when it succeeds, it advances state.cp
+    private static int readNHexDigits(CompilerState state, int nDigits, ParserParameters params) {
+        int termBegin = state.cp;
+        int n = 0;
+
+        for (int i = 0; i < nDigits; i++) {
+            if (state.cp >= state.cpend) {
+                // in unicode mode, we need exact number of digits
+                if (params.unicodeMode || i == 0) {
+                    state.cp = termBegin;
+                    return -1;
+                } else {
+                    return n;
+                }
+            }
+            char c = state.cpbegin[state.cp++];
+            n = Kit.xDigitToInt(c, n);
+            if (n < 0) {
+                state.cp = termBegin;
+                return -1;
+            }
+        }
+
+        return n;
+    }
+
+    private static int parseUnicodeCodePoint(CompilerState state) {
+        char[] src = state.cpbegin;
+        int cpOriginal = state.cp;
+        int n = 0;
+
+        if (state.cp == state.cpend || src[state.cp++] != '{') {
+            state.cp = cpOriginal;
+            return -1;
+        }
+        if (state.cp == state.cpend || src[state.cp] == '}') {
+            reportError("msg.invalid.escape", "");
+        }
+        while (state.cp != state.cpend) {
+            if (src[state.cp] == '\\') break;
+
+            int res = Kit.xDigitToInt(src[state.cp], n);
+            if (res == -1) break;
+            if (res > 0x10FFFF) {
+                reportError("msg.invalid.escape", "");
+            }
+
+            n = res;
+            state.cp += 1;
+        }
+        if (state.cp == state.cpend || src[state.cp++] != '}') {
+            state.cp = cpOriginal;
+            return -1;
+        }
+
+        return n;
+    }
+
+    // assume the leading 'u' has been consumed
+    public static int readRegExpUnicodeEscapeSequence(
+            CompilerState state, ParserParameters params) {
+        char[] src = state.cpbegin;
+
+        int n = readNHexDigits(state, 4, params);
+        if (n < 0) {
+            if (params.unicodeMode) return parseUnicodeCodePoint(state);
+        }
+
+        if (params.unicodeMode) {
+            if (Character.isHighSurrogate((char) n)) {
+                if (state.cp + 2 < state.cpend
+                        && src[state.cp] == '\\'
+                        && src[state.cp + 1] == 'u') {
+                    state.cp += 2;
+                    int n2 = readNHexDigits(state, 4, params);
+                    if (n2 < 0) {
+                        state.cp -= 2;
+                    } else if (Character.isLowSurrogate((char) n2)) {
+                        return Character.toCodePoint((char) n, (char) n2);
+                    } else {
+                        state.cp -= 6;
+                    }
+                }
+            }
+        }
+
+        return n;
+    }
+
+    // assume the leading 'u' has been consumed
+    public static boolean parseRegExpUnicodeEscapeSequence(
+            CompilerState state, ParserParameters params) {
+        int n = readRegExpUnicodeEscapeSequence(state, params);
+
+        if (n < 0) {
+            return false;
+        } else if (n <= 0xFFFF) doFlat(state, (char) n);
+        else {
+            doFlatSurrogatePair(state, Character.highSurrogate(n), Character.lowSurrogate(n));
+        }
         return true;
     }
 
@@ -1164,11 +1329,17 @@ public class NativeRegExp extends IdScriptableObject {
         c = src[state.cp++];
         switch (c) {
             case '0':
-                // if next character is a decimal digit, then it must be an octal escape.
+                // in non-unicode mode, if next character is a decimal digit, then it must be
+                // an octal escape.
                 if (state.cp < state.cpend && isDigit(src[state.cp])) {
-                    state.cp--;
-                    if (!parseLegacyOctalEscapeSequence(state)) {
-                        throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
+                    if (params.unicodeMode) {
+                        reportError("msg.invalid.escape", "");
+                        return false;
+                    } else {
+                        state.cp--;
+                        if (!parseLegacyOctalEscapeSequence(state)) {
+                            throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
+                        }
                     }
                 } else {
                     doFlat(state, (char) 0);
@@ -1181,6 +1352,10 @@ public class NativeRegExp extends IdScriptableObject {
             case '5':
             case '6':
             case '7':
+                if (params.unicodeMode) {
+                    reportError("msg.invalid.escape", "");
+                    return false;
+                }
                 state.cp--;
                 if (!parseLegacyOctalEscapeSequence(state)) {
                     throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
@@ -1213,6 +1388,10 @@ public class NativeRegExp extends IdScriptableObject {
                 if ((state.cp < state.cpend) && isControlLetter(src[state.cp]))
                     c = (char) (src[state.cp++] & 0x1F);
                 else {
+                    if (params.unicodeMode) {
+                        reportError("msg.invalid.escape", "");
+                        return false;
+                    }
                     state.cp = termBegin;
                     return false;
                 }
@@ -1220,31 +1399,25 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             /* UnicodeEscapeSequence */
             case 'u':
-                nDigits += 2;
-            /* fall through */ case 'x': /* HexEscapeSequence */
-                {
-                    int n = 0;
-                    int i;
-                    if (state.cp >= state.cpend) {
-                        // Back off to accepting the original
-                        // 'u' or 'x' as a literal
-                        n = src[state.cp - 1];
+                if (!parseRegExpUnicodeEscapeSequence(state, params)) {
+                    state.cp--; // rewind to the 'u'
+
+                    if (parseIdentityEscape(state, params)) {
+                        return true;
                     } else {
-                        for (i = 0; (i < nDigits) && (state.cp < state.cpend); i++) {
-                            c = src[state.cp++];
-                            n = Kit.xDigitToInt(c, n);
-                            if (n < 0) {
-                                // Back off to accepting the original
-                                // 'u' or 'x' as a literal
-                                state.cp -= (i + 2);
-                                n = src[state.cp++];
-                                break;
-                            }
-                        }
+                        reportError("msg.invalid.escape", "");
                     }
-                    c = (char) n;
                 }
-                doFlat(state, c);
+                break;
+            case 'x': /* HexEscapeSequence */
+                {
+                    int n = readNHexDigits(state, 2, params);
+                    if (n < 0) {
+                        state.cp--; // rewind to the 'x'
+                        return parseIdentityEscape(state, params);
+                    }
+                    doFlat(state, (char) n);
+                }
                 break;
             /* Character class escapes */
             case 'd':
@@ -1442,16 +1615,20 @@ public class NativeRegExp extends IdScriptableObject {
                             break;
                         case '0':
                             if (state.cp < state.cpend && src[state.cp] == '0') {
-                                /*
-                                 * We're deliberately violating the ECMA 5.1 specification and allow octal
-                                 * escapes to follow spidermonkey and general 'web reality':
-                                 * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
-                                 * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
-                                 */
+                                if (params.unicodeMode) {
+                                    reportError("msg.invalid.escape", "");
+                                } else {
+                                    /*
+                                     * We're deliberately violating the ECMA 5.1 specification and allow octal
+                                     * escapes to follow spidermonkey and general 'web reality':
+                                     * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+                                     * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
+                                     */
 
-                                // follow spidermonkey and allow multiple leading zeros,
-                                // e.g. let /\0000/ match the string "\0"
-                                parseMultipleLeadingZerosAsOctalEscape(state);
+                                    // follow spidermonkey and allow multiple leading zeros,
+                                    // e.g. let /\0000/ match the string "\0"
+                                    parseMultipleLeadingZerosAsOctalEscape(state);
+                                }
                                 break;
                             }
                         /* fall through */
@@ -1583,12 +1760,25 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError("msg.bad.quant", String.valueOf(src[state.cp - 1]));
                 return false;
             default:
-                state.result = new RENode(REOP_FLAT);
-                state.result.chr = c;
-                state.result.length = 1;
-                state.result.flatIndex = state.cp - 1;
-                state.progLength += 3;
-                break;
+                {
+                    if (params.unicodeMode && (c == ']' || c == '{' || c == '}'))
+                        reportError("msg.lone.quantifier.bracket", "");
+
+                    if (params.unicodeMode
+                            && Character.isHighSurrogate(c)
+                            && state.cp < state.cpend
+                            && Character.isLowSurrogate(src[state.cp])) {
+                        char low = src[state.cp++];
+                        doFlatSurrogatePair(state, c, low);
+                    } else {
+                        state.result = new RENode(REOP_FLAT);
+                        state.result.chr = c;
+                        state.result.length = 1;
+                        state.result.flatIndex = state.cp - 1;
+                        state.progLength += 3;
+                    }
+                    break;
+                }
         }
 
         term = state.result;
@@ -1680,6 +1870,11 @@ public class NativeRegExp extends IdScriptableObject {
             return false;
         }
 
+        if (params.unicodeMode && (term.op == REOP_ASSERT || term.op == REOP_ASSERT_NOT)) {
+            reportError("msg.bad.quant", "");
+            return false;
+        }
+
         ++state.cp;
         state.result.kid = term;
         state.result.parenIndex = parenBaseCount;
@@ -1763,10 +1958,14 @@ public class NativeRegExp extends IdScriptableObject {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_FLAT1i;
                             else program[pc - 1] = REOP_FLAT1;
                             program[pc++] = (byte) t.chr;
-                        } else {
+                        } else if (t.lowSurrogate == 0) {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_UCFLAT1i;
                             else program[pc - 1] = REOP_UCFLAT1;
                             pc = addIndex(program, pc, t.chr);
+                        } else {
+                            program[pc - 1] = REOP_UCSPFLAT1;
+                            pc = addIndex(program, pc, t.chr);
+                            pc = addIndex(program, pc, t.lowSurrogate);
                         }
                     }
                     break;
@@ -2316,6 +2515,7 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_FLAT1:
+                matchCodePoint = (program[pc++] & 0xFF);
                 if (cpInBounds) {
                     int inputCodePoint;
 
@@ -2324,8 +2524,6 @@ public class NativeRegExp extends IdScriptableObject {
                     } else {
                         inputCodePoint = input.charAt(cpToMatch);
                     }
-
-                    matchCodePoint = (program[pc++] & 0xFF);
                     if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
@@ -2357,6 +2555,9 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_UCFLAT1:
+                matchCodePoint = getIndex(program, pc);
+                pc += INDEX_LEN;
+
                 if (cpInBounds) {
                     int inputCodePoint;
 
@@ -2365,9 +2566,6 @@ public class NativeRegExp extends IdScriptableObject {
                     } else {
                         inputCodePoint = input.charAt(cpToMatch);
                     }
-
-                    matchCodePoint = getIndex(program, pc);
-                    pc += INDEX_LEN;
                     if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
@@ -2404,7 +2602,22 @@ public class NativeRegExp extends IdScriptableObject {
                     }
                 }
                 break;
-
+            case REOP_UCSPFLAT1:
+                {
+                    char highSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    matchCodePoint = Character.toCodePoint(highSurrogate, lowSurrogate);
+                    if (cpInBounds) {
+                        int inputCodePoint = input.codePointAt(cpToMatch);
+                        if (matchCodePoint == inputCodePoint) {
+                            result = true;
+                            gData.cp += cpDelta;
+                        }
+                    }
+                }
+                break;
             default:
                 throw Kit.codeBug();
         }
@@ -3970,6 +4183,8 @@ class RENode {
 
     /* or a literal sequence */
     char chr; /* of one character */
+    char
+            lowSurrogate; /* low surrogate, if chr is high surrogate that is part of a surrogate pair */
     int length; /* or many (via the index) */
     int flatIndex; /* which is -1 if not sourced */
 

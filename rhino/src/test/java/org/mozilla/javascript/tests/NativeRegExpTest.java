@@ -956,6 +956,35 @@ public class NativeRegExpTest {
     @Test
     public void unterminatedCharacterClass() {
         Utils.assertEcmaErrorES6("SyntaxError: Unterminated character class", "new RegExp('[')");
+
+        // rhino permits hex and unicode escapes with less than 2 and 4 digits respectively
+        final String script3 =
+                "var regex = /\\x1/;\n" + "var res = '' + regex.test('\\x01');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script3);
+
+        final String script4 =
+                "var regex = /\\u61/;\n" + "var res = '' + regex.test('a');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script4);
+    }
+
+    @Test
+    public void unicodeEscapeFallbackWithUFlag() {
+        final String script =
+                "var regex = /\\u/u;\n" + "var res = '' + regex.test('u');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script);
+
+        final String script2 =
+                "var regex = /\\x/u;\n" + "var res = '' + regex.test('x');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script2);
+
+        // same as script3 and 4 above,  but they fail too
+        final String script3 =
+                "var regex = /\\x1/u;\n" + "var res = '' + regex.test('\\x01');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script3);
+
+        final String script4 =
+                "var regex = /\\u61/u;\n" + "var res = '' + regex.test('a');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script4);
     }
 
     @Test
@@ -966,7 +995,7 @@ public class NativeRegExpTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("😀-true", script);
     }
-    
+
     @Test
     public void surrogatePairInputReadCorrectly() {
         final String script =
@@ -980,5 +1009,82 @@ public class NativeRegExpTest {
                         + "var res = '' + regex.test('a\\uD83D\\uDE00') + '-' + regex.test('a\\uD83D');\n"
                         + "res;";
         Utils.assertWithAllModes_ES6("false-true", script2);
+    }
+
+    @Test
+    public void testUnicodeEscapes() {
+        Utils.assertWithAllModes_ES6(
+                "high-low surrogate pair", "😀", "'😀'.match(/\\uD83D\\uDE00/u)[0]");
+        Utils.assertWithAllModes_ES6("high surrogate", "\uD83D", "'\\uD83D'.match(/\\uD83D/u)[0]");
+        Utils.assertWithAllModes_ES6("low surrogate", "\uDE00", "'\\uDE00'.match(/\\uDE00/u)[0]");
+        Utils.assertWithAllModes_ES6("non surrogate", "\u0000", "'\\u0000'.match(/\\u0000/u)[0]");
+        Utils.assertWithAllModes_ES6("ASCII", "a", "'a'.match(/\\u0061/u)[0]");
+        Utils.assertWithAllModes_ES6(
+                "unicode code point inside the BMP", "©", "'©'.match(/\\u00A9/u)[0]");
+        Utils.assertWithAllModes_ES6(
+                "unicode code point outside the BMP", "😀", "'😀'.match(/\\u{1F600}/u)[0]");
+    }
+
+    @Test
+    public void testIncompleteDigitHexEscape() {
+        final String script1 =
+                "'\\x01'.match(/\\x1/)[0] + '\\x01'.match(/\\u1/)[0] == '\\x01\\x01';";
+        Utils.assertWithAllModes_ES6(true, script1);
+
+        final String script2 = "'x1k'.match(/\\x1k/)[0] + 'u1k'.match(/\\u1k/)[0];";
+        Utils.assertWithAllModes_ES6("x1ku1k", script2);
+
+        // same as above, with u flag throws
+        final String script3 =
+                "'\\x01'.match(/\\x1/u)[0] + '\\x01'.match(/\\u1/u)[0] == '\\x01\\x01';";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script3);
+
+        final String script4 = "'x1k'.match(/\\x1k/u)[0] + 'u1k'.match(/\\u1k/u)[0];";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script4);
+    }
+
+    // tests that in non-unicode mode \\u{5} is treated as a quantifier
+    @Test
+    public void testUQuantifier() {
+        final String script = "'uu'.match(/\\u{2}/)[0];";
+        Utils.assertWithAllModes_ES6("uu", script);
+    }
+
+    @Test
+    public void testInvalidUnicodeEscape() {
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u{/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u{}/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u{1/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u{k}/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\ua/u");
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u}/u");
+    }
+
+    @Test
+    public void testDecimalEscapeAsOctalEscape() {
+        final String script1 = "'x\\2'.match(/(.)\\2/u)[0];";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script1);
+
+        final String script2 = "'x\\x02'.match(/(.)\\2/)[0] == 'x\\x02'";
+        Utils.assertWithAllModes_ES6(true, script2);
+    }
+
+    @Test
+    public void testSimpleRegExpWithNonLatinLiterals() {
+        final String script =
+                "var result = '€'.match(/€/)"
+                        + " + '-' + '€'.match(/[€]/)"
+                        + " + '-' + '😀'.match(/😀/)"
+                        + " + '-' + '😀'.match(/[😀]/u)"
+                        // without the 'u' flag the surrogate pair is treated as two chars in the
+                        // character class
+                        + " + '-' + '😀'.match(/[😀]/)"
+                        + " + '-' + '😀'.match(/\\uD83D/)"
+                        + " + '-' + '😀'.match(/\\uDE00/)\n"
+                        // with the 'u' flag 😀is consumed as a single codepoint
+                        + " + '-' + '😀'.match(/\\uDE00/u)\n"
+                        + "result";
+        Utils.assertWithAllModes_ES6("€-€-😀-😀-\uD83D-\uD83D-\uDE00-null", script);
     }
 }
