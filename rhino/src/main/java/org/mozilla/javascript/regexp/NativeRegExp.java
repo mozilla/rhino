@@ -964,8 +964,8 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        for (int i = 1; i < classContents.ranges.size(); i += 2) {
-            char rangeEnd = classContents.ranges.get(i);
+        for (int i = 1; i < classContents.bmpRanges.size(); i += 2) {
+            char rangeEnd = classContents.bmpRanges.get(i);
             if (rangeEnd > max) {
                 max = rangeEnd;
             }
@@ -1488,16 +1488,19 @@ public class NativeRegExp extends IdScriptableObject {
     static class ClassContents {
         boolean sense = true;
         ArrayList<Character> chars = new ArrayList<>();
-        ArrayList<Character> ranges =
+        ArrayList<Character> bmpRanges =
                 new ArrayList<>(); // ranges stored as (start1, end1, start2, end2, ...)
         ArrayList<RENode> escapeNodes = new ArrayList<>();
+        ArrayList<Integer> nonBMPRanges =
+                new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
+        ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
     }
 
     private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
         char[] src = state.cpbegin;
-        char rangeStart = 0;
+        int rangeStart = 0;
         boolean inRange = false;
-        char thisChar = 0;
+        int thisCodePoint;
         ClassContents contents = new ClassContents();
 
         if (state.cp >= state.cpend) return null;
@@ -1517,47 +1520,84 @@ public class NativeRegExp extends IdScriptableObject {
                 state.cp++;
                 if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
-                    thisChar = (char) 0x08;
+                    thisCodePoint = (char) 0x08;
+                } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
+                    state.cp++;
+                    thisCodePoint = '-';
                 } else {
                     if (!parseCharacterAndCharacterClassEscape(state, params)) {
-                        if (src[state.cp] == 'c') { // when lookahead=c, parse the \\ as a literal
-                            thisChar = '\\';
+                        if (src[state.cp] == 'c'
+                                && !params.unicodeMode) { // when lookahead=c, parse the \\ as a
+                            // literal
+                            thisCodePoint = '\\';
                         } else {
                             reportError("msg.invalid.escape", "");
                             return null;
                         }
                     } else {
                         if (state.result.op == REOP_FLAT) {
-                            thisChar = state.result.chr;
+                            if (state.result.lowSurrogate == 0) {
+                                thisCodePoint = state.result.chr;
+                            } else {
+                                thisCodePoint =
+                                        Character.toCodePoint(
+                                                state.result.chr, state.result.lowSurrogate);
+                            }
                         } else {
                             contents.escapeNodes.add(state.result);
                             if (inRange) {
-                                contents.chars.add('-');
-                                inRange = false;
+                                if (!params.unicodeMode) {
+                                    contents.chars.add('-');
+                                    inRange = false;
+                                } else {
+                                    reportError("msg.invalid.class", "");
+                                }
+                            } else {
+                                // if we have a '-' after this and we're in unicode mode, we fail
+                                if (state.cp < state.cpend
+                                        && src[state.cp] == '-'
+                                        && params.unicodeMode) {
+                                    reportError("msg.invalid.class", "");
+                                }
                             }
-                            // multi-character character escapes don't need range handling
+                            // multi-character character escapes can't be part of ranges
                             continue;
                         }
                     }
                 }
             } else {
-                thisChar = src[state.cp++];
+                if ((state.flags & JSREG_UNICODE) != 0) {
+                    thisCodePoint = Character.codePointAt(src, state.cp, state.cpend);
+                    state.cp += Character.charCount(thisCodePoint);
+                } else {
+                    thisCodePoint = src[state.cp];
+                    state.cp++;
+                }
             }
             if (inRange) {
-                if (rangeStart > thisChar) {
+                if (rangeStart > thisCodePoint) {
                     reportError("msg.bad.range", "");
                     return null;
                 }
                 inRange = false;
-                contents.ranges.add(rangeStart);
-                contents.ranges.add(thisChar);
+                if (rangeStart > 0xFFFF || thisCodePoint > 0xFFFF) {
+                    contents.nonBMPRanges.add(rangeStart);
+                    contents.nonBMPRanges.add(thisCodePoint);
+                } else {
+                    contents.bmpRanges.add((char) rangeStart);
+                    contents.bmpRanges.add((char) thisCodePoint);
+                }
             } else {
-                contents.chars.add(thisChar);
+                if (thisCodePoint > 0xFFFF) {
+                    contents.nonBMPCodepoints.add(thisCodePoint);
+                } else {
+                    contents.chars.add((char) thisCodePoint);
+                }
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
                     if (src[state.cp] == '-') {
                         state.cp++;
                         inRange = true;
-                        rangeStart = thisChar;
+                        rangeStart = thisCodePoint;
                     }
                 }
             }
@@ -2298,9 +2338,9 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        for (int j = 0; j < classContents.ranges.size(); j += 2) {
-            char start = classContents.ranges.get(j);
-            char end = classContents.ranges.get(j + 1);
+        for (int j = 0; j < classContents.bmpRanges.size(); j += 2) {
+            char start = classContents.bmpRanges.get(j);
+            char end = classContents.bmpRanges.get(j + 1);
             if ((gData.regexp.flags & JSREG_FOLD) != 0) {
                 for (char ch = start; ch <= end; ) {
                     addCharacterToCharSet(charSet, ch);
@@ -2349,16 +2389,30 @@ public class NativeRegExp extends IdScriptableObject {
      *   Initialize the character set if it this is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
-    private static boolean classMatcher(REGlobalData gData, RECharSet charSet, char ch) {
+    private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
         if (!charSet.converted) {
             processCharSet(gData, charSet);
         }
 
-        int byteIndex = ch >> 3;
-        return (charSet.length == 0
-                        || ch >= charSet.length
-                        || (charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0)
-                ^ charSet.classContents.sense;
+        if (codePoint <= 0xFFFF) {
+            int byteIndex = codePoint >> 3;
+            if (!(charSet.length == 0
+                    || codePoint >= charSet.length
+                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0))
+                return charSet.classContents.sense;
+        }
+
+        if (charSet.classContents.nonBMPCodepoints.contains(codePoint))
+            return charSet.classContents.sense;
+
+        for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
+            if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
+                    && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
+                return charSet.classContents.sense;
+            }
+        }
+
+        return !charSet.classContents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -2608,8 +2662,11 @@ public class NativeRegExp extends IdScriptableObject {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        if (classMatcher(
-                                gData, gData.regexp.classList[index], input.charAt(cpToMatch))) {
+                        int inputCodePoint =
+                                (gData.regexp.flags & JSREG_UNICODE) != 0
+                                        ? input.codePointAt(cpToMatch)
+                                        : input.charAt(cpToMatch);
+                        if (classMatcher(gData, gData.regexp.classList[index], inputCodePoint)) {
                             gData.cp += cpDelta;
                             result = true;
                             break;

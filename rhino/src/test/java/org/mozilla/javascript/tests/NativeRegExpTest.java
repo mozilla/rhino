@@ -1087,4 +1087,19 @@ public class NativeRegExpTest {
                         + "result";
         Utils.assertWithAllModes_ES6("€-€-😀-😀-\uD83D-\uD83D-\uDE00-null", script);
     }
+
+    @Test
+    public void testUnicodeEscapesInClass() {
+        Utils.assertWithAllModes_ES6(
+                "high-low surrogate pair", "😀", "'😀'.match(/[\\uD83D\\uDE00]/u)[0]");
+        Utils.assertWithAllModes_ES6(
+                "high surrogate", "\uD83D", "'\\uD83D'.match(/[\\uD83D]/u)[0]");
+        Utils.assertWithAllModes_ES6("low surrogate", "\uDE00", "'\\uDE00'.match(/[\\uDE00]/u)[0]");
+        Utils.assertWithAllModes_ES6("non surrogate", "\u0000", "'\\u0000'.match(/[\\u0000]/u)[0]");
+        Utils.assertWithAllModes_ES6("ASCII", "a", "'a'.match(/[\\u0061]/u)[0]");
+        Utils.assertWithAllModes_ES6(
+                "unicode code point inside the BMP", "©", "'©'.match(/[\\u00A9]/u)[0]");
+        Utils.assertWithAllModes_ES6(
+                "unicode code point outside the BMP", "😀", "'😀'.match(/[\\u{1F600}]/u)[0]");
+    }
 }
