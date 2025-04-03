@@ -698,8 +698,15 @@ public class NativeRegExp extends IdScriptableObject {
             // specified in \#, the \# is taken as an octal escape"
             CompilerState reParseState = null;
             if (state.maxBackReference > state.parenCount) {
-                reParseState = new CompilerState(cx, regexp.source, length, flags);
-                reParseState.backReferenceLimit = state.parenCount;
+                if (params.unicodeMode) {
+                    reportError("msg.invalid.escape", "");
+                } else {
+                    // Need to reparse if pattern contains invalid backreferences:
+                    // "Note: if the number of left parentheses is less than the number
+                    // specified in \#, the \# is taken as an octal escape"
+                    reParseState = new CompilerState(cx, regexp.source, length, flags);
+                    reParseState.backReferenceLimit = state.parenCount;
+                }
             }
             if (state.namedCaptureGroupsFound && !params.namedCaptureGroups) {
                 params.namedCaptureGroups = true;
@@ -860,7 +867,9 @@ public class NativeRegExp extends IdScriptableObject {
              * TODO: Include FLAT with non-zero lowSurrogate for a
              *  prerequisite match.
              */
-            if (result.kid.op == REOP_FLAT && result.kid2.op == REOP_FLAT  && result.kid.lowSurrogate == 0
+            if (result.kid.op == REOP_FLAT
+                    && result.kid2.op == REOP_FLAT
+                    && result.kid.lowSurrogate == 0
                     && result.kid2.lowSurrogate == 0) {
                 result.op = (state.flags & JSREG_FOLD) == 0 ? REOP_ALTPREREQ : REOP_ALTPREREQi;
                 result.chr = result.kid.chr;
@@ -1605,7 +1614,7 @@ public class NativeRegExp extends IdScriptableObject {
                             // decimal escape
                             termStart = state.cp - 1;
                             num = getDecimalValue(c, state, "msg.overlarge.backref");
-                            if (num > state.backReferenceLimit) {
+                            if (!params.unicodeMode && num > state.backReferenceLimit) {
                                 reportWarning(state.cx, "msg.bad.backref", "");
                                 state.cp = termStart;
                                 if (!parseCharacterAndCharacterClassEscape(state, params))
