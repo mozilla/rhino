@@ -1208,12 +1208,12 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     int n = 0;
                     int i;
-                    if ((state.cp >= state.cpend)) {
+                    if (state.cp >= state.cpend) {
                         // Back off to accepting the original
                         // 'u' or 'x' as a literal
                         n = src[state.cp - 1];
                     } else {
-                        for (i = 0; (i < nDigits); i++) {
+                        for (i = 0; (i < nDigits) && (state.cp < state.cpend); i++) {
                             c = src[state.cp++];
                             n = Kit.xDigitToInt(c, n);
                             if (n < 0) {
