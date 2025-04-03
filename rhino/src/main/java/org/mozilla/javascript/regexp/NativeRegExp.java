@@ -856,8 +856,12 @@ public class NativeRegExp extends IdScriptableObject {
             /*
              * Look at both alternates to see if there's a FLAT or a CLASS at
              * the start of each. If so, use a prerequisite match.
+             *
+             * TODO: Include FLAT with non-zero lowSurrogate for a
+             *  prerequisite match.
              */
-            if (result.kid.op == REOP_FLAT && result.kid2.op == REOP_FLAT) {
+            if (result.kid.op == REOP_FLAT && result.kid2.op == REOP_FLAT  && result.kid.lowSurrogate == 0
+                    && result.kid2.lowSurrogate == 0) {
                 result.op = (state.flags & JSREG_FOLD) == 0 ? REOP_ALTPREREQ : REOP_ALTPREREQi;
                 result.chr = result.kid.chr;
                 result.index = result.kid2.chr;
@@ -867,6 +871,7 @@ public class NativeRegExp extends IdScriptableObject {
             } else if (result.kid.op == REOP_CLASS
                     && result.kid.index < 256
                     && result.kid2.op == REOP_FLAT
+                    && result.kid2.lowSurrogate == 0
                     && (state.flags & JSREG_FOLD) == 0) {
                 result.op = REOP_ALTPREREQ2;
                 result.chr = result.kid2.chr;
@@ -877,6 +882,7 @@ public class NativeRegExp extends IdScriptableObject {
             } else if (result.kid.op == REOP_FLAT
                     && result.kid2.op == REOP_CLASS
                     && result.kid2.index < 256
+                    && result.kid.lowSurrogate == 0
                     && (state.flags & JSREG_FOLD) == 0) {
                 result.op = REOP_ALTPREREQ2;
                 result.chr = result.kid.chr;
