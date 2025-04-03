@@ -104,6 +104,7 @@ class CodeGenerator extends Icode {
 
         itsData.itsFunctionType = theFunction.getFunctionType();
         itsData.itsNeedsActivation = theFunction.requiresActivation();
+        itsData.itsRequiresArgumentObject = theFunction.requiresArgumentObject();
         if (theFunction.getFunctionName() != null) {
             itsData.itsName = theFunction.getName();
         }

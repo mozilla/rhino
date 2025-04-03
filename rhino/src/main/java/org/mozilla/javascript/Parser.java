@@ -4167,6 +4167,13 @@ public class Parser {
     }
 
     protected void checkActivationName(String name, int token) {
+        if ("arguments".equals(name) && currentScriptOrFn instanceof FunctionNode) {
+            // If there is a usage of "arguments" we need to initialize it. However,
+            // we might not be in a function body, because we could be inside a function's
+            // default arguments. So, we do this check first, before the "insideFunctionBody"
+            ((FunctionNode) currentScriptOrFn).setRequiresArgumentObject();
+        }
+
         if (!insideFunctionBody()) {
             return;
         }
@@ -4200,13 +4207,21 @@ public class Parser {
     private void checkCallRequiresActivation(AstNode pn) {
         if ((pn.getType() == Token.NAME && "eval".equals(((Name) pn).getIdentifier()))
                 || (pn.getType() == Token.GETPROP
-                        && "eval".equals(((PropertyGet) pn).getProperty().getIdentifier())))
+                        && "eval".equals(((PropertyGet) pn).getProperty().getIdentifier()))) {
             setRequiresActivation();
+            setRequiresArgumentObject();
+        }
     }
 
     protected void setIsGenerator() {
         if (insideFunctionBody()) {
             ((FunctionNode) currentScriptOrFn).setIsGenerator();
+        }
+    }
+
+    private void setRequiresArgumentObject() {
+        if (insideFunctionBody()) {
+            ((FunctionNode) currentScriptOrFn).setRequiresArgumentObject();
         }
     }
 

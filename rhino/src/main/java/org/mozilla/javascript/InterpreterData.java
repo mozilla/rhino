@@ -46,6 +46,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
     String itsName;
     String itsSourceFile;
     boolean itsNeedsActivation;
+    boolean itsRequiresArgumentObject;
     int itsFunctionType;
 
     String[] itsStringTable;
