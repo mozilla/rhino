@@ -726,31 +726,31 @@ public class NativeRegExp extends IdScriptableObject {
         switch (regexp.program[0]) {
             case REOP_UCFLAT1:
             case REOP_UCFLAT1i:
-                regexp.anchorCh = (char) getIndex(regexp.program, 1);
+                regexp.anchorCodePoint = (char) getIndex(regexp.program, 1);
                 break;
             case REOP_FLAT1:
             case REOP_FLAT1i:
-                regexp.anchorCh = (char) (regexp.program[1] & 0xFF);
+                regexp.anchorCodePoint = (char) (regexp.program[1] & 0xFF);
                 break;
             case REOP_FLAT:
             case REOP_FLATi:
                 int k = getIndex(regexp.program, 1);
-                regexp.anchorCh = regexp.source[k];
+                regexp.anchorCodePoint = regexp.source[k];
                 break;
             case REOP_BOL:
-                regexp.anchorCh = ANCHOR_BOL;
+                regexp.anchorCodePoint = ANCHOR_BOL;
                 break;
             case REOP_ALT:
                 RENode n = state.result;
                 if (n.kid.op == REOP_BOL && n.kid2.op == REOP_BOL) {
-                    regexp.anchorCh = ANCHOR_BOL;
+                    regexp.anchorCodePoint = ANCHOR_BOL;
                 }
                 break;
         }
 
         if (debug) {
-            if (regexp.anchorCh >= 0) {
-                System.out.println("Anchor ch = '" + (char) regexp.anchorCh + "'");
+            if (regexp.anchorCodePoint >= 0) {
+                System.out.println("Anchor ch = '" + (char) regexp.anchorCodePoint + "'");
             }
         }
         return regexp;
@@ -2167,14 +2167,34 @@ public class NativeRegExp extends IdScriptableObject {
             boolean updatecp,
             boolean matchBackward) {
         boolean result = false;
-        char matchCh;
+        int matchCodePoint;
         int parenIndex;
         int offset, length, index;
         int startcp = gData.cp;
-        int cpDelta = matchBackward ? -1 : 1;
+        int cpDelta;
+        final int cpToMatch;
+        final boolean cpInBounds;
 
-        final int cpToMatch = gData.cp + (matchBackward ? -1 : 0);
-        final boolean cpInBounds = cpToMatch >= 0 && cpToMatch < end;
+        if ((gData.regexp.flags & JSREG_UNICODE) != 0 && gData.cp < end) {
+            if (matchBackward) {
+                if (gData.cp - 2 >= 0
+                        && Character.isSurrogatePair(
+                                input.charAt(gData.cp - 2), input.charAt(gData.cp - 1))) {
+                    cpDelta = -2;
+                    cpToMatch = gData.cp - 2;
+                } else {
+                    cpDelta = -1;
+                    cpToMatch = gData.cp - 1;
+                }
+            } else {
+                cpDelta = Character.charCount(input.codePointAt(gData.cp));
+                cpToMatch = gData.cp;
+            }
+        } else {
+            cpDelta = (matchBackward ? -1 : 1);
+            cpToMatch = gData.cp + (matchBackward ? -1 : 0);
+        }
+        cpInBounds = cpToMatch >= 0 && cpToMatch < end;
 
         switch (op) {
             case REOP_EMPTY:
@@ -2296,9 +2316,17 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_FLAT1:
-                {
-                    matchCh = (char) (program[pc++] & 0xFF);
-                    if (cpInBounds && input.charAt(cpToMatch) == matchCh) {
+                if (cpInBounds) {
+                    int inputCodePoint;
+
+                    if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                        inputCodePoint = input.codePointAt(cpToMatch);
+                    } else {
+                        inputCodePoint = input.charAt(cpToMatch);
+                    }
+
+                    matchCodePoint = (program[pc++] & 0xFF);
+                    if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
                     }
@@ -2317,10 +2345,11 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_FLAT1i:
                 {
-                    matchCh = (char) (program[pc++] & 0xFF);
+                    // Note: No support for unicode with REOP_FLAT1i
+                    matchCodePoint = (program[pc++] & 0xFF);
                     if (cpInBounds) {
                         char c = input.charAt(cpToMatch);
-                        if (matchCh == c || upcase(matchCh) == upcase(c)) {
+                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
@@ -2328,10 +2357,18 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_UCFLAT1:
-                {
-                    matchCh = (char) getIndex(program, pc);
+                if (cpInBounds) {
+                    int inputCodePoint;
+
+                    if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                        inputCodePoint = input.codePointAt(cpToMatch);
+                    } else {
+                        inputCodePoint = input.charAt(cpToMatch);
+                    }
+
+                    matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
-                    if (cpInBounds && input.charAt(cpToMatch) == matchCh) {
+                    if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
                     }
@@ -2339,11 +2376,12 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_UCFLAT1i:
                 {
-                    matchCh = (char) getIndex(program, pc);
+                    // Note: No support for unicode with REOP_UCFLAT1i
+                    matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
                         char c = input.charAt(cpToMatch);
-                        if (matchCh == c || upcase(matchCh) == upcase(c)) {
+                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
@@ -2393,7 +2431,7 @@ public class NativeRegExp extends IdScriptableObject {
          * If the first node is a simple match, step the index into the string
          * until that match is made, or fail if it can't be found at all.
          */
-        if (gData.regexp.anchorCh < 0 && reopIsSimple(op)) {
+        if (gData.regexp.anchorCodePoint < 0 && reopIsSimple(op)) {
             boolean anchor = false;
             while (gData.cp <= end) {
                 int match = simpleMatch(gData, input, op, program, pc, end, true, false);
@@ -2407,8 +2445,15 @@ public class NativeRegExp extends IdScriptableObject {
                     op = program[pc++];
                     break;
                 }
-                gData.skipped++;
-                gData.cp++;
+
+                if ((gData.regexp.flags & JSREG_UNICODE) != 0 && gData.cp < end) {
+                    int toSkip = Character.charCount(input.codePointAt(gData.cp));
+                    gData.cp += toSkip;
+                    gData.skipped += toSkip;
+                } else {
+                    gData.cp++;
+                    gData.skipped++;
+                }
             }
             if (!anchor) return false;
         }
@@ -2969,7 +3014,7 @@ public class NativeRegExp extends IdScriptableObject {
         gData.multiline = multiline || (re.flags & JSREG_MULTILINE) != 0;
         gData.regexp = re;
 
-        int anchorCh = gData.regexp.anchorCh;
+        int anchorCodePoint = gData.regexp.anchorCodePoint;
         //
         // have to include the position beyond the last character
         //  in order to detect end-of-input/line condition
@@ -2980,23 +3025,34 @@ public class NativeRegExp extends IdScriptableObject {
             // the string until that match is made, or fail if it can't be
             // found at all.
             //
-            if (anchorCh >= 0) {
+            if (anchorCodePoint >= 0) {
                 for (; ; ) {
                     if (i == end) {
                         return false;
                     }
-                    char matchCh = input.charAt(i);
-                    if (matchCh == anchorCh
-                            || ((gData.regexp.flags & JSREG_FOLD) != 0
-                                    && upcase(matchCh) == upcase((char) anchorCh))) {
-                        break;
+
+                    int charCount;
+                    if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                        int matchCodePoint = input.codePointAt(i);
+                        if (matchCodePoint == anchorCodePoint) {
+                            break;
+                        }
+                        charCount = Character.charCount(matchCodePoint);
+                    } else {
+                        char matchCh = input.charAt(i);
+                        if (matchCh == anchorCodePoint
+                                || ((gData.regexp.flags & JSREG_FOLD) != 0
+                                        && upcase(matchCh) == upcase((char) anchorCodePoint))) {
+                            break;
+                        }
+                        charCount = 1;
                     }
 
                     if ((gData.regexp.flags & JSREG_STICKY) != 0) {
                         return false;
                     }
 
-                    ++i;
+                    i += charCount;
                 }
             }
             gData.cp = i;
@@ -3011,7 +3067,7 @@ public class NativeRegExp extends IdScriptableObject {
             if (result) {
                 return true;
             }
-            if (anchorCh == ANCHOR_BOL && !gData.multiline) {
+            if (anchorCodePoint == ANCHOR_BOL && !gData.multiline) {
                 gData.skipped = end;
                 return false;
             }
@@ -3881,7 +3937,7 @@ class RECompiled implements Serializable {
     byte[] program; /* regular expression bytecode */
     int classCount; /* count [...] bitmaps */
     RECharSet[] classList; /* list of [...] bitmaps */
-    int anchorCh = -1; /* if >= 0, then re starts with this literal char */
+    int anchorCodePoint = -1; /* if >= 0, then re starts with this literal char */
 
     RECompiled(String str) {
         this.source = str.toCharArray();

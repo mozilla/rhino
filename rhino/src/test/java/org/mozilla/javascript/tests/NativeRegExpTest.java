@@ -957,4 +957,28 @@ public class NativeRegExpTest {
     public void unterminatedCharacterClass() {
         Utils.assertEcmaErrorES6("SyntaxError: Unterminated character class", "new RegExp('[')");
     }
+
+    @Test
+    public void testUnicodeModeDot() {
+        final String script =
+                "var regex = /./u;\n"
+                        + "var res = '' + regex.exec('\\uD83D\\uDE00') + '-' + regex.test('\\uD83D');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("😀-true", script);
+    }
+    
+    @Test
+    public void surrogatePairInputReadCorrectly() {
+        final String script =
+                "var regex = /\\uD83D/u;\n"
+                        + "var res = '' + regex.test('\\uD83D\\uDE00') + '-' + regex.test('\\uD83D');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("false-true", script);
+
+        final String script2 =
+                "var regex = /a\\uD83D/u;\n"
+                        + "var res = '' + regex.test('a\\uD83D\\uDE00') + '-' + regex.test('a\\uD83D');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("false-true", script2);
+    }
 }
