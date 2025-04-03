@@ -1060,4 +1060,13 @@ public class NativeRegExpTest {
         Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\ua/u");
         Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", "/\\u}/u");
     }
+
+    @Test
+    public void testDecimalEscapeAsOctalEscape() {
+        final String script1 = "'x\\2'.match(/(.)\\2/u)[0];";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script1);
+
+        final String script2 = "'x\\x02'.match(/(.)\\2/)[0] == 'x\\x02'";
+        Utils.assertWithAllModes_ES6(true, script2);
+    }
 }
