@@ -91,7 +91,9 @@ public class NativeRegExp extends IdScriptableObject {
     private static final byte REOP_CLASS = REOP_UCSPFLAT1 + 1; /* character class with index */
     private static final byte REOP_NCLASS = REOP_CLASS + 1; /* negated character class with index */
     private static final byte REOP_NAMED_BACKREF = REOP_NCLASS + 1; /* named back-reference */
-    private static final byte REOP_SIMPLE_END = REOP_NAMED_BACKREF; /* end of 'simple opcodes' */
+    private static final byte REOP_UPROP = REOP_NAMED_BACKREF + 1; /* unicode property */
+    private static final byte REOP_UPROP_NOT = REOP_UPROP + 1; /* negated unicode property */
+    private static final byte REOP_SIMPLE_END = REOP_UPROP_NOT; /* end of 'simple opcodes' */
     // REOP_SIMPLE_END is not a real opcode, but a sentinel for the end of the simple opcodes
 
     private static final byte REOP_QUANT = REOP_SIMPLE_END + 1; /* quantified atom: atom{1,2} */
@@ -1327,6 +1329,54 @@ public class NativeRegExp extends IdScriptableObject {
         return true;
     }
 
+    // only in the format \p{X} or \P{X}. Assume the \ has been consumed.
+    // depending on p or P choose PROP_UPROP or PROP_UPROP_NOT.
+    // X is ASCII letter, decimal or underscore
+    public static boolean parseUnicodePropertyEscape(CompilerState state) {
+        char[] src = state.cpbegin;
+        int termBegin = state.cp;
+        int contentBegin;
+        int contentEnd;
+        char c = src[state.cp++];
+        boolean sense;
+
+        if (c != 'p' && c != 'P') {
+            state.cp = termBegin;
+            return false;
+        }
+
+        sense = c == 'p';
+
+        if (state.cp == state.cpend || src[state.cp++] != '{') {
+            state.cp = termBegin;
+            return false;
+        }
+        contentBegin = state.cp;
+        while (state.cp != state.cpend) {
+            c = src[state.cp++];
+            if (c == '}') break;
+        }
+
+        contentEnd = state.cp;
+        if (contentBegin == contentEnd) {
+            state.cp = termBegin;
+            return false;
+        }
+
+        String content = new String(src, contentBegin, contentEnd - contentBegin - 1);
+        int encodedProp = UnicodeProperties.lookup(content);
+        if (encodedProp == -1) {
+            reportError("msg.invalid.escape", "");
+            return false;
+        }
+
+        state.result = new RENode(sense ? REOP_UPROP : REOP_UPROP_NOT);
+        state.result.unicodeProperty = encodedProp;
+        state.progLength += 3;
+
+        return true;
+    }
+
     // Follows Annex B.1.2 of the ECMAScript specification
     private static boolean parseCharacterAndCharacterClassEscape(
             CompilerState state, ParserParameters params) {
@@ -1459,6 +1509,13 @@ public class NativeRegExp extends IdScriptableObject {
                 state.result = new RENode(REOP_NONALNUM);
                 state.progLength++;
                 break;
+            case 'p':
+            case 'P':
+                state.cp--;
+                if (!parseUnicodePropertyEscape(state)) {
+                    reportError("msg.invalid.property", "");
+                }
+                break;
             /* IdentityEscape */
             default:
                 state.cp--;
@@ -1500,7 +1557,7 @@ public class NativeRegExp extends IdScriptableObject {
         char[] src = state.cpbegin;
         int rangeStart = 0;
         boolean inRange = false;
-        int thisCodePoint;
+        int thisCodePoint = Integer.MAX_VALUE;
         ClassContents contents = new ClassContents();
 
         if (state.cp >= state.cpend) return null;
@@ -2099,6 +2156,10 @@ public class NativeRegExp extends IdScriptableObject {
                     pc = addIndex(program, pc, t.index);
                     re.classList[t.index] = new RECharSet(t.classContents, t.bmsize);
                     break;
+                case REOP_UPROP:
+                case REOP_UPROP_NOT:
+                    pc = addIndex(program, pc, t.unicodeProperty);
+                    break;
                 default:
                     break;
             }
@@ -2379,6 +2440,12 @@ public class NativeRegExp extends IdScriptableObject {
                     for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
                     break;
+                case REOP_UPROP:
+                    charSet.unicodeProps.add(escape.unicodeProperty);
+                    break;
+                case REOP_UPROP_NOT:
+                    charSet.negUnicodeProps.add(escape.unicodeProperty);
+                    break;
                 default:
                     Kit.codeBug("classContents contains invalid escape node type");
             }
@@ -2412,6 +2479,14 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
+        for (int encodedProp : charSet.unicodeProps) {
+            if (UnicodeProperties.hasProperty(encodedProp, codePoint))
+                return charSet.classContents.sense;
+        }
+        for (int encodedProp : charSet.negUnicodeProps) {
+            if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
+                return charSet.classContents.sense;
+        }
         return !charSet.classContents.sense;
     }
 
@@ -2690,6 +2765,22 @@ public class NativeRegExp extends IdScriptableObject {
                     }
                 }
                 break;
+
+            case REOP_UPROP:
+            case REOP_UPROP_NOT:
+                {
+                    int encodedProp = getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    if (cpInBounds) {
+                        boolean sense = (op == REOP_UPROP);
+                        result =
+                                sense
+                                        ^ !UnicodeProperties.hasProperty(
+                                                encodedProp, input.codePointAt(cpToMatch));
+                        gData.cp += cpDelta;
+                    }
+                    break;
+                }
             default:
                 throw Kit.codeBug();
         }
@@ -4263,6 +4354,9 @@ class RENode {
     /* or a named capture group */
     int captureGroupNameIndex;
     int captureGroupNameLength;
+
+    /* or a unicode property */
+    int unicodeProperty; // encoded using UnicodeProperty.encode()
 }
 
 class CompilerState {
@@ -4394,6 +4488,8 @@ class REGlobalData {
  */
 final class RECharSet implements Serializable {
     private static final long serialVersionUID = 7931787979395898394L;
+    ArrayList<Integer> unicodeProps = new ArrayList<Integer>();
+    ArrayList<Integer> negUnicodeProps = new ArrayList<Integer>();
 
     RECharSet(NativeRegExp.ClassContents classContents, int length) {
         this.length = length;

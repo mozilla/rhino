@@ -864,10 +864,24 @@ public class NativeRegExpTest {
     }
 
     @Test
-    public void controlEscapeInCharacterClass() {
+    public void controlEscapeParsing() {
+        // tests for \c within and without char class and in unicode mode and not
         final String script =
-                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\\\');\n" + "res;";
+                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\c');\n" + "res;";
         Utils.assertWithAllModes_ES6("true", script);
+
+        final String script2 =
+                "var regex = /\\c/;\n" + "var res = '' + regex.test('\\\\c');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script2);
+
+        // same above, but unicode flag
+        final String script3 =
+                "var regex = /[\\c]/u;\n" + "var res = '' + regex.test('\\c');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script3);
+
+        final String script4 =
+                "var regex = /\\c/u;\n" + "var res = '' + regex.test('\\\\c');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script4);
     }
 
     @Test
@@ -1101,5 +1115,18 @@ public class NativeRegExpTest {
                 "unicode code point inside the BMP", "©", "'©'.match(/[\\u00A9]/u)[0]");
         Utils.assertWithAllModes_ES6(
                 "unicode code point outside the BMP", "😀", "'😀'.match(/[\\u{1F600}]/u)[0]");
+    }
+
+    @Test
+    public void testUnicodePropertyEscape() {
+        Utils.assertWithAllModes_ES6("uppercase letter", "A", "'A'.match(/\\p{Lu}/u)[0]");
+    }
+
+    @Test
+    public void testUnicodePropertyEscapeZanabazarSquare() {
+        Utils.assertWithAllModes_ES6(
+                "Zanabazar Square",
+                "\uD806\uDE45",
+                "'\\u{11A45}'.match(/\\p{sc=Zanabazar_Square}/u)[0]");
     }
 }
