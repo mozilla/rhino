@@ -995,7 +995,7 @@ public class NativeRegExpTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("😀-true", script);
     }
-    
+
     @Test
     public void surrogatePairInputReadCorrectly() {
         final String script =
@@ -1083,5 +1083,18 @@ public class NativeRegExpTest {
                 "unicode code point inside the BMP", "©", "'©'.match(/[\\u00A9]/u)[0]");
         Utils.assertWithAllModes_ES6(
                 "unicode code point outside the BMP", "😀", "'😀'.match(/[\\u{1F600}]/u)[0]");
+    }
+
+    @Test
+    public void testUnicodePropertyEscape() {
+        Utils.assertWithAllModes_ES6("uppercase letter", "A", "'A'.match(/\\p{Lu}/u)[0]");
+    }
+
+    @Test
+    public void testUnicodePropertyEscapeZanabazarSquare() {
+        Utils.assertWithAllModes_ES6(
+                "Zanabazar Square",
+                "\uD806\uDE45",
+                "'\\u{11A45}'.match(/\\p{sc=Zanabazar_Square}/u)[0]");
     }
 }
