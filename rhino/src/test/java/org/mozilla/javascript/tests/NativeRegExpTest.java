@@ -864,10 +864,24 @@ public class NativeRegExpTest {
     }
 
     @Test
-    public void controlEscapeInCharacterClass() {
+    public void controlEscapeParsing() {
+        // tests for \c within and without char class and in unicode mode and not
         final String script =
-                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\\\');\n" + "res;";
+                "var regex = /[\\c]/;\n" + "var res = '' + regex.test('\\c');\n" + "res;";
         Utils.assertWithAllModes_ES6("true", script);
+
+        final String script2 =
+                "var regex = /\\c/;\n" + "var res = '' + regex.test('\\\\c');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script2);
+
+        // same above, but unicode flag
+        final String script3 =
+                "var regex = /[\\c]/u;\n" + "var res = '' + regex.test('\\c');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script3);
+
+        final String script4 =
+                "var regex = /\\c/u;\n" + "var res = '' + regex.test('\\\\c');\n" + "res;";
+        Utils.assertEcmaErrorES6("SyntaxError: invalid Unicode escape sequence", script4);
     }
 
     @Test
