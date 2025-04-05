@@ -405,8 +405,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
                                 ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
                                         .getPrototypeProperty();
                     else protoProp = ScriptableObject.getProperty(thisObj, "prototype");
-                    if (protoProp instanceof NativeObject
-                            || protoProp instanceof IdScriptableObject) {
+                    if (protoProp instanceof ScriptableObject
+                            && !(protoProp instanceof NativeSymbol)) {
                         return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
                     }
                     throw ScriptRuntime.typeErrorById(
