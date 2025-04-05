@@ -3791,6 +3791,10 @@ public class ScriptRuntime {
         }
     }
 
+    public static double bitwiseAND(double val1, double val2) {
+        return (double) (toInt32(val1) & toInt32(val2));
+    }
+
     public static Number bitwiseAND(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).and((BigInteger) val2);
@@ -3802,6 +3806,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) & toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double bitwiseOR(double val1, double val2) {
+        return (double) (toInt32(val1) | toInt32(val2));
     }
 
     public static Number bitwiseOR(Number val1, Number val2) {
@@ -3817,6 +3825,10 @@ public class ScriptRuntime {
         }
     }
 
+    public static double bitwiseXOR(double val1, double val2) {
+        return (double) (toInt32(val1) ^ toInt32(val2));
+    }
+
     public static Number bitwiseXOR(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).xor((BigInteger) val2);
@@ -3828,6 +3840,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) ^ toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double leftShift(double val1, double val2) {
+        return (double) (toInt32(val1) << toInt32(val2));
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
@@ -3848,6 +3864,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) << toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double signedRightShift(double val1, double val2) {
+        return (double) (toInt32(val1) >> toInt32(val2));
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
@@ -4669,7 +4689,7 @@ public class ScriptRuntime {
         }
     }
 
-    private static boolean compareTo(double d1, double d2, int op) {
+    static boolean compareTo(double d1, double d2, int op) {
         switch (op) {
             case Token.GE:
                 return d1 >= d2;

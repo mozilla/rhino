@@ -3104,6 +3104,11 @@ public final class Interpreter extends Icode implements Evaluator {
         Object rhs = stack[stackTop + 1];
         Object lhs = stack[stackTop];
         boolean valBln;
+        if (lhs == DOUBLE_MARK && rhs == DOUBLE_MARK) {
+            valBln = ScriptRuntime.compareTo(sDbl[stackTop], sDbl[stackTop + 1], op);
+            stack[stackTop] = valBln;
+            return stackTop;
+        }
         object_compare:
         {
             number_compare:
@@ -3127,8 +3132,42 @@ public final class Interpreter extends Icode implements Evaluator {
         return stackTop;
     }
 
+    private static int doFastBitOp(
+            CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
+        double lValue = sDbl[stackTop - 1];
+        double rValue = sDbl[stackTop];
+        stackTop--;
+
+        double result = 0.0;
+        switch (op) {
+            case Token.BITAND:
+                result = ScriptRuntime.bitwiseAND(lValue, rValue);
+                break;
+            case Token.BITOR:
+                result = ScriptRuntime.bitwiseOR(lValue, rValue);
+                break;
+            case Token.BITXOR:
+                result = ScriptRuntime.bitwiseXOR(lValue, rValue);
+                break;
+            case Token.LSH:
+                result = ScriptRuntime.leftShift(lValue, rValue);
+                break;
+            case Token.RSH:
+                result = ScriptRuntime.signedRightShift(lValue, rValue);
+                break;
+        }
+
+        stack[stackTop] = DOUBLE_MARK;
+        sDbl[stackTop] = result;
+
+        return stackTop;
+    }
+
     private static int doBitOp(
             CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
+        if (stack[stackTop] == DOUBLE_MARK && stack[stackTop - 1] == DOUBLE_MARK) {
+            return doFastBitOp(frame, op, stack, sDbl, stackTop);
+        }
         Number lValue = stack_numeric(frame, stackTop - 1);
         Number rValue = stack_numeric(frame, stackTop);
         stackTop--;
@@ -4022,8 +4061,48 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
+    private static int doFastArithemtic(
+            CallFrame frame,
+            int op,
+            double lNum,
+            double rNum,
+            Object[] stack,
+            double[] sDbl,
+            int stackTop) {
+        stackTop--;
+
+        double result = 0.0;
+        switch (op) {
+            case Token.SUB:
+                result = lNum - rNum;
+                break;
+            case Token.MUL:
+                result = lNum * rNum;
+                break;
+            case Token.DIV:
+                result = lNum / rNum;
+                break;
+            case Token.MOD:
+                result = lNum % rNum;
+                break;
+            case Token.EXP:
+                result = Math.pow(lNum, rNum);
+                break;
+        }
+
+        stack[stackTop] = DOUBLE_MARK;
+        sDbl[stackTop] = result;
+
+        return stackTop;
+    }
+
     private static int doArithmetic(
             CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
+        if (stack[stackTop] == DOUBLE_MARK && stack[stackTop - 1] == DOUBLE_MARK) {
+            return doFastArithemtic(
+                    frame, op, sDbl[stackTop - 1], sDbl[stackTop], stack, sDbl, stackTop);
+        }
+
         Number lNum = stack_numeric(frame, stackTop - 1);
         Number rNum = stack_numeric(frame, stackTop);
         --stackTop;
