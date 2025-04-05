@@ -15,6 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -26,7 +28,8 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
-    transient Class<?>[] argTypes;
+    private transient volatile List<TypeInfo> argTypeInfos;
+    private transient volatile TypeInfo returnTypeInfo;
     transient boolean[] argNullability;
     transient boolean vararg;
 
@@ -47,7 +50,6 @@ final class MemberBox implements Serializable {
 
     private void init(Method method) {
         this.memberObject = method;
-        this.argTypes = method.getParameterTypes();
         this.argNullability =
                 nullDetector == null
                         ? new boolean[method.getParameters().length]
@@ -57,7 +59,6 @@ final class MemberBox implements Serializable {
 
     private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
-        this.argTypes = constructor.getParameterTypes();
         this.argNullability =
                 nullDetector == null
                         ? new boolean[constructor.getParameters().length]
@@ -101,6 +102,36 @@ final class MemberBox implements Serializable {
         return memberObject.getDeclaringClass();
     }
 
+    List<TypeInfo> getArgTypes() {
+        if (argTypeInfos == null) {
+            synchronized (this) {
+                if (argTypeInfos == null) {
+                    final var rawTypes =
+                            this.memberObject instanceof Method
+                                    ? ((Method) memberObject).getGenericParameterTypes()
+                                    : ((Constructor<?>) memberObject).getGenericParameterTypes();
+                    argTypeInfos = List.of(TypeInfo.ofArray(rawTypes));
+                }
+            }
+        }
+        return argTypeInfos;
+    }
+
+    TypeInfo getReturnType() {
+        if (returnTypeInfo == null) {
+            synchronized (this) {
+                if (returnTypeInfo == null) {
+                    returnTypeInfo =
+                            this.isMethod()
+                                    ? TypeInfo.of(this.method().getGenericReturnType())
+                                    : TypeInfo.NONE;
+                }
+            }
+        }
+
+        return returnTypeInfo;
+    }
+
     String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
@@ -117,7 +148,7 @@ final class MemberBox implements Serializable {
             }
             sb.append(name);
         }
-        sb.append(JavaMembers.liveConnectSignature(argTypes));
+        sb.append(JavaMembers.liveConnectSignature(getArgTypes()));
         return sb.toString();
     }
 
@@ -195,8 +226,7 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]),
+                                                    nativeSetter.getArgTypes().get(0).getTypeTag(),
                                                     nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
@@ -237,7 +267,12 @@ final class MemberBox implements Serializable {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
-                Method accessible = searchAccessibleMethod(method, argTypes);
+                Method accessible =
+                        searchAccessibleMethod(
+                                method,
+                                getArgTypes().stream()
+                                        .map(TypeInfo::asClass)
+                                        .toArray(Class[]::new));
                 if (accessible != null) {
                     memberObject = accessible;
                     method = accessible;
