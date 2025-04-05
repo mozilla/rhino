@@ -948,5 +948,14 @@ public class NativeRegExpTest {
         final String script2 =
                 "var regex = /\\x/;\n" + "var res = '' + regex.test('x');\n" + "res;";
         Utils.assertWithAllModes_ES6("true", script2);
+
+        // rhino permits hex and unicode escapes with less than 2 and 4 digits respectively
+        final String script3 =
+                "var regex = /\\x1/;\n" + "var res = '' + regex.test('\\x01');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script3);
+
+        final String script4 =
+                "var regex = /\\u61/;\n" + "var res = '' + regex.test('a');\n" + "res;";
+        Utils.assertWithAllModes_ES6("true", script4);
     }
 }
