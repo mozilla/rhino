@@ -13,10 +13,8 @@ package org.mozilla.javascript;
  */
 public interface RegExpProxy {
     // Types of regexp actions
-    public static final int RA_MATCH = 1;
     public static final int RA_REPLACE = 2;
     public static final int RA_REPLACE_ALL = 3;
-    public static final int RA_SEARCH = 4;
 
     public void register(ScriptableObject scope, boolean sealed);
 
