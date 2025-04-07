@@ -7,14 +7,20 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
+import org.mozilla.javascript.ClassCache;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
 
 /**
  * @author ZZZank
  */
 public interface TypeInfoFactory {
 
-    TypeInfoFactory GLOBAL = new ConcurrentFactory();
+    /**
+     * non-global factory is attached to {@link ClassCache}, which is attached to scope (see {@link ClassCache#get(Scriptable)}), so
+     * cached {@link TypeInfo} will be cleared when the scope itself is reclaimed, thus not requiring weak-reference
+     */
+    TypeInfoFactory GLOBAL = new WeakReferenceFactory();
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
