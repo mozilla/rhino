@@ -6,7 +6,7 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.impl.DefaultFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 import java.io.Serializable;
@@ -157,7 +157,7 @@ public class ClassCache implements Serializable {
 
     TypeInfoFactory getTypeFactory() {
         if (typeFactory == null) {
-            typeFactory = new DefaultFactory();
+            typeFactory = new ConcurrentFactory();
         }
         return typeFactory;
     }

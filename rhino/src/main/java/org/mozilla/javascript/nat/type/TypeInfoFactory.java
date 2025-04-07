@@ -7,14 +7,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.mozilla.javascript.nat.type.impl.DefaultFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 
 /**
  * @author ZZZank
  */
 public interface TypeInfoFactory {
 
-    TypeInfoFactory GLOBAL = new DefaultFactory();
+    TypeInfoFactory GLOBAL = new ConcurrentFactory();
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 

@@ -8,7 +8,7 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.impl.DefaultFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 import java.security.AccessController;
@@ -528,7 +528,7 @@ public class ContextFactory {
 
     public Function<Context, TypeInfoFactory> getTypeFactoryProvider() {
         if (typeFactoryProvider == null) {
-            typeFactoryProvider = cx -> new DefaultFactory();
+            typeFactoryProvider = cx -> new ConcurrentFactory();
         }
         return typeFactoryProvider;
     }
