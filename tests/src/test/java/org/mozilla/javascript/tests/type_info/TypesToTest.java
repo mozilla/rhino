@@ -65,7 +65,7 @@ public interface TypesToTest {
             // bool
             Boolean bo);
 
-    void commonObjects(String s, Object o, Enum<?> e, Class<?> c, CharSequence cs);
+    void commonObjects(String s, Object o, Enum<?> e, Class<?> c, CharSequence cs, Character.UnicodeScript u);
 
     void objectArrays(
             // primitive
