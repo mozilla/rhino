@@ -20,10 +20,11 @@ import org.mozilla.javascript.nat.type.impl.*;
  * A representation of Java type, aiming at preserving more type information than what a {@link
  * Class} can provide
  *
+ * <p>Note: using {@code null} is not recommended, {@link #NONE} should be used instead
+ *
  * @see TypeInfoExt : more predefined TypeInfo
  * @see #asClass() : how to convert TypeInfo back to Class
  * @see #is(Class) : how to determine whether a TypeInfo represents a specific class
- * @see NoTypeInfo : how to represent null
  */
 public interface TypeInfo {
     TypeInfo NONE = NoTypeInfo.INSTANCE;

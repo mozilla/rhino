@@ -38,7 +38,7 @@ public interface TypeFormatContext {
     }
 
     /**
-     * @see org.mozilla.javascript.nat.type.NoTypeInfo
+     * @see org.mozilla.javascript.nat.type.impl.NoTypeInfo
      * @see org.mozilla.javascript.nat.type.TypeInfo#NONE
      */
     default String getFormattedNone() {

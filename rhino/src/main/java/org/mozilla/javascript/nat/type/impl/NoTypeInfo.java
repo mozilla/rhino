@@ -1,12 +1,14 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.nat.type.impl;
 
 import java.util.function.Consumer;
+import org.mozilla.javascript.nat.type.TypeFormatContext;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * @see TypeInfo#NONE
  */
 public final class NoTypeInfo implements TypeInfo {
-    static final NoTypeInfo INSTANCE = new NoTypeInfo();
+    public static final NoTypeInfo INSTANCE = new NoTypeInfo();
 
     private NoTypeInfo() {}
 
