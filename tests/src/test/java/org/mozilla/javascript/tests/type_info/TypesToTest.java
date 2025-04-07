@@ -2,6 +2,7 @@ package org.mozilla.javascript.tests.type_info;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -65,7 +66,20 @@ public interface TypesToTest {
             // bool
             Boolean bo);
 
-    void commonObjects(String s, Object o, Enum<?> e, Class<?> c, CharSequence cs, Character.UnicodeScript u);
+    void commonObjects(
+        // object
+        String s,
+        Object o,
+        Enum<?> e,
+        Class<?> c,
+        // interface
+        CharSequence cs,
+        Comparator<?> co,
+        // enum
+        Character.UnicodeScript u,
+        // raw usage of generic class
+        Map m,
+        List l);
 
     void objectArrays(
             // primitive
@@ -79,11 +93,11 @@ public interface TypesToTest {
             float[][][] fff,
             String[][][] sss);
 
-    <T, TExtend extends CharSequence /*, TSuper super String*/> void genericArrays(
-            T[] t, TExtend[] tex, T[][][] ttt, TExtend[][][] texxx);
-
     <T, TExtend extends CharSequence, TExtend3 extends CharSequence & Comparable<T> & Cloneable>
             T generics(T t, TExtend tex, TExtend3 tex3);
+
+    <T, TExtend extends CharSequence /*, TSuper super String*/> void genericArrays(
+            T[] t, TExtend[] tex, T[][][] ttt, TExtend[][][] texxx);
 
     <T, TExtend extends CharSequence> void typeParam(
             // type variable

@@ -24,7 +24,7 @@ public final class TypePack {
         this(raw, clazz, TypeInfoFactory.GLOBAL.create(raw));
     }
 
-    public TypePack(Map.Entry<Type, Class<?>> entry) {
+    public <T extends Class<?>> TypePack(Map.Entry<Type, T> entry) {
         this(entry.getKey(), entry.getValue());
     }
 

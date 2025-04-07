@@ -1,12 +1,19 @@
 package org.mozilla.javascript.tests.type_info;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.VariableTypeInfo;
 
 /**
  * @author ZZZank
@@ -39,23 +46,26 @@ public class TypeInfoTest {
     }
 
     /// additional tests for primitives
+    ///
     /// @see TypesToTest#primitives(float, double, byte, short, int, long, char, boolean)
     @Test
     public void primitives() {
-        var action = (Consumer<TypePack>) pack -> {
-            var clazz = pack.clazz();
-            var info = pack.resolved();
-            Assertions.assertSame(clazz == int.class, info.isInt());
-            Assertions.assertSame(clazz == short.class, info.isShort());
-            Assertions.assertSame(clazz == long.class, info.isLong());
-            Assertions.assertSame(clazz == byte.class, info.isByte());
-            Assertions.assertSame(clazz == char.class, info.isCharacter());
-            Assertions.assertSame(clazz == float.class, info.isFloat());
-            Assertions.assertSame(clazz == double.class, info.isDouble());
-            Assertions.assertSame(clazz == boolean.class, info.isBoolean());
-            Assertions.assertSame(clazz == void.class, info.isVoid());
-        };
+        var action = (Consumer<TypePack>) TypeInfoTest::primitiveTestAction;
         test("primitives", action);
+    }
+
+    private static void primitiveTestAction(TypePack pack) {
+        var clazz = pack.clazz();
+        var info = pack.resolved();
+        Assertions.assertSame(clazz == int.class, info.isInt());
+        Assertions.assertSame(clazz == short.class, info.isShort());
+        Assertions.assertSame(clazz == long.class, info.isLong());
+        Assertions.assertSame(clazz == byte.class, info.isByte());
+        Assertions.assertSame(clazz == char.class, info.isCharacter());
+        Assertions.assertSame(clazz == float.class, info.isFloat());
+        Assertions.assertSame(clazz == double.class, info.isDouble());
+        Assertions.assertSame(clazz == boolean.class, info.isBoolean());
+        Assertions.assertSame(clazz == void.class, info.isVoid());
     }
 
     /// @see TypesToTest#primitiveObjects(Float, Double, Byte, Short, Integer, Long, Character, Boolean)
@@ -91,7 +101,10 @@ public class TypeInfoTest {
             if (!clazz.isEnum()) {
                 Assertions.assertTrue(info.enumConstants().isEmpty());
             } else {
-                Assertions.assertEquals(new HashSet<>(Arrays.asList(clazz.getEnumConstants())), new HashSet<>(info.enumConstants()));
+                Assertions.assertEquals(
+                    new HashSet<>(Arrays.asList(clazz.getEnumConstants())),
+                    new HashSet<>(info.enumConstants())
+                );
             }
         };
         test("commonObjects", action);
@@ -116,6 +129,88 @@ public class TypeInfoTest {
             }
         };
         test("objectArrays", action);
+    }
+
+    /**
+     * @see TypesToTest#generics(Object, CharSequence, CharSequence)
+     */
+    @Test
+    public void generics() {
+        var action = (Consumer<TypePack>) (pack) -> {
+            var clazz = pack.clazz();
+            var info = pack.resolved();
+
+            if (info instanceof VariableTypeInfo) {
+                var variableInfo = (VariableTypeInfo) info;
+                // only TypeVariable can be resolved to VariableTypeInfo
+                var variable = (TypeVariable<?>) pack.raw();
+
+                // validate name
+                Assertions.assertEquals(variable.getName(), variableInfo.name());
+
+                // validate bounds
+                testMulti(
+                    variable.getBounds(),
+                    variableInfo.bounds(TypeInfoFactory.GLOBAL)
+                );
+            }
+        };
+        test("generics", action);
+    }
+
+    private static void testMulti(Type[] rawTypes, List<TypeInfo> resolved) {
+        Assertions.assertEquals(rawTypes.length, resolved.size());
+        var rawClasses = Arrays.stream(rawTypes)
+            .map(TypeInfoTestUtil::getRawType)
+            .toArray(Class[]::new);
+        for (int i = 0; i < rawTypes.length; i++) {
+            var packForBound = new TypePack(rawTypes[i], rawClasses[i], resolved.get(i));
+            commonTestAction(packForBound);
+        }
+    }
+
+    /**
+     * probably no additional test required, since array component extracting is tested in {@link #objectArrays()},
+     * and type variable tested in {@link #generics()}
+     *
+     * @see TypesToTest#genericArrays(Object[], CharSequence[], Object[][][], CharSequence[][][])
+     */
+    @Test
+    public void genericArray() {
+    }
+
+    /**
+     * @see TypesToTest#typeParam(Map, List, Function, Map, List, Function)
+     */
+    public void typeParam() {
+        var action = (Consumer<TypePack>) pack -> {
+            if (!(pack.resolved() instanceof ParameterizedTypeInfo)) {
+                return;
+            }
+            var parameterizedInfo = (ParameterizedTypeInfo) pack.resolved();
+            // only ParameterizedType can be resolved to ParameterizedTypeInfo
+            var parameterized = (ParameterizedType) pack.raw();
+
+            // validate raw type
+            commonTestAction(new TypePack(parameterized.getRawType(), pack.clazz(), parameterizedInfo.rawType()));
+
+            // validate type args
+            testMulti(
+                parameterized.getActualTypeArguments(),
+                parameterizedInfo.params()
+            );
+        };
+        test("typeParam", action);
+    }
+
+    /**
+     * well...no
+     * <p>
+     * The default implementation of {@link TypeInfoFactory} in Rhino will always resolve wildcard type to its main bound,
+     * so basic tests in {@link #common()} should be enough
+     */
+    @Test
+    public void wildcard() {
     }
 
     @SafeVarargs
