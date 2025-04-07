@@ -25,7 +25,7 @@ public class ClassCache implements Serializable {
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
     private transient Map<CacheKey, JavaMembers> classTable;
-    private transient TypeInfoFactory typeFactory;
+    private final transient TypeInfoFactory typeFactory;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
@@ -35,7 +35,9 @@ public class ClassCache implements Serializable {
         this.typeFactory = typeInfoFactory;
     }
 
-    public ClassCache() {}
+    public ClassCache() {
+        this(new ConcurrentFactory());
+    }
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are
@@ -154,9 +156,6 @@ public class ClassCache implements Serializable {
     }
 
     TypeInfoFactory getTypeFactory() {
-        if (typeFactory == null) {
-            typeFactory = new ConcurrentFactory();
-        }
         return typeFactory;
     }
 

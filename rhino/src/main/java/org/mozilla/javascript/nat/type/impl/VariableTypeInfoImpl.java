@@ -4,7 +4,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import org.mozilla.javascript.nat.type.TypeFormatContext;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
@@ -20,7 +19,7 @@ public class VariableTypeInfoImpl extends TypeInfoBase implements VariableTypeIn
 
     public VariableTypeInfoImpl(TypeVariable<?> raw, TypeInfoFactory factory) {
         this.raw = raw;
-        mainBound = (Supplier<TypeInfo>) () -> factory.create(raw.getBounds()[0]);
+        mainBound = factory;
     }
 
     @Override
@@ -33,13 +32,12 @@ public class VariableTypeInfoImpl extends TypeInfoBase implements VariableTypeIn
         return factory.createList(this.raw.getBounds());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public TypeInfo mainBound() {
-        if (mainBound instanceof Supplier) {
+        if (mainBound instanceof TypeInfoFactory) {
             synchronized (this) {
-                if (mainBound instanceof Supplier) {
-                    mainBound = ((Supplier<TypeInfo>) mainBound).get();
+                if (mainBound instanceof TypeInfoFactory) {
+                    mainBound = ((TypeInfoFactory) mainBound).create(raw.getBounds()[0]);
                 }
             }
         }
