@@ -75,47 +75,10 @@ public final class ParameterizedTypeInfo extends TypeInfoBase
     }
 
     @Override
-    public boolean isFunctionalInterface() {
-        return rawType.isFunctionalInterface();
-    }
-
-    @Override
-    public List<Object> enumConstants() {
-        return rawType.enumConstants();
-    }
-
-    @Override
     public void collectComponentClass(Consumer<Class<?>> collector) {
         rawType.collectComponentClass(collector);
         for (var param : params) {
             param.collectComponentClass(collector);
         }
-    }
-
-    @Override
-    public boolean isInterface() {
-        return this.rawType.isInterface();
-    }
-
-    @Override
-    public boolean isAssignableFrom(TypeInfo another) {
-        return this.rawType.isAssignableFrom(another);
-    }
-
-    @Override
-    public boolean isInstance(Object o) {
-        return this.rawType.isInstance(o);
-    }
-
-    /**
-     * none of the base types is parameterized, unless this object is an implementation of {@link
-     * Scriptable} with type variables
-     */
-    @Override
-    public int getTypeTag() {
-        if (Scriptable.class.isAssignableFrom(asClass())) {
-            return FunctionObject.JAVA_SCRIPTABLE_TYPE;
-        }
-        return FunctionObject.JAVA_UNSUPPORTED_TYPE;
     }
 }
