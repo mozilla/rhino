@@ -14,7 +14,8 @@ import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
  */
 public final class ConcurrentFactory implements FactoryBase {
 
-    private final Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache = new ConcurrentHashMap<>();
+    private final Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache =
+            new ConcurrentHashMap<>();
     private final Map<Class<?>, BasicClassTypeInfo> basicClassCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, InterfaceTypeInfo> interfaceCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, EnumTypeInfo> enumCache = new ConcurrentHashMap<>();

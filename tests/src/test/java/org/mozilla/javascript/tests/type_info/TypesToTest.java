@@ -67,19 +67,19 @@ public interface TypesToTest {
             Boolean bo);
 
     void commonObjects(
-        // object
-        String s,
-        Object o,
-        Enum<?> e,
-        Class<?> c,
-        // interface
-        CharSequence cs,
-        Comparator<?> co,
-        // enum
-        Character.UnicodeScript u,
-        // raw usage of generic class
-        Map m,
-        List l);
+            // object
+            String s,
+            Object o,
+            Enum<?> e,
+            Class<?> c,
+            // interface
+            CharSequence cs,
+            Comparator<?> co,
+            // enum
+            Character.UnicodeScript u,
+            // raw usage of generic class
+            Map m,
+            List l);
 
     void objectArrays(
             // primitive

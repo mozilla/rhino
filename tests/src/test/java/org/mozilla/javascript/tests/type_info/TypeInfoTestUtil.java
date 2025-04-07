@@ -26,7 +26,7 @@ public class TypeInfoTestUtil {
 
     public static <T> Stream<T> streamIterator(Iterator<T> iter) {
         return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(iter, Spliterator.ORDERED), false);
+                Spliterators.spliteratorUnknownSize(iter, Spliterator.ORDERED), false);
     }
 
     public static <K, V> Stream<Map.Entry<K, V>> zip(Stream<K> iter1, Stream<V> iter2) {
@@ -52,7 +52,7 @@ public class TypeInfoTestUtil {
 
         } else if (type instanceof TypeVariable) {
             // do not return Object.class directly, it's not how Java erase generic type info
-//            return Object.class;
+            //            return Object.class;
             var typeVariable = (TypeVariable<?>) type;
             return getRawType(typeVariable.getBounds()[0]);
 
@@ -60,14 +60,11 @@ public class TypeInfoTestUtil {
             var bounds = ((WildcardType) type).getUpperBounds();
             // Currently the JLS only permits one bound for wildcards so using first bound is safe
             return getRawType(bounds[0]);
-
         }
         var className = type == null ? "null" : type.getClass().getName();
         throw new IllegalArgumentException(
-            String.format(
-                "Expected a Class, ParameterizedType, or GenericArrayType, but <%s> is of type %s",
-                type,
-                className
-            ));
+                String.format(
+                        "Expected a Class, ParameterizedType, or GenericArrayType, but <%s> is of type %s",
+                        type, className));
     }
 }

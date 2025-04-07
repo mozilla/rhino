@@ -80,19 +80,18 @@ public interface TypeInfo {
     TypeInfo RAW_ENUM_SET = new BasicClassTypeInfo(EnumSet.class);
 
     /**
-     * Get the {@link Class} object represented by this {@link TypeInfo}. For a {@link java.lang.reflect.Type} object, the
-     * TypeInfo object created from the Type object should return the exact same class as the one after Java erased its generic type info
+     * Get the {@link Class} object represented by this {@link TypeInfo}. For a {@link
+     * java.lang.reflect.Type} object, the TypeInfo object created from the Type object should
+     * return the exact same class as the one after Java erased its generic type info
      */
     Class<?> asClass();
 
     /**
      * @return the actual type parameter at provided index, or {@link #NONE} if:
-     * <p>
-     * 1. no type parameter at such index, or
-     * <p>
-     * 2. index not in valid range, or
-     * <p>
-     * 3. the TypeInfo itself is not representing a {@link java.lang.reflect.ParameterizedType}
+     *     <p>1. no type parameter at such index, or
+     *     <p>2. index not in valid range, or
+     *     <p>3. the TypeInfo itself is not representing a {@link
+     *     java.lang.reflect.ParameterizedType}
      */
     default TypeInfo param(int index) {
         return NONE;
