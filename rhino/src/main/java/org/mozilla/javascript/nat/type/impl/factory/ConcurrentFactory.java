@@ -37,6 +37,7 @@ public final class ConcurrentFactory implements FactoryBase {
 
     @Override
     public TypeInfo create(TypeVariable<?> typeVariable) {
-        return variableCache.computeIfAbsent(typeVariable, VariableTypeInfoImpl::new);
+        return variableCache.computeIfAbsent(
+                typeVariable, raw -> new VariableTypeInfoImpl(raw, this));
     }
 }

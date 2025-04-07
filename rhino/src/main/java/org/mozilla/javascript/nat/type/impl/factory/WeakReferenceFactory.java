@@ -59,7 +59,8 @@ public final class WeakReferenceFactory implements FactoryBase {
             return got;
         }
         synchronized (variableCache) {
-            return variableCache.computeIfAbsent(typeVariable, VariableTypeInfoImpl::new);
+            return variableCache.computeIfAbsent(
+                    typeVariable, raw -> new VariableTypeInfoImpl(raw, this));
         }
     }
 }

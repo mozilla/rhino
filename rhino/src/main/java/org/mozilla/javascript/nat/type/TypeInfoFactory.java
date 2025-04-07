@@ -6,13 +6,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -116,7 +110,20 @@ public interface TypeInfoFactory {
     }
 
     default <T extends Type> List<TypeInfo> createList(T[] types) {
-        return List.of(createArray(types));
+        switch (types.length) {
+            case 0:
+                return List.of();
+            case 1:
+                return List.of(create(types[0]));
+            case 2:
+                return List.of(create(types[0]), create(types[1]));
+            default:
+                final var list = new ArrayList<TypeInfo>();
+                for (var type : types) {
+                    list.add(create(type));
+                }
+                return Collections.unmodifiableList(list);
+        }
     }
 
     default TypeInfo matchPredefined(Class<?> clazz) {
