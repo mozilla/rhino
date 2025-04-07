@@ -1,14 +1,13 @@
 package org.mozilla.javascript.nat.type.impl.factory;
 
-import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
-
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.WildcardType;
 import java.util.List;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
 
 /**
  * @author ZZZank
@@ -23,9 +22,8 @@ public interface FactoryBase extends TypeInfoFactory {
     @Override
     default TypeInfo create(ParameterizedType parameterizedType) {
         return attachParam(
-            create(parameterizedType.getRawType()),
-            createList(parameterizedType.getActualTypeArguments())
-        );
+                create(parameterizedType.getRawType()),
+                createList(parameterizedType.getActualTypeArguments()));
     }
 
     @Override
@@ -49,7 +47,10 @@ public interface FactoryBase extends TypeInfoFactory {
 
     @Override
     default TypeInfo attachParam(TypeInfo base, List<TypeInfo> params) {
-        var rawType = base instanceof ParameterizedTypeInfo ? ((ParameterizedTypeInfo) base).rawType() : base;
+        var rawType =
+                base instanceof ParameterizedTypeInfo
+                        ? ((ParameterizedTypeInfo) base).rawType()
+                        : base;
         return new org.mozilla.javascript.nat.type.impl.ParameterizedTypeInfo(rawType, params);
     }
 }

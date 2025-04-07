@@ -1,11 +1,10 @@
 package org.mozilla.javascript.tests.type_info;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author ZZZank

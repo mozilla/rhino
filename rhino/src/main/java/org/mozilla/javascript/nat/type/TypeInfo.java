@@ -33,6 +33,7 @@ public interface TypeInfo {
      * class, using `typeInfo == TypeInfo.OBJECT` might cause problem with VariableTypeInfo
      */
     TypeInfo OBJECT = new BasicClassTypeInfo(Object.class);
+
     TypeInfo OBJECT_ARRAY = new ArrayTypeInfo(OBJECT);
 
     TypeInfo PRIMITIVE_VOID = new PrimitiveClassTypeInfo(Void.TYPE, null);

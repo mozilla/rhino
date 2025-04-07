@@ -2,7 +2,6 @@ package org.mozilla.javascript.nat.type.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
-
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.nat.ByteAsBool;
 

@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
 import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
@@ -17,8 +16,9 @@ import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
 public interface TypeInfoFactory {
 
     /**
-     * non-global factory is attached to {@link ClassCache}, which is attached to scope (see {@link ClassCache#get(Scriptable)}), so
-     * cached {@link TypeInfo} will be cleared when the scope itself is reclaimed, thus not requiring weak-reference
+     * non-global factory is attached to {@link ClassCache}, which is attached to scope (see {@link
+     * ClassCache#get(Scriptable)}), so cached {@link TypeInfo} will be cleared when the scope
+     * itself is reclaimed, thus not requiring weak-reference
      */
     TypeInfoFactory GLOBAL = new WeakReferenceFactory();
 
@@ -67,7 +67,7 @@ public interface TypeInfoFactory {
      *
      * <p>There's no guarantee that created {@link TypeInfo} will keep all their original
      * information, for example, {@link WildcardType} might be mapped to one of its bounds, instead
-     * of another {@code "WildcardTypeInfo"}
+     * of a {@link WildcardTypeInfo}
      *
      * <p>Implementations should return {@link #none()} if it's unable to parse the {@link Type} it
      * received

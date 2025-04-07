@@ -21,7 +21,10 @@ public class TypeInfoTest {
 
     static {
         for (var method : Typing.class.getMethods()) {
-            var old = TYPES.put(method.getName(), TypeInfoFactory.GLOBAL.create(method.getGenericReturnType()));
+            var old =
+                    TYPES.put(
+                            method.getName(),
+                            TypeInfoFactory.GLOBAL.create(method.getGenericReturnType()));
             Assert.assertNull(
                     String.format("duplicated method name '%s' in Typing.class", method.getName()),
                     old);

@@ -3,7 +3,6 @@ package org.mozilla.javascript.nat.type.impl.factory;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.impl.*;
 

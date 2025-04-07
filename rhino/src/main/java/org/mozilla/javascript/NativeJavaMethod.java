@@ -6,13 +6,12 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 /**
  * This class reflects Java methods into the JavaScript environment and handles overloading of

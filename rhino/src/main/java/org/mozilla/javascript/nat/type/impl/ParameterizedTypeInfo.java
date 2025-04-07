@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeFormatContext;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
-public final class ParameterizedTypeInfo extends TypeInfoBase implements
-    org.mozilla.javascript.nat.type.ParameterizedTypeInfo {
+public final class ParameterizedTypeInfo extends TypeInfoBase
+        implements org.mozilla.javascript.nat.type.ParameterizedTypeInfo {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;
@@ -59,10 +59,12 @@ public final class ParameterizedTypeInfo extends TypeInfoBase implements
         ctx.formatParameterized(builder, this);
     }
 
+    @Override
     public TypeInfo rawType() {
         return rawType;
     }
 
+    @Override
     public List<TypeInfo> params() {
         return params;
     }

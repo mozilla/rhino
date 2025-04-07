@@ -84,7 +84,9 @@ public class FunctionObject extends BaseFunction {
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
         var classCache = ClassCache.get(scope);
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor, classCache.getTypeFactory());
+            member =
+                    new MemberBox(
+                            (Constructor<?>) methodOrConstructor, classCache.getTypeFactory());
             isStatic = true; // well, doesn't take a 'this'
         } else {
             member = new MemberBox((Method) methodOrConstructor, classCache.getTypeFactory());

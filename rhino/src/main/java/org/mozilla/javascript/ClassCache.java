@@ -6,13 +6,12 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 
 /**
  * Cache of generated classes and data structures to access Java runtime from JavaScript.
@@ -36,8 +35,7 @@ public class ClassCache implements Serializable {
         this.typeFactory = typeInfoFactory;
     }
 
-    public ClassCache() {
-    }
+    public ClassCache() {}
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are

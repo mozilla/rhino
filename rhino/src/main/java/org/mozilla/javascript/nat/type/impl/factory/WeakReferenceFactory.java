@@ -1,14 +1,13 @@
 package org.mozilla.javascript.nat.type.impl.factory;
 
+import java.lang.reflect.TypeVariable;
+import java.util.Map;
+import java.util.WeakHashMap;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
 import org.mozilla.javascript.nat.type.impl.VariableTypeInfo;
-
-import java.lang.reflect.TypeVariable;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * @author ZZZank

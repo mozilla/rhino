@@ -24,7 +24,8 @@ public class TypeInfoTestUtil {
     }
 
     public static <T> Stream<T> streamIterator(Iterator<T> iter) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iter, Spliterator.ORDERED), false);
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iter, Spliterator.ORDERED), false);
     }
 
     public static <K, V> Stream<Map.Entry<K, V>> zip(Stream<K> iter1, Stream<V> iter2) {

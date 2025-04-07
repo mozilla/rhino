@@ -13,8 +13,7 @@ public class ClassSignatureFormatContext implements TypeFormatContext {
     }
 
     @Override
-    public void appendSpace(StringBuilder builder) {
-    }
+    public void appendSpace(StringBuilder builder) {}
 
     @Override
     public void formatParameterized(StringBuilder builder, ParameterizedTypeInfo type) {

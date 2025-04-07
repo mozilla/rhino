@@ -1,9 +1,8 @@
 package org.mozilla.javascript.nat.type.impl;
 
 import java.lang.reflect.Array;
-
-import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeFormatContext;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 public abstract class TypeInfoBase implements TypeInfo {
     private volatile Object emptyArray;

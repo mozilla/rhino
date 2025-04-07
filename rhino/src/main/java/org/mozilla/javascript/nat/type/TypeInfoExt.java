@@ -14,6 +14,7 @@ public interface TypeInfoExt {
     TypeInfo CONTEXT = TypeInfoFactory.GLOBAL.create(Context.class);
     TypeInfo SCRIPTABLE = TypeInfoFactory.GLOBAL.create(Scriptable.class);
     TypeInfo FUNCTION = TypeInfoFactory.GLOBAL.create(Function.class);
-    TypeInfo WRAPPED_JAVA_ITERATOR = TypeInfoFactory.GLOBAL.create(NativeIterator.WrappedJavaIterator.class);
+    TypeInfo WRAPPED_JAVA_ITERATOR =
+            TypeInfoFactory.GLOBAL.create(NativeIterator.WrappedJavaIterator.class);
     TypeInfo BIG_INT = TypeInfoFactory.GLOBAL.create(BigInteger.class);
 }
