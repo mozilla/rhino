@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -81,14 +82,15 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
-        var classCache = ClassCache.get(scope);
+        // do not use `ClassCache.get(scope).getTypeFactory()` as typeInfoFactory here, scope here
+        // is NOT created via org.mozilla.javascript.ScriptRuntime.initSafeStandardObjects(...)
+        var typeInfoFactory = TypeInfoFactory.GLOBAL;
+
         if (methodOrConstructor instanceof Constructor) {
-            member =
-                    new MemberBox(
-                            (Constructor<?>) methodOrConstructor, classCache.getTypeFactory());
+            member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor, classCache.getTypeFactory());
+            member = new MemberBox((Method) methodOrConstructor, typeInfoFactory);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
