@@ -505,7 +505,7 @@ public class NativeJavaMethod extends BaseFunction {
      * will be {@code args.length} for non-vararg member or {@code args.length-1} for vararg member
      *
      * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.nat.type.TypeInfo)
-     * @see NativeJavaObject#canConvert(Object, Class)
+     * @see NativeJavaObject#canConvert(Object, org.mozilla.javascript.nat.type.TypeInfo)
      */
     static int[] failFastConversionWeights(Object[] args, MemberBox member) {
         final var argTypes = member.getArgTypes();

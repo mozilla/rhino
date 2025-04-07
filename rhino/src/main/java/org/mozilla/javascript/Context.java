@@ -35,6 +35,7 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -1845,7 +1846,7 @@ public class Context implements Closeable {
      * @throws EvaluatorException if the conversion cannot be performed
      */
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
-        return jsToJava(value, TypeInfo.of(desiredType));
+        return jsToJava(value, TypeInfoFactory.GLOBAL.create(desiredType));
     }
 
     public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {

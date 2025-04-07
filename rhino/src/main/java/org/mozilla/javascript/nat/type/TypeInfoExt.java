@@ -11,9 +11,9 @@ import org.mozilla.javascript.Scriptable;
  * @author ZZZank
  */
 public interface TypeInfoExt {
-    TypeInfo CONTEXT = TypeInfo.of(Context.class);
-    TypeInfo SCRIPTABLE = TypeInfo.of(Scriptable.class);
-    TypeInfo FUNCTION = TypeInfo.of(Function.class);
-    TypeInfo WRAPPED_JAVA_ITERATOR = TypeInfo.of(NativeIterator.WrappedJavaIterator.class);
-    TypeInfo BIG_INT = TypeInfo.of(BigInteger.class);
+    TypeInfo CONTEXT = TypeInfoFactory.GLOBAL.create(Context.class);
+    TypeInfo SCRIPTABLE = TypeInfoFactory.GLOBAL.create(Scriptable.class);
+    TypeInfo FUNCTION = TypeInfoFactory.GLOBAL.create(Function.class);
+    TypeInfo WRAPPED_JAVA_ITERATOR = TypeInfoFactory.GLOBAL.create(NativeIterator.WrappedJavaIterator.class);
+    TypeInfo BIG_INT = TypeInfoFactory.GLOBAL.create(BigInteger.class);
 }

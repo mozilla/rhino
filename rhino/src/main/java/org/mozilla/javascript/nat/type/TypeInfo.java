@@ -1,7 +1,6 @@
 package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -28,8 +27,6 @@ import org.mozilla.javascript.nat.type.impl.*;
  */
 public interface TypeInfo {
     TypeInfo NONE = NoTypeInfo.INSTANCE;
-
-    TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
     /**
      * use {@link TypeInfo#isObjectExact()} to determine whether a type represents a {@link Object}
@@ -104,26 +101,6 @@ public interface TypeInfo {
 
     default boolean shouldConvert() {
         return true;
-    }
-
-    static TypeInfo of(Class<?> c) {
-        return TypeInfoFactory.GLOBAL.create(c);
-    }
-
-    static TypeInfo of(Type type) {
-        return TypeInfoFactory.GLOBAL.create(type);
-    }
-
-    static TypeInfo[] ofArray(Type[] array) {
-        if (array.length == 0) {
-            return EMPTY_ARRAY;
-        }
-        var len = array.length;
-        var arr = new TypeInfo[len];
-        for (int i = 0; i < len; i++) {
-            arr[i] = of(array[i]);
-        }
-        return arr;
     }
 
     /**

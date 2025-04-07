@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoExt;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
@@ -260,7 +261,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      */
     @Deprecated
     public static boolean canConvert(Object fromObj, Class<?> to) {
-        return canConvert(fromObj, TypeInfo.of(to));
+        return canConvert(fromObj, TypeInfoFactory.GLOBAL.create(to));
     }
 
     public static boolean canConvert(Object fromObj, TypeInfo to) {
@@ -492,7 +493,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      */
     @Deprecated
     public static Object coerceType(Class<?> type, Object value) {
-        return coerceTypeImpl(TypeInfo.of(type), value);
+        return coerceTypeImpl(TypeInfoFactory.GLOBAL.create(type), value);
     }
 
     /** Type-munging for field setting and method invocation. Conforms to LC3 specification */

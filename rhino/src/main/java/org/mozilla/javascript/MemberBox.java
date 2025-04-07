@@ -42,7 +42,7 @@ final class MemberBox implements Serializable {
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
     MemberBox(Method method) {
-        init(method, null);
+        init(method, TypeInfoFactory.GLOBAL);
     }
 
     MemberBox(Method method, TypeInfoFactory factory) {
@@ -50,7 +50,7 @@ final class MemberBox implements Serializable {
     }
 
     MemberBox(Constructor<?> constructor) {
-        init(constructor, null);
+        init(constructor, TypeInfoFactory.GLOBAL);
     }
 
     MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
