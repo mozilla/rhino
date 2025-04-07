@@ -1,10 +1,9 @@
 package org.mozilla.javascript.nat.type;
 
-import org.mozilla.javascript.FunctionObject;
-import org.mozilla.javascript.Scriptable;
-
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
+import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * @see ParameterizedType

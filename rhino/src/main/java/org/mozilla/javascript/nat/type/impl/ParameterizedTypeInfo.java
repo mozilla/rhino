@@ -2,8 +2,6 @@ package org.mozilla.javascript.nat.type.impl;
 
 import java.util.List;
 import java.util.function.Consumer;
-import org.mozilla.javascript.FunctionObject;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.type.TypeFormatContext;
 import org.mozilla.javascript.nat.type.TypeInfo;
 
