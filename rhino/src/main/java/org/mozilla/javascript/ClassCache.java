@@ -25,7 +25,7 @@ public class ClassCache implements Serializable {
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
     private transient Map<CacheKey, JavaMembers> classTable;
-    private final transient TypeInfoFactory typeFactory;
+    private transient TypeInfoFactory typeFactory;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
@@ -36,7 +36,6 @@ public class ClassCache implements Serializable {
     }
 
     public ClassCache() {
-        this(new ConcurrentFactory());
     }
 
     /**
@@ -156,6 +155,9 @@ public class ClassCache implements Serializable {
     }
 
     TypeInfoFactory getTypeFactory() {
+        if (typeFactory == null) {
+            typeFactory = new ConcurrentFactory();
+        }
         return typeFactory;
     }
 
