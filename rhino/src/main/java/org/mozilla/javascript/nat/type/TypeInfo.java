@@ -14,7 +14,11 @@ import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.nat.ByteAsBool;
-import org.mozilla.javascript.nat.type.impl.*;
+import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
+import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
+import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
+import org.mozilla.javascript.nat.type.impl.NoTypeInfo;
+import org.mozilla.javascript.nat.type.impl.PrimitiveClassTypeInfo;
 
 /**
  * A representation of Java type, aiming at preserving more type information than what a {@link
@@ -31,7 +35,7 @@ public interface TypeInfo {
 
     /**
      * use {@link TypeInfo#isObjectExact()} to determine whether a type represents a {@link Object}
-     * class, using `typeInfo == TypeInfo.OBJECT` might cause problem with VariableTypeInfo
+     * class, using `typeInfo == TypeInfo.OBJECT` might cause problem with {@link VariableTypeInfo}
      */
     TypeInfo OBJECT = new BasicClassTypeInfo(Object.class);
 
@@ -75,8 +79,21 @@ public interface TypeInfo {
     TypeInfo RAW_OPTIONAL = new BasicClassTypeInfo(Optional.class);
     TypeInfo RAW_ENUM_SET = new BasicClassTypeInfo(EnumSet.class);
 
+    /**
+     * Get the {@link Class} object represented by this {@link TypeInfo}. For a {@link java.lang.reflect.Type} object, the
+     * TypeInfo object created from the Type object should return the exact same class as the one after Java erased its generic type info
+     */
     Class<?> asClass();
 
+    /**
+     * @return the actual type parameter at provided index, or {@link #NONE} if:
+     * <p>
+     * 1. no type parameter at such index, or
+     * <p>
+     * 2. index not in valid range, or
+     * <p>
+     * 3. the TypeInfo itself is not representing a {@link java.lang.reflect.ParameterizedType}
+     */
     default TypeInfo param(int index) {
         return NONE;
     }

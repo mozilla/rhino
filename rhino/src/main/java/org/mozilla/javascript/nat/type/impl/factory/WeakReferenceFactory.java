@@ -7,14 +7,14 @@ import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
-import org.mozilla.javascript.nat.type.impl.VariableTypeInfo;
+import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
 
 /**
  * @author ZZZank
  */
 public final class WeakReferenceFactory implements FactoryBase {
 
-    private final Map<TypeVariable<?>, VariableTypeInfo> variableCache = new WeakHashMap<>();
+    private final Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache = new WeakHashMap<>();
     private final Map<Class<?>, BasicClassTypeInfo> basicClassCache = new WeakHashMap<>();
     private final Map<Class<?>, InterfaceTypeInfo> interfaceCache = new WeakHashMap<>();
     private final Map<Class<?>, EnumTypeInfo> enumCache = new WeakHashMap<>();
@@ -59,7 +59,7 @@ public final class WeakReferenceFactory implements FactoryBase {
             return got;
         }
         synchronized (variableCache) {
-            return variableCache.computeIfAbsent(typeVariable, VariableTypeInfo::new);
+            return variableCache.computeIfAbsent(typeVariable, VariableTypeInfoImpl::new);
         }
     }
 }

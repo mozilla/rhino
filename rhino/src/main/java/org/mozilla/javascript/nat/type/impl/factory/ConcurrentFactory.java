@@ -1,17 +1,20 @@
 package org.mozilla.javascript.nat.type.impl.factory;
 
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.impl.*;
+import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
+import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
+import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
+import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
 
 /**
  * @author ZZZank
  */
 public final class ConcurrentFactory implements FactoryBase {
 
-    private final Map<TypeVariable<?>, VariableTypeInfo> variableCache = new ConcurrentHashMap<>();
+    private final Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, BasicClassTypeInfo> basicClassCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, InterfaceTypeInfo> interfaceCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, EnumTypeInfo> enumCache = new ConcurrentHashMap<>();
@@ -33,6 +36,6 @@ public final class ConcurrentFactory implements FactoryBase {
 
     @Override
     public TypeInfo create(TypeVariable<?> typeVariable) {
-        return variableCache.computeIfAbsent(typeVariable, VariableTypeInfo::new);
+        return variableCache.computeIfAbsent(typeVariable, VariableTypeInfoImpl::new);
     }
 }

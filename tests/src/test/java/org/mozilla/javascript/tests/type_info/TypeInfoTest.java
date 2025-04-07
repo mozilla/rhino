@@ -137,23 +137,21 @@ public class TypeInfoTest {
     @Test
     public void generics() {
         var action = (Consumer<TypePack>) (pack) -> {
-            var clazz = pack.clazz();
-            var info = pack.resolved();
-
-            if (info instanceof VariableTypeInfo) {
-                var variableInfo = (VariableTypeInfo) info;
-                // only TypeVariable can be resolved to VariableTypeInfo
-                var variable = (TypeVariable<?>) pack.raw();
-
-                // validate name
-                Assertions.assertEquals(variable.getName(), variableInfo.name());
-
-                // validate bounds
-                testMulti(
-                    variable.getBounds(),
-                    variableInfo.bounds(TypeInfoFactory.GLOBAL)
-                );
+            if (!(pack.resolved() instanceof VariableTypeInfo)) {
+                return;
             }
+            var variableInfo = (VariableTypeInfo) pack.resolved();
+            // only TypeVariable can be resolved to VariableTypeInfo
+            var variable = (TypeVariable<?>) pack.raw();
+
+            // validate name
+            Assertions.assertEquals(variable.getName(), variableInfo.name());
+
+            // validate bounds
+            testMulti(
+                variable.getBounds(),
+                variableInfo.bounds(TypeInfoFactory.GLOBAL)
+            );
         };
         test("generics", action);
     }
