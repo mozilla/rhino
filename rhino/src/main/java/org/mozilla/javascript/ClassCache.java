@@ -35,8 +35,7 @@ public class ClassCache implements Serializable {
         this.typeFactory = typeInfoFactory;
     }
 
-    public ClassCache() {
-    }
+    public ClassCache() {}
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are
