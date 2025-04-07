@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
@@ -195,6 +196,8 @@ public interface TypeInfoFactory {
             return TypeInfo.OBJECT_ARRAY;
         } else if (clazz == String[].class) {
             return TypeInfo.STRING_ARRAY;
+        } else if (clazz == BigInteger.class) {
+            return TypeInfo.BIG_INT;
         }
         return null;
     }

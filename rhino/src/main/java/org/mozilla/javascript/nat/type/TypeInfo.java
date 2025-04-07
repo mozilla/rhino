@@ -1,6 +1,7 @@
 package org.mozilla.javascript.nat.type;
 
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.mozilla.javascript.nat.type.impl.PrimitiveClassTypeInfo;
  *
  * <p>Note: using {@code null} is not recommended, {@link #NONE} should be used instead
  *
- * @see TypeInfoExt : more predefined TypeInfo
  * @see #asClass() : how to convert TypeInfo back to Class
  * @see #is(Class) : how to determine whether a TypeInfo represents a specific class
  */
@@ -78,6 +78,7 @@ public interface TypeInfo {
     TypeInfo RAW_MAP = new InterfaceTypeInfo(Map.class, ByteAsBool.FALSE);
     TypeInfo RAW_OPTIONAL = new BasicClassTypeInfo(Optional.class);
     TypeInfo RAW_ENUM_SET = new BasicClassTypeInfo(EnumSet.class);
+    TypeInfo BIG_INT = new BasicClassTypeInfo(BigInteger.class);
 
     /**
      * Get the {@link Class} object represented by this {@link TypeInfo}. For a {@link
@@ -110,7 +111,7 @@ public interface TypeInfo {
      *     parameter, true otherwise
      */
     default boolean isNot(Class<?> c) {
-        return !is(c);
+        return asClass() != c;
     }
 
     default boolean isPrimitive() {

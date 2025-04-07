@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoExt;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -100,19 +99,19 @@ public class FunctionObject extends BaseFunction {
             // Either variable args or an error.
             if (types.get(1).isArray()) {
                 if (!isStatic
-                        || types.get(0) != TypeInfoExt.CONTEXT
-                        || types.get(1) != TypeInfo.OBJECT_ARRAY
-                        || types.get(2) != TypeInfoExt.FUNCTION
-                        || types.get(3) != TypeInfo.PRIMITIVE_BOOLEAN) {
+                        || types.get(0).isNot(Context.class)
+                        || types.get(1).isNot(Object[].class)
+                        || types.get(2).isNot(Function.class)
+                        || types.get(3).isNot(boolean.class)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.ctor", methodName);
                 }
                 parmsLength = VARARGS_CTOR;
             } else {
                 if (!isStatic
-                        || types.get(0) != TypeInfoExt.CONTEXT
-                        || types.get(1) != TypeInfoExt.SCRIPTABLE
-                        || types.get(2) != TypeInfo.OBJECT_ARRAY
-                        || types.get(3) != TypeInfoExt.FUNCTION) {
+                        || types.get(0).isNot(Context.class)
+                        || types.get(1).isNot(Scriptable.class)
+                        || types.get(2).isNot(Object[].class)
+                        || types.get(3).isNot(Function.class)) {
                     throw Context.reportRuntimeErrorById("msg.varargs.fun", methodName);
                 }
                 parmsLength = VARARGS_METHOD;

@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoExt;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
 
 /**
@@ -331,7 +330,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     if (to == TypeInfo.STRING) {
                         // native numbers are #1-8
                         return 9;
-                    } else if (to == TypeInfoExt.BIG_INT) {
+                    } else if (to.is(BigInteger.class)) {
                         return 10;
                     } else if (to.isObjectExact()) {
                         return 11;
@@ -545,7 +544,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                         }
                     }
                     return coerceToNumber(
-                            jsTypeCode == JSTYPE_BIGINT ? TypeInfoExt.BIG_INT : TypeInfo.DOUBLE,
+                            jsTypeCode == JSTYPE_BIGINT ? TypeInfo.BIG_INT : TypeInfo.DOUBLE,
                             value);
                 } else if ((type.isPrimitive() && !type.isBoolean())
                         || type.isNumber()
@@ -704,7 +703,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             return Double.valueOf(toDouble(value));
         }
 
-        if (type == TypeInfoExt.BIG_INT) {
+        if (type.is(BigInteger.class)) {
             if (valueClass == BigInteger.class) {
                 return value;
             }
