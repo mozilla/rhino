@@ -31,6 +31,11 @@ public interface VariableTypeInfo extends TypeInfo {
     TypeInfo mainBound();
 
     @Override
+    default boolean isEnum() {
+        return mainBound().isEnum();
+    }
+
+    @Override
     default boolean isInterface() {
         return mainBound().isInterface();
     }

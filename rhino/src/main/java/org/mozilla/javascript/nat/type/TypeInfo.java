@@ -142,9 +142,20 @@ public interface TypeInfo {
     }
 
     /**
+     * @see Class#isInterface()
+     */
+    default boolean isInterface() {
+        return false;
+    }
+
+    /**
      * @see FunctionalInterface
      */
     default boolean isFunctionalInterface() {
+        return false;
+    }
+
+    default boolean isEnum() {
         return false;
     }
 
@@ -248,13 +259,6 @@ public interface TypeInfo {
 
     default void collectComponentClass(Consumer<Class<?>> collector) {
         collector.accept(asClass());
-    }
-
-    /**
-     * @see Class#isInterface()
-     */
-    default boolean isInterface() {
-        return false;
     }
 
     /**

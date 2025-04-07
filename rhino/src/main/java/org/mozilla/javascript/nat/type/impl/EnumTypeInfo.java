@@ -15,6 +15,11 @@ public class EnumTypeInfo extends ClassTypeInfo {
     }
 
     @Override
+    public boolean isEnum() {
+        return true;
+    }
+
+    @Override
     public List<Object> enumConstants() {
         if (constants == null) {
             constants = List.of(asClass().getEnumConstants());

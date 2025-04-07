@@ -93,8 +93,8 @@ public interface TypesToTest {
             float[][][] fff,
             String[][][] sss);
 
-    <T, TExtend extends CharSequence, TExtend3 extends CharSequence & Comparable<T> & Cloneable>
-            T generics(T t, TExtend tex, TExtend3 tex3);
+    <T, TExtend extends CharSequence, TExtend3 extends CharSequence & Comparable<T> & Cloneable, TEnum extends Character.UnicodeScript>
+            T generics(T t, TExtend tex, TExtend3 tex3, TEnum tenum);
 
     <T, TExtend extends CharSequence /*, TSuper super String*/> void genericArrays(
             T[] t, TExtend[] tex, T[][][] ttt, TExtend[][][] texxx);

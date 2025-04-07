@@ -29,12 +29,15 @@ public class TypeInfoTest {
     private static void commonTestAction(TypePack pack) {
         var clazz = pack.clazz();
         var info = pack.resolved();
+        // info should represent the exact class
         Assertions.assertSame(clazz, info.asClass());
+        Assertions.assertTrue(info.is(clazz));
+        // TypeInfo should behave the same as the original class
         Assertions.assertSame(clazz.isArray(), info.isArray());
         Assertions.assertSame(clazz.isPrimitive(), info.isPrimitive());
         Assertions.assertSame(clazz.isInterface(), info.isInterface());
+        Assertions.assertSame(clazz.isEnum(), info.isEnum());
         Assertions.assertSame(FunctionObject.getTypeTag(clazz), info.getTypeTag());
-        Assertions.assertTrue(info.is(clazz));
         Assertions.assertSame(Number.class.isAssignableFrom(clazz), info.isNumber());
         Assertions.assertSame(clazz == Object.class, info.isObjectExact());
         if (!clazz.isArray()) {
@@ -148,7 +151,7 @@ public class TypeInfoTest {
     }
 
     /**
-     * @see TypesToTest#generics(Object, CharSequence, CharSequence)
+     * @see TypesToTest#generics(Object, CharSequence, CharSequence, Character.UnicodeScript)
      */
     @Test
     public void generics() {
