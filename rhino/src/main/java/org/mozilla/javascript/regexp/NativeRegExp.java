@@ -86,7 +86,9 @@ public class NativeRegExp extends IdScriptableObject {
     private static final byte REOP_FLAT1i = REOP_FLATi + 1; /* case-independent REOP_FLAT1 */
     private static final byte REOP_UCFLAT1 = REOP_FLAT1i + 1; /* single Unicode char */
     private static final byte REOP_UCFLAT1i = REOP_UCFLAT1 + 1; /* case-independent REOP_UCFLAT1 */
-    private static final byte REOP_CLASS = REOP_UCFLAT1i + 1; /* character class with index */
+    private static final byte REOP_UCSPFLAT1 =
+            REOP_UCFLAT1i + 1; /* single Unicode surrogate pair */
+    private static final byte REOP_CLASS = REOP_UCSPFLAT1 + 1; /* character class with index */
     private static final byte REOP_NCLASS = REOP_CLASS + 1; /* negated character class with index */
     private static final byte REOP_NAMED_BACKREF = REOP_NCLASS + 1; /* named back-reference */
     private static final byte REOP_UPROP = REOP_NAMED_BACKREF + 1; /* unicode property */
@@ -409,6 +411,17 @@ public class NativeRegExp extends IdScriptableObject {
                     char ucFlat1iChar = (char) getIndex(regexp.program, pc);
                     System.out.println("UCFLAT1i: " + ucFlat1iChar);
                     pc += INDEX_LEN;
+                    break;
+                case REOP_UCSPFLAT1:
+                    // high and low surrogates
+                    char highSurrogate = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogate = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    System.out.println(
+                            "UCSPFLAT1: "
+                                    + Character.toString(
+                                            Character.toCodePoint(highSurrogate, lowSurrogate)));
                     break;
                 case REOP_CLASS:
                     int classIndex = getIndex(regexp.program, pc);
@@ -733,13 +746,7 @@ public class NativeRegExp extends IdScriptableObject {
         switch (regexp.program[0]) {
             case REOP_UCFLAT1:
             case REOP_UCFLAT1i:
-                {
-                    char ch = (char) getIndex(regexp.program, 1);
-                    char lowSurrogate = (char) getIndex(regexp.program, 3);
-                    if (lowSurrogate != 0)
-                        regexp.anchorCodePoint = Character.toCodePoint(ch, lowSurrogate);
-                    else regexp.anchorCodePoint = ch;
-                }
+                regexp.anchorCodePoint = (char) getIndex(regexp.program, 1);
                 break;
             case REOP_FLAT1:
             case REOP_FLAT1i:
@@ -857,10 +864,7 @@ public class NativeRegExp extends IdScriptableObject {
              * TODO: Include FLAT with non-zero lowSurrogate for a
              *  prerequisite match.
              */
-            if (result.kid.op == REOP_FLAT
-                    && result.kid2.op == REOP_FLAT
-                    && result.kid.lowSurrogate == 0
-                    && result.kid2.lowSurrogate == 0) {
+            if (result.kid.op == REOP_FLAT && result.kid2.op == REOP_FLAT) {
                 result.op = (state.flags & JSREG_FOLD) == 0 ? REOP_ALTPREREQ : REOP_ALTPREREQi;
                 result.chr = result.kid.chr;
                 result.index = result.kid2.chr;
@@ -870,7 +874,6 @@ public class NativeRegExp extends IdScriptableObject {
             } else if (result.kid.op == REOP_CLASS
                     && result.kid.index < 256
                     && result.kid2.op == REOP_FLAT
-                    && result.kid2.lowSurrogate == 0
                     && (state.flags & JSREG_FOLD) == 0) {
                 result.op = REOP_ALTPREREQ2;
                 result.chr = result.kid2.chr;
@@ -881,7 +884,6 @@ public class NativeRegExp extends IdScriptableObject {
             } else if (result.kid.op == REOP_FLAT
                     && result.kid2.op == REOP_CLASS
                     && result.kid2.index < 256
-                    && result.kid.lowSurrogate == 0
                     && (state.flags & JSREG_FOLD) == 0) {
                 result.op = REOP_ALTPREREQ2;
                 result.chr = result.kid.chr;
@@ -1043,7 +1045,7 @@ public class NativeRegExp extends IdScriptableObject {
         state.progLength += 3;
     }
 
-    private static void doFlatNonLatin(CompilerState state, char high, char low) {
+    private static void doFlatSurrogatePair(CompilerState state, char high, char low) {
         state.result = new RENode(REOP_FLAT);
         state.result.chr = high;
         state.result.lowSurrogate = low;
@@ -1345,11 +1347,9 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (n < 0) {
             return false;
-        } else if (n <= 0xFF) doFlat(state, (char) n);
-        else if (n <= 0xFFFF) doFlatNonLatin(state, (char) n, (char) 0);
+        } else if (n <= 0xFFFF) doFlat(state, (char) n);
         else {
-            // surrogate pair
-            doFlatNonLatin(state, Character.highSurrogate(n), Character.lowSurrogate(n));
+            doFlatSurrogatePair(state, Character.highSurrogate(n), Character.lowSurrogate(n));
         }
         return true;
     }
@@ -1905,15 +1905,25 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError("msg.bad.quant", String.valueOf(src[state.cp - 1]));
                 return false;
             default:
-                if (params.unicodeMode && (c == ']' || c == '{' || c == '}'))
-                    reportError("msg.lone.quantifier.bracket", "");
+                {
+                    if (params.unicodeMode && (c == ']' || c == '{' || c == '}'))
+                        reportError("msg.lone.quantifier.bracket", "");
 
-                state.result = new RENode(REOP_FLAT);
-                state.result.chr = c;
-                state.result.length = 1;
-                state.result.flatIndex = state.cp - 1;
-                state.progLength += 3;
-                break;
+                    if (params.unicodeMode
+                            && Character.isHighSurrogate(c)
+                            && state.cp < state.cpend
+                            && Character.isLowSurrogate(src[state.cp])) {
+                        char low = src[state.cp++];
+                        doFlatSurrogatePair(state, c, low);
+                    } else {
+                        state.result = new RENode(REOP_FLAT);
+                        state.result.chr = c;
+                        state.result.length = 1;
+                        state.result.flatIndex = state.cp - 1;
+                        state.progLength += 3;
+                    }
+                    break;
+                }
         }
 
         term = state.result;
@@ -2093,9 +2103,12 @@ public class NativeRegExp extends IdScriptableObject {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_FLAT1i;
                             else program[pc - 1] = REOP_FLAT1;
                             program[pc++] = (byte) t.chr;
-                        } else {
+                        } else if (t.lowSurrogate == 0) {
                             if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_UCFLAT1i;
                             else program[pc - 1] = REOP_UCFLAT1;
+                            pc = addIndex(program, pc, t.chr);
+                        } else {
+                            program[pc - 1] = REOP_UCSPFLAT1;
                             pc = addIndex(program, pc, t.chr);
                             pc = addIndex(program, pc, t.lowSurrogate);
                         }
@@ -2687,6 +2700,7 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_FLAT1:
+                matchCodePoint = (program[pc++] & 0xFF);
                 if (cpInBounds) {
                     int inputCodePoint;
 
@@ -2695,8 +2709,6 @@ public class NativeRegExp extends IdScriptableObject {
                     } else {
                         inputCodePoint = input.charAt(cpToMatch);
                     }
-
-                    matchCodePoint = (program[pc++] & 0xFF);
                     if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
@@ -2728,6 +2740,9 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_UCFLAT1:
+                matchCodePoint = getIndex(program, pc);
+                pc += INDEX_LEN;
+
                 if (cpInBounds) {
                     int inputCodePoint;
 
@@ -2736,14 +2751,6 @@ public class NativeRegExp extends IdScriptableObject {
                     } else {
                         inputCodePoint = input.charAt(cpToMatch);
                     }
-
-                    char ch = (char) getIndex(program, pc);
-                    char lowSurrogate = (char) getIndex(program, pc + INDEX_LEN);
-
-                    if (lowSurrogate == 0) matchCodePoint = ch;
-                    else matchCodePoint = Character.toCodePoint(ch, lowSurrogate);
-
-                    pc += 2 * INDEX_LEN;
                     if (inputCodePoint == matchCodePoint) {
                         result = true;
                         gData.cp += cpDelta;
@@ -2754,7 +2761,7 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     // Note: No support for unicode with REOP_UCFLAT1i
                     matchCodePoint = getIndex(program, pc);
-                    pc += 2 * INDEX_LEN;
+                    pc += INDEX_LEN;
                     if (cpInBounds) {
                         char c = input.charAt(cpToMatch);
                         if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
@@ -2799,6 +2806,22 @@ public class NativeRegExp extends IdScriptableObject {
                     }
                     break;
                 }
+            case REOP_UCSPFLAT1:
+                {
+                    char highSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    matchCodePoint = Character.toCodePoint(highSurrogate, lowSurrogate);
+                    if (cpInBounds) {
+                        int inputCodePoint = input.codePointAt(cpToMatch);
+                        if (matchCodePoint == inputCodePoint) {
+                            result = true;
+                            gData.cp += cpDelta;
+                        }
+                    }
+                }
+                break;
             default:
                 throw Kit.codeBug();
         }

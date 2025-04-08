@@ -1111,4 +1111,22 @@ public class NativeRegExpTest {
                 "\uD806\uDE45",
                 "'\\u{11A45}'.match(/\\p{sc=Zanabazar_Square}/u)[0]");
     }
+
+    @Test
+    public void testSimpleRegExpWithNonLatinLiterals() {
+        final String script =
+                "var result = '€'.match(/€/)"
+                        + " + '-' + '€'.match(/[€]/)"
+                        + " + '-' + '😀'.match(/😀/)"
+                        + " + '-' + '😀'.match(/[😀]/u)"
+                        // without the 'u' flag the surrogate pair is treated as two chars in the
+                        // character class
+                        + " + '-' + '😀'.match(/[😀]/)"
+                        + " + '-' + '😀'.match(/\\uD83D/)"
+                        + " + '-' + '😀'.match(/\\uDE00/)\n"
+                        // with the 'u' flag 😀is consumed as a single codepoint
+                        + " + '-' + '😀'.match(/\\uDE00/u)\n"
+                        + "result";
+        Utils.assertWithAllOptimizationLevelsES6("€-€-😀-😀-\uD83D-\uD83D-\uDE00-null", script);
+    }
 }
