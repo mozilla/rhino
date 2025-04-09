@@ -949,4 +949,9 @@ public class NativeRegExpTest {
                 "var regex = /\\x/;\n" + "var res = '' + regex.test('x');\n" + "res;";
         Utils.assertWithAllModes_ES6("true", script2);
     }
+
+    @Test
+    public void unterminatedCharacterClass() {
+        Utils.assertEcmaErrorES6("SyntaxError: Unterminated character class", "new RegExp('[')");
+    }
 }

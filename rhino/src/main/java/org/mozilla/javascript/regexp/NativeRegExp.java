@@ -1544,6 +1544,7 @@ public class NativeRegExp extends IdScriptableObject {
             case '[':
                 ClassContents classContents = parseClassContents(state, params);
                 if (classContents == null) {
+                    reportError("msg.unterm.class", "");
                     return false;
                 }
                 state.result = new RENode(REOP_CLASS);
