@@ -67,9 +67,7 @@ public class AbstractEcmaStringOperations {
                                 int digitCount = 1;
                                 if (templateRemainder.length() > 2) {
                                     char c2 = templateRemainder.charAt(2);
-                                    if (c2 == '0' || c2 == '1' || c2 == '2' || c2 == '3'
-                                            || c2 == '4' || c2 == '5' || c2 == '6' || c2 == '7'
-                                            || c2 == '8' || c2 == '9') {
+                                    if (isAsciiDigit(c2)) {
                                         digitCount = 2;
                                     }
                                 }
@@ -129,5 +127,24 @@ public class AbstractEcmaStringOperations {
             result.append(refReplacement);
         }
         return result.toString();
+    }
+
+    private static boolean isAsciiDigit(char c) {
+        switch (c) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                return true;
+
+            default:
+                return false;
+        }
     }
 }
