@@ -3613,14 +3613,7 @@ public class NativeRegExp extends IdScriptableObject {
             double positionDbl =
                     ScriptRuntime.toInteger(
                             ScriptRuntime.getObjectProp(result, "index", cx, scope));
-            int position;
-            if (positionDbl < 0) {
-                position = 0;
-            } else if (positionDbl > lengthS) {
-                position = lengthS;
-            } else {
-                position = (int) positionDbl;
-            }
+            int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
 
             List<Object> captures = new ArrayList<>();
             int n = 1;

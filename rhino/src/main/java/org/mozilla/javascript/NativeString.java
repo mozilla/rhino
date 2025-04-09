@@ -423,16 +423,8 @@ final class NativeString extends ScriptableObject {
         int separatorLength = r.length();
         if (separatorLength == 0) {
             int strLen = s.length();
-            long outLen;
-            if (lim < 0) {
-                outLen = 0;
-            } else if (lim > strLen) {
-                outLen = strLen;
-            } else {
-                outLen = lim;
-            }
-
-            String head = s.substring(0, (int) outLen);
+            int outLen = ScriptRuntime.clamp((int) lim, 0, strLen);
+            String head = s.substring(0, outLen);
 
             List<Object> codeUnits = new ArrayList<>();
             for (int i = 0; i < head.length(); ) {

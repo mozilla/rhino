@@ -5703,6 +5703,21 @@ public class ScriptRuntime {
         return null;
     }
 
+    /**
+     * Clamps value between min and max, inclusive.
+     *
+     * @return value if it is between min and max, otherwise min or max
+     */
+    public static int clamp(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
+    }
+
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
 
