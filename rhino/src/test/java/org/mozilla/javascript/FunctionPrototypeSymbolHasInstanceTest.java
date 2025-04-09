@@ -1,6 +1,5 @@
 package org.mozilla.javascript;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -58,7 +57,6 @@ public class FunctionPrototypeSymbolHasInstanceTest {
     }
 
     @Test
-    @Ignore("name-length-params-prototype-set-incorrectly")
     public void testFunctionPrototypeSymbolHasInstanceHasProperties() {
         String script =
                 "var a = Object.getOwnPropertyDescriptor(Function.prototype[Symbol.hasInstance], 'length');\n"
