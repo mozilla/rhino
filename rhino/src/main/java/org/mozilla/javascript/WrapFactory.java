@@ -11,6 +11,7 @@ package org.mozilla.javascript;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
@@ -44,13 +45,13 @@ public class WrapFactory {
      *     class, staticType will be used instead.
      * @return the wrapped value.
      */
-    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+    public Object wrap(Context cx, Scriptable scope, Object obj, TypeInfo staticType) {
         if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
             return obj;
         }
-        if (staticType != null && staticType.isPrimitive()) {
-            if (staticType == Void.TYPE) return Undefined.instance;
-            if (staticType == Character.TYPE) return Integer.valueOf(((Character) obj).charValue());
+        if (staticType.shouldConvert() && staticType.isPrimitive()) {
+            if (staticType.isVoid()) return Undefined.instance;
+            if (staticType.isCharacter()) return (int) (Character) obj;
             return obj;
         }
         if (!isJavaPrimitiveWrap()) {
@@ -70,9 +71,17 @@ public class WrapFactory {
         }
         Class<?> cls = obj.getClass();
         if (cls.isArray()) {
-            return NativeJavaArray.wrap(scope, obj);
+            return new NativeJavaArray(scope, obj);
         }
         return wrapAsJavaObject(cx, scope, obj, staticType);
+    }
+
+    /**
+     * @deprecated use {@link #wrap(Context, Scriptable, Object, TypeInfo)} instead
+     */
+    @Deprecated
+    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+        return wrap(cx, scope, obj, TypeInfo.of(staticType));
     }
 
     /**
@@ -91,7 +100,7 @@ public class WrapFactory {
         if (cls.isArray()) {
             return NativeJavaArray.wrap(scope, obj);
         }
-        return wrapAsJavaObject(cx, scope, obj, null);
+        return wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
     }
 
     /**
@@ -112,13 +121,22 @@ public class WrapFactory {
      * @return the wrapped value which shall not be null
      */
     public Scriptable wrapAsJavaObject(
-            Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
+            Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
         if (List.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaList(scope, javaObject);
+            return new NativeJavaList(scope, javaObject, staticType);
         } else if (Map.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaMap(scope, javaObject);
+            return new NativeJavaMap(scope, javaObject, staticType);
         }
         return new NativeJavaObject(scope, javaObject, staticType);
+    }
+
+    /**
+     * @deprecated use {@link #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)} instead
+     */
+    @Deprecated
+    public Scriptable wrapAsJavaObject(
+            Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
+        return wrapAsJavaObject(cx, scope, javaObject, TypeInfo.of(staticType));
     }
 
     /**
