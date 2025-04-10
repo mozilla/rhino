@@ -1422,7 +1422,7 @@ public class ScriptRuntime {
 
     /** Implements the abstract operation AdvanceStringIndex. See ECMAScript spec 22.2.7.3 */
     public static long advanceStringIndex(String string, long index, boolean unicode) {
-        if (index >= NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
+        if (index > NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
         if (!unicode) {
             return index + 1;
         }
@@ -3090,7 +3090,7 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    static Scriptable getApplyOrCallThis(
+    public static Scriptable getApplyOrCallThis(
             Context cx, Scriptable scope, Object arg0, int l, Callable target) {
         Scriptable callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
@@ -5701,6 +5701,21 @@ public class ScriptRuntime {
             return result;
         }
         return null;
+    }
+
+    /**
+     * Clamps value between min and max, inclusive.
+     *
+     * @return value if it is between min and max, otherwise min or max
+     */
+    public static int clamp(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
     }
 
     public static final Object[] emptyArgs = new Object[0];

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
+import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
@@ -19,6 +20,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -3065,9 +3067,11 @@ public class NativeRegExp extends IdScriptableObject {
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
 
-                // We do a new NativeObject() and not cx.newObject(scope)
-                // since we want the groups to have null as prototype
-                groups = new NativeObject();
+                if (!re.namedCaptureGroups.isEmpty()) {
+                    // We do a new NativeObject() and not cx.newObject(scope)
+                    // since we want the groups to have null as prototype
+                    groups = new NativeObject();
+                }
                 for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
                     String key = entry.getKey();
                     List<Integer> indices = entry.getValue();
@@ -3296,6 +3300,10 @@ public class NativeRegExp extends IdScriptableObject {
         if ((thisObj.getAttributes("lastIndex") & READONLY) != 0) {
             throw ScriptRuntime.typeErrorById("msg.modify.readonly", "lastIndex");
         }
+        setLastIndex((Scriptable) thisObj, value);
+    }
+
+    private void setLastIndex(Scriptable thisObj, Object value) {
         ScriptableObject.putProperty(thisObj, "lastIndex", value);
     }
 
@@ -3345,6 +3353,14 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (id == SymbolId_search) {
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
+            return;
+        }
+        if (id == SymbolId_replace) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.REPLACE, "[Symbol.replace]", 2);
+            return;
+        }
+        if (id == SymbolId_split) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SPLIT, "[Symbol.split]", 2);
             return;
         }
 
@@ -3427,9 +3443,13 @@ public class NativeRegExp extends IdScriptableObject {
                 return js_SymbolMatchAll(cx, scope, thisObj, args);
 
             case SymbolId_search:
-                Scriptable scriptable =
-                        (Scriptable) realThis(thisObj, f).execSub(cx, scope, args, MATCH);
-                return scriptable == null ? -1 : scriptable.get("index", scriptable);
+                return js_SymbolSearch(cx, scope, thisObj, args);
+
+            case SymbolId_replace:
+                return js_SymbolReplace(cx, scope, thisObj, args);
+
+            case SymbolId_split:
+                return js_SymbolSplit(cx, scope, thisObj, args);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -3470,12 +3490,37 @@ public class NativeRegExp extends IdScriptableObject {
             result.put(i++, result, matchStr);
 
             if (matchStr.isEmpty()) {
-                long thisIndex =
-                        ScriptRuntime.toLength(
-                                ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
+                long thisIndex = getLastIndex(cx, thisObj);
                 long nextIndex = ScriptRuntime.advanceStringIndex(string, thisIndex, fullUnicode);
                 setLastIndex(thisObj, nextIndex);
             }
+        }
+    }
+
+    private Object js_SymbolSearch(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // See ECMAScript spec 22.2.6.12
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+
+        String string = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        long previousLastIndex = getLastIndex(cx, thisObj);
+        if (previousLastIndex != 0) {
+            setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        }
+
+        Object result = regExpExec(thisObj, string, cx, scope);
+
+        long currentLastIndex = getLastIndex(cx, thisObj);
+        if (previousLastIndex != currentLastIndex) {
+            setLastIndex(thisObj, previousLastIndex);
+        }
+
+        if (result == null) {
+            return -1;
+        } else {
+            return ScriptRuntime.getObjectProp(result, "index", cx, scope);
         }
     }
 
@@ -3502,13 +3547,227 @@ public class NativeRegExp extends IdScriptableObject {
 
         Scriptable matcher = c.construct(cx, scope, new Object[] {thisObj, flags});
 
-        long lastIndex =
-                ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
-        ScriptRuntime.setObjectProp(matcher, "lastIndex", lastIndex, cx);
+        long lastIndex = getLastIndex(cx, thisObj);
+        setLastIndex(matcher, lastIndex);
         boolean global = flags.indexOf('g') != -1;
         boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
 
         return new NativeRegExpStringIterator(scope, matcher, s, global, fullUnicode);
+    }
+
+    private Object js_SymbolReplace(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // See ECMAScript spec 22.2.6.11
+        if (!ScriptRuntime.isObject(thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
+        }
+
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        int lengthS = s.length();
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+        boolean global = flags.indexOf('g') != -1;
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+        if (global) {
+            setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        }
+
+        List<Object> results = new ArrayList<>();
+        boolean done = false;
+        while (!done) {
+            Object result = regExpExec(thisObj, s, cx, scope);
+            if (result == null) {
+                done = true;
+            } else {
+                results.add(result);
+                if (!global) {
+                    done = true;
+                } else {
+                    String matchStr =
+                            ScriptRuntime.toString(
+                                    ScriptRuntime.getObjectIndex(result, 0, cx, scope));
+                    if (matchStr.isEmpty()) {
+                        long thisIndex = getLastIndex(cx, thisObj);
+                        long nextIndex =
+                                ScriptRuntime.advanceStringIndex(s, thisIndex, fullUnicode);
+                        setLastIndex(thisObj, nextIndex);
+                    }
+                }
+            }
+        }
+
+        StringBuilder accumulatedResult = new StringBuilder();
+        int nextSourcePosition = 0;
+        for (Object result : results) {
+            long resultLength =
+                    ScriptRuntime.toLength(
+                            ScriptRuntime.getObjectProp(result, "length", cx, scope));
+            long nCaptures = Math.max(resultLength - 1, 0);
+            String matched =
+                    ScriptRuntime.toString(ScriptRuntime.getObjectIndex(result, 0, cx, scope));
+            int matchLength = matched.length();
+            double positionDbl =
+                    ScriptRuntime.toInteger(
+                            ScriptRuntime.getObjectProp(result, "index", cx, scope));
+            int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
+
+            List<Object> captures = new ArrayList<>();
+            int n = 1;
+            while (n <= nCaptures) {
+                Object capN = ScriptRuntime.getObjectElem(result, n, cx, scope);
+                if (!Undefined.isUndefined(capN)) {
+                    capN = ScriptRuntime.toString(capN);
+                }
+                captures.add(capN);
+                ++n;
+            }
+
+            Object namedCaptures = ScriptRuntime.getObjectProp(result, "groups", cx, scope);
+            String replacementString;
+
+            if (functionalReplace) {
+                List<Object> replacerArgs = new ArrayList<>();
+                replacerArgs.add(matched);
+                replacerArgs.addAll(captures);
+                replacerArgs.add(position);
+                replacerArgs.add(s);
+                if (!Undefined.isUndefined(namedCaptures)) {
+                    replacerArgs.add(namedCaptures);
+                }
+
+                Scriptable callThis =
+                        ScriptRuntime.getApplyOrCallThis(
+                                cx, scope, null, 0, (Callable) replaceValue);
+                Object replacementValue =
+                        ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs.toArray());
+                replacementString = ScriptRuntime.toString(replacementValue);
+            } else {
+                if (!Undefined.isUndefined(namedCaptures)) {
+                    namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
+                }
+
+                NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
+                replacementString =
+                        AbstractEcmaStringOperations.getSubstitution(
+                                cx,
+                                scope,
+                                matched,
+                                s,
+                                position,
+                                capturesArray,
+                                namedCaptures,
+                                (String) replaceValue);
+            }
+
+            if (position >= nextSourcePosition) {
+                accumulatedResult.append(s.substring(nextSourcePosition, position));
+                accumulatedResult.append(replacementString);
+                nextSourcePosition = position + matchLength;
+            }
+        }
+
+        if (nextSourcePosition >= lengthS) {
+            return accumulatedResult.toString();
+        } else {
+            accumulatedResult.append(s.substring(nextSourcePosition));
+            return accumulatedResult.toString();
+        }
+    }
+
+    private Object js_SymbolSplit(Context cx, Scriptable scope, Scriptable rx, Object[] args) {
+        // See ECMAScript spec 22.2.6.14
+        if (!ScriptRuntime.isObject(rx)) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(rx));
+        }
+
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+
+        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        Function defaultConstructor =
+                ScriptRuntime.getExistingCtor(cx, topLevelScope, getClassName());
+        Constructable c =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, rx, defaultConstructor);
+
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(rx, "flags", cx));
+        boolean unicodeMatching = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+        String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
+
+        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
+
+        NativeArray a = (NativeArray) cx.newArray(scope, 0);
+        int lengthA = 0;
+
+        Object limit = args.length > 1 ? args[1] : Undefined.instance;
+        long lim;
+        if (Undefined.isUndefined(limit)) {
+            lim = Integer.MAX_VALUE;
+        } else {
+            lim = ScriptRuntime.toUint32(limit);
+        }
+        if (lim == 0) {
+            return a;
+        }
+
+        if (s.isEmpty()) {
+            Object z = regExpExec(splitter, s, cx, scope);
+            if (z != null) {
+                return a;
+            }
+            a.put(0, a, s);
+            return a;
+        }
+
+        int size = s.length();
+        long p = 0;
+        long q = p;
+        while (q < size) {
+            setLastIndex(splitter, q);
+            Object z = regExpExec(splitter, s, cx, scope);
+            if (z == null) {
+                q = ScriptRuntime.advanceStringIndex(s, q, unicodeMatching);
+            } else {
+                long e = getLastIndex(cx, splitter);
+                e = Math.min(e, size);
+                if (e == p) {
+                    q = ScriptRuntime.advanceStringIndex(s, q, unicodeMatching);
+                } else {
+                    String t = s.substring((int) p, (int) q);
+                    a.put((int) a.getLength(), a, t);
+                    lengthA++;
+                    if (a.getLength() == lim) {
+                        return a;
+                    }
+
+                    p = e;
+                    long numberOfCaptures =
+                            ScriptRuntime.toLength(
+                                    ScriptRuntime.getObjectProp(z, "length", cx, scope));
+                    numberOfCaptures = Math.max(numberOfCaptures - 1, 0);
+                    int i = 1;
+                    while (i <= numberOfCaptures) {
+                        Object nextCapture = ScriptRuntime.getObjectIndex(z, i, cx, scope);
+                        a.put((int) a.getLength(), a, nextCapture);
+                        i = i + 1;
+                        lengthA++;
+                        if (lengthA == lim) {
+                            return a;
+                        }
+                    }
+                    q = p;
+                }
+            }
+        }
+        String t = s.substring((int) p, size);
+        a.put((int) a.getLength(), a, t);
+        return a;
+    }
+
+    private static long getLastIndex(Context cx, Scriptable thisObj) {
+        return ScriptRuntime.toLength(ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx));
     }
 
     private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
@@ -3529,6 +3788,12 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (SymbolKey.SEARCH.equals(k)) {
             return SymbolId_search;
+        }
+        if (SymbolKey.REPLACE.equals(k)) {
+            return SymbolId_replace;
+        }
+        if (SymbolKey.SPLIT.equals(k)) {
+            return SymbolId_split;
         }
         return 0;
     }
@@ -3571,7 +3836,9 @@ public class NativeRegExp extends IdScriptableObject {
             SymbolId_match = 7,
             SymbolId_matchAll = 8,
             SymbolId_search = 9,
-            MAX_PROTOTYPE_ID = SymbolId_search;
+            SymbolId_replace = 10,
+            SymbolId_split = 11,
+            MAX_PROTOTYPE_ID = SymbolId_split;
 
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */

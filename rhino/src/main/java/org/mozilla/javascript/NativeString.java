@@ -11,7 +11,9 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -372,9 +374,87 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_split(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        String thisStr =
-                ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "split"));
-        return ScriptRuntime.checkRegExpProxy(cx).js_split(cx, scope, thisStr, args);
+        // See ECMAScript spec 22.1.3.23
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "split");
+
+        if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
+            // Use old algorithm for backward compatibility
+            return ScriptRuntime.checkRegExpProxy(cx)
+                    .js_split(cx, scope, ScriptRuntime.toString(o), args);
+        }
+
+        Object separator = args.length > 0 ? args[0] : Undefined.instance;
+        Object limit = args.length > 1 ? args[1] : Undefined.instance;
+        if (!Undefined.isUndefined(separator) && separator != null) {
+            Object splitter = ScriptRuntime.getObjectElem(separator, SymbolKey.SPLIT, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (splitter != null && !Undefined.isUndefined(splitter)) {
+                if (!(splitter instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            separator, splitter, SymbolKey.SPLIT.getName());
+                }
+                return ((Callable) splitter)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, separator),
+                                new Object[] {
+                                    o instanceof NativeString ? ((NativeString) o).string : o,
+                                    limit,
+                                });
+            }
+        }
+
+        String s = ScriptRuntime.toString(o);
+        long lim;
+        if (Undefined.isUndefined(limit)) {
+            lim = Integer.MAX_VALUE;
+        } else {
+            lim = ScriptRuntime.toUint32(limit);
+        }
+        String r = ScriptRuntime.toString(separator);
+        if (lim == 0) {
+            return cx.newArray(scope, 0);
+        }
+        if (Undefined.isUndefined(separator)) {
+            return cx.newArray(scope, new Object[] {s});
+        }
+
+        int separatorLength = r.length();
+        if (separatorLength == 0) {
+            int strLen = s.length();
+            int outLen = ScriptRuntime.clamp((int) lim, 0, strLen);
+            String head = s.substring(0, outLen);
+
+            List<Object> codeUnits = new ArrayList<>();
+            for (int i = 0; i < head.length(); ) {
+                char c = head.charAt(i);
+                codeUnits.add(Character.toString(c));
+                i += Character.charCount(c);
+            }
+            return cx.newArray(scope, codeUnits.toArray());
+        }
+
+        if (s.isEmpty()) {
+            return cx.newArray(scope, new Object[] {s});
+        }
+
+        List<String> substrings = new ArrayList<>();
+        int i = 0;
+        int j = s.indexOf(r);
+        while (j != -1) {
+            String t = s.substring(i, j);
+            substrings.add(t);
+            if (substrings.size() >= lim) {
+                return cx.newArray(scope, substrings.toArray());
+            }
+            i = j + separatorLength;
+            j = s.indexOf(r, i);
+        }
+        String t = s.substring(i);
+        substrings.add(t);
+
+        return cx.newArray(scope, substrings.toArray());
     }
 
     private static NativeString realThis(Scriptable thisObj) {
@@ -773,23 +853,220 @@ final class NativeString extends ScriptableObject {
 
     private static Object js_search(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_SEARCH);
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
+        Object regexp = args.length > 0 ? args[0] : Undefined.instance;
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
+        if (regexp != null && !Undefined.isUndefined(regexp)) {
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.SEARCH, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                if (!(matcher instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            regexp, matcher, SymbolKey.SEARCH.getName());
+                }
+                return ((Callable) matcher)
+                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+            }
+        }
+
+        String s = ScriptRuntime.toString(o);
+        String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+
+        String flags = null;
+        // Not standard; Done for backward compatibility
+        if (cx.getLanguageVersion() < Context.VERSION_1_6 && args.length > 1) {
+            flags = ScriptRuntime.toString(args[1]);
+        }
+
+        Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, flags);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.SEARCH, cx, scope);
+        if (!(method instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.SEARCH.getName());
+        }
+        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
     }
 
     private static Object js_replace(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE);
+        // See ECMAScript spec 22.1.3.19
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
+
+        if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
+            // Use old algorithm for backward compatibility
+            return ScriptRuntime.checkRegExpProxy(cx)
+                    .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE);
+        }
+
+        // Spec-compliant algorithm
+
+        Object searchValue = args.length > 0 ? args[0] : Undefined.instance;
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+
+        if (!Undefined.isUndefined(searchValue) && searchValue != null) {
+            Object replacer =
+                    ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (replacer != null && !Undefined.isUndefined(replacer)) {
+                if (!(replacer instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            searchValue, replacer, SymbolKey.REPLACE.getName());
+                }
+                return ((Callable) replacer)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, searchValue),
+                                new Object[] {
+                                    o instanceof NativeString ? ((NativeString) o).string : o,
+                                    replaceValue
+                                });
+            }
+        }
+
+        String string = ScriptRuntime.toString(o);
+        String searchString = ScriptRuntime.toString(searchValue);
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        int searchLength = searchString.length();
+        int position = string.indexOf(searchString);
+        if (position == -1) {
+            return string;
+        }
+        String preceding = string.substring(0, position);
+        String following = string.substring(position + searchLength);
+
+        String replacement;
+        if (functionalReplace) {
+            Scriptable callThis =
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+
+            Object replacementObj =
+                    ((Callable) replaceValue)
+                            .call(
+                                    cx,
+                                    scope,
+                                    callThis,
+                                    new Object[] {
+                                        searchString, position, string,
+                                    });
+            replacement = ScriptRuntime.toString(replacementObj);
+        } else {
+            NativeArray captures = (NativeArray) cx.newArray(scope, 0);
+            replacement =
+                    AbstractEcmaStringOperations.getSubstitution(
+                            cx,
+                            scope,
+                            searchString,
+                            string,
+                            position,
+                            captures,
+                            Undefined.SCRIPTABLE_UNDEFINED,
+                            (String) replaceValue);
+        }
+        return preceding + replacement + following;
     }
 
     private static Object js_replaceAll(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
-        return ScriptRuntime.checkRegExpProxy(cx)
-                .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE_ALL);
+        // See ECMAScript spec 22.1.3.20
+        Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
+
+        Object searchValue = args.length > 0 ? args[0] : Undefined.instance;
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+
+        if (searchValue != null && !Undefined.isUndefined(searchValue)) {
+            boolean isRegExp =
+                    searchValue instanceof Scriptable
+                            && AbstractEcmaObjectOperations.isRegExp(cx, scope, searchValue);
+            if (isRegExp) {
+                Object flags = ScriptRuntime.getObjectProp(searchValue, "flags", cx, scope);
+                requireObjectCoercible(cx, flags, CLASS_NAME, "replaceAll");
+                String flagsStr = ScriptRuntime.toString(flags);
+                if (!flagsStr.contains("g")) {
+                    throw ScriptRuntime.typeErrorById("msg.str.replace.all.no.global.flag");
+                }
+            }
+
+            Object matcher = ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            // If method is not undefined, it should be a Callable
+            if (matcher != null && !Undefined.isUndefined(matcher)) {
+                if (!(matcher instanceof Callable)) {
+                    throw ScriptRuntime.notFunctionError(
+                            searchValue, matcher, SymbolKey.REPLACE.getName());
+                }
+                return ((Callable) matcher)
+                        .call(
+                                cx,
+                                scope,
+                                ScriptRuntime.toObject(scope, searchValue),
+                                new Object[] {o, replaceValue});
+            }
+        }
+
+        String string = ScriptRuntime.toString(o);
+        String searchString = ScriptRuntime.toString(searchValue);
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        int searchLength = searchString.length();
+        int advanceBy = Math.max(1, searchLength);
+
+        List<Integer> matchPositions = new ArrayList<>();
+        int position = string.indexOf(searchString);
+        while (position != -1) {
+            matchPositions.add(position);
+            int newPosition = string.indexOf(searchString, position + advanceBy);
+            if (newPosition == position) {
+                break;
+            }
+            position = newPosition;
+        }
+        int endOfLastMatch = 0;
+        StringBuilder result = new StringBuilder();
+        for (Integer p : matchPositions) {
+            String preserved = string.substring(endOfLastMatch, p);
+            String replacement;
+            if (functionalReplace) {
+                Scriptable callThis =
+                        ScriptRuntime.getApplyOrCallThis(
+                                cx, scope, null, 0, (Callable) replaceValue);
+
+                Object replacementObj =
+                        ((Callable) replaceValue)
+                                .call(
+                                        cx,
+                                        scope,
+                                        callThis,
+                                        new Object[] {
+                                            searchString, p, string,
+                                        });
+                replacement = ScriptRuntime.toString(replacementObj);
+            } else {
+                NativeArray captures = (NativeArray) cx.newArray(scope, 0);
+                replacement =
+                        AbstractEcmaStringOperations.getSubstitution(
+                                cx,
+                                scope,
+                                searchString,
+                                string,
+                                p,
+                                captures,
+                                Undefined.SCRIPTABLE_UNDEFINED,
+                                (String) replaceValue);
+            }
+            result.append(preserved);
+            result.append(replacement);
+            endOfLastMatch = p + searchLength;
+        }
+        if (endOfLastMatch < string.length()) {
+            result.append(string.substring(endOfLastMatch));
+        }
+        return result.toString();
     }
 
     private static Object js_matchAll(
@@ -797,10 +1074,8 @@ final class NativeString extends ScriptableObject {
         // See ECMAScript spec 22.1.3.14
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "matchAll");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
-        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         if (regexp != null && !Undefined.isUndefined(regexp)) {
-            boolean isRegExp =
-                    regexp instanceof Scriptable && regExpProxy.isRegExp((Scriptable) regexp);
+            boolean isRegExp = AbstractEcmaObjectOperations.isRegExp(cx, scope, regexp);
             if (isRegExp) {
                 Object flags = ScriptRuntime.getObjectProp(regexp, "flags", cx, scope);
                 requireObjectCoercible(cx, flags, CLASS_NAME, "matchAll");
@@ -824,6 +1099,7 @@ final class NativeString extends ScriptableObject {
 
         String s = ScriptRuntime.toString(o);
         String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, "g");
         Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
 
