@@ -212,16 +212,6 @@ public class Bootstrapper {
                             .named(getNameSegment(tokens, name, 2));
             }
 
-        } else if ("METHOD".equals(namespaceName)) {
-            switch (opName) {
-                case "CALL":
-                    return StandardOperation.CALL.withNamespace(StandardNamespace.METHOD);
-                case "CALL_0":
-                    return RhinoOperation.CALL_0.withNamespace(StandardNamespace.METHOD);
-                case "CALL_0_OPT":
-                    return RhinoOperation.CALL_0_OPTIONAL.withNamespace(StandardNamespace.METHOD);
-            }
-
         } else if ("MATH".equals(namespaceName)) {
             switch (opName) {
                 case "ADD":

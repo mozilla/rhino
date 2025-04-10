@@ -225,26 +225,6 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
-     * METHOD:CALL_0, METHOD:CALL_0_OPT: Call the method with no arguments. Falls back to
-     * OptRuntime.call0.
-     */
-    String METHOD_CALL_0 =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Ljava/lang/Object;";
-
-    /** METHOD:CALL: Call the method with an array of arguments. Falls back to OptRuntime.callN. */
-    String METHOD_CALL =
-            "(Lorg/mozilla/javascript/Callable;"
-                    + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
-                    + "[Ljava/lang/Object;"
-                    + ")Ljava/lang/Object;";
-
-    /**
      * MATH:ADD: Add the first two arguments on the stack, which could be numbers, strings, or
      * really just about anything.
      */

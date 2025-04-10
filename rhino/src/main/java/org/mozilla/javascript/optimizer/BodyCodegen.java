@@ -2524,12 +2524,13 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
-            if (firstArgChild == null) {
-                addDynamicInvoke("METHOD:CALL_0", Signatures.METHOD_CALL_0);
-            } else {
-                generateCallArgArray(node, firstArgChild, false);
-                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
-            }
+            generateCallArgArray(node, firstArgChild, false);
+            cfw.addInvoke(
+                    ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/Scriptable;[Ljava/lang/Object;)Ljava/lang/Object;");
 
         } else if (isOptionalChainingCall) {
             generateFunctionAndThisObj(child, node);
@@ -2556,13 +2557,13 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             pushThisFromLastScriptable();
-
-            if (firstArgChild == null) {
-                addDynamicInvoke("METHOD:CALL_0_OPT", Signatures.METHOD_CALL_0);
-            } else {
-                generateCallArgArray(node, firstArgChild, false);
-                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
-            }
+            generateCallArgArray(node, firstArgChild, false);
+            cfw.addInvoke(
+                    ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/Scriptable;[Ljava/lang/Object;)Ljava/lang/Object;");
 
         } else if (childType == Token.NAME && firstArgChild == null) {
             // Streamline, or at least reduce bytecode size a bit, but only
@@ -2586,12 +2587,13 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             pushThisFromLastScriptable();
-            if (firstArgChild == null) {
-                addDynamicInvoke("METHOD:CALL_0", Signatures.METHOD_CALL_0);
-            } else {
-                generateCallArgArray(node, firstArgChild, false);
-                addDynamicInvoke("METHOD:CALL", Signatures.METHOD_CALL);
-            }
+            generateCallArgArray(node, firstArgChild, false);
+            cfw.addInvoke(
+                    ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/Scriptable;[Ljava/lang/Object;)Ljava/lang/Object;");
         }
 
         if (afterLabel != null) {
@@ -2754,6 +2756,16 @@ class BodyCodegen {
 
     private void generateCallArgArray(Node node, Node argChild, boolean directCall) {
         int argCount = countArguments(argChild);
+        if (argCount == 0) {
+            // Avoid creation of lots of empty arrays
+            cfw.add(
+                    ByteCode.GETSTATIC,
+                    "org/mozilla/javascript/ScriptRuntime",
+                    "emptyArgs",
+                    "[Ljava/lang/Object;");
+            return;
+        }
+
         // load array object to set arguments
         if (argCount == 1 && itsOneArgArray >= 0) {
             cfw.addALoad(itsOneArgArray);
