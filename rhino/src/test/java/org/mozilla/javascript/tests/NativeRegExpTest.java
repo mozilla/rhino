@@ -940,14 +940,17 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6("true-true-true-false", script);
     }
 
+    // The spec says that \\u and \\x should be followed by exactly 4 and 2 hex digits respectively
+    // for them to be valid unicode escapes. Rhino allows them to be followed by less than 4 or 2
     @Test
     public void unicodeEscapeFallback() {
-        final String script = "var regex = /\\u/;\n" + "var res = '' + regex.test('u');\n" + "res;";
-        Utils.assertWithAllModes_ES6("true", script);
-
-        final String script2 =
-                "var regex = /\\x/;\n" + "var res = '' + regex.test('x');\n" + "res;";
-        Utils.assertWithAllModes_ES6("true", script2);
+        final String script =
+                "var res = '' + /\\u/.test('u') + '-';\n"
+                        + "res += '' + /\\x/.test('x') + '-';\n"
+                        + "res += '' + /\\x1/.test('\\x01') + '-';\n"
+                        + "res += '' + /\\u61/.test('a');\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true-true-true-true", script);
     }
 
     @Test
