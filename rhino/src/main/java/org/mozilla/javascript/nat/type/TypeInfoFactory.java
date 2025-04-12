@@ -30,12 +30,28 @@ import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
 public interface TypeInfoFactory {
 
     /**
-     * non-global factory is attached to {@link ClassCache}, which is attached to scope (see {@link
-     * ClassCache#get(Scriptable)}), so cached {@link TypeInfo} will be cleared when the scope
-     * itself is reclaimed, thus not requiring weak-reference
+     * TypeInfoFactory used by scope independent actions.
+     *
+     * <p>This factory does cache {@link TypeInfo}. TypeInfo created from simple types like {@link
+     * Class} will be kept in a cache, so that when the same type is passed to this factory, no new
+     * TypeInfo is created.
+     *
+     * <p>This factory is weakly referencing cached types. It holds a {@link
+     * java.lang.ref.WeakReference} to the type for each cached type, and will not prevent cached
+     * types from being unloaded
+     *
+     * <p>For actions with scope available, the TypeInfoFactory can be obtained via {@link
+     * ClassCache#getTypeFactory()}. The {@link ClassCache} itself is attached to provided scope
+     * (see {@link ClassCache#get(Scriptable)})
      */
     TypeInfoFactory GLOBAL = new WeakReferenceFactory();
 
+    /**
+     * TypeInfoFactory used by very few actions with the intention of not caching any used types
+     *
+     * <p>This factory does not cache {@link TypeInfo}. If the same type is passed to this factory
+     * multiple times, the return result may or may not be the exact same object
+     */
     TypeInfoFactory NO_CACHE = new NoCacheFactory();
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];

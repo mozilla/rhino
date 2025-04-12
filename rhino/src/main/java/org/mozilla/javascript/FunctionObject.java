@@ -82,8 +82,10 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
-        // do not use `ClassCache.get(scope).getTypeFactory()` as typeInfoFactory here, scope here
-        // is NOT created via org.mozilla.javascript.ScriptRuntime.initSafeStandardObjects(...)
+        // do not use `ClassCache.get(scope).getTypeFactory()` as typeInfoFactory here, the `scope`
+        // param is NOT created via
+        // org.mozilla.javascript.ScriptRuntime.initSafeStandardObjects(...), thus having no
+        // ClassCache attached
         var typeInfoFactory = TypeInfoFactory.GLOBAL;
 
         if (methodOrConstructor instanceof Constructor) {

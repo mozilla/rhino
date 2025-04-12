@@ -111,9 +111,12 @@ public interface TypeInfo {
      *     parameter, true otherwise
      */
     default boolean isNot(Class<?> c) {
-        return asClass() != c;
+        return !is(c);
     }
 
+    /**
+     * @see Class#isPrimitive()
+     */
     default boolean isPrimitive() {
         return false;
     }
@@ -156,6 +159,9 @@ public interface TypeInfo {
         return false;
     }
 
+    /**
+     * @see Class#isEnum()
+     */
     default boolean isEnum() {
         return false;
     }
