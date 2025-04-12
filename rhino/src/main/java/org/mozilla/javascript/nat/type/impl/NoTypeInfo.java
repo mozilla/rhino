@@ -7,10 +7,8 @@ import org.mozilla.javascript.nat.type.TypeInfo;
 /**
  * @see TypeInfo#NONE
  */
-public final class NoTypeInfo implements TypeInfo {
-    public static final NoTypeInfo INSTANCE = new NoTypeInfo();
-
-    private NoTypeInfo() {}
+public enum NoTypeInfo implements TypeInfo {
+    INSTANCE;
 
     @Override
     public Class<?> asClass() {
@@ -20,11 +18,6 @@ public final class NoTypeInfo implements TypeInfo {
     @Override
     public boolean shouldConvert() {
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
     }
 
     @Override
