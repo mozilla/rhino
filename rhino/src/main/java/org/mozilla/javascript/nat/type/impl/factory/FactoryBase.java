@@ -8,6 +8,7 @@ import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
 import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
+import org.mozilla.javascript.nat.type.impl.ParameterizedTypeInfoImpl;
 
 /**
  * @author ZZZank
@@ -47,10 +48,9 @@ public interface FactoryBase extends TypeInfoFactory {
 
     @Override
     default TypeInfo attachParam(TypeInfo base, List<TypeInfo> params) {
-        var rawType =
-                base instanceof ParameterizedTypeInfo
-                        ? ((ParameterizedTypeInfo) base).rawType()
-                        : base;
-        return new org.mozilla.javascript.nat.type.impl.ParameterizedTypeInfo(rawType, params);
+        if (base instanceof ParameterizedTypeInfo) {
+            base = ((ParameterizedTypeInfo) base).rawType();
+        }
+        return new ParameterizedTypeInfoImpl(base, params);
     }
 }

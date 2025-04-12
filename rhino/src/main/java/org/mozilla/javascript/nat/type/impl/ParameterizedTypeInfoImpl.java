@@ -2,16 +2,16 @@ package org.mozilla.javascript.nat.type.impl;
 
 import java.util.List;
 import java.util.function.Consumer;
+import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.nat.type.TypeFormatContext;
 import org.mozilla.javascript.nat.type.TypeInfo;
 
-public final class ParameterizedTypeInfo extends TypeInfoBase
-        implements org.mozilla.javascript.nat.type.ParameterizedTypeInfo {
+public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements ParameterizedTypeInfo {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;
 
-    public ParameterizedTypeInfo(TypeInfo rawType, List<TypeInfo> params) {
+    public ParameterizedTypeInfoImpl(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
         this.params = params;
     }
@@ -47,9 +47,9 @@ public final class ParameterizedTypeInfo extends TypeInfoBase
     @Override
     public boolean equals(Object object) {
         return (this == object)
-                || ((object instanceof ParameterizedTypeInfo)
-                        && rawType.equals(((ParameterizedTypeInfo) object).rawType)
-                        && params.equals(((ParameterizedTypeInfo) object).params));
+                || ((object instanceof ParameterizedTypeInfoImpl)
+                        && rawType.equals(((ParameterizedTypeInfoImpl) object).rawType)
+                        && params.equals(((ParameterizedTypeInfoImpl) object).params));
     }
 
     @Override
