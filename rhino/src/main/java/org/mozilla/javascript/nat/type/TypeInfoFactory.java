@@ -21,6 +21,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.nat.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
 
 /**
@@ -34,6 +35,8 @@ public interface TypeInfoFactory {
      * itself is reclaimed, thus not requiring weak-reference
      */
     TypeInfoFactory GLOBAL = new WeakReferenceFactory();
+
+    TypeInfoFactory NO_CACHE = new NoCacheFactory();
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 

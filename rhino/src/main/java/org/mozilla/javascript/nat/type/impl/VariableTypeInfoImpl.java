@@ -51,7 +51,7 @@ public class VariableTypeInfoImpl extends TypeInfoBase implements VariableTypeIn
 
     @Override
     public void collectComponentClass(Consumer<Class<?>> collector) {
-        for (var bound : this.bounds(TypeInfoFactory.GLOBAL)) {
+        for (var bound : this.bounds(TypeInfoFactory.NO_CACHE)) {
             bound.collectComponentClass(collector);
         }
     }
