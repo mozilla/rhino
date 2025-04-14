@@ -16,11 +16,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
@@ -41,14 +43,11 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * @author Norris Boyd
  * @author Attila Szegedi
  */
-@RunWith(Parameterized.class)
+@Execution(ExecutionMode.CONCURRENT)
 public class MozillaSuiteTest {
-    private final File jsFile;
-    private final boolean interpretedMode;
 
-    public MozillaSuiteTest(File jsFile, boolean interpretedMode) {
-        this.jsFile = jsFile;
-        this.interpretedMode = interpretedMode;
+    @BeforeAll
+    static void beforeAll() {
         ShellTest.cacheFramework();
     }
 
@@ -110,7 +109,6 @@ public class MozillaSuiteTest {
         return new String(buf);
     }
 
-    @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         for (boolean im : new boolean[] {false, true}) {
@@ -160,12 +158,12 @@ public class MozillaSuiteTest {
             // to locate the test in a Parameterized JUnit test
             String msg = "In \"" + file + "\":" + System.getProperty("line.separator") + s;
             System.out.println(msg);
-            Assert.fail(msg);
+            Assertions.fail(msg);
         }
 
         @Override
         public final void exitCodesWere(int expected, int actual) {
-            Assert.assertEquals("Unexpected exit code", expected, actual);
+            Assertions.assertEquals(expected, actual, "Unexpected exit code");
         }
 
         @Override
@@ -176,7 +174,7 @@ public class MozillaSuiteTest {
 
         @Override
         public final void threw(Throwable t) {
-            Assert.fail(ShellTest.getStackTrace(t));
+            Assertions.fail(ShellTest.getStackTrace(t));
         }
 
         @Override
@@ -185,8 +183,9 @@ public class MozillaSuiteTest {
         }
     }
 
-    @Test
-    public void runMozillaTest() throws Exception {
+    @ParameterizedTest(name = "{index}, js={0}, opt={1}")
+    @MethodSource("mozillaSuiteValues")
+    public void runMozillaTest(File jsFile, boolean interpretedMode) throws Exception {
         // System.out.println("Test \"" + jsFile + "\" running under optimization level " +
         // optimizationLevel);
         final ShellContextFactory shellContextFactory = new ShellContextFactory();
@@ -223,7 +222,7 @@ public class MozillaSuiteTest {
                     int absolutePathLength = testDir.getAbsolutePath().length() + 1;
                     for (File testFile : diff) {
                         try {
-                            (new MozillaSuiteTest(testFile, im)).runMozillaTest();
+                            (new MozillaSuiteTest()).runMozillaTest(testFile, im);
                             // strip off testDir
                             String canonicalized =
                                     testFile.getAbsolutePath().substring(absolutePathLength);
