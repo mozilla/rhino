@@ -105,7 +105,9 @@ public class MozillaSuiteTest {
     public static String loadFile(File f) throws IOException {
         int length = (int) f.length(); // don't worry about very long files
         char[] buf = new char[length];
-        new FileReader(f).read(buf, 0, length);
+        try (var reader = new FileReader(f)) {
+            Assertions.assertEquals(length, reader.read(buf, 0, length));
+        }
         return new String(buf);
     }
 
