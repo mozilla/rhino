@@ -1,6 +1,5 @@
 package org.mozilla.javascript;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -58,7 +57,6 @@ public class FunctionPrototypeSymbolHasInstanceTest {
     }
 
     @Test
-    @Ignore("name-length-params-prototype-set-incorrectly")
     public void testFunctionPrototypeSymbolHasInstanceHasProperties() {
         String script =
                 "var a = Object.getOwnPropertyDescriptor(Function.prototype[Symbol.hasInstance], 'length');\n"
@@ -147,6 +145,56 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "f.prototype = Symbol(); \n"
                         + "f[Symbol.hasInstance]({})";
         Utils.assertEcmaErrorES6(
-                "TypeError: 'prototype' property of  is not an object. (test#3)", script);
+                "TypeError: 'prototype' property of '' is not an object. (test#3)", script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceStringProto() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new String(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceBooleanProto() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Boolean(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceArrayProto() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Array(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceNumberProto() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = new Number(); \n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
+    }
+
+    @Test
+    public void testFunctionPrototypeSymbolHasInstanceFunctionProto() {
+        String script =
+                "var f = function() {}; \n"
+                        + "f.prototype = function() {}\n"
+                        + "f[Symbol.hasInstance]({})";
+
+        Utils.assertWithAllModes(false, script);
     }
 }
