@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.Iterator;
+import org.mozilla.javascript.nat.type.TypeInfoExt;
 
 /**
  * This class implements iterator objects. See
@@ -175,7 +176,7 @@ public final class NativeIterator extends IdScriptableObject {
                                 cx,
                                 scope,
                                 new WrappedJavaIterator(iterator, scope),
-                                WrappedJavaIterator.class);
+                                TypeInfoExt.WRAPPED_JAVA_ITERATOR);
             }
 
             // Otherwise, just call the runtime routine
