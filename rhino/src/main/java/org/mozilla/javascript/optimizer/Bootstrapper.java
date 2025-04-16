@@ -152,6 +152,16 @@ public class Bootstrapper {
                 case "SETINDEX":
                     // Same but the property name is definitely a number
                     return RhinoOperation.SETINDEX.withNamespace(StandardNamespace.PROPERTY);
+                case "CALL_0":
+                    // Call a function with no arguments
+                    return RhinoOperation.CALL_0
+                            .withNamespace(StandardNamespace.PROPERTY)
+                            .named(getNameSegment(tokens, name, 2));
+                case "CALL_0_OPT":
+                    // Call a function with no arguments
+                    return RhinoOperation.CALL_0_OPTIONAL
+                            .withNamespace(StandardNamespace.PROPERTY)
+                            .named(getNameSegment(tokens, name, 2));
             }
         } else if ("NAME".equals(namespaceName)) {
             switch (opName) {
@@ -188,6 +198,16 @@ public class Bootstrapper {
                 case "SETCONST":
                     // Same but try to set a constant
                     return RhinoOperation.SETCONST
+                            .withNamespace(RhinoNamespace.NAME)
+                            .named(getNameSegment(tokens, name, 2));
+                case "CALL_0":
+                    // Call a function with no arguments
+                    return RhinoOperation.CALL_0
+                            .withNamespace(RhinoNamespace.NAME)
+                            .named(getNameSegment(tokens, name, 2));
+                case "CALL_0_OPT":
+                    // Call a function with no arguments
+                    return RhinoOperation.CALL_0_OPTIONAL
                             .withNamespace(RhinoNamespace.NAME)
                             .named(getNameSegment(tokens, name, 2));
             }
