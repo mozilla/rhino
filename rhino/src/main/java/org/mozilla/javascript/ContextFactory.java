@@ -10,6 +10,9 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.function.Function;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -114,6 +117,7 @@ public class ContextFactory {
     private volatile Object listeners;
     private boolean disabledListening;
     private ClassLoader applicationClassLoader;
+    private Function<Context, TypeInfoFactory> typeFactoryProvider;
 
     /** Listener of {@link Context} creation and release events. */
     public interface Listener {
@@ -515,5 +519,16 @@ public class ContextFactory {
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);
+    }
+
+    public void setTypeFactoryProvider(Function<Context, TypeInfoFactory> typeFactoryProvider) {
+        this.typeFactoryProvider = typeFactoryProvider;
+    }
+
+    public Function<Context, TypeInfoFactory> getTypeFactoryProvider() {
+        if (typeFactoryProvider == null) {
+            typeFactoryProvider = cx -> new ConcurrentFactory();
+        }
+        return typeFactoryProvider;
     }
 }

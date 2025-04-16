@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
 
 /**
  * Cache of generated classes and data structures to access Java runtime from JavaScript.
@@ -23,10 +25,17 @@ public class ClassCache implements Serializable {
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
     private transient Map<CacheKey, JavaMembers> classTable;
+    private transient TypeInfoFactory typeFactory;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
+
+    public ClassCache(TypeInfoFactory typeInfoFactory) {
+        this.typeFactory = typeInfoFactory;
+    }
+
+    public ClassCache() {}
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are
@@ -142,6 +151,13 @@ public class ClassCache implements Serializable {
             classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
         }
         return classTable;
+    }
+
+    TypeInfoFactory getTypeFactory() {
+        if (typeFactory == null) {
+            typeFactory = new ConcurrentFactory();
+        }
+        return typeFactory;
     }
 
     Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
