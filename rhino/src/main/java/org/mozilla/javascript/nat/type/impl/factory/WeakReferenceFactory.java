@@ -1,66 +1,27 @@
 package org.mozilla.javascript.nat.type.impl.factory;
 
-import java.lang.reflect.TypeVariable;
+import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
+
+import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
-import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
-import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
-import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
 
 /**
+ * {@link TypeInfoFactory} implementation with a thread-safe (synchronized), weak-reference cache.
+ * <p>
+ * This factory will cache {@link TypeInfo} for simple types. Passing simple type ({@link TypeInfoFactory}.class for example) to this factory multiple times will return the exactly same TypeInfo object.
+ * <p>
+ * This factory uses a weak-reference cache. Resolving a type will not prevent it from getting reclaimed by JVM.
+ * <p>
+ * This factory is thread safe. Multiple threads can safely access the same {@link WeakReferenceFactory} object at the same time, but it's not guaranteed to be performant.
+ *
  * @author ZZZank
  */
-public final class WeakReferenceFactory implements FactoryBase {
-
-    private final Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache = new WeakHashMap<>();
-    private final Map<Class<?>, BasicClassTypeInfo> basicClassCache = new WeakHashMap<>();
-    private final Map<Class<?>, InterfaceTypeInfo> interfaceCache = new WeakHashMap<>();
-    private final Map<Class<?>, EnumTypeInfo> enumCache = new WeakHashMap<>();
+public final class WeakReferenceFactory extends WithCacheFactory implements FactoryBase {
 
     @Override
-    public TypeInfo create(Class<?> clazz) {
-        final var predefined = matchPredefined(clazz);
-        if (predefined != null) {
-            return predefined;
-        } else if (clazz.isArray()) {
-            return toArray(create(clazz.getComponentType()));
-        } else if (clazz.isEnum()) {
-            final var got = enumCache.get(clazz);
-            if (got != null) {
-                return got;
-            }
-            synchronized (enumCache) {
-                return enumCache.computeIfAbsent(clazz, EnumTypeInfo::new);
-            }
-        } else if (clazz.isInterface()) {
-            final var got = interfaceCache.get(clazz);
-            if (got != null) {
-                return got;
-            }
-            synchronized (interfaceCache) {
-                return interfaceCache.computeIfAbsent(clazz, InterfaceTypeInfo::new);
-            }
-        }
-        final var got = basicClassCache.get(clazz);
-        if (got != null) {
-            return got;
-        }
-        synchronized (basicClassCache) {
-            return basicClassCache.computeIfAbsent(clazz, BasicClassTypeInfo::new);
-        }
-    }
-
-    @Override
-    public TypeInfo create(TypeVariable<?> typeVariable) {
-        final var got = variableCache.get(typeVariable);
-        if (got != null) {
-            return got;
-        }
-        synchronized (variableCache) {
-            return variableCache.computeIfAbsent(
-                    typeVariable, raw -> new VariableTypeInfoImpl(raw, this));
-        }
+    protected <K, V> Map<K, V> createTypeCache() {
+        return Collections.synchronizedMap(new WeakHashMap<>());
     }
 }
