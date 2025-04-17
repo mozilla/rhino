@@ -5,6 +5,8 @@ import org.mozilla.javascript.nat.type.TypeFormatContext;
 import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
+ * Declaring it as an enum ensures that {@link NoTypeInfo} is always singleton.
+ *
  * @see TypeInfo#NONE
  */
 public enum NoTypeInfo implements TypeInfo {

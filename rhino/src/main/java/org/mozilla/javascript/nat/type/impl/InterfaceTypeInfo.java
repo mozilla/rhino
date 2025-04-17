@@ -11,6 +11,7 @@ public class InterfaceTypeInfo extends ClassTypeInfo {
     private static final Class<? extends Annotation> FN_INTERFACE =
             (Class<? extends Annotation>) Kit.classOrNull("java.lang.FunctionalInterface");
 
+    /** Not using nullable {@link Boolean} in an attempt of reducing object size. */
     private byte functional;
 
     public InterfaceTypeInfo(Class<?> type) {

@@ -4,6 +4,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.List;
 
 /**
+ * @see TypeVariable
  * @author ZZZank
  */
 public interface VariableTypeInfo extends TypeInfo {

@@ -32,9 +32,9 @@ public interface TypeInfoFactory {
     /**
      * TypeInfoFactory used by scope independent actions.
      *
-     * <p>This factory does cache {@link TypeInfo}. TypeInfo created from simple types like {@link
-     * Class} will be kept in a cache, so that when the same type is passed to this factory, no new
-     * TypeInfo is created.
+     * <p>This factory will cache {@link TypeInfo}. TypeInfo created from simple types like {@link
+     * TypeInfoFactory}.class will be kept in a cache, so that when the same type is passed to this
+     * factory, no new TypeInfo is created.
      *
      * <p>This factory is weakly referencing cached types. It holds a {@link
      * java.lang.ref.WeakReference} to the type for each cached type, and will not prevent cached

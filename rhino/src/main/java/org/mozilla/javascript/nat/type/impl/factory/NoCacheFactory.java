@@ -2,13 +2,25 @@ package org.mozilla.javascript.nat.type.impl.factory;
 
 import java.lang.reflect.TypeVariable;
 import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.nat.type.TypeInfoFactory;
 import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
 import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
 
 /**
+ * {@link TypeInfoFactory} implementation with no cache.
+ *
+ * <p>This factory will not cache {@link TypeInfo}. But passing a type to this factory multiple
+ * times might still return the exact same object, they are predefined static {@link TypeInfo}.
+ *
+ * <p>Resolving a type will not prevent it from getting reclaimed by JVM, obviously.
+ *
+ * <p>This factory is thread-safe, as it's stateless.
+ *
  * @author ZZZank
+ * @see ConcurrentFactory factory with a strong-reference, high performance cache
+ * @see WeakReferenceFactory factory with a weak-reference cache
  */
 public final class NoCacheFactory implements FactoryBase {
 

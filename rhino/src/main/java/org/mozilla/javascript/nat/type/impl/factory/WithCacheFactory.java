@@ -17,6 +17,8 @@ import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
  * characteristic if the factory depends on the characteristic of map backend created via {@link
  * #createTypeCache()}
  *
+ * <p>This factory is serializable, but none of its cached objects will be serialized.
+ *
  * @author ZZZank
  */
 public abstract class WithCacheFactory implements FactoryBase, Serializable {
