@@ -1,5 +1,6 @@
 package org.mozilla.javascript.nat.type.impl.factory;
 
+import java.io.Serializable;
 import java.lang.reflect.TypeVariable;
 import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.nat.type.TypeInfoFactory;
@@ -22,7 +23,8 @@ import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
  * @see ConcurrentFactory factory with a strong-reference, high performance cache
  * @see WeakReferenceFactory factory with a weak-reference cache
  */
-public final class NoCacheFactory implements FactoryBase {
+public enum NoCacheFactory implements FactoryBase, Serializable {
+    INSTANCE;
 
     @Override
     public TypeInfo create(Class<?> clazz) {

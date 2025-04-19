@@ -52,7 +52,7 @@ public interface TypeInfoFactory {
      * <p>This factory does not cache {@link TypeInfo}. If the same type is passed to this factory
      * multiple times, the return result may or may not be the exact same object
      */
-    TypeInfoFactory NO_CACHE = new NoCacheFactory();
+    TypeInfoFactory NO_CACHE = NoCacheFactory.INSTANCE;
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
