@@ -66,7 +66,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                 "var a = Object.getOwnPropertyDescriptor(Function.prototype[Symbol.hasInstance], 'name');\n"
                         + "a.value + ':' + a.writable + ':' + a.configurable + ':' + a.enumerable";
         Utils.assertWithAllModes("1:false:true:false", script);
-        Utils.assertWithAllModes("Symbol(Symbol.hasInstance):false:true:false", script2);
+        Utils.assertWithAllModes("[Symbol.hasInstance]:false:true:false", script2);
     }
 
     @Test

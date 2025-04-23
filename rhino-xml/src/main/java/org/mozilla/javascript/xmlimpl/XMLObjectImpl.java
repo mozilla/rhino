@@ -15,6 +15,7 @@ import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -666,7 +667,14 @@ abstract class XMLObjectImpl extends XMLObject {
                 {
                     IdFunctionObject ctor;
                     if (this instanceof XML) {
-                        ctor = new XMLCtor((XML) this, XMLOBJECT_TAG, id, 1);
+                        ctor =
+                                new XMLCtor(
+                                        Context.getCurrentContext(),
+                                        (ScriptableObject) getParentScope(),
+                                        (XML) this,
+                                        XMLOBJECT_TAG,
+                                        id,
+                                        1);
                     } else {
                         ctor = new IdFunctionObject(this, XMLOBJECT_TAG, id, 1);
                     }

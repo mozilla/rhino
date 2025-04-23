@@ -863,6 +863,9 @@ public abstract class ScriptableObject extends SlotMapOwner
             return ScriptRuntime.toBoolean(
                     ((Callable) hasInstance).call(cx, getParentScope(), this, new Object[] {this}));
         }
+        if (!(this instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById("msg.instanceof.bad.target");
+        }
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
 
@@ -1832,6 +1835,11 @@ public abstract class ScriptableObject extends SlotMapOwner
 
         LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
         replaceLambdaAccessorSlot(cx, name, newSlot);
+    }
+
+    public void defineProperty(
+            Context cx, String name, LambdaGetterFunction getter, int attributes) {
+        defineProperty(cx, name, getter, null, attributes);
     }
 
     public void defineProperty(
@@ -3074,12 +3082,26 @@ public abstract class ScriptableObject extends SlotMapOwner
             String name,
             int attributes,
             BuiltInSlot.Getter<T> getter,
+            BuiltInSlot.Setter<T> setter) {
+        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner,
+            Object name,
+            int attributes,
+            BuiltInSlot.Getter<T> getter,
             BuiltInSlot.Setter<T> setter,
             BuiltInSlot.AttributeSetter<T> attrSetter) {
         owner.getMap()
                 .add(
                         owner,
                         new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter, attrSetter));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner, Object name, int attributes, BuiltInSlot.Getter<T> getter) {
+        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter));
     }
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(
@@ -3102,5 +3124,21 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 setter,
                                 attrSetter,
                                 propDescSetter));
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> T ensureType(Object obj, Class<T> clazz, String functionName) {
+        if (clazz.isInstance(obj)) {
+            return (T) obj;
+        }
+        if (obj == null) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.incompat.call.details", functionName, "null", clazz.getName());
+        }
+        throw ScriptRuntime.typeErrorById(
+                "msg.incompat.call.details",
+                functionName,
+                obj.getClass().getName(),
+                clazz.getName());
     }
 }
