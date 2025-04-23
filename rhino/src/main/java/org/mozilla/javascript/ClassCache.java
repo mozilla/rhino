@@ -46,7 +46,7 @@ public class ClassCache implements Serializable {
         public int hashCode() {
             int result = cls.hashCode();
             if (sec != null) {
-                result = sec.hashCode() * 31;
+                result = result * 31 + sec.hashCode();
             }
             return result;
         }
