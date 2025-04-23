@@ -3102,4 +3102,20 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 attrSetter,
                                 propDescSetter));
     }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> T ensureType(Object obj, Class<T> clazz, String functionName) {
+        if (clazz.isInstance(obj)) {
+            return (T) obj;
+        }
+        if (obj == null) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.incompat.call.details", functionName, "null", clazz.getName());
+        }
+        throw ScriptRuntime.typeErrorById(
+                "msg.incompat.call.details",
+                functionName,
+                obj.getClass().getName(),
+                clazz.getName());
+    }
 }

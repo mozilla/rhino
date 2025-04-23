@@ -335,88 +335,133 @@ public class BaseFunction extends IdScriptableObject implements Function {
         int id = f.methodId();
         switch (id) {
             case Id_constructor:
-                if (cx.isStrictMode()) {
-                    // Disable strict mode forcefully, and restore it after the call
-                    NativeCall activation = cx.currentActivationCall;
-                    boolean strictMode = cx.isTopLevelStrict;
-                    try {
-                        cx.currentActivationCall = null;
-                        cx.isTopLevelStrict = false;
-                        return jsConstructor(cx, scope, args);
-                    } finally {
-                        cx.isTopLevelStrict = strictMode;
-                        cx.currentActivationCall = activation;
-                    }
-                } else {
-                    return jsConstructor(cx, scope, args);
-                }
+                return js_constructor(cx, scope, args);
 
             case Id_toString:
-                {
-                    BaseFunction realf = realFunction(thisObj, f);
-                    int indent = ScriptRuntime.toInt32(args, 0);
-                    return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
-                }
+                return js_toString(cx, scope, thisObj, args);
 
             case Id_toSource:
-                {
-                    BaseFunction realf = realFunction(thisObj, f);
-                    int indent = 0;
-                    EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
-                    if (args.length != 0) {
-                        indent = ScriptRuntime.toInt32(args[0]);
-                        if (indent >= 0) {
-                            flags = EnumSet.noneOf(DecompilerFlag.class);
-                        } else {
-                            indent = 0;
-                        }
-                    }
-                    return realf.decompile(indent, flags);
-                }
+                return js_toSource(cx, scope, thisObj, args);
 
             case Id_apply:
+                return js_apply(cx, scope, thisObj, args);
             case Id_call:
-                return ScriptRuntime.applyOrCall(id == Id_apply, cx, scope, thisObj, args);
+                return js_call(cx, scope, thisObj, args);
 
             case Id_bind:
-                if (!(thisObj instanceof Callable)) {
-                    throw ScriptRuntime.notFunctionError(thisObj);
-                }
-                Callable targetFunction = (Callable) thisObj;
-                int argc = args.length;
-                final Scriptable boundThis;
-                final Object[] boundArgs;
-                if (argc > 0) {
-                    boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
-                    boundArgs = new Object[argc - 1];
-                    System.arraycopy(args, 1, boundArgs, 0, argc - 1);
-                } else {
-                    boundThis = null;
-                    boundArgs = ScriptRuntime.emptyArgs;
-                }
-                return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
+                return js_bind(cx, scope, thisObj, args);
 
             case SymbolId_hasInstance:
-                if (thisObj != null && args.length == 1 && args[0] instanceof Scriptable) {
-                    Scriptable obj = (Scriptable) args[0];
-                    Object protoProp = null;
-                    if (thisObj instanceof BoundFunction)
-                        protoProp =
-                                ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
-                                        .getPrototypeProperty();
-                    else protoProp = ScriptableObject.getProperty(thisObj, "prototype");
-                    if (ScriptRuntime.isObject(protoProp)) {
-                        return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
-                    }
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.instanceof.bad.prototype", getFunctionName());
-                }
-                return false; // NOT_FOUND, null etc.
+                return js_hasInstance(cx, scope, thisObj, args);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private static BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f) {
+    private static Object js_hasInstance(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!(thisObj instanceof Callable)) {
+            return false;
+        }
+        Object protoProp = null;
+        if (thisObj instanceof BoundFunction)
+            protoProp =
+                    ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
+                            .getPrototypeProperty();
+        else {
+            protoProp = ScriptableObject.getProperty(thisObj, "prototype");
+        }
+
+        if (ScriptRuntime.isObject(protoProp)) {
+            if (args.length > 0 && args[0] instanceof Scriptable) {
+                Scriptable obj = (Scriptable) args[0];
+
+                return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
+            }
+            return false; // NOT_FOUND, null etc.
+        }
+
+        throw ScriptRuntime.typeErrorById(
+                "msg.instanceof.bad.prototype",
+                (thisObj instanceof BaseFunction)
+                        ? ((BaseFunction) thisObj).getFunctionName()
+                        : "unknown");
+    }
+
+    private static Object js_bind(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!(thisObj instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(thisObj);
+        }
+        Callable targetFunction = (Callable) thisObj;
+        int argc = args.length;
+        final Scriptable boundThis;
+        final Object[] boundArgs;
+        if (argc > 0) {
+            boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
+            boundArgs = new Object[argc - 1];
+            System.arraycopy(args, 1, boundArgs, 0, argc - 1);
+        } else {
+            boundThis = null;
+            boundArgs = ScriptRuntime.emptyArgs;
+        }
+        return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
+    }
+
+    private static Object js_apply(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ScriptRuntime.applyOrCall(true, cx, scope, thisObj, args);
+    }
+
+    private static Object js_call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return ScriptRuntime.applyOrCall(false, cx, scope, thisObj, args);
+    }
+
+    private static Object js_toSource(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        BaseFunction realf = realFunction(thisObj, "toSource");
+        int indent = 0;
+        EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
+        if (args.length != 0) {
+            indent = ScriptRuntime.toInt32(args[0]);
+            if (indent >= 0) {
+                flags = EnumSet.noneOf(DecompilerFlag.class);
+            } else {
+                indent = 0;
+            }
+        }
+        return realf.decompile(indent, flags);
+    }
+
+    private static Object js_toString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        BaseFunction realf = realFunction(thisObj, "toString");
+        int indent = ScriptRuntime.toInt32(args, 0);
+        return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
+    }
+
+    private static Scriptable js_constructorCall(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_constructor(cx, scope, args);
+    }
+
+    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+        if (cx.isStrictMode()) {
+            // Disable strict mode forcefully, and restore it after the call
+            NativeCall activation = cx.currentActivationCall;
+            boolean strictMode = cx.isTopLevelStrict;
+            try {
+                cx.currentActivationCall = null;
+                cx.isTopLevelStrict = false;
+                return jsConstructor(cx, scope, args, false);
+            } finally {
+                cx.isTopLevelStrict = strictMode;
+                cx.currentActivationCall = activation;
+            }
+        } else {
+            return jsConstructor(cx, scope, args, false);
+        }
+    }
+
+    private static BaseFunction realFunction(Scriptable thisObj, String functionName) {
         if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null);
         }
@@ -424,7 +469,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
         if (x instanceof Delegator) {
             x = ((Delegator) x).getDelegee();
         }
-        return ensureType(x, BaseFunction.class, f);
+        return ensureType(x, BaseFunction.class, functionName);
     }
 
     /** Make value as DontEnum, DontDelete, ReadOnly prototype property of this Function object */
@@ -615,12 +660,13 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return (activation == null) ? null : activation.get("arguments", activation);
     }
 
-    private Object jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, Scriptable scope, Object[] args, boolean isGeneratorFunction) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
         sourceBuf.append("function ");
-        if (isGeneratorFunction()) {
+        if (isGeneratorFunction) {
             sourceBuf.append("* ");
         }
         /* version != 1.2 Function constructor behavior -

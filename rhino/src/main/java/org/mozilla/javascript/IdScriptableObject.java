@@ -838,22 +838,6 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return ensureType(obj, clazz, f.getFunctionName());
     }
 
-    @SuppressWarnings("unchecked")
-    protected static <T> T ensureType(Object obj, Class<T> clazz, String functionName) {
-        if (clazz.isInstance(obj)) {
-            return (T) obj;
-        }
-        if (obj == null) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.incompat.call.details", functionName, "null", clazz.getName());
-        }
-        throw ScriptRuntime.typeErrorById(
-                "msg.incompat.call.details",
-                functionName,
-                obj.getClass().getName(),
-                clazz.getName());
-    }
-
     private IdFunctionObject newIdFunction(
             Object tag, int id, String name, int arity, Scriptable scope) {
         IdFunctionObject function = null;
