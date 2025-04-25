@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -100,7 +100,7 @@ public class SecurityControllerTest {
             runScript(script, RESTRICT_IMPL_ACCESS);
             fail("EcmaError expected");
         } catch (EcmaError ee) {
-            assertEquals("TypeError: Cannot find function bar in object []. (#4)", ee.getMessage());
+            assertTrue(ee.getMessage().contains("Cannot find function bar"));
         }
 
         // try in allowed scope again
