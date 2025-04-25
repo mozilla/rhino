@@ -14,7 +14,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
  *
  * @author Norris Boyd
  */
-public abstract class NativeFunction extends BaseFunction {
+public abstract class NativeFunction extends BaseFunction2 {
 
     private static final long serialVersionUID = 8713897114082216401L;
 

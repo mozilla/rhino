@@ -55,15 +55,15 @@ public class ScriptRuntime {
      * @deprecated {@link #typeErrorThrower(Context)}
      */
     @Deprecated
-    public static BaseFunction typeErrorThrower() {
+    public static BaseFunction2 typeErrorThrower() {
         return typeErrorThrower(Context.getCurrentContext());
     }
 
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
-    public static BaseFunction typeErrorThrower(Context cx) {
+    public static BaseFunction2 typeErrorThrower(Context cx) {
         if (cx.typeErrorThrower == null) {
-            BaseFunction thrower =
-                    new BaseFunction() {
+            BaseFunction2 thrower =
+                    new BaseFunction2() {
                         private static final long serialVersionUID = -5891740962154902286L;
 
                         @Override
@@ -165,7 +165,7 @@ public class ScriptRuntime {
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         new ClassCache().associate(scope);
 
-        BaseFunction.init(cx, scope, sealed);
+        BaseFunction2.init(cx, scope, sealed);
         NativeObject.init(scope, sealed);
 
         Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
@@ -4937,6 +4937,30 @@ public class ScriptRuntime {
 
     public static void setFunctionProtoAndParent(
             BaseFunction fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
+        fn.setParentScope(scope);
+        if (es6GeneratorFunction) {
+            fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
+        } else {
+            fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
+        }
+
+        if (cx != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            fn.setStandardPropertyAttributes(ScriptableObject.READONLY | ScriptableObject.DONTENUM);
+        }
+    }
+
+    public static void setFunctionProtoAndParent(BaseFunction2 fn, Context cx, Scriptable scope) {
+        setFunctionProtoAndParent(fn, cx, scope, false);
+    }
+
+    @Deprecated
+    public static void setFunctionProtoAndParent(
+            BaseFunction2 fn, Scriptable scope, boolean es6GeneratorFunction) {
+        setFunctionProtoAndParent(fn, Context.getCurrentContext(), scope, es6GeneratorFunction);
+    }
+
+    public static void setFunctionProtoAndParent(
+            BaseFunction2 fn, Context cx, Scriptable scope, boolean es6GeneratorFunction) {
         fn.setParentScope(scope);
         if (es6GeneratorFunction) {
             fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));

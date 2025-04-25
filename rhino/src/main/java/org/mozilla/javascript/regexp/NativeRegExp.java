@@ -140,7 +140,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final int ANCHOR_BOL = -2;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, ScriptableObject scope, boolean sealed) {
 
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
@@ -148,7 +148,7 @@ public class NativeRegExp extends IdScriptableObject {
         proto.setParentScope(scope);
         proto.setPrototype(getObjectPrototype(scope));
 
-        NativeRegExpCtor ctor = new NativeRegExpCtor();
+        var ctor = NativeRegExpCtor.init(cx, scope, sealed);
         // Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
         // RegExp.prototype.constructor is the builtin RegExp constructor."
         proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);

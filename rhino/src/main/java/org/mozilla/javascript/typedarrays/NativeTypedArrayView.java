@@ -173,6 +173,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 (Scriptable thisObj) -> js_length(thisObj, realThis),
                 DONTENUM | READONLY);
 
+<<<<<<< HEAD
         constructor.definePrototypeMethod(
                 scope,
                 "at",
@@ -475,6 +476,207 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 },
                 DONTENUM,
                 DONTENUM | READONLY);
+||||||| parent of ca6bcd891 (Giant WIP.)
+        LambdaConstructor typedArray =
+                (LambdaConstructor) scope.getAssociatedValue(TYPED_ARRAY_TAG);
+        if (typedArray == null) {
+            typedArray =
+                    new LambdaConstructor(
+                            scope,
+                            "TypedArray",
+                            0,
+                            (lcx, lscope, largs) -> {
+                                throw ScriptRuntime.typeError("Fuck");
+                            });
+            defineProtoProperty(typedArray, cx, "buffer", NativeTypedArrayView::js_buffer, null);
+            defineProtoProperty(
+                    typedArray, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
+            defineProtoProperty(
+                    typedArray, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);
+            defineProtoProperty(typedArray, cx, "length", NativeTypedArrayView::js_length, null);
+            defineProtoProperty(
+                    typedArray,
+                    cx,
+                    SymbolKey.TO_STRING_TAG,
+                    NativeTypedArrayView::js_toStringTag,
+                    null);
+
+            defineMethod(typedArray, scope, "at", 1, NativeTypedArrayView::js_at);
+            defineMethod(typedArray, scope, "copyWithin", 1, NativeTypedArrayView::js_copyWithin);
+            defineMethod(typedArray, scope, "entries", 0, NativeTypedArrayView::js_entries);
+            defineMethod(typedArray, scope, "every", 1, NativeTypedArrayView::js_every);
+            defineMethod(typedArray, scope, "fill", 1, NativeTypedArrayView::js_fill);
+            defineMethod(typedArray, scope, "filter", 1, NativeTypedArrayView::js_filter);
+            defineMethod(typedArray, scope, "find", 1, NativeTypedArrayView::js_find);
+            defineMethod(typedArray, scope, "findIndex", 1, NativeTypedArrayView::js_findIndex);
+            defineMethod(typedArray, scope, "findLast", 1, NativeTypedArrayView::js_findLast);
+            defineMethod(
+                    typedArray, scope, "findLastIndex", 1, NativeTypedArrayView::js_findLastIndex);
+            defineMethod(typedArray, scope, "forEach", 1, NativeTypedArrayView::js_forEach);
+            defineMethod(typedArray, scope, "includes", 1, NativeTypedArrayView::js_includes);
+            defineMethod(typedArray, scope, "indexOf", 1, NativeTypedArrayView::js_indexOf);
+            defineMethod(typedArray, scope, "join", 1, NativeTypedArrayView::js_join);
+            defineMethod(typedArray, scope, "keys", 0, NativeTypedArrayView::js_keys);
+            defineMethod(typedArray, scope, "lastIndexOf", 1, NativeTypedArrayView::js_lastIndexOf);
+            defineMethod(typedArray, scope, "map", 1, NativeTypedArrayView::js_map);
+            defineMethod(typedArray, scope, "reduce", 1, NativeTypedArrayView::js_reduce);
+            defineMethod(typedArray, scope, "reduceRight", 1, NativeTypedArrayView::js_reduceRight);
+            defineMethod(typedArray, scope, "reverse", 0, NativeTypedArrayView::js_reverse);
+            defineMethod(typedArray, scope, "set", 0, NativeTypedArrayView::js_set);
+            defineMethod(typedArray, scope, "slice", 2, NativeTypedArrayView::js_slice);
+            defineMethod(typedArray, scope, "some", 1, NativeTypedArrayView::js_some);
+            defineMethod(typedArray, scope, "sort", 1, NativeTypedArrayView::js_sort);
+            defineMethod(typedArray, scope, "subarray", 2, NativeTypedArrayView::js_subarray);
+            defineMethod(
+                    typedArray,
+                    scope,
+                    "toLocaleString",
+                    0,
+                    NativeTypedArrayView::js_toLocaleString);
+            defineMethod(typedArray, scope, "toReversed", 0, NativeTypedArrayView::js_toReversed);
+            defineMethod(typedArray, scope, "toSorted", 1, NativeTypedArrayView::js_toSorted);
+            defineMethod(typedArray, scope, "toString", 0, NativeTypedArrayView::js_toString);
+            defineMethod(typedArray, scope, "values", 0, NativeTypedArrayView::js_values);
+            defineMethod(typedArray, scope, "with", 2, NativeTypedArrayView::js_with);
+            defineMethod(
+                    typedArray, scope, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
+
+            typedArray = (LambdaConstructor) scope.associateValue(TYPED_ARRAY_TAG, typedArray);
+        }
+        constructor.setPrototype(typedArray);
+        ((ScriptableObject) constructor.getPrototypeProperty())
+                .setPrototype((Scriptable) typedArray.getPrototypeProperty());
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            String name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            SymbolKey name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(
+                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            SymbolKey key,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+=======
+        LambdaConstructor ta = (LambdaConstructor) scope.getAssociatedValue(TYPED_ARRAY_TAG);
+        if (ta == null) {
+            ta =
+                    new LambdaConstructor(
+                            scope,
+                            "TypedArray",
+                            0,
+                            (lcx, lscope, largs) -> {
+                                throw ScriptRuntime.typeError("Fuck");
+                            });
+            defineProtoProperty(ta, cx, "buffer", NativeTypedArrayView::js_buffer, null);
+            defineProtoProperty(ta, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
+            defineProtoProperty(ta, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);
+            defineProtoProperty(ta, cx, "length", NativeTypedArrayView::js_length, null);
+            defineProtoProperty(
+                    ta, cx, SymbolKey.TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
+
+            defineMethod(ta, scope, "at", 1, NativeTypedArrayView::js_at);
+            defineMethod(ta, scope, "copyWithin", 1, NativeTypedArrayView::js_copyWithin);
+            defineMethod(ta, scope, "entries", 0, NativeTypedArrayView::js_entries);
+            defineMethod(ta, scope, "every", 1, NativeTypedArrayView::js_every);
+            defineMethod(ta, scope, "fill", 1, NativeTypedArrayView::js_fill);
+            defineMethod(ta, scope, "filter", 1, NativeTypedArrayView::js_filter);
+            defineMethod(ta, scope, "find", 1, NativeTypedArrayView::js_find);
+            defineMethod(ta, scope, "findIndex", 1, NativeTypedArrayView::js_findIndex);
+            defineMethod(ta, scope, "findLast", 1, NativeTypedArrayView::js_findLast);
+            defineMethod(ta, scope, "findLastIndex", 1, NativeTypedArrayView::js_findLastIndex);
+            defineMethod(ta, scope, "forEach", 1, NativeTypedArrayView::js_forEach);
+            defineMethod(ta, scope, "includes", 1, NativeTypedArrayView::js_includes);
+            defineMethod(ta, scope, "indexOf", 1, NativeTypedArrayView::js_indexOf);
+            defineMethod(ta, scope, "join", 1, NativeTypedArrayView::js_join);
+            defineMethod(ta, scope, "keys", 0, NativeTypedArrayView::js_keys);
+            defineMethod(ta, scope, "lastIndexOf", 1, NativeTypedArrayView::js_lastIndexOf);
+            defineMethod(ta, scope, "map", 1, NativeTypedArrayView::js_map);
+            defineMethod(ta, scope, "reduce", 1, NativeTypedArrayView::js_reduce);
+            defineMethod(ta, scope, "reduceRight", 1, NativeTypedArrayView::js_reduceRight);
+            defineMethod(ta, scope, "reverse", 0, NativeTypedArrayView::js_reverse);
+            defineMethod(ta, scope, "set", 0, NativeTypedArrayView::js_set);
+            defineMethod(ta, scope, "slice", 2, NativeTypedArrayView::js_slice);
+            defineMethod(ta, scope, "some", 1, NativeTypedArrayView::js_some);
+            defineMethod(ta, scope, "sort", 1, NativeTypedArrayView::js_sort);
+            defineMethod(ta, scope, "subarray", 2, NativeTypedArrayView::js_subarray);
+            defineMethod(ta, scope, "toLocaleString", 0, NativeTypedArrayView::js_toLocaleString);
+            defineMethod(ta, scope, "toReversed", 0, NativeTypedArrayView::js_toReversed);
+            defineMethod(ta, scope, "toSorted", 1, NativeTypedArrayView::js_toSorted);
+            defineMethod(ta, scope, "toString", 0, NativeTypedArrayView::js_toString);
+            defineMethod(ta, scope, "values", 0, NativeTypedArrayView::js_values);
+            defineMethod(ta, scope, "with", 2, NativeTypedArrayView::js_with);
+            defineMethod(ta, scope, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
+
+            ta = (LambdaConstructor) scope.associateValue(TYPED_ARRAY_TAG, ta);
+        }
+        constructor.setPrototype(ta);
+        ((ScriptableObject) constructor.getPrototypeProperty())
+                .setPrototype((Scriptable) ta.getPrototypeProperty());
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            String name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            SymbolKey name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(
+                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            SymbolKey key,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+>>>>>>> ca6bcd891 (Giant WIP.)
     }
 
     protected boolean checkIndex(int index) {

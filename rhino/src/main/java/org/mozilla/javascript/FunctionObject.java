@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 
-public class FunctionObject extends BaseFunction {
+public class FunctionObject extends BaseFunction2 {
     private static final long serialVersionUID = -5332312783643935019L;
 
     /**

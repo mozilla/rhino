@@ -11,7 +11,7 @@ package org.mozilla.javascript;
  *
  * @author Raphael Speyer
  */
-public class BoundFunction extends BaseFunction {
+public class BoundFunction extends BaseFunction2 {
 
     private static final long serialVersionUID = 2118137342826470729L;
 

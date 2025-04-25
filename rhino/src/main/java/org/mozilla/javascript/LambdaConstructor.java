@@ -381,6 +381,11 @@ public class LambdaConstructor extends LambdaFunction {
     @SuppressWarnings("unchecked")
     public static <T> T convertThisObject(Scriptable thisObj, Class<T> targetClass) {
         if (!targetClass.isInstance(thisObj)) {
+            new Error(
+                            String.format(
+                                    "%s not a %s",
+                                    thisObj == null ? null : thisObj.getClass(), targetClass))
+                    .printStackTrace();
             throw ScriptRuntime.typeErrorById("msg.this.not.instance");
         }
         return (T) thisObj;

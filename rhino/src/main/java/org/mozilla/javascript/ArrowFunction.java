@@ -9,7 +9,7 @@ package org.mozilla.javascript;
 import java.util.EnumSet;
 
 /** The class for Arrow Function Definitions EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2 */
-public class ArrowFunction extends BaseFunction {
+public class ArrowFunction extends BaseFunction2 {
 
     private static final long serialVersionUID = -7377989503697220633L;
 

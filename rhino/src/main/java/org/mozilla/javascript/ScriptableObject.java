@@ -1035,14 +1035,14 @@ public abstract class ScriptableObject extends SlotMapOwner
     public static <T extends Scriptable> String defineClass(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        BaseFunction ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
+        BaseFunction2 ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
         if (ctor == null) return null;
         String name = ctor.getClassPrototype().getClassName();
         defineProperty(scope, name, ctor, ScriptableObject.DONTENUM);
         return name;
     }
 
-    static <T extends Scriptable> BaseFunction buildClassCtor(
+    static <T extends Scriptable> BaseFunction2 buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
@@ -1092,7 +1092,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (existing instanceof BaseFunction) {
             Object existingProto = ((BaseFunction) existing).getPrototypeProperty();
             if (existingProto != null && clazz.equals(existingProto.getClass())) {
-                return (BaseFunction) existing;
+                return (BaseFunction2) existing;
             }
         }
 
@@ -3079,6 +3079,11 @@ public abstract class ScriptableObject extends SlotMapOwner
                 .add(
                         owner,
                         new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter, attrSetter));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner, Object name, int attributes, BuiltInSlot.Getter<T> getter) {
+        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter));
     }
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(

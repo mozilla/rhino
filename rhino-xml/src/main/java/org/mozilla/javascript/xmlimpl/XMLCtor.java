@@ -27,7 +27,6 @@ class XMLCtor extends IdFunctionObject {
         super(xml, tag, id, arity);
         //        this.lib = xml.lib;
         this.options = xml.getProcessor();
-        activatePrototypeMap(MAX_FUNCTION_ID);
     }
 
     private void writeSetting(Scriptable target) {

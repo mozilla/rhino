@@ -143,7 +143,7 @@ final class MemberBox implements Serializable {
         // Because of this we can cache the function in the attribute
         if (asGetterFunction == null) {
             asGetterFunction =
-                    new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
+                    new BaseFunction2(scope, ScriptableObject.getFunctionPrototype(scope)) {
                         @Override
                         public Object call(
                                 Context cx,
@@ -179,7 +179,7 @@ final class MemberBox implements Serializable {
         // Because of this we can cache the function in the attribute
         if (asSetterFunction == null) {
             asSetterFunction =
-                    new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
+                    new BaseFunction2(scope, ScriptableObject.getFunctionPrototype(scope)) {
                         @Override
                         public Object call(
                                 Context cx,

@@ -121,7 +121,7 @@ public class NativeGlobal implements Serializable {
             errorProto.defineProperty("name", name, DONTENUM);
             errorProto.defineProperty("message", "", DONTENUM);
 
-            BaseFunction ctor;
+            BaseFunction2 ctor;
 
             // Building errors is complex because of the prototype chain requirements. This is a bit
             // arcane, but it's a combination that makes test262 happy.

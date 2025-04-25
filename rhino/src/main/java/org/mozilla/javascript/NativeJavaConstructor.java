@@ -17,7 +17,7 @@ package org.mozilla.javascript;
  * @see NativeJavaPackage
  * @see NativeJavaClass
  */
-public class NativeJavaConstructor extends BaseFunction {
+public class NativeJavaConstructor extends BaseFunction2 {
     private static final long serialVersionUID = -8149253217482668463L;
 
     MemberBox ctor;

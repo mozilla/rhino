@@ -8,7 +8,7 @@
 
 package org.mozilla.javascript;
 
-public class IdFunctionObject extends BaseFunction {
+public class IdFunctionObject extends BaseFunction2 {
     private static final long serialVersionUID = -5332312783643935019L;
 
     public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity) {

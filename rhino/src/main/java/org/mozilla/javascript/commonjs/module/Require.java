@@ -10,7 +10,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.BaseFunction2;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
@@ -41,7 +41,7 @@ import org.mozilla.javascript.ScriptableObject;
  * @author Attila Szegedi
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
-public class Require extends BaseFunction {
+public class Require extends BaseFunction2 {
     private static final long serialVersionUID = 1L;
     private final ModuleScriptProvider moduleScriptProvider;
     private final Scriptable nativeScope;

@@ -52,8 +52,8 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
                                         args,
                                         NativeFloat64Array::new,
                                         BYTES_PER_ELEMENT));
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         NativeTypedArrayView.init(cx, scope, constructor, NativeFloat64Array::realThis);
+        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         constructor.defineProperty(
                 "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
         constructor.definePrototypeProperty(

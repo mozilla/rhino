@@ -412,13 +412,14 @@ final class Arguments extends IdScriptableObject {
         calleeObj = null;
     }
 
-    private static class ThrowTypeError extends BaseFunction {
+    private static class ThrowTypeError extends BaseFunction2 {
         private static final long serialVersionUID = -744615873947395749L;
         private String propertyName;
 
         ThrowTypeError(String propertyName) {
             this.propertyName = propertyName;
-            super.setInstanceIdAttributes(BaseFunction.Id_name, PERMANENT | READONLY | DONTENUM);
+            //            super.setInstanceIdAttributes(BaseFunction.Id_name, PERMANENT | READONLY |
+            // DONTENUM);
         }
 
         @Override

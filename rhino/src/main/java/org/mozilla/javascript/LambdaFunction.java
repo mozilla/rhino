@@ -11,7 +11,7 @@ package org.mozilla.javascript;
  * Function class, and which is implemented using a single function that can easily be implemented
  * using a lambda expression.
  */
-public class LambdaFunction extends BaseFunction {
+public class LambdaFunction extends BaseFunction2 {
 
     private static final long serialVersionUID = -8388132362854748293L;
 
