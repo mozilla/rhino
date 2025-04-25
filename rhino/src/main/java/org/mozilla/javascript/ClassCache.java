@@ -44,11 +44,10 @@ public class ClassCache implements Serializable {
 
         @Override
         public int hashCode() {
-            int result = cls.hashCode();
             if (sec != null) {
-                result = result * 31 + sec.hashCode();
+                return sec.hashCode() ^ cls.hashCode();
             }
-            return result;
+            return cls.hashCode();
         }
 
         @Override
