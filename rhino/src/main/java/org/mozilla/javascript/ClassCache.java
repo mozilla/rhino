@@ -22,9 +22,9 @@ public class ClassCache implements Serializable {
     private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
-    private transient Map<CacheKey, JavaMembers> classTable;
-    private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
-    private transient Map<Class<?>, Object> interfaceAdapterCache;
+    private transient volatile Map<CacheKey, JavaMembers> classTable;
+    private transient volatile Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
+    private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
@@ -137,16 +137,22 @@ public class ClassCache implements Serializable {
      */
     Map<CacheKey, JavaMembers> getClassCacheMap() {
         if (classTable == null) {
-            // Use 1 as concurrency level here and for other concurrent hash maps
-            // as we don't expect high levels of sustained concurrent writes.
-            classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
+            synchronized (this) {
+                if (classTable == null) {
+                    classTable = new ConcurrentHashMap<>();
+                }
+            }
         }
         return classTable;
     }
 
     Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
         if (classAdapterCache == null) {
-            classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+            synchronized (this) {
+                if (classAdapterCache == null) {
+                    classAdapterCache = new ConcurrentHashMap<>();
+                }
+            }
         }
         return classAdapterCache;
     }
@@ -184,7 +190,11 @@ public class ClassCache implements Serializable {
     synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
-                interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+                synchronized (this) {
+                    if (interfaceAdapterCache == null) {
+                        interfaceAdapterCache = new ConcurrentHashMap<>();
+                    }
+                }
             }
             interfaceAdapterCache.put(cl, iadapter);
         }
