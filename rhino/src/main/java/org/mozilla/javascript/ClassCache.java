@@ -139,9 +139,7 @@ public class ClassCache implements Serializable {
         if (classTable == null) {
             synchronized (this) {
                 if (classTable == null) {
-                    // Use 1 as concurrency level here and for other concurrent hash maps
-                    // as we don't expect high levels of sustained concurrent writes.
-                    classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
+                    classTable = new ConcurrentHashMap<>();
                 }
             }
         }
@@ -152,7 +150,7 @@ public class ClassCache implements Serializable {
         if (classAdapterCache == null) {
             synchronized (this) {
                 if (classAdapterCache == null) {
-                    classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+                    classAdapterCache = new ConcurrentHashMap<>();
                 }
             }
         }
@@ -194,7 +192,7 @@ public class ClassCache implements Serializable {
             if (interfaceAdapterCache == null) {
                 synchronized (this) {
                     if (interfaceAdapterCache == null) {
-                        interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+                        interfaceAdapterCache = new ConcurrentHashMap<>();
                     }
                 }
             }
