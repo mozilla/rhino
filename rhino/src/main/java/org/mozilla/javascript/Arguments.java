@@ -412,7 +412,7 @@ final class Arguments extends IdScriptableObject {
         calleeObj = null;
     }
 
-    private static class ThrowTypeError extends BaseFunction2 {
+    private static class ThrowTypeError extends BaseFunction {
         private static final long serialVersionUID = -744615873947395749L;
         private String propertyName;
 

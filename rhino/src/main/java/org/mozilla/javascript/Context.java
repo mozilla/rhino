@@ -2769,7 +2769,7 @@ public class Context implements Closeable {
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;
-    BaseFunction2 typeErrorThrower;
+    BaseFunction typeErrorThrower;
 
     // for Objects, Arrays to tag themselves as being printed out,
     // so they don't print themselves out recursively.

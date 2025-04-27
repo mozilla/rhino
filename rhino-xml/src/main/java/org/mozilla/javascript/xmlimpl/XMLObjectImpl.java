@@ -666,7 +666,7 @@ abstract class XMLObjectImpl extends XMLObject {
                 {
                     IdFunctionObject ctor;
                     if (this instanceof XML) {
-                        ctor = new XMLCtor((XML) this, XMLOBJECT_TAG, id, 1);
+                        ctor = null; // new XMLCtor((XML) this, XMLOBJECT_TAG, id, 1);
                     } else {
                         ctor = new IdFunctionObject(this, XMLOBJECT_TAG, id, 1);
                     }

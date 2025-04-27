@@ -20,7 +20,7 @@ import java.util.EnumSet;
  * @since 1.3
  * @author Norris Boyd
  */
-class NativeScript extends BaseFunction2 {
+class NativeScript extends BaseFunction {
     private static final long serialVersionUID = -6795101161980121700L;
 
     private static final Object SCRIPT_TAG = "Script";

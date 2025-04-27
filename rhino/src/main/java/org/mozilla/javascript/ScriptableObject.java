@@ -1035,14 +1035,14 @@ public abstract class ScriptableObject extends SlotMapOwner
     public static <T extends Scriptable> String defineClass(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        BaseFunction2 ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
+        BaseFunction ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
         if (ctor == null) return null;
         String name = ctor.getClassPrototype().getClassName();
         defineProperty(scope, name, ctor, ScriptableObject.DONTENUM);
         return name;
     }
 
-    static <T extends Scriptable> BaseFunction2 buildClassCtor(
+    static <T extends Scriptable> BaseFunction buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
@@ -1092,7 +1092,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (existing instanceof BaseFunction) {
             Object existingProto = ((BaseFunction) existing).getPrototypeProperty();
             if (existingProto != null && clazz.equals(existingProto.getClass())) {
-                return (BaseFunction2) existing;
+                return (BaseFunction) existing;
             }
         }
 

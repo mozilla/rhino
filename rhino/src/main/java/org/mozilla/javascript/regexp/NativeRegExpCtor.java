@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript.regexp;
 
-import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -29,72 +28,73 @@ class NativeRegExpCtor {
     private static final long serialVersionUID = -5733330028285400526L;
 
     public static LambdaConstructor init(Context cx, ScriptableObject scope, boolean sealed) {
-        var ctor = new LambdaConstructor(
-            scope,
-            "Regexp",
-            2,
-            NativeRegExpCtor::js_constructCall,
-            NativeRegExpCtor::js_construct);
-        ctor.defineProperty(cx, "multiline",
-            (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
-            (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$*",
-            (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
-            (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "input",
-            (c) -> getImpl().input,
-            (c, v) -> getImpl().input = ScriptRuntime.toString(v),
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$_",
-            (c) -> getImpl().input,
-            (c, v) -> getImpl().input = ScriptRuntime.toString(v),
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "lastMatch",
-            (c) -> getImpl().lastMatch,
-            null,
-            ScriptableObject.PERMANENT);        
-        ctor.defineProperty(cx, "$&",
-            (c) -> getImpl().lastMatch,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "lastParen",
-            (c) -> getImpl().lastParen,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$+",
-            (c) -> getImpl().lastParen,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "leftContext",
-            (c) -> getImpl().leftContext,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$`",
-            (c) -> getImpl().leftContext,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "rightContext",
-            (c) -> getImpl().rightContext,
-            null,
-            ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$'",
-            (c) -> getImpl().rightContext,
-            null,
-            ScriptableObject.PERMANENT);
+        var ctor =
+                new LambdaConstructor(
+                        scope,
+                        "Regexp",
+                        2,
+                        NativeRegExpCtor::js_constructCall,
+                        NativeRegExpCtor::js_construct);
+        ctor.defineProperty(
+                cx,
+                "multiline",
+                (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
+                (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "$*",
+                (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
+                (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "input",
+                (c) -> getImpl().input,
+                (c, v) -> getImpl().input = ScriptRuntime.toString(v),
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "$_",
+                (c) -> getImpl().input,
+                (c, v) -> getImpl().input = ScriptRuntime.toString(v),
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx, "lastMatch", (c) -> getImpl().lastMatch, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(cx, "$&", (c) -> getImpl().lastMatch, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx, "lastParen", (c) -> getImpl().lastParen, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(cx, "$+", (c) -> getImpl().lastParen, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx, "leftContext", (c) -> getImpl().leftContext, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx, "$`", (c) -> getImpl().leftContext, null, ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "rightContext",
+                (c) -> getImpl().rightContext,
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx, "$'", (c) -> getImpl().rightContext, null, ScriptableObject.PERMANENT);
         for (int i = 1; i < 10; i++) {
             int c = i - 1;
-            ctor.defineProperty(cx, String.format("$%d", i), (x) -> getImpl().getParenSubString(c), null, ScriptableObject.PERMANENT);
+            ctor.defineProperty(
+                    cx,
+                    String.format("$%d", i),
+                    (x) -> getImpl().getParenSubString(c),
+                    null,
+                    ScriptableObject.PERMANENT);
         }
         return ctor;
     }
 
-    private static Scriptable js_constructCall(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable js_constructCall(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length > 0
                 && args[0] instanceof NativeRegExp
                 && (args.length == 1 || args[1] == Undefined.instance)) {
-            return (Scriptable)args[0];
+            return (Scriptable) args[0];
         }
         return js_construct(cx, scope, args);
     }
