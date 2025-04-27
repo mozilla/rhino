@@ -82,4 +82,79 @@ public class PutPropertyTest {
 
         Utils.assertWithAllModes("0 # 1", script);
     }
+
+    @Test
+    public void setPropKnownAtPrototypePrototypeObject() throws Exception {
+        final String script =
+                "var WithObjectPrototype = function(array) {\n"
+                        + "  this.prop = array.length;\n"
+                        + "  return this;\n"
+                        + "}\n"
+                        + "var nlp = {}.prototype = { prop: 7 };\n"
+                        + "var nlpp = WithObjectPrototype.prototype = nlp;\n"
+                        + "var test = new WithObjectPrototype(['abc']);\n"
+                        + "'' + nlp.prop + ' # ' + nlpp.prop + ' # ' + test.prop";
+
+        Utils.assertWithAllModes("7 # 7 # 1", script);
+    }
+
+    @Test
+    public void setPropNotKnownAtPrototypePrototypeObject() throws Exception {
+        final String script =
+                "var WithObjectPrototype = function(array) {\n"
+                        + "  this.prop = array.length;\n"
+                        + "  return this;\n"
+                        + "}\n"
+                        + "var nlp = {}.prototype = { length: 7 };\n"
+                        + "var nlpp = WithObjectPrototype.prototype = nlp;\n"
+                        + "var test = new WithObjectPrototype(['abc']);\n"
+                        + "'' + nlp.prop + ' # ' + nlpp.prop + ' # ' + test.prop";
+
+        Utils.assertWithAllModes("undefined # undefined # 1", script);
+    }
+
+    @Test
+    public void setLengthKnownAtPrototypePrototypeObject() throws Exception {
+        final String script =
+                "var WithObjectPrototype = function(array) {\n"
+                        + "  this.length = array.length;\n"
+                        + "  return this;\n"
+                        + "}\n"
+                        + "var nlp = {}.prototype = { length: 7 };\n"
+                        + "var nlpp = WithObjectPrototype.prototype = nlp;\n"
+                        + "var test = new WithObjectPrototype(['abc']);\n"
+                        + "'' + nlp.length + ' # ' + nlpp.length + ' # ' + test.length";
+
+        Utils.assertWithAllModes("7 # 7 # 1", script);
+    }
+
+    @Test
+    public void setLengthNotKnownAtPrototypePrototypeObject() throws Exception {
+        final String script =
+                "var WithObjectPrototype = function(array) {\n"
+                        + "  this.length = array.length;\n"
+                        + "  return this;\n"
+                        + "}\n"
+                        + "var nlp = {}.prototype = { prop: 7 };\n"
+                        + "var nlpp = WithObjectPrototype.prototype = nlp;\n"
+                        + "var test = new WithObjectPrototype(['abc']);\n"
+                        + "'' + nlp.length + ' # ' + nlpp.length + ' # ' + test.length";
+
+        Utils.assertWithAllModes("undefined # undefined # 1", script);
+    }
+
+    @Test
+    public void setLengthKnownAtPrototypePrototypeArray() throws Exception {
+        final String script =
+                "var WithArrayPrototype = function(array) {\n"
+                        + "  this.length = array.length;\n"
+                        + "  return this;\n"
+                        + "}\n"
+                        + "var nlp = {}.prototype = [];\n"
+                        + "var nlpp = WithArrayPrototype.prototype = nlp;\n"
+                        + "var test = new WithArrayPrototype(['abc']);\n"
+                        + "'' + nlp.length + ' # ' + nlpp.length + ' # ' + test.length";
+
+        Utils.assertWithAllModes("0 # 0 # 1", script);
+    }
 }
