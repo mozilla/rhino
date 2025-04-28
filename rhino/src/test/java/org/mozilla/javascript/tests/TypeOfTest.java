@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.mozilla.javascript.BaseFunction2;
+import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -53,7 +53,7 @@ public class TypeOfTest {
     @Test
     public void test0() throws Exception {
         final Function f =
-                new BaseFunction2() {
+                new BaseFunction() {
                     @Override
                     public Object call(
                             Context _cx, Scriptable _scope, Scriptable _thisObj, Object[] _args) {

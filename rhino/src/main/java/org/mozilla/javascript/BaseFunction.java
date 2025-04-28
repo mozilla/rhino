@@ -33,13 +33,17 @@ public class BaseFunction extends ScriptableObject implements Function {
                         BaseFunction::js_constructorCall,
                         BaseFunction::js_constructor);
 
+        // Do this early, so that the functions on the prototype get
+        // the right prototype...
+        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, obj, DONTENUM);
+        obj.setPrototype((Scriptable) obj.getPrototypeProperty());
+
         defOnProto(obj, scope, "apply", 2, BaseFunction::js_apply);
         defOnProto(obj, scope, "bind", 1, BaseFunction::js_bind);
         defOnProto(obj, scope, "call", 1, BaseFunction::js_call);
         defOnProto(obj, scope, "toSource", 1, BaseFunction::js_toSource);
         defOnProto(obj, scope, "toString", 0, BaseFunction::js_toString);
         defOnProto(obj, scope, SymbolKey.HAS_INSTANCE, 1, BaseFunction::js_hasInstance);
-        ;
 
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
@@ -93,10 +97,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
+        ScriptableObject.putProperty(scope, GENERATOR_FUNCTION_CLASS, obj);
         // Function.prototype attributes: see ECMA 15.3.3.1
         // The "GeneratorFunction" name actually never appears in the global scope.
         // Return it here so it can be cached as a "builtin"
-        return ScriptableObject.getProperty(scope, GENERATOR_FUNCTION_CLASS);
+        return obj;
     }
 
     public BaseFunction() {
@@ -104,18 +109,22 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     public BaseFunction(boolean isGenerator) {
+        createProperties();
         this.isGeneratorFunction = isGenerator;
     }
 
     public BaseFunction(Scriptable scope, Scriptable prototype) {
         super(scope, prototype);
+        createProperties();
+        ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.Function);
     }
 
     protected void createProperties() {
         ScriptableObject.defineBuiltInProperty(
-                this, "length", DONTENUM | PERMANENT, BaseFunction::lengthGetter);
+                this, "length", DONTENUM | READONLY, BaseFunction::lengthGetter);
         ScriptableObject.defineBuiltInProperty(
-                this, "name", DONTENUM | PERMANENT, BaseFunction::nameGetter);
+                this, "name", DONTENUM | READONLY, BaseFunction::nameGetter);
+        createPrototypeProperty();
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
@@ -130,7 +139,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         ScriptableObject.defineBuiltInProperty(
                 this,
                 "prototype",
-                prototypePropertyAttributes,
+                0,
                 BaseFunction::prototypeGetter,
                 BaseFunction::prototypeSetter,
                 BaseFunction::prototypeAttrSetter);
@@ -151,7 +160,6 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static void prototypeAttrSetter(BaseFunction function, int attributes) {
-        function.prototypePropertyAttributes = attributes;
     }
 
     protected final boolean defaultHas(String name) {
@@ -335,7 +343,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, scope, args, true);
+            return jsConstructor(cx, scope, args, false);
         }
     }
 
@@ -358,7 +366,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, scope, args, false);
+            return jsConstructor(cx, scope, args, true);
         }
     }
 
@@ -375,11 +383,11 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Make value as DontEnum, DontDelete, ReadOnly prototype property of this Function object */
     public void setImmunePrototypeProperty(Object value) {
-        if ((prototypePropertyAttributes & READONLY) != 0) {
+        if ((getAttributes("prototype") & READONLY) != 0) {
             throw new IllegalStateException();
         }
         prototypeProperty = (value != null) ? value : UniqueTag.NULL_VALUE;
-        prototypePropertyAttributes = DONTENUM | PERMANENT | READONLY;
+        setAttributes("prototype", DONTENUM | PERMANENT | READONLY);
     }
 
     protected Scriptable getClassPrototype() {
@@ -489,13 +497,13 @@ public class BaseFunction extends ScriptableObject implements Function {
      * native objects.
      */
     public void setStandardPropertyAttributes(int attributes) {
-        namePropertyAttributes = attributes;
-        lengthPropertyAttributes = attributes;
+        setAttributes("name", attributes);
+        setAttributes("length", attributes);
         arityPropertyAttributes = attributes;
     }
 
     public void setPrototypePropertyAttributes(int attributes) {
-        prototypePropertyAttributes = attributes;
+        setAttributes("prototype", attributes);
     }
 
     protected boolean hasPrototypeProperty() {
@@ -647,9 +655,6 @@ public class BaseFunction extends ScriptableObject implements Function {
     // For function object instances, attributes are
     //  {configurable:false, enumerable:false};
     // see ECMA 15.3.5.2
-    private int prototypePropertyAttributes = PERMANENT | DONTENUM;
     private int argumentsAttributes = PERMANENT | DONTENUM;
     private int arityPropertyAttributes = PERMANENT | READONLY | DONTENUM;
-    private int namePropertyAttributes = READONLY | DONTENUM;
-    private int lengthPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 }

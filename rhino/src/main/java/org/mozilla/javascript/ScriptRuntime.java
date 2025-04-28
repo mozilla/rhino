@@ -22,6 +22,7 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.regexp.NativeRegExp;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeDataView;
 import org.mozilla.javascript.typedarrays.NativeFloat32Array;
@@ -207,6 +208,7 @@ public class ScriptRuntime {
 
         NativeJavaObject.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
+        NativeRegExp.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism

@@ -31,7 +31,7 @@ class NativeRegExpCtor {
         var ctor =
                 new LambdaConstructor(
                         scope,
-                        "Regexp",
+                        "RegExp",
                         2,
                         NativeRegExpCtor::js_constructCall,
                         NativeRegExpCtor::js_construct);

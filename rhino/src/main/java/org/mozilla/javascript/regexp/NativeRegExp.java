@@ -162,7 +162,7 @@ public class NativeRegExp extends IdScriptableObject {
             ctor.sealObject();
         }
 
-        defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
+        ScriptableObject.defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, ctor);
     }
