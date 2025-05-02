@@ -112,7 +112,24 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     @Override
     @SuppressWarnings("unchecked")
     public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        return setter.apply(((T) this.value), value, owner, start, isThrow);
+        if ((getAttributes() & ScriptableObject.READONLY) != 0) {
+            if (isThrow) {
+                throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
+            }
+            return true;
+        }
+        if (owner == start) {
+            return setter.apply(((T) this.value), value, owner, start, isThrow);
+        }
+        return false;
+    }
+
+    /* When setting a property descriptor we need to set the property
+    _without_ the normal checks on readonly and similar. */
+    @SuppressWarnings("unchecked")
+    public void setValueFromDescriptor(
+            Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+        setter.apply(((T) this.value), value, owner, start, isThrow);
     }
 
     @Override
