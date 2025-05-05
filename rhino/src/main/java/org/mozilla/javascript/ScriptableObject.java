@@ -1740,7 +1740,8 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 fslot.value = Undefined.instance;
                             } else if (slot instanceof BuiltInSlot) {
                                 if (value != NOT_FOUND) {
-                                    slot.setValue(value, owner, owner, true);
+                                    ((BuiltInSlot<?>) slot)
+                                            .setValueFromDescriptor(value, owner, owner, true);
                                 }
                             } else {
                                 if (!slot.isValueSlot() && isDataDescriptor(desc)) {
