@@ -20,6 +20,8 @@ module org.mozilla.rhino {
 
     provides org.mozilla.javascript.RegExpLoader with
             org.mozilla.javascript.regexp.RegExpLoaderImpl;
+    provides org.mozilla.javascript.TypedArraysLoader with
+            org.mozilla.javascript.typedarrays.TypedArraysLoaderImpl;
 
     requires java.compiler;
     requires jdk.dynalink;
