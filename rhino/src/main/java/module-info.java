@@ -15,6 +15,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.config;
 
     uses org.mozilla.javascript.RegExpLoader;
+    uses org.mozilla.javascript.TypedArraysLoader;
     uses org.mozilla.javascript.xml.XMLLoader;
     uses org.mozilla.javascript.config.RhinoPropertiesLoader;
 
