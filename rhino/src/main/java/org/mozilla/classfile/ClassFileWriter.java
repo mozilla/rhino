@@ -1455,8 +1455,15 @@ public class ClassFileWriter {
             if (startIdx < itsSuperBlockStartsTop) {
                 SuperBlock sb = superBlocks[startIdx];
                 // check, if it is really the matching one
-                if (offset < sb.getStart() || offset >= sb.getEnd())
-                    throw new IndexOutOfBoundsException();
+                if (offset < sb.getStart() || offset >= sb.getEnd()) {
+                    throw new IndexOutOfBoundsException(
+                            "Index: "
+                                    + offset
+                                    + ", From: "
+                                    + sb.getStart()
+                                    + ", To: "
+                                    + sb.getEnd());
+                }
                 return sb;
             }
             throw new IllegalArgumentException("bad offset: " + offset);
