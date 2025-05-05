@@ -477,6 +477,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 DONTENUM | READONLY);
     }
 
+    /**
+     * Returns <code>true</code>, if the index is wrong.
+     */
     protected boolean checkIndex(int index) {
         return ((index < 0) || (index >= length));
     }
@@ -487,7 +490,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
      * @throws IndexOutOfBoundsException when index is out of range
      */
     protected void ensureIndex(int index) {
-        if (!checkIndex(index)) {
+        if (checkIndex(index)) {
             throw new IndexOutOfBoundsException("Index: " + index + ", length: " + length);
         }
     }
