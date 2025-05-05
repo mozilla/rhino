@@ -482,6 +482,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     /**
+     * Enusres that the index is in the given range
+     * @throws IndexOutOfBoundsException when index is out of range
+     */
+    protected void ensureIndex(int index) {
+        if (!checkIndex(index)) {
+            throw new IndexOutOfBoundsException("Index: " + index+ ", length: " + length);
+        }
+    }
+    /**
      * Return the number of bytes represented by each element in the array. This can be useful when
      * wishing to manipulate the byte array directly from Java.
      */
@@ -1302,9 +1311,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public ListIterator<T> listIterator(int start) {
-        if (checkIndex(start)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(start);
         return new NativeTypedArrayIterator<>(this, start);
     }
 

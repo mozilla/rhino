@@ -102,17 +102,13 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
 
     @Override
     public Double get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Double) js_get(i);
     }
 
     @Override
     public Double set(int i, Double aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Double) js_set(i, aByte);
     }
 }
