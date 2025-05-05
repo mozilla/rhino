@@ -44,11 +44,10 @@ public class ClassCache implements Serializable {
 
         @Override
         public int hashCode() {
-            int result = cls.hashCode();
             if (sec != null) {
-                result = sec.hashCode() * 31;
+                return sec.hashCode() ^ cls.hashCode();
             }
-            return result;
+            return cls.hashCode();
         }
 
         @Override
@@ -62,17 +61,30 @@ public class ClassCache implements Serializable {
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
      * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
-     * to locate associated ClassCache object in the prototype chain of the top scope.
+     * to locate associated ClassCache object in the prototype chain of the top scope. If none was
+     * found, it will try to associate a new ClassCache object to the top scope.
      *
      * @param scope scope to search for ClassCache object.
      * @return previously associated ClassCache object or a new instance of ClassCache if no
      *     ClassCache object was found.
      * @see #associate(ScriptableObject topScope)
+     * @throws IllegalArgumentException if the top scope of provided scope have no associated
+     *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
+     *     ScriptableObject}
      */
     public static ClassCache get(Scriptable scope) {
         ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
         if (cache == null) {
-            throw new RuntimeException("Can't find top level scope for " + "ClassCache.get");
+            // we expect this to not happen frequently, so computing top scope twice is acceptable
+            var topScope = ScriptableObject.getTopLevelScope(scope);
+            if (!(topScope instanceof ScriptableObject)) {
+                // Note: it's originally a RuntimeException, the super class of
+                // IllegalArgumentException, so this will not break error catching
+                throw new IllegalArgumentException(
+                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
+            }
+            cache = new ClassCache();
+            cache.associate(((ScriptableObject) topScope));
         }
         return cache;
     }
