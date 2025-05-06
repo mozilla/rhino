@@ -139,7 +139,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         ScriptableObject.defineBuiltInProperty(
                 this,
                 "prototype",
-                0,
+                DONTENUM | PERMANENT,
                 BaseFunction::prototypeGetter,
                 BaseFunction::prototypeSetter,
                 BaseFunction::prototypeAttrSetter);
@@ -159,8 +159,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         return true;
     }
 
-    private static void prototypeAttrSetter(BaseFunction function, int attributes) {
-    }
+    private static void prototypeAttrSetter(BaseFunction function, int attributes) {}
 
     protected final boolean defaultHas(String name) {
         return super.has(name, this);

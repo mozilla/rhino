@@ -863,6 +863,9 @@ public abstract class ScriptableObject extends SlotMapOwner
             return ScriptRuntime.toBoolean(
                     ((Callable) hasInstance).call(cx, getParentScope(), this, new Object[] {this}));
         }
+        if (!(this instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById("msg.instanceof.bad.target");
+        }
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
 
