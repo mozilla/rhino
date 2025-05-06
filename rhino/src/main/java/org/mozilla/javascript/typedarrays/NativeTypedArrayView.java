@@ -477,9 +477,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 DONTENUM | READONLY);
     }
 
-    /**
-     * Returns <code>true</code>, if the index is wrong.
-     */
+    /** Returns <code>true</code>, if the index is wrong. */
     protected boolean checkIndex(int index) {
         return ((index < 0) || (index >= length));
     }
