@@ -63,7 +63,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         scope,
                         PROXY_TAG,
                         2,
-					    null, // Proxy constructor has *no* prototype
+                        null, // Proxy constructor has *no* prototype
                         null, // Proxy constructor may not be called as a function.
                         NativeProxy::constructor) {
 

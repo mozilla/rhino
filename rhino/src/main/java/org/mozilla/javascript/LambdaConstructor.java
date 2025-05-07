@@ -117,8 +117,8 @@ public class LambdaConstructor extends LambdaFunction {
         setPrototypeProperty(prototype);
         this.targetConstructor = targetConstructor;
         this.flags =
-          (target != null ? CONSTRUCTOR_FUNCTION : 0) |
-          (targetConstructor != null ? CONSTRUCTOR_NEW : 0);
+                (target != null ? CONSTRUCTOR_FUNCTION : 0)
+                        | (targetConstructor != null ? CONSTRUCTOR_NEW : 0);
     }
 
     protected Constructable getTargetConstructor() {

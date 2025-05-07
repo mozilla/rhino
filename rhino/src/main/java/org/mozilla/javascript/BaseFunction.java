@@ -35,11 +35,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         var proto =
                 new LambdaFunction(
-                        scope,
-                        "",
-                        0,
-                        null,
-                        (lcx, lscope, lthisObj, largs) -> Undefined.instance);
+                        scope, "", 0, null, (lcx, lscope, lthisObj, largs) -> Undefined.instance);
 
         proto.defineProperty("constructor", ctor, DONTENUM);
         // Set the constructor correctly here. i.e. ctor.prototype.constructor == ctor
@@ -552,18 +548,21 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     public void setPrototypePropertyAttributes(int attributes) {
         prototypePropertyAttributes = attributes;
-        getMap().compute(this, "prototype", 0, (k, i, s) -> {
-            if (s != null) {
-                s.setAttributes(attributes);
-            }
-            return s;
-        });
+        getMap().compute(
+                        this,
+                        "prototype",
+                        0,
+                        (k, i, s) -> {
+                            if (s != null) {
+                                s.setAttributes(attributes);
+                            }
+                            return s;
+                        });
     }
 
     protected boolean hasPrototypeProperty() {
-        return (prototypeProperty != null
-                && prototypeProperty != UniqueTag.NOT_FOUND)
-               || this instanceof NativeFunction;
+        return (prototypeProperty != null && prototypeProperty != UniqueTag.NOT_FOUND)
+                || this instanceof NativeFunction;
     }
 
     public Object getPrototypeProperty() {

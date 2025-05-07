@@ -47,7 +47,7 @@ public class NativeObject extends ScriptableObject implements Map {
         var proto = new NativeObject();
         ctor.setPrototypeProperty(proto);
         proto.defineProperty("constructor", ctor, DONTENUM);
-        
+
         defOnCtor(ctor, s, "getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
         if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
             defOnCtor(ctor, s, "setPrototypeOf", 2, NativeObject::js_setPrototypeOf);
@@ -533,7 +533,7 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object js_defineProperty(
-        Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         ScriptableObject obj = ensureScriptableObject(arg);
         Object name = args.length < 2 ? Undefined.instance : args[1];
