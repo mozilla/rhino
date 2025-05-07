@@ -63,6 +63,18 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
                 BuiltInSlot::defaultPropDescSetter);
     }
 
+    BuiltInSlot(Object name, int index, int attr, T builtIn, Getter<T> getter, Setter<T> setter) {
+        this(
+                name,
+                index,
+                attr,
+                builtIn,
+                getter,
+                setter,
+                BuiltInSlot::defaultAttrSetter,
+                BuiltInSlot::defaultPropDescSetter);
+    }
+
     BuiltInSlot(
             Object name,
             int index,

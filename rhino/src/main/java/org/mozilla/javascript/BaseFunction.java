@@ -24,8 +24,8 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String FUNCTION_CLASS = "Function";
     static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
-        LambdaConstructor obj =
+    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
+        LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
                         FUNCTION_CLASS,
@@ -33,28 +33,48 @@ public class BaseFunction extends ScriptableObject implements Function {
                         BaseFunction::js_constructorCall,
                         BaseFunction::js_constructor);
 
+        var proto =
+                new LambdaFunction(
+                        scope,
+                        "",
+                        0,
+                        null,
+                        (lcx, lscope, lthisObj, largs) -> Undefined.instance);
+
+        proto.defineProperty("constructor", ctor, DONTENUM);
+        // Set the constructor correctly here. i.e. ctor.prototype.constructor == ctor
+        // Redo the stuff about setupDefaultPrototype.
+
+        ctor.setPrototypeProperty(proto);
         // Do this early, so that the functions on the prototype get
         // the right prototype...
-        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, obj, DONTENUM);
-        obj.setPrototype((Scriptable) obj.getPrototypeProperty());
+        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
+        ctor.setPrototype((Scriptable) ctor.getPrototypeProperty());
 
-        defOnProto(obj, scope, "apply", 2, BaseFunction::js_apply);
-        defOnProto(obj, scope, "bind", 1, BaseFunction::js_bind);
-        defOnProto(obj, scope, "call", 1, BaseFunction::js_call);
-        defOnProto(obj, scope, "toSource", 1, BaseFunction::js_toSource);
-        defOnProto(obj, scope, "toString", 0, BaseFunction::js_toString);
-        defOnProto(obj, scope, SymbolKey.HAS_INSTANCE, 1, BaseFunction::js_hasInstance);
+        defOnProto(ctor, scope, "apply", 2, BaseFunction::js_apply);
+        defOnProto(ctor, scope, "bind", 1, BaseFunction::js_bind);
+        defOnProto(ctor, scope, "call", 1, BaseFunction::js_call);
+        defOnProto(ctor, scope, "toSource", 1, BaseFunction::js_toSource);
+        defOnProto(ctor, scope, "toString", 0, BaseFunction::js_toString);
+        defOnProto(
+                ctor,
+                scope,
+                SymbolKey.HAS_INSTANCE,
+                1,
+                BaseFunction::js_hasInstance,
+                DONTENUM | READONLY | PERMANENT);
 
         // Function.prototype attributes: see ECMA 15.3.3.1
-        obj.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            obj.setStandardPropertyAttributes(READONLY | DONTENUM);
+            ctor.setStandardPropertyAttributes(READONLY | DONTENUM);
         }
-        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, obj, DONTENUM);
+        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
         if (sealed) {
-            obj.sealObject();
-            ((NativeObject) obj.getPrototypeProperty()).sealObject();
+            ctor.sealObject();
+            ((ScriptableObject) ctor.getPrototypeProperty()).sealObject();
         }
+        return ctor;
     }
 
     private static void defOnProto(
@@ -64,7 +84,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             int length,
             SerializableCallable target) {
         constructor.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
     }
 
     private static void defOnProto(
@@ -74,7 +94,18 @@ public class BaseFunction extends ScriptableObject implements Function {
             int length,
             SerializableCallable target) {
         constructor.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defOnProto(
+            LambdaConstructor constructor,
+            Scriptable scope,
+            SymbolKey name,
+            int length,
+            SerializableCallable target,
+            int attributes) {
+        constructor.definePrototypeMethod(
+                scope, name, length, null, target, attributes, DONTENUM | READONLY);
     }
 
     /**
@@ -123,8 +154,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         ScriptableObject.defineBuiltInProperty(
                 this, "length", DONTENUM | READONLY, BaseFunction::lengthGetter);
         ScriptableObject.defineBuiltInProperty(
-                this, "name", DONTENUM | READONLY, BaseFunction::nameGetter);
-        createPrototypeProperty();
+                this,
+                "name",
+                DONTENUM | READONLY,
+                BaseFunction::nameGetter,
+                BaseFunction::nameSetter);
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
@@ -132,17 +166,29 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Object nameGetter(BaseFunction function, Scriptable start) {
-        return function.getFunctionName();
+        return function.nameValue != null ? function.nameValue : function.getFunctionName();
+    }
+
+    private static boolean nameSetter(
+            BaseFunction function,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        function.nameValue = value;
+        return true;
     }
 
     protected void createPrototypeProperty() {
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "prototype",
-                DONTENUM | PERMANENT,
-                BaseFunction::prototypeGetter,
-                BaseFunction::prototypeSetter,
-                BaseFunction::prototypeAttrSetter);
+        if (!has("prototype", this)) {
+            ScriptableObject.defineBuiltInProperty(
+                    this,
+                    "prototype",
+                    prototypePropertyAttributes,
+                    BaseFunction::prototypeGetter,
+                    BaseFunction::prototypeSetter,
+                    BaseFunction::prototypeAttrSetter);
+        }
     }
 
     private static Object prototypeGetter(BaseFunction function, Scriptable start) {
@@ -159,7 +205,9 @@ public class BaseFunction extends ScriptableObject implements Function {
         return true;
     }
 
-    private static void prototypeAttrSetter(BaseFunction function, int attributes) {}
+    private static void prototypeAttrSetter(BaseFunction function, int attributes) {
+        function.prototypePropertyAttributes = attributes;
+    }
 
     protected final boolean defaultHas(String name) {
         return super.has(name, this);
@@ -382,10 +430,11 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Make value as DontEnum, DontDelete, ReadOnly prototype property of this Function object */
     public void setImmunePrototypeProperty(Object value) {
-        if ((getAttributes("prototype") & READONLY) != 0) {
+        if ((prototypePropertyAttributes & READONLY) != 0) {
             throw new IllegalStateException();
         }
         prototypeProperty = (value != null) ? value : UniqueTag.NULL_VALUE;
+        createPrototypeProperty();
         setAttributes("prototype", DONTENUM | PERMANENT | READONLY);
     }
 
@@ -502,23 +551,25 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     public void setPrototypePropertyAttributes(int attributes) {
-        setAttributes("prototype", attributes);
+        prototypePropertyAttributes = attributes;
+        getMap().compute(this, "prototype", 0, (k, i, s) -> {
+            if (s != null) {
+                s.setAttributes(attributes);
+            }
+            return s;
+        });
     }
 
     protected boolean hasPrototypeProperty() {
-        return prototypeProperty != null || this instanceof NativeFunction;
+        return (prototypeProperty != null
+                && prototypeProperty != UniqueTag.NOT_FOUND)
+               || this instanceof NativeFunction;
     }
 
     public Object getPrototypeProperty() {
         Object result = prototypeProperty;
-        if (result == null) {
-            // only create default prototype on native JavaScript functions,
-            // not on built-in functions, java methods, host objects etc.
-            if (this instanceof NativeFunction) {
-                result = setupDefaultPrototype();
-            } else {
-                result = Undefined.instance;
-            }
+        if (result == null || result == UniqueTag.NOT_FOUND) {
+            result = Undefined.instance;
         } else if (result == UniqueTag.NULL_VALUE) {
             result = null;
         }
@@ -526,12 +577,17 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void setPrototypeProperty(Object prototype) {
-        this.prototypeProperty = prototype;
+        if (prototype != null) {
+            createPrototypeProperty();
+            this.prototypeProperty = prototype;
+        } else {
+            prototypeProperty = UniqueTag.NOT_FOUND;
+        }
     }
 
-    protected synchronized Object setupDefaultPrototype() {
-        if (prototypeProperty != null) {
-            return prototypeProperty;
+    protected synchronized Object setupDefaultPrototype(Scriptable scope) {
+        if (!has("prototyoe", this)) {
+            createPrototypeProperty();
         }
         NativeObject obj = new NativeObject();
         obj.setParentScope(getParentScope());
@@ -647,13 +703,14 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;
-    private String nameValue = null;
+    private Object nameValue = null;
     private boolean isGeneratorFunction = false;
     private Scriptable homeObject = null;
 
     // For function object instances, attributes are
     //  {configurable:false, enumerable:false};
     // see ECMA 15.3.5.2
+    private int prototypePropertyAttributes = PERMANENT | DONTENUM;
     private int argumentsAttributes = PERMANENT | DONTENUM;
     private int arityPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 }

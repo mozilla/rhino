@@ -170,12 +170,12 @@ public class NativeGlobal implements Serializable {
             errorProto.put("constructor", errorProto, ctor);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
             errorProto.setPrototype(nativeErrorProto);
+            ctor.setAttributes("name", DONTENUM | READONLY);
+            ctor.setAttributes("length", DONTENUM | READONLY);
             if (sealed) {
                 errorProto.sealObject();
                 ctor.sealObject();
             }
-            ctor.setAttributes("name", DONTENUM | READONLY);
-            ctor.setAttributes("length", DONTENUM | READONLY);
 
             ScriptableObject.defineProperty(scope, name, ctor, DONTENUM);
         }
@@ -187,7 +187,7 @@ public class NativeGlobal implements Serializable {
             String name,
             int length,
             SerializableCallable callable) {
-        LambdaFunction fun = new LambdaFunction(scope, name, length, callable);
+        LambdaFunction fun = new LambdaFunction(scope, name, length, null, callable);
         registerGlobalFunction(scope, sealed, name, fun);
     }
 
@@ -197,9 +197,6 @@ public class NativeGlobal implements Serializable {
         if (sealed) {
             fun.sealObject();
         }
-
-        // Strange, but required by the spec and checked by test262
-        fun.setPrototypeProperty(null);
     }
 
     // Eval is special because we need to "recognize" it in isEvalFunction
@@ -796,6 +793,7 @@ public class NativeGlobal implements Serializable {
                     scope,
                     "eval",
                     1,
+                    null,
                     (callCx, callScope, thisObj, args) ->
                             NativeGlobal.js_eval(callCx, callScope, args));
         }

@@ -737,6 +737,9 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Sets the prototype of the object. */
     @Override
     public void setPrototype(Scriptable m) {
+        if (m == this) {
+            throw new Error("Prototype is this");
+        }
         prototypeObject = m;
     }
 
@@ -3074,6 +3077,15 @@ public abstract class ScriptableObject extends SlotMapOwner
     public static <T extends ScriptableObject> void defineBuiltInProperty(
             T owner,
             String name,
+            int attributes,
+            BuiltInSlot.Getter<T> getter,
+            BuiltInSlot.Setter<T> setter) {
+        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner,
+            Object name,
             int attributes,
             BuiltInSlot.Getter<T> getter,
             BuiltInSlot.Setter<T> setter,

@@ -25,7 +25,7 @@ class NativeScript extends BaseFunction {
 
     private static final Object SCRIPT_TAG = "Script";
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor obj =
                 new LambdaConstructor(
                         scope,
@@ -33,9 +33,15 @@ class NativeScript extends BaseFunction {
                         1,
                         NativeScript::js_constructorCall,
                         NativeScript::js_constructor);
-        var function = (BaseFunction) scope.get("Function", scope);
-        ((ScriptableObject) obj.getPrototypeProperty())
-                .setPrototype((Scriptable) function.getPrototypeProperty());
+        var proto =
+                new LambdaFunction(
+                        scope,
+                        "",
+                        0,
+                        new NativeObject(),
+                        (lcx, lscope, lthisObj, largs) -> Undefined.instance);
+        proto.setPrototypeProperty(null);
+        obj.setPrototypeProperty(proto);
 
         defineMethod(obj, scope, "toString", 0, NativeScript::js_toString);
         defineMethod(obj, scope, "exec", 0, NativeScript::js_exec);
@@ -44,8 +50,10 @@ class NativeScript extends BaseFunction {
         ScriptableObject.defineProperty(scope, "Script", obj, DONTENUM);
         if (sealed) {
             obj.sealObject();
-            ((NativeObject) obj.getPrototypeProperty()).sealObject();
+            ((ScriptableObject) obj.getPrototypeProperty()).sealObject();
         }
+
+        return obj;
     }
 
     private static void defineMethod(

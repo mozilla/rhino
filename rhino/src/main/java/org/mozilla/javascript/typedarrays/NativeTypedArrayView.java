@@ -586,14 +586,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 =======
         LambdaConstructor ta = (LambdaConstructor) scope.getAssociatedValue(TYPED_ARRAY_TAG);
         if (ta == null) {
+            var proto = (ScriptableObject) cx.newObject(scope);
             ta =
                     new LambdaConstructor(
                             scope,
                             "TypedArray",
                             0,
+                            proto,
+                            null,
                             (lcx, lscope, largs) -> {
                                 throw ScriptRuntime.typeError("Fuck");
                             });
+            proto.defineProperty("constructor", ta, DONTENUM);
             defineProtoProperty(ta, cx, "buffer", NativeTypedArrayView::js_buffer, null);
             defineProtoProperty(ta, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
             defineProtoProperty(ta, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);

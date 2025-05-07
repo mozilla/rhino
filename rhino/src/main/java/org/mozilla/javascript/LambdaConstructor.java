@@ -101,9 +101,24 @@ public class LambdaConstructor extends LambdaFunction {
             int length,
             SerializableCallable target,
             SerializableConstructable targetConstructor) {
-        super(scope, name, length, target);
+        super(scope, name, length, target, true);
         this.targetConstructor = targetConstructor;
         this.flags = CONSTRUCTOR_DEFAULT;
+    }
+
+    public LambdaConstructor(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            SerializableConstructable targetConstructor) {
+        super(scope, name, length, target, false);
+        setPrototypeProperty(prototype);
+        this.targetConstructor = targetConstructor;
+        this.flags =
+          (target != null ? CONSTRUCTOR_FUNCTION : 0) |
+          (targetConstructor != null ? CONSTRUCTOR_NEW : 0);
     }
 
     protected Constructable getTargetConstructor() {
@@ -209,6 +224,25 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, prototype, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers.
+     */
+    public void definePrototypeMethod(
+            Scriptable scope,
+            SymbolKey name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f =
+                new LambdaFunction(scope, "[" + name.getName() + "]", length, prototype, target);
         f.setStandardPropertyAttributes(propertyAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);
@@ -381,11 +415,6 @@ public class LambdaConstructor extends LambdaFunction {
     @SuppressWarnings("unchecked")
     public static <T> T convertThisObject(Scriptable thisObj, Class<T> targetClass) {
         if (!targetClass.isInstance(thisObj)) {
-            new Error(
-                            String.format(
-                                    "%s not a %s",
-                                    thisObj == null ? null : thisObj.getClass(), targetClass))
-                    .printStackTrace();
             throw ScriptRuntime.typeErrorById("msg.this.not.instance");
         }
         return (T) thisObj;

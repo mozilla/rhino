@@ -43,7 +43,7 @@ public class LambdaFunction extends BaseFunction {
         this.length = length;
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         if (defaultPrototype) {
-            setupDefaultPrototype();
+            setupDefaultPrototype(scope);
         }
     }
 

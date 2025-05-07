@@ -166,17 +166,21 @@ public class ScriptRuntime {
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         new ClassCache().associate(scope);
 
-        BaseFunction.init(cx, scope, sealed);
-        NativeObject.init(scope, sealed);
+        LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
+        LambdaConstructor obj = NativeObject.init(scope, sealed);
 
-        Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
+        Scriptable objectProto = obj.getPrototype();
 
-        // Function.prototype.__proto__ should be Object.prototype
-        Scriptable functionProto = ScriptableObject.getClassPrototype(scope, "Function");
-        functionProto.setPrototype(objectProto);
+        ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
+        ScriptableObject functionPrototype = (ScriptableObject) function.getPrototypeProperty();
+
+        objectPrototype.setPrototype(null);
+        functionPrototype.setPrototype(objectPrototype);
+        function.setPrototype(functionPrototype);
+        obj.setPrototype(functionPrototype);
 
         // Set the prototype of the object passed in if need be
-        if (scope.getPrototype() == null) scope.setPrototype(objectProto);
+        if (scope.getPrototype() == null) scope.setPrototype(objectPrototype);
 
         // must precede NativeGlobal since it's needed therein
         NativeError.init(scope, sealed);
@@ -258,6 +262,14 @@ public class ScriptRuntime {
         }
 
         return scope;
+    }
+
+    private static void debug(String name, Object obj) {
+        System.err.printf("%s (%s) id %x.\n", name, className(obj), System.identityHashCode(obj));
+    }
+
+    private static String className(Object obj) {
+        return obj == null ? "null" : obj.getClass().getName();
     }
 
     private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
