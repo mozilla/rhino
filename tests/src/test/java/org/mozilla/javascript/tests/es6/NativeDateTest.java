@@ -132,6 +132,56 @@ public class NativeDateTest {
                 "new Date('2021-12-18T17:23:00.000+05:00').toISOString()");
     }
 
+    @Test
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsZ() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78Z').toISOString()");
+    }
+
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsPlus() {
+        ctorDateTimeString(
+                "2025-05-07T05:05:20.780Z",
+                "new Date('2025-05-07T09:05:20.78+04:00').toISOString()");
+    }
+
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsMinus() {
+        ctorDateTimeString(
+                "2025-05-07T13:05:20.780Z",
+                "new Date('2025-05-07T09:05:20.78-04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyTwoDigits() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitZ() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.700Z", "new Date('2025-05-07T09:05:20.7Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitPlus() {
+        ctorDateTimeString(
+                "2025-05-07T05:05:20.700Z",
+                "new Date('2025-05-07T09:05:20.7+04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitMinus() {
+        ctorDateTimeString(
+                "2025-05-07T13:05:20.700Z",
+                "new Date('2025-05-07T09:05:20.7-04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigit() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.700Z", "new Date('2025-05-07T09:05:20.7').toISOString()");
+    }
+
     private static void ctorDateTimeString(final String expected, final String js) {
         Utils.runWithAllModes(
                 cx -> {

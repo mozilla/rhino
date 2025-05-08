@@ -984,31 +984,58 @@ final class NativeDate extends IdScriptableObject {
         }
         loop:
         while (state != ERROR) {
-            int m = i + (state == YEAR ? yearlen : state == MSEC ? 3 : 2);
-            if (m > len) {
-                state = ERROR;
-                break;
-            }
-
-            int value = 0;
-            for (; i < m; ++i) {
-                char c = s.charAt(i);
-                if (c < '0' || c > '9') {
+            if (state == MSEC) {
+                // milli secs are different, digit 2 and 3 are optional
+                int value = 0;
+                int digitsFound = 0;
+                for (; i < len; i++) {
+                    char c = s.charAt(i);
+                    if (c < '0' || c > '9') {
+                        break;
+                    }
+                    value = 10 * value + (c - '0');
+                    digitsFound++;
+                }
+                if (digitsFound == 0 || digitsFound > 3) {
                     state = ERROR;
                     break loop;
                 }
-                value = 10 * value + (c - '0');
-            }
-            values[state] = value;
-
-            if (i == len) {
-                // reached EOF, check for end state
-                switch (state) {
-                    case HOUR:
-                    case TZHOUR:
-                        state = ERROR;
+                if (digitsFound < 3) {
+                    value = value * (digitsFound == 1 ? 100 : 10);
                 }
-                break;
+                values[state] = value;
+
+                if (i == len) {
+                    // no timezone at all is correct here
+                    break;
+                }
+            } else {
+                int m = i + (state == YEAR ? yearlen : 2);
+                if (m > len) {
+                    state = ERROR;
+                    break;
+                }
+
+                int value = 0;
+                for (; i < m; ++i) {
+                    char c = s.charAt(i);
+                    if (c < '0' || c > '9') {
+                        state = ERROR;
+                        break loop;
+                    }
+                    value = 10 * value + (c - '0');
+                }
+                values[state] = value;
+
+                if (i == len) {
+                    // reached EOF, check for end state
+                    switch (state) {
+                        case HOUR:
+                        case TZHOUR:
+                            state = ERROR;
+                    }
+                    break;
+                }
             }
 
             char c = s.charAt(i++);
