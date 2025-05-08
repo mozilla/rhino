@@ -7,150 +7,188 @@
 package org.mozilla.javascript.xmlimpl;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.LambdaConstructor;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SerializableCallable;
+import org.mozilla.javascript.Undefined;
 
-class XMLCtor {
+class XMLCtor extends IdFunctionObject {
     static final long serialVersionUID = -8708195078359817341L;
 
     private static final Object XMLCTOR_TAG = "XMLCtor";
 
-    private static XmlProcessor options;
+    private XmlProcessor options;
 
-    //    private XMLLibImpl lib;
+    private XMLLibImpl lib;
 
-    private XMLCtor(XML xml, Object tag, int id, int arity) {
-        // super(xml, tag, id, arity);
-        //        this.lib = xml.lib;
+    public XMLCtor(Context cx, ScriptableObject scope, XML xml, Object tag, int id, int arity) {
+        super(xml, tag, id, arity);
+        //       this.lib = xml.lib;
         this.options = xml.getProcessor();
+        createProperties(cx, scope, this);
     }
 
-    public static Scriptable init() {
+    public static IdFunctionObject init() {
         return null;
     }
 
-    private static void createProperties(Context cx, LambdaConstructor obj) {
-        // obj.definePrototypeMethod(cx, "defaultSettings", null, null, 0);
-        // obj.definePrototypeMethod(cx, "settings", null, null, 0);
-        // obj.definePrototypeMethod(cx, "setSettings", null, null, 0);
-        obj.defineProperty(
-                cx,
+    private static void createProperties(Context cx, ScriptableObject scope, XMLCtor obj) {
+        defineMethod(
+                obj,
+                scope,
+                "defaultSettings",
+                0,
+                (lcx, lscope, lthisObj, largs) -> {
+                    obj.options.setDefault();
+                    var res = lcx.newObject(lscope);
+                    writeSetting(obj, res);
+                    return res;
+                });
+        defineMethod(
+                obj,
+                scope,
+                "settings",
+                0,
+                (lcx, lscope, lthisObj, largs) -> {
+                    var res = lcx.newObject(lscope);
+                    writeSetting(obj, res);
+                    return res;
+                });
+        defineMethod(
+                obj,
+                scope,
+                "setSettings",
+                1,
+                (lcx, lscope, lthisObj, largs) -> {
+                    if (largs.length == 0 || largs[0] == null || largs[0] == Undefined.instance) {
+                        obj.options.setDefault();
+                    } else if (largs[0] instanceof Scriptable) {
+                        readSettings(obj, (Scriptable) largs[0]);
+                    }
+                    return Undefined.instance;
+                });
+
+        ScriptableObject.defineBuiltInProperty(
+                obj,
                 "prettyPrinting",
-                (o) -> ScriptRuntime.wrapBoolean(options.isPrettyPrinting()),
-                (o, v) -> options.setPrettyPrinting(ScriptRuntime.toBoolean(v)),
-                0);
-        obj.defineProperty(
-                cx,
+                0,
+                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isPrettyPrinting()),
+                (b, v, o, s, t) -> {
+                    b.options.setPrettyPrinting(ScriptRuntime.toBoolean(v));
+                    return true;
+                });
+        ScriptableObject.defineBuiltInProperty(
+                obj,
                 "prettyIndent",
-                (o) -> ScriptRuntime.wrapInt(options.getPrettyIndent()),
-                (o, v) -> options.setPrettyIndent(ScriptRuntime.toInt32(v)),
-                0);
-        obj.defineProperty(
-                cx,
+                0,
+                (b, s) -> ScriptRuntime.wrapInt(b.options.getPrettyIndent()),
+                (b, v, o, s, t) -> {
+                    b.options.setPrettyIndent(ScriptRuntime.toInt32(v));
+                    return true;
+                });
+        ScriptableObject.defineBuiltInProperty(
+                obj,
                 "ignoreWhitespace",
-                (o) -> ScriptRuntime.wrapBoolean(options.isIgnoreWhitespace()),
-                (o, v) -> options.setIgnoreWhitespace(ScriptRuntime.toBoolean(v)),
-                0);
-        obj.defineProperty(
-                cx,
+                0,
+                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreWhitespace()),
+                (b, v, o, s, t) -> {
+                    b.options.setIgnoreWhitespace(ScriptRuntime.toBoolean(v));
+                    return true;
+                });
+        ScriptableObject.defineBuiltInProperty(
+                obj,
                 "ignoreProcessingInstructions",
-                (o) -> ScriptRuntime.wrapBoolean(options.isIgnoreProcessingInstructions()),
-                (o, v) -> options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(v)),
-                0);
-        obj.defineProperty(
-                cx,
+                0,
+                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreProcessingInstructions()),
+                (b, v, o, s, t) -> {
+                    b.options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(v));
+                    return true;
+                });
+        ScriptableObject.defineBuiltInProperty(
+                obj,
                 "ignoreComments",
-                (o) -> ScriptRuntime.wrapBoolean(options.isIgnoreComments()),
-                (o, v) -> options.setIgnoreComments(ScriptRuntime.toBoolean(v)),
-                0);
+                0,
+                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreComments()),
+                (b, v, o, s, t) -> {
+                    b.options.setIgnoreComments(ScriptRuntime.toBoolean(v));
+                    return true;
+                });
     }
 
-    // private void writeSetting(Scriptable target) {
-    //     for (int i = 1; i <= MAX_INSTANCE_ID; ++i) {
-    //         int id = super.getMaxInstanceId() + i;
-    //         String name = getInstanceIdName(id);
-    //         Object value = getInstanceIdValue(id);
-    //         ScriptableObject.putProperty(target, name, value);
-    //     }
-    // }
+    private static void defineMethod(
+            ScriptableObject obj,
+            ScriptableObject scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        defineMethod(obj, scope, name, length, target, DONTENUM, DONTENUM | READONLY, true);
+    }
 
-    // private void readSettings(Scriptable source) {
-    //     for (int i = 1; i <= MAX_INSTANCE_ID; ++i) {
-    //         int id = super.getMaxInstanceId() + i;
-    //         String name = getInstanceIdName(id);
-    //         Object value = ScriptableObject.getProperty(source, name);
-    //         if (value == Scriptable.NOT_FOUND) {
-    //             continue;
-    //         }
-    //         switch (i) {
-    //             case Id_ignoreComments:
-    //             case Id_ignoreProcessingInstructions:
-    //             case Id_ignoreWhitespace:
-    //             case Id_prettyPrinting:
-    //                 if (!(value instanceof Boolean)) {
-    //                     continue;
-    //                 }
-    //                 break;
-    //             case Id_prettyIndent:
-    //                 if (!(value instanceof Number)) {
-    //                     continue;
-    //                 }
-    //                 break;
-    //             default:
-    //                 throw new IllegalStateException();
-    //         }
-    //         setInstanceIdValue(id, value);
-    //     }
-    // }
+    private static void defineMethod(
+            ScriptableObject obj,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes,
+            boolean defaultPrototype) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target, defaultPrototype);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        obj.defineProperty(name, f, attributes);
+    }
+
+    private static void writeSetting(XMLCtor thisObj, Scriptable target) {
+        for (var p : propNames) {
+            Object value = thisObj.get(p, thisObj);
+            ScriptableObject.putProperty(target, p, value);
+        }
+    }
+
+    private static void readSettings(XMLCtor thisObj, Scriptable source) {
+        for (var p : propNames) {
+            Object value = ScriptableObject.getProperty(source, p);
+            if (value == Scriptable.NOT_FOUND) {
+                continue;
+            }
+            switch (p) {
+                case "ignoreComments":
+                case "ignoreProcessingInstructions":
+                case "ignoreWhitespace":
+                case "prettyPrinting":
+                    if (!(value instanceof Boolean)) {
+                        continue;
+                    }
+                    break;
+                case "prettyIndent":
+                    if (!(value instanceof Number)) {
+                        continue;
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException();
+            }
+            ScriptableObject.putProperty(thisObj, p, value);
+        }
+    }
 
     // #string_id_map#
 
-    private static final int Id_ignoreComments = 1,
-            Id_ignoreProcessingInstructions = 2,
-            Id_ignoreWhitespace = 3,
-            Id_prettyIndent = 4,
-            Id_prettyPrinting = 5,
-            MAX_INSTANCE_ID = 5;
+    private static final String[] propNames =
+            new String[] {
+                "ignoreComments",
+                "ignoreProcessingInstructions",
+                "ignoreWhitespace",
+                "prettyIndent",
+                "prettyPrinting"
+            };
 
-    // public Object execIdCall(
-    //         IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-    // {
-    //     if (!f.hasTag(XMLCTOR_TAG)) {
-    //         return super.execIdCall(f, cx, scope, thisObj, args);
-    //     }
-    //     int id = f.methodId();
-    //     switch (id) {
-    //         case Id_defaultSettings:
-    //             {
-    //                 options.setDefault();
-    //                 Scriptable obj = cx.newObject(scope);
-    //                 writeSetting(obj);
-    //                 return obj;
-    //             }
-    //         case Id_settings:
-    //             {
-    //                 Scriptable obj = cx.newObject(scope);
-    //                 writeSetting(obj);
-    //                 return obj;
-    //             }
-    //         case Id_setSettings:
-    //             {
-    //                 if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
-    //                     options.setDefault();
-    //                 } else if (args[0] instanceof Scriptable) {
-    //                     readSettings((Scriptable) args[0]);
-    //                 }
-    //                 return Undefined.instance;
-    //             }
-    //     }
-    //     throw new IllegalArgumentException(String.valueOf(id));
-    // }
-
-    // /** hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
-    // */
-    // @Override
-    // public boolean hasInstance(Scriptable instance) {
-    //     return (instance instanceof XML || instance instanceof XMLList);
-    // }
+    /** hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10. */
+    @Override
+    public boolean hasInstance(Scriptable instance) {
+        return (instance instanceof XML || instance instanceof XMLList);
+    }
 }
