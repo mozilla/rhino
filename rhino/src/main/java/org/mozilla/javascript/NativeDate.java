@@ -976,7 +976,7 @@ final class NativeDate extends IdScriptableObject {
                 i += 1;
                 yearlen = 6;
                 yearmod = (c == '-') ? -1 : 1;
-            } else if (c == 'T') {
+            } else if (c == 'T' && cx.getLanguageVersion() < Context.VERSION_ES6) {
                 // time-only forms no longer in spec, but follow spidermonkey here
                 i += 1;
                 state = HOUR;
@@ -993,10 +993,14 @@ final class NativeDate extends IdScriptableObject {
                     if (c < '0' || c > '9') {
                         break;
                     }
-                    value = 10 * value + (c - '0');
-                    digitsFound++;
+
+                    // skip more digits
+                    if (digitsFound < 3) {
+                        value = 10 * value + (c - '0');
+                        digitsFound++;
+                    }
                 }
-                if (digitsFound == 0 || digitsFound > 3) {
+                if (digitsFound == 0) {
                     state = ERROR;
                     break loop;
                 }
