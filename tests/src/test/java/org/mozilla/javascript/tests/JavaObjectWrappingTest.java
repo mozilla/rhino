@@ -1,13 +1,12 @@
 package org.mozilla.javascript.tests;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.testutils.Utils;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * @author ZZZank
@@ -21,9 +20,10 @@ public class JavaObjectWrappingTest {
         Utils.assertWithAllModes(1, PATH + ".listBased().size()");
         // values inside list should not be leaked, if static type is not a list
         Utils.assertEvaluatorExceptionES6(
-            String.format("Java class \"%s\" has no public instance field or method named", ListBasedImpl.class.getName()),
-            PATH + ".listBased()[0]"
-        );
+                String.format(
+                        "Java class \"%s\" has no public instance field or method named",
+                        ListBasedImpl.class.getName()),
+                PATH + ".listBased()[0]");
         Utils.assertWithAllModes(Undefined.instance, PATH + ".listBased().length");
     }
 
@@ -35,20 +35,19 @@ public class JavaObjectWrappingTest {
         Utils.assertWithAllModes(Undefined.instance, PATH + ".mapBased()['inner']");
         // even when related feature is enabled
         Utils.assertWithAllModes(
-            new ContextFactory() {
-                @Override
-                protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == Context.FEATURE_ENABLE_JAVA_MAP_ACCESS) {
-                        return true;
+                new ContextFactory() {
+                    @Override
+                    protected boolean hasFeature(Context cx, int featureIndex) {
+                        if (featureIndex == Context.FEATURE_ENABLE_JAVA_MAP_ACCESS) {
+                            return true;
+                        }
+                        return super.hasFeature(cx, featureIndex);
                     }
-                    return super.hasFeature(cx, featureIndex);
-                }
-            },
-            -1,
-            null,
-            Undefined.instance,
-            PATH + ".mapBased().inner"
-        );
+                },
+                -1,
+                null,
+                Undefined.instance,
+                PATH + ".mapBased().inner");
     }
 
     public interface Interf {
@@ -61,7 +60,8 @@ public class JavaObjectWrappingTest {
         }
 
         /**
-         * the only method exposed by this interface, accessing any other name SHOULD return {@code undefined}
+         * the only method exposed by this interface, accessing any other name SHOULD return {@code
+         * undefined}
          */
         int size();
     }
