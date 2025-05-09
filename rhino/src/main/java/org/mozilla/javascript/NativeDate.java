@@ -1048,6 +1048,9 @@ final class NativeDate extends IdScriptableObject {
                 values[TZHOUR] = 0;
                 values[TZMIN] = 0;
                 switch (state) {
+                    case YEAR:
+                    case MONTH:
+                    case DAY:
                     case MIN:
                     case SEC:
                     case MSEC:
