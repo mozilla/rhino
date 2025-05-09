@@ -96,17 +96,13 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
 
     @Override
     public Integer get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Integer) js_get(i);
     }
 
     @Override
     public Integer set(int i, Integer aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Integer) js_set(i, aByte);
     }
 }

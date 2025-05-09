@@ -90,17 +90,13 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
 
     @Override
     public Byte get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Byte) js_get(i);
     }
 
     @Override
     public Byte set(int i, Byte aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Byte) js_set(i, aByte);
     }
 }

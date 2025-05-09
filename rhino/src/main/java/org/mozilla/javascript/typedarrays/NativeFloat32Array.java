@@ -97,17 +97,13 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
 
     @Override
     public Float get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Float) js_get(i);
     }
 
     @Override
     public Float set(int i, Float aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Float) js_set(i, aByte);
     }
 }
