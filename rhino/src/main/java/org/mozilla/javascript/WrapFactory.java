@@ -113,13 +113,14 @@ public class WrapFactory {
      */
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
-        if (staticType != null) {
-            if (List.class.isAssignableFrom(staticType)) {
-                return new NativeJavaList(scope, javaObject);
-            } else if (Map.class.isAssignableFrom(staticType)) {
-                return new NativeJavaMap(scope, javaObject);
-            }
+
+        var typeHint = staticType == null ? javaObject.getClass() : staticType;
+        if (List.class.isAssignableFrom(typeHint)) {
+            return new NativeJavaList(scope, javaObject);
+        } else if (Map.class.isAssignableFrom(typeHint)) {
+            return new NativeJavaMap(scope, javaObject);
         }
+
         return new NativeJavaObject(scope, javaObject, staticType);
     }
 
