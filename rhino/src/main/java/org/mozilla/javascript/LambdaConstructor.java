@@ -230,6 +230,26 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     /**
+     * Define a function property on the prototype of the constructor using a KnownBuiltInFunction
+     * under the covers.
+     */
+    public void defineKnownBuiltInPrototypeMethod(
+            Object tag,
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        KnownBuiltInFunction f =
+                new KnownBuiltInFunction(tag, scope, name, length, prototype, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, f, attributes);
+    }
+
+    /**
      * Define a function property on the prototype of the constructor using a LambdaFunction under
      * the covers.
      */

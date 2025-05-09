@@ -24,6 +24,9 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String FUNCTION_CLASS = "Function";
     static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 
+    private static final String APPLY_TAG = "APPLY_TAG";
+    private static final String CALL_TAG = "CALL_TAG";
+
     static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
@@ -47,9 +50,9 @@ public class BaseFunction extends ScriptableObject implements Function {
         ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
         ctor.setPrototype((Scriptable) ctor.getPrototypeProperty());
 
-        defOnProto(ctor, scope, "apply", 2, BaseFunction::js_apply);
+        defKnownBuiltInOnProto(ctor, APPLY_TAG, scope, "apply", 2, BaseFunction::js_apply);
         defOnProto(ctor, scope, "bind", 1, BaseFunction::js_bind);
-        defOnProto(ctor, scope, "call", 1, BaseFunction::js_call);
+        defKnownBuiltInOnProto(ctor, CALL_TAG, scope, "call", 1, BaseFunction::js_call);
         defOnProto(ctor, scope, "toSource", 1, BaseFunction::js_toSource);
         defOnProto(ctor, scope, "toString", 0, BaseFunction::js_toString);
         defOnProto(
@@ -81,6 +84,17 @@ public class BaseFunction extends ScriptableObject implements Function {
             SerializableCallable target) {
         constructor.definePrototypeMethod(
                 scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defKnownBuiltInOnProto(
+            LambdaConstructor constructor,
+            Object tag,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        constructor.defineKnownBuiltInPrototypeMethod(
+                tag, scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
     }
 
     private static void defOnProto(
@@ -155,10 +169,16 @@ public class BaseFunction extends ScriptableObject implements Function {
                 DONTENUM | READONLY,
                 BaseFunction::nameGetter,
                 BaseFunction::nameSetter);
+        ScriptableObject.defineBuiltInProperty(
+                this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
         return function.getLength();
+    }
+
+    private static Object arityGetter(BaseFunction function, Scriptable start) {
+        return function.getArity();
     }
 
     private static Object nameGetter(BaseFunction function, Scriptable start) {
@@ -271,19 +291,13 @@ public class BaseFunction extends ScriptableObject implements Function {
             Id_arguments = 5,
             MAX_INSTANCE_ID = 5;
 
-    static boolean isApply(IdFunctionObject f) {
-        return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
+    static boolean isApply(KnownBuiltInFunction f) {
+        return f.getTag() == APPLY_TAG;
     }
 
-    static boolean isApplyOrCall(IdFunctionObject f) {
-        if (f.hasTag(FUNCTION_TAG)) {
-            switch (f.methodId()) {
-                case Id_apply:
-                case Id_call:
-                    return true;
-            }
-        }
-        return false;
+    static boolean isApplyOrCall(KnownBuiltInFunction f) {
+        var tag = f.getTag();
+        return tag == APPLY_TAG || tag == CALL_TAG;
     }
 
     private static Object js_hasInstance(
