@@ -171,6 +171,12 @@ public class BaseFunction extends ScriptableObject implements Function {
                 BaseFunction::nameSetter);
         ScriptableObject.defineBuiltInProperty(
                 this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
+        ScriptableObject.defineBuiltInProperty(
+                this,
+                "arguments",
+                PERMANENT | DONTENUM,
+                BaseFunction::argumentsGetter,
+                BaseFunction::argumentsSetter);
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
@@ -179,6 +185,20 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Object arityGetter(BaseFunction function, Scriptable start) {
         return function.getArity();
+    }
+
+    private static Object argumentsGetter(BaseFunction function, Scriptable start) {
+        return function.getArguments();
+    }
+
+    private static boolean argumentsSetter(
+            BaseFunction function,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        function.argumentsObj = value;
+        return true;
     }
 
     private static Object nameGetter(BaseFunction function, Scriptable start) {
@@ -557,7 +577,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     public void setStandardPropertyAttributes(int attributes) {
         setAttributes("name", attributes);
         setAttributes("length", attributes);
-        arityPropertyAttributes = attributes;
+        setAttributes("arity", attributes);
     }
 
     public void setPrototypePropertyAttributes(int attributes) {
@@ -623,14 +643,13 @@ public class BaseFunction extends ScriptableObject implements Function {
         // <Function name>.arguments is deprecated, so we use a slow
         // way of getting it that doesn't add to the invocation cost.
         // TODO: add warning, error based on version
-        Object value = defaultHas("arguments") ? defaultGet("arguments") : argumentsObj;
-        if (value != NOT_FOUND) {
+        if (argumentsObj != NOT_FOUND) {
             // Should after changing <Function name>.arguments its
             // activation still be available during Function call?
             // This code assumes it should not:
             // defaultGet("arguments") != NOT_FOUND
             // means assigned arguments
-            return value;
+            return argumentsObj;
         }
         Context cx = Context.getContext();
         NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
@@ -724,6 +743,4 @@ public class BaseFunction extends ScriptableObject implements Function {
     //  {configurable:false, enumerable:false};
     // see ECMA 15.3.5.2
     private int prototypePropertyAttributes = PERMANENT | DONTENUM;
-    private int argumentsAttributes = PERMANENT | DONTENUM;
-    private int arityPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 }
