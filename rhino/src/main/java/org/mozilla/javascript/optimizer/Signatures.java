@@ -143,6 +143,16 @@ interface Signatures {
                     + ")Ljava/lang/Object;";
 
     /**
+     * PROP:CALL_0:{name} and PROP:CALL_0_OPT:{name}: Calls the named property with no arguments.
+     * Falls back to OptRuntime.callProp0 or callProp0Optional.
+     */
+    String PROP_CALL_0 =
+            "(Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;";
+
+    /**
      * NAME:GET:{name}: Looks up a the named value from the scope. Falls back to ScriptRuntime.name.
      * Compared to that function, this version of the signature puts the "scope" first in the
      * argument list rather than second. This makes it easier for future linkers to work because
@@ -202,6 +212,15 @@ interface Signatures {
     String NAME_SET_CONST =
             "(Lorg/mozilla/javascript/Scriptable;"
                     + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + ")Ljava/lang/Object;";
+
+    /**
+     * NAME:CALL_0:{name}, and NAME:CALL_0_OPT:{name}: Calls the named function with no arguments.
+     * Falls back to ScriptRuntime.callName0 or callName0Optional.
+     */
+    String NAME_CALL_0 =
+            "(Lorg/mozilla/javascript/Scriptable;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";
 

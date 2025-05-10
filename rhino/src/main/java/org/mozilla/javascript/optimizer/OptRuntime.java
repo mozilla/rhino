@@ -24,6 +24,13 @@ public final class OptRuntime extends ScriptRuntime {
     public static final Integer oneObj = Integer.valueOf(1);
     public static final Integer minusOneObj = Integer.valueOf(-1);
 
+    private static final Object[] argsForVarargs = new Object[] {ScriptRuntime.emptyArgs};
+
+    /** A way to pass an empty array to a varargs function like MethodHandles.insertArguments. */
+    public static Object[] emptyArgsForVarargs() {
+        return argsForVarargs;
+    }
+
     /** Implement ....() call shrinking optimizer code. */
     public static Object call0(Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
         return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
@@ -84,6 +91,13 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /** Implement x.property() call shrinking optimizer code. */
+    public static Object callProp(
+            Object value, String property, Context cx, Scriptable scope, Object[] args) {
+        Callable f = getPropFunctionAndThis(value, property, cx, scope);
+        Scriptable thisObj = lastStoredScriptable(cx);
+        return f.call(cx, scope, thisObj, args);
+    }
+
     public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
