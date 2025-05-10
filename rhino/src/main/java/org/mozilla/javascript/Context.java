@@ -34,6 +34,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
+import org.mozilla.javascript.nat.type.TypeInfo;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -1829,7 +1830,7 @@ public class Context implements Closeable {
             if (cx == null) {
                 cx = Context.getContext();
             }
-            return cx.getWrapFactory().wrap(cx, scope, value, null);
+            return cx.getWrapFactory().wrap(cx, scope, value, TypeInfo.NONE);
         }
     }
 
@@ -1844,6 +1845,10 @@ public class Context implements Closeable {
      * @throws EvaluatorException if the conversion cannot be performed
      */
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+        return jsToJava(value, TypeInfo.of(desiredType));
+    }
+
+    public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
         return NativeJavaObject.coerceTypeImpl(desiredType, value);
     }
 
