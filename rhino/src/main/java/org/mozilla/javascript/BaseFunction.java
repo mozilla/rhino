@@ -127,11 +127,22 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
+        var proto = new NativeObject();
+
+        var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
+        var functionProto = (Scriptable) ScriptableObject.getProperty(function, "prototype");
+        proto.setPrototype(functionProto);
+
+        var iterator = (Scriptable) ScriptableObject.getProperty(scope, "Iterator");
+        var iteratorPrototype = ScriptableObject.getProperty(iterator, "prototype");
+        ScriptableObject.putProperty(proto, "prototype", iteratorPrototype);
+
         LambdaConstructor obj =
                 new LambdaConstructor(
                         scope,
                         GENERATOR_FUNCTION_CLASS,
                         1,
+                        proto,
                         BaseFunction::js_gen_constructorCall,
                         BaseFunction::js_gen_constructor);
 
@@ -169,14 +180,20 @@ public class BaseFunction extends ScriptableObject implements Function {
                 DONTENUM | READONLY,
                 BaseFunction::nameGetter,
                 BaseFunction::nameSetter);
-        ScriptableObject.defineBuiltInProperty(
-                this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "arguments",
-                PERMANENT | DONTENUM,
-                BaseFunction::argumentsGetter,
-                BaseFunction::argumentsSetter);
+        if (includeNonStandardProps()) {
+            ScriptableObject.defineBuiltInProperty(
+                    this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
+            ScriptableObject.defineBuiltInProperty(
+                    this,
+                    "arguments",
+                    PERMANENT | DONTENUM,
+                    BaseFunction::argumentsGetter,
+                    BaseFunction::argumentsSetter);
+        }
+    }
+
+    protected boolean includeNonStandardProps() {
+        return !Context.isCurrentContextStrict();
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {

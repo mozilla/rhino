@@ -27,7 +27,10 @@ import org.mozilla.javascript.Undefined;
 class NativeRegExpCtor {
     private static final long serialVersionUID = -5733330028285400526L;
 
-    public static LambdaConstructor init(Context cx, ScriptableObject scope, boolean sealed) {
+    public static LambdaConstructor init(Context cx, Scriptable scopeArg, boolean sealed) {
+        // We have to keep parameter types to match lazy evaluation.
+        ScriptableObject scope = (ScriptableObject) scopeArg;
+
         var ctor =
                 new LambdaConstructor(
                         scope,
@@ -50,39 +53,102 @@ class NativeRegExpCtor {
         ctor.defineProperty(
                 cx,
                 "input",
-                (c) -> getImpl().input,
+                (c) -> {
+                    var res = getImpl().input;
+                    return res == null ? "" : res.toString();
+                },
                 (c, v) -> getImpl().input = ScriptRuntime.toString(v),
                 ScriptableObject.PERMANENT);
         ctor.defineProperty(
                 cx,
                 "$_",
-                (c) -> getImpl().input,
+                (c) -> {
+                    var res = getImpl().input;
+                    return res == null ? "" : res.toString();
+                },
                 (c, v) -> getImpl().input = ScriptRuntime.toString(v),
                 ScriptableObject.PERMANENT);
         ctor.defineProperty(
-                cx, "lastMatch", (c) -> getImpl().lastMatch, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$&", (c) -> getImpl().lastMatch, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx, "lastParen", (c) -> getImpl().lastParen, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(cx, "$+", (c) -> getImpl().lastParen, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx, "leftContext", (c) -> getImpl().leftContext, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx, "$`", (c) -> getImpl().leftContext, null, ScriptableObject.PERMANENT);
-        ctor.defineProperty(
                 cx,
-                "rightContext",
-                (c) -> getImpl().rightContext,
+                "lastMatch",
+                (c) -> {
+                    var res = getImpl().lastMatch;
+                    return res == null ? "" : res.toString();
+                },
                 null,
                 ScriptableObject.PERMANENT);
         ctor.defineProperty(
-                cx, "$'", (c) -> getImpl().rightContext, null, ScriptableObject.PERMANENT);
+                cx,
+                "$&",
+                (c) -> {
+                    var res = getImpl().lastMatch;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "lastParen",
+                (c) -> {
+                    var res = getImpl().lastParen;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "$+",
+                (c) -> {
+                    var res = getImpl().lastParen;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "leftContext",
+                (c) -> {
+                    var res = getImpl().leftContext;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "$`",
+                (c) -> {
+                    var res = getImpl().leftContext;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "rightContext",
+                (c) -> {
+                    var res = getImpl().rightContext;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
+        ctor.defineProperty(
+                cx,
+                "$'",
+                (c) -> {
+                    var res = getImpl().rightContext;
+                    return res == null ? "" : res.toString();
+                },
+                null,
+                ScriptableObject.PERMANENT);
         for (int i = 1; i < 10; i++) {
             int c = i - 1;
             ctor.defineProperty(
                     cx,
                     String.format("$%d", i),
-                    (x) -> getImpl().getParenSubString(c),
+                    (x) -> {
+                        var res = getImpl().getParenSubString(c);
+                        return res == null ? "" : res.toString();
+                    },
                     null,
                     ScriptableObject.PERMANENT);
         }

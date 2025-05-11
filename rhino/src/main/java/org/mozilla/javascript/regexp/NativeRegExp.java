@@ -140,7 +140,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final int ANCHOR_BOL = -2;
 
-    public static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
 
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
