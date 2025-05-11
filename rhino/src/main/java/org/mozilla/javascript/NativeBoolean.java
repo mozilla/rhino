@@ -11,7 +11,7 @@ package org.mozilla.javascript;
  *
  * @author Norris Boyd
  */
-final class NativeBoolean extends OptimisedScriptableObject {
+final class NativeBoolean extends ScriptableObject {
     private static final long serialVersionUID = -3716996899943880933L;
 
     private static final String CLASS_NAME = "Boolean";

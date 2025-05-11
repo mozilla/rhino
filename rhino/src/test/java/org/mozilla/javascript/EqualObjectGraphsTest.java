@@ -88,12 +88,12 @@ public class EqualObjectGraphsTest {
                             (c, scope, thisObj, args) -> {
                                 assertTrue(
                                         equal(
-                                                makeHeterogenousScriptable(cx, top, "v1"),
-                                                makeHeterogenousScriptable(cx, top, "v1")));
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v1")));
                                 assertFalse(
                                         equal(
-                                                makeHeterogenousScriptable(cx, top, "v1"),
-                                                makeHeterogenousScriptable(cx, top, "v2")));
+                                                makeHeterogenousScriptable(cx, "v1"),
+                                                makeHeterogenousScriptable(cx, "v2")));
                                 return null;
                             },
                     cx,
@@ -104,8 +104,8 @@ public class EqualObjectGraphsTest {
         }
     }
 
-    private static Object makeHeterogenousScriptable(
-            Context cx, ScriptableObject global, String discriminator) {
+    private static Object makeHeterogenousScriptable(Context cx, String discriminator) {
+        ScriptableObject global = cx.initStandardObjects();
         ScriptableObject s = (ScriptableObject) cx.newObject(global);
         s.put(0, s, "i0");
         s.put(1, s, "i1");
