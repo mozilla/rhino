@@ -137,7 +137,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         var iteratorPrototype = ScriptableObject.getProperty(iterator, "prototype");
         ScriptableObject.putProperty(proto, "prototype", iteratorPrototype);
 
-        LambdaConstructor obj =
+        LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
                         GENERATOR_FUNCTION_CLASS,
@@ -146,14 +146,16 @@ public class BaseFunction extends ScriptableObject implements Function {
                         BaseFunction::js_gen_constructorCall,
                         BaseFunction::js_gen_constructor);
 
-        // Function.prototype attributes: see ECMA 15.3.3.1
-        obj.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+        proto.defineProperty("constructor", ctor, DONTENUM);
 
-        ScriptableObject.putProperty(scope, GENERATOR_FUNCTION_CLASS, obj);
+        // Function.prototype attributes: see ECMA 15.3.3.1
+        ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
+
+        ScriptableObject.putProperty(scope, GENERATOR_FUNCTION_CLASS, ctor);
         // Function.prototype attributes: see ECMA 15.3.3.1
         // The "GeneratorFunction" name actually never appears in the global scope.
         // Return it here so it can be cached as a "builtin"
-        return obj;
+        return ctor;
     }
 
     public BaseFunction() {
@@ -454,7 +456,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             try {
                 cx.currentActivationCall = null;
                 cx.isTopLevelStrict = false;
-                return jsConstructor(cx, scope, args, false);
+                return jsConstructor(cx, scope, args, true);
             } finally {
                 cx.isTopLevelStrict = strictMode;
                 cx.currentActivationCall = activation;
