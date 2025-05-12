@@ -737,9 +737,6 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Sets the prototype of the object. */
     @Override
     public void setPrototype(Scriptable m) {
-        if (m == this) {
-            throw new Error("Prototype is this");
-        }
         prototypeObject = m;
     }
 
@@ -1837,6 +1834,11 @@ public abstract class ScriptableObject extends SlotMapOwner
 
         LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
         replaceLambdaAccessorSlot(cx, name, newSlot);
+    }
+
+    public void defineProperty(
+            Context cx, String name, LambdaGetterFunction getter, int attributes) {
+        defineProperty(cx, name, getter, null, attributes);
     }
 
     public void defineProperty(

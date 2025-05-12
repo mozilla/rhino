@@ -102,16 +102,6 @@ public class BaseFunction extends ScriptableObject implements Function {
             Scriptable scope,
             SymbolKey name,
             int length,
-            SerializableCallable target) {
-        constructor.definePrototypeMethod(
-                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
-    }
-
-    private static void defOnProto(
-            LambdaConstructor constructor,
-            Scriptable scope,
-            SymbolKey name,
-            int length,
             SerializableCallable target,
             int attributes) {
         constructor.definePrototypeMethod(

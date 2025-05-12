@@ -262,14 +262,6 @@ public class ScriptRuntime {
         return scope;
     }
 
-    private static void debug(String name, Object obj) {
-        System.err.printf("%s (%s) id %x.\n", name, className(obj), System.identityHashCode(obj));
-    }
-
-    private static String className(Object obj) {
-        return obj == null ? "null" : obj.getClass().getName();
-    }
-
     private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {

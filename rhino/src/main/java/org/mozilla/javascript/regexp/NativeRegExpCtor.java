@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.regexp;
 
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -43,116 +45,51 @@ class NativeRegExpCtor {
                 "multiline",
                 (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
                 (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
-                ScriptableObject.PERMANENT);
+                PERMANENT);
         ctor.defineProperty(
                 cx,
                 "$*",
                 (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
                 (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
-                ScriptableObject.PERMANENT);
+                PERMANENT);
         ctor.defineProperty(
                 cx,
                 "input",
-                (c) -> {
-                    var res = getImpl().input;
-                    return res == null ? "" : res.toString();
-                },
+                (c) -> toStr(getImpl().input),
                 (c, v) -> getImpl().input = ScriptRuntime.toString(v),
-                ScriptableObject.PERMANENT);
+                PERMANENT);
         ctor.defineProperty(
                 cx,
                 "$_",
-                (c) -> {
-                    var res = getImpl().input;
-                    return res == null ? "" : res.toString();
-                },
+                (c) -> toStr(getImpl().input),
                 (c, v) -> getImpl().input = ScriptRuntime.toString(v),
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "lastMatch",
-                (c) -> {
-                    var res = getImpl().lastMatch;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "$&",
-                (c) -> {
-                    var res = getImpl().lastMatch;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "lastParen",
-                (c) -> {
-                    var res = getImpl().lastParen;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "$+",
-                (c) -> {
-                    var res = getImpl().lastParen;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "leftContext",
-                (c) -> {
-                    var res = getImpl().leftContext;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "$`",
-                (c) -> {
-                    var res = getImpl().leftContext;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "rightContext",
-                (c) -> {
-                    var res = getImpl().rightContext;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
-        ctor.defineProperty(
-                cx,
-                "$'",
-                (c) -> {
-                    var res = getImpl().rightContext;
-                    return res == null ? "" : res.toString();
-                },
-                null,
-                ScriptableObject.PERMANENT);
+                PERMANENT);
+        ctor.defineProperty(cx, "lastMatch", (c) -> toStr(getImpl().lastMatch), PERMANENT);
+        ctor.defineProperty(cx, "$&", (c) -> toStr(getImpl().lastMatch), PERMANENT);
+        ctor.defineProperty(cx, "lastParen", (c) -> toStr(getImpl().lastParen), PERMANENT);
+        ctor.defineProperty(cx, "$+", (c) -> toStr(getImpl().lastParen), PERMANENT);
+        ctor.defineProperty(cx, "leftContext", (c) -> toStr(getImpl().leftContext), PERMANENT);
+        ctor.defineProperty(cx, "$`", (c) -> toStr(getImpl().leftContext), PERMANENT);
+        ctor.defineProperty(cx, "rightContext", (c) -> toStr(getImpl().rightContext), PERMANENT);
+        ctor.defineProperty(cx, "$'", (c) -> toStr(getImpl().rightContext), PERMANENT);
         for (int i = 1; i < 10; i++) {
             int c = i - 1;
             ctor.defineProperty(
                     cx,
                     String.format("$%d", i),
-                    (x) -> {
-                        var res = getImpl().getParenSubString(c);
-                        return res == null ? "" : res.toString();
-                    },
+                    (x) -> toStr(getImpl().getParenSubString(c)),
                     null,
-                    ScriptableObject.PERMANENT);
+                    PERMANENT);
         }
         return ctor;
+    }
+
+    private static String toStr(String subStr) {
+        return subStr == null ? "" : subStr;
+    }
+
+    private static String toStr(SubString subStr) {
+        return subStr == null ? "" : subStr.toString();
     }
 
     private static Scriptable js_constructCall(
