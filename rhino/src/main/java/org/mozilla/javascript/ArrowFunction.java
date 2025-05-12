@@ -43,6 +43,11 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
+    protected void createPrototypeProperty() {
+        // Do nothing, because arrow functions don't have a prototype.
+    }
+
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return targetFunction.call(cx, scope, getCallThis(cx), args);
     }

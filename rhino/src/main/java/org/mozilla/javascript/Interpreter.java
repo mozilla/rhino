@@ -2859,35 +2859,17 @@ public final class Interpreter extends Icode implements Evaluator {
                 fun = afun.getTargetFunction();
                 funThisObj = afun.getCallThis(cx);
                 funHomeObj = afun.getBoundHomeObject();
-            } else if (fun instanceof LambdaConstructor) {
-                break;
-            } else if (fun instanceof LambdaFunction) {
-                fun = ((LambdaFunction) fun).getTarget();
-            } else if (fun instanceof BoundFunction) {
-                BoundFunction bfun = (BoundFunction) fun;
-                fun = bfun.getTargetFunction();
-                funThisObj = bfun.getCallThis(cx, calleeScope);
-                Object[] boundArgs = bfun.getBoundArgs();
-                int blen = boundArgs.length;
-                if (blen > 0) {
-                    stack = frame.ensureStackLength(blen + stackTop + 2 + indexReg);
-                    sDbl = frame.sDbl;
-                    System.arraycopy(stack, stackTop + 2, stack, stackTop + 2 + blen, indexReg);
-                    System.arraycopy(sDbl, stackTop + 2, sDbl, stackTop + 2 + blen, indexReg);
-                    System.arraycopy(boundArgs, 0, stack, stackTop + 2, blen);
-                    indexReg += blen;
-                }
-            } else if (fun instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) fun;
+            } else if (fun instanceof KnownBuiltInFunction) {
+                KnownBuiltInFunction kfun = (KnownBuiltInFunction) fun;
                 // Bug 405654 -- make the best effort to keep
                 // Function.apply and Function.call within this
                 // interpreter loop invocation
-                if (BaseFunction.isApplyOrCall(ifun)) {
+                if (BaseFunction.isApplyOrCall(kfun)) {
                     // funThisObj becomes fun
                     fun = ScriptRuntime.getCallable(funThisObj);
                     // first arg becomes thisObj
                     funThisObj = getApplyThis(cx, stack, sDbl, stackTop + 2, indexReg, fun, frame);
-                    if (BaseFunction.isApply(ifun)) {
+                    if (BaseFunction.isApply(kfun)) {
                         // Apply: second argument after new "this"
                         // should be array-like
                         // and we'll spread its elements on the stack
@@ -2916,6 +2898,24 @@ public final class Interpreter extends Icode implements Evaluator {
                     // Some other IdFunctionObject we don't know how to
                     // reduce.
                     break;
+                }
+            } else if (fun instanceof LambdaConstructor) {
+                break;
+            } else if (fun instanceof LambdaFunction) {
+                fun = ((LambdaFunction) fun).getTarget();
+            } else if (fun instanceof BoundFunction) {
+                BoundFunction bfun = (BoundFunction) fun;
+                fun = bfun.getTargetFunction();
+                funThisObj = bfun.getCallThis(cx, calleeScope);
+                Object[] boundArgs = bfun.getBoundArgs();
+                int blen = boundArgs.length;
+                if (blen > 0) {
+                    stack = frame.ensureStackLength(blen + stackTop + 2 + indexReg);
+                    sDbl = frame.sDbl;
+                    System.arraycopy(stack, stackTop + 2, stack, stackTop + 2 + blen, indexReg);
+                    System.arraycopy(sDbl, stackTop + 2, sDbl, stackTop + 2 + blen, indexReg);
+                    System.arraycopy(boundArgs, 0, stack, stackTop + 2, blen);
+                    indexReg += blen;
                 }
             } else if (fun instanceof NoSuchMethodShim) {
                 NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;

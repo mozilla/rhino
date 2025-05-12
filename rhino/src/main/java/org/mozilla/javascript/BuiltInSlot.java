@@ -51,6 +51,30 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     private final AttributeSetter<T> attrUpdater;
     private final PropDescriptionSetter<T> propDescSetter;
 
+    BuiltInSlot(Object name, int index, int attr, T builtIn, Getter<T> getter) {
+        this(
+                name,
+                index,
+                attr,
+                builtIn,
+                getter,
+                BuiltInSlot::defaultSetter,
+                BuiltInSlot::defaultAttrSetter,
+                BuiltInSlot::defaultPropDescSetter);
+    }
+
+    BuiltInSlot(Object name, int index, int attr, T builtIn, Getter<T> getter, Setter<T> setter) {
+        this(
+                name,
+                index,
+                attr,
+                builtIn,
+                getter,
+                setter,
+                BuiltInSlot::defaultAttrSetter,
+                BuiltInSlot::defaultPropDescSetter);
+    }
+
     BuiltInSlot(
             Object name,
             int index,
@@ -150,6 +174,15 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     boolean applyNewDescriptor(
             Object id, ScriptableObject desc, boolean checkValid, Object key, int index) {
         return propDescSetter.apply(((T) this.value), this, id, desc, checkValid, key, index);
+    }
+
+    private static <T extends ScriptableObject> boolean defaultSetter(
+            T builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+        return true;
+    }
+
+    private static <T extends ScriptableObject> void defaultAttrSetter(T builtIn, int attributes) {
+        // Do nothing.
     }
 
     private static <T extends ScriptableObject> boolean defaultPropDescSetter(

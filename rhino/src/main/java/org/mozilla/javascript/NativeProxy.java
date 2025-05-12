@@ -63,7 +63,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         scope,
                         PROXY_TAG,
                         2,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        null, // Proxy constructor has *no* prototype
+                        null, // Proxy constructor may not be called as a function.
                         NativeProxy::constructor) {
 
                     @Override
@@ -76,7 +77,6 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         return obj;
                     }
                 };
-        constructor.setPrototypeProperty(null);
 
         constructor.defineConstructorMethod(
                 scope, "revocable", 2, NativeProxy::revocable, DONTENUM, DONTENUM | READONLY);

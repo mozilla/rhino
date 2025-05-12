@@ -49,6 +49,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
@@ -465,7 +466,7 @@ public class Test262SuiteTest {
 
         public static $262 createRealm(
                 Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            ScriptableObject realm = cx.initSafeStandardObjects();
+            ScriptableObject realm = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
             return install(realm, thisObj.getPrototype());
         }
 
@@ -486,7 +487,7 @@ public class Test262SuiteTest {
     }
 
     private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
-        ScriptableObject scope = cx.initSafeStandardObjects();
+        ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
             String harnessKey = harnessFile + '-' + interpretedMode;
