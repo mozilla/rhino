@@ -16,6 +16,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * Misc utilities to make test code easier.
@@ -204,8 +205,10 @@ public class Utils {
                         cx.setLanguageVersion(languageVersion);
                     }
                     final Scriptable scope = cx.initStandardObjects();
-                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
-
+                    Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+                    if (res instanceof Wrapper) {
+                        res = ((Wrapper) res).unwrap();
+                    }
                     if (expected instanceof Integer && res instanceof Double) {
                         assertEquals(
                                 message,
