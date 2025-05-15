@@ -1168,6 +1168,53 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return result;
     }
 
+    private static class TypedArrayBufferWitnessRecord {
+        private final NativeTypedArrayView<?> object;
+        private final int cachedBufferByteLength;
+        private static final int DETACHED = -1;
+
+        private TypedArrayBufferWitnessRecord(NativeTypedArrayView<?> object, int cachedBufferByteLength) {
+            this.object = object;
+            this.cachedBufferByteLength = cachedBufferByteLength;
+        }
+
+        static TypedArrayBufferWitnessRecord create(NativeTypedArrayView<?> object) {
+            var buffer = object.arrayBuffer;
+            return new TypedArrayBufferWitnessRecord(
+                    object,
+                    buffer.isDetached() ? DETACHED : buffer.getLength()
+            );
+        }
+
+        public int getTypedArrayByteLength() {
+            if (isTypedArrayOutOfBounds()) {
+                return 0;
+            }
+            int length = getTypedArrayLength();
+            if (length == 0) {
+                return 0;
+            }
+            return object.byteLength;
+        }
+
+        public int getTypedArrayLength() {
+            return object.getArrayLength();
+        }
+
+        public boolean isTypedArrayOutOfBounds() {
+            var ta = object;
+            int bufferByteLength = cachedBufferByteLength;
+            if (bufferByteLength == DETACHED) {
+                return true;
+            }
+
+            int byteOffsetStart = ta.offset;
+            int byteOffsetEnd = byteOffsetStart + ta.byteLength;
+
+            return byteOffsetStart > bufferByteLength || byteOffsetEnd > bufferByteLength;
+        }
+    }
+
     // External Array implementation
 
     @Override

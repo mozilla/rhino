@@ -54,12 +54,26 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeProperty(
                 cx,
                 "byteLength",
-                (Scriptable thisObj) -> realThis(thisObj).byteLength,
+                (Scriptable thisObj) -> {
+                    NativeDataView self = realThis(thisObj);
+                    var viewRecord = DataViewBufferWitnessRecord.create(self);
+                    if (viewRecord.isViewOutOfBounds()) {
+                        throw ScriptRuntime.typeError("view out of bounds");
+                    }
+                    return viewRecord.getViewByteLength();
+                },
                 DONTENUM | READONLY);
         constructor.definePrototypeProperty(
                 cx,
                 "byteOffset",
-                (Scriptable thisObj) -> realThis(thisObj).offset,
+                (Scriptable thisObj) -> {
+                    NativeDataView self = realThis(thisObj);
+                    var viewRecord = DataViewBufferWitnessRecord.create(self);
+                    if (viewRecord.isViewOutOfBounds()) {
+                        throw ScriptRuntime.typeError("view out of bounds");
+                    }
+                    return self.offset;
+                },
                 DONTENUM | READONLY);
 
         constructor.definePrototypeMethod(
@@ -213,17 +227,6 @@ public class NativeDataView extends NativeArrayBufferView {
         return constructor;
     }
 
-    private static int determinePos(Object[] args) {
-        if (isArg(args, 0)) {
-            double doublePos = ScriptRuntime.toNumber(args[0]);
-            if (Double.isInfinite(doublePos)) {
-                throw ScriptRuntime.rangeError("offset out of range");
-            }
-            return ScriptRuntime.toInt32(doublePos);
-        }
-        return 0;
-    }
-
     private void rangeCheck(int pos, int len) {
         if ((pos < 0) || ((pos + len) > byteLength)) {
             throw ScriptRuntime.rangeError("offset out of range");
@@ -241,42 +244,64 @@ public class NativeDataView extends NativeArrayBufferView {
 
         NativeArrayBuffer ab = (NativeArrayBuffer) args[0];
 
-        int pos;
-        if (isArg(args, 1)) {
-            double doublePos = ScriptRuntime.toNumber(args[1]);
-            if (Double.isInfinite(doublePos)) {
-                throw ScriptRuntime.rangeError("offset out of range");
-            }
-            pos = ScriptRuntime.toInt32(doublePos);
-        } else {
-            pos = 0;
+        int pos = ScriptRuntime.toIndex(isArg(args, 1) ? args[1] : Undefined.instance);
+
+        if (ab.isDetached()) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
+        }
+
+        int bufferByteLength = ab.getLength();
+        if (pos > bufferByteLength) {
+            throw ScriptRuntime.rangeError("offset out of range");
         }
 
         int len;
         if (isArg(args, 2)) {
-            double doublePos = ScriptRuntime.toNumber(args[2]);
-            if (Double.isInfinite(doublePos)) {
-                throw ScriptRuntime.rangeError("offset out of range");
+            len = ScriptRuntime.toIndex(args[2]);
+            if (pos + len > bufferByteLength) {
+                throw ScriptRuntime.rangeError("length out of range");
             }
-            len = ScriptRuntime.toInt32(doublePos);
         } else {
-            len = ab.getLength() - pos;
+            len = bufferByteLength - pos;
         }
 
-        if (len < 0) {
-            throw ScriptRuntime.rangeError("length out of range");
+        var instance = new NativeDataView();
+
+        if (ab.isDetached()) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
         }
-        if ((pos < 0) || ((pos + len) > ab.getLength())) {
+
+        bufferByteLength = ab.getLength();
+        if (pos > bufferByteLength) {
             throw ScriptRuntime.rangeError("offset out of range");
         }
-        return new NativeDataView(ab, pos, len);
+
+        if (isArg(args, 2)) {
+            if (pos + len > bufferByteLength) {
+                throw ScriptRuntime.rangeError("length out of range");
+            }
+        }
+
+        instance.arrayBuffer = ab;
+        instance.byteLength = len;
+        instance.offset = pos;
+        return instance;
     }
 
     private Object js_getInt(int bytes, boolean signed, Object[] args) {
-        int pos = determinePos(args);
-        rangeCheck(pos, bytes);
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
+
+        var viewRecord = DataViewBufferWitnessRecord.create(this);
+        if (viewRecord.isViewOutOfBounds()) {
+            throw ScriptRuntime.typeError("view out of bounds");
+        }
+
+        int viewSize = viewRecord.getViewByteLength();
+        if (pos + bytes > viewSize) {
+            throw ScriptRuntime.rangeError("offset out of range");
+        }
 
         switch (bytes) {
             case 1:
@@ -301,10 +326,19 @@ public class NativeDataView extends NativeArrayBufferView {
     }
 
     private Object js_getFloat(int bytes, Object[] args) {
-        int pos = determinePos(args);
-        rangeCheck(pos, bytes);
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
+
+        var viewRecord = DataViewBufferWitnessRecord.create(this);
+        if (viewRecord.isViewOutOfBounds()) {
+            throw ScriptRuntime.typeError("view out of bounds");
+        }
+
+        int viewSize = viewRecord.getViewByteLength();
+        if (pos + bytes > viewSize) {
+            throw ScriptRuntime.rangeError("offset out of range");
+        }
 
         switch (bytes) {
             case 4:
@@ -317,16 +351,20 @@ public class NativeDataView extends NativeArrayBufferView {
     }
 
     private void js_setInt(int bytes, boolean signed, Object[] args) {
-        int pos = determinePos(args);
-        if (pos < 0) {
-            throw ScriptRuntime.rangeError("offset out of range");
-        }
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
+
+        Object val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : ScriptRuntime.zeroObj;
 
         boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
-        Object val = ScriptRuntime.zeroObj;
-        if (args.length > 1) {
-            val = args[1];
+        var viewRecord = DataViewBufferWitnessRecord.create(this);
+        if (viewRecord.isViewOutOfBounds()) {
+            throw ScriptRuntime.typeError("view out of bounds");
+        }
+
+        int viewSize = viewRecord.getViewByteLength();
+        if (pos + bytes > viewSize) {
+            throw ScriptRuntime.rangeError("offset out of range");
         }
 
         switch (bytes) {
@@ -381,19 +419,19 @@ public class NativeDataView extends NativeArrayBufferView {
     }
 
     private void js_setFloat(int bytes, Object[] args) {
-        int pos = determinePos(args);
-        if (pos < 0) {
-            throw ScriptRuntime.rangeError("offset out of range");
-        }
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
+
+        double val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : Double.NaN;
 
         boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
-        double val = Double.NaN;
-        if (args.length > 1) {
-            val = ScriptRuntime.toNumber(args[1]);
+        var viewRecord = DataViewBufferWitnessRecord.create(this);
+        if (viewRecord.isViewOutOfBounds()) {
+            throw ScriptRuntime.typeError("view out of bounds");
         }
 
-        if (pos + bytes > byteLength) {
+        int viewSize = viewRecord.getViewByteLength();
+        if (pos + bytes > viewSize) {
             throw ScriptRuntime.rangeError("offset out of range");
         }
 
@@ -406,6 +444,42 @@ public class NativeDataView extends NativeArrayBufferView {
                 break;
             default:
                 throw new AssertionError();
+        }
+    }
+
+    private static class DataViewBufferWitnessRecord {
+        private final NativeDataView object;
+        private final int cachedBufferByteLength;
+        private static final int DETACHED = -1;
+
+        private DataViewBufferWitnessRecord(NativeDataView object, int cachedBufferByteLength) {
+            this.object = object;
+            this.cachedBufferByteLength = cachedBufferByteLength;
+        }
+
+        static DataViewBufferWitnessRecord create(NativeDataView object) {
+            var buffer = object.arrayBuffer;
+            return new DataViewBufferWitnessRecord(
+                    object,
+                    buffer.isDetached() ? DETACHED : buffer.getLength()
+            );
+        }
+
+        public int getViewByteLength() {
+            return object.byteLength;
+        }
+
+        public boolean isViewOutOfBounds() {
+            NativeDataView view = object;
+            int bufferByteLength = cachedBufferByteLength;
+            if (bufferByteLength == DETACHED) {
+                return true;
+            }
+
+            int byteOffsetStart = view.offset;
+            int byteOffsetEnd = byteOffsetStart + view.byteLength;
+
+            return byteOffsetStart > bufferByteLength || byteOffsetEnd > bufferByteLength;
         }
     }
 }
