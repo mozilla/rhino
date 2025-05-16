@@ -227,12 +227,6 @@ public class NativeDataView extends NativeArrayBufferView {
         return constructor;
     }
 
-    private void rangeCheck(int pos, int len) {
-        if ((pos < 0) || ((pos + len) > byteLength)) {
-            throw ScriptRuntime.rangeError("offset out of range");
-        }
-    }
-
     private static NativeDataView realThis(Scriptable thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeDataView.class);
     }
