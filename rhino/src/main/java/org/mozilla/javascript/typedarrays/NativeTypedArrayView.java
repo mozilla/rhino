@@ -257,7 +257,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 "filter",
                 1,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    var record = TypedArrayBufferWitnessRecord.validateTypedArray(thisObj, realThis);
+                    var record =
+                            TypedArrayBufferWitnessRecord.validateTypedArray(thisObj, realThis);
                     Object array =
                             ArrayLikeAbstractOperations.iterativeMethod(
                                     lcx, IterativeOperation.FILTER, lscope, thisObj, args);
@@ -368,7 +369,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 "map",
                 1,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    var record = TypedArrayBufferWitnessRecord.validateTypedArray(thisObj, realThis);
+                    var record =
+                            TypedArrayBufferWitnessRecord.validateTypedArray(thisObj, realThis);
                     Object array =
                             ArrayLikeAbstractOperations.iterativeMethod(
                                     lcx, IterativeOperation.MAP, lscope, thisObj, args);
@@ -696,7 +698,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
         int srcLength = srcRecord.getTypedArrayLength();
 
-
         if (srcLength + off > targetLength) {
             throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.source.array");
         }
@@ -916,8 +917,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         long count = Math.max(end - begin, 0);
 
-        var a = (NativeTypedArrayView<?>) record.object.typedArraySpeciesCreate(
-                cx, scope, new Object[] {count}, "slice");
+        var a =
+                (NativeTypedArrayView<?>)
+                        record.object.typedArraySpeciesCreate(
+                                cx, scope, new Object[] {count}, "slice");
 
         if (count > 0) {
             record = TypedArrayBufferWitnessRecord.create(self);
@@ -1221,8 +1224,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         var record = TypedArrayBufferWitnessRecord.validateTypedArray(thisObj, realThis);
         int len = record.getTypedArrayLength();
 
-        NativeArrayBuffer newBuffer =
-                new NativeArrayBuffer(len * self.getBytesPerElement());
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(len * self.getBytesPerElement());
         Scriptable result =
                 cx.newObject(
                         scope,
@@ -1247,8 +1249,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Object[] working = self.sortTemporaryArray(cx, scope, args);
 
         // Move value in a new typed array of the same type
-        NativeArrayBuffer newBuffer =
-                new NativeArrayBuffer(len * self.getBytesPerElement());
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(len * self.getBytesPerElement());
         Scriptable result =
                 cx.newObject(
                         scope,
@@ -1302,7 +1303,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         private final int cachedBufferByteLength;
         private static final int DETACHED = -1;
 
-        private TypedArrayBufferWitnessRecord(NativeTypedArrayView<?> object, int cachedBufferByteLength) {
+        private TypedArrayBufferWitnessRecord(
+                NativeTypedArrayView<?> object, int cachedBufferByteLength) {
             this.object = object;
             this.cachedBufferByteLength = cachedBufferByteLength;
         }
@@ -1310,12 +1312,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         static TypedArrayBufferWitnessRecord create(NativeTypedArrayView<?> object) {
             var buffer = object.arrayBuffer;
             return new TypedArrayBufferWitnessRecord(
-                    object,
-                    buffer.isDetached() ? DETACHED : buffer.getLength()
-            );
+                    object, buffer.isDetached() ? DETACHED : buffer.getLength());
         }
 
-        static TypedArrayBufferWitnessRecord validateTypedArray(Scriptable object, RealThis realThis) {
+        static TypedArrayBufferWitnessRecord validateTypedArray(
+                Scriptable object, RealThis realThis) {
             if (realThis != null) {
                 var o = realThis.realThis(object);
                 var record = create(o);

@@ -454,9 +454,7 @@ public class NativeDataView extends NativeArrayBufferView {
         static DataViewBufferWitnessRecord create(NativeDataView object) {
             var buffer = object.arrayBuffer;
             return new DataViewBufferWitnessRecord(
-                    object,
-                    buffer.isDetached() ? DETACHED : buffer.getLength()
-            );
+                    object, buffer.isDetached() ? DETACHED : buffer.getLength());
         }
 
         public int getViewByteLength() {
