@@ -246,14 +246,14 @@ public class NativeDataView extends NativeArrayBufferView {
 
         int bufferByteLength = ab.getLength();
         if (pos > bufferByteLength) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         int len;
         if (isArg(args, 2)) {
             len = ScriptRuntime.toIndex(args[2]);
             if (pos + len > bufferByteLength) {
-                throw ScriptRuntime.rangeError("length out of range");
+                throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
             }
         } else {
             len = bufferByteLength - pos;
@@ -267,12 +267,12 @@ public class NativeDataView extends NativeArrayBufferView {
 
         bufferByteLength = ab.getLength();
         if (pos > bufferByteLength) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         if (isArg(args, 2)) {
             if (pos + len > bufferByteLength) {
-                throw ScriptRuntime.rangeError("length out of range");
+                throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
             }
         }
 
@@ -289,12 +289,12 @@ public class NativeDataView extends NativeArrayBufferView {
 
         var viewRecord = DataViewBufferWitnessRecord.create(this);
         if (viewRecord.isViewOutOfBounds()) {
-            throw ScriptRuntime.typeError("view out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
         int viewSize = viewRecord.getViewByteLength();
         if (pos + bytes > viewSize) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         switch (bytes) {
@@ -326,12 +326,12 @@ public class NativeDataView extends NativeArrayBufferView {
 
         var viewRecord = DataViewBufferWitnessRecord.create(this);
         if (viewRecord.isViewOutOfBounds()) {
-            throw ScriptRuntime.typeError("view out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
         int viewSize = viewRecord.getViewByteLength();
         if (pos + bytes > viewSize) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         switch (bytes) {
@@ -353,12 +353,12 @@ public class NativeDataView extends NativeArrayBufferView {
 
         var viewRecord = DataViewBufferWitnessRecord.create(this);
         if (viewRecord.isViewOutOfBounds()) {
-            throw ScriptRuntime.typeError("view out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
         int viewSize = viewRecord.getViewByteLength();
         if (pos + bytes > viewSize) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         switch (bytes) {
@@ -366,13 +366,13 @@ public class NativeDataView extends NativeArrayBufferView {
                 if (signed) {
                     int value = Conversions.toInt8(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt8(arrayBuffer.buffer, offset + pos, value);
                 } else {
                     int value = Conversions.toUint8(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint8(arrayBuffer.buffer, offset + pos, value);
                 }
@@ -381,13 +381,13 @@ public class NativeDataView extends NativeArrayBufferView {
                 if (signed) {
                     int value = Conversions.toInt16(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt16(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 } else {
                     int value = Conversions.toUint16(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint16(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 }
@@ -396,13 +396,13 @@ public class NativeDataView extends NativeArrayBufferView {
                 if (signed) {
                     int value = Conversions.toInt32(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt32(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 } else {
                     long value = Conversions.toUint32(val);
                     if (pos + bytes > byteLength) {
-                        throw ScriptRuntime.rangeError("offset out of range");
+                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint32(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 }
@@ -421,12 +421,12 @@ public class NativeDataView extends NativeArrayBufferView {
 
         var viewRecord = DataViewBufferWitnessRecord.create(this);
         if (viewRecord.isViewOutOfBounds()) {
-            throw ScriptRuntime.typeError("view out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
         int viewSize = viewRecord.getViewByteLength();
         if (pos + bytes > viewSize) {
-            throw ScriptRuntime.rangeError("offset out of range");
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
         switch (bytes) {

@@ -686,13 +686,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private void setRange(NativeTypedArrayView<?> v, int off) {
         var targetRecord = TypedArrayBufferWitnessRecord.create(this);
         if (targetRecord.isTypedArrayOutOfBounds()) {
-            throw ScriptRuntime.typeError("typed array out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
         int targetLength = targetRecord.getTypedArrayLength();
 
         var srcRecord = TypedArrayBufferWitnessRecord.create(v);
         if (srcRecord.isTypedArrayOutOfBounds()) {
-            throw ScriptRuntime.typeError("typed array out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
         int srcLength = srcRecord.getTypedArrayLength();
 
@@ -720,7 +720,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private void setRange(Scriptable a, int off) {
         var targetRecord = TypedArrayBufferWitnessRecord.create(this);
         if (targetRecord.isTypedArrayOutOfBounds()) {
-            throw ScriptRuntime.typeError("typed array out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
         int targetLength = targetRecord.getTypedArrayLength();
 
@@ -922,7 +922,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (count > 0) {
             record = TypedArrayBufferWitnessRecord.create(self);
             if (record.isTypedArrayOutOfBounds()) {
-                throw ScriptRuntime.typeError("typed array out of bounds");
+                throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
             }
             end = Math.min(end, record.getTypedArrayLength());
 
@@ -1022,7 +1022,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         record = TypedArrayBufferWitnessRecord.create(self);
         if (record.isTypedArrayOutOfBounds()) {
-            throw ScriptRuntime.typeError("typed array out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
         len = record.getTypedArrayLength();
 
@@ -1104,7 +1104,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         record = TypedArrayBufferWitnessRecord.create(realThis.realThis(thisObj));
         if (record.isTypedArrayOutOfBounds()) {
-            throw ScriptRuntime.typeError("typed array out of bounds");
+            throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
 
         int direction = 1;
@@ -1204,11 +1204,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Object arg0 = ScriptRuntime.toPrimitive(args[0]);
             if (arg0 instanceof Number) {
                 if (record.isTypedArrayOutOfBounds()) {
-                    throw ScriptRuntime.typeError("typed array out of bounds");
+                    throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
                 }
                 int length = record.getTypedArrayLength();
                 if (length < ScriptRuntime.toNumber(arg0)) {
-                    throw ScriptRuntime.typeError("bad length");
+                    throw ScriptRuntime.typeErrorById("msg.typed.array.bad.length", arg0);
                 }
             }
         }
@@ -1320,7 +1320,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 var o = realThis.realThis(object);
                 var record = create(o);
                 if (record.isTypedArrayOutOfBounds()) {
-                    throw ScriptRuntime.typeError("typed array out of bounds");
+                    throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
                 }
                 return record;
             }
@@ -1329,7 +1329,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 var o = (NativeTypedArrayView<?>) object;
                 var record = create(o);
                 if (record.isTypedArrayOutOfBounds()) {
-                    throw ScriptRuntime.typeError("typed array out of bounds");
+                    throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
                 }
                 return record;
             }
