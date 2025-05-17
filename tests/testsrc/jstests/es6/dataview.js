@@ -16,7 +16,7 @@ load("testsrc/assert.js");
   assertEquals('DataView', d[Symbol.toStringTag]);
   assertEquals(false, d.hasOwnProperty(Symbol.toStringTag));
   assertEquals(false, DataView.hasOwnProperty(Symbol.toStringTag));
-  assertEquals(false, DataView.prototype.hasOwnProperty(Symbol.toStringTag));
+  assertEquals(true, DataView.prototype.hasOwnProperty(Symbol.toStringTag));
 })();
 
 "success";

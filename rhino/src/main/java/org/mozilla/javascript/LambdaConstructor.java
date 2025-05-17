@@ -321,6 +321,16 @@ public class LambdaConstructor extends LambdaFunction {
         proto.defineProperty(cx, name, getter, setter, attributes);
     }
 
+    public void definePrototypeProperty(
+            Context cx,
+            Symbol key,
+            ScriptableObject.LambdaGetterFunction getter,
+            ScriptableObject.LambdaSetterFunction setter,
+            int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, key, getter, setter, attributes);
+    }
+
     /** Define a property on the prototype that has the same value as another property. */
     public void definePrototypeAlias(String name, SymbolKey alias, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();

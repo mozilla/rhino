@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -62,6 +63,8 @@ public class NativeDataView extends NativeArrayBufferView {
                 (Scriptable thisObj) -> realThis(thisObj).offset,
                 DONTENUM | READONLY);
 
+        constructor.definePrototypeProperty(
+                SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "getFloat32",
