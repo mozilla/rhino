@@ -79,4 +79,11 @@ public final class DoubleConversion {
         long s = significand(d64);
         return sign(d64) * (int) (exponent < 0 ? s >> -exponent : s << exponent);
     }
+
+    public static double truncate(double x) {
+        if (!Double.isFinite(x)) {
+            return x;
+        }
+        return x < 0.0 ? Math.ceil(x) : Math.floor(x);
+    }
 }

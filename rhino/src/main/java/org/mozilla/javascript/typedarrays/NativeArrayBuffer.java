@@ -13,6 +13,7 @@ import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -55,6 +56,8 @@ public class NativeArrayBuffer extends ScriptableObject {
                 DONTENUM | READONLY);
         constructor.definePrototypeProperty(
                 cx, "byteLength", NativeArrayBuffer::js_byteLength, DONTENUM | READONLY);
+        constructor.definePrototypeProperty(
+                SymbolKey.TO_STRING_TAG, "ArrayBuffer", DONTENUM | READONLY);
 
         if (sealed) {
             constructor.sealObject();

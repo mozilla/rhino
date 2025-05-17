@@ -44,6 +44,8 @@ public class NativeArray extends ScriptableObject implements List {
      * always gets at least an object back, even when Array == null.
      */
 
+    static final long MAX_ARRAY_INDEX = 0xfffffffel;
+
     private static final Object ARRAY_TAG = "Array";
     private static final String CLASS_NAME = "Array";
     private static final Long NEGATIVE_ONE = Long.valueOf(-1);
@@ -1950,46 +1952,102 @@ public class NativeArray extends ScriptableObject implements List {
     private static Object js_every(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "every", IterativeOperation.EVERY, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "every",
+                IterativeOperation.EVERY,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_filter(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "filter", IterativeOperation.FILTER, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "filter",
+                IterativeOperation.FILTER,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_forEach(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "forEach", IterativeOperation.FOR_EACH, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "forEach",
+                IterativeOperation.FOR_EACH,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_map(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "map", IterativeOperation.MAP, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "map",
+                IterativeOperation.MAP,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_some(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "some", IterativeOperation.SOME, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "some",
+                IterativeOperation.SOME,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_find(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "find", IterativeOperation.FIND, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "find",
+                IterativeOperation.FIND,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_findIndex(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "findIndex", IterativeOperation.FIND_INDEX, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "findIndex",
+                IterativeOperation.FIND_INDEX,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_findLast(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
-                cx, ARRAY_TAG, "findLast", IterativeOperation.FIND_LAST, scope, thisObj, args);
+                cx,
+                ARRAY_TAG,
+                "findLast",
+                IterativeOperation.FIND_LAST,
+                scope,
+                thisObj,
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_findLastIndex(
@@ -2001,7 +2059,8 @@ public class NativeArray extends ScriptableObject implements List {
                 IterativeOperation.FIND_LAST_INDEX,
                 scope,
                 thisObj,
-                args);
+                args,
+                NativeArray::getLengthProperty);
     }
 
     private static Object js_reduce(
