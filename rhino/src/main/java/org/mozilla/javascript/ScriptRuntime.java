@@ -3345,9 +3345,9 @@ public class ScriptRuntime {
     }
 
     /**
-     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus 5. Let lprim be ?
-     * ToPrimitive(lval). 7. If Type(lprim) is String or Type(rprim) is String, then a. Let lstr be
-     * ? ToString(lprim).
+     * <a href="https://262.ecma-international.org/11.0/#sec-addition-operator-plus">12.8.3 The
+     * Addition Operator (+)</a> 5. Let lprim be ? ToPrimitive(lval). 7. If Type(lprim) is String or
+     * Type(rprim) is String, then a. Let lstr be ? ToString(lprim).
      *
      * <p>Should call toPrimitive before toCharSequence
      *
@@ -3359,9 +3359,9 @@ public class ScriptRuntime {
     }
 
     /**
-     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus 6. Let rprim be ?
-     * ToPrimitive(rval). 7. If Type(lprim) is String or Type(rprim) is String, then b. Let rstr be
-     * ? ToString(rprim).
+     * <a href="https://262.ecma-international.org/11.0/#sec-addition-operator-plus">12.8.3 The
+     * Addition Operator (+)</a> 6. Let rprim be ? ToPrimitive(rval). 7. If Type(lprim) is String or
+     * Type(rprim) is String, then b. Let rstr be ? ToString(rprim).
      *
      * <p>Should call toPrimitive before toCharSequence
      *

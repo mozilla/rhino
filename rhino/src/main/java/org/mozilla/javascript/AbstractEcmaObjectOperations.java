@@ -214,7 +214,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * Set ( O, P, V, Throw)
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw">7.3.4 Set (O, P, V,
+     * Throw)</a>
      */
     static void put(Context cx, Scriptable o, String p, Object v, boolean isThrow) {
         Scriptable base = ScriptableObject.getBase(o, p);
@@ -232,7 +233,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * Set ( O, P, V, Throw)
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw">7.3.4 Set (O, P, V,
+     * Throw)</a>
      */
     static void put(Context cx, Scriptable o, int p, Object v, boolean isThrow) {
         Scriptable base = ScriptableObject.getBase(o, p);
@@ -322,7 +324,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * CreateListFromArrayLike ( obj [ , elementTypes ] )
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-createlistfromarraylike
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-createlistfromarraylike">7.3.19
+     * CreateListFromArrayLike (obj [, elementTypes])</a>
      */
     static List<Object> createListFromArrayLike(
             Context cx, Scriptable o, Predicate<Object> elementTypesPredicate, String msg) {
@@ -355,7 +358,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * LengthOfArrayLike ( obj )
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-lengthofarraylike
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-lengthofarraylike">7.3.18
+     * LengthOfArrayLike (obj)</a>
      */
     static long lengthOfArrayLike(Context cx, Scriptable o) {
         Object value = ScriptableObject.getProperty(o, "length");
@@ -366,7 +370,9 @@ public class AbstractEcmaObjectOperations {
     /**
      * IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-iscompatiblepropertydescriptor
+     * <p><a
+     * href="https://262.ecma-international.org/12.0/#sec-iscompatiblepropertydescriptor">10.1.6.2
+     * IsCompatiblePropertyDescriptor (Extensible, Desc, Current)</a>
      */
     static boolean isCompatiblePropertyDescriptor(
             Context cx, boolean extensible, ScriptableObject desc, ScriptableObject current) {
@@ -382,7 +388,9 @@ public class AbstractEcmaObjectOperations {
     /**
      * ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-validateandapplypropertydescriptor
+     * <p><a
+     * href="https://262.ecma-international.org/12.0/#sec-validateandapplypropertydescriptor">10.1.6.3
+     * ValidateAndApplyPropertyDescriptor (O, P, extensible, Desc, current)</a>
      */
     static boolean validateAndApplyPropertyDescriptor(
             Context cx,
@@ -480,7 +488,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * IsConstructor ( argument )
      *
-     * <p>https://262.ecma-international.org/12.0/#sec-isconstructor
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-isconstructor">7.2.4 IsConstructor
+     * (argument)</a>
      */
     static boolean isConstructor(Context cx, Object argument) {
         /*
@@ -509,7 +518,8 @@ public class AbstractEcmaObjectOperations {
     /**
      * IsRegExp(argument)
      *
-     * <p>https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isregexp
+     * <p><a href="https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isregexp">7.2.6
+     * IsRegExp (argument)</a>
      */
     static boolean isRegExp(Context cx, Scriptable scope, Object argument) {
         if (!ScriptRuntime.isObject(argument)) {

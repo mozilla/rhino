@@ -1272,8 +1272,12 @@ final class NativeString extends ScriptableObject {
     }
 
     /**
-     * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart
-     * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend
+     * @see <a
+     *     href="https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart">21.1.3.14String.prototype.padStart(maxLength[,
+     *     fillString])</a>
+     * @see <a
+     *     href="https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend">21.1.3.13String.prototype.padEnd(maxLength[,
+     *     fillString])</a>
      */
     private static String pad(
             Context cx, Scriptable thisObj, String functionName, Object[] args, boolean atStart) {

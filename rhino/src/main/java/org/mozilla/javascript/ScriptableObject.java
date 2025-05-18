@@ -868,9 +868,10 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     /**
      * Emulate the SpiderMonkey (and Firefox) feature of allowing custom objects to avoid detection
-     * by normal "object detection" code patterns. This is used to implement document.all. See
-     * https://bugzilla.mozilla.org/show_bug.cgi?id=412247. This is an analog to JOF_DETECTING from
-     * SpiderMonkey; see https://bugzilla.mozilla.org/show_bug.cgi?id=248549. Other than this
+     * by normal "object detection" code patterns. This is used to implement document.all. See <a
+     * href="https://bugzilla.mozilla.org/show_bug.cgi?id=412247">bug 412247</a>. This is an analog
+     * to JOF_DETECTING from SpiderMonkey; see <a
+     * href="https://bugzilla.mozilla.org/show_bug.cgi?id=248549">bug 248549</a>. Other than this
      * special case, embeddings should return false.
      *
      * @return true if this object should avoid object detection

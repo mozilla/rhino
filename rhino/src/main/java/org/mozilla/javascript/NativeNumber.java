@@ -17,7 +17,9 @@ final class NativeNumber extends ScriptableObject {
     private static final long serialVersionUID = 3504516769741512101L;
 
     /**
-     * @see https://www.ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer
+     * @see <a
+     *     href="https://www.ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer">20.1.2.6
+     *     Number.MAX_SAFE_INTEGER</a>
      */
     public static final double MAX_SAFE_INTEGER = 9007199254740991.0; // Math.pow(2, 53) - 1
 

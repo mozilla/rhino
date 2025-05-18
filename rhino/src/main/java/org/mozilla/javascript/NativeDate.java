@@ -21,7 +21,7 @@ import java.util.Locale;
  *
  * @author Mike McCabe
  *     <p>Significant parts of this code are adapted from the venerable jsdate.cpp (also Mozilla):
- *     https://dxr.mozilla.org/mozilla-central/source/js/src/jsdate.cpp
+ *     <a href="https://dxr.mozilla.org/mozilla-central/source/js/src/jsdate.cpp">jsdate.cpp</a>
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 final class NativeDate extends IdScriptableObject {
