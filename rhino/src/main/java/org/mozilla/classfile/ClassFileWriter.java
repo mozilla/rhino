@@ -1573,8 +1573,8 @@ public class ClassFileWriter {
          * Replace the contents of a super block with no-ops.
          *
          * <p>The above description is not strictly true; the last instruction is an athrow
-         * instruction. This technique is borrowed from ASM's developer guide:
-         * http://asm.ow2.org/doc/developer-guide.html#deadcode
+         * instruction. This technique is borrowed from ASM's developer guide: <a
+         * href="https://asm.ow2.io/developer-guide.html#deadcode">3.5.4 Dead code</a>
          *
          * <p>The proposed algorithm fills a block with nop, ending it with an athrow. The stack map
          * generated would be empty locals with an exception on the stack. In theory, it shouldn't
