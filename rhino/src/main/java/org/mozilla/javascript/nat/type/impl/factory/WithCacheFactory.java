@@ -3,7 +3,6 @@ package org.mozilla.javascript.nat.type.impl.factory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import org.mozilla.javascript.nat.type.TypeInfo;
@@ -21,7 +20,7 @@ import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
  *
  * @author ZZZank
  */
-public abstract class WithCacheFactory implements FactoryBase, Serializable {
+public abstract class WithCacheFactory implements FactoryBase {
     private static final long serialVersionUID = 1L;
 
     private transient Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache = createTypeCache();

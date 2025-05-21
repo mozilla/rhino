@@ -25,7 +25,7 @@ import org.mozilla.javascript.nat.type.TypeInfoFactory;
  * @see NoCacheFactory factory with no cache
  * @see ConcurrentFactory factory with a strong-reference, high performance cache
  */
-public final class WeakReferenceFactory extends WithCacheFactory implements FactoryBase {
+public final class WeakReferenceFactory extends WithCacheFactory {
 
     @Override
     protected <K, V> Map<K, V> createTypeCache() {

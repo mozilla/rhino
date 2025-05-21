@@ -1,5 +1,6 @@
 package org.mozilla.javascript.nat.type;
 
+import java.io.Serializable;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,9 +26,19 @@ import org.mozilla.javascript.nat.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
 
 /**
+ * Factory for {@link TypeInfo}
+ *
+ * <p>For getting TypeInfo representing a {@link Type}, use {@link #create(Type)} and its overloads
+ *
+ * <p>For mutating an existed TypeInfo, use {@link #toArray(TypeInfo)}, {@link
+ * #attachParam(TypeInfo, TypeInfo...)}. These methods will not modify the original TypeInfo
+ *
+ * <p>This class is serializable, but cached types (if implementation has a cache) will not be
+ * de/serialized
+ *
  * @author ZZZank
  */
-public interface TypeInfoFactory {
+public interface TypeInfoFactory extends Serializable {
 
     /**
      * TypeInfoFactory used by scope independent actions.
