@@ -33,7 +33,7 @@ import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
  * <p>For mutating an existed TypeInfo, use {@link #toArray(TypeInfo)}, {@link
  * #attachParam(TypeInfo, TypeInfo...)}. These methods will not modify the original TypeInfo
  *
- * <p>This class is serializable, but cached types (if implementation has a cache) will not be
+ * <p>This class is serializable, but cached TypeInfo (if implementation has a cache) will not be
  * de/serialized
  *
  * @author ZZZank

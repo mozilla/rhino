@@ -27,12 +27,18 @@ public class ClassCache implements Serializable {
     private transient volatile Map<CacheKey, JavaMembers> classTable;
     private transient volatile Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
-    private transient TypeInfoFactory typeFactory;
+
+    /**
+     * no {@code transient} because it is provided via {@link #ClassCache(TypeInfoFactory)}, and we
+     * need to keep the exact implementation type
+     */
+    private volatile TypeInfoFactory typeFactory;
+
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
     public ClassCache(TypeInfoFactory typeInfoFactory) {
-        this.typeFactory = typeInfoFactory;
+        this.typeFactory = Objects.requireNonNull(typeInfoFactory);
     }
 
     public ClassCache() {}
@@ -168,8 +174,13 @@ public class ClassCache implements Serializable {
     }
 
     TypeInfoFactory getTypeFactory() {
-        if (typeFactory == null) {
-            typeFactory = new ConcurrentFactory();
+        if (this.typeFactory == null) {
+            /// fallback, only for [#ClassCache()]
+            synchronized (this) {
+                if (typeFactory == null) {
+                    typeFactory = new ConcurrentFactory();
+                }
+            }
         }
         return typeFactory;
     }
