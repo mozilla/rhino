@@ -22,7 +22,7 @@ jobs:
       # We don't actually want all the history for this part
       run: git submodule update --init --single-branch
     - name: Set up Java
-      uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
       # By putting JVMs in reverse order, the last one is the one that
       # will go in the path.
       with:
@@ -35,7 +35,7 @@ jobs:
       run: >-
         ./gradlew check
     - name: Upload results Java 21
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ always() }}
       with:
         name: reports-java-21
@@ -46,7 +46,7 @@ jobs:
       run: >-
         ./gradlew check
     - name: Upload results Java 17
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ always() }}
       with:
         name: reports-java-17
@@ -57,7 +57,7 @@ jobs:
       run: >-
         ./gradlew check
     - name: Upload results Java 11
-      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ always() }}
       with:
         name: reports-java-11

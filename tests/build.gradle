@@ -12,10 +12,10 @@ dependencies {
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
-    testImplementation("com.tngtech.archunit:archunit-junit4:1.4.0") {
+    testImplementation("com.tngtech.archunit:archunit-junit4:1.4.1") {
         exclude group: 'junit'
     }
-    testImplementation("org.slf4j:slf4j-simple:2.0.16")
+    testImplementation("org.slf4j:slf4j-simple:2.0.17")
 }
 
 tasks.withType(JavaCompile) {

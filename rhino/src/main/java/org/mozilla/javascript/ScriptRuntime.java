@@ -1422,7 +1422,7 @@ public class ScriptRuntime {
 
     /** Implements the abstract operation AdvanceStringIndex. See ECMAScript spec 22.2.7.3 */
     public static long advanceStringIndex(String string, long index, boolean unicode) {
-        if (index >= NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
+        if (index > NativeNumber.MAX_SAFE_INTEGER) Kit.codeBug();
         if (!unicode) {
             return index + 1;
         }
@@ -3071,7 +3071,7 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L);
+        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, function);
 
         Object[] callArgs;
         if (isApply) {
@@ -3090,22 +3090,41 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    static Scriptable getApplyOrCallThis(Context cx, Scriptable scope, Object arg0, int l) {
+    public static Scriptable getApplyOrCallThis(
+            Context cx, Scriptable scope, Object arg0, int l, Callable target) {
         Scriptable callThis;
-        if (l != 0) {
-            callThis =
-                    arg0 == Undefined.instance
-                                    && !cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)
-                            ? Undefined.SCRIPTABLE_UNDEFINED
-                            : toObjectOrNull(cx, arg0, scope);
+        if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+            // Legacy behavior
+            if (l != 0) {
+                callThis = toObjectOrNull(cx, arg0, scope);
+            } else {
+                callThis = null;
+            }
+            if (callThis == null) {
+                // This covers the case of args[0] == (null|undefined) as well.
+                callThis = getTopCallScope(cx);
+            }
         } else {
-            callThis = null;
+            // Spec-compliant behavior
+            if (l != 0) {
+                callThis =
+                        arg0 == Undefined.instance
+                                ? Undefined.SCRIPTABLE_UNDEFINED
+                                : toObjectOrNull(cx, arg0, scope);
+            } else {
+                callThis = Undefined.SCRIPTABLE_UNDEFINED;
+            }
+
+            // Replace missing this with global object only for non-strict functions
+            boolean missingCallThis =
+                    callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
+            boolean isFunctionStrict =
+                    !(target instanceof NativeFunction) || ((NativeFunction) target).isStrict();
+            if (missingCallThis && !isFunctionStrict) {
+                callThis = getTopCallScope(cx);
+            }
         }
-        if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
-            callThis =
-                    getTopCallScope(
-                            cx); // This covers the case of args[0] == (null|undefined) as well.
-        }
+
         return callThis;
     }
 
@@ -4511,13 +4530,38 @@ public class ScriptRuntime {
 
     /**
      * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, Scriptable)} instead
+     *     Object[], boolean, boolean, boolean, Scriptable)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
             NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, null);
+                funObj,
+                Context.getCurrentContext(),
+                scope,
+                args,
+                false,
+                isStrict,
+                false,
+                true,
+                null);
+    }
+
+    /**
+     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     */
+    @Deprecated
+    public static Scriptable createFunctionActivation(
+            NativeFunction funObj,
+            Context cx,
+            Scriptable scope,
+            Object[] args,
+            boolean isStrict,
+            boolean argsHasRest,
+            Scriptable homeObject) {
+        return new NativeCall(
+                funObj, cx, scope, args, false, isStrict, argsHasRest, true, homeObject);
     }
 
     public static Scriptable createFunctionActivation(
@@ -4527,19 +4571,54 @@ public class ScriptRuntime {
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
+            boolean requiresArgumentObject,
             Scriptable homeObject) {
-        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, homeObject);
+        return new NativeCall(
+                funObj,
+                cx,
+                scope,
+                args,
+                false,
+                isStrict,
+                argsHasRest,
+                requiresArgumentObject,
+                homeObject);
     }
 
     /**
      * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, Scriptable)} instead
+     *     Object[], boolean, boolean, boolean, Scriptable)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
             NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, null);
+                funObj,
+                Context.getCurrentContext(),
+                scope,
+                args,
+                true,
+                isStrict,
+                false,
+                true,
+                null);
+    }
+
+    /**
+     * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     */
+    @Deprecated
+    public static Scriptable createArrowFunctionActivation(
+            NativeFunction funObj,
+            Context cx,
+            Scriptable scope,
+            Object[] args,
+            boolean isStrict,
+            boolean argsHasRest,
+            Scriptable homeObject) {
+        return new NativeCall(
+                funObj, cx, scope, args, true, isStrict, argsHasRest, true, homeObject);
     }
 
     public static Scriptable createArrowFunctionActivation(
@@ -4549,8 +4628,18 @@ public class ScriptRuntime {
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
+            boolean requiresArgumentObject,
             Scriptable homeObject) {
-        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, homeObject);
+        return new NativeCall(
+                funObj,
+                cx,
+                scope,
+                args,
+                true,
+                isStrict,
+                argsHasRest,
+                requiresArgumentObject,
+                homeObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
@@ -5612,6 +5701,21 @@ public class ScriptRuntime {
             return result;
         }
         return null;
+    }
+
+    /**
+     * Clamps value between min and max, inclusive.
+     *
+     * @return value if it is between min and max, otherwise min or max
+     */
+    public static int clamp(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        } else if (value > max) {
+            return max;
+        } else {
+            return value;
+        }
     }
 
     public static final Object[] emptyArgs = new Object[0];

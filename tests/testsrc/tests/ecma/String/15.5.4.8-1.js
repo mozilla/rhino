@@ -40,8 +40,9 @@ var TITLE   = "String.prototype.split";
 writeHeaderToLog( SECTION + " "+ TITLE);
 
 new TestCase( SECTION,  "String.prototype.split.length",        2,          String.prototype.split.length );
-new TestCase( SECTION,  "delete String.prototype.split.length", false,      delete String.prototype.split.length );
-new TestCase( SECTION,  "delete String.prototype.split.length; String.prototype.split.length", 2,      eval("delete String.prototype.split.length; String.prototype.split.length") );
+// These are no longer valid ECMAScript tests
+//new TestCase( SECTION,  "delete String.prototype.split.length", false,      delete String.prototype.split.length );
+//new TestCase( SECTION,  "delete String.prototype.split.length; String.prototype.split.length", 2,      eval("delete String.prototype.split.length; String.prototype.split.length") );
 
 // test cases for when split is called with no arguments.
 

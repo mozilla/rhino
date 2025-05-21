@@ -477,8 +477,20 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 DONTENUM | READONLY);
     }
 
+    /** Returns <code>true</code>, if the index is wrong. */
     protected boolean checkIndex(int index) {
         return ((index < 0) || (index >= length));
+    }
+
+    /**
+     * Enusres that the index is in the given range
+     *
+     * @throws IndexOutOfBoundsException when index is out of range
+     */
+    protected void ensureIndex(int index) {
+        if (checkIndex(index)) {
+            throw new IndexOutOfBoundsException("Index: " + index + ", length: " + length);
+        }
     }
 
     /**
@@ -1302,9 +1314,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public ListIterator<T> listIterator(int start) {
-        if (checkIndex(start)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(start);
         return new NativeTypedArrayIterator<>(this, start);
     }
 

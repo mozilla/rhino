@@ -31,7 +31,7 @@ public class LambdaConstructor extends LambdaFunction {
     /** By default, the constructor may be invoked either way */
     public static final int CONSTRUCTOR_DEFAULT = CONSTRUCTOR_FUNCTION | CONSTRUCTOR_NEW;
 
-    // Lambdas should not be serialized.
+    // Lambdas may be serialized, which means that we need the target to be serializable.
     protected final SerializableConstructable targetConstructor;
     private final int flags;
 
@@ -158,7 +158,22 @@ public class LambdaConstructor extends LambdaFunction {
             SerializableCallable target,
             int attributes,
             int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        definePrototypeMethod(scope, name, length, target, attributes, propertyAttributes, true);
+    }
+
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers and control the prototype of the new function
+     */
+    public void definePrototypeMethod(
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes,
+            boolean defaultPrototype) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target, defaultPrototype);
         f.setStandardPropertyAttributes(propertyAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);
@@ -176,6 +191,24 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, "[" + name.getName() + "]", length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers.
+     */
+    public void definePrototypeMethod(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, prototype, target);
         f.setStandardPropertyAttributes(propertyAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);
@@ -302,6 +335,24 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes,
             int propertyAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property directly on the constructor that is implemented under the covers
+     * by a LambdaFunction, and override the properties of its "name", "length", "arity", and
+     * "protoyupe" properties.
+     */
+    public void defineConstructorMethod(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, prototype, target);
         f.setStandardPropertyAttributes(propertyAttributes);
         defineProperty(name, f, attributes);
     }

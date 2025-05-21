@@ -505,4 +505,24 @@ public class AbstractEcmaObjectOperations {
 
         return argument instanceof Constructable;
     }
+
+    /**
+     * IsRegExp(argument)
+     *
+     * <p>https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isregexp
+     */
+    static boolean isRegExp(Context cx, Scriptable scope, Object argument) {
+        if (!ScriptRuntime.isObject(argument)) {
+            return false;
+        }
+        Object matcher = ScriptRuntime.getObjectElem(argument, SymbolKey.MATCH, cx, scope);
+        if (!Undefined.isUndefined(matcher)) {
+            return ScriptRuntime.toBoolean(matcher);
+        }
+        RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
+        if (argument instanceof Scriptable && regExpProxy.isRegExp((Scriptable) argument)) {
+            return true;
+        }
+        return false;
+    }
 }

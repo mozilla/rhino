@@ -5,13 +5,17 @@
 js> function sum(acc, val) { return acc + val; };
 
 js> [1, 4, 9, 16].reduce;
-function reduce() { [native code for Array.reduce, arity=1] }
+function reduce() {
+	[native code]
+}
 
 js> [1, 4, 9, 16].reduce(sum);
 30
 
 js> Array.reduce;
-function reduce() { [native code for Array.reduce, arity=1] }
+function reduce() {
+	[native code]
+}
 
 js> Array.reduce([1, 4, 9, 16], sum);
 30

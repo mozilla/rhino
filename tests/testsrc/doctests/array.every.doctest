@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> Array.every;
-function every() { [native code for Array.every, arity=1] }
+function every() {
+	[native code]
+}
 
 js> function isSmall(n) { return n < 10; };
 

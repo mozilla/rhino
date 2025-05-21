@@ -8,15 +8,24 @@
 package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.util.TimeZone;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test for NativeDate. */
 public class NativeDateTest {
+
+    @Test
+    public void ctorDateTimeStringEmpty() {
+        ctorDateTimeStringThrows(
+                EcmaError.class, "RangeError: Date is invalid.", "new Date('').toISOString()");
+    }
 
     @Test
     public void ctorDateTimeStringGMT() {
@@ -132,6 +141,255 @@ public class NativeDateTest {
                 "new Date('2021-12-18T17:23:00.000+05:00').toISOString()");
     }
 
+    @Test
+    public void ctorDateTimeInvalidCharInMonth() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2021-1o-18T17:23:00.000+05:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsZ() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78Z').toISOString()");
+    }
+
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsPlus() {
+        ctorDateTimeString(
+                "2025-05-07T05:05:20.780Z",
+                "new Date('2025-05-07T09:05:20.78+04:00').toISOString()");
+    }
+
+    public void ctorDateTimeMillisecondsOnlyTwoDigitsMinus() {
+        ctorDateTimeString(
+                "2025-05-07T13:05:20.780Z",
+                "new Date('2025-05-07T09:05:20.78-04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyTwoDigits() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitZ() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.700Z", "new Date('2025-05-07T09:05:20.7Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitPlus() {
+        ctorDateTimeString(
+                "2025-05-07T05:05:20.700Z",
+                "new Date('2025-05-07T09:05:20.7+04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigitMinus() {
+        ctorDateTimeString(
+                "2025-05-07T13:05:20.700Z",
+                "new Date('2025-05-07T09:05:20.7-04:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsOnlyOneDigit() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.700Z", "new Date('2025-05-07T09:05:20.7').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsMissing() {
+        // 15.9.1.15.1 Extended years
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09:05:20.').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsFourDigts() {
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.123Z", "new Date('2025-05-07T09:05:20.1234Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsFourDigtsWrongZone() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09:05:20.1234X').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeExtendedYears() {
+        // 15.9.1.15.1 Extended years
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('-283457-03-21T15:00:59.008Z').toISOString()");
+
+        ctorDateTimeString(
+                "-000001-01-01T00:00:00.000Z", "new Date('-000001-01-01T00:00:00Z').toISOString()");
+
+        ctorDateTimeString(
+                "0000-01-01T00:00:00.000Z", "new Date('+000000-01-01T00:00:00Z').toISOString()");
+
+        ctorDateTimeString(
+                "1970-01-01T00:00:00.000Z", "new Date('+001970-01-01T00:00:00Z').toISOString()");
+
+        ctorDateTimeString(
+                "2009-12-15T00:00:00.000Z", "new Date('+002009-12-15T00:00:00Z').toISOString()");
+
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('+287396-10-12T08:59:00.992Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeTimeOnly() {
+        // 15.9.1.15 Date Time String Format
+        // no longer supported in ES6
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('T08:59:00.992Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoMinutes() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoMinutesZ() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeTimezoneNoMinutes() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09:05:20.789+04').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTime() {
+        ctorDateTimeString("2025-05-07T00:00:00.000Z", "new Date('2025-05-07').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeZ() {
+        ctorDateTimeString("2025-05-07T00:00:00.000Z", "new Date('2025-05-07Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimePlus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07+01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeMinus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07-01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoDay() {
+        ctorDateTimeString("2025-05-01T00:00:00.000Z", "new Date('2025-05').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoDayZ() {
+        ctorDateTimeString("2025-05-01T00:00:00.000Z", "new Date('2025-05Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoDayPlus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05+01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoDayMinus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoMonth() {
+        ctorDateTimeString("2025-01-01T00:00:00.000Z", "new Date('2025').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoMonthZ() {
+        ctorDateTimeString("2025-01-01T00:00:00.000Z", "new Date('2025Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoMonthPlus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025+01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeNoTimeNoMonthMinus() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-01:00').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeColonMissingFromTimezonePlus() {
+        ctorDateTimeString(
+                "2009-07-23T17:00:00.000Z",
+                "new Date('2009-07-23T24:00:00.000+0700').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeColonMissingFromTimezoneMinus() {
+        ctorDateTimeString(
+                "2009-07-24T07:00:00.000Z",
+                "new Date('2009-07-23T24:00:00.000-0700').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeWrongMinuteSeparator() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025-05-07T09-05').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeWrongMonthSeparator() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('2025 05-07T09:05').toISOString()");
+    }
+
     private static void ctorDateTimeString(final String expected, final String js) {
         Utils.runWithAllModes(
                 cx -> {
@@ -141,6 +399,30 @@ public class NativeDateTest {
 
                     final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
                     assertEquals(expected, res);
+                    return null;
+                });
+    }
+
+    private static <T extends Exception> void ctorDateTimeStringThrows(
+            final Class<T> expectedThrowable, final String expectedMessage, final String js) {
+        Utils.runWithAllModes(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+                    T e =
+                            assertThrows(
+                                    expectedThrowable,
+                                    () -> cx.evaluateString(scope, js, "test", 1, null));
+
+                    assertTrue(
+                            "'"
+                                    + e.getMessage()
+                                    + "' does not start with '"
+                                    + expectedMessage
+                                    + "'",
+                            e.getMessage().startsWith(expectedMessage));
                     return null;
                 });
     }

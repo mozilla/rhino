@@ -4,7 +4,7 @@
 
 js> parseInt
 function parseInt() {
-	[native code, arity=2]
+	[native code]
 }
 js> parseInt("0");
 0

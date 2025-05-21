@@ -145,8 +145,9 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        idata.isStrict,
+                                        fnOrScript.isStrict(),
                                         idata.argsHasRest,
+                                        idata.itsRequiresArgumentObject,
                                         homeObject);
                     } else {
                         scope =
@@ -155,8 +156,9 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        idata.isStrict,
+                                        fnOrScript.isStrict(),
                                         idata.argsHasRest,
+                                        idata.itsRequiresArgumentObject,
                                         homeObject);
                     }
                 }
@@ -233,6 +235,7 @@ public final class Interpreter extends Icode implements Evaluator {
             if (length > stack.length) {
                 stack = Arrays.copyOf(stack, length);
                 sDbl = Arrays.copyOf(sDbl, length);
+                stackAttributes = Arrays.copyOf(stackAttributes, length);
                 // TODO: adjust idata idata.itsMaxFrameArray & idata.itsMaxStack so they start with
                 // larger stacks next time? Not clear this is always a good idea.
             }
@@ -315,7 +318,7 @@ public final class Interpreter extends Icode implements Evaluator {
             for (; ; ) {
                 final CallFrame p = f.parentFrame;
                 if (p == null) {
-                    return f.idata.isStrict;
+                    return f.fnOrScript.isStrict();
                 }
                 f = p;
             }
@@ -3659,34 +3662,14 @@ public final class Interpreter extends Icode implements Evaluator {
             int indexReg,
             Callable target,
             CallFrame frame) {
-        // This is a workaround for what is most likely a bug. We compute applyThis differently for
-        // interpreted and non-interpreted functions. It feels like exactly one of these two
-        // strategies should be correct, but choosing one or the other for all functions will break
-        // different sets of test262 tests.
-        if (target instanceof InterpretedFunction) {
-            Scriptable applyThis;
-            if (indexReg != 0) {
-                Object obj = stack[thisIdx];
-                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
-                applyThis = ScriptRuntime.toObjectOrNull(cx, obj, frame.scope);
-            } else {
-                applyThis = null;
-            }
-            if (applyThis == null) {
-                // This covers the case of args[0] == (null|undefined) as well.
-                applyThis = ScriptRuntime.getTopCallScope(cx);
-            }
-            return applyThis;
+        Object obj;
+        if (indexReg != 0) {
+            obj = stack[thisIdx];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
         } else {
-            Object obj;
-            if (indexReg != 0) {
-                obj = stack[thisIdx];
-                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
-            } else {
-                obj = null;
-            }
-            return ScriptRuntime.getApplyOrCallThis(cx, frame.scope, obj, indexReg);
+            obj = null;
         }
+        return ScriptRuntime.getApplyOrCallThis(cx, frame.scope, obj, indexReg, target);
     }
 
     private static CallFrame initFrame(

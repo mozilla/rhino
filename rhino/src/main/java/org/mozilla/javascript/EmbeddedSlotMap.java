@@ -26,6 +26,7 @@ public class EmbeddedSlotMap implements SlotMap {
     private Slot lastAdded;
 
     private int count;
+    private boolean hasIndex = false;
 
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
@@ -79,7 +80,7 @@ public class EmbeddedSlotMap implements SlotMap {
     /** Locate the slot with the given name or index. */
     @Override
     public Slot query(Object key, int index) {
-        if (slots == null) {
+        if (slots == null || (key == null && !hasIndex)) {
             return null;
         }
 
@@ -231,6 +232,7 @@ public class EmbeddedSlotMap implements SlotMap {
             firstAdded = newSlot;
         }
         lastAdded = newSlot;
+        if (newSlot.name == null) hasIndex = true;
         addKnownAbsentSlot(slots, newSlot);
     }
 

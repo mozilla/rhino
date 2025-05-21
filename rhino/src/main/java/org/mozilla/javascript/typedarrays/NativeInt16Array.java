@@ -96,17 +96,13 @@ public class NativeInt16Array extends NativeTypedArrayView<Short> {
 
     @Override
     public Short get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Short) js_get(i);
     }
 
     @Override
     public Short set(int i, Short aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Short) js_set(i, aByte);
     }
 }

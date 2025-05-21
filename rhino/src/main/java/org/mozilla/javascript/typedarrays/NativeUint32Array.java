@@ -96,17 +96,13 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
 
     @Override
     public Long get(int i) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Long) js_get(i);
     }
 
     @Override
     public Long set(int i, Long aByte) {
-        if (checkIndex(i)) {
-            throw new IndexOutOfBoundsException();
-        }
+        ensureIndex(i);
         return (Long) js_set(i, aByte);
     }
 }

@@ -24,10 +24,10 @@ public class ClassCache implements Serializable {
     private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
-    private transient Map<CacheKey, JavaMembers> classTable;
+    private transient volatile Map<CacheKey, JavaMembers> classTable;
+    private transient volatile Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
+    private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
     private transient TypeInfoFactory typeFactory;
-    private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
-    private transient Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
@@ -53,11 +53,10 @@ public class ClassCache implements Serializable {
 
         @Override
         public int hashCode() {
-            int result = cls.hashCode();
             if (sec != null) {
-                result = sec.hashCode() * 31;
+                return sec.hashCode() ^ cls.hashCode();
             }
-            return result;
+            return cls.hashCode();
         }
 
         @Override
@@ -71,17 +70,30 @@ public class ClassCache implements Serializable {
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
      * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
-     * to locate associated ClassCache object in the prototype chain of the top scope.
+     * to locate associated ClassCache object in the prototype chain of the top scope. If none was
+     * found, it will try to associate a new ClassCache object to the top scope.
      *
      * @param scope scope to search for ClassCache object.
      * @return previously associated ClassCache object or a new instance of ClassCache if no
      *     ClassCache object was found.
      * @see #associate(ScriptableObject topScope)
+     * @throws IllegalArgumentException if the top scope of provided scope have no associated
+     *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
+     *     ScriptableObject}
      */
     public static ClassCache get(Scriptable scope) {
         ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
         if (cache == null) {
-            throw new RuntimeException("Can't find top level scope for " + "ClassCache.get");
+            // we expect this to not happen frequently, so computing top scope twice is acceptable
+            var topScope = ScriptableObject.getTopLevelScope(scope);
+            if (!(topScope instanceof ScriptableObject)) {
+                // Note: it's originally a RuntimeException, the super class of
+                // IllegalArgumentException, so this will not break error catching
+                throw new IllegalArgumentException(
+                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
+            }
+            cache = new ClassCache();
+            cache.associate(((ScriptableObject) topScope));
         }
         return cache;
     }
@@ -146,9 +158,11 @@ public class ClassCache implements Serializable {
      */
     Map<CacheKey, JavaMembers> getClassCacheMap() {
         if (classTable == null) {
-            // Use 1 as concurrency level here and for other concurrent hash maps
-            // as we don't expect high levels of sustained concurrent writes.
-            classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
+            synchronized (this) {
+                if (classTable == null) {
+                    classTable = new ConcurrentHashMap<>();
+                }
+            }
         }
         return classTable;
     }
@@ -162,7 +176,11 @@ public class ClassCache implements Serializable {
 
     Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
         if (classAdapterCache == null) {
-            classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+            synchronized (this) {
+                if (classAdapterCache == null) {
+                    classAdapterCache = new ConcurrentHashMap<>();
+                }
+            }
         }
         return classAdapterCache;
     }
@@ -200,7 +218,11 @@ public class ClassCache implements Serializable {
     synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
-                interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+                synchronized (this) {
+                    if (interfaceAdapterCache == null) {
+                        interfaceAdapterCache = new ConcurrentHashMap<>();
+                    }
+                }
             }
             interfaceAdapterCache.put(cl, iadapter);
         }

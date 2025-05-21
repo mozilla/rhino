@@ -42,4 +42,13 @@ public class ScriptRuntimeTest {
                 "java.lang.NullPointerException: NPE",
                 ScriptRuntime.toString(new NullPointerException("NPE")));
     }
+
+    @Test
+    public void testClamp() {
+        assertEquals(5, ScriptRuntime.clamp(5, 0, 10));
+        assertEquals(10, ScriptRuntime.clamp(10, 0, 10));
+        assertEquals(10, ScriptRuntime.clamp(20, 0, 10));
+        assertEquals(0, ScriptRuntime.clamp(0, 0, 10));
+        assertEquals(0, ScriptRuntime.clamp(-10, 0, 10));
+    }
 }
