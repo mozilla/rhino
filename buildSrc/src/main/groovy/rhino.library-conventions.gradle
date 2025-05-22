@@ -9,6 +9,7 @@ plugins {
     id 'signing'
     id 'jacoco'
     id 'net.ltgt.errorprone'
+    id 'de.obqo.decycle'
 }
 
 dependencies {
