@@ -737,6 +737,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Sets the prototype of the object. */
     @Override
     public void setPrototype(Scriptable m) {
+        checkNotSealed("__proto__", 0);
         prototypeObject = m;
     }
 
@@ -749,6 +750,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Sets the parent (enclosing) scope of the object. */
     @Override
     public void setParentScope(Scriptable m) {
+        checkNotSealed("__parent__", 0);
         parentScopeObject = m;
     }
 

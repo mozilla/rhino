@@ -22,6 +22,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -36,6 +37,19 @@ public class SealedSharedScopeTest {
     public void setUp() throws Exception {
         try (Context tmpCtx = Context.enter()) {
             sharedScope = new ImporterTopLevel(tmpCtx, true);
+            tmpCtx.evaluateString(
+                    sharedScope,
+                    "jsObj = {'bar': 42};\n"
+                    // Some tests...
+                    // + "Object.defineProperties(jsObj, { baz : { writable: true, value: 'aaa'
+                    // }});\n"
+                    // + "Object.seal(jsObj);"
+                    ,
+                    "init",
+                    1,
+                    null);
+            // Note: Object.seal != ScriptableObject.sealObject
+            ((ScriptableObject) sharedScope.get("jsObj", sharedScope)).sealObject();
             sharedScope.sealObject();
         }
 
@@ -176,6 +190,58 @@ public class SealedSharedScopeTest {
             fail("EcmaError expected");
         } catch (EcmaError e) {
             assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsModifyProp() {
+        String s = evaluateString(scope1, "jsObj").toString();
+        assertEquals("[object Object]", s);
+
+        try {
+            evaluateString(scope1, "'use strict';jsObj.bar = 3");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: bar. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsAddProp() {
+        String s = evaluateString(scope1, "jsObj").toString();
+        assertEquals("[object Object]", s);
+
+        try {
+            evaluateString(scope1, "'use strict';jsObj.foo = 3");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: foo. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsModifyProto() {
+        try {
+            evaluateString(scope1, "jsObj.__proto__ = {}");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: __proto__. (test#1)",
+                    e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsModifyParent() {
+        try {
+            evaluateString(scope1, "jsObj.__parent__ = {}");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: __parent__. (test#1)",
+                    e.getMessage());
         }
     }
 }
