@@ -11,8 +11,8 @@ package org.mozilla.javascript;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.function.Function;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>

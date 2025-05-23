@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * @author Mike Shaver

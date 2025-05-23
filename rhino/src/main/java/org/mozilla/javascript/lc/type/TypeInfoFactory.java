@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.lc.type;
 
 import java.io.Serializable;
 import java.lang.reflect.GenericArrayType;
@@ -22,8 +22,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.nat.type.impl.factory.NoCacheFactory;
-import org.mozilla.javascript.nat.type.impl.factory.WeakReferenceFactory;
+import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
+import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
 /**
  * Factory for {@link TypeInfo}

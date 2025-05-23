@@ -1,13 +1,13 @@
-package org.mozilla.javascript.nat.type.impl;
+package org.mozilla.javascript.lc.type.impl;
 
 import java.lang.reflect.TypeVariable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.mozilla.javascript.nat.type.TypeFormatContext;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.VariableTypeInfo;
+import org.mozilla.javascript.lc.type.TypeFormatContext;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 /**
  * @author ZZZank

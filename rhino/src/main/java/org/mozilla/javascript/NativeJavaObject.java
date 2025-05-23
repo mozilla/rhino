@@ -18,8 +18,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields

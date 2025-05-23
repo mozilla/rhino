@@ -1,9 +1,9 @@
-package org.mozilla.javascript.nat.type.impl;
+package org.mozilla.javascript.lc.type.impl;
 
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
-import org.mozilla.javascript.nat.type.TypeFormatContext;
-import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeFormatContext;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 public final class ArrayTypeInfo extends TypeInfoBase {
     private final TypeInfo component;

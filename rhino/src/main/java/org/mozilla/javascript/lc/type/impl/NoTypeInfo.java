@@ -1,8 +1,8 @@
-package org.mozilla.javascript.nat.type.impl;
+package org.mozilla.javascript.lc.type.impl;
 
 import java.util.function.Consumer;
-import org.mozilla.javascript.nat.type.TypeFormatContext;
-import org.mozilla.javascript.nat.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeFormatContext;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * Declaring it as an enum ensures that {@link NoTypeInfo} is always singleton.

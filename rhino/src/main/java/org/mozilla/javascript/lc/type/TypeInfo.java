@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.lc.type;
 
 import java.lang.reflect.Array;
 import java.math.BigInteger;
@@ -14,12 +14,12 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.nat.ByteAsBool;
-import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
-import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
-import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
-import org.mozilla.javascript.nat.type.impl.NoTypeInfo;
-import org.mozilla.javascript.nat.type.impl.PrimitiveClassTypeInfo;
+import org.mozilla.javascript.lc.ByteAsBool;
+import org.mozilla.javascript.lc.type.impl.ArrayTypeInfo;
+import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
+import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
+import org.mozilla.javascript.lc.type.impl.NoTypeInfo;
+import org.mozilla.javascript.lc.type.impl.PrimitiveClassTypeInfo;
 
 /**
  * A representation of Java type, aiming at preserving more type information than what a {@link

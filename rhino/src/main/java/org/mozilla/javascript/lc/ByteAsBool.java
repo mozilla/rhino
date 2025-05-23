@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat;
+package org.mozilla.javascript.lc;
 
 /**
  * @author ZZZank

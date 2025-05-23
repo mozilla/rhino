@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * This class reflects Java methods into the JavaScript environment and handles overloading of
@@ -503,8 +503,8 @@ public class NativeJavaMethod extends BaseFunction {
      * <p>3. otherwise -> return an int array holding all computed conversion weights, whose length
      * will be {@code args.length} for non-vararg member or {@code args.length-1} for vararg member
      *
-     * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.nat.type.TypeInfo)
-     * @see NativeJavaObject#canConvert(Object, org.mozilla.javascript.nat.type.TypeInfo)
+     * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.lc.type.TypeInfo)
+     * @see NativeJavaObject#canConvert(Object, org.mozilla.javascript.lc.type.TypeInfo)
      */
     static int[] failFastConversionWeights(Object[] args, MemberBox member) {
         final var argTypes = member.getArgTypes();

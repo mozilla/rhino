@@ -10,8 +10,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.impl.factory.ConcurrentFactory;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 
 /**
  * Cache of generated classes and data structures to access Java runtime from JavaScript.

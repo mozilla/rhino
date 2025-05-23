@@ -3,8 +3,8 @@ package org.mozilla.javascript.tests.type_info;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.function.UnaryOperator;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * @author ZZZank

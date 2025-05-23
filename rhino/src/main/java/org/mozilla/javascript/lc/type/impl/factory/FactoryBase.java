@@ -1,14 +1,14 @@
-package org.mozilla.javascript.nat.type.impl.factory;
+package org.mozilla.javascript.lc.type.impl.factory;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.WildcardType;
 import java.util.List;
-import org.mozilla.javascript.nat.type.ParameterizedTypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.impl.ArrayTypeInfo;
-import org.mozilla.javascript.nat.type.impl.ParameterizedTypeInfoImpl;
+import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.impl.ArrayTypeInfo;
+import org.mozilla.javascript.lc.type.impl.ParameterizedTypeInfoImpl;
 
 /**
  * @author ZZZank

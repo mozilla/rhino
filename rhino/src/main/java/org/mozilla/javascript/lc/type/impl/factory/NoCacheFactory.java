@@ -1,12 +1,12 @@
-package org.mozilla.javascript.nat.type.impl.factory;
+package org.mozilla.javascript.lc.type.impl.factory;
 
 import java.lang.reflect.TypeVariable;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
-import org.mozilla.javascript.nat.type.impl.BasicClassTypeInfo;
-import org.mozilla.javascript.nat.type.impl.EnumTypeInfo;
-import org.mozilla.javascript.nat.type.impl.InterfaceTypeInfo;
-import org.mozilla.javascript.nat.type.impl.VariableTypeInfoImpl;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
+import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
+import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
+import org.mozilla.javascript.lc.type.impl.VariableTypeInfoImpl;
 
 /**
  * {@link TypeInfoFactory} implementation with no cache.

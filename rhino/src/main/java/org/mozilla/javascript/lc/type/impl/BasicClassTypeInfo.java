@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type.impl;
+package org.mozilla.javascript.lc.type.impl;
 
 public class BasicClassTypeInfo extends ClassTypeInfo {
 

@@ -1,9 +1,9 @@
-package org.mozilla.javascript.nat.type.impl;
+package org.mozilla.javascript.lc.type.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.nat.ByteAsBool;
+import org.mozilla.javascript.lc.ByteAsBool;
 
 public class InterfaceTypeInfo extends ClassTypeInfo {
     /** Android device might not have {@link FunctionalInterface} class */

@@ -34,8 +34,8 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**

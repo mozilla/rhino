@@ -1,4 +1,4 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.lc.type;
 
 import java.lang.reflect.WildcardType;
 import java.util.List;

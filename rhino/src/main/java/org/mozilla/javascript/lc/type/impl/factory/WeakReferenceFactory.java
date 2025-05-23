@@ -1,10 +1,10 @@
-package org.mozilla.javascript.nat.type.impl.factory;
+package org.mozilla.javascript.lc.type.impl.factory;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
-import org.mozilla.javascript.nat.type.TypeInfo;
-import org.mozilla.javascript.nat.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * {@link TypeInfoFactory} implementation with a thread-safe (synchronized), weak-reference cache.

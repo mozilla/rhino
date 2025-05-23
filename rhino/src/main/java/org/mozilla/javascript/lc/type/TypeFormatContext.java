@@ -1,6 +1,6 @@
-package org.mozilla.javascript.nat.type;
+package org.mozilla.javascript.lc.type;
 
-import org.mozilla.javascript.nat.type.impl.ClassSignatureFormatContext;
+import org.mozilla.javascript.lc.type.impl.ClassSignatureFormatContext;
 
 /**
  * @author ZZZank
@@ -38,8 +38,8 @@ public interface TypeFormatContext {
     }
 
     /**
-     * @see org.mozilla.javascript.nat.type.impl.NoTypeInfo
-     * @see org.mozilla.javascript.nat.type.TypeInfo#NONE
+     * @see org.mozilla.javascript.lc.type.impl.NoTypeInfo
+     * @see org.mozilla.javascript.lc.type.TypeInfo#NONE
      */
     default String getFormattedNone() {
         return "?";

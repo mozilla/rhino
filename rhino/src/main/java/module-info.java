@@ -13,7 +13,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.typedarrays;
     exports org.mozilla.javascript.xml;
     exports org.mozilla.javascript.config;
-    exports org.mozilla.javascript.nat.type;
+    exports org.mozilla.javascript.lc.type;
 
     uses org.mozilla.javascript.RegExpLoader;
     uses org.mozilla.javascript.xml.XMLLoader;
