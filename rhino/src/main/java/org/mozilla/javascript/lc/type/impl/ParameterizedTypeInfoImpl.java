@@ -1,6 +1,7 @@
 package org.mozilla.javascript.lc.type.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
@@ -14,6 +15,9 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
     public ParameterizedTypeInfoImpl(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
         this.params = params;
+        for (var param : params) { // implicit null check on `params`
+            Objects.requireNonNull(param);
+        }
     }
 
     @Override

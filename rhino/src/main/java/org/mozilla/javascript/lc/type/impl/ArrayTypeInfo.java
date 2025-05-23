@@ -1,5 +1,6 @@
 package org.mozilla.javascript.lc.type.impl;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
@@ -10,7 +11,7 @@ public final class ArrayTypeInfo extends TypeInfoBase {
     private Class<?> asClass;
 
     public ArrayTypeInfo(TypeInfo component) {
-        this.component = component;
+        this.component = Objects.requireNonNull(component);
     }
 
     @Override
