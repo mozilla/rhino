@@ -27,6 +27,8 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public final class WeakReferenceFactory extends WithCacheFactory {
 
+    private static final long serialVersionUID = 7240510556821383410L;
+
     @Override
     protected <K, V> Map<K, V> createTypeCache() {
         return Collections.synchronizedMap(new WeakHashMap<>());

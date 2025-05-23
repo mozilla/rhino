@@ -27,6 +27,8 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public final class ConcurrentFactory extends WithCacheFactory {
 
+    private static final long serialVersionUID = -6609860947796335136L;
+
     @Override
     protected <K, V> Map<K, V> createTypeCache() {
         return new ConcurrentHashMap<>();
