@@ -26,7 +26,6 @@ public class KnownBuiltInFunction extends LambdaFunction {
      * @param length the arity of the function
      * @param target an object that implements the function in Java. Since Callable is a
      *     single-function interface this will typically be implemented as a lambda.
-     * @param defaultPrototype set up a prototype on the new function
      */
     public KnownBuiltInFunction(
             Object tag,

@@ -81,8 +81,8 @@ public class Test262SuiteTest {
     private static final boolean statsEnabled;
     private static final boolean includeUnsupported;
 
-    static Map<String, Script> HARNESS_SCRIPT_CACHE = new ConcurrentHashMap<>();
-    static Map<Test262Case, TestResultTracker> RESULT_TRACKERS = new LinkedHashMap<>();
+    static final Map<String, Script> HARNESS_SCRIPT_CACHE = new ConcurrentHashMap<>();
+    static final Map<Test262Case, TestResultTracker> RESULT_TRACKERS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
@@ -267,7 +267,7 @@ public class Test262SuiteTest {
                                                         .relativize(testFilePath)
                                                         .toString()
                                                         .replace("\\", "/")
-                                                + (statsEnabled && testResult != ""
+                                                + (statsEnabled && !testResult.isEmpty()
                                                         ? " " + testResult
                                                         : "");
                                 if (tt.comment != null && !tt.comment.isEmpty()) {
@@ -543,14 +543,7 @@ public class Test262SuiteTest {
 
             boolean failedEarly = false;
             try {
-                Scriptable scope;
-                try {
-                    scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
-                } catch (Exception ex) {
-                    throw new RuntimeException(
-                            "Failed to build a scope with the harness files.", ex);
-                }
-
+                Scriptable scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -610,7 +603,7 @@ public class Test262SuiteTest {
                         tracker.passes(testMode, useStrict);
                     }
                 }
-            } catch (Exception ex) {
+            } catch (RuntimeException ex) {
                 // enable line below to print out stacktraces of unexpected exceptions
                 // disabled for now because too many exceptions are throw
                 // Unexpected non-Rhino-Exception here, so print the exception so it stands out
@@ -993,7 +986,7 @@ public class Test262SuiteTest {
     }
 
     private static class TestResultTracker {
-        private Set<String> modes = new HashSet<>();
+        private final Set<String> modes = new HashSet<>();
         private boolean onlyStrict;
         private boolean noStrict;
         private boolean expectedFailure;
@@ -1061,7 +1054,7 @@ public class Test262SuiteTest {
             }
 
             // simplify the output for some cases
-            ArrayList res = new ArrayList<>(modes);
+            ArrayList<String> res = new ArrayList<>(modes);
             if (res.contains("compiled-non-strict") && res.contains("interpreted-non-strict")) {
                 res.remove("compiled-non-strict");
                 res.remove("interpreted-non-strict");
