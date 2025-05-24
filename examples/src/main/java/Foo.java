@@ -17,33 +17,33 @@ import org.mozilla.javascript.annotations.JSGetter;
  * <p>Here's a shell session showing the Foo object in action:
  *
  * <pre>
- * js> defineClass("Foo")
- * js> foo = new Foo();         <i>A constructor call, see <a href="#Foo">Foo</a> below.</i>
- * [object Foo]                 <i>The "Foo" here comes from <a href"#getClassName">getClassName</a>.</i>
- * js> foo.counter;             <i>The counter property is defined by the <code>defineProperty</code></i>
- * 0                            <i>call below and implemented by the <a href="#getCounter">getCounter</a></i>
- * js> foo.counter;             <i>method below.</i>
+ * js&gt; defineClass("Foo")
+ * js&gt; foo = new Foo();      &lt;i&gt;A constructor call, see <a href="#Foo">Foo</a> below.&lt;/i&gt;
+ * [object Foo]                 &lt;i&gt;The "Foo" here comes from <a href="#getClassName">getClassName</a>.&lt;/i&gt;
+ * js&gt; foo.counter;          &lt;i&gt;The counter property is defined by the <code>defineProperty</code>&lt;/i&gt;
+ * 0                            &lt;i&gt;call below and implemented by the <a href="#getCounter">getCounter</a>&lt;/i&gt;
+ * js&gt; foo.counter;          &lt;i&gt;method below.&lt;/i&gt;
  * 1
- * js> foo.counter;
+ * js&gt; foo.counter;
  * 2
- * js> foo.resetCounter();      <i>Results in a call to <a href="#resetCounter">resetCounter</a>.</i>
- * js> foo.counter;             <i>Now the counter has been reset.</i>
+ * js&gt; foo.resetCounter();   &lt;i&gt;Results in a call to <a href="#resetCounter">resetCounter</a>.&lt;/i&gt;
+ * js&gt; foo.counter;          &lt;i&gt;Now the counter has been reset.&lt;/i&gt;
  * 0
- * js> foo.counter;
+ * js&gt; foo.counter;
  * 1
- * js> bar = new Foo(37);       <i>Create a new instance.</i>
+ * js&gt; bar = new Foo(37);    &lt;i&gt;Create a new instance.&lt;/i&gt;
  * [object Foo]
- * js> bar.counter;             <i>This instance's counter is distinct from</i>
- * 37                           <i>the other instance's counter.</i>
- * js> foo.varargs(3, "hi");    <i>Calls <a href="#varargs">varargs</a>.</i>
+ * js&gt; bar.counter;          &lt;i&gt;This instance's counter is distinct from&lt;/i&gt;
+ * 37                           &lt;i&gt;the other instance's counter.&lt;/i&gt;
+ * js&gt; foo.varargs(3, "hi"); &lt;i&gt;Calls <a href="#varargs">varargs</a>.&lt;/i&gt;
  * this = [object Foo]; args = [3, hi]
- * js> foo[7] = 34;             <i>Since we extended ScriptableObject, we get</i>
- * 34                           <i>all the behavior of a JavaScript object</i>
- * js> foo.a = 23;              <i>for free.</i>
+ * js&gt; foo[7] = 34;          &lt;i&gt;Since we extended ScriptableObject, we get&lt;/i&gt;
+ * 34                           &lt;i&gt;all the behavior of a JavaScript object&lt;/i&gt;
+ * js&gt; foo.a = 23;           &lt;i&gt;for free.&lt;/i&gt;
  * 23
- * js> foo.a + foo[7];
+ * js&gt; foo.a + foo[7];
  * 57
- * js>
+ * js&gt;
  * </pre>
  *
  * @see org.mozilla.javascript.Context

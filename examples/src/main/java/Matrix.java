@@ -22,21 +22,21 @@ import org.mozilla.javascript.ScriptableObject;
  * <p>Here's a shell session showing the Matrix object in action:
  *
  * <pre>
- * js> defineClass("Matrix")
- * js> var m = new Matrix(2); // A constructor call, see "Matrix(int dimension)"
- * js> m                      // Object.toString will call "Matrix.getClassName()"
+ * js&gt; defineClass("Matrix")
+ * js&gt; var m = new Matrix(2); // A constructor call, see "Matrix(int dimension)"
+ * js&gt; m                      // Object.toString will call "Matrix.getClassName()"
  * [object Matrix]
- * js> m[0][0] = 3;
+ * js&gt; m[0][0] = 3;
  * 3
- * js> uneval(m[0]);          // an array was created automatically!
+ * js&gt; uneval(m[0]);          // an array was created automatically!
  * [3]
- * js> uneval(m[1]);          // array is created even if we don't set a value
+ * js&gt; uneval(m[1]);          // array is created even if we don't set a value
  * []
- * js> m.dim;                 // we can access the "dim" property
+ * js&gt; m.dim;                 // we can access the "dim" property
  * 2
- * js> m.dim = 3;
+ * js&gt; m.dim = 3;
  * 3
- * js> m.dim;                 // but not modify the "dim" property
+ * js&gt; m.dim;                 // but not modify the "dim" property
  * 2
  * </pre>
  *
