@@ -2854,7 +2854,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     fun = ScriptRuntime.getCallable(funThisObj);
                     // first arg becomes thisObj
                     funThisObj = getApplyThis(cx, stack, sDbl, stackTop + 1, indexReg, fun, frame);
-                    if (BaseFunction.isApply(ifun)) {
+                    if (BaseFunction.isApply(kfun)) {
                         // Apply: second argument after new "this"
                         // should be array-like
                         // and we'll spread its elements on the stack
@@ -2895,11 +2895,11 @@ public final class Interpreter extends Icode implements Evaluator {
                 Object[] boundArgs = bfun.getBoundArgs();
                 int blen = boundArgs.length;
                 if (blen > 0) {
-                    stack = frame.ensureStackLength(blen + stackTop + 2 + indexReg);
+                    stack = frame.ensureStackLength(blen + stackTop + 1 + indexReg);
                     sDbl = frame.sDbl;
-                    System.arraycopy(stack, stackTop + 2, stack, stackTop + 2 + blen, indexReg);
-                    System.arraycopy(sDbl, stackTop + 2, sDbl, stackTop + 2 + blen, indexReg);
-                    System.arraycopy(boundArgs, 0, stack, stackTop + 2, blen);
+                    System.arraycopy(stack, stackTop + 1, stack, stackTop + 1 + blen, indexReg);
+                    System.arraycopy(sDbl, stackTop + 1, sDbl, stackTop + 1 + blen, indexReg);
+                    System.arraycopy(boundArgs, 0, stack, stackTop + 1, blen);
                     indexReg += blen;
                 }
             } else if (fun instanceof NoSuchMethodShim) {
