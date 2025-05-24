@@ -40,8 +40,6 @@ tasks.withType(JavaCompile).configureEach {
         "EscapedEntity",
         "MissingSummary",
         "InvalidBlockTag",
-        "InvalidLink",
-        "InvalidParam",
         "NotJavadoc",
         "UnicodeEscape",
         // Great ideas for when minimum version is more than Java 11
@@ -54,7 +52,11 @@ tasks.withType(JavaCompile).configureEach {
         "InlineMeSuggester",
         // This one either alerts for parameters that we don't use,
         // or spuriously for local variables in my opinion.
-        "UnusedVariable")
+        "UnusedVariable",
+        // This requires annotations that are difficult to incorporate
+        // without adding a dependency for everyon who uses Rhino.
+        "AnnotateFormatMethod"
+        )
     options.errorprone.enable(
         // These two do the last thing that Checkstyle used to do for us
         "RemoveUnusedImports",
