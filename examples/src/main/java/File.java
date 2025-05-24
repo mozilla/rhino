@@ -31,17 +31,17 @@ import org.mozilla.javascript.annotations.JSGetter;
  * <p>Example of use of the File object:
  *
  * <pre>
- * js> defineClass("File")
- * js> file = new File("myfile.txt");
+ * js&gt; defineClass("File")
+ * js&gt; file = new File("myfile.txt");
  * [object File]
- * js> file.writeLine("one");                       <i>only now is file actually opened</i>
- * js> file.writeLine("two");
- * js> file.writeLine("thr", "ee");
- * js> file.close();                                <i>must close file before we can reopen for reading</i>
- * js> var a = file.readLines();                    <i>creates and fills an array with the contents of the file</i>
- * js> a;
+ * js&gt; file.writeLine("one");           &lt;i&gt;only now is file actually opened&lt;/i&gt;
+ * js&gt; file.writeLine("two");
+ * js&gt; file.writeLine("thr", "ee");
+ * js&gt; file.close();                    &lt;i&gt;must close file before we can reopen for reading&lt;/i&gt;
+ * js&gt; var a = file.readLines();        &lt;i&gt;creates and fills an array with the contents of the file&lt;/i&gt;
+ * js&gt; a;
  * one,two,three
- * js>
+ * js&gt;
  * </pre>
  *
  * File errors or end-of-file signaled by thrown Java exceptions will be wrapped as JavaScript
