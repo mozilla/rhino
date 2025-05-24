@@ -69,7 +69,7 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(Javadoc) {
       failOnError = false
-      options.addStringOption('Xdoclint:none', '-quiet')
+      options.addStringOption('Xdoclint:all', '-quiet')
 }
 
 jacocoTestReport {
