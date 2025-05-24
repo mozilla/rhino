@@ -106,6 +106,21 @@ public class LambdaConstructor extends LambdaFunction {
         this.flags = CONSTRUCTOR_DEFAULT;
     }
 
+    public LambdaConstructor(
+            Scriptable scope,
+            String name,
+            int length,
+            Object prototype,
+            SerializableCallable target,
+            SerializableConstructable targetConstructor) {
+        super(scope, name, length, target);
+        setPrototypeProperty(prototype);
+        this.targetConstructor = targetConstructor;
+        this.flags =
+                (target != null ? CONSTRUCTOR_FUNCTION : 0)
+                        | (targetConstructor != null ? CONSTRUCTOR_NEW : 0);
+    }
+
     protected Constructable getTargetConstructor() {
         return targetConstructor;
     }
@@ -265,6 +280,16 @@ public class LambdaConstructor extends LambdaFunction {
             int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, name, getter, setter, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx,
+            Symbol key,
+            ScriptableObject.LambdaGetterFunction getter,
+            ScriptableObject.LambdaSetterFunction setter,
+            int attributes) {
+        ScriptableObject proto = getPrototypeScriptable();
+        proto.defineProperty(cx, key, getter, setter, attributes);
     }
 
     /** Define a property on the prototype that has the same value as another property. */

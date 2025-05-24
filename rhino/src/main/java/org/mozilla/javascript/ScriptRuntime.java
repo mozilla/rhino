@@ -1372,12 +1372,25 @@ public class ScriptRuntime {
         return toInt32(toNumber(val));
     }
 
+    // We return a double here because we *must* maintain infinities
+    // for the purposes of error reporting.
+    public static double toIntegerOrInfinity(Object val) {
+        // short circuit for common integer values
+        if (val instanceof Integer) return ((Integer) val).doubleValue();
+
+        return toIntegerOrInfinity(toNumber(val));
+    }
+
     public static int toInt32(Object[] args, int index) {
         return (index < args.length) ? toInt32(args[index]) : 0;
     }
 
     public static int toInt32(double d) {
         return DoubleConversion.doubleToInt32(d);
+    }
+
+    public static double toIntegerOrInfinity(double d) {
+        return DoubleConversion.truncate(d);
     }
 
     /**

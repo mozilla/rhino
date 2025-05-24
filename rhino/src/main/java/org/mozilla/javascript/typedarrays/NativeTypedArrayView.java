@@ -31,6 +31,7 @@ import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SerializableCallable;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
@@ -148,333 +149,111 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return -1;
     }
 
+    private static final Object TYPED_ARRAY_TAG = "%TypedArray.prototype%";
+
     // Actual functions
 
     static void init(
             Context cx, Scriptable scope, LambdaConstructor constructor, RealThis realThis) {
-        constructor.definePrototypeProperty(
-                cx,
-                "buffer",
-                (Scriptable thisObj) -> js_buffer(thisObj, realThis),
-                DONTENUM | READONLY);
-        constructor.definePrototypeProperty(
-                cx,
-                "byteLength",
-                (Scriptable thisObj) -> js_byteLength(thisObj, realThis),
-                DONTENUM | READONLY);
-        constructor.definePrototypeProperty(
-                cx,
-                "byteOffset",
-                (Scriptable thisObj) -> js_byteOffset(thisObj, realThis),
-                DONTENUM | READONLY);
-        constructor.definePrototypeProperty(
-                cx,
-                "length",
-                (Scriptable thisObj) -> js_length(thisObj, realThis),
-                DONTENUM | READONLY);
+        ScriptableObject s = (ScriptableObject) scope;
+        // Where do we store this prototype? Top level scope for now?
 
-        constructor.definePrototypeMethod(
-                scope,
-                "at",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_at(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "copyWithin",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_copyWithin(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "entries",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.ENTRIES);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "every",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.EVERY, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "fill",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_fill(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "filter",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    Object array =
-                            ArrayLikeAbstractOperations.iterativeMethod(
-                                    lcx, IterativeOperation.FILTER, lscope, self, args);
-                    return self.typedArraySpeciesCreate(
-                            lcx, lscope, new Object[] {array}, "filter");
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "find",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.FIND, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "findIndex",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.FIND_INDEX, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "findLast",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.FIND_LAST, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "findLastIndex",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.FIND_LAST_INDEX, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "forEach",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.FOR_EACH, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "includes",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_includes(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "indexOf",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_indexOf(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "join",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_join(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "keys",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.KEYS);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "lastIndexOf",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_lastIndexOf(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "map",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    Object array =
-                            ArrayLikeAbstractOperations.iterativeMethod(
-                                    lcx, IterativeOperation.MAP, lscope, thisObj, args);
-                    return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "map");
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "reduce",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.reduceMethod(
-                            lcx, ReduceOperation.REDUCE, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "reduceRight",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.reduceMethod(
-                            lcx, ReduceOperation.REDUCE_RIGHT, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "reverse",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_reverse(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "set",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_set(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "slice",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_slice(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "some",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return ArrayLikeAbstractOperations.iterativeMethod(
-                            lcx, IterativeOperation.SOME, lscope, self, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "sort",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_sort(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "subarray",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_subarray(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toLocaleString",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_toString(lcx, lscope, thisObj, args, realThis, true),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toReversed",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_toReversed(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toSorted",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_toSorted(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toString",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_toString(lcx, lscope, thisObj, args, realThis, false),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "values",
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.VALUES);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "with",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_with(lcx, lscope, thisObj, args, realThis),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                SymbolKey.ITERATOR,
-                0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativeTypedArrayView<?> self = realThis.realThis(thisObj);
-                    return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.VALUES);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
+        LambdaConstructor ta = (LambdaConstructor) s.getAssociatedValue(TYPED_ARRAY_TAG);
+        if (ta == null) {
+            var proto = (ScriptableObject) cx.newObject(s);
+            ta =
+                    new LambdaConstructor(
+                            s,
+                            "TypedArray",
+                            0,
+                            proto,
+                            null,
+                            (lcx, ls, largs) -> {
+                                throw ScriptRuntime.typeError("Fuck");
+                            });
+            proto.defineProperty("constructor", ta, DONTENUM);
+            defineProtoProperty(ta, cx, "buffer", NativeTypedArrayView::js_buffer, null);
+            defineProtoProperty(ta, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
+            defineProtoProperty(ta, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);
+            defineProtoProperty(ta, cx, "length", NativeTypedArrayView::js_length, null);
+            defineProtoProperty(
+                    ta, cx, SymbolKey.TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
+
+            defineMethod(ta, s, "at", 1, NativeTypedArrayView::js_at);
+            defineMethod(ta, s, "copyWithin", 1, NativeTypedArrayView::js_copyWithin);
+            defineMethod(ta, s, "entries", 0, NativeTypedArrayView::js_entries);
+            defineMethod(ta, s, "every", 1, NativeTypedArrayView::js_every);
+            defineMethod(ta, s, "fill", 1, NativeTypedArrayView::js_fill);
+            defineMethod(ta, s, "filter", 1, NativeTypedArrayView::js_filter);
+            defineMethod(ta, s, "find", 1, NativeTypedArrayView::js_find);
+            defineMethod(ta, s, "findIndex", 1, NativeTypedArrayView::js_findIndex);
+            defineMethod(ta, s, "findLast", 1, NativeTypedArrayView::js_findLast);
+            defineMethod(ta, s, "findLastIndex", 1, NativeTypedArrayView::js_findLastIndex);
+            defineMethod(ta, s, "forEach", 1, NativeTypedArrayView::js_forEach);
+            defineMethod(ta, s, "includes", 1, NativeTypedArrayView::js_includes);
+            defineMethod(ta, s, "indexOf", 1, NativeTypedArrayView::js_indexOf);
+            defineMethod(ta, s, "join", 1, NativeTypedArrayView::js_join);
+            defineMethod(ta, s, "keys", 0, NativeTypedArrayView::js_keys);
+            defineMethod(ta, s, "lastIndexOf", 1, NativeTypedArrayView::js_lastIndexOf);
+            defineMethod(ta, s, "map", 1, NativeTypedArrayView::js_map);
+            defineMethod(ta, s, "reduce", 1, NativeTypedArrayView::js_reduce);
+            defineMethod(ta, s, "reduceRight", 1, NativeTypedArrayView::js_reduceRight);
+            defineMethod(ta, s, "reverse", 0, NativeTypedArrayView::js_reverse);
+            defineMethod(ta, s, "set", 0, NativeTypedArrayView::js_set);
+            defineMethod(ta, s, "slice", 2, NativeTypedArrayView::js_slice);
+            defineMethod(ta, s, "some", 1, NativeTypedArrayView::js_some);
+            defineMethod(ta, s, "sort", 1, NativeTypedArrayView::js_sort);
+            defineMethod(ta, s, "subarray", 2, NativeTypedArrayView::js_subarray);
+            defineMethod(ta, s, "toLocaleString", 0, NativeTypedArrayView::js_toLocaleString);
+            defineMethod(ta, s, "toReversed", 0, NativeTypedArrayView::js_toReversed);
+            defineMethod(ta, s, "toSorted", 1, NativeTypedArrayView::js_toSorted);
+            defineMethod(ta, s, "toString", 0, NativeTypedArrayView::js_toString);
+            defineMethod(ta, s, "values", 0, NativeTypedArrayView::js_values);
+            defineMethod(ta, s, "with", 2, NativeTypedArrayView::js_with);
+            defineMethod(ta, s, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
+
+            ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
+        }
+        constructor.setPrototype(ta);
+        ((ScriptableObject) constructor.getPrototypeProperty())
+                .setPrototype((Scriptable) ta.getPrototypeProperty());
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            String name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineProtoProperty(
+            LambdaConstructor typedArray,
+            Context cx,
+            SymbolKey name,
+            LambdaGetterFunction getter,
+            LambdaSetterFunction setter) {
+        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(
+                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    private static void defineMethod(
+            LambdaConstructor typedArray,
+            Scriptable scope,
+            SymbolKey key,
+            int length,
+            SerializableCallable target) {
+        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /** Returns <code>true</code>, if the index is wrong. */
@@ -628,11 +407,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         throw ScriptRuntime.constructError("Error", "invalid argument");
     }
 
-    private void setRange(NativeTypedArrayView<?> v, int off) {
-        if (off < 0 || off > length) {
-            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", off);
+    private void setRange(NativeTypedArrayView<?> v, double dbloff) {
+        if (dbloff < 0 || dbloff > length) {
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", dbloff);
             throw ScriptRuntime.rangeError(msg);
         }
+
+        int off = (int) dbloff;
 
         if (v.length > (length - off)) {
             String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.source.array");
@@ -655,11 +436,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
-    private void setRange(NativeArray a, int off) {
-        if (off < 0 || off > length) {
-            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", off);
+    private void setRange(NativeArray a, double dbloff) {
+        if (dbloff < 0 || dbloff > length) {
+            String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.offset", dbloff);
             throw ScriptRuntime.rangeError(msg);
         }
+        int off = (int) dbloff;
         if ((off + a.size()) > length) {
             String msg = ScriptRuntime.getMessageById("msg.typed.array.bad.source.array");
             throw ScriptRuntime.rangeError(msg);
@@ -672,33 +454,60 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
-    private static Object js_buffer(Scriptable thisObj, RealThis realThis) {
-        return realThis.realThis(thisObj).arrayBuffer;
+    /**
+     * Method to allow implementation of
+     * https://tc39.es/ecma262/multipage/indexed-collections.html#sec-validatetypedarray, but only
+     * return the actual length since we don't really need to create a witness record.
+     */
+    private long validateAndGetLenght() {
+        // Check if the buffer is detached, and whether the length is
+        // in range. DETACHED is valid value of length if the byte
+        // buffer is detached, but should always result in this
+        // operation throwing so we don't need to represent it as a
+        // numerical value.
+        return length;
     }
 
-    private static Object js_byteLength(Scriptable thisObj, RealThis realThis) {
-        NativeTypedArrayView<?> o = realThis.realThis(thisObj);
+    private static NativeTypedArrayView realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeTypedArrayView.class);
+    }
+
+    private static Object js_buffer(Scriptable thisObj) {
+        return realThis(thisObj).arrayBuffer;
+    }
+
+    private static Object js_toStringTag(Scriptable thisObj) {
+        return realThis(thisObj).getClassName();
+    }
+
+    private static Object js_byteLength(Scriptable thisObj) {
+        NativeTypedArrayView<?> o = realThis(thisObj);
         return o.byteLength;
     }
 
-    private static Object js_byteOffset(Scriptable thisObj, RealThis realThis) {
-        NativeTypedArrayView<?> o = realThis.realThis(thisObj);
+    private static Object js_byteOffset(Scriptable thisObj) {
+        NativeTypedArrayView<?> o = realThis(thisObj);
         return o.offset;
     }
 
-    private static Object js_length(Scriptable thisObj, RealThis realThis) {
-        NativeTypedArrayView<?> o = realThis.realThis(thisObj);
+    private static Object js_length(Scriptable thisObj) {
+        NativeTypedArrayView<?> o = realThis(thisObj);
         return o.length;
     }
 
     private static String js_toString(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args,
-            RealThis realThis,
-            boolean useLocale) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_toStringInternal(cx, scope, thisObj, args, false);
+    }
+
+    private static String js_toLocaleString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return js_toStringInternal(cx, scope, thisObj, args, true);
+    }
+
+    private static String js_toStringInternal(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, boolean useLocale) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
         StringBuilder builder = new StringBuilder();
         if (self.length > 0) {
             Object elem = self.getElemForToString(cx, scope, 0, useLocale);
@@ -723,9 +532,81 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
+    private static Object js_entries(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.ENTRIES);
+    }
+
+    private static Object js_every(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx, IterativeOperation.EVERY, lscope, self, args, self.validateAndGetLenght());
+    }
+
+    private static Object js_filter(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        Object array =
+                ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                        lcx,
+                        IterativeOperation.FILTER,
+                        lscope,
+                        self,
+                        args,
+                        self.validateAndGetLenght());
+        return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "filter");
+    }
+
+    private static Object js_find(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx, IterativeOperation.FIND, lscope, self, args, self.validateAndGetLenght());
+    }
+
+    private static Object js_findIndex(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx,
+                IterativeOperation.FIND_INDEX,
+                lscope,
+                self,
+                args,
+                self.validateAndGetLenght());
+    }
+
+    private static Object js_findLast(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx, IterativeOperation.FIND_LAST, lscope, self, args, self.validateAndGetLenght());
+    }
+
+    private static Object js_findLastIndex(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx,
+                IterativeOperation.FIND_LAST_INDEX,
+                lscope,
+                self,
+                args,
+                self.validateAndGetLenght());
+    }
+
+    private static Object js_forEach(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx, IterativeOperation.FOR_EACH, lscope, self, args, self.validateAndGetLenght());
+    }
+
     private static Boolean js_includes(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         if (self.length == 0) return Boolean.FALSE;
@@ -751,8 +632,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_indexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
@@ -779,9 +660,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return -1;
     }
 
+    private static Object js_iterator(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.VALUES);
+    }
+
+    private static Object js_keys(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.KEYS);
+    }
+
     private static Object js_lastIndexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
@@ -806,9 +699,32 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return -1;
     }
 
+    private static Object js_map(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        Object array =
+                ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                        lcx, IterativeOperation.MAP, lscope, thisObj, args, self.length);
+        return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "map");
+    }
+
+    private static Object js_reduce(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.reduceMethodWithLength(
+                lcx, ReduceOperation.REDUCE, lscope, self, args, self.validateAndGetLenght());
+    }
+
+    private static Object js_reduceRight(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.reduceMethodWithLength(
+                lcx, ReduceOperation.REDUCE_RIGHT, lscope, self, args, self.validateAndGetLenght());
+    }
+
     private static Scriptable js_slice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         long begin, end;
         if (args.length == 0) {
@@ -843,9 +759,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 "slice");
     }
 
-    private static String js_join(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+    private static Object js_some(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                lcx, IterativeOperation.SOME, lscope, self, args, self.validateAndGetLenght());
+    }
+
+    private static Object js_values(
+            Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
+        return new NativeArrayIterator(lscope, self, ARRAY_ITERATOR_TYPE.VALUES);
+    }
+
+    private static String js_join(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         // if no args, use "," as separator
         String separator =
@@ -881,8 +809,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static NativeTypedArrayView<?> js_reverse(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         for (int i = 0, j = self.length - 1; i < j; i++, j--) {
             Object temp = self.js_get(i);
@@ -893,8 +821,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static NativeTypedArrayView<?> js_fill(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         long relativeStart = 0;
         if (args.length >= 2) {
@@ -927,12 +855,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Scriptable js_sort(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (isArg(args, 0) && !(args[0] instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.function.expected");
         }
 
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         Object[] working = self.sortTemporaryArray(cx, scope, args);
         for (int i = 0; i < self.length; ++i) {
@@ -957,8 +885,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_copyWithin(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
         long relativeTarget = (long) ScriptRuntime.toInteger(targetArg);
@@ -1007,25 +935,23 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return self;
     }
 
-    private static Object js_set(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
         if (args.length > 0) {
-            if (args[0] instanceof NativeTypedArrayView) {
-                int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                NativeTypedArrayView<?> nativeView = (NativeTypedArrayView<?>) args[0];
-                self.setRange(nativeView, offset);
+            if (args[0] instanceof NativeTypedArrayView || args[0] instanceof NativeArray) {
+                double offset = isArg(args, 1) ? ScriptRuntime.toIntegerOrInfinity(args[1]) : 0;
+                if (args[0] instanceof NativeTypedArrayView) {
+                    NativeTypedArrayView<?> nativeView = (NativeTypedArrayView<?>) args[0];
+                    self.setRange(nativeView, offset);
+                } else {
+                    self.setRange((NativeArray) args[0], offset);
+                }
                 return Undefined.instance;
-            }
-            if (args[0] instanceof NativeArray) {
-                int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                self.setRange((NativeArray) args[0], offset);
-                return Undefined.instance;
-            }
-            if (args[0] instanceof Scriptable) {
+            } else if (args[0] instanceof Scriptable) {
                 // Tests show that we need to ignore a non-array object
                 return Undefined.instance;
             }
+
             if (isArg(args, 2)) {
                 return self.js_set(ScriptRuntime.toInt32(args[0]), args[1]);
             }
@@ -1034,8 +960,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_subarray(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
         int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
@@ -1058,9 +984,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         throw ScriptRuntime.constructError("Error", "invalid arguments");
     }
 
-    private static Object js_at(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+    private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         long relativeIndex = 0;
         if (args.length >= 1) {
@@ -1092,8 +1017,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_toReversed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         NativeArrayBuffer newBuffer =
                 new NativeArrayBuffer(self.length * self.getBytesPerElement());
@@ -1113,8 +1038,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_toSorted(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         Object[] working = self.sortTemporaryArray(cx, scope, args);
 
@@ -1133,9 +1058,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return result;
     }
 
-    private static Object js_with(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RealThis realThis) {
-        NativeTypedArrayView<?> self = realThis.realThis(thisObj);
+    private static Object js_with(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeTypedArrayView<?> self = realThis(thisObj);
 
         long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
         long actualIndex = relativeIndex >= 0 ? relativeIndex : self.length + relativeIndex;
