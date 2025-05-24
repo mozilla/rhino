@@ -9,7 +9,6 @@ import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
-import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -89,19 +88,14 @@ class DefaultLinker implements GuardingDynamicLinker {
         } else if (op.isOperation(RhinoOperation.GETWITHTHIS)) {
             mh =
                     bindStringParameter(
-                            lookup,
-                            mType,
-                            ScriptRuntime.class,
-                            "getPropFunctionAndThis",
-                            1,
-                            op.getName());
+                            lookup, mType, ScriptRuntime.class, "getPropAndThis", 1, op.getName());
         } else if (op.isOperation(RhinoOperation.GETWITHTHISOPTIONAL)) {
             mh =
                     bindStringParameter(
                             lookup,
                             mType,
                             ScriptRuntime.class,
-                            "getPropFunctionAndThisOptional",
+                            "getPropAndThisOptional",
                             1,
                             op.getName());
         } else if (op.isOperation(StandardOperation.SET)) {
@@ -158,15 +152,21 @@ class DefaultLinker implements GuardingDynamicLinker {
         } else if (op.isOperation(RhinoOperation.GETWITHTHIS)) {
             tt =
                     MethodType.methodType(
-                            Callable.class, String.class, Context.class, Scriptable.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThis", tt);
+                            ScriptRuntime.LookupResult.class,
+                            String.class,
+                            Context.class,
+                            Scriptable.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThis", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (op.isOperation(RhinoOperation.GETWITHTHISOPTIONAL)) {
             tt =
                     MethodType.methodType(
-                            Callable.class, String.class, Context.class, Scriptable.class);
-            mh = lookup.findStatic(ScriptRuntime.class, "getNameFunctionAndThisOptional", tt);
+                            ScriptRuntime.LookupResult.class,
+                            String.class,
+                            Context.class,
+                            Scriptable.class);
+            mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThisOptional", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (op.isOperation(StandardOperation.SET)) {

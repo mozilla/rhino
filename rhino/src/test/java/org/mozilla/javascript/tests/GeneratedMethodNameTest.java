@@ -76,7 +76,7 @@ public class GeneratedMethodNameTest {
         public String readCurrentFunctionJavaName() {
             final Throwable t = new RuntimeException();
             // remove prefix and suffix of method name
-            return t.getStackTrace()[8].getMethodName().replaceFirst("_[^_]*_(.*)_[^_]*", "$1");
+            return t.getStackTrace()[7].getMethodName().replaceFirst("_[^_]*_(.*)_[^_]*", "$1");
         }
     }
 

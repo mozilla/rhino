@@ -48,7 +48,7 @@ interface Signatures {
             "(Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/Scriptable;"
-                    + ")Lorg/mozilla/javascript/Callable;";
+                    + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;";
 
     /**
      * PROP:GETINDEX: Get a property from an object based on a numeric index. Falls back to
@@ -163,7 +163,7 @@ interface Signatures {
     String NAME_GET_THIS =
             "(Lorg/mozilla/javascript/Scriptable;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + ")Lorg/mozilla/javascript/Callable;";
+                    + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;";
 
     /** NAME:SET:{name}: Sets the named value in the scope. Falls back to ScriptRuntime.setName. */
     String NAME_SET =

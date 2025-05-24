@@ -7,7 +7,10 @@ js> version(180)
 js> try {
   > (function({a}) { return a }).foo()
   > } catch (e) {
-  > e.message.indexOf("function({a}) {...}") != -1;
+  > // The error message no longer prints out the "toString" of the object
+  > // that we were looking up -- a lot of machinery would be necessary
+  > // to make that work.
+  > e.message.indexOf("function foo") != -1;
   > }
 true
 
