@@ -15,6 +15,37 @@ import org.mozilla.javascript.Scriptable;
  * @author Norris Boyd
  */
 public class RunScript {
+
+    /**
+     * Main method that evaluates JavaScript code passed as command line arguments.
+     *
+     * <p>This method demonstrates basic JavaScript execution using the Mozilla Rhino engine. It
+     * concatenates all command line arguments into a single JavaScript expression, evaluates it,
+     * and prints the result to standard error.
+     *
+     * <p>Example usage:
+     *
+     * <pre>
+     * java YourClass "3 + 4"
+     * java YourClass "Math.sqrt(16)"
+     * java YourClass "var x = 5;" "x * 2"
+     * </pre>
+     *
+     * <p>The method performs the following steps:
+     *
+     * <ol>
+     *   <li>Creates and enters a JavaScript execution context
+     *   <li>Initializes standard JavaScript objects (Object, Function, Math, etc.)
+     *   <li>Concatenates all command line arguments into a single string
+     *   <li>Evaluates the concatenated string as JavaScript code
+     *   <li>Converts the result to a string and prints it to stderr
+     *   <li>Ensures proper cleanup of the JavaScript context
+     * </ol>
+     *
+     * @param args command line arguments that will be concatenated and evaluated as JavaScript
+     *     code. Each argument is treated as part of a single JavaScript expression or statement
+     *     sequence.
+     */
     public static void main(String args[]) {
         // Creates and enters a Context. The Context stores information
         // about the execution environment of a script.
@@ -41,5 +72,10 @@ public class RunScript {
             // Exit from the context.
             Context.exit();
         }
+    }
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private RunScript() {
+        // Utility class - prevent instantiation
     }
 }

@@ -12,9 +12,9 @@ import java.net.URI;
  * Represents the source text of the module as a tuple of a reader, a URI, a security domain, and a
  * cache validator.
  *
- * <h1>Cache validators</h1>
+ * <p>&lt;h1&gt;Cache validators&lt;/h1&gt;
  *
- * Validators are used by caches subclassed from {@link CachingModuleScriptProviderBase} to avoid
+ * <p>Validators are used by caches subclassed from {@link CachingModuleScriptProviderBase} to avoid
  * repeated loading of unmodified resources as well as automatic reloading of modified resources.
  * Such a validator can be any value that can be used to detect modification or non-modification of
  * the resource that provided the source of the module. It can be as simple as a tuple of a URI or a

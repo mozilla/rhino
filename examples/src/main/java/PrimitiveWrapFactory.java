@@ -12,7 +12,7 @@ import org.mozilla.javascript.WrapFactory;
  * An example WrapFactory that can be used to avoid wrapping of Java types that can be converted to
  * ECMA primitive values. So java.lang.String is mapped to ECMA string, all java.lang.Numbers are
  * mapped to ECMA numbers, and java.lang.Booleans are mapped to ECMA booleans instead of being
- * wrapped as objects. Additionally java.lang.Character is converted to ECMA string with length 1.
+ * wrapped as objects. Additionally, java.lang.Character is converted to ECMA string with length 1.
  * Other types have the default behavior.
  *
  * <p>Note that calling "new java.lang.String('foo')" in JavaScript with this wrap factory enabled
@@ -32,5 +32,10 @@ public class PrimitiveWrapFactory extends WrapFactory {
             return new String(a);
         }
         return super.wrap(cx, scope, obj, staticType);
+    }
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private PrimitiveWrapFactory() {
+        // Utility class - prevent instantiation
     }
 }

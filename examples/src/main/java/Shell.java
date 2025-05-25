@@ -39,6 +39,8 @@ public class Shell extends ScriptableObject {
      * <p>Process arguments as would a normal Java program. Also create a new Context and associate
      * it with the current thread. Then set up the execution environment and begin to execute
      * scripts.
+     *
+     * @param args the array of arguments
      */
     public static void main(String args[]) {
         // Associate a new Context with this thread
@@ -75,7 +77,13 @@ public class Shell extends ScriptableObject {
         }
     }
 
-    /** Parse arguments. */
+    /**
+     * Parse arguments.
+     *
+     * @param cx the current Context for this thread
+     * @param args the array of arguments
+     * @return the options as String[]
+     */
     public static String[] processOptions(Context cx, String args[]) {
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -134,6 +142,11 @@ public class Shell extends ScriptableObject {
      * <p>This method is defined as a JavaScript function. Note that its arguments are of the
      * "varargs" form, which allows it to handle an arbitrary number of arguments supplied to the
      * JavaScript function.
+     *
+     * @param cx the current Context for this thread
+     * @param thisObj the JavaScript <code>this</code> object
+     * @param args the array of arguments
+     * @param funObj the function object of the invoked JavaScript function
      */
     public static void print(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         for (int i = 0; i < args.length; i++) {
@@ -162,6 +175,12 @@ public class Shell extends ScriptableObject {
      * Get and set the language version.
      *
      * <p>This method is defined as a JavaScript function.
+     *
+     * @param cx the current Context for this thread
+     * @param thisObj the JavaScript <code>this</code> object
+     * @param args the array of arguments
+     * @param funObj the function object of the invoked JavaScript function
+     * @return the version no as double
      */
     public static double version(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         double result = cx.getLanguageVersion();
@@ -176,6 +195,11 @@ public class Shell extends ScriptableObject {
      * Load and execute a set of JavaScript source files.
      *
      * <p>This method is defined as a JavaScript function.
+     *
+     * @param cx the current Context for this thread
+     * @param thisObj the JavaScript <code>this</code> object
+     * @param args the array of arguments
+     * @param funObj the function object of the invoked JavaScript function
      */
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         Shell shell = (Shell) getTopLevelScope(thisObj);
@@ -281,5 +305,11 @@ public class Shell extends ScriptableObject {
         System.out.println(s);
     }
 
+    /** Flag for the quitting mode. */
     private boolean quitting;
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private Shell() {
+        // Utility class - prevent instantiation
+    }
 }

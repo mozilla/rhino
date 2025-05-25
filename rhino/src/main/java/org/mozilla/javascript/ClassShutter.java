@@ -40,8 +40,6 @@ public interface ClassShutter {
      * attempts to load the class "java.lang.System.out" because it assumes that "java.lang.System"
      * is a package name.
      *
-     * <p>
-     *
      * @param fullClassName the full name of the class (including the package name, with '.' as a
      *     delimiter). For example the standard string class is "java.lang.String"
      * @return whether or not to reveal this class to scripts

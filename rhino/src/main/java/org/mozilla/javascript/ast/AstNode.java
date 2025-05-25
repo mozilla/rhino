@@ -297,8 +297,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * implementations may assume that the AST node is error-free, since it is intended to be
      * invoked only at runtime after a successful parse.
      *
-     * <p>
-     *
      * @param depth the current recursion depth, typically beginning at 0 when called on the root
      *     node.
      */
@@ -350,8 +348,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * <p>Generally speaking, the order will be deterministic; the order is whatever order is
      * decided by each child node. Normally child nodes will try to visit their children in lexical
      * order, but there may be exceptions to this rule.
-     *
-     * <p>
      *
      * @param visitor the object to call with this node and its children
      */

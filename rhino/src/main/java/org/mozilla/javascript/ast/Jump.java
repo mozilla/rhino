@@ -97,13 +97,18 @@ public class Jump extends AstNode {
     /**
      * Jumps are only used directly during code generation, and do not support this interface.
      *
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException always when called
      */
     @Override
     public void visit(NodeVisitor visitor) {
         throw new UnsupportedOperationException(this.toString());
     }
 
+    /**
+     * Jumps are only used directly during code generation, and do not support this interface.
+     *
+     * @throws UnsupportedOperationException always when called
+     */
     @Override
     public String toSource(int depth) {
         throw new UnsupportedOperationException(this.toString());

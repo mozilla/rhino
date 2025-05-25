@@ -27,8 +27,6 @@ public interface Script {
      * ECMA programs, the scope must be an object that has been initialized as a global object using
      * <code>Context.initStandardObjects</code>.
      *
-     * <p>
-     *
      * @param cx the Context associated with the current thread
      * @param scope the scope to execute relative to
      * @return the result of executing the script

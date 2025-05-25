@@ -24,8 +24,6 @@ import java.util.Objects;
  * directly, and uses NativeJavaMethod objects to reflect (possibly overloaded) methods. It also
  * provides iterator support for all iterable objects.
  *
- * <p>
- *
  * @author Mike Shaver
  * @see NativeJavaArray
  * @see NativeJavaPackage

@@ -52,6 +52,7 @@ public class ScriptRuntime {
     /**
      * Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3
      *
+     * @return a {@link BaseFunction}
      * @deprecated {@link #typeErrorThrower(Context)}
      */
     @Deprecated
@@ -121,7 +122,6 @@ public class ScriptRuntime {
      * 'standard' classes - especially those in java.lang, we can trust
      * that they won't cause problems by being loaded early.
      */
-
     public static final Class<?> BooleanClass = Kit.classOrNull("java.lang.Boolean"),
             ByteClass = Kit.classOrNull("java.lang.Byte"),
             CharacterClass = Kit.classOrNull("java.lang.Character"),
@@ -140,6 +140,7 @@ public class ScriptRuntime {
             ContextFactoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory"),
             FunctionClass = Kit.classOrNull("org.mozilla.javascript.Function"),
             ScriptableObjectClass = Kit.classOrNull("org.mozilla.javascript.ScriptableObject");
+
     public static final Class<Scriptable> ScriptableClass = Scriptable.class;
 
     private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
