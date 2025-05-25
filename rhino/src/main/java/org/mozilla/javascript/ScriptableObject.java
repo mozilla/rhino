@@ -1843,8 +1843,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
-        LambdaAccessorSlot newSlot =
-                createLambdaAccessorSlot(key.toString(), 0, getter, setter, attributes);
+        LambdaAccessorSlot newSlot = createLambdaAccessorSlot(key, 0, getter, setter, attributes);
         replaceLambdaAccessorSlot(cx, key, newSlot);
     }
 
