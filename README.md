@@ -101,6 +101,17 @@ You can also run the benchmarks:
 
     ./gradlew jmh
 
+When running the benchmarks you may find a couple of environment variables useful.
+* `BENCHMARKS` if set will limit the benchmarks run to those matching
+  the regular expression given.
+* `INTERPRETED` can be set to `true` or `false` to only run the
+  benchmarks in interpreted or compiled mode.
+* `PROFILERS` can be set to `cpu` or `alloc` to run the async profiler
+  for cpu time or memory allocations, or can be set to any other
+  string which will be passed to jmh as the value of the profilers
+  argument. This allows for things like running JFR as the profiler to
+  collect information on lock contention or other events.
+
 ### Testing on other Java Versions
 
 It is a good idea to test major changes on Java 11 before assuming that they will pass the CI
