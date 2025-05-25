@@ -22,17 +22,6 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
-import org.mozilla.javascript.typedarrays.NativeDataView;
-import org.mozilla.javascript.typedarrays.NativeFloat32Array;
-import org.mozilla.javascript.typedarrays.NativeFloat64Array;
-import org.mozilla.javascript.typedarrays.NativeInt16Array;
-import org.mozilla.javascript.typedarrays.NativeInt32Array;
-import org.mozilla.javascript.typedarrays.NativeInt8Array;
-import org.mozilla.javascript.typedarrays.NativeUint16Array;
-import org.mozilla.javascript.typedarrays.NativeUint32Array;
-import org.mozilla.javascript.typedarrays.NativeUint8Array;
-import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
@@ -227,18 +216,10 @@ public class ScriptRuntime {
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
                 || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            new LazilyLoadedCtor(scope, "ArrayBuffer", sealed, true, NativeArrayBuffer::init);
-            new LazilyLoadedCtor(scope, "Int8Array", sealed, true, NativeInt8Array::init);
-            new LazilyLoadedCtor(scope, "Uint8Array", sealed, true, NativeUint8Array::init);
-            new LazilyLoadedCtor(
-                    scope, "Uint8ClampedArray", sealed, true, NativeUint8ClampedArray::init);
-            new LazilyLoadedCtor(scope, "Int16Array", sealed, true, NativeInt16Array::init);
-            new LazilyLoadedCtor(scope, "Uint16Array", sealed, true, NativeUint16Array::init);
-            new LazilyLoadedCtor(scope, "Int32Array", sealed, true, NativeInt32Array::init);
-            new LazilyLoadedCtor(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
-            new LazilyLoadedCtor(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
-            new LazilyLoadedCtor(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
-            new LazilyLoadedCtor(scope, "DataView", sealed, true, NativeDataView::init);
+            if (typedArraysLoader == null) {
+                throw new NullPointerException("No typedArraysLoader present");
+            }
+            typedArraysLoader.load(scope, sealed);
         }
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -5727,4 +5708,6 @@ public class ScriptRuntime {
 
     static final XMLLoader xmlLoaderImpl =
             ScriptRuntime.loadOneServiceImplementation(XMLLoader.class);
+    static final TypedArraysLoader typedArraysLoader =
+            ScriptRuntime.loadOneServiceImplementation(TypedArraysLoader.class);
 }
