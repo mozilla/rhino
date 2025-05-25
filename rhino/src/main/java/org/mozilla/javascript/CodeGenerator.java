@@ -1258,7 +1258,6 @@ class CodeGenerator extends Icode {
 
         // Put undefined
         addIcode(Icode_POP);
-        addIcode(Icode_POP);
         addStringOp(Token.NAME, "undefined");
         int afterLabel = iCodeTop;
         addGotoOp(Token.GOTO);
