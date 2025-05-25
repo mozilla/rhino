@@ -39,15 +39,15 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         private Object[] valueArray;
         private short[] attributeArray;
 
-        // The following helps to avoid creation of valueArray during runtime
-        // initialization for common case of "constructor" property
+        // The following helps to avoid the creation of valueArray during runtime
+        // initialization for the common case of "constructor" property
         int constructorId;
         private IdFunctionObject constructor;
         private short constructorAttrs;
 
         PrototypeValues(IdScriptableObject obj, int maxId) {
-            if (obj == null) throw new IllegalArgumentException();
-            if (maxId < 1) throw new IllegalArgumentException();
+            if (obj == null) throw new IllegalArgumentException("obj == null");
+            if (maxId < 1) throw new IllegalArgumentException("maxId < 1");
             this.obj = obj;
             this.maxId = maxId;
         }
@@ -57,9 +57,10 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         }
 
         final void initValue(int id, String name, Object value, int attributes) {
-            if (!(1 <= id && id <= maxId)) throw new IllegalArgumentException();
-            if (name == null) throw new IllegalArgumentException();
-            if (value == NOT_FOUND) throw new IllegalArgumentException();
+            if (!(1 <= id && id <= maxId))
+                throw new IllegalArgumentException("!(1 <= id && id <= maxId)");
+            if (name == null) throw new IllegalArgumentException("name == null");
+            if (value == NOT_FOUND) throw new IllegalArgumentException("value == NOT_FOUND");
             ScriptableObject.checkValidAttributes(attributes);
             if (obj.findPrototypeId(name) != id) throw new IllegalArgumentException(name);
 
@@ -77,9 +78,10 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         }
 
         final void initValue(int id, Symbol key, Object value, int attributes) {
-            if (!(1 <= id && id <= maxId)) throw new IllegalArgumentException();
-            if (key == null) throw new IllegalArgumentException();
-            if (value == NOT_FOUND) throw new IllegalArgumentException();
+            if (!(1 <= id && id <= maxId))
+                throw new IllegalArgumentException("!(1 <= id && id <= maxId)");
+            if (key == null) throw new IllegalArgumentException("key == null");
+            if (value == NOT_FOUND) throw new IllegalArgumentException("value == NOT_FOUND");
             ScriptableObject.checkValidAttributes(attributes);
             if (obj.findPrototypeId(key) != id) throw new IllegalArgumentException(key.toString());
 
@@ -167,7 +169,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         }
 
         final void set(int id, Scriptable start, Object value) {
-            if (value == NOT_FOUND) throw new IllegalArgumentException();
+            if (value == NOT_FOUND) throw new IllegalArgumentException("value == NOT_FOUND");
             ensureId(id);
             int attr = attributeArray[id - 1];
             if ((attr & READONLY) == 0) {
@@ -680,7 +682,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     /**
-     * Set or delete id value. If value == NOT_FOUND , the implementation should make sure that the
+     * Set or delete id value. If value == NOT_FOUND, the implementation should make sure that the
      * following getInstanceIdValue return NOT_FOUND.
      */
     protected void setInstanceIdValue(int id, Object value) {
@@ -840,8 +842,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     private IdFunctionObject newIdFunction(
             Object tag, int id, String name, int arity, Scriptable scope) {
-        IdFunctionObject function = null;
-        function = new IdFunctionObject(this, tag, id, name, arity, scope);
+        IdFunctionObject function = new IdFunctionObject(this, tag, id, name, arity, scope);
 
         if (isSealed()) {
             function.sealObject();
@@ -969,14 +970,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     private Slot getBuiltInSlot(String name) {
-        Object value = null;
-        int attr = EMPTY;
-
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
-            value = getInstanceIdValue(id);
-            attr = (info >>> 16);
+            Object value = getInstanceIdValue(id);
+            int attr = (info >>> 16);
             var slot = new Slot(name, 0, attr);
             slot.value = value;
             return slot;
@@ -984,8 +982,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
-                value = prototypeValues.get(id);
-                attr = prototypeValues.getAttributes(id);
+                Object value = prototypeValues.get(id);
+                int attr = prototypeValues.getAttributes(id);
                 var slot = new Slot(name, 0, attr);
                 slot.value = value;
                 return slot;
@@ -1005,14 +1003,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     private Slot getBuiltInSlot(Symbol key) {
-        Object value = null;
-        int attr = EMPTY;
-
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
             if (id != 0) {
-                value = prototypeValues.get(id);
-                attr = prototypeValues.getAttributes(id);
+                Object value = prototypeValues.get(id);
+                int attr = prototypeValues.getAttributes(id);
                 var slot = new Slot(key, 0, attr);
                 slot.value = value;
                 return slot;
