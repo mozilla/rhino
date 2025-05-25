@@ -5991,7 +5991,7 @@ public class ScriptRuntime {
         private static final long serialVersionUID = 8491017987326545970L;
 
         private final Object result;
-        private Scriptable thisObj;
+        private final Scriptable thisObj;
         private final String name;
 
         LookupResult(Object result, Scriptable thisObj, String name) {
@@ -6006,10 +6006,6 @@ public class ScriptRuntime {
 
         public Scriptable getThis() {
             return thisObj;
-        }
-
-        public void setThis(Scriptable t) {
-            this.thisObj = t;
         }
 
         public String getName() {
