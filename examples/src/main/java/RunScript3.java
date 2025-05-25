@@ -16,6 +16,56 @@ import org.mozilla.javascript.Scriptable;
  * @author Norris Boyd
  */
 public class RunScript3 {
+
+    /**
+     * Main method that evaluates JavaScript code and then accesses JavaScript variables and
+     * functions from Java.
+     *
+     * <p>This method demonstrates advanced JavaScript-Java integration using the Mozilla Rhino
+     * engine. After executing JavaScript code, it inspects the JavaScript scope to access variables
+     * and call functions that were defined in the JavaScript code.
+     *
+     * <p>Example usage:
+     *
+     * <pre>
+     * java YourClass "var x = 42; function f(arg) { return 'Hello ' + arg; }"
+     * java YourClass "x = Math.PI;" "function f(n) { return n * 2; }"
+     * java YourClass "var x = 'test';" "f = function(s) { return s.toUpperCase(); }"
+     * </pre>
+     *
+     * <p>Expected output format:
+     *
+     * <pre>
+     * x = [value of variable x]
+     * f('my args') = [return value of function f]
+     * </pre>
+     *
+     * <p>If the variable x is not defined, prints: "x is not defined."<br>
+     * If function f is not defined or not a function, prints: "f is undefined or not a function."
+     *
+     * <p>The method performs the following steps:
+     *
+     * <ol>
+     *   <li>Creates and enters a JavaScript execution context
+     *   <li>Initializes standard JavaScript objects (Object, Function, Math, etc.)
+     *   <li>Concatenates all command line arguments into a single JavaScript code string
+     *   <li>Evaluates the JavaScript code (ignoring the return value)
+     *   <li>Attempts to retrieve the variable "x" from the JavaScript scope
+     *   <li>Prints the value of "x" or a message if undefined
+     *   <li>Attempts to retrieve the function "f" from the JavaScript scope
+     *   <li>If "f" is a valid function, calls it with the argument "my arg"
+     *   <li>Prints the function result or an error message if function is invalid
+     *   <li>Ensures proper cleanup of the JavaScript context
+     * </ol>
+     *
+     * <p>This demonstrates how Java code can inspect and interact with JavaScript variables and
+     * functions after script execution, enabling bidirectional communication between the JavaScript
+     * and Java environments.
+     *
+     * @param args command line arguments that will be concatenated and evaluated as JavaScript
+     *     code. The code should define a variable "x" and/or a function "f" to see the full
+     *     demonstration of Java-JavaScript variable and function access.
+     */
     public static void main(String args[]) {
         Context cx = Context.enter();
         try {
@@ -52,5 +102,10 @@ public class RunScript3 {
         } finally {
             Context.exit();
         }
+    }
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private RunScript3() {
+        // Utility class - prevent instantiation
     }
 }

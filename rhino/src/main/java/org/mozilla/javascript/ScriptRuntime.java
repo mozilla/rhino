@@ -136,7 +136,6 @@ public class ScriptRuntime {
             StringClass = Kit.classOrNull("java.lang.String"),
             DateClass = Kit.classOrNull("java.util.Date"),
             BigIntegerClass = Kit.classOrNull("java.math.BigInteger");
-
     public static final Class<?> ContextClass = Kit.classOrNull("org.mozilla.javascript.Context"),
             ContextFactoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory"),
             FunctionClass = Kit.classOrNull("org.mozilla.javascript.Function"),

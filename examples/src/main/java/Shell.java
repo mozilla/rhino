@@ -305,5 +305,11 @@ public class Shell extends ScriptableObject {
         System.out.println(s);
     }
 
+    /** Flag for the quitting mode. */
     private boolean quitting;
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private Shell() {
+        // Utility class - prevent instantiation
+    }
 }

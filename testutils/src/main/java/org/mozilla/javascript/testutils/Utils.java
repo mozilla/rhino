@@ -39,11 +39,8 @@ public class Utils {
         return String.join("\n", lines);
     }
 
-    /**
-     * Make the ctor private; this is a utility classe.
-     */
-    private Utils() {
-    }
+    /** Make the ctor private; this is a utility classe. */
+    private Utils() {}
 
     /**
      * Execute the provided script in a fresh context as "myScript.js".
@@ -268,9 +265,8 @@ public class Utils {
     }
 
     /**
-     * Execute the provided script using a {@link TopLevel} instance as scope
-     * and assert the result. Before the execution the language version
-     * is set to {@link Context#VERSION_ES6}.
+     * Execute the provided script using a {@link TopLevel} instance as scope and assert the result.
+     * Before the execution the language version is set to {@link Context#VERSION_ES6}.
      *
      * @param expected the expected result
      * @param script the javascript script to execute

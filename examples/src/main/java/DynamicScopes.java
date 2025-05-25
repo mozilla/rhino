@@ -169,4 +169,9 @@ public class DynamicScopes {
         private String source;
         private String x;
     }
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private DynamicScopes() {
+        // Utility class - prevent instantiation
+    }
 }
