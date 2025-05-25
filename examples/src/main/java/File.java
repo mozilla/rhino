@@ -69,6 +69,12 @@ public class File extends ScriptableObject {
      * argument is converted to a string as used as the filename.
      *
      * <p>Otherwise System.in or System.out is assumed as appropriate to the use.
+     *
+     * @param cx the current Context for this thread
+     * @param args the array of arguments
+     * @param ctorObj the ctor function
+     * @param inNewExpr true if this ctor is called with new
+     * @return a new File
      */
     @JSConstructor
     public static Scriptable jsConstructor(
@@ -94,6 +100,8 @@ public class File extends ScriptableObject {
      * Get the name of the file.
      *
      * <p>Used to define the "name" property.
+     *
+     * @return the name
      */
     @JSGetter
     public String getName() {
@@ -107,6 +115,7 @@ public class File extends ScriptableObject {
      *
      * <p>This is a good example of creating a new array and setting elements in that array.
      *
+     * @return a javascript array containing all the lines
      * @exception IOException if an error occurred while accessing the file associated with this
      *     object
      */
@@ -128,6 +137,7 @@ public class File extends ScriptableObject {
      *
      * <p>Implements a JavaScript function.
      *
+     * @return the line
      * @exception IOException if an error occurred while accessing the file associated with this
      *     object, or EOFException if the object reached the end of the file
      */
@@ -139,6 +149,7 @@ public class File extends ScriptableObject {
     /**
      * Read a character.
      *
+     * @return the char
      * @exception IOException if an error occurred while accessing the file associated with this
      *     object, or EOFException if the object reached the end of the file
      */
@@ -158,6 +169,10 @@ public class File extends ScriptableObject {
      * <p>This function takes a variable number of arguments, converts each argument to a string,
      * and writes that string to the file.
      *
+     * @param cx the current Context for this thread
+     * @param thisObj the JavaScript <code>this</code> object
+     * @param args the array of arguments
+     * @param funObj the function object of the invoked JavaScript function
      * @exception IOException if an error occurred while accessing the file associated with this
      *     object
      */
@@ -172,6 +187,10 @@ public class File extends ScriptableObject {
      *
      * <p>Implements a JavaScript function.
      *
+     * @param cx the current Context for this thread
+     * @param thisObj the JavaScript <code>this</code> object
+     * @param args the array of arguments
+     * @param funObj the function object of the invoked JavaScript function
      * @exception IOException if an error occurred while accessing the file associated with this
      *     object
      */
@@ -219,7 +238,11 @@ public class File extends ScriptableObject {
         }
     }
 
-    /** Get the Java reader. */
+    /**
+     * Get the Java reader.
+     *
+     * @return the Java reader wrapped as js object
+     */
     @JSFunction("getReader")
     public Object getJSReader() {
         if (reader == null) return null;
@@ -234,6 +257,7 @@ public class File extends ScriptableObject {
      * Get the Java writer.
      *
      * @see File#getReader
+     * @return the Java writer wrapped as js object
      */
     @JSFunction
     public Object getWriter() {

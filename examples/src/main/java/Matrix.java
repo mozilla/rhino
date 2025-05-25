@@ -54,7 +54,11 @@ public class Matrix implements Scriptable {
      */
     public Matrix() {}
 
-    /** The Java constructor, also used to define the JavaScript constructor. */
+    /**
+     * The Java constructor, also used to define the JavaScript constructor.
+     *
+     * @param dimension the number of dimensions
+     */
     public Matrix(int dimension) {
         if (dimension <= 0) {
             throw Context.reportRuntimeError("Dimension of Matrix must be greater than zero");
@@ -113,8 +117,6 @@ public class Matrix implements Scriptable {
      *
      * <p>Look up the element in the associated list and return it if it exists. If it doesn't
      * exist, create it.
-     *
-     * <p>
      *
      * @param index the index of the integral property
      * @param start the object where the lookup began

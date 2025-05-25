@@ -71,8 +71,6 @@ public class FunctionObject extends BaseFunction {
      * Boolean constructor, when called as a function, will convert to boolean rather than creating
      * a new object.)
      *
-     * <p>
-     *
      * @param name the name of the function
      * @param methodOrConstructor a java.lang.reflect.Method or a java.lang.reflect.Constructor that
      *     defines the object

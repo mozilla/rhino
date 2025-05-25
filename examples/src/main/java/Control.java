@@ -22,6 +22,8 @@ public class Control {
      * <p>Process arguments as would a normal Java program. Also create a new Context and associate
      * it with the current thread. Then set up the execution environment and begin to execute
      * scripts.
+     *
+     * @param args the array of arguments
      */
     public static void main(String[] args) {
         Context cx = Context.enter();

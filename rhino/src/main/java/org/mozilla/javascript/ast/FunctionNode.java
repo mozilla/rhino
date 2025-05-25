@@ -228,8 +228,6 @@ public class FunctionNode extends ScriptNode {
      * based on the body bounds. Assumes the function node absolute position has already been set,
      * and the body node's absolute position and length are set.
      *
-     * <p>
-     *
      * @param body function body. Its parent is set to this node, and its position is updated to be
      *     relative to this node.
      * @throws IllegalArgumentException if body is {@code null}

@@ -71,7 +71,7 @@ public interface ConstProperties {
     /**
      * Returns true if the named property is defined as a const on this object.
      *
-     * @param name
+     * @param name the name of the property
      * @return true if the named property is defined as a const, false otherwise.
      */
     public boolean isConst(String name);

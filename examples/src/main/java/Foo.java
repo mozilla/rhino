@@ -69,6 +69,8 @@ public class Foo extends ScriptableObject {
      * above, we didn't supply a argument to the Foo constructor. This means that the Undefined
      * value is used as the value of the argument, and when the argument is converted to an integer,
      * Undefined becomes 0.
+     *
+     * @param counterStart the new counterStart value
      */
     public Foo(int counterStart) {
         counter = counterStart;
@@ -95,6 +97,8 @@ public class Foo extends ScriptableObject {
      *
      * <p>If "setCounter" had been defined in this class, the runtime would call the setter when the
      * property is assigned to.
+     *
+     * @return the current counter
      */
     @JSGetter
     public int getCounter() {
@@ -106,8 +110,6 @@ public class Foo extends ScriptableObject {
      *
      * <p>All variable arguments methods must have the same number and types of parameters, and must
      * be static.
-     *
-     * <p>
      *
      * @param cx the Context of the current thread
      * @param thisObj the JavaScript 'this' value.

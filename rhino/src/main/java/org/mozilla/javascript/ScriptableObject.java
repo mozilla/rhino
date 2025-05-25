@@ -438,7 +438,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Returns true if the named property is defined as a const on this object.
      *
-     * @param name
+     * @param name the name of the property
      * @return true if the named property is defined as a const, false otherwise.
      */
     @Override
@@ -490,8 +490,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Get the attributes of a named property.
      *
      * <p>The property is specified by <code>name</code> as defined for <code>has</code>.
-     *
-     * <p>
      *
      * @param name the identifier for the property
      * @return the bitset of attributes
@@ -757,8 +755,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * <p>Any properties with the attribute DONTENUM are not listed.
      *
-     * <p>
-     *
      * @return an array of java.lang.Objects with an entry for every listed property. Properties
      *     accessed via an integer index will have a corresponding Integer entry in the returned
      *     array. Properties accessed by a String will have a String entry in the returned array.
@@ -971,8 +967,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * it will be called to finish any initialization. The <code>scope</code> argument will be
      * passed, along with the newly created constructor and the newly created prototype.
-     *
-     * <p>
      *
      * @param scope The scope in which to define the constructor.
      * @param clazz The Java class to use to define the JavaScript objects and properties.
@@ -1428,8 +1422,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * <p>The getter must be a method with zero parameters, and the setter, if found, must be a
      * method with one parameter.
      *
-     * <p>
-     *
      * @param propertyName the name of the property to define. This name also affects the name of
      *     the setter and getter to search for. If the propertyId is "foo", then <code>clazz</code>
      *     will be searched for "getFoo" and "setFoo" methods.
@@ -1809,10 +1801,10 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Define a property on this object that is implemented using lambda functions accepting
      * Scriptable `this` object as first parameter. Unlike with `defineProperty(String name,
-     * Supplier<Object> getter, Consumer<Object> setter, int attributes)` where getter and setter
-     * need to have access to target object instance, this allows for defining properties on
-     * LambdaConstructor prototype providing getter and setter logic with java instance methods. If
-     * a property with the same name already exists, then it will be replaced. This property will
+     * Supplier&lt;Object&gt; getter, Consumer&lt;Object&gt; setter, int attributes)` where getter
+     * and setter need to have access to target object instance, this allows for defining properties
+     * on LambdaConstructor prototype providing getter and setter logic with java instance methods.
+     * If a property with the same name already exists, then it will be replaced. This property will
      * appear to the JavaScript user exactly like descriptor with a getter and setter, just as if
      * they had been defined in JavaScript using Object.defineOwnProperty.
      *
@@ -2271,8 +2263,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * <p>Searches the prototype chain for a property named <code>name</code>.
      *
-     * <p>
-     *
      * @param obj a JavaScript object
      * @param name a property name
      * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
@@ -2331,8 +2321,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * that if you wish to look for properties with numerical but non-integral indicies, you should
      * use getProperty(Scriptable,String) with the string value of the index.
      *
-     * <p>
-     *
      * @param s a JavaScript object
      * @param index an integral index
      * @param type the required Java type of the result
@@ -2355,8 +2343,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
      * that if you wish to look for properties with numerical but non-integral indicies, you should
      * use getProperty(Scriptable,String) with the string value of the index.
-     *
-     * <p>
      *
      * @param obj a JavaScript object
      * @param index an integral index
@@ -2393,8 +2379,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * <p>Searches the prototype chain for a property named <code>name</code>.
      *
-     * <p>
-     *
      * @param s a JavaScript object
      * @param name a property name
      * @param type the required Java type of the result
@@ -2416,8 +2400,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * chain.
      *
      * <p>Searches the prototype chain for a property named <code>name</code>.
-     *
-     * <p>
      *
      * @param obj a JavaScript object
      * @param name a property name
@@ -2452,8 +2434,6 @@ public abstract class ScriptableObject extends SlotMapOwner
      * chain.
      *
      * <p>Searches the prototype chain for a property with index <code>index</code>.
-     *
-     * <p>
      *
      * @param obj a JavaScript object
      * @param index a property index
@@ -2604,8 +2584,6 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     /**
      * Returns an array of all ids from an object and its prototypes.
-     *
-     * <p>
      *
      * @param obj a JavaScript object
      * @return an array of all ids from all object in the prototype chain. If a given id occurs
