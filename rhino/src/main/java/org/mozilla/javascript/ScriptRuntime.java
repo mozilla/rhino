@@ -3216,7 +3216,7 @@ public class ScriptRuntime {
                             || Undefined.isUndefined(value))) {
                 return null;
             }
-            return new LookupResult(value, null, value == null ? "null" : value.toString());
+            return new LookupResult(value, null, value);
         }
 
         Callable f = (Callable) value;
@@ -3237,7 +3237,7 @@ public class ScriptRuntime {
                 thisObj = ScriptableObject.getTopLevelScope(thisObj);
             }
         }
-        return new LookupResult(f, thisObj, value == null ? "null" : value.toString());
+        return new LookupResult(f, thisObj, value);
     }
 
     /**
@@ -6011,9 +6011,9 @@ public class ScriptRuntime {
 
         private final Object result;
         private final Scriptable thisObj;
-        private final String name;
+        private final Object name;
 
-        LookupResult(Object result, Scriptable thisObj, String name) {
+        LookupResult(Object result, Scriptable thisObj, Object name) {
             this.result = result;
             this.thisObj = thisObj;
             this.name = name;
@@ -6028,7 +6028,7 @@ public class ScriptRuntime {
         }
 
         public String getName() {
-            return name;
+            return name == null ? "null" : name.toString();
         }
 
         /**
