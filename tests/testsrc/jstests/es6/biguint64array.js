@@ -5,22 +5,22 @@
 load("testsrc/assert.js");
 
 (function TestSymbolSpecies() {
-  var symbolSpeciesValue = Uint8ClampedArray[Symbol.species];
-  assertEquals(Uint8ClampedArray, symbolSpeciesValue);
+  var symbolSpeciesValue = BigUint64Array[Symbol.species];
+  assertEquals(BigUint64Array, symbolSpeciesValue);
 })();
 
 (function TestSymbolToString() {
-  var a = new Uint8ClampedArray(4);
-  assertEquals('Uint8ClampedArray', a[Symbol.toStringTag]);
+  var a = new BigUint64Array(4);
+  assertEquals('BigUint64Array', a[Symbol.toStringTag]);
   assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
 
-  assertEquals(undefined, Uint8ClampedArray[Symbol.toStringTag]);
-  assertEquals(false, Uint8ClampedArray.hasOwnProperty(Symbol.toStringTag));
-  assertEquals(false, Uint8ClampedArray.prototype.hasOwnProperty(Symbol.toStringTag));
+  assertEquals(undefined, BigUint64Array[Symbol.toStringTag]);
+  assertEquals(false, BigUint64Array.hasOwnProperty(Symbol.toStringTag));
+  assertEquals(false, BigUint64Array.prototype.hasOwnProperty(Symbol.toStringTag));
 })();
 
 (function TestPrototypeSymbolToString() {
-  var a = new Uint8ClampedArray(4).__proto__;
+  var a = new BigUint64Array(4).__proto__;
   assertEquals(undefined, a[Symbol.toStringTag]);
   assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
 })();

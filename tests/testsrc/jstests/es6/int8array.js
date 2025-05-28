@@ -13,8 +13,18 @@ load("testsrc/assert.js");
   var a = new Int8Array(4);
   assertEquals('Int8Array', a[Symbol.toStringTag]);
   assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
+
+  assertEquals(undefined, Int8Array[Symbol.toStringTag]);
   assertEquals(false, Int8Array.hasOwnProperty(Symbol.toStringTag));
   assertEquals(false, Int8Array.prototype.hasOwnProperty(Symbol.toStringTag));
+})();
+
+(function TestPrototypeSymbolToString() {
+  var a = new Int8Array(4).__proto__;
+  assertEquals(undefined, a[Symbol.toStringTag]);
+  assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
+
+  assertEquals(undefined, Int8Array.prototype[Symbol.toStringTag]);
 })();
 
 "success";

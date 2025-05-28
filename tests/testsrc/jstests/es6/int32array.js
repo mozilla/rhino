@@ -13,8 +13,15 @@ load("testsrc/assert.js");
   var a = new Int32Array(4);
   assertEquals('Int32Array', a[Symbol.toStringTag]);
   assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
+
+  assertEquals(undefined, Int32Array[Symbol.toStringTag]);
   assertEquals(false, Int32Array.hasOwnProperty(Symbol.toStringTag));
   assertEquals(false, Int32Array.prototype.hasOwnProperty(Symbol.toStringTag));
 })();
 
+(function TestPrototypeSymbolToString() {
+  var a = new Int32Array(4).__proto__;
+  assertEquals(undefined, a[Symbol.toStringTag]);
+  assertEquals(false, a.hasOwnProperty(Symbol.toStringTag));
+})();
 "success";
