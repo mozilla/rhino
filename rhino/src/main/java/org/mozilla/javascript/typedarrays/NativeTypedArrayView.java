@@ -477,7 +477,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static Object js_toStringTag(Scriptable thisObj) {
-        return realThis(thisObj).getClassName();
+        if (NativeTypedArrayView.class.isInstance(thisObj)) {
+            return thisObj.getClassName();
+        }
+        return Undefined.instance;
     }
 
     private static Object js_byteLength(Scriptable thisObj) {
