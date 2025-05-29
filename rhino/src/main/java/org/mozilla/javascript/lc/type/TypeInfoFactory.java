@@ -69,10 +69,6 @@ public interface TypeInfoFactory extends Serializable {
 
     /// creating types
 
-    default TypeInfo none() {
-        return TypeInfo.NONE;
-    }
-
     TypeInfo create(Class<?> clazz);
 
     TypeInfo create(GenericArrayType genericArrayType);
@@ -129,8 +125,8 @@ public interface TypeInfoFactory extends Serializable {
      * information. For example, {@link WildcardType} might be mapped to one of its bounds, instead
      * of a {@link WildcardTypeInfo}
      *
-     * <p>Implementations should return {@link #none()} if it's unable to parse the {@link Type} it
-     * received
+     * <p>Implementations should return {@link TypeInfo#NONE} if it's unable to parse the {@link
+     * Type} it received
      */
     default TypeInfo create(Type type) {
         if (type instanceof Class<?>) {
@@ -149,7 +145,7 @@ public interface TypeInfoFactory extends Serializable {
             WildcardType wildcard = (WildcardType) type;
             return create(wildcard);
         }
-        return none();
+        return TypeInfo.NONE;
     }
 
     default <T extends Type> TypeInfo[] createArray(T[] types) {

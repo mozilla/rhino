@@ -38,7 +38,7 @@ public interface FactoryBase extends TypeInfoFactory {
         if (lower.length != 0) {
             return create(lower[0]);
         }
-        return none();
+        return TypeInfo.NONE;
     }
 
     @Override
