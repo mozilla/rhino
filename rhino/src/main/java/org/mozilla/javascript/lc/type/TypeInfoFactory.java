@@ -85,8 +85,25 @@ public interface TypeInfoFactory extends Serializable {
 
     /// mutating types
 
+    /**
+     * @return a TypeInfo representing an array type whose component type is the provided {@code
+     *     component} param
+     * @see TypeInfo#isArray()
+     * @see TypeInfo#getComponentType()
+     */
     TypeInfo toArray(TypeInfo component);
 
+    /**
+     * In general, implementations are recommended, but not required, to return a {@link
+     * ParameterizedTypeInfo}.
+     *
+     * <p>Default implementations in Rhino will return a TypeInfo representing a parameterized type
+     * with raw type being {@code base} param, and parameters being {@code params} param. If the
+     * {@code base} param itself is already a {@link ParameterizedTypeInfo}, the raw type will then
+     * be {@link ParameterizedTypeInfo#rawType()} of {@code base}
+     *
+     * @see ParameterizedTypeInfo
+     */
     TypeInfo attachParam(TypeInfo base, List<TypeInfo> params);
 
     default TypeInfo attachParam(TypeInfo base, TypeInfo... params) {
@@ -109,7 +126,7 @@ public interface TypeInfoFactory extends Serializable {
      * types like {@link Class}, to reduce allocation
      *
      * <p>There's no guarantee that created {@link TypeInfo} will keep all their original
-     * information, for example, {@link WildcardType} might be mapped to one of its bounds, instead
+     * information. For example, {@link WildcardType} might be mapped to one of its bounds, instead
      * of a {@link WildcardTypeInfo}
      *
      * <p>Implementations should return {@link #none()} if it's unable to parse the {@link Type} it

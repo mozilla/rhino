@@ -89,9 +89,8 @@ public interface TypeInfo {
 
     /**
      * @return the actual type parameter at provided index, or {@link #NONE} if:
-     *     <p>1. no type parameter at such index, or
-     *     <p>2. index not in valid range, or
-     *     <p>3. the TypeInfo itself is not representing a {@link
+     *     <p>1. index not in valid range, or
+     *     <p>2. the TypeInfo itself is not representing a {@link
      *     java.lang.reflect.ParameterizedType}
      */
     default TypeInfo param(int index) {
@@ -309,9 +308,6 @@ public interface TypeInfo {
         } else if (isObjectExact()) {
             return FunctionObject.JAVA_OBJECT_TYPE;
         }
-
-        // Note that the long type is not supported; see the javadoc for
-        // the constructor for this class
 
         return FunctionObject.JAVA_UNSUPPORTED_TYPE;
     }

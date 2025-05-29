@@ -4,6 +4,8 @@ import java.lang.reflect.TypeVariable;
 import java.util.List;
 
 /**
+ * a {@link TypeInfo} implementation representing {@link TypeVariable}
+ *
  * @see TypeVariable
  * @author ZZZank
  */

@@ -4,6 +4,8 @@ import java.lang.reflect.WildcardType;
 import java.util.List;
 
 /**
+ * a {@link TypeInfo} implementation representing {@link WildcardType}
+ *
  * @see WildcardType
  * @author ZZZank
  */
