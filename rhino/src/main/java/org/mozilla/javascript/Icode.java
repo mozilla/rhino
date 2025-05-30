@@ -110,9 +110,8 @@ abstract class Icode {
             Icode_GETVAR1 = Icode_REG_STR4 - 1,
             Icode_SETVAR1 = Icode_GETVAR1 - 1,
 
-            // Load undefined
-            Icode_UNDEF = Icode_SETVAR1 - 1,
-            Icode_ZERO = Icode_UNDEF - 1,
+            // zero and one constants
+            Icode_ZERO = Icode_SETVAR1 - 1,
             Icode_ONE = Icode_ZERO - 1,
 
             // entrance and exit from .()
@@ -296,8 +295,6 @@ abstract class Icode {
                 return "GETVAR1";
             case Icode_SETVAR1:
                 return "SETVAR1";
-            case Icode_UNDEF:
-                return "UNDEF";
             case Icode_ZERO:
                 return "ZERO";
             case Icode_ONE:

@@ -725,7 +725,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addToken(Token.UNDEFINED);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     addStringOp(
@@ -770,7 +770,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addToken(Token.UNDEFINED);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     visitExpression(child, 0);
@@ -819,7 +819,7 @@ class CodeGenerator extends Icode {
                 visitExpression(child, 0);
                 if (type == Token.VOID) {
                     addIcode(Icode_POP);
-                    addIcode(Icode_UNDEF);
+                    addToken(Token.UNDEFINED);
                 } else {
                     addToken(type);
                 }
@@ -999,6 +999,7 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.NULL:
+            case Token.UNDEFINED:
             case Token.THIS:
             case Token.SUPER:
             case Token.THISFN:
@@ -1054,7 +1055,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addToken(Token.UNDEFINED);
                     resolveForwardGoto(afterLabel);
                 } else {
                     addStringOp(type, (String) node.getProp(Node.NAME_PROP));
@@ -1104,7 +1105,7 @@ class CodeGenerator extends Icode {
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
-                    addIcode(Icode_UNDEF);
+                    addToken(Token.UNDEFINED);
                     stackChange(1);
                 }
                 if (type == Token.YIELD) {
@@ -1265,7 +1266,7 @@ class CodeGenerator extends Icode {
 
         // Put undefined
         addIcode(Icode_POP);
-        addStringOp(Token.NAME, "undefined");
+        addToken(Token.UNDEFINED);
         int afterLabel = iCodeTop;
         addGotoOp(Token.GOTO);
 

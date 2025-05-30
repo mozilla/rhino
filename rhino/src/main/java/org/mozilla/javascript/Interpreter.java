@@ -1477,7 +1477,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
-        instructionObjs[base + Icode_UNDEF] = new DoUndef();
+        instructionObjs[base + Token.UNDEFINED] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
         instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
