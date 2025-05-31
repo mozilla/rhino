@@ -9,6 +9,7 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
@@ -3504,10 +3505,62 @@ public class NativeRegExp extends IdScriptableObject {
         return false;
     }
 
+    private static class ExecResult {
+        final ArrayList<String> matches = new ArrayList<>();
+        final LinkedHashMap<String, String> groups = new LinkedHashMap<>();
+        final int index;
+        final String input;
+
+        ExecResult(int index, String input) {
+            this.index = index;
+            this.input = input;
+        }
+    }
+
     /*
      * indexp is assumed to be an array of length 1
      */
     Object executeRegExp(
+            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
+
+        var result = executeRegExpInternal(cx, scope, res, str, indexp, matchType);
+
+        if (result == null) {
+            return null;
+        } else if (matchType == TEST) {
+            /*
+             * Testing for a match and updating cx.regExpImpl: don't allocate
+             * an array object, do return true.
+             */
+            return Boolean.TRUE;
+        } else {
+            Object[] matches = result.matches.toArray();
+            for (int i = 0; i < matches.length; i++) {
+                if (matches[i] == null) matches[i] = Undefined.instance;
+            }
+            Scriptable obj = cx.newArray(scope, matches);
+            obj.put("index", obj, Integer.valueOf(result.index));
+            obj.put("input", obj, str);
+            if (!result.groups.isEmpty()) {
+                var groups = new NativeObject();
+                for (var g : result.groups.entrySet()) {
+                    groups.put(
+                            g.getKey(),
+                            groups,
+                            g.getValue() == null ? Undefined.instance : g.getValue());
+                }
+                obj.put("groups", obj, groups);
+            } else {
+                obj.put("groups", obj, Undefined.instance);
+            }
+            return obj;
+        }
+    }
+
+    /*
+     * indexp is assumed to be an array of length 1
+     */
+    ExecResult executeRegExpInternal(
             Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
 
@@ -3520,35 +3573,24 @@ public class NativeRegExp extends IdScriptableObject {
         boolean matches = matchRegExp(cx, gData, re, str, start, end, res.multiline);
         if (!matches) {
             if (matchType != PREFIX) return null;
-            return Undefined.instance;
+            return null;
         }
         int index = gData.cp;
         int ep = indexp[0] = index;
         int matchlen = ep - (start + gData.skipped);
         index -= matchlen;
-        Object result;
-        Scriptable obj;
-        Scriptable groups = Undefined.SCRIPTABLE_UNDEFINED;
+        ExecResult result = new ExecResult(index, str);
 
-        if (matchType == TEST) {
-            /*
-             * Testing for a match and updating cx.regExpImpl: don't allocate
-             * an array object, do return true.
-             */
-            result = Boolean.TRUE;
-            obj = null;
-        } else {
+        if (matchType != TEST) {
             /*
              * The array returned on match has element 0 bound to the matched
              * string, elements 1 through re.parenCount bound to the paren
              * matches, an index property telling the length of the left context,
              * and an input property referring to the input string.
              */
-            result = cx.newArray(scope, 0);
-            obj = (Scriptable) result;
 
             String matchstr = str.substring(index, index + matchlen);
-            obj.put(0, obj, matchstr);
+            result.matches.add(matchstr);
         }
 
         if (re.parenCount == 0) {
@@ -3562,11 +3604,6 @@ public class NativeRegExp extends IdScriptableObject {
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
 
-                if (!re.namedCaptureGroups.isEmpty()) {
-                    // We do a new NativeObject() and not cx.newObject(scope)
-                    // since we want the groups to have null as prototype
-                    groups = new NativeObject();
-                }
                 for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
                     String key = entry.getKey();
                     List<Integer> indices = entry.getValue();
@@ -3584,32 +3621,22 @@ public class NativeRegExp extends IdScriptableObject {
                     parsub = new SubString(str, cap_index, cap_length);
                     res.parens[num] = parsub;
                     if (matchType != TEST) {
-                        obj.put(num + 1, obj, parsub.toString());
+                        result.matches.add(parsub.toString());
                         if (namedCaptureGroups[num] != null) {
-                            groups.put(namedCaptureGroups[num], groups, parsub.toString());
+                            result.groups.put(namedCaptureGroups[num], parsub.toString());
                         }
                     }
                 } else {
+                    result.matches.add(null);
                     if (matchType != TEST) {
-                        obj.put(num + 1, obj, Undefined.instance);
                         if (namedCaptureGroups[num] != null
-                                && !groups.has(namedCaptureGroups[num], groups)) {
-                            groups.put(namedCaptureGroups[num], groups, Undefined.instance);
+                                && !result.groups.containsKey(namedCaptureGroups[num])) {
+                            result.groups.put(namedCaptureGroups[num], null);
                         }
                     }
                 }
             }
             res.lastParen = parsub;
-        }
-
-        if (!(matchType == TEST)) {
-            /*
-             * Define the index and input properties last for better for/in loop
-             * order (so they come after the elements).
-             */
-            obj.put("index", obj, Integer.valueOf(start + gData.skipped));
-            obj.put("input", obj, str);
-            obj.put("groups", obj, groups);
         }
 
         if (res.lastMatch == null) {
@@ -4061,6 +4088,33 @@ public class NativeRegExp extends IdScriptableObject {
 
     private Object js_SymbolReplace(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // if (thisObj instanceof NativeRegExp) {
+        //     return symbolReplaceFastPath(cx, scope, (NativeRegExp)thisObj, args);
+        // } else {
+        return symbolReplaceSlow(cx, scope, thisObj, args);
+        // }
+    }
+
+    private Object symbolReplaceFastPath(
+            Context cx, Scriptable scope, NativeRegExp thisObj, Object[] args) {
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        int lengthS = s.length();
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+        boolean functionalReplace = replaceValue instanceof Callable;
+        if (!functionalReplace) {
+            replaceValue = ScriptRuntime.toString(replaceValue);
+        }
+        int flags = thisObj.getFlags();
+        boolean global = (flags & JSREG_GLOB) != 0;
+        boolean fullUnicode = false; // Flag not yet supported
+        if (global) {
+            setLastIndex(thisObj, ScriptRuntime.zeroObj);
+        }
+        return null;
+    }
+
+    private Object symbolReplaceSlow(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.11
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
@@ -4131,41 +4185,17 @@ public class NativeRegExp extends IdScriptableObject {
             }
 
             Object namedCaptures = ScriptRuntime.getObjectProp(result, "groups", cx, scope);
-            String replacementString;
-
-            if (functionalReplace) {
-                List<Object> replacerArgs = new ArrayList<>();
-                replacerArgs.add(matched);
-                replacerArgs.addAll(captures);
-                replacerArgs.add(position);
-                replacerArgs.add(s);
-                if (!Undefined.isUndefined(namedCaptures)) {
-                    replacerArgs.add(namedCaptures);
-                }
-
-                Scriptable callThis =
-                        ScriptRuntime.getApplyOrCallThis(
-                                cx, scope, null, 0, (Callable) replaceValue);
-                Object replacementValue =
-                        ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs.toArray());
-                replacementString = ScriptRuntime.toString(replacementValue);
-            } else {
-                if (!Undefined.isUndefined(namedCaptures)) {
-                    namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
-                }
-
-                NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
-                replacementString =
-                        AbstractEcmaStringOperations.getSubstitution(
-                                cx,
-                                scope,
-                                matched,
-                                s,
-                                position,
-                                capturesArray,
-                                namedCaptures,
-                                (String) replaceValue);
-            }
+            String replacementString =
+                    makeReplacement(
+                            cx,
+                            scope,
+                            functionalReplace,
+                            matched,
+                            captures,
+                            position,
+                            s,
+                            namedCaptures,
+                            replaceValue);
 
             if (position >= nextSourcePosition) {
                 accumulatedResult.append(s, nextSourcePosition, position);
@@ -4179,6 +4209,50 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             accumulatedResult.append(s.substring(nextSourcePosition));
             return accumulatedResult.toString();
+        }
+    }
+
+    private String makeReplacement(
+            Context cx,
+            Scriptable scope,
+            boolean functionalReplace,
+            String matched,
+            List<Object> captures,
+            int position,
+            String s,
+            Object namedCaptures,
+            Object replaceValue) {
+
+        if (functionalReplace) {
+            List<Object> replacerArgs = new ArrayList<>();
+            replacerArgs.add(matched);
+            replacerArgs.addAll(captures);
+            replacerArgs.add(position);
+            replacerArgs.add(s);
+            if (!Undefined.isUndefined(namedCaptures)) {
+                replacerArgs.add(namedCaptures);
+            }
+
+            Scriptable callThis =
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+            Object replacementValue =
+                    ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs.toArray());
+            return ScriptRuntime.toString(replacementValue);
+        } else {
+            if (!Undefined.isUndefined(namedCaptures)) {
+                namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
+            }
+
+            NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
+            return AbstractEcmaStringOperations.getSubstitution(
+                    cx,
+                    scope,
+                    matched,
+                    s,
+                    position,
+                    capturesArray,
+                    namedCaptures,
+                    (String) replaceValue);
         }
     }
 
