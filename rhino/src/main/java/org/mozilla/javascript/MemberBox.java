@@ -41,16 +41,8 @@ final class MemberBox implements Serializable {
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method) {
-        init(method, TypeInfoFactory.GLOBAL);
-    }
-
     MemberBox(Method method, TypeInfoFactory factory) {
         init(method, factory);
-    }
-
-    MemberBox(Constructor<?> constructor) {
-        init(constructor, TypeInfoFactory.GLOBAL);
     }
 
     MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
