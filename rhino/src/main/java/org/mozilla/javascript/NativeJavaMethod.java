@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -114,7 +113,7 @@ public class NativeJavaMethod extends BaseFunction {
             } else {
                 sb.append(methods[i].getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
+            sb.append(JavaMembers.liveConnectSignature(methods[i].getArgTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -135,57 +134,15 @@ public class NativeJavaMethod extends BaseFunction {
         }
 
         MemberBox meth = methods[index];
-        Class<?>[] argTypes = meth.argTypes;
-
-        if (meth.vararg) {
-            // marshall the explicit parameters
-            Object[] newArgs = new Object[argTypes.length];
-            for (int i = 0; i < argTypes.length - 1; i++) {
-                newArgs[i] = Context.jsToJava(args[i], argTypes[i]);
-            }
-
-            Object varArgs;
-
-            // Handle special situation where a single variable parameter
-            // is given and it is a Java or ECMA array or is null.
-            if (args.length == argTypes.length
-                    && (args[args.length - 1] == null
-                            || args[args.length - 1] instanceof NativeArray
-                            || args[args.length - 1] instanceof NativeJavaArray)) {
-                // convert the ECMA array into a native array
-                varArgs = Context.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1]);
-            } else {
-                // marshall the variable parameters
-                Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
-                varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
-                for (int i = 0; i < Array.getLength(varArgs); i++) {
-                    Object value = Context.jsToJava(args[argTypes.length - 1 + i], componentType);
-                    Array.set(varArgs, i, value);
-                }
-            }
-
-            // add varargs
-            newArgs[argTypes.length - 1] = varArgs;
-            // replace the original args with the new one
-            args = newArgs;
+        if (thisObj instanceof NativeJavaObject) {
+            var mapping = ((NativeJavaObject) thisObj).extractTypeConsolidationMapping();
+            args = meth.getParameters().wrapArgs(args, mapping);
         } else {
-            // First, we marshall the args.
-            Object[] origArgs = args;
-            for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
-                Object coerced = Context.jsToJava(arg, argTypes[i]);
-                if (coerced != arg) {
-                    if (origArgs == args) {
-                        args = args.clone();
-                    }
-                    args[i] = coerced;
-                }
-            }
+            args = meth.getParameters().wrapArgs(args);
         }
-        Object javaObject;
-        if (meth.isStatic()) {
-            javaObject = null; // don't need an object
-        } else {
+
+        Object javaObject = null;
+        if (!meth.isStatic()) {
             Scriptable o = thisObj;
             Class<?> c = meth.getDeclaringClass();
             for (; ; ) {
@@ -205,57 +162,57 @@ public class NativeJavaMethod extends BaseFunction {
                 o = o.getPrototype();
             }
         }
+
         if (debug) {
             printDebug("Calling ", meth, args);
         }
 
-        Object retval = meth.invoke(javaObject, args);
-        Class<?> staticType = meth.method().getReturnType();
+        var returned = meth.invoke(javaObject, args);
+        var staticType = meth.getReturnType();
 
         if (debug) {
-            Class<?> actualType = (retval == null) ? null : retval.getClass();
+            Class<?> actualType = (returned == null) ? null : returned.getClass();
             System.err.println(
                     " ----- Returned "
-                            + retval
+                            + returned
                             + " actual = "
                             + actualType
                             + " expect = "
-                            + staticType);
+                            + staticType.asClass());
         }
 
         Object wrapped =
                 cx.getWrapFactory()
                         .wrap(
                                 cx, scope,
-                                retval, staticType);
+                                returned, staticType);
         if (debug) {
             Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
             System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
         }
 
-        if (wrapped == null && staticType == Void.TYPE) {
+        if (wrapped == null && staticType.isVoid()) {
             wrapped = Undefined.instance;
         }
         return wrapped;
     }
 
     int findCachedFunction(Context cx, Object[] args) {
-        if (methods.length > 1) {
-            for (ResolvedOverload ovl : overloadCache) {
-                if (ovl.matches(args)) {
-                    return ovl.index;
-                }
-            }
-            int index = findFunction(cx, methods, args);
-            // As a sanity measure, don't let the lookup cache grow longer
-            // than twice the number of overloaded methods
-            if (overloadCache.size() < methods.length * 2) {
-                ResolvedOverload ovl = new ResolvedOverload(args, index);
-                overloadCache.addIfAbsent(ovl);
-            }
-            return index;
+        if (methods.length <= 1) {
+            return findFunction(cx, methods, args);
         }
-        return findFunction(cx, methods, args);
+        for (ResolvedOverload ovl : overloadCache) {
+            if (ovl.matches(args)) {
+                return ovl.index;
+            }
+        }
+        int index = findFunction(cx, methods, args);
+        // As a sanity measure, don't let the lookup cache grow longer
+        // than twice the number of overloaded methods
+        if (overloadCache.size() < methods.length * 2) {
+            overloadCache.addIfAbsent(new ResolvedOverload(args, index));
+        }
+        return index;
     }
 
     /**
@@ -434,16 +391,20 @@ public class NativeJavaMethod extends BaseFunction {
             int[] computedWeights1,
             MemberBox member2,
             int[] computedWeights2) {
-        final var types1 = member1.argTypes;
-        final var types2 = member2.argTypes;
+        final var types1 = member1.getArgTypes();
+        final var types2 = member2.getArgTypes();
 
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             final var type1 =
-                    member1.vararg && j >= types1.length ? types1[types1.length - 1] : types1[j];
+                    member1.isVararg() && j >= types1.size()
+                            ? types1.get(types1.size() - 1)
+                            : types1.get(j);
             final var type2 =
-                    member2.vararg && j >= types2.length ? types2[types2.length - 1] : types2[j];
-            if (type1 == type2) {
+                    member2.isVararg() && j >= types2.size()
+                            ? types2.get(types2.size() - 1)
+                            : types2.get(j);
+            if (type1.asClass() == type2.asClass()) {
                 continue;
             }
             final var arg = args[j];
@@ -496,13 +457,13 @@ public class NativeJavaMethod extends BaseFunction {
      * <p>3. otherwise -> return an int array holding all computed conversion weights, whose length
      * will be {@code args.length} for non-vararg member or {@code args.length-1} for vararg member
      *
-     * @see NativeJavaObject#getConversionWeight(Object, Class)
+     * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.nat.type.TypeInfo)
      * @see NativeJavaObject#canConvert(Object, Class)
      */
     static int[] failFastConversionWeights(Object[] args, MemberBox member) {
-        final var argTypes = member.argTypes;
-        var typeLen = argTypes.length;
-        if (member.vararg) {
+        final var argTypes = member.getArgTypes();
+        var typeLen = argTypes.size();
+        if (member.isVararg()) {
             typeLen--;
             if (typeLen > args.length) {
                 return null;
@@ -514,7 +475,7 @@ public class NativeJavaMethod extends BaseFunction {
         }
         final var weights = new int[typeLen];
         for (int i = 0; i < typeLen; i++) {
-            final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes[i]);
+            final var weight = NativeJavaObject.getConversionWeight(args[i], argTypes.get(i));
             if (weight >= NativeJavaObject.CONVERSION_NONE) {
                 if (debug) {
                     printDebug("Rejecting (args can't convert) ", member, args);
@@ -538,7 +499,7 @@ public class NativeJavaMethod extends BaseFunction {
             if (member.isMethod()) {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.argTypes));
+            sb.append(JavaMembers.liveConnectSignature(member.getArgTypes()));
             sb.append(" for arguments (");
             sb.append(scriptSignature(args));
             sb.append(')');
