@@ -242,8 +242,7 @@ public class NativePromise extends ScriptableObject {
             IteratorLikeIterable.Itr iterator,
             Scriptable thisObj,
             Capability cap) {
-        Callable resolve = ScriptRuntime.getPropFunctionAndThis(thisObj, "resolve", cx, scope);
-        Scriptable localThis = ScriptRuntime.lastStoredScriptable(cx);
+        var resolve = ScriptRuntime.getPropAndThis(thisObj, "resolve", cx, scope);
 
         // Manually iterate for exception handling purposes
         while (true) {
@@ -267,17 +266,12 @@ public class NativePromise extends ScriptableObject {
             }
 
             // Call "resolve" to get the next promise in the chain
-            Object nextPromise = resolve.call(cx, scope, localThis, new Object[] {nextVal});
+            Object nextPromise = resolve.call(cx, scope, new Object[] {nextVal});
 
             // And then call "then" on it.
             // Logic in the resolution function ensures we don't deliver duplicate results
-            Callable thenFunc =
-                    ScriptRuntime.getPropFunctionAndThis(nextPromise, "then", cx, scope);
-            thenFunc.call(
-                    cx,
-                    scope,
-                    ScriptRuntime.lastStoredScriptable(cx),
-                    new Object[] {cap.resolve, cap.reject});
+            var thenFunc = ScriptRuntime.getPropAndThis(nextPromise, "then", cx, scope);
+            thenFunc.call(cx, scope, new Object[] {cap.resolve, cap.reject});
         }
     }
 
@@ -362,12 +356,8 @@ public class NativePromise extends ScriptableObject {
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
         Scriptable coercedThis = ScriptRuntime.toObject(cx, scope, thisObj);
         // No guarantee that the caller didn't change the prototype of "then"!
-        Callable thenFunc = ScriptRuntime.getPropFunctionAndThis(coercedThis, "then", cx, scope);
-        return thenFunc.call(
-                cx,
-                scope,
-                ScriptRuntime.lastStoredScriptable(cx),
-                new Object[] {Undefined.instance, arg});
+        var thenFunc = ScriptRuntime.getPropAndThis(coercedThis, "then", cx, scope);
+        return thenFunc.call(cx, scope, new Object[] {Undefined.instance, arg});
     }
 
     // Promise.prototype.finally
@@ -390,9 +380,8 @@ public class NativePromise extends ScriptableObject {
             thenFinally = makeThenFinally(scope, constructor, callableOnFinally);
             catchFinally = makeCatchFinally(scope, constructor, callableOnFinally);
         }
-        Callable thenFunc = ScriptRuntime.getPropFunctionAndThis(thisObj, "then", cx, scope);
-        Scriptable to = ScriptRuntime.lastStoredScriptable(cx);
-        return thenFunc.call(cx, scope, to, new Object[] {thenFinally, catchFinally});
+        var thenFunc = ScriptRuntime.getPropAndThis(thisObj, "then", cx, scope);
+        return thenFunc.call(cx, scope, new Object[] {thenFinally, catchFinally});
     }
 
     // Abstract "Then Finally Function"
@@ -416,13 +405,8 @@ public class NativePromise extends ScriptableObject {
                                     Undefined.SCRIPTABLE_UNDEFINED,
                                     ScriptRuntime.emptyArgs);
                     Object promise = resolveInternal(cx, scope, constructor, result);
-                    Callable thenFunc =
-                            ScriptRuntime.getPropFunctionAndThis(promise, "then", cx, scope);
-                    return thenFunc.call(
-                            cx,
-                            scope,
-                            ScriptRuntime.lastStoredScriptable(cx),
-                            new Object[] {valueThunk});
+                    var thenFunc = ScriptRuntime.getPropAndThis(promise, "then", cx, scope);
+                    return thenFunc.call(cx, scope, new Object[] {valueThunk});
                 });
     }
 
@@ -448,13 +432,8 @@ public class NativePromise extends ScriptableObject {
                                     Undefined.SCRIPTABLE_UNDEFINED,
                                     ScriptRuntime.emptyArgs);
                     Object promise = resolveInternal(cx, scope, constructor, result);
-                    Callable thenFunc =
-                            ScriptRuntime.getPropFunctionAndThis(promise, "then", cx, scope);
-                    return thenFunc.call(
-                            cx,
-                            scope,
-                            ScriptRuntime.lastStoredScriptable(cx),
-                            new Object[] {reasonThrower});
+                    var thenFunc = ScriptRuntime.getPropAndThis(promise, "then", cx, scope);
+                    return thenFunc.call(cx, scope, new Object[] {reasonThrower});
                 });
     }
 
@@ -749,9 +728,7 @@ public class NativePromise extends ScriptableObject {
             int index = 0;
             // Do this first because we should catch any exception before
             // invoking the iterator.
-            Callable resolve =
-                    ScriptRuntime.getPropFunctionAndThis(thisObj, "resolve", topCx, topScope);
-            Scriptable storedThis = ScriptRuntime.lastStoredScriptable(topCx);
+            var resolve = ScriptRuntime.getPropAndThis(thisObj, "resolve", topCx, topScope);
 
             // Iterate manually because we need to catch exceptions in a special way.
             while (true) {
@@ -783,8 +760,7 @@ public class NativePromise extends ScriptableObject {
                 values.add(Undefined.instance);
 
                 // Call "resolve" to get the next promise in the chain
-                Object nextPromise =
-                        resolve.call(topCx, topScope, storedThis, new Object[] {nextVal});
+                Object nextPromise = resolve.call(topCx, topScope, new Object[] {nextVal});
 
                 // Create a resolution func that will stash its result in the right place
                 PromiseElementResolver eltResolver = new PromiseElementResolver(index);
@@ -830,13 +806,8 @@ public class NativePromise extends ScriptableObject {
                 remainingElements++;
 
                 // Call "then" on the promise with the resolution func
-                Callable thenFunc =
-                        ScriptRuntime.getPropFunctionAndThis(nextPromise, "then", topCx, topScope);
-                thenFunc.call(
-                        topCx,
-                        topScope,
-                        ScriptRuntime.lastStoredScriptable(topCx),
-                        new Object[] {resolveFunc, rejectFunc});
+                var thenFunc = ScriptRuntime.getPropAndThis(nextPromise, "then", topCx, topScope);
+                thenFunc.call(topCx, topScope, new Object[] {resolveFunc, rejectFunc});
                 index++;
             }
         }
@@ -870,9 +841,7 @@ public class NativePromise extends ScriptableObject {
             int index = 0;
             // Do this first because we should catch any exception before
             // invoking the iterator.
-            Callable resolve =
-                    ScriptRuntime.getPropFunctionAndThis(thisObj, "resolve", topCx, topScope);
-            Scriptable storedThis = ScriptRuntime.lastStoredScriptable(topCx);
+            var resolve = ScriptRuntime.getPropAndThis(thisObj, "resolve", topCx, topScope);
 
             // Iterate manually because we need to catch exceptions in a special way.
             while (true) {
@@ -911,8 +880,7 @@ public class NativePromise extends ScriptableObject {
                 errors.add(Undefined.instance);
 
                 // Call "resolve" to get the next promise in the chain
-                Object nextPromise =
-                        resolve.call(topCx, topScope, storedThis, new Object[] {nextVal});
+                Object nextPromise = resolve.call(topCx, topScope, new Object[] {nextVal});
 
                 // Create a resolution func that will stash its result in the right place
                 PromiseElementResolver eltResolver = new PromiseElementResolver(index);
@@ -930,13 +898,8 @@ public class NativePromise extends ScriptableObject {
                 remainingElements++;
 
                 // Call "then" on the promise with the resolution func
-                Callable thenFunc =
-                        ScriptRuntime.getPropFunctionAndThis(nextPromise, "then", topCx, topScope);
-                thenFunc.call(
-                        topCx,
-                        topScope,
-                        ScriptRuntime.lastStoredScriptable(topCx),
-                        new Object[] {capability.resolve, rejectFunc});
+                var thenFunc = ScriptRuntime.getPropAndThis(nextPromise, "then", topCx, topScope);
+                thenFunc.call(topCx, topScope, new Object[] {capability.resolve, rejectFunc});
                 index++;
             }
         }
