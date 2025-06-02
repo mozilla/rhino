@@ -15,7 +15,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.StringJoiner;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
@@ -48,13 +47,14 @@ public class ShellTest {
     }
 
     public static final FileFilter DIRECTORY_FILTER =
-        pathname -> pathname.isDirectory() && !pathname.getName().equals("CVS");
+            pathname -> pathname.isDirectory() && !pathname.getName().equals("CVS");
 
     public static final FileFilter TEST_FILTER =
-        pathname -> pathname.getName().endsWith(".js")
-                && !pathname.getName().equals("shell.js")
-                && !pathname.getName().equals("browser.js")
-                && !pathname.getName().equals("template.js");
+            pathname ->
+                    pathname.getName().endsWith(".js")
+                            && !pathname.getName().equals("shell.js")
+                            && !pathname.getName().equals("browser.js")
+                            && !pathname.getName().equals("template.js");
 
     public static String getStackTrace(Throwable t) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -309,62 +309,60 @@ public class ShellTest {
         final Throwable[] thrown = {null};
 
         Thread thread =
-                new Thread(() -> {
-                        try (var cx = shellContextFactory.enterContext()) {
-                            status.running(jsFile);
-                            testState.errors =
-                                new ErrorReporterWrapper(
-                                    cx.getErrorReporter());
-                            cx.setErrorReporter(testState.errors);
-                            global.init(cx);
+                new Thread(
+                        () -> {
+                            try (var cx = shellContextFactory.enterContext()) {
+                                status.running(jsFile);
+                                testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
+                                cx.setErrorReporter(testState.errors);
+                                global.init(cx);
 
-                            // invoke after init(...) to make sure ClassCache is available for FunctionObject
-                            global.defineFunctionProperties(
-                                new String[] {"options"},
-                                ShellTest.class,
-                                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                                // invoke after init(...) to make sure ClassCache is available for
+                                // FunctionObject
+                                global.defineFunctionProperties(
+                                        new String[] {"options"},
+                                        ShellTest.class,
+                                        ScriptableObject.DONTENUM
+                                                | ScriptableObject.PERMANENT
+                                                | ScriptableObject.READONLY);
 
-                            try {
-                                runFileIfExists(
-                                    cx,
-                                    global,
-                                    new File(
-                                        jsFile.getParentFile()
-                                            .getParentFile()
-                                            .getParentFile(),
-                                        "shell.js"));
-                                runFileIfExists(
-                                    cx,
-                                    global,
-                                    new File(
-                                        jsFile.getParentFile()
-                                            .getParentFile(),
-                                        "shell.js"));
-                                runFileIfExists(
-                                    cx,
-                                    global,
-                                    new File(
-                                        jsFile.getParentFile(),
-                                        "shell.js"));
-                                runFileIfExists(cx, global, jsFile);
-                                status.hadErrors(
-                                    jsFile,
-                                    testState.errors.errors.toArray(
-                                        new Status.JsError[0]));
-                            } catch (ThreadDeath e) {
-                            } catch (Throwable t) {
-                                status.threw(t);
+                                try {
+                                    runFileIfExists(
+                                            cx,
+                                            global,
+                                            new File(
+                                                    jsFile.getParentFile()
+                                                            .getParentFile()
+                                                            .getParentFile(),
+                                                    "shell.js"));
+                                    runFileIfExists(
+                                            cx,
+                                            global,
+                                            new File(
+                                                    jsFile.getParentFile().getParentFile(),
+                                                    "shell.js"));
+                                    runFileIfExists(
+                                            cx,
+                                            global,
+                                            new File(jsFile.getParentFile(), "shell.js"));
+                                    runFileIfExists(cx, global, jsFile);
+                                    status.hadErrors(
+                                            jsFile,
+                                            testState.errors.errors.toArray(new Status.JsError[0]));
+                                } catch (ThreadDeath e) {
+                                } catch (Throwable t) {
+                                    status.threw(t);
+                                }
+                            } catch (Error t) {
+                                thrown[0] = t;
+                            } catch (RuntimeException t) {
+                                thrown[0] = t;
+                            } finally {
+                                synchronized (testState) {
+                                    testState.finished = true;
+                                }
                             }
-                        } catch (Error t) {
-                            thrown[0] = t;
-                        } catch (RuntimeException t) {
-                            thrown[0] = t;
-                        } finally {
-                            synchronized (testState) {
-                                testState.finished = true;
-                            }
-                        }
-                    },
+                        },
                         jsFile.getPath());
         thread.setDaemon(true);
         thread.start();
