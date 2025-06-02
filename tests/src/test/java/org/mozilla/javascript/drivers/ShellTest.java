@@ -437,7 +437,7 @@ public class ShellTest {
         if (jsFile.getName().endsWith("-n.js")) {
             status.setNegative();
         }
-        final Throwable thrown[] = {null};
+        final Throwable[] thrown = {null};
 
         try (var cx = shellContextFactory.enterContext()) {
             status.running(jsFile);
@@ -480,30 +480,30 @@ public class ShellTest {
 
         int expectedExitCode = 0;
         p.flush();
-        status.outputWas(new String(out.toByteArray()));
+        status.outputWas(out.toString());
         BufferedReader r =
                 new BufferedReader(
                         new InputStreamReader(new ByteArrayInputStream(out.toByteArray())));
-        String failures = "";
+        StringBuilder failures = new StringBuilder();
         for (; ; ) {
-            String s = r.readLine();
-            if (s == null) {
+            String line = r.readLine();
+            if (line == null) {
                 break;
             }
-            if (s.indexOf("FAILED!") != -1) {
-                failures += s + '\n';
+            if (line.contains("FAILED!")) {
+                failures.append(line).append('\n');
             }
-            int expex = s.indexOf("EXPECT EXIT CODE ");
+            int expex = line.indexOf("EXPECT EXIT CODE ");
             if (expex != -1) {
-                expectedExitCode = s.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
+                expectedExitCode = line.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
             }
         }
         if (thrown[0] != null) {
             status.threw(thrown[0]);
         }
         status.exitCodesWere(expectedExitCode, testState.exitCode);
-        if (failures != "") {
-            status.failed(failures);
+        if (failures.length() > 0) {
+            status.failed(failures.toString());
         }
     }
 
