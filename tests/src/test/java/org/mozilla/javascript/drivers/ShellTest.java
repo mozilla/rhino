@@ -482,26 +482,26 @@ public class ShellTest {
         BufferedReader r =
                 new BufferedReader(
                         new InputStreamReader(new ByteArrayInputStream(out.toByteArray())));
-        StringBuilder failures = new StringBuilder();
+        String failures = "";
         for (; ; ) {
-            String line = r.readLine();
-            if (line == null) {
+            String s = r.readLine();
+            if (s == null) {
                 break;
             }
-            if (line.contains("FAILED!")) {
-                failures.append(line).append('\n');
+            if (s.contains("FAILED!")) {
+                failures += s + '\n';
             }
-            int expex = line.indexOf("EXPECT EXIT CODE ");
+            int expex = s.indexOf("EXPECT EXIT CODE ");
             if (expex != -1) {
-                expectedExitCode = line.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
+                expectedExitCode = s.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
             }
         }
         if (thrown[0] != null) {
             status.threw(thrown[0]);
         }
         status.exitCodesWere(expectedExitCode, testState.exitCode);
-        if (failures.length() > 0) {
-            status.failed(failures.toString());
+        if (!failures.isEmpty()) {
+            status.failed(failures);
         }
     }
 
