@@ -447,26 +447,24 @@ public class ShellTest {
 
             // invoke after init(...) to make sure ClassCache is available for FunctionObject
             global.defineFunctionProperties(
-                new String[] {"options"},
-                ShellTest.class,
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    new String[] {"options"},
+                    ShellTest.class,
+                    ScriptableObject.DONTENUM
+                            | ScriptableObject.PERMANENT
+                            | ScriptableObject.READONLY);
 
             try {
                 runFileIfExists(
-                    cx,
-                    global,
-                    new File(
-                        jsFile.getParentFile().getParentFile().getParentFile(),
-                        "shell.js"));
+                        cx,
+                        global,
+                        new File(
+                                jsFile.getParentFile().getParentFile().getParentFile(),
+                                "shell.js"));
                 runFileIfExists(
-                    cx,
-                    global,
-                    new File(jsFile.getParentFile().getParentFile(), "shell.js"));
-                runFileIfExists(
-                    cx, global, new File(jsFile.getParentFile(), "shell.js"));
+                        cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
+                runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
                 runFileIfExists(cx, global, jsFile);
-                status.hadErrors(
-                    jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
+                status.hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
             } catch (Throwable t) {
                 status.threw(t);
             }
