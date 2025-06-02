@@ -4088,11 +4088,15 @@ public class NativeRegExp extends IdScriptableObject {
 
     private Object js_SymbolReplace(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        // if (thisObj instanceof NativeRegExp) {
-        //     return symbolReplaceFastPath(cx, scope, (NativeRegExp)thisObj, args);
-        // } else {
+        if (thisObj instanceof NativeRegExp) {
+            var regexp = (NativeRegExp) thisObj;
+            var exec = ScriptableObject.getProperty(regexp, "exec");
+            if (exec instanceof IdFunctionObject
+                    && ((IdFunctionObject) exec).methodId() == Id_exec
+                    && ((IdFunctionObject) exec).getTag() == REGEXP_TAG)
+                return regexp.symbolReplaceFastPath(cx, scope, (NativeRegExp) thisObj, args);
+        }
         return symbolReplaceSlow(cx, scope, thisObj, args);
-        // }
     }
 
     private Object symbolReplaceFastPath(
@@ -4104,13 +4108,121 @@ public class NativeRegExp extends IdScriptableObject {
         if (!functionalReplace) {
             replaceValue = ScriptRuntime.toString(replaceValue);
         }
-        int flags = thisObj.getFlags();
-        boolean global = (flags & JSREG_GLOB) != 0;
-        boolean fullUnicode = false; // Flag not yet supported
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+        boolean global = flags.indexOf('g') != -1;
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
         if (global) {
             setLastIndex(thisObj, ScriptRuntime.zeroObj);
         }
-        return null;
+
+        List<ExecResult> results = new ArrayList<>();
+        boolean done = false;
+        while (!done) {
+            ExecResult result = regExpExecFast(s, cx, scope);
+            if (result == null) {
+                done = true;
+            } else {
+                results.add(result);
+                if (!global) {
+                    done = true;
+                } else {
+                    String matchStr = result.matches.get(0);
+                    if (matchStr.isEmpty()) {
+                        long thisIndex = getLastIndex(cx, thisObj);
+                        long nextIndex =
+                                ScriptRuntime.advanceStringIndex(s, thisIndex, fullUnicode);
+                        setLastIndex(thisObj, nextIndex);
+                    }
+                }
+            }
+        }
+
+        StringBuilder accumulatedResult = new StringBuilder();
+        int nextSourcePosition = 0;
+        for (ExecResult result : results) {
+            long resultLength = result.matches.size();
+            long nCaptures = Math.max(resultLength - 1, 0);
+            String matched = result.matches.get(0);
+            int matchLength = matched.length();
+            double positionDbl = result.index;
+            int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
+
+            List<Object> captures = new ArrayList<>();
+            int n = 1;
+            while (n <= nCaptures) {
+                Object capN = result.matches.get(n);
+                if (capN == null) {
+                    capN = Undefined.instance;
+                }
+                captures.add(capN);
+                ++n;
+            }
+
+            Object namedCaptures;
+            if (!result.groups.isEmpty()) {
+                var groups = new NativeObject();
+                for (var g : result.groups.entrySet()) {
+                    groups.put(
+                            g.getKey(),
+                            groups,
+                            g.getValue() == null ? Undefined.instance : g.getValue());
+                }
+                namedCaptures = groups;
+            } else {
+                namedCaptures = Undefined.instance;
+            }
+
+            String replacementString =
+                    makeReplacement(
+                            cx,
+                            scope,
+                            functionalReplace,
+                            matched,
+                            captures,
+                            position,
+                            s,
+                            namedCaptures,
+                            replaceValue);
+
+            if (position >= nextSourcePosition) {
+                accumulatedResult.append(s.substring(nextSourcePosition, position));
+                accumulatedResult.append(replacementString);
+                nextSourcePosition = position + matchLength;
+            }
+        }
+
+        if (nextSourcePosition >= lengthS) {
+            return accumulatedResult.toString();
+        } else {
+            accumulatedResult.append(s.substring(nextSourcePosition));
+            return accumulatedResult.toString();
+        }
+    }
+
+    private ExecResult regExpExecFast(String str, Context cx, Scriptable scope) {
+        RegExpImpl reImpl = getImpl(cx);
+
+        boolean globalOrSticky = (re.flags & JSREG_GLOB) != 0 || (re.flags & JSREG_STICKY) != 0;
+        double d = 0;
+        if (globalOrSticky) {
+            d = ScriptRuntime.toInteger(lastIndex);
+
+            if (d < 0 || str.length() < d) {
+                setLastIndex(ScriptRuntime.zeroObj);
+                return null;
+            }
+        }
+
+        int[] indexp = {(int) d};
+        ExecResult rval = executeRegExpInternal(cx, scope, reImpl, str, indexp, MATCH);
+        if (globalOrSticky) {
+            if (rval == null) {
+                setLastIndex(ScriptRuntime.zeroObj);
+            } else {
+                setLastIndex(Double.valueOf(indexp[0]));
+            }
+        }
+        return rval;
     }
 
     private Object symbolReplaceSlow(
@@ -4224,19 +4336,23 @@ public class NativeRegExp extends IdScriptableObject {
             Object replaceValue) {
 
         if (functionalReplace) {
-            List<Object> replacerArgs = new ArrayList<>();
-            replacerArgs.add(matched);
-            replacerArgs.addAll(captures);
-            replacerArgs.add(position);
-            replacerArgs.add(s);
+            Object[] replacerArgs =
+                    new Object[captures.size() + (Undefined.isUndefined(namedCaptures) ? 3 : 4)];
+            replacerArgs[0] = matched;
+            int i = 1;
+            for (; i <= captures.size(); i++) {
+                replacerArgs[i] = captures.get(i - 1);
+            }
+            replacerArgs[i++] = position;
+            replacerArgs[i++] = s;
             if (!Undefined.isUndefined(namedCaptures)) {
-                replacerArgs.add(namedCaptures);
+                replacerArgs[i++] = namedCaptures;
             }
 
             Scriptable callThis =
                     ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
             Object replacementValue =
-                    ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs.toArray());
+                    ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs);
             return ScriptRuntime.toString(replacementValue);
         } else {
             if (!Undefined.isUndefined(namedCaptures)) {
