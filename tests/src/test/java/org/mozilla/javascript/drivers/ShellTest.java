@@ -439,41 +439,37 @@ public class ShellTest {
         }
         final Throwable thrown[] = {null};
 
-        try {
-            shellContextFactory.call(
-                    cx -> {
-                        status.running(jsFile);
-                        testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
-                        cx.setErrorReporter(testState.errors);
-                        global.init(cx);
+        try (var cx = shellContextFactory.enterContext()) {
+            status.running(jsFile);
+            testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
+            cx.setErrorReporter(testState.errors);
+            global.init(cx);
 
-                        // invoke after init(...) to make sure ClassCache is available for FunctionObject
-                        global.defineFunctionProperties(
-                            new String[] {"options"},
-                            ShellTest.class,
-                            ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+            // invoke after init(...) to make sure ClassCache is available for FunctionObject
+            global.defineFunctionProperties(
+                new String[] {"options"},
+                ShellTest.class,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
 
-                        try {
-                            runFileIfExists(
-                                    cx,
-                                    global,
-                                    new File(
-                                            jsFile.getParentFile().getParentFile().getParentFile(),
-                                            "shell.js"));
-                            runFileIfExists(
-                                    cx,
-                                    global,
-                                    new File(jsFile.getParentFile().getParentFile(), "shell.js"));
-                            runFileIfExists(
-                                    cx, global, new File(jsFile.getParentFile(), "shell.js"));
-                            runFileIfExists(cx, global, jsFile);
-                            status.hadErrors(
-                                    jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
-                        } catch (Throwable t) {
-                            status.threw(t);
-                        }
-                        return null;
-                    });
+            try {
+                runFileIfExists(
+                    cx,
+                    global,
+                    new File(
+                        jsFile.getParentFile().getParentFile().getParentFile(),
+                        "shell.js"));
+                runFileIfExists(
+                    cx,
+                    global,
+                    new File(jsFile.getParentFile().getParentFile(), "shell.js"));
+                runFileIfExists(
+                    cx, global, new File(jsFile.getParentFile(), "shell.js"));
+                runFileIfExists(cx, global, jsFile);
+                status.hadErrors(
+                    jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
+            } catch (Throwable t) {
+                status.threw(t);
+            }
         } catch (Error t) {
             thrown[0] = t;
         } catch (RuntimeException t) {
