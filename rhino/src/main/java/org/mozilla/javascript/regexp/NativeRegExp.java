@@ -4147,17 +4147,7 @@ public class NativeRegExp extends IdScriptableObject {
             double positionDbl = result.index;
             int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
 
-            List<Object> captures = new ArrayList<>();
-            int n = 1;
-            while (n <= nCaptures) {
-                Object capN = result.matches.get(n);
-                if (capN == null) {
-                    capN = Undefined.instance;
-                }
-                captures.add(capN);
-                ++n;
-            }
-
+            List<String> captures = result.matches;
             Object namedCaptures;
             if (!result.groups.isEmpty()) {
                 var groups = new NativeObject();
@@ -4177,7 +4167,6 @@ public class NativeRegExp extends IdScriptableObject {
                             cx,
                             scope,
                             functionalReplace,
-                            matched,
                             captures,
                             position,
                             s,
@@ -4286,6 +4275,7 @@ public class NativeRegExp extends IdScriptableObject {
             int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
 
             List<Object> captures = new ArrayList<>();
+            captures.add(Undefined.instance); // Make match number consistent with list position.
             int n = 1;
             while (n <= nCaptures) {
                 Object capN = ScriptRuntime.getObjectElem(result, n, cx, scope);
@@ -4328,8 +4318,7 @@ public class NativeRegExp extends IdScriptableObject {
             Context cx,
             Scriptable scope,
             boolean functionalReplace,
-            String matched,
-            List<Object> captures,
+            List<String> captures,
             int position,
             String s,
             Object namedCaptures,
@@ -4337,11 +4326,11 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (functionalReplace) {
             Object[] replacerArgs =
-                    new Object[captures.size() + (Undefined.isUndefined(namedCaptures) ? 3 : 4)];
-            replacerArgs[0] = matched;
-            int i = 1;
-            for (; i <= captures.size(); i++) {
-                replacerArgs[i] = captures.get(i - 1);
+                    new Object[captures.size() + (Undefined.isUndefined(namedCaptures) ? 2 : 3)];
+            int i = 0;
+            for (; i < captures.size(); i++) {
+                var capture = captures.get(i);
+                replacerArgs[i] = capture == null ? Undefined.instance : capture;
             }
             replacerArgs[i++] = position;
             replacerArgs[i++] = s;
@@ -4359,14 +4348,61 @@ public class NativeRegExp extends IdScriptableObject {
                 namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
             }
 
-            NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
+            return AbstractEcmaStringOperations.getSubstitution(
+                    cx,
+                    scope,
+                    captures.get(0),
+                    s,
+                    position,
+                    captures,
+                    namedCaptures,
+                    (String) replaceValue);
+        }
+    }
+
+    private String makeReplacement(
+            Context cx,
+            Scriptable scope,
+            boolean functionalReplace,
+            String matched,
+            List<Object> captures,
+            int position,
+            String s,
+            Object namedCaptures,
+            Object replaceValue) {
+
+        if (functionalReplace) {
+            Object[] replacerArgs =
+                    new Object[captures.size() + (Undefined.isUndefined(namedCaptures) ? 3 : 4)];
+            replacerArgs[0] = matched;
+            int i = 1;
+            for (; i <= captures.size(); i++) {
+                var capture = captures.get(i);
+                replacerArgs[i] = capture == null ? Undefined.instance : capture;
+            }
+            replacerArgs[i++] = position;
+            replacerArgs[i++] = s;
+            if (!Undefined.isUndefined(namedCaptures)) {
+                replacerArgs[i++] = namedCaptures;
+            }
+
+            Scriptable callThis =
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+            Object replacementValue =
+                    ((Callable) replaceValue).call(cx, scope, callThis, replacerArgs);
+            return ScriptRuntime.toString(replacementValue);
+        } else {
+            if (!Undefined.isUndefined(namedCaptures)) {
+                namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
+            }
+
             return AbstractEcmaStringOperations.getSubstitution(
                     cx,
                     scope,
                     matched,
                     s,
                     position,
-                    capturesArray,
+                    captures,
                     namedCaptures,
                     (String) replaceValue);
         }

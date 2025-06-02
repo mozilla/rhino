@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import java.util.List;
+
 /** Abstract operations for string manipulation as defined by EcmaScript */
 public class AbstractEcmaStringOperations {
     /**
@@ -9,13 +11,13 @@ public class AbstractEcmaStringOperations {
      * href="https://tc39.es/ecma262/multipage/text-processing.html#sec-getsubstitution">22.1.3.19.1
      * GetSubstitution (matched, str, position, captures, namedCaptures, replacementTemplate)</a>
      */
-    public static String getSubstitution(
+    public static <T extends Object> String getSubstitution(
             Context cx,
             Scriptable scope,
             String matched,
             String str,
             int position,
-            NativeArray capturesArray,
+            List<T> capturesList,
             Object namedCaptures,
             String replacementTemplate) {
         // See ECMAScript spec 22.1.3.19.1
@@ -79,15 +81,15 @@ public class AbstractEcmaStringOperations {
                                 // two characters and
                                 // contains only [0-9]
                                 int index = Integer.parseInt(digits);
-                                long captureLen = capturesArray.getLength();
+                                long captureLen = capturesList.size();
                                 if (index > captureLen && digitCount == 2) {
                                     digitCount = 1;
                                     digits = digits.substring(0, 1);
                                     index = Integer.parseInt(digits);
                                 }
                                 ref = templateRemainder.substring(0, 1 + digitCount);
-                                if (1 <= index && index <= captureLen) {
-                                    Object capture = capturesArray.get(index - 1);
+                                if (1 <= index && index < captureLen) {
+                                    Object capture = capturesList.get(index);
                                     if (capture
                                             == null) { // Undefined or missing are returned as null
                                         refReplacement = "";
