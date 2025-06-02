@@ -431,10 +431,6 @@ public class ShellTest {
         final PrintStream p = new PrintStream(out);
         global.setOut(p);
         global.setErr(p);
-        global.defineFunctionProperties(
-                new String[] {"options"},
-                ShellTest.class,
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
         // test suite expects keywords to be disallowed as identifiers
         shellContextFactory.setAllowReservedKeywords(false);
         final TestState testState = new TestState();
@@ -450,6 +446,13 @@ public class ShellTest {
                         testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
                         cx.setErrorReporter(testState.errors);
                         global.init(cx);
+
+                        // invoke after init(...) to make sure ClassCache is available for FunctionObject
+                        global.defineFunctionProperties(
+                            new String[] {"options"},
+                            ShellTest.class,
+                            ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+
                         try {
                             runFileIfExists(
                                     cx,
