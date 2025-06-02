@@ -42,3 +42,22 @@ publishing {
         }
     }
 }
+decycle {
+    // package o.m.j.json contains only one class. Maybe move it to o.m.j
+    ignoring from: "org.mozilla.javascript.json.JsonParser", to: "org.mozilla.javascript.**"
+    // o.m.j.commonjs is strongly coupled to o.m.j
+    ignoring from: "org.mozilla.javascript.commonjs.**", to: "org.mozilla.javascript.**"
+    // o.m.j.debug is strongly coupled to o.m.j
+    ignoring from: "org.mozilla.javascript.debug.**", to: "org.mozilla.javascript.**"
+    // o.m.j.xml is strongly coupled to o.m.j (xmlimpl already in separate module)
+    ignoring from: "org.mozilla.javascript.xml.**", to: "org.mozilla.javascript.**"
+
+    // TODO: easy to remove
+    ignoring from: "org.mozilla.classfile.**", to: "org.mozilla.javascript.Kit"
+
+    // TODO: Should be possible to remove cycle between o.m.j.ast and o.m.j
+    ignoring from: "org.mozilla.javascript.ast.**", to: "org.mozilla.javascript.**"
+
+    // TODO: o.m.j.typedarrays can be decoupled with serviceLoader pattern
+    ignoring from: "org.mozilla.javascript.typedarrays.**", to: "org.mozilla.javascript.**"
+}
