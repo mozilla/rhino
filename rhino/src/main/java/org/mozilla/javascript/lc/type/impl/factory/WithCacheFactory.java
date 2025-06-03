@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
@@ -32,7 +33,7 @@ public abstract class WithCacheFactory implements FactoryBase {
 
     @Override
     public TypeInfo create(Class<?> clazz) {
-        final var predefined = matchPredefined(clazz);
+        final var predefined = TypeInfoFactory.matchPredefined(clazz);
         if (predefined != null) {
             return predefined;
         } else if (clazz.isArray()) {

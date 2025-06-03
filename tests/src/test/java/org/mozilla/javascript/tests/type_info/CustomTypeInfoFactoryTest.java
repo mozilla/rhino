@@ -17,14 +17,14 @@ public class CustomTypeInfoFactoryTest {
     @Test
     public void init() {
         var contextFactory = new ContextFactory();
-        contextFactory.setTypeFactoryProvider(cx -> new NoGenericFactory());
+        contextFactory.setTypeFactoryProvider(cx -> new NoGenericNoCacheFactory());
 
         try (var cx = contextFactory.enterContext()) {
             var scope = cx.initStandardObjects();
 
             var typeFactory = getTypeFactory(ClassCache.get(scope));
 
-            Assertions.assertInstanceOf(NoGenericFactory.class, typeFactory);
+            Assertions.assertInstanceOf(NoGenericNoCacheFactory.class, typeFactory);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
@@ -33,7 +33,7 @@ public class CustomTypeInfoFactoryTest {
     @Test
     public void serde() {
         var contextFactory = new ContextFactory();
-        contextFactory.setTypeFactoryProvider(cx -> new NoGenericFactory());
+        contextFactory.setTypeFactoryProvider(cx -> new NoGenericNoCacheFactory());
 
         try (var cx = contextFactory.enterContext()) {
             var scope = cx.initStandardObjects();
@@ -42,7 +42,7 @@ public class CustomTypeInfoFactoryTest {
 
             var typeFactory = getTypeFactory(ClassCache.get(transferred));
 
-            Assertions.assertInstanceOf(NoGenericFactory.class, typeFactory);
+            Assertions.assertInstanceOf(NoGenericNoCacheFactory.class, typeFactory);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

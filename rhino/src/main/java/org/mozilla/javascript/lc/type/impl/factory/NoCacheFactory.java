@@ -27,7 +27,7 @@ public enum NoCacheFactory implements FactoryBase {
 
     @Override
     public TypeInfo create(Class<?> clazz) {
-        final var predefined = matchPredefined(clazz);
+        final var predefined = TypeInfoFactory.matchPredefined(clazz);
         if (predefined != null) {
             return predefined;
         } else if (clazz.isArray()) {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
 import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
@@ -18,11 +19,11 @@ import org.mozilla.javascript.lc.type.impl.factory.FactoryBase;
  *
  * @author ZZZank
  */
-class NoGenericFactory implements FactoryBase {
+class NoGenericNoCacheFactory implements FactoryBase {
 
     @Override
     public TypeInfo create(Class<?> clazz) {
-        final var predefined = matchPredefined(clazz);
+        final var predefined = TypeInfoFactory.matchPredefined(clazz);
         if (predefined != null) {
             return predefined;
         } else if (clazz.isArray()) {

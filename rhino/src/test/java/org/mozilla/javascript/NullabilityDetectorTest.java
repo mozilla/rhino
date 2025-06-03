@@ -12,19 +12,22 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
 public class NullabilityDetectorTest {
     @Test
     public void testNullableDetectorForMethodWithoutArgs() {
-        MemberBox memberBox = new MemberBox(getTestClassMethod("function1"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox =
+                new MemberBox(getTestClassMethod("function1"), TypeInfoFactory.GLOBAL);
         assertThat(memberBox.argNullability, is(new boolean[] {}));
     }
 
     @Test
     public void testNullableDetectorForMethodWithOneArg() {
-        MemberBox memberBox = new MemberBox(getTestClassMethod("function2"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox =
+                new MemberBox(getTestClassMethod("function2"), TypeInfoFactory.GLOBAL);
         assertThat(memberBox.argNullability, is(new boolean[] {true}));
     }
 
     @Test
     public void testNullableDetectorForMethodWithSeveralArgs() {
-        MemberBox memberBox = new MemberBox(getTestClassMethod("function3"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox =
+                new MemberBox(getTestClassMethod("function3"), TypeInfoFactory.GLOBAL);
         assertThat(memberBox.argNullability, is(new boolean[] {true, true, true, true}));
     }
 

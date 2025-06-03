@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -130,20 +129,15 @@ public interface TypeInfoFactory extends Serializable {
      */
     default TypeInfo create(Type type) {
         if (type instanceof Class<?>) {
-            Class<?> clz = (Class<?>) type;
-            return create(clz);
+            return create((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
-            ParameterizedType paramType = (ParameterizedType) type;
-            return create(paramType);
+            return create((ParameterizedType) type);
         } else if (type instanceof GenericArrayType) {
-            GenericArrayType arrType = (GenericArrayType) type;
-            return create(arrType);
+            return create((GenericArrayType) type);
         } else if (type instanceof TypeVariable<?>) {
-            TypeVariable<?> variable = (TypeVariable<?>) type;
-            return create(variable);
+            return create((TypeVariable<?>) type);
         } else if (type instanceof WildcardType) {
-            WildcardType wildcard = (WildcardType) type;
-            return create(wildcard);
+            return create((WildcardType) type);
         }
         return TypeInfo.NONE;
     }
@@ -169,15 +163,12 @@ public interface TypeInfoFactory extends Serializable {
             case 2:
                 return List.of(create(types[0]), create(types[1]));
             default:
-                final var list = new ArrayList<TypeInfo>();
-                for (var type : types) {
-                    list.add(create(type));
-                }
-                return Collections.unmodifiableList(list);
+                // List.of(createArray(types)) will cause one more array copying
+                return Collections.unmodifiableList(Arrays.asList(createArray(types)));
         }
     }
 
-    default TypeInfo matchPredefined(Class<?> clazz) {
+    static TypeInfo matchPredefined(Class<?> clazz) {
         if (clazz == null) {
             return TypeInfo.NONE;
         } else if (clazz == Object.class) {
