@@ -1500,7 +1500,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
         MemberBox getterBox = null;
         if (getter != null) {
-            getterBox = new MemberBox(getter);
+            getterBox = new MemberBox(getter, ClassCache.get(this).getTypeFactory());
 
             boolean delegatedForm;
             if (!Modifier.isStatic(getter.getModifiers())) {
@@ -1541,7 +1541,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (setter.getReturnType() != Void.TYPE)
                 throw Context.reportRuntimeErrorById("msg.setter.return", setter.toString());
 
-            setterBox = new MemberBox(setter);
+            setterBox = new MemberBox(setter, ClassCache.get(this).getTypeFactory());
 
             boolean delegatedForm;
             if (!Modifier.isStatic(setter.getModifiers())) {
