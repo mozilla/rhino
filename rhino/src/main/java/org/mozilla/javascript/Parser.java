@@ -2047,7 +2047,12 @@ public class Parser {
         if (mustMatchToken(Token.RP, "msg.no.paren.after.with", true)) rp = ts.tokenBeg;
 
         WithStatement pn = new WithStatement(pos);
+
+        boolean previous = hasUndefinedBeenRedefined;
+        hasUndefinedBeenRedefined = true;
         AstNode body = getNextStatementAfterInlineComments(pn);
+        hasUndefinedBeenRedefined = previous;
+
         pn.setLength(getNodeEnd(body) - pos);
         pn.setJsDocNode(withComment);
         pn.setExpression(obj);
