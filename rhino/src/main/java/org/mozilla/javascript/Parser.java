@@ -1804,6 +1804,8 @@ public class Parser {
             consumeToken();
             peek = peekToken();
         }
+
+        boolean previous = hasUndefinedBeenRedefined;
         if (peek == Token.CATCH) {
             while (matchToken(Token.CATCH, true)) {
                 int catchLineNum = lineNumber();
@@ -1824,7 +1826,9 @@ public class Parser {
                         {
                             matchToken(Token.LP, true);
                             lp = ts.tokenBeg;
-                            mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
+                            if (!matchToken(Token.UNDEFINED, true)) {
+                                mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
+                            }
 
                             varName = createNameNode();
                             Comment jsdocNodeForName = getAndResetJsDoc();
@@ -1832,6 +1836,9 @@ public class Parser {
                                 varName.setJsDocNode(jsdocNodeForName);
                             }
                             String varNameString = varName.getIdentifier();
+                            if ("undefined".equals(varNameString)) {
+                                hasUndefinedBeenRedefined = true;
+                            }
                             if (inUseStrictDirective) {
                                 if ("eval".equals(varNameString)
                                         || "arguments".equals(varNameString)) {
@@ -1871,6 +1878,7 @@ public class Parser {
                 try {
                     statements(catchScope);
                 } finally {
+                    hasUndefinedBeenRedefined = previous;
                     popScope();
                 }
 
