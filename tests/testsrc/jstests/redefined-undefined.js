@@ -10,22 +10,6 @@ load("testsrc/assert.js");
         (function () {
             assertEquals(10, undefined);
         })();
-
-        (() => {
-            assertEquals(10, undefined);
-        })();
-    })();
-
-    (() => {
-        assertEquals(10, undefined);
-
-        (function () {
-            assertEquals(10, undefined);
-        })();
-
-        (() => {
-            assertEquals(10, undefined);
-        })();
     })();
 
     assertEquals(false, delete undefined);
@@ -34,38 +18,21 @@ load("testsrc/assert.js");
     assertEquals(10, x);
 })();
 
-(() => {
-    var undefined = 10;
-    assertEquals(10, undefined);
+function f(undefined) {
+    return undefined;
+}
 
-    (function () {
-        assertEquals(10, undefined);
+assertEquals(12, f(12));
 
-        (function () {
-            assertEquals(10, undefined);
-        })();
+var o = { undefined: 42 };
+with (o) {
+    assertEquals(42, undefined);
+}
 
-        (() => {
-            assertEquals(10, undefined);
-        })();
-    })();
-
-    (() => {
-        assertEquals(10, undefined);
-
-        (function () {
-            assertEquals(10, undefined);
-        })();
-
-        (() => {
-            assertEquals(10, undefined);
-        })();
-    })();
-
-    assertEquals(false, delete undefined);
-
-    var x = undefined;
-    assertEquals(10, x);
-})();
+try {
+    throw "a";
+} catch (undefined) {
+    assertEquals("a", undefined);
+}
 
 "success";
