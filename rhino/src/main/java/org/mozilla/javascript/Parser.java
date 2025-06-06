@@ -866,11 +866,8 @@ public class Parser {
                         restStartColumn = columnNumber();
                     }
 
-                    if (peekToken() == Token.UNDEFINED
+                    if (matchToken(Token.UNDEFINED, true)
                             || mustMatchToken(Token.NAME, "msg.no.parm", true)) {
-                        if (peekToken() == Token.UNDEFINED) {
-                            consumeToken();
-                        }
 
                         if (!wasRest && fnNode.hasRestParameter()) {
                             // Error: parameter after rest parameter
@@ -952,7 +949,7 @@ public class Parser {
         AstNode memberExprNode = null;
 
         do {
-            if (matchToken(Token.NAME, true)) {
+            if (matchToken(Token.NAME, true) || matchToken(Token.UNDEFINED, true)) {
                 name = createNameNode(true, Token.NAME);
                 if (inUseStrictDirective) {
                     String id = name.getIdentifier();
