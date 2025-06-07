@@ -1355,7 +1355,7 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     // only in the format \p{X} or \P{X}. Assume the \ has been consumed.
-    // depending on p or P choose PROP_ESC or PROP_NO_ESC
+    // depending on p or P choose PROP_UPROP or PROP_UPROP_NOT.
     // X is ASCII letter, decimal or underscore
     public static boolean parseUnicodePropertyEscape(CompilerState state) {
         char[] src = state.cpbegin;
