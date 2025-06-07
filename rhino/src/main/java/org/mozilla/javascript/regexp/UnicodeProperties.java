@@ -12,7 +12,8 @@ public class UnicodeProperties {
     public static final byte ALPHABETIC = 1;
     public static final byte ASCII = ALPHABETIC + 1;
     public static final byte CASE_IGNORABLE = ASCII + 1;
-    public static final byte HEX_DIGIT = CASE_IGNORABLE + 1;
+    public static final byte ASCII_HEX_DIGIT = CASE_IGNORABLE + 1;
+    public static final byte HEX_DIGIT = ASCII_HEX_DIGIT + 1;
     public static final byte ID_CONTINUE = HEX_DIGIT + 1;
     public static final byte ID_START = ID_CONTINUE + 1;
     public static final byte LOWERCASE = ID_START + 1;
@@ -79,6 +80,8 @@ public class UnicodeProperties {
                     Map.entry("gc", GENERAL_CATEGORY),
                     Map.entry("Script", SCRIPT),
                     Map.entry("sc", SCRIPT),
+                    Map.entry("ASCII_Hex_Digit", ASCII_HEX_DIGIT),
+                    Map.entry("AHex", ASCII_HEX_DIGIT),
                     Map.entry("Hex_Digit", HEX_DIGIT),
                     Map.entry("Hex", HEX_DIGIT),
                     Map.entry("ID_Continue", ID_CONTINUE),
@@ -294,9 +297,10 @@ public class UnicodeProperties {
             case GENERAL_CATEGORY:
                 int javaCategory = Character.getType(codePoint);
                 return checkGeneralCategory(valueByte, javaCategory);
-            case HEX_DIGIT:
+            case ASCII_HEX_DIGIT:
                 return isHexDigit(codePoint) == (valueByte == TRUE);
-
+            case HEX_DIGIT:
+                return (Character.digit(codePoint, 16) != -1) == (valueByte == TRUE);
             case ID_CONTINUE:
                 return Character.isUnicodeIdentifierPart(codePoint) == (valueByte == TRUE);
 
@@ -310,8 +314,12 @@ public class UnicodeProperties {
                 return Character.isUpperCase(codePoint) == (valueByte == TRUE);
 
             case WHITE_SPACE:
-                return Character.isWhitespace(codePoint) == (valueByte == TRUE);
-
+                {
+                    // Note: This only a good approximation of the Unicode white space property
+                    return (valueByte == TRUE)
+                            == (Character.isSpaceChar(codePoint)
+                                    || Character.isWhitespace(codePoint));
+                }
             case SCRIPT:
                 return Character.UnicodeScript.of(codePoint) == UnicodeScriptValues[valueByte];
             default:
