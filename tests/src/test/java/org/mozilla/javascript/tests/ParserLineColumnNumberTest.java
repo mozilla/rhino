@@ -12,53 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Node;
-import org.mozilla.javascript.ast.ArrayLiteral;
-import org.mozilla.javascript.ast.Assignment;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.BigIntLiteral;
-import org.mozilla.javascript.ast.Block;
-import org.mozilla.javascript.ast.BreakStatement;
-import org.mozilla.javascript.ast.CatchClause;
-import org.mozilla.javascript.ast.Comment;
-import org.mozilla.javascript.ast.ComputedPropertyKey;
-import org.mozilla.javascript.ast.ConditionalExpression;
-import org.mozilla.javascript.ast.ContinueStatement;
-import org.mozilla.javascript.ast.DoLoop;
-import org.mozilla.javascript.ast.ElementGet;
-import org.mozilla.javascript.ast.EmptyStatement;
-import org.mozilla.javascript.ast.ExpressionStatement;
-import org.mozilla.javascript.ast.ForInLoop;
-import org.mozilla.javascript.ast.ForLoop;
-import org.mozilla.javascript.ast.FunctionCall;
-import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.IfStatement;
-import org.mozilla.javascript.ast.InfixExpression;
-import org.mozilla.javascript.ast.KeywordLiteral;
-import org.mozilla.javascript.ast.LabeledStatement;
-import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NewExpression;
-import org.mozilla.javascript.ast.NumberLiteral;
-import org.mozilla.javascript.ast.ObjectLiteral;
-import org.mozilla.javascript.ast.ObjectProperty;
-import org.mozilla.javascript.ast.ParenthesizedExpression;
-import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.RegExpLiteral;
-import org.mozilla.javascript.ast.ReturnStatement;
-import org.mozilla.javascript.ast.Scope;
-import org.mozilla.javascript.ast.StringLiteral;
-import org.mozilla.javascript.ast.SwitchCase;
-import org.mozilla.javascript.ast.SwitchStatement;
-import org.mozilla.javascript.ast.TaggedTemplateLiteral;
-import org.mozilla.javascript.ast.ThrowStatement;
-import org.mozilla.javascript.ast.TryStatement;
-import org.mozilla.javascript.ast.UnaryExpression;
-import org.mozilla.javascript.ast.UpdateExpression;
-import org.mozilla.javascript.ast.VariableDeclaration;
-import org.mozilla.javascript.ast.VariableInitializer;
-import org.mozilla.javascript.ast.WhileLoop;
-import org.mozilla.javascript.ast.WithStatement;
-import org.mozilla.javascript.ast.Yield;
+import org.mozilla.javascript.ast.*;
 
 class ParserLineColumnNumberTest {
     CompilerEnvirons environment;
@@ -895,7 +849,8 @@ class ParserLineColumnNumberTest {
                                 + " c() { return 3; },\n"
                                 + " d: function() { return 4; },\n"
                                 + " get e() { return 5; },\n"
-                                + " set f(value) { this._f = value; }\n"
+                                + " set f(value) { this._f = value; },\n"
+                                + " ...g\n"
                                 + "}");
         ExpressionStatement expressionStatement =
                 assertInstanceOf(ExpressionStatement.class, root.getFirstChild());
@@ -905,7 +860,7 @@ class ParserLineColumnNumberTest {
         assertLineColumnAre(assignment, 0, 2);
         ObjectLiteral objectLiteral = assertInstanceOf(ObjectLiteral.class, assignment.getRight());
         assertLineColumnAre(objectLiteral, 0, 6);
-        assertEquals(6, objectLiteral.getElements().size());
+        assertEquals(7, objectLiteral.getElements().size());
 
         ObjectProperty propA =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(0));
@@ -944,6 +899,13 @@ class ParserLineColumnNumberTest {
         assertLineColumnAre(propF, 5, 2);
         assertLineColumnAre(propF.getLeft(), 5, 2);
         assertLineColumnAre(propF.getRight(), 5, 6);
+
+        ObjectProperty propG =
+                assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(6));
+        assertLineColumnAre(propG, 6, 2);
+        assertLineColumnAre(propG.getLeft(), 6, 2);
+        assertLineColumnAre(((Spread) propG.getLeft()).getExpression(), 6, 5);
+        assertNull(propG.getRight());
     }
 
     @Test
