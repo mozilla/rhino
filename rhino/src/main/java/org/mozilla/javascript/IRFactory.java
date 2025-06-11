@@ -901,6 +901,7 @@ public final class IRFactory {
                     AstNode left = prop.getLeft();
                     var transformedSpreadNode = transform(left);
                     properties[i++] = transformedSpreadNode;
+                    object.putIntProp(Node.CONTAINS_SPREAD, 1);
                     object.addChildToBack(transformedSpreadNode);
                 } else {
                     Object propKey = Parser.getPropKey(prop.getLeft());

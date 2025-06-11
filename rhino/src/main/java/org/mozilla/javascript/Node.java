@@ -68,7 +68,8 @@ public class Node implements Iterable<Node> {
             OBJECT_LITERAL_DESTRUCTURING = 29,
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
-            LAST_PROP = SUPER_PROPERTY_ACCESS;
+            CONTAINS_SPREAD = 32,
+            LAST_PROP = CONTAINS_SPREAD;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types

@@ -12,14 +12,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.Block;
-import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.Jump;
-import org.mozilla.javascript.ast.Scope;
-import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.TemplateCharacters;
+
+import org.mozilla.javascript.ast.*;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator extends Icode {
@@ -1411,13 +1405,27 @@ class CodeGenerator extends Icode {
         }
     }
 
+    private void visitObjectLiteralWithSpread(Node node, Node child) {
+        addIcode(Icode_NEWOBJECT);
+        stackChange(+1);
+        // TODO(abs):
+        // iterate over the object and add them one at a time
+        // - normal property
+        // - computed property
+        // - new bytecode for spread
+    }
+
     private void visitObjectLiteral(Node node, Node child) {
+        if (node.getIntProp(Node.CONTAINS_SPREAD, 0) == 1) {
+            visitObjectLiteralWithSpread(node, child);
+            return;
+        }
+
         Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         int count = propertyIds == null ? 0 : propertyIds.length;
         boolean hasAnyComputedProperty =
                 propertyIds != null
                         && Arrays.stream(propertyIds).anyMatch(id -> id instanceof Node);
-
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
 

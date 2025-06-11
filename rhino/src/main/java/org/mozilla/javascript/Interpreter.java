@@ -2380,6 +2380,13 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop = literalKeySet(stack, stackTop, DBL_MRK, sDbl);
                                     continue Loop;
                                 }
+                            case Icode_NEWOBJECT:
+                            {
+                                // create empty object
+                                ++stackTop;
+                                stack[stackTop] = cx.newObject(frame.scope);
+                                continue Loop;
+                            }
                             case Token.OBJECTLIT:
                                 {
                                     stackTop = objectLit(cx, frame, stack, stackTop);
