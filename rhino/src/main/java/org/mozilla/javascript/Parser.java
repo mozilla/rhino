@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.mozilla.javascript.ast.*;
 import org.mozilla.javascript.ast.Symbol;
 
@@ -3884,7 +3883,7 @@ public class Parser {
                     AstNode exprNode = assignExpr();
                     pname = new Spread(pos, ts.tokenEnd - pos);
                     pname.setLineColumnNumber(lineno, column);
-                    ((Spread)pname).setExpression(exprNode);
+                    ((Spread) pname).setExpression(exprNode);
                 } else {
                     reportError("msg.bad.prop");
                     return null;

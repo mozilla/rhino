@@ -10,73 +10,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import org.mozilla.javascript.ast.ArrayComprehension;
-import org.mozilla.javascript.ast.ArrayComprehensionLoop;
-import org.mozilla.javascript.ast.ArrayLiteral;
-import org.mozilla.javascript.ast.Assignment;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.BigIntLiteral;
-import org.mozilla.javascript.ast.Block;
-import org.mozilla.javascript.ast.BreakStatement;
-import org.mozilla.javascript.ast.CatchClause;
-import org.mozilla.javascript.ast.ComputedPropertyKey;
-import org.mozilla.javascript.ast.ConditionalExpression;
-import org.mozilla.javascript.ast.ContinueStatement;
-import org.mozilla.javascript.ast.DestructuringForm;
-import org.mozilla.javascript.ast.DoLoop;
-import org.mozilla.javascript.ast.ElementGet;
-import org.mozilla.javascript.ast.EmptyExpression;
-import org.mozilla.javascript.ast.ExpressionStatement;
-import org.mozilla.javascript.ast.ForInLoop;
-import org.mozilla.javascript.ast.ForLoop;
-import org.mozilla.javascript.ast.FunctionCall;
-import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.GeneratorExpression;
-import org.mozilla.javascript.ast.GeneratorExpressionLoop;
-import org.mozilla.javascript.ast.GeneratorMethodDefinition;
-import org.mozilla.javascript.ast.IfStatement;
-import org.mozilla.javascript.ast.InfixExpression;
-import org.mozilla.javascript.ast.Jump;
-import org.mozilla.javascript.ast.KeywordLiteral;
-import org.mozilla.javascript.ast.Label;
-import org.mozilla.javascript.ast.LabeledStatement;
-import org.mozilla.javascript.ast.LetNode;
-import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NewExpression;
-import org.mozilla.javascript.ast.NumberLiteral;
-import org.mozilla.javascript.ast.ObjectLiteral;
-import org.mozilla.javascript.ast.ObjectProperty;
-import org.mozilla.javascript.ast.ParenthesizedExpression;
-import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.RegExpLiteral;
-import org.mozilla.javascript.ast.ReturnStatement;
-import org.mozilla.javascript.ast.Scope;
-import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.StringLiteral;
-import org.mozilla.javascript.ast.SwitchCase;
-import org.mozilla.javascript.ast.SwitchStatement;
+import org.mozilla.javascript.ast.*;
 import org.mozilla.javascript.ast.Symbol;
-import org.mozilla.javascript.ast.TaggedTemplateLiteral;
-import org.mozilla.javascript.ast.TemplateCharacters;
-import org.mozilla.javascript.ast.TemplateLiteral;
-import org.mozilla.javascript.ast.ThrowStatement;
-import org.mozilla.javascript.ast.TryStatement;
-import org.mozilla.javascript.ast.UnaryExpression;
-import org.mozilla.javascript.ast.UpdateExpression;
-import org.mozilla.javascript.ast.VariableDeclaration;
-import org.mozilla.javascript.ast.VariableInitializer;
-import org.mozilla.javascript.ast.WhileLoop;
-import org.mozilla.javascript.ast.WithStatement;
-import org.mozilla.javascript.ast.XmlElemRef;
-import org.mozilla.javascript.ast.XmlExpression;
-import org.mozilla.javascript.ast.XmlFragment;
-import org.mozilla.javascript.ast.XmlLiteral;
-import org.mozilla.javascript.ast.XmlMemberGet;
-import org.mozilla.javascript.ast.XmlPropRef;
-import org.mozilla.javascript.ast.XmlRef;
-import org.mozilla.javascript.ast.XmlString;
-import org.mozilla.javascript.ast.Yield;
 
 /**
  * This class rewrites the parse tree into an IR suitable for codegen.
@@ -230,6 +165,8 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
+            case Token.DOTDOTDOT:
+                return transformSpread((Spread) node);
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -960,23 +897,30 @@ public final class IRFactory {
             int size = elems.size(), i = 0;
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
-                Object propKey = Parser.getPropKey(prop.getLeft());
-                if (propKey == null) {
-                    Node theId = transform(prop.getLeft());
-                    properties[i++] = theId;
+                if (prop.getLeft() instanceof Spread) {
+                    AstNode left = prop.getLeft();
+                    var transformedSpreadNode = transform(left);
+                    properties[i++] = transformedSpreadNode;
+                    object.addChildToBack(transformedSpreadNode);
                 } else {
-                    properties[i++] = propKey;
-                }
+                    Object propKey = Parser.getPropKey(prop.getLeft());
+                    if (propKey == null) {
+                        Node theId = transform(prop.getLeft());
+                        properties[i++] = theId;
+                    } else {
+                        properties[i++] = propKey;
+                    }
 
-                Node right = transform(prop.getRight());
-                if (prop.isGetterMethod()) {
-                    right = createUnary(Token.GET, right);
-                } else if (prop.isSetterMethod()) {
-                    right = createUnary(Token.SET, right);
-                } else if (prop.isNormalMethod()) {
-                    right = createUnary(Token.METHOD, right);
+                    Node right = transform(prop.getRight());
+                    if (prop.isGetterMethod()) {
+                        right = createUnary(Token.GET, right);
+                    } else if (prop.isSetterMethod()) {
+                        right = createUnary(Token.SET, right);
+                    } else if (prop.isNormalMethod()) {
+                        right = createUnary(Token.METHOD, right);
+                    }
+                    object.addChildToBack(right);
                 }
-                object.addChildToBack(right);
             }
         }
         object.putProp(Node.OBJECT_IDS_PROP, properties);
@@ -1269,6 +1213,11 @@ public final class IRFactory {
         Node kid = node.getValue() == null ? null : transform(node.getValue());
         if (kid != null) return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
         return new Node(node.getType(), node.getLineno(), node.getColumn());
+    }
+
+    private Node transformSpread(Spread node) {
+        Node kid = transform(node.getExpression());
+        return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
     }
 
     private Node transformXmlLiteral(XmlLiteral node) {
