@@ -129,4 +129,42 @@ public class ObjectBenchmark {
         delete.call(
                 state.cx, state.scope, null, new Object[] {count, o, state.strings, state.ints});
     }
+
+    @Benchmark
+    @OperationsPerInvocation(1000)
+    @SuppressWarnings("unused")
+    public void objectLiteralEmpty(FieldTestState state) {
+        Function create =
+                (Function) ScriptableObject.getProperty(state.scope, "objectLiteralEmpty");
+        create.call(state.cx, state.scope, null, new Object[] {count});
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(1000)
+    @SuppressWarnings("unused")
+    public void objectLiteralSimple(FieldTestState state) {
+        Function create =
+                (Function) ScriptableObject.getProperty(state.scope, "objectLiteralSimple");
+        create.call(state.cx, state.scope, null, new Object[] {count});
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(1000)
+    @SuppressWarnings("unused")
+    public void objectLiteralComputedProperties(FieldTestState state) {
+        Function create =
+                (Function)
+                        ScriptableObject.getProperty(
+                                state.scope, "objectLiteralComputedProperties");
+        create.call(state.cx, state.scope, null, new Object[] {count});
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(1000)
+    @SuppressWarnings("unused")
+    public void objectLiteralGetterSetter(FieldTestState state) {
+        Function create =
+                (Function) ScriptableObject.getProperty(state.scope, "objectLiteralGetterSetter");
+        create.call(state.cx, state.scope, null, new Object[] {count});
+    }
 }
