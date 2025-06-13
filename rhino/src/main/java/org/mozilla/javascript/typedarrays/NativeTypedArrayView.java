@@ -527,9 +527,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private Object getElemForToString(Context cx, Scriptable scope, int index, boolean useLocale) {
         var elem = js_get(index);
         if (useLocale) {
-            Callable fun = ScriptRuntime.getPropFunctionAndThis(elem, "toLocaleString", cx, scope);
-            Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
-            return fun.call(cx, scope, funThis, ScriptRuntime.emptyArgs);
+            var toLocaleString = ScriptRuntime.getPropAndThis(elem, "toLocaleString", cx, scope);
+            return toLocaleString.call(cx, scope, ScriptRuntime.emptyArgs);
         } else {
             return elem;
         }
