@@ -26,11 +26,7 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     public ThreadSafeHashSlotMap(StampedLock lock, SlotMap oldMap, Slot newSlot) {
-        super(
-                1
-                        + ((oldMap instanceof LockAwareSlotMap)
-                                ? ((LockAwareSlotMap) oldMap).sizeWithLock()
-                                : oldMap.size()));
+        super(oldMap.dirtySize() + 1);
         this.lock = lock;
         for (Slot n : oldMap) {
             addWithLock(null, n.copySlot());
@@ -56,7 +52,7 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
 
     @Override
     public int dirtySize() {
-        assert lock.isReadLocked();
+        assert lock.isReadLocked() || lock.isWriteLocked();
         return super.size();
     }
 
