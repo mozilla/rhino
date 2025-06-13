@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.testutils.Utils;
 
 /** Ensures that slot map promotion */
 class SlotMapPromotionTest {
@@ -33,7 +32,9 @@ class SlotMapPromotionTest {
 
     @Test
     public void promotionFromThreadSafeEmptyToSingleSlot() {
-        assertPromotes(() -> SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP, SlotMapOwner.ThreadSafeSingleEntrySlotMap.class);
+        assertPromotes(
+                () -> SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
+                SlotMapOwner.ThreadSafeSingleEntrySlotMap.class);
     }
 
     @Test
