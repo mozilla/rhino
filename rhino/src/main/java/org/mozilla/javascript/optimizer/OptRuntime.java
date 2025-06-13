@@ -61,7 +61,8 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /** Implement name(args) call shrinking optimizer code. */
-    @Deprecated
+    @Deprecated(since = "1.8.1", forRemoval = true)
+    @SuppressWarnings("removal")
     public static Object callName(Object[] args, String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
@@ -69,14 +70,16 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /** Implement name() call shrinking optimizer code. */
-    @Deprecated
+    @Deprecated(since = "1.8.1", forRemoval = true)
+    @SuppressWarnings("removal")
     public static Object callName0(String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    @Deprecated
+    @Deprecated(since = "1.8.1", forRemoval = true)
+    @SuppressWarnings("removal")
     public static Object callName0Optional(String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThisOptional(name, cx, scope);
         if (f == null) {
@@ -86,7 +89,8 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    @Deprecated
+    @Deprecated(since = "1.8.1", forRemoval = true)
+    @SuppressWarnings("removal")
     /** Implement x.property() call shrinking optimizer code. */
     public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
@@ -94,7 +98,8 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    @Deprecated
+    @Deprecated(since = "1.8.1", forRemoval = true)
+    @SuppressWarnings("removal")
     public static Object callProp0Optional(
             Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThisOptional(value, property, cx, scope);
