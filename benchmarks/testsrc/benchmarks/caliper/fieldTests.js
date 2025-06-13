@@ -138,3 +138,10 @@ function objectLiteralGetterSetter(iterations) {
     };
   }
 }
+
+function arrayLiteral(iterations) {
+  var a;
+  for (var ct = 0; ct < iterations; ct++) {
+    a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  }
+}

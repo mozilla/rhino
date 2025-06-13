@@ -167,4 +167,12 @@ public class ObjectBenchmark {
                 (Function) ScriptableObject.getProperty(state.scope, "objectLiteralGetterSetter");
         create.call(state.cx, state.scope, null, new Object[] {count});
     }
+
+    @Benchmark
+    @OperationsPerInvocation(1000)
+    @SuppressWarnings("unused")
+    public void arrayLiteral(FieldTestState state) {
+        Function create = (Function) ScriptableObject.getProperty(state.scope, "arrayLiteral");
+        create.call(state.cx, state.scope, null, new Object[] {count});
+    }
 }
