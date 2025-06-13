@@ -95,6 +95,7 @@ public final class IRFactory {
 
     private Parser parser;
     private AstNodePosition astNodePos;
+    private boolean outerScopeIsStrict;
 
     public IRFactory(CompilerEnvirons env, String sourceString) {
         this(env, null, sourceString, env.getErrorReporter());
@@ -618,6 +619,8 @@ public final class IRFactory {
         Node mexpr = decompileFunctionHeader(fn);
         int index = parser.currentScriptOrFn.addFunction(fn);
 
+        var savedStrict = outerScopeIsStrict;
+        outerScopeIsStrict |= fn.isInStrictMode();
         Parser.PerFunctionVariables savedVars = parser.createPerFunctionVariables(fn);
         try {
             // If we start needing to record much more codegen metadata during
@@ -693,6 +696,7 @@ public final class IRFactory {
         } finally {
             --parser.nestingOfFunction;
             savedVars.restore();
+            outerScopeIsStrict = savedStrict;
         }
     }
 
@@ -1054,6 +1058,7 @@ public final class IRFactory {
     private Node transformScript(ScriptNode node) {
         if (parser.currentScope != null) Kit.codeBug();
         parser.currentScope = node;
+        outerScopeIsStrict = node.isInStrictMode();
         Node body = new Node(Token.BLOCK);
         for (Node kid : node) {
             body.addChildToBack(transform((AstNode) kid));
@@ -1413,10 +1418,14 @@ public final class IRFactory {
         return new Node(Token.CATCH, varName, catchCond, stmts, lineno, column);
     }
 
-    private static Node initFunction(
+    private Node initFunction(
             FunctionNode fnNode, int functionIndex, Node statements, int functionType) {
         fnNode.setFunctionType(functionType);
         fnNode.addChildToBack(statements);
+
+        if (outerScopeIsStrict && !fnNode.isInStrictMode()) {
+            fnNode.setInStrictMode(true);
+        }
 
         int functionCount = fnNode.getFunctionCount();
         if (functionCount != 0) {
