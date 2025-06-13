@@ -69,7 +69,7 @@ class SlotMapPromotionTest {
         ScriptableObject obj = new TestScriptableObject();
         obj.setMap(slotMapSupplier.get());
 
-        // add one more slot to ensure the promotion
+        // Add one more slot to ensure the promotion
         obj.put("xxx", obj, "one more property");
 
         assertEquals(expectedClass, obj.getMap().getClass());
