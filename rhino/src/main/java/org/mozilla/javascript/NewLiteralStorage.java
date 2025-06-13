@@ -1,8 +1,6 @@
 package org.mozilla.javascript;
 
-/**
- * Used to store the support structures for a literal object (or array) being built.
- */
+/** Used to store the support structures for a literal object (or array) being built. */
 public final class NewLiteralStorage {
     private Object[] keys;
     private int[] getterSetters;
@@ -15,8 +13,8 @@ public final class NewLiteralStorage {
         this.values = new Object[ids.length];
     }
 
-    public NewLiteralStorage(int length) {
-        this.keys = null;
+    public NewLiteralStorage(int length, boolean createKeys) {
+        this.keys = createKeys ? new Object[length] : null;
         this.getterSetters = new int[length];
         this.values = new Object[length];
     }
@@ -34,6 +32,10 @@ public final class NewLiteralStorage {
     public void pushSetter(Object value) {
         this.getterSetters[this.index] = +1;
         this.pushValue(value);
+    }
+
+    public void setGetterSetterFlagAt(int index, int flag) {
+        this.getterSetters[index] = flag;
     }
 
     public void pushKey(Object key) {

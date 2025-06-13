@@ -2370,7 +2370,7 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_LITERAL_NEW_ARRAY:
                                 // indexReg: number of values in the literal
                                 ++stackTop;
-                                stack[stackTop] = new NewLiteralStorage(indexReg);
+                                stack[stackTop] = new NewLiteralStorage(indexReg, false);
                                 continue Loop;
                             case Icode_LITERAL_SET:
                                 {
