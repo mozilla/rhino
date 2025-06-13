@@ -250,6 +250,25 @@ public class AbstractEcmaObjectOperations {
     }
 
     /**
+     * Set ( O, P, V, Throw)
+     *
+     * <p><a href="https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw">7.3.4 Set (O, P, V,
+     * Throw)</a>
+     */
+    static void put(Context cx, Scriptable o, Symbol p, Object v, boolean isThrow) {
+        Scriptable base = ScriptableObject.getBase(o, p);
+        if (base == null) base = o;
+
+        if (base instanceof ScriptableObject) {
+            if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
+
+            ScriptableObject.ensureSymbolScriptable(o).put(p, o, v);
+        } else {
+            ScriptableObject.ensureSymbolScriptable(base).put(p, o, v);
+        }
+    }
+
+    /**
      * Implement the ECMAScript abstract operation "GroupBy"
      *
      * @param cx
