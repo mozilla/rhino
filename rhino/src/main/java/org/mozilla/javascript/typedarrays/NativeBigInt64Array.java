@@ -24,10 +24,13 @@ public class NativeBigInt64Array extends NativeTypedArrayView<BigInteger> {
     private static final String CLASS_NAME = "BigInt64Array";
     private static final int BYTES_PER_ELEMENT = 8;
 
-    public NativeBigInt64Array() {}
+    public NativeBigInt64Array() {
+        isBigInt = true;
+    }
 
     public NativeBigInt64Array(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+        isBigInt = true;
     }
 
     public NativeBigInt64Array(int len) {
@@ -91,10 +94,10 @@ public class NativeBigInt64Array extends NativeTypedArrayView<BigInteger> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        var val = ScriptRuntime.toBigInt(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        var val = ScriptRuntime.toBigInt(c);
 
         long base = val.longValue();
 
