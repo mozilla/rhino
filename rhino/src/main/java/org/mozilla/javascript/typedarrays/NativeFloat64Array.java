@@ -90,10 +90,10 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        double val = ScriptRuntime.toNumber(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        double val = ScriptRuntime.toNumber(c);
         long base = Double.doubleToLongBits(val);
         ByteIo.writeUint64(
                 arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, useLittleEndian());

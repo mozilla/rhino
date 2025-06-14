@@ -216,8 +216,17 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject target = checkTarget(args);
         ScriptableObject desc = ScriptableObject.ensureScriptableObject(args[2]);
 
+        Object key = args[1];
+
         try {
-            return target.defineOwnProperty(cx, args[1], desc);
+            if (key instanceof Symbol) {
+                return target.defineOwnProperty(cx, key, desc);
+            } else {
+                String propertyKey = ScriptRuntime.toString(
+                        ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
+                return target.defineOwnProperty(cx, propertyKey, desc);
+            }
+
         } catch (EcmaError e) {
             return false;
         }
