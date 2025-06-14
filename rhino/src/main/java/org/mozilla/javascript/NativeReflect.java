@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 
 /**
  * This class implements the Reflect object.
@@ -123,7 +124,10 @@ final class NativeReflect extends ScriptableObject {
                 true, cx, scope, callable, new Object[] {thisObj, argumentsList});
     }
 
-    /** see https://262.ecma-international.org/12.0/#sec-reflect.construct */
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.construct">28.1.2
+     * Reflect.construct (target, argumentsList[, newTarget])</a>
+     */
     private static Scriptable construct(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         /*
@@ -349,10 +353,13 @@ final class NativeReflect extends ScriptableObject {
 
         if (ScriptRuntime.isSymbol(args[1])) {
             receiver.put((Symbol) args[1], receiver, args[2]);
-        } else if (args[1] instanceof Double) {
-            receiver.put(ScriptRuntime.toIndex(args[1]), receiver, args[2]);
         } else {
-            receiver.put(ScriptRuntime.toString(args[1]), receiver, args[2]);
+            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[1]);
+            if (s.stringId == null) {
+                receiver.put(s.index, receiver, args[2]);
+            } else {
+                receiver.put(s.stringId, receiver, args[2]);
+            }
         }
 
         return true;

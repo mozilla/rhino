@@ -9,8 +9,8 @@ package org.mozilla.javascript;
 import java.util.Iterator;
 
 /**
- * This class implements iterator objects. See
- * http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Iterators
+ * This class implements iterator objects. See <a
+ * href="http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Iterators">Iterators</a>
  *
  * @author Norris Boyd
  */

@@ -30,7 +30,7 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
 
-    static void init(Scriptable s, boolean sealed) {
+    static LambdaConstructor init(Scriptable s, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         s,
@@ -43,6 +43,10 @@ public class NativeObject extends ScriptableObject implements Map {
                         return js_constructor(cx, scope, args);
                     }
                 };
+
+        var proto = new NativeObject();
+        ctor.setPrototypeProperty(proto);
+        proto.defineProperty("constructor", ctor, DONTENUM);
 
         defOnCtor(ctor, s, "getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
         if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
@@ -88,6 +92,7 @@ public class NativeObject extends ScriptableObject implements Map {
             ctor.sealObject();
             ((NativeObject) ctor.getPrototypeProperty()).sealObject();
         }
+        return ctor;
     }
 
     private static void defOnCtor(

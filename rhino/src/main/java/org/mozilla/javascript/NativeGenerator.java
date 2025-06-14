@@ -7,8 +7,8 @@
 package org.mozilla.javascript;
 
 /**
- * This class implements generator objects. See
- * http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Generators
+ * This class implements generator objects. See <a
+ * href="http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Generators">Generators</a>
  *
  * @author Norris Boyd
  */

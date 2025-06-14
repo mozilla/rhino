@@ -227,7 +227,8 @@ public class TopLevel extends IdScriptableObject {
 
     /**
      * Get the cached native error constructor from this scope with the given <code>type</code>.
-     * Returns null if {@link #cacheBuiltins()} has not been called on this object.
+     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
+     * object.
      *
      * @param type the native error type
      * @return the native error constructor

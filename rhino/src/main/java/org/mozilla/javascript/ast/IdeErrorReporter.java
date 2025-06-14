@@ -22,8 +22,6 @@ import org.mozilla.javascript.ErrorReporter;
  * within a single line, for readability, but the client is free to use the AST to determine the
  * affected node(s) from the start position and change the error or warning's display bounds.
  *
- * <p>
- *
  * @author Steve Yegge
  */
 public interface IdeErrorReporter extends ErrorReporter {
@@ -49,8 +47,6 @@ public interface IdeErrorReporter extends ErrorReporter {
      * <p>If execution has not yet begun, the JavaScript engine is free to find additional errors
      * rather than terminating the translation. It will not execute a script that had errors,
      * however.
-     *
-     * <p>
      *
      * @param message a String describing the error
      * @param sourceName a String describing the JavaScript source where the error occurred;

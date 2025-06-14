@@ -63,8 +63,6 @@ public class LetNode extends Scope {
      * is similar to a VariableDeclaration, with no curly-brace. (This form is used to define
      * let-bound variables in the scope of the current block.)
      *
-     * <p>
-     *
      * @return the body form
      */
     public AstNode getBody() {

@@ -18,8 +18,6 @@ package org.mozilla.javascript;
  * <p>There are many static methods defined in ScriptableObject that perform the multiple calls to
  * the Scriptable interface needed in order to manipulate properties in prototype chains.
  *
- * <p>
- *
  * @see org.mozilla.javascript.ScriptableObject
  * @author Norris Boyd
  * @author Nick Thompson
@@ -100,8 +98,6 @@ public interface Scriptable {
      *
      * <p>The property is specified by a String name as defined for the <code>get</code> method.
      *
-     * <p>
-     *
      * @param name the name of the property
      * @param start the object in which the lookup began
      * @return true if and only if the named property is found in the object
@@ -116,8 +112,6 @@ public interface Scriptable {
      * <p>Does not traverse the prototype chain.
      *
      * <p>The property is specified by an integral index as defined for the <code>get</code> method.
-     *
-     * <p>
      *
      * @param index the numeric index for the property
      * @param start the object in which the lookup began

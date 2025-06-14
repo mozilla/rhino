@@ -85,7 +85,7 @@ public class Bootstrapper {
     }
 
     /**
-     * Operation names in the bytecode are names like "PROP:GET:<NAME> and "NAME:BIND:<NAME>". (See
+     * Operation names in the bytecode are names like "PROP:GET:[NAME]" and "NAME:BIND:[NAME]". (See
      * the "Signatures" interface for a description of these.) This method translates them the first
      * time a call site is seen to an object that can be easily consumed by the various types of
      * linkers.

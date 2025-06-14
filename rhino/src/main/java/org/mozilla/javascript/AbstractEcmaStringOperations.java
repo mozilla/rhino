@@ -5,7 +5,9 @@ public class AbstractEcmaStringOperations {
     /**
      * GetSubstitution(matched, str, position, captures, namedCaptures, replacementTemplate)
      *
-     * <p>https://tc39.es/ecma262/multipage/text-processing.html#sec-getsubstitution
+     * <p><a
+     * href="https://tc39.es/ecma262/multipage/text-processing.html#sec-getsubstitution">22.1.3.19.1
+     * GetSubstitution (matched, str, position, captures, namedCaptures, replacementTemplate)</a>
      */
     public static String getSubstitution(
             Context cx,

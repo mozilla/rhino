@@ -12,10 +12,31 @@ jmh {
     if (System.getenv('BENCHMARK') != null) {
       includes = [System.getenv('BENCHMARK')]
     }
+    if (System.getenv('INTERPRETED') != null) {
+       def vals = System.getenv('INTERPRETED').split(",")
+       def aParams = project.objects.listProperty(String)
+       for (String v : vals) {
+           aParams.add(v)
+       }
+       benchmarkParameters = [interpreted: aParams]
+    }
+    if (System.getenv('PROFILERS') != null) {
+        if ('cpu'.equals(System.getenv('PROFILERS'))) {
+            profilers = ['async:output=jfr']
+        } else if ('alloc'.equals(System.getenv('PROFILERS'))) {
+            profilers = ['async:output=jfr;event=alloc']
+        } else {
+            profilers = []
+            for (String v :System.getenv('PROFILERS').split(',')) {
+                profilers.add(v)
+            }
+        }
+    }
+    jvmArgs = ['-XX:+BackgroundCompilation']
     benchmarkMode = ['avgt']
     fork = 1
     iterations = 5
     timeOnIteration = '2s'
-    warmupIterations = 3
+    warmupIterations = 4
     warmup = '5s'
 }

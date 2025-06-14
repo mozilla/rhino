@@ -99,8 +99,6 @@ import org.mozilla.javascript.ast.Yield;
  * <p>This parser implementation is not intended to be reused after a parse finishes, and will throw
  * an IllegalStateException() if invoked again.
  *
- * <p>
- *
  * @see TokenStream
  * @author Mike McCabe
  * @author Brendan Eich

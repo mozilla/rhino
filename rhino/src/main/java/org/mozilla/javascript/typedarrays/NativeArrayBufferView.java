@@ -7,10 +7,7 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Symbol;
-import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -73,13 +70,5 @@ public abstract class NativeArrayBufferView extends ScriptableObject {
 
     protected static boolean isArg(Object[] args, int i) {
         return ((args.length > i) && !Undefined.instance.equals(args[i]));
-    }
-
-    @Override
-    public Object get(Symbol key, Scriptable start) {
-        if (SymbolKey.TO_STRING_TAG.equals(key)) {
-            return getClassName();
-        }
-        return super.get(key, start);
     }
 }

@@ -21,22 +21,22 @@ import org.mozilla.javascript.ScriptableObject;
  * Implements the require() function as defined by <a
  * href="http://wiki.commonjs.org/wiki/Modules/1.1">Common JS modules</a>.
  *
- * <h1>Thread safety</h1>
+ * <p>&lt;h1&gt;Thread safety&lt;/h1&gt;
  *
- * You will ordinarily create one instance of require() for every top-level scope. This ordinarily
- * means one instance per program execution, except if you use shared top-level scopes and
- * installing most objects into them. Module loading is thread safe, so using a single require() in
- * a shared top-level scope is also safe.
+ * <p>You will ordinarily create one instance of require() for every top-level scope. This
+ * ordinarily means one instance per program execution, except if you use shared top-level scopes
+ * and installing most objects into them. Module loading is thread safe, so using a single require()
+ * in a shared top-level scope is also safe.
  *
- * <h1>Creation</h1>
+ * <p>&lt;h1&gt;Creation&lt;/h1&gt;
  *
- * If you need to create many otherwise identical require() functions for different scopes, you
+ * <p>If you need to create many otherwise identical require() functions for different scopes, you
  * might want to use {@link RequireBuilder} for convenience.
  *
- * <h1>Making it available</h1>
+ * <p>&lt;h1&gt;Making it available&lt;/h1&gt;
  *
- * In order to make the require() function available to your JavaScript program, you need to invoke
- * either {@link #install(Scriptable)} or {@link #requireMain(Context, String)}.
+ * <p>In order to make the require() function available to your JavaScript program, you need to
+ * invoke either {@link #install(Scriptable)} or {@link #requireMain(Context, String)}.
  *
  * @author Attila Szegedi
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $

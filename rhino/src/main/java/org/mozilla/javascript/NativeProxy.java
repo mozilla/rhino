@@ -63,7 +63,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         scope,
                         PROXY_TAG,
                         2,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        null, // Proxy constructor has *no* prototype
+                        null, // Proxy constructor may not be called as a function.
                         NativeProxy::constructor) {
 
                     @Override
@@ -76,7 +77,6 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         return obj;
                     }
                 };
-        constructor.setPrototypeProperty(null);
 
         constructor.defineConstructorMethod(
                 scope, "revocable", 2, NativeProxy::revocable, DONTENUM, DONTENUM | READONLY);
@@ -104,8 +104,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget">10.5.13
+     * [[Construct]] (argumentsList, newTarget)</a>
      */
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
@@ -138,7 +139,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
+     * <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p">10.5.7
+     * [[HasProperty]] (P)</a>
      */
     @Override
     public boolean has(String name, Scriptable start) {
@@ -190,8 +193,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p">10.5.7
+     * [[HasProperty]] (P)</a>
      */
     @Override
     public boolean has(int index, Scriptable start) {
@@ -242,8 +246,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-hasproperty-p">10.5.7
+     * [[HasProperty]] (P)</a>
      */
     @Override
     public boolean has(Symbol key, Scriptable start) {
@@ -276,8 +281,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys">10.5.11
+     * [[OwnPropertyKeys]] ()</a>
      */
     @Override
     Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
@@ -395,8 +401,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver">10.5.8
+     * [[Get]] (P, Receiver)</a>
      */
     @Override
     public Object get(String name, Scriptable start) {
@@ -454,8 +461,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver">10.5.8
+     * [[Get]] (P, Receiver)</a>
      */
     @Override
     public Object get(int index, Scriptable start) {
@@ -514,8 +522,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-get-p-receiver">10.5.8
+     * [[Get]] (P, Receiver)</a>
      */
     @Override
     public Object get(Symbol key, Scriptable start) {
@@ -574,7 +583,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver
+     * <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver">10.5.9
+     * [[Set]] (P, V, Receiver)</a>
      */
     @Override
     public void put(String name, Scriptable start, Object value) {
@@ -634,7 +645,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver
+     * <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver">10.5.9
+     * [[Set]] (P, V, Receiver)</a>
      */
     @Override
     public void put(int index, Scriptable start, Object value) {
@@ -697,7 +710,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver
+     * <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-set-p-v-receiver">10.5.9
+     * [[Set]] (P, V, Receiver)</a>
      */
     @Override
     public void put(Symbol key, Scriptable start, Object value) {
@@ -758,8 +773,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p">10.5.10
+     * [[Delete]] (P)</a>
      */
     @Override
     public void delete(String name) {
@@ -808,8 +824,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p">10.5.10
+     * [[Delete]] (P)</a>
      */
     @Override
     public void delete(int index) {
@@ -859,8 +876,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-delete-p">10.5.10
+     * [[Delete]] (P)</a>
      */
     @Override
     public void delete(Symbol key) {
@@ -910,8 +928,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getownproperty-p
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getownproperty-p">10.5.5
+     * [[GetOwnProperty]] (P)</a>
      */
     @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
@@ -1004,8 +1023,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-defineownproperty-p-desc
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-defineownproperty-p-desc">10.5.6
+     * [[DefineOwnProperty]] (P, Desc)</a>
      */
     @Override
     public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
@@ -1087,8 +1107,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-isextensible
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-isextensible">10.5.3
+     * [[IsExtensible]] ()</a>
      */
     @Override
     public boolean isExtensible() {
@@ -1121,8 +1142,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-preventextensions
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-preventextensions">10.5.4
+     * [[PreventExtensions]] ()</a>
      */
     @Override
     public boolean preventExtensions() {
@@ -1160,8 +1182,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getprototypeof
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-getprototypeof">10.5.1
+     * [[GetPrototypeOf]] ()</a>
      */
     @Override
     public Scriptable getPrototype() {
@@ -1215,8 +1238,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-setprototypeof-v
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-setprototypeof-v">10.5.2
+     * [[SetPrototypeOf]] (V)</a>
      */
     @Override
     public void setPrototype(Scriptable prototype) {
@@ -1257,8 +1281,9 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     /**
-     * see
-     * https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist">10.5.12
+     * [[Call]] (thisArgument, argumentsList)</a>
      */
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
