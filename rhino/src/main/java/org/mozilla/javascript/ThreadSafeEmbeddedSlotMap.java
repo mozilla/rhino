@@ -34,7 +34,7 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
 
     @Override
     public int dirtySize() {
-        assert lock.isReadLocked();
+        assert lock.isReadLocked() || lock.isWriteLocked();
         return current.sizeWithLock();
     }
 
