@@ -23,20 +23,6 @@ public interface ParameterizedTypeInfo extends TypeInfo {
      */
     List<TypeInfo> params();
 
-    /**
-     * Example:
-     *
-     * <p>1. for {@code Map<String, Integer>}, {@code param(-1)} == {@link TypeInfo#NONE}, {@code
-     * param(0)} == {@link TypeInfo#STRING}, {@code param(1)} == {@link TypeInfo#INT}, {@code
-     * param(2)} == {@link TypeInfo#NONE}
-     *
-     * <p>2. for {@code Map} (raw usage of generic class) or {@code Integer} (not generic class),
-     * {@code param(anyNumberHere)} == {@link TypeInfo#NONE}
-     *
-     * <p>{@inheritDoc}
-     *
-     * @see #params()
-     */
     @Override
     default TypeInfo param(int index) {
         final var params = params();

@@ -88,10 +88,20 @@ public interface TypeInfo {
     Class<?> asClass();
 
     /**
+     * Example:
+     *
+     * <p>1. for {@code Map<String, Integer>}, {@code param(-1)} == {@link TypeInfo#NONE}, {@code
+     * param(0)} == {@link TypeInfo#STRING}, {@code param(1)} == {@link TypeInfo#INT}, {@code
+     * param(2)} == {@link TypeInfo#NONE}
+     *
+     * <p>2. for {@code Map} (raw usage of generic class) or {@code Integer} (not generic class),
+     * {@code param(anyNumberHere)} == {@link TypeInfo#NONE}
+     *
      * @return the actual type parameter at provided index, or {@link #NONE} if:
      *     <p>1. index not in valid range, or
      *     <p>2. the TypeInfo itself is not representing a {@link
      *     java.lang.reflect.ParameterizedType}
+     * @see ParameterizedTypeInfo#params()
      */
     default TypeInfo param(int index) {
         return NONE;
@@ -106,8 +116,8 @@ public interface TypeInfo {
     }
 
     /**
-     * @return false if this TypeInfo does not represent the same class as the {@link Class}
-     *     parameter, true otherwise
+     * @return {@code true} if this TypeInfo does NOT represent the same class as the {@link Class}
+     *     parameter, {@code false} otherwise
      */
     default boolean isNot(Class<?> c) {
         return !is(c);
