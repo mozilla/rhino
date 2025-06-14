@@ -15,6 +15,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -26,7 +29,8 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
-    transient Class<?>[] argTypes;
+    private transient volatile List<TypeInfo> argTypeInfos;
+    private transient volatile TypeInfo returnTypeInfo;
     transient boolean[] argNullability;
     transient boolean vararg;
 
@@ -37,32 +41,34 @@ final class MemberBox implements Serializable {
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method) {
-        init(method);
+    MemberBox(Method method, TypeInfoFactory factory) {
+        init(method, factory);
     }
 
-    MemberBox(Constructor<?> constructor) {
-        init(constructor);
+    MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
+        init(constructor, factory);
     }
 
-    private void init(Method method) {
+    private void init(Method method, TypeInfoFactory factory) {
         this.memberObject = method;
-        this.argTypes = method.getParameterTypes();
         this.argNullability =
                 nullDetector == null
                         ? new boolean[method.getParameters().length]
                         : nullDetector.getParameterNullability(method);
         this.vararg = method.isVarArgs();
+        this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
+        this.returnTypeInfo = factory.create(method.getGenericReturnType());
     }
 
-    private void init(Constructor<?> constructor) {
+    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
-        this.argTypes = constructor.getParameterTypes();
         this.argNullability =
                 nullDetector == null
                         ? new boolean[constructor.getParameters().length]
                         : nullDetector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
+        this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
+        this.returnTypeInfo = TypeInfo.NONE;
     }
 
     Method method() {
@@ -101,6 +107,14 @@ final class MemberBox implements Serializable {
         return memberObject.getDeclaringClass();
     }
 
+    List<TypeInfo> getArgTypes() {
+        return argTypeInfos;
+    }
+
+    TypeInfo getReturnType() {
+        return returnTypeInfo;
+    }
+
     String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
@@ -117,7 +131,7 @@ final class MemberBox implements Serializable {
             }
             sb.append(name);
         }
-        sb.append(JavaMembers.liveConnectSignature(argTypes));
+        sb.append(JavaMembers.liveConnectSignature(getArgTypes()));
         return sb.toString();
     }
 
@@ -195,8 +209,7 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]),
+                                                    nativeSetter.getArgTypes().get(0).getTypeTag(),
                                                     nativeSetter.argNullability[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
@@ -237,7 +250,12 @@ final class MemberBox implements Serializable {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
-                Method accessible = searchAccessibleMethod(method, argTypes);
+                Method accessible =
+                        searchAccessibleMethod(
+                                method,
+                                getArgTypes().stream()
+                                        .map(TypeInfo::asClass)
+                                        .toArray(Class[]::new));
                 if (accessible != null) {
                     memberObject = accessible;
                     method = accessible;
@@ -321,9 +339,9 @@ final class MemberBox implements Serializable {
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
-            init((Method) member);
+            init((Method) member, TypeInfoFactory.GLOBAL);
         } else {
-            init((Constructor<?>) member);
+            init((Constructor<?>) member, TypeInfoFactory.GLOBAL);
         }
     }
 
