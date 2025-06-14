@@ -12,7 +12,7 @@ import org.mozilla.javascript.lc.type.VariableTypeInfo;
 /**
  * @author ZZZank
  */
-public class VariableTypeInfoImpl extends TypeInfoBase implements VariableTypeInfo {
+public final class VariableTypeInfoImpl extends TypeInfoBase implements VariableTypeInfo {
 
     private final TypeVariable<?> raw;
     private volatile Object mainBound;
