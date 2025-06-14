@@ -816,7 +816,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         NativeTypedArrayView<?> self = realThis(thisObj);
         Object array =
                 ArrayLikeAbstractOperations.coercibleIterativeMethod(
-                        lcx, IterativeOperation.MAP, lscope, thisObj, args, self.validateAndGetLength());
+                        lcx,
+                        IterativeOperation.MAP,
+                        lscope,
+                        thisObj,
+                        args,
+                        self.validateAndGetLength());
         // todo: fix this impl
         return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "map");
     }
@@ -864,11 +869,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         long count = Math.max(end - begin, 0);
 
-        var a = self.typedArraySpeciesCreate(
-                cx,
-                scope,
-                new Object[] {count},
-                "slice");
+        var a = self.typedArraySpeciesCreate(cx, scope, new Object[] {count}, "slice");
 
         if (count > 0) {
             if (self.isTypedArrayOutOfBounds()) {
@@ -926,7 +927,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 buf[i] = str;
             }
         }
-        total_size += ((int)len - 1) * separator.length();
+        total_size += ((int) len - 1) * separator.length();
         StringBuilder sb = new StringBuilder(total_size);
         for (int i = 0; i != len; i++) {
             if (i != 0) {

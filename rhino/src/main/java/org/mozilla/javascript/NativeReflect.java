@@ -222,8 +222,9 @@ final class NativeReflect extends ScriptableObject {
             if (key instanceof Symbol) {
                 return target.defineOwnProperty(cx, key, desc);
             } else {
-                String propertyKey = ScriptRuntime.toString(
-                        ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
+                String propertyKey =
+                        ScriptRuntime.toString(
+                                ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
                 return target.defineOwnProperty(cx, propertyKey, desc);
             }
 
