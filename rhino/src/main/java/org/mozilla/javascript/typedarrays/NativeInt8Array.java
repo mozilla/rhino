@@ -78,10 +78,10 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        int val = Conversions.toInt8(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = Conversions.toInt8(c);
         ByteIo.writeInt8(arrayBuffer.buffer, index + offset, val);
         return null;
     }

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
+
 public final class NativeArrayIterator extends ES6Iterator {
     public enum ARRAY_ITERATOR_TYPE {
         ENTRIES,
@@ -41,6 +43,12 @@ public final class NativeArrayIterator extends ES6Iterator {
 
     @Override
     protected boolean isDone(Context cx, Scriptable scope) {
+        if (arrayLike instanceof NativeTypedArrayView) {
+            NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) arrayLike;
+            if (typedArray.isTypedArrayOutOfBounds()) {
+                throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
+            }
+        }
         return index >= NativeArray.getLengthProperty(cx, arrayLike);
     }
 
