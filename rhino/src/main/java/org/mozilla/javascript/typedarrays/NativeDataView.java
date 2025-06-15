@@ -293,7 +293,7 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         int viewSize = byteLength;
-        if (pos + bytes > viewSize) {
+        if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
@@ -329,7 +329,7 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         int viewSize = byteLength;
-        if (pos + bytes > viewSize) {
+        if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
@@ -355,7 +355,7 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         int viewSize = byteLength;
-        if (pos + bytes > viewSize) {
+        if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
@@ -422,7 +422,7 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         int viewSize = byteLength;
-        if (pos + bytes > viewSize) {
+        if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
