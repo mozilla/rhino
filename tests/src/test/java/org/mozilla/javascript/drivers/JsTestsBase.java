@@ -15,7 +15,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 
 public abstract class JsTestsBase {
-    private int optimizationLevel;
+    private boolean interpretedMode;
 
     private static ContextFactory threadSafeFactory;
 
@@ -33,8 +33,8 @@ public abstract class JsTestsBase {
                 };
     }
 
-    public void setOptimizationLevel(int level) {
-        this.optimizationLevel = level;
+    public void setInterpretedMode(boolean interpretedMode) {
+        this.interpretedMode = interpretedMode;
     }
 
     public void runJsTest(Context cx, Scriptable shared, String name, String source) {
@@ -55,7 +55,7 @@ public abstract class JsTestsBase {
 
     public void runJsTests(File[] tests) throws IOException {
         try (Context cx = threadSafeFactory.enterContext()) {
-            cx.setOptimizationLevel(this.optimizationLevel);
+            cx.setInterpretedMode(this.interpretedMode);
             Scriptable shared = cx.initStandardObjects();
             for (File f : tests) {
                 int length = (int) f.length(); // don't worry about very long

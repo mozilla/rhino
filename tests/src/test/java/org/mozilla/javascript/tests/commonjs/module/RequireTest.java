@@ -46,7 +46,7 @@ public class RequireTest {
 
     private static Context createContext() {
         final Context cx = Context.enter();
-        cx.setOptimizationLevel(-1);
+        cx.setInterpretedMode(true);
         return cx;
     }
 

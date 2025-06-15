@@ -25,7 +25,7 @@ public class StackTraceExtensionMozillaLfTest {
         RhinoException.setStackStyle(StackStyle.RHINO);
     }
 
-    private void testTraces(int opt) {
+    private void testTraces(boolean interpretedMode) {
         final ContextFactory factory =
                 new ContextFactory() {
                     @Override
@@ -41,7 +41,7 @@ public class StackTraceExtensionMozillaLfTest {
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);
-            cx.setOptimizationLevel(opt);
+            cx.setInterpretedMode(interpretedMode);
             cx.setGeneratingDebug(true);
 
             Global global = new Global(cx);
@@ -57,17 +57,12 @@ public class StackTraceExtensionMozillaLfTest {
     }
 
     @Test
-    public void stackTrace0() {
-        testTraces(0);
+    public void stackTraceInterpreted() {
+        testTraces(true);
     }
 
     @Test
-    public void stackTrace9() {
-        testTraces(9);
-    }
-
-    @Test
-    public void stackTraceInt() {
-        testTraces(-1);
+    public void stackTraceCompiled() {
+        testTraces(false);
     }
 }

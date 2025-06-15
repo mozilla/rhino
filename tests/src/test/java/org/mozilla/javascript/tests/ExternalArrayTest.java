@@ -41,7 +41,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
     @Test
@@ -55,7 +55,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
 
         // Clear it and test again. When cleared, object should go back to behaving like a
         // regular JavaScript object.
@@ -82,7 +82,7 @@ public class ExternalArrayTest {
         }
         a.defineProperty("length", 10, ScriptableObject.DONTENUM);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
     @Test
@@ -118,12 +118,12 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc/jstests/extensions/external-array-test.js", false);
     }
 
-    private void runScript(String script, int opt) {
+    private void runScript(String script, boolean interpretedMode) {
         try {
-            cx.setOptimizationLevel(opt);
+            cx.setInterpretedMode(interpretedMode);
             try (FileReader rdr = new FileReader(script)) {
                 cx.evaluateReader(root, rdr, script, 1, null);
             }
