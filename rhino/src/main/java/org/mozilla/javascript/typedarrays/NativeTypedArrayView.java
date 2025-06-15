@@ -465,22 +465,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
 
-        int targetOffset = (int) dbloff;
-
         int srcLength = source.length;
 
-        if (dbloff == Double.POSITIVE_INFINITY) {
+        if (dbloff > targetLength) {
             throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", dbloff);
         }
 
-        if (srcLength + targetOffset > targetLength) {
-            throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", dbloff);
+        if (srcLength + dbloff > targetLength) {
+            throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.source.array");
         }
 
         if (isBigInt != source.isBigInt) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.type.mismatch");
         }
 
+        int targetOffset = (int) dbloff;
         if (source.arrayBuffer == arrayBuffer) {
             // Copy to temporary space first, as per spec, to avoid messing up overlapping copies
             Object[] tmp = new Object[srcLength];
@@ -505,12 +504,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Scriptable src = ScriptRuntime.toObject(scope, source);
         long srcLength = AbstractEcmaObjectOperations.lengthOfArrayLike(cx, src);
 
-        if (dbloff == Double.POSITIVE_INFINITY) {
+        if (dbloff > targetLength) {
             throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", dbloff);
         }
 
         if (srcLength + dbloff > targetLength) {
-            throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", dbloff);
+            throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.source.array");
         }
 
         int targetOffset = (int) dbloff;
@@ -1107,6 +1106,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static Object js_subarray(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length == 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
+            throw ScriptRuntime.constructError("Error", "invalid arguments");
+        }
+
         NativeTypedArrayView<?> self = realThis(thisObj);
 
         final int srcLength;
