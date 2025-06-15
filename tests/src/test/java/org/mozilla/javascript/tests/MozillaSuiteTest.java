@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
@@ -52,7 +51,7 @@ public class MozillaSuiteTest {
         ShellTest.cacheFramework();
     }
 
-    public static File getTestDir() throws IOException {
+    private static File getTestDir() throws IOException {
         File testDir = null;
         if (System.getProperty("mozilla.js.tests") != null) {
             testDir = new File(System.getProperty("mozilla.js.tests"));
@@ -81,36 +80,29 @@ public class MozillaSuiteTest {
         return testDir;
     }
 
-    public static String getTestFilename(boolean interpretedMode) {
+    private static String getTestFilename(boolean interpretedMode) {
         return interpretedMode ? "interpreted.tests" : "compiled.tests";
     }
 
-    public static File[] getTestFiles(boolean interpretedMode) throws IOException {
+    private static File[] getTestFiles(boolean interpretedMode) throws IOException {
         File testDir = getTestDir();
-        String[] tests =
-                TestUtils.loadTestsFromResource("/" + getTestFilename(interpretedMode), null);
-        Arrays.sort(tests);
-        File[] files = new File[tests.length];
-        for (int i = 0; i < files.length; i++) {
-            files[i] = new File(testDir, tests[i]);
-        }
-        if (files.length == 0) {
+        String[] tests = TestUtils.loadTestsFromResource("/" + getTestFilename(interpretedMode));
+        if (tests.length == 0) {
             throw new IOException(
                     "No Mozilla Suite tests found in "
                             + testDir
                             + ". Check mozilla.js.tests property");
         }
+
+        Arrays.sort(tests);
+        File[] files = new File[tests.length];
+        for (int i = 0; i < files.length; i++) {
+            files[i] = new File(testDir, tests[i]);
+        }
         return files;
     }
 
-    public static String loadFile(File f) throws IOException {
-        int length = (int) f.length(); // don't worry about very long files
-        char[] buf = new char[length];
-        new FileReader(f).read(buf, 0, length);
-        return new String(buf);
-    }
-
-    @Parameters(name = "{index}, js={0}, opt={1}")
+    @Parameters(name = "{index}, js={0}, interpreted={1}")
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         for (boolean im : new boolean[] {false, true}) {
@@ -118,19 +110,6 @@ public class MozillaSuiteTest {
             for (File f : tests) {
                 result.add(new Object[] {f, im});
             }
-        }
-        return result;
-    }
-
-    // move "@Parameters" to this method to test a single Mozilla test
-    //    @Parameters(name = "{index}, js={0}, opt={1}")
-    public static Collection<Object[]> singleDoctest() throws IOException {
-        final String SINGLE_TEST_FILE = "...";
-
-        List<Object[]> result = new ArrayList<Object[]>();
-        for (boolean im : new boolean[] {false, true}) {
-            File f = new File(getTestDir(), SINGLE_TEST_FILE);
-            result.add(new Object[] {f, im});
         }
         return result;
     }
@@ -204,7 +183,7 @@ public class MozillaSuiteTest {
     public static void main(String[] args) throws IOException {
         try (PrintStream out = new PrintStream("fix-tests-files.sh")) {
             try {
-                for (boolean im : new boolean[] {false, true}) {
+                for (boolean interpretedMode : new boolean[] {false, true}) {
                     File testDir = getTestDir();
                     File[] allTests =
                             TestUtils.recursiveListFiles(
@@ -217,13 +196,13 @@ public class MozillaSuiteTest {
                                         }
                                     });
                     HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
-                    File testFiles[] = getTestFiles(im);
+                    File testFiles[] = getTestFiles(interpretedMode);
                     diff.removeAll(Arrays.asList(testFiles));
                     ArrayList<String> skippedPassed = new ArrayList<String>();
                     int absolutePathLength = testDir.getAbsolutePath().length() + 1;
                     for (File testFile : diff) {
                         try {
-                            (new MozillaSuiteTest(testFile, im)).runMozillaTest();
+                            new MozillaSuiteTest(testFile, interpretedMode).runMozillaTest();
                             // strip off testDir
                             String canonicalized =
                                     testFile.getAbsolutePath().substring(absolutePathLength);
@@ -237,7 +216,7 @@ public class MozillaSuiteTest {
                     // skipped but now pass. Print out shell commands to update the
                     // appropriate *.tests file.
                     if (skippedPassed.size() > 0) {
-                        out.println("cat >> " + getTestFilename(im) + " <<EOF");
+                        out.println("cat >> " + getTestFilename(interpretedMode) + " <<EOF");
                         String[] sorted = skippedPassed.toArray(new String[0]);
                         Arrays.sort(sorted);
                         for (int j = 0; j < sorted.length; j++) {
