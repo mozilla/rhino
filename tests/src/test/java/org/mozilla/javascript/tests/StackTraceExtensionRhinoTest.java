@@ -11,7 +11,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class StackTraceExtensionRhinoTest {
-    private void testTraces(int opt, boolean debug) {
+    private void testTraces(boolean interpretedMode, boolean debug) {
         final ContextFactory factory =
                 new ContextFactory() {
                     @Override
@@ -27,12 +27,12 @@ public class StackTraceExtensionRhinoTest {
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);
-            cx.setOptimizationLevel(opt);
+            cx.setInterpretedMode(interpretedMode);
             cx.setGeneratingDebug(debug);
 
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
-            root.put("ExpectFileNames", global, opt < 0 || debug);
+            root.put("ExpectFileNames", global, interpretedMode || debug);
 
             try (FileReader rdr =
                     new FileReader("testsrc/jstests/extensions/stack-traces-rhino.js")) {
@@ -44,32 +44,22 @@ public class StackTraceExtensionRhinoTest {
     }
 
     @Test
-    public void stackTrace0() {
-        testTraces(0, true);
+    public void stackTraceInterpreted() {
+        testTraces(true, true);
     }
 
     @Test
-    public void stackTrace0NoDebug() {
-        testTraces(0, false);
+    public void stackTraceInterpretedNoDebug() {
+        testTraces(true, false);
     }
 
     @Test
-    public void stackTrace9() {
-        testTraces(9, true);
+    public void stackTraceCompiled() {
+        testTraces(false, true);
     }
 
     @Test
-    public void stackTrace9NoDebug() {
-        testTraces(9, false);
-    }
-
-    @Test
-    public void stackTraceInt() {
-        testTraces(-1, true);
-    }
-
-    @Test
-    public void stackTraceIntNoDebug() {
-        testTraces(-1, false);
+    public void stackTraceCompiledNoDebug() {
+        testTraces(false, false);
     }
 }
