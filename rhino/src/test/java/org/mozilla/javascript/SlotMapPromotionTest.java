@@ -48,7 +48,7 @@ class SlotMapPromotionTest {
     public void promotionFromThreadSafeEmbeddedToHash() {
         assertPromotes(
                 () -> {
-                    var map = new ThreadSafeEmbeddedSlotMap(SlotMapOwner.LARGE_HASH_SIZE);
+                    var map = new ThreadSafeEmbeddedSlotMap();
                     fillToCapacity(SlotMapOwner.LARGE_HASH_SIZE, map);
                     return map;
                 },
@@ -56,11 +56,7 @@ class SlotMapPromotionTest {
     }
 
     private static void fillToCapacity(int size, EmbeddedSlotMap map) {
-        // The EmbeddedSlotMap will promote once it's 3/4s full. It also
-        // is always sized to a power of two.
-        int b = Integer.highestOneBit(size);
-        int nextPowerOfTwo = b << (size > b ? 1 : 0);
-        for (int i = 0; i < nextPowerOfTwo / 4 * 3; ++i) {
+        for (int i = 0; i < size; ++i) {
             map.add(null, new Slot(Integer.toString(i), i, 0));
         }
     }
