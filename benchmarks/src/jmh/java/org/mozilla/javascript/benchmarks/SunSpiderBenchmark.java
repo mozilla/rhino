@@ -44,7 +44,7 @@ public class SunSpiderBenchmark {
         }
 
         Object run() {
-            return script.exec(cx, scope);
+            return script.exec(cx, scope, scope);
         }
     }
 

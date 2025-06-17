@@ -326,7 +326,7 @@ public class Require extends BaseFunction {
             defineReadOnlyProperty(this, "main", moduleObject);
         }
         executeOptionalScript(preExec, cx, executionScope);
-        moduleScript.getScript().exec(cx, executionScope);
+        moduleScript.getScript().exec(cx, executionScope, executionScope);
         executeOptionalScript(postExec, cx, executionScope);
         return ScriptRuntime.toObject(
                 cx, nativeScope, ScriptableObject.getProperty(moduleObject, "exports"));
@@ -335,7 +335,7 @@ public class Require extends BaseFunction {
     private static void executeOptionalScript(
             Script script, Context cx, Scriptable executionScope) {
         if (script != null) {
-            script.exec(cx, executionScope);
+            script.exec(cx, executionScope, executionScope);
         }
     }
 

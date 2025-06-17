@@ -89,7 +89,7 @@ public class GeneratedMethodNameTest {
             Scriptable topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());
             Script script = cx.compileString(scriptCode, "myScript", 1, null);
-            script.exec(cx, topScope);
+            script.exec(cx, topScope, topScope);
         }
     }
 

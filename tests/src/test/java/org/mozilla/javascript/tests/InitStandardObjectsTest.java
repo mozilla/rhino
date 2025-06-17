@@ -61,6 +61,6 @@ public class InitStandardObjectsTest {
 
     private Object exec(String source) {
         Script script = context.compileString(source, "", 1, null);
-        return script.exec(context, global);
+        return script.exec(context, global, global);
     }
 }

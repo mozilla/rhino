@@ -86,7 +86,7 @@ class NativeScript extends BaseFunction {
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (script != null) {
-            return script.exec(cx, scope);
+            return script.exec(cx, scope, thisObj);
         }
         return Undefined.instance;
     }

@@ -577,7 +577,7 @@ public final class JavaAdapter implements IdFunctionCall {
                 .call(
                         cx -> {
                             ScriptableObject global = ScriptRuntime.getGlobal(cx);
-                            script.exec(cx, global);
+                            script.exec(cx, global, global);
                             return global;
                         });
     }

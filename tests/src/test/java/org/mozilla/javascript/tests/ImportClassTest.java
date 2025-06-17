@@ -91,7 +91,7 @@ public class ImportClassTest {
                         Scriptable scope = new ImporterTopLevel(cx);
                         scope.setPrototype(sharedScope);
                         scope.setParentScope(null);
-                        script.exec(cx, scope);
+                        script.exec(cx, scope, scope);
                         assertEquals(UniqueTag.NOT_FOUND, sharedScope.get("UUID", sharedScope));
                         assertTrue(scope.get("UUID", scope) instanceof NativeJavaClass);
                     }
@@ -104,7 +104,7 @@ public class ImportClassTest {
         return contextFactory.call(
                 context -> {
                     Script script = context.compileString(scriptSourceText, "", 1, null);
-                    Object exec = script.exec(context, global);
+                    Object exec = script.exec(context, global, global);
                     return exec;
                 });
     }

@@ -44,7 +44,7 @@ public class Bug714204Test {
         sb.append("var f = new F('a');\n");
         sb.append("(f.x == 'a')\n");
         Script script = cx.compileString(sb.toString(), "<eval>", 1, null);
-        Object result = script.exec(cx, scope);
+        Object result = script.exec(cx, scope, scope);
         assertEquals(Boolean.TRUE, result);
     }
 

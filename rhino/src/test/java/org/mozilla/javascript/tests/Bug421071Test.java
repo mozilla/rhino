@@ -102,7 +102,7 @@ public class Bug421071Test {
                 Scriptable threadScope = context.newObject(globalScope);
                 threadScope.setPrototype(globalScope);
                 threadScope.setParentScope(null);
-                script.exec(context, threadScope);
+                script.exec(context, threadScope, threadScope);
             } catch (Exception ee) {
                 ee.printStackTrace();
             }

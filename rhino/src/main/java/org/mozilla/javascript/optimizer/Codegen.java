@@ -574,16 +574,18 @@ public class Codegen implements Evaluator {
                 "exec",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
                         + ")Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
         final int CONTEXT_ARG = 1;
         final int SCOPE_ARG = 2;
+        final int THIS_OBJ_ARG = 3;
 
         cfw.addLoadThis();
         cfw.addALoad(CONTEXT_ARG);
         cfw.addALoad(SCOPE_ARG);
-        cfw.add(ByteCode.DUP);
+        cfw.addALoad(THIS_OBJ_ARG);
         cfw.add(ByteCode.ACONST_NULL);
         cfw.addInvoke(
                 ByteCode.INVOKEVIRTUAL,
@@ -603,8 +605,8 @@ public class Codegen implements Evaluator {
                 "()V");
 
         cfw.add(ByteCode.ARETURN);
-        // 3 = this + context + scope
-        cfw.stopMethod((short) 3);
+        // 4 = this + context + scope + thisObj
+        cfw.stopMethod((short) 4);
     }
 
     private static void generateScriptCtor(ClassFileWriter cfw) {
