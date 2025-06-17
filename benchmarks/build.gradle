@@ -33,8 +33,9 @@ jmh {
         }
     }
     jvmArgs = ['-XX:+BackgroundCompilation',
-                '-XX:+UnlockDiagnosticVMOptions',
-                '-XX:+PrintInlining']
+//                '-XX:+UnlockDiagnosticVMOptions',
+//                '-XX:+PrintInlining'
+    ]
     benchmarkMode = ['avgt']
     fork = 1
     iterations = 5
