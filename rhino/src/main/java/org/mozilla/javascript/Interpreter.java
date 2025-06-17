@@ -2353,90 +2353,42 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_LITERAL_NEW_OBJECT:
                                 {
-                                    // indexReg: index of constant with the keys
-                                    Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
-                                    boolean copyArray = iCode[frame.pc] != 0;
-                                    ++frame.pc;
-                                    ++stackTop;
-                                    stack[stackTop] = cx.newObject(frame.scope);
-                                    ++stackTop;
-                                    stack[stackTop] =
-                                            new NewLiteralStorage(
-                                                    copyArray
-                                                            ? Arrays.copyOf(ids, ids.length)
-                                                            : ids);
+                                    stackTop = literalNewObject(cx, frame, indexReg, iCode, stackTop, stack);
                                     continue Loop;
                                 }
                             case Icode_LITERAL_NEW_ARRAY:
-                                // indexReg: number of values in the literal
-                                ++stackTop;
-                                stack[stackTop] = new NewLiteralStorage(indexReg, false);
+                                stackTop = literalNewArray(stackTop, stack, indexReg);
                                 continue Loop;
                             case Icode_LITERAL_SET:
                                 {
-                                    Object value = stack[stackTop];
-                                    if (value == DBL_MRK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    store.pushValue(value);
+                                    stackTop = literalSet(stack, stackTop, DBL_MRK, sDbl);
                                     continue Loop;
                                 }
                             case Icode_LITERAL_GETTER:
                                 {
-                                    Object value = stack[stackTop];
-                                    --stackTop;
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    store.pushGetter(value);
+                                    stackTop = literalGetter(stack, stackTop);
                                     continue Loop;
                                 }
                             case Icode_LITERAL_SETTER:
                                 {
-                                    Object value = stack[stackTop];
-                                    --stackTop;
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    store.pushSetter(value);
+                                    stackTop = literalSetter(stack, stackTop);
                                     continue Loop;
                                 }
 
                             case Icode_LITERAL_KEY_SET:
                                 {
-                                    Object key = stack[stackTop];
-                                    if (key == DBL_MRK)
-                                        key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    store.pushKey(key);
+                                    stackTop = literalKeySet(stack, stackTop, DBL_MRK, sDbl);
                                     continue Loop;
                                 }
                             case Token.OBJECTLIT:
                                 {
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    --stackTop;
-                                    Scriptable object = (Scriptable) stack[stackTop];
-                                    ScriptRuntime.fillObjectLiteral(
-                                            object,
-                                            store.getKeys(),
-                                            store.getValues(),
-                                            store.getGetterSetters(),
-                                            cx,
-                                            frame.scope);
+                                    stackTop = objectLit(cx, frame, stack, stackTop);
                                     continue Loop;
                                 }
                             case Token.ARRAYLIT:
                             case Icode_SPARE_ARRAYLIT:
                                 {
-                                    var store = (NewLiteralStorage) stack[stackTop];
-                                    int[] skipIndexces = null;
-                                    if (op == Icode_SPARE_ARRAYLIT) {
-                                        skipIndexces = (int[]) frame.idata.literalIds[indexReg];
-                                    }
-                                    stack[stackTop] =
-                                            ScriptRuntime.newArrayLiteral(
-                                                    store.getValues(),
-                                                    skipIndexces,
-                                                    cx,
-                                                    frame.scope);
+                                    arrayLit(cx, frame, stack, stackTop, op, indexReg);
                                     continue Loop;
                                 }
                             case Icode_ENTERDQ:
@@ -2772,6 +2724,98 @@ public final class Interpreter extends Icode implements Evaluator {
         return (interpreterResult != DBL_MRK)
                 ? interpreterResult
                 : ScriptRuntime.wrapNumber(interpreterResultDbl);
+    }
+
+    private static int literalNewObject(Context cx,
+                                        CallFrame frame,
+                                        int indexReg,
+                                        byte[] iCode,
+                                        int stackTop,
+                                        Object[] stack) {
+        // indexReg: index of constant with the keys
+        Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
+        boolean copyArray = iCode[frame.pc] != 0;
+        ++frame.pc;
+        ++stackTop;
+        stack[stackTop] = cx.newObject(frame.scope);
+        ++stackTop;
+        stack[stackTop] =
+                new NewLiteralStorage(
+                        copyArray
+                                ? Arrays.copyOf(ids, ids.length)
+                                : ids);
+        return stackTop;
+    }
+
+    private static int literalNewArray(int stackTop, Object[] stack, int indexReg) {
+        // indexReg: number of values in the literal
+        ++stackTop;
+        stack[stackTop] = new NewLiteralStorage(indexReg, false);
+        return stackTop;
+    }
+
+    private static int literalSet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
+        Object value = stack[stackTop];
+        if (value == DBL_MRK)
+            value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushValue(value);
+        return stackTop;
+    }
+
+    private static int literalGetter(Object[] stack, int stackTop) {
+        Object value = stack[stackTop];
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushGetter(value);
+        return stackTop;
+    }
+
+    private static int literalSetter(Object[] stack, int stackTop) {
+        Object value = stack[stackTop];
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushSetter(value);
+        return stackTop;
+    }
+
+    private static int literalKeySet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
+        Object key = stack[stackTop];
+        if (key == DBL_MRK)
+            key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushKey(key);
+        return stackTop;
+    }
+
+    private static int objectLit(Context cx, CallFrame frame, Object[] stack, int stackTop) {
+        var store = (NewLiteralStorage) stack[stackTop];
+        --stackTop;
+        Scriptable object = (Scriptable) stack[stackTop];
+        ScriptRuntime.fillObjectLiteral(
+                object,
+                store.getKeys(),
+                store.getValues(),
+                store.getGetterSetters(),
+                cx,
+                frame.scope);
+        return stackTop;
+    }
+
+    private static void arrayLit(Context cx, CallFrame frame, Object[] stack, int stackTop, int op, int indexReg) {
+        var store = (NewLiteralStorage) stack[stackTop];
+        int[] skipIndexces = null;
+        if (op == Icode_SPARE_ARRAYLIT) {
+            skipIndexces = (int[]) frame.idata.literalIds[indexReg];
+        }
+        stack[stackTop] =
+                ScriptRuntime.newArrayLiteral(
+                        store.getValues(),
+                        skipIndexces,
+                        cx,
+                        frame.scope);
     }
 
     private static NewState doCallByteCode(
