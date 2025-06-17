@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 
 /**
@@ -910,8 +911,13 @@ final class NativeString extends ScriptableObject {
         String string = ScriptRuntime.toString(o);
         String searchString = ScriptRuntime.toString(searchValue);
         boolean functionalReplace = replaceValue instanceof Callable;
+        List<ReplacementOperation> replaceOps;
         if (!functionalReplace) {
-            replaceValue = ScriptRuntime.toString(replaceValue);
+            replaceOps =
+                    AbstractEcmaStringOperations.buildReplacementList(
+                            ScriptRuntime.toString(replaceValue));
+        } else {
+            replaceOps = List.of();
         }
         int searchLength = searchString.length();
         int position = string.indexOf(searchString);
@@ -947,7 +953,7 @@ final class NativeString extends ScriptableObject {
                             position,
                             captures,
                             Undefined.SCRIPTABLE_UNDEFINED,
-                            (String) replaceValue);
+                            replaceOps);
         }
         return preceding + replacement + following;
     }
@@ -992,8 +998,13 @@ final class NativeString extends ScriptableObject {
         String string = ScriptRuntime.toString(o);
         String searchString = ScriptRuntime.toString(searchValue);
         boolean functionalReplace = replaceValue instanceof Callable;
+        List<ReplacementOperation> replaceOps;
         if (!functionalReplace) {
-            replaceValue = ScriptRuntime.toString(replaceValue);
+            replaceOps =
+                    AbstractEcmaStringOperations.buildReplacementList(
+                            ScriptRuntime.toString(replaceValue));
+        } else {
+            replaceOps = List.of();
         }
         int searchLength = searchString.length();
         int advanceBy = Math.max(1, searchLength);
@@ -1039,7 +1050,7 @@ final class NativeString extends ScriptableObject {
                                 p,
                                 captures,
                                 Undefined.SCRIPTABLE_UNDEFINED,
-                                (String) replaceValue);
+                                replaceOps);
             }
             result.append(preserved);
             result.append(replacement);
