@@ -4117,14 +4117,24 @@ public class NativeRegExp extends IdScriptableObject {
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
         boolean global = flags.indexOf('g') != -1;
         boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
-        if (global) {
-            setLastIndex(thisObj, ScriptRuntime.zeroObj);
-        }
 
         List<ExecResult> results = new ArrayList<>();
         boolean done = false;
+
+        RegExpImpl reImpl = getImpl(cx);
+        boolean sticky = (re.flags & JSREG_STICKY) != 0;
+
+        int[] indexp = {0};
+        if (sticky) {
+            indexp[0] = (int) getLastIndex(cx, thisObj);
+        }
         while (!done) {
-            ExecResult result = regExpExecFast(s, cx, scope);
+            ExecResult result;
+            if (indexp[0] < 0 || indexp[0] > s.length()) {
+                result = null;
+            } else {
+                result = executeRegExpInternal(cx, scope, reImpl, s, indexp, MATCH);
+            }
             if (result == null) {
                 done = true;
             } else {
@@ -4134,14 +4144,13 @@ public class NativeRegExp extends IdScriptableObject {
                 } else {
                     String matchStr = result.matches.get(0);
                     if (matchStr.isEmpty()) {
-                        long thisIndex = getLastIndex(cx, thisObj);
-                        long nextIndex =
-                                ScriptRuntime.advanceStringIndex(s, thisIndex, fullUnicode);
-                        setLastIndex(thisObj, nextIndex);
+                        indexp[0] =
+                                (int) ScriptRuntime.advanceStringIndex(s, indexp[0], fullUnicode);
                     }
                 }
             }
         }
+        setLastIndex(thisObj, indexp[0]);
 
         StringBuilder accumulatedResult = new StringBuilder();
         int nextSourcePosition = 0;
@@ -4191,32 +4200,6 @@ public class NativeRegExp extends IdScriptableObject {
             accumulatedResult.append(s.substring(nextSourcePosition));
             return accumulatedResult.toString();
         }
-    }
-
-    private ExecResult regExpExecFast(String str, Context cx, Scriptable scope) {
-        RegExpImpl reImpl = getImpl(cx);
-
-        boolean globalOrSticky = (re.flags & JSREG_GLOB) != 0 || (re.flags & JSREG_STICKY) != 0;
-        double d = 0;
-        if (globalOrSticky) {
-            d = ScriptRuntime.toInteger(lastIndex);
-
-            if (d < 0 || str.length() < d) {
-                setLastIndex(ScriptRuntime.zeroObj);
-                return null;
-            }
-        }
-
-        int[] indexp = {(int) d};
-        ExecResult rval = executeRegExpInternal(cx, scope, reImpl, str, indexp, MATCH);
-        if (globalOrSticky) {
-            if (rval == null) {
-                setLastIndex(ScriptRuntime.zeroObj);
-            } else {
-                setLastIndex(Double.valueOf(indexp[0]));
-            }
-        }
-        return rval;
     }
 
     private Object symbolReplaceSlow(
