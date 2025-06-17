@@ -2049,16 +2049,20 @@ public class Parser {
         WithStatement pn = new WithStatement(pos);
 
         boolean previous = hasUndefinedBeenRedefined;
-        hasUndefinedBeenRedefined = true;
-        AstNode body = getNextStatementAfterInlineComments(pn);
-        hasUndefinedBeenRedefined = previous;
+        try {
+            hasUndefinedBeenRedefined = true;
+            AstNode body = getNextStatementAfterInlineComments(pn);
 
-        pn.setLength(getNodeEnd(body) - pos);
-        pn.setJsDocNode(withComment);
-        pn.setExpression(obj);
-        pn.setStatement(body);
-        pn.setParens(lp, rp);
-        pn.setLineColumnNumber(lineno, column);
+            pn.setLength(getNodeEnd(body) - pos);
+            pn.setJsDocNode(withComment);
+            pn.setExpression(obj);
+            pn.setStatement(body);
+            pn.setParens(lp, rp);
+            pn.setLineColumnNumber(lineno, column);
+        } finally {
+            hasUndefinedBeenRedefined = previous;
+        }
+
         return pn;
     }
 
