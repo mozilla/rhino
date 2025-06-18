@@ -313,7 +313,6 @@ public class Require extends BaseFunction {
         if (!sandboxed) {
             defineReadOnlyProperty(moduleObject, "uri", uri.toString());
         }
-        final Scriptable thisObj = cx.newObject(nativeScope);
         final Scriptable executionScope = new ModuleScope(nativeScope, uri, base);
         // Set this so it can access the global JS environment objects.
         // This means we're currently using the "MGN" approach (ModuleScript
@@ -326,9 +325,9 @@ public class Require extends BaseFunction {
         if (isMain) {
             defineReadOnlyProperty(this, "main", moduleObject);
         }
-        executeOptionalScript(preExec, cx, executionScope, thisObj);
-        moduleScript.getScript().exec(cx, executionScope, thisObj);
-        executeOptionalScript(postExec, cx, executionScope, thisObj);
+        executeOptionalScript(preExec, cx, executionScope, exports);
+        moduleScript.getScript().exec(cx, executionScope, exports);
+        executeOptionalScript(postExec, cx, executionScope, exports);
         return ScriptRuntime.toObject(
                 cx, nativeScope, ScriptableObject.getProperty(moduleObject, "exports"));
     }

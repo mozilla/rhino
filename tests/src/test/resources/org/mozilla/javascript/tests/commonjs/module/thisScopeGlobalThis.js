@@ -8,5 +8,16 @@ assert.strictEqual(Object.keys(this).length, 0);
 assert.notEqual(this, globalThis);
 
 // This should not be the scope
-assert.strictEqual(this.exports, undefined);
-assert.notEqual(exports, undefined);
+assert.strictEqual(this.module, undefined);
+assert.notEqual(module, undefined);
+
+// This should be exports
+assert.strictEqual(this, exports);
+assert.strictEqual(this, module.exports);
+assert.strictEqual(exports, module.exports);
+
+// Reassigning exports
+module.exports = {foo: 'bar'};
+assert.strictEqual(this, exports); // Still true
+assert.notEqual(this, module.exports); // No longer true
+assert.notEqual(exports, module.exports); // No longer true
