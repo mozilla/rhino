@@ -20,10 +20,9 @@ public interface Script {
 
     /**
      * @deprecated Use {@link #exec(Context, Scriptable, Scriptable)}
-     * @since 1.8.1
      */
     // Maintained for backward compatibility of already-compiled classes
-    @Deprecated
+    @Deprecated(since = "1.8.1")
     default Object exec(Context cx, Scriptable scope) {
         return exec(cx, scope, scope);
     }
