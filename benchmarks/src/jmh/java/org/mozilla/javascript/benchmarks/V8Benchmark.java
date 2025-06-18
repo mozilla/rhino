@@ -178,31 +178,32 @@ public class V8Benchmark {
         return state.rt.call(state.cx, state.scope, state.scope, emptyArgs);
     }
 
-    /* TODO not working right now
     @State(Scope.Thread)
     public static class RegExpState extends AbstractState {
-      Callable re;
+        Callable re;
 
-      @Setup(Level.Trial)
-      public void setUp() {
-        initialize();
-        evaluateSource(cx, scope, "testsrc/benchmarks/v8-benchmarks-v6/regexp.js");
-        runSetup();
-        re = getRunFunc("RegExp");
-      }
+        @Param({"false", "true"})
+        public boolean interpreted;
 
-      @TearDown(Level.Trial)
-      public void tearDown() {
-        runCleanup();
-        cleanup();
-      }
+        @Setup(Level.Trial)
+        public void setUp() {
+            initialize(interpreted);
+            evaluateSource(cx, scope, "testsrc/benchmarks/v8-benchmarks-v6/regexp.js");
+            runSetup();
+            re = getRunFunc("RegExpBench");
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            runCleanup();
+            cleanup();
+        }
     }
 
     @Benchmark
     public Object regExp(RegExpState state) {
-      return state.re.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.re.call(state.cx, state.scope, state.scope, emptyArgs);
     }
-     */
 
     @State(Scope.Thread)
     public static class RichardsState extends AbstractState {
