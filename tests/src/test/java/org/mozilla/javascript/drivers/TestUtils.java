@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.mozilla.javascript.ContextFactory;
@@ -50,7 +49,7 @@ public class TestUtils {
         addTestsFromStream(new FileInputStream(new File(filename)), list);
     }
 
-    public static void addTestsFromStream(InputStream in, List<String> list) throws IOException {
+    private static void addTestsFromStream(InputStream in, List<String> list) throws IOException {
         Properties props = new Properties();
         props.load(in);
         for (Object obj : props.keySet()) {
@@ -58,14 +57,14 @@ public class TestUtils {
         }
     }
 
-    public static String[] loadTestsFromResource(String resource, String[] inherited)
-            throws IOException {
-        List<String> list =
-                inherited == null
-                        ? new ArrayList<String>()
-                        : new ArrayList<String>(Arrays.asList(inherited));
+    public static String[] loadTestsFromResource(String resource) throws IOException {
         InputStream in = JsTestsBase.class.getResourceAsStream(resource);
-        if (in != null) addTestsFromStream(in, list);
+        if (in == null) {
+            return new String[0];
+        }
+
+        List<String> list = new ArrayList<String>();
+        addTestsFromStream(in, list);
         return list.toArray(new String[0]);
     }
 
