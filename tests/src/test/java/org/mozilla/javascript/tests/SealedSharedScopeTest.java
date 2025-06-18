@@ -188,8 +188,7 @@ public class SealedSharedScopeTest {
 
     @Test
     public void accessGloballyImportedPackage() throws Exception {
-        // evaluateString(scope1, "importPackage(Packages.javax.xml)");
-        // evaluateString(scope2, "importPackage(Packages.javax.xml)");
+        evaluateString(scope2, "importPackage(Packages.javax.xml)"); // duplicate import
         Object o1 = evaluateString(scope1, "XMLConstants.XMLNS_ATTRIBUTE");
         assertEquals(XMLConstants.XMLNS_ATTRIBUTE, o1);
         Object o2 = evaluateString(scope2, "XMLConstants.XMLNS_ATTRIBUTE");
@@ -198,8 +197,7 @@ public class SealedSharedScopeTest {
 
     @Test
     public void accessGloballyImportedClass() throws Exception {
-        // evaluateString(scope1, "importClass(Packages.java.sql.JDBCType)");
-        // evaluateString(scope2, "importClass(Packages.java.sql.JDBCType)");
+        evaluateString(scope2, "importClass(Packages.java.sql.JDBCType)"); // duplicate import
         Object o1 = evaluateString(scope1, "JDBCType.DOUBLE");
         assertEquals(JDBCType.DOUBLE, o1);
         Object o2 = evaluateString(scope2, "JDBCType.DOUBLE");

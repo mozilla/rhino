@@ -204,6 +204,21 @@ public class ImporterTopLevel extends TopLevel {
         if (pkg == null) {
             return;
         }
+        Scriptable proto = scope.getPrototype();
+        if (proto instanceof ScriptableObject) {
+            // check, if package is already imported in shared scope.
+            // as this is a read only operation, we do not need synchronization here.
+            @SuppressWarnings("unchecked")
+            ArrayList<Object> importedPackages =
+                    (ArrayList<Object>) ((ScriptableObject) proto).getAssociatedValue(AKEY);
+            if (importedPackages != null) {
+                for (int j = 0; j != importedPackages.size(); j++) {
+                    if (pkg.equals(importedPackages.get(j))) {
+                        return;
+                    }
+                }
+            }
+        }
         synchronized (scope) {
             @SuppressWarnings("unchecked")
             ArrayList<Object> importedPackages = (ArrayList<Object>) scope.getAssociatedValue(AKEY);
