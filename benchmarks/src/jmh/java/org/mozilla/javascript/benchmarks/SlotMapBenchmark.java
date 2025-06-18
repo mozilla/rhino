@@ -2,10 +2,7 @@ package org.mozilla.javascript.benchmarks;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import org.mozilla.javascript.EmbeddedSlotMap;
-import org.mozilla.javascript.HashSlotMap;
-import org.mozilla.javascript.Slot;
-import org.mozilla.javascript.SlotMap;
+import org.mozilla.javascript.*;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -133,6 +130,71 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object hashQueryKey100Entries(HashState state) {
+        Slot slot = null;
+        for (int i = 0; i < 100; i++) {
+            slot = state.size100Map.query(state.size100LastKey, 0);
+        }
+        if (slot == null) {
+            throw new AssertionError();
+        }
+        return slot;
+    }
+
+    @State(Scope.Thread)
+    public static class OrderedState {
+        final OrderedSlotMap emptyMap = new OrderedSlotMap();
+        final OrderedSlotMap size10Map = new OrderedSlotMap();
+        final OrderedSlotMap size100Map = new OrderedSlotMap();
+        final String[] randomKeys = new String[100];
+        String size100LastKey;
+        String size10LastKey;
+
+        @Setup(Level.Trial)
+        public void create() {
+            String lastKey = null;
+            for (int i = 0; i < 10; i++) {
+                lastKey = insertRandomEntry(size10Map);
+            }
+            size10LastKey = lastKey;
+            for (int i = 0; i < 100; i++) {
+                lastKey = insertRandomEntry(size100Map);
+            }
+            size100LastKey = lastKey;
+            for (int i = 0; i < 100; i++) {
+                randomKeys[i] = makeRandomString();
+            }
+        }
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(100)
+    public Object orderedInsert1Key(OrderedState state) {
+        Slot newSlot = null;
+        for (int i = 0; i < 100; i++) {
+            newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
+        }
+        if (newSlot == null) {
+            throw new AssertionError();
+        }
+        return newSlot;
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(100)
+    public Object orderedQueryKey10Entries(OrderedState state) {
+        Slot slot = null;
+        for (int i = 0; i < 100; i++) {
+            slot = state.size10Map.query(state.size10LastKey, 0);
+        }
+        if (slot == null) {
+            throw new AssertionError();
+        }
+        return slot;
+    }
+
+    @Benchmark
+    @OperationsPerInvocation(100)
+    public Object orderedQueryKey100Entries(OrderedState state) {
         Slot slot = null;
         for (int i = 0; i < 100; i++) {
             slot = state.size100Map.query(state.size100LastKey, 0);
