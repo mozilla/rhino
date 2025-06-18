@@ -16,6 +16,12 @@ assert.strictEqual(this, exports);
 assert.strictEqual(this, module.exports);
 assert.strictEqual(exports, module.exports);
 
+// Modifying exports
+exports.foo = 2;
+assert.strictEqual(this, exports);
+assert.strictEqual(this, module.exports);
+assert.strictEqual(exports, module.exports);
+
 // Reassigning exports
 module.exports = {foo: 'bar'};
 assert.strictEqual(this, exports); // Still true
