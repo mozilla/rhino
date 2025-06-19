@@ -1,10 +1,9 @@
 package org.mozilla.javascript.optimizer;
 
+import java.lang.invoke.MethodType;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-
-import java.lang.invoke.MethodType;
 
 /**
  * This class defines the method signatures for the properties used by the invokedynamic
@@ -80,7 +79,8 @@ interface Signatures {
      * PROP:SET:{name}: Sets the named property on an object. Falls back to
      * ScriptRuntime.setObjectProp.
      */
-    String PROP_SET = sig(Object.class, Object.class, Object.class, Context.class, Scriptable.class);
+    String PROP_SET =
+            sig(Object.class, Object.class, Object.class, Context.class, Scriptable.class);
 
     /**
      * PROP:SETSUPER:{name}: Sets the named property on super. Falls back to
