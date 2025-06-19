@@ -20,7 +20,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int8Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -28,7 +28,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int8Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int8Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -87,7 +87,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint8Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -95,7 +95,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint8Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -155,7 +155,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int16Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -163,7 +163,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int16Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int16Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -225,7 +225,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint16Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -233,7 +233,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint16Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint16Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -295,7 +295,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -303,7 +303,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Int32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -365,7 +365,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -373,7 +373,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -435,7 +435,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8ClampedArray(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint8ClampedArray(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -443,7 +443,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8ClampedArray(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Uint8ClampedArray(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -503,7 +503,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Float32Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -511,7 +511,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float32Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Float32Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
@@ -573,7 +573,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float64Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Float64Array(new ArrayBuffer(2), 3); } catch (e) { msg = e.toString();}
@@ -581,7 +581,7 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float64Array(new ArrayBuffer(), 0, -1); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: index out of range", msg);
+  assertEquals("RangeError: Index -1 out of range", msg);
 
   msg = null;
   try { new Float64Array(new ArrayBuffer(2), 0, 3); } catch (e) { msg = e.toString();}
