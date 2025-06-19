@@ -394,21 +394,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
             int newByteLength;
             if (!isArg(args, 2)) {
+                newByteLength = bufferByteLength - byteOff;
                 if ((bufferByteLength % bytesPerElement) != 0) {
                     throw ScriptRuntime.rangeErrorById(
                             "msg.typed.array.bad.buffer.length.byte.size",
-                            bufferByteLength,
+                            newByteLength,
                             bytesPerElement);
                 }
-                newByteLength = bufferByteLength - byteOff;
                 if (newByteLength < 0) {
-                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.length", newByteLength);
+                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
                 }
             } else {
                 newByteLength = newLength * bytesPerElement;
 
                 if (byteOff + newByteLength > bufferByteLength) {
-                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
+                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.length", newByteLength);
                 }
             }
 
