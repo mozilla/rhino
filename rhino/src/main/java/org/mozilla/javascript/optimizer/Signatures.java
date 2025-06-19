@@ -17,41 +17,7 @@ import java.lang.invoke.MethodType;
  */
 interface Signatures {
     static String sig(Class<?> returnType, Class<?>... paramTypes) {
-        var builder = new StringBuilder().append('(');
-        for (var paramType : paramTypes) {
-            builder.append(classDesc(paramType));
-            MethodType.methodType(returnType).toMethodDescriptorString();
-        }
-        return builder.append(')').append(classDesc(returnType)).toString();
-    }
-
-    private static String classDesc(Class<?> c) {
-        if (c.isArray()) {
-            return '[' + classDesc(c.getComponentType());
-        }
-        if (c.isPrimitive()) {
-            if (c == Integer.TYPE) {
-                return "I";
-            } else if (c == Void.TYPE) {
-                return "V";
-            } else if (c == Boolean.TYPE) {
-                return "Z";
-            } else if (c == Byte.TYPE) {
-                return "B";
-            } else if (c == Character.TYPE) {
-                return "C";
-            } else if (c == Short.TYPE) {
-                return "S";
-            } else if (c == Double.TYPE) {
-                return "D";
-            } else if (c == Float.TYPE) {
-                return "F";
-            } else if (c == Long.TYPE) {
-                return "J";
-            }
-            throw new AssertionError("Unknown primitive type: " + c);
-        }
-        return 'L' + c.getName().replace('.', '/') + ';';
+        return MethodType.methodType(returnType, paramTypes).toMethodDescriptorString();
     }
 
     /**
