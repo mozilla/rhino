@@ -1223,6 +1223,15 @@ public final class IRFactory {
                 right = transform(init);
             }
 
+            // Infer function name is missing on rhs
+            if (left instanceof Name && right instanceof Name && right.type == Token.FUNCTION) {
+                var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
+                FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
+                if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+                    functionNode.setFunctionName((Name) left);
+                }
+            }
+
             if (var.isDestructuring()) {
                 if (right == null) { // TODO:  should this ever happen?
                     node.addChildToBack(left);
