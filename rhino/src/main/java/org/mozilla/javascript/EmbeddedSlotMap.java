@@ -131,7 +131,7 @@ public class EmbeddedSlotMap implements SlotMap {
         // Check if the table is not too full before inserting.
         if (4 * (count + 1) > 3 * slots.length) {
             // table size must be a power of 2 -- always grow by x2!
-            if (count > SlotMapOwner.LARGE_HASH_SIZE) {
+            if (count >= SlotMapOwner.LARGE_HASH_SIZE) {
                 promoteMap(owner, newSlot);
                 return;
             }

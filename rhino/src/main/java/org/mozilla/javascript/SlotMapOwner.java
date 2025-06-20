@@ -10,7 +10,12 @@ import java.util.Objects;
 public abstract class SlotMapOwner {
     private static final long serialVersionUID = 1L;
 
-    static final int LARGE_HASH_SIZE = 2000;
+    /**
+     * Maximum size of an {@link EmbeddedSlotMap} before it is promoted to a {@link HashSlotMap}.
+     * The value must be 3/4 of a power of two, because the embedded slot map's slot size must be a
+     * power of two, and it is resized when it is 3/4 full.
+     */
+    static final int LARGE_HASH_SIZE = (1 << 10) + (1 << 9);
 
     static final SlotMap EMPTY_SLOT_MAP = new EmptySlotMap();
 
