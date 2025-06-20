@@ -24,7 +24,7 @@ public class Bug482203Test {
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
             Scriptable scope = cx.initStandardObjects();
-            script.exec(cx, scope);
+            script.exec(cx, scope, scope);
             int counter = 0;
             for (; ; ) {
                 Object cont = ScriptableObject.getProperty(scope, "c");

@@ -312,7 +312,7 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.must.implement.Script");
         }
         Script script = (Script) clazz.getDeclaredConstructor().newInstance();
-        script.exec(cx, thisObj);
+        script.exec(cx, thisObj, thisObj);
     }
 
     private static Class<?> getClass(Object[] args) {
@@ -1157,7 +1157,7 @@ class Runner implements Runnable, ContextAction<Object> {
     @Override
     public Object run(Context cx) {
         if (f != null) return f.call(cx, scope, scope, args);
-        else return s.exec(cx, scope);
+        else return s.exec(cx, scope, scope);
     }
 
     ContextFactory factory;

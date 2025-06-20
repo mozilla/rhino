@@ -505,7 +505,7 @@ public class Test262SuiteTest {
                                             "Error reading test file " + harnessPath, ioe);
                                 }
                             });
-            harnessScript.exec(cx, scope);
+            harnessScript.exec(cx, scope, scope);
         }
 
         $262 proto = $262.init(cx, scope);
@@ -555,7 +555,7 @@ public class Test262SuiteTest {
                 Script caseScript = cx.compileString(str, testFilePath, line, null);
 
                 failedEarly = false; // not after this line
-                caseScript.exec(cx, scope);
+                caseScript.exec(cx, scope, scope);
 
                 if (testCase.isNegative()) {
                     fail(

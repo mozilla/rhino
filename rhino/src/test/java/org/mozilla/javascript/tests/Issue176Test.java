@@ -25,7 +25,7 @@ public class Issue176Test {
             Script script = cx.compileReader(in, "Issue176.js", 1, null);
             scope = cx.initStandardObjects();
             scope.put("host", scope, this);
-            script.exec(cx, scope); // calls our methods
+            script.exec(cx, scope, scope); // calls our methods
         } finally {
             Context.exit();
         }

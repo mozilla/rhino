@@ -65,7 +65,7 @@ public class ShellTest {
     private static void runFileIfExists(Context cx, Scriptable global, File f) {
         if (frameworkFile.equals(f)) {
             try {
-                frameworkScript.exec(cx, global);
+                frameworkScript.exec(cx, global, global);
             } catch (RhinoException re) {
                 // Error in test framework means that the whole world is broken.
                 throw new AssertionError(re);

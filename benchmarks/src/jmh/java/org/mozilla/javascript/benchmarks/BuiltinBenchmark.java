@@ -74,7 +74,7 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object annotatedClassMethods(AnnotatedClassState state) {
-        return state.testScript.exec(state.cx, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope);
     }
 
     public static class AnnotatedClass extends ScriptableObject {
@@ -138,7 +138,7 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object idClassMethods(IdClassState state) {
-        return state.testScript.exec(state.cx, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope);
     }
 
     public static class IdClass extends IdScriptableObject {
@@ -331,7 +331,7 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object dumbLambdaClassMethods(DumbLambdaState state) {
-        return state.testScript.exec(state.cx, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope);
     }
 
     private static class DumbLambdaClass extends ScriptableObject {

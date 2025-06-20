@@ -201,7 +201,8 @@ public class Main {
         try {
             Script script = cx.compileString(scriptText, "<command>", 1, null);
             if (script != null) {
-                script.exec(cx, getShellScope());
+                Scriptable scope = getShellScope();
+                script.exec(cx, scope, scope);
             }
         } catch (RhinoException rex) {
             ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
@@ -481,7 +482,7 @@ public class Main {
                     String finalSource = source.toString();
                     Script script = cx.compileString(finalSource, "<stdin>", lineno, null);
                     if (script != null) {
-                        Object result = script.exec(cx, scope);
+                        Object result = script.exec(cx, scope, scope);
                         // Avoid printing out undefined or function definitions.
                         if (result != Context.getUndefinedValue()
                                 && !(result instanceof Function
@@ -580,7 +581,7 @@ public class Main {
         }
 
         if (script != null) {
-            script.exec(cx, scope);
+            script.exec(cx, scope, scope);
         }
     }
 

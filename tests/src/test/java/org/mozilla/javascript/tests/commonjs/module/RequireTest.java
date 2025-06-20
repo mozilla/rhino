@@ -168,6 +168,15 @@ public class RequireTest {
                 });
     }
 
+    @Test
+    public void thisScopeGlobalThis() throws Exception {
+        try (Context cx = createContext()) {
+            final Scriptable scope = cx.initStandardObjects();
+            final Require require = getSandboxedRequire(cx, scope, false);
+            require.requireMain(cx, "thisScopeGlobalThisMain");
+        }
+    }
+
     private Reader getReader(String name) {
         return new InputStreamReader(getClass().getResourceAsStream(name));
     }

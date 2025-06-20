@@ -88,7 +88,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
     }
 
     @Override
-    public Object exec(Context cx, Scriptable scope) {
+    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
         if (!isScript()) {
             // Can only be applied to scripts
             throw new IllegalStateException();
@@ -98,9 +98,9 @@ final class InterpretedFunction extends NativeFunction implements Script {
             // It will go through "call" path. but they are equivalent
             ret =
                     ScriptRuntime.doTopCall(
-                            this, cx, scope, scope, ScriptRuntime.emptyArgs, isStrict());
+                            this, cx, scope, thisObj, ScriptRuntime.emptyArgs, isStrict());
         } else {
-            ret = Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.emptyArgs);
+            ret = Interpreter.interpret(this, cx, scope, thisObj, ScriptRuntime.emptyArgs);
         }
         cx.processMicrotasks();
         return ret;

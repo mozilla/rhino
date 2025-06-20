@@ -164,7 +164,7 @@ public class JavaAcessibilityTest {
         return contextFactory.call(
                 context -> {
                     Script script = context.compileString(scriptSourceText, "", 1, null);
-                    return script.exec(context, global);
+                    return script.exec(context, global, global);
                 });
     }
 }

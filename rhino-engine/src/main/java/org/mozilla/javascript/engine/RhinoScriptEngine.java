@@ -163,7 +163,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     Object eval(Script script, ScriptContext sc) throws ScriptException {
         try (Context cx = ctxFactory.enterContext()) {
             Scriptable scope = initScope(cx, sc);
-            Object ret = script.exec(cx, scope);
+            Object ret = script.exec(cx, scope, scope);
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {
             throw new ScriptException(
