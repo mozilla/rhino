@@ -18,19 +18,16 @@ import org.mozilla.javascript.Undefined;
  * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array"
  * interface. It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
-public class NativeBigUint64Array extends NativeTypedArrayView<BigInteger> {
+public class NativeBigUint64Array extends NativeBigIntArrayView {
     private static final long serialVersionUID = -1255405650050639335L;
 
     private static final String CLASS_NAME = "BigUint64Array";
     private static final int BYTES_PER_ELEMENT = 8;
 
-    public NativeBigUint64Array() {
-        isBigInt = true;
-    }
+    public NativeBigUint64Array() {}
 
     public NativeBigUint64Array(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
-        isBigInt = true;
     }
 
     public NativeBigUint64Array(int len) {

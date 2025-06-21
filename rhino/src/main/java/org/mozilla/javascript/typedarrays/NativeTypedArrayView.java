@@ -47,19 +47,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     /** The length, in elements, of the array */
     protected final int length;
 
-    /** corresponds to the [[ContentType]] property */
-    protected boolean isBigInt;
-
     protected NativeTypedArrayView() {
         super();
         length = 0;
-        isBigInt = false;
     }
 
     protected NativeTypedArrayView(NativeArrayBuffer ab, int off, int len, int byteLen) {
         super(ab, off, byteLen);
         length = len;
-        isBigInt = false;
     }
 
     // Array properties implementation.
@@ -321,6 +316,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     protected abstract Object js_set(int index, Object c);
 
+    protected Object toNumeric(Object num) {
+        return ScriptRuntime.toNumber(num);
+    }
+
     private static NativeArrayBuffer makeArrayBuffer(
             Context cx, Scriptable scope, int length, int bytesPerElement) {
         return (NativeArrayBuffer)
@@ -475,7 +474,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.source.array");
         }
 
-        if (isBigInt != source.isBigInt) {
+        if ((this instanceof NativeBigIntArrayView) != (source instanceof NativeBigIntArrayView)) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.type.mismatch");
         }
 
@@ -959,12 +958,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         NativeTypedArrayView<?> self = realThis(thisObj);
         long len = self.validateAndGetLength();
 
-        Object value = args.length > 0 ? args[0] : Undefined.instance;
-        if (self.isBigInt) {
-            value = ScriptRuntime.toBigInt(value);
-        } else {
-            value = ScriptRuntime.toNumber(value);
-        }
+        Object value = self.toNumeric(args.length > 0 ? args[0] : Undefined.instance);
 
         long relativeStart = 0;
         if (args.length >= 2) {

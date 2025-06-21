@@ -21,13 +21,13 @@ public abstract class NativeArrayBufferView extends ScriptableObject {
     private static Boolean useLittleEndian = null;
 
     /** Many view objects can share the same backing array */
-    protected NativeArrayBuffer arrayBuffer;
+    protected final NativeArrayBuffer arrayBuffer;
 
     /** The offset, in bytes, from the start of the backing array */
-    protected int offset;
+    protected final int offset;
 
     /** The length, in bytes, of the portion of the backing array that we use */
-    protected int byteLength;
+    protected final int byteLength;
 
     public NativeArrayBufferView() {
         arrayBuffer = new NativeArrayBuffer();

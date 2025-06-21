@@ -253,14 +253,12 @@ public class NativeDataView extends NativeArrayBufferView {
         int len;
         if (isArg(args, 2)) {
             len = ScriptRuntime.toIndex(args[2]);
-            if (pos + len > bufferByteLength) {
+            if ((long) pos + len > bufferByteLength) {
                 throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
             }
         } else {
             len = bufferByteLength - pos;
         }
-
-        var instance = new NativeDataView();
 
         if (ab.isDetached()) {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
@@ -272,15 +270,12 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         if (isArg(args, 2)) {
-            if (pos + len > bufferByteLength) {
+            if ((long) pos + len > bufferByteLength) {
                 throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
             }
         }
 
-        instance.arrayBuffer = ab;
-        instance.byteLength = len;
-        instance.offset = pos;
-        return instance;
+        return new NativeDataView(ab, pos, len);
     }
 
     private Object js_getInt(int bytes, boolean signed, Object[] args) {
