@@ -15,6 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.Map;
+import org.mozilla.javascript.nat.TypeConsolidator;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -25,44 +29,49 @@ import java.lang.reflect.Modifier;
 final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
+    private transient Class<?> from;
     private transient Member memberObject;
-    transient Class<?>[] argTypes;
-    transient boolean[] argNullability;
-    transient boolean vararg;
+    private transient JavaParameters parameters;
+    private transient TypeInfo returnTypeInfo;
 
     transient Function asGetterFunction;
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    private static final NullabilityDetector nullDetector =
-            ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
-
+    /**
+     * Not recommended, use {@link MemberBox#MemberBox(Method, Class)} instead for better generic
+     * support
+     */
     MemberBox(Method method) {
-        init(method);
+        init(method, method.getDeclaringClass());
     }
 
+    MemberBox(Method method, Class<?> from) {
+        init(method, from);
+    }
+
+    /**
+     * Not recommended, use {@link MemberBox#MemberBox(Constructor, Class)} instead for better
+     * generic support
+     */
     MemberBox(Constructor<?> constructor) {
-        init(constructor);
+        init(constructor, constructor.getDeclaringClass());
     }
 
-    private void init(Method method) {
+    MemberBox(Constructor<?> constructor, Class<?> from) {
+        init(constructor, from);
+    }
+
+    private void init(Method method, Class<?> from) {
+        this.from = from;
         this.memberObject = method;
-        this.argTypes = method.getParameterTypes();
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[method.getParameters().length]
-                        : nullDetector.getParameterNullability(method);
-        this.vararg = method.isVarArgs();
+        this.parameters = new JavaParameters(method, from);
     }
 
-    private void init(Constructor<?> constructor) {
+    private void init(Constructor<?> constructor, Class<?> from) {
+        this.from = from;
         this.memberObject = constructor;
-        this.argTypes = constructor.getParameterTypes();
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[constructor.getParameters().length]
-                        : nullDetector.getParameterNullability(constructor);
-        this.vararg = constructor.isVarArgs();
+        this.parameters = new JavaParameters(constructor, from);
     }
 
     Method method() {
@@ -101,6 +110,21 @@ final class MemberBox implements Serializable {
         return memberObject.getDeclaringClass();
     }
 
+    List<TypeInfo> getArgTypes() {
+        return parameters.getTypes();
+    }
+
+    TypeInfo getReturnType() {
+        if (returnTypeInfo == null) {
+            returnTypeInfo =
+                    this.isMethod()
+                            ? TypeInfo.of(this.method().getGenericReturnType())
+                                    .consolidate(TypeConsolidator.getMapping(from))
+                            : TypeInfo.NONE;
+        }
+        return returnTypeInfo;
+    }
+
     String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
@@ -117,7 +141,7 @@ final class MemberBox implements Serializable {
             }
             sb.append(name);
         }
-        sb.append(JavaMembers.liveConnectSignature(argTypes));
+        sb.append(JavaMembers.liveConnectSignature(getArgTypes()));
         return sb.toString();
     }
 
@@ -195,9 +219,8 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    FunctionObject.getTypeTag(
-                                                            nativeSetter.argTypes[0]),
-                                                    nativeSetter.argNullability[0])
+                                                    nativeSetter.getArgTypes().get(0).getTypeTag(),
+                                                    nativeSetter.getArgNullability()[0])
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
@@ -237,7 +260,12 @@ final class MemberBox implements Serializable {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
-                Method accessible = searchAccessibleMethod(method, argTypes);
+                Method accessible =
+                        searchAccessibleMethod(
+                                method,
+                                getArgTypes().stream()
+                                        .map(TypeInfo::asClass)
+                                        .toArray(Class[]::new));
                 if (accessible != null) {
                     memberObject = accessible;
                     method = accessible;
@@ -280,37 +308,39 @@ final class MemberBox implements Serializable {
 
     private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
         int modifiers = method.getModifiers();
-        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
-            Class<?> c = method.getDeclaringClass();
-            if (!Modifier.isPublic(c.getModifiers())) {
-                String name = method.getName();
-                Class<?>[] intfs = c.getInterfaces();
-                for (int i = 0, N = intfs.length; i != N; ++i) {
-                    Class<?> intf = intfs[i];
-                    if (Modifier.isPublic(intf.getModifiers())) {
-                        try {
-                            return intf.getMethod(name, params);
-                        } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {
-                        }
-                    }
+        if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers)) {
+            return null;
+        }
+
+        Class<?> c = method.getDeclaringClass();
+        if (Modifier.isPublic(c.getModifiers())) {
+            return null;
+        }
+
+        String name = method.getName();
+        for (Class<?> interfac : c.getInterfaces()) {
+            if (Modifier.isPublic(interfac.getModifiers())) {
+                try {
+                    return interfac.getMethod(name, params);
+                } catch (NoSuchMethodException ex) {
+                } catch (SecurityException ex) {
                 }
-                for (; ; ) {
-                    c = c.getSuperclass();
-                    if (c == null) {
-                        break;
+            }
+        }
+        for (; ; ) {
+            c = c.getSuperclass();
+            if (c == null) {
+                break;
+            }
+            if (Modifier.isPublic(c.getModifiers())) {
+                try {
+                    Method m = c.getMethod(name, params);
+                    int mModifiers = m.getModifiers();
+                    if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
+                        return m;
                     }
-                    if (Modifier.isPublic(c.getModifiers())) {
-                        try {
-                            Method m = c.getMethod(name, params);
-                            int mModifiers = m.getModifiers();
-                            if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
-                                return m;
-                            }
-                        } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {
-                        }
-                    }
+                } catch (NoSuchMethodException ex) {
+                } catch (SecurityException ex) {
                 }
             }
         }
@@ -319,17 +349,18 @@ final class MemberBox implements Serializable {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        Member member = readMember(in);
+        var entry = readMember(in);
+        var member = entry.getValue();
         if (member instanceof Method) {
-            init((Method) member);
+            init((Method) member, entry.getKey());
         } else {
-            init((Constructor<?>) member);
+            init((Constructor<?>) member, entry.getKey());
         }
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        writeMember(out, memberObject);
+        writeMember(out, memberObject, from);
     }
 
     /**
@@ -338,7 +369,8 @@ final class MemberBox implements Serializable {
      * <p>Methods and Constructors are not serializable, so we must serialize information about the
      * class, the name, and the parameters and recreate upon deserialization.
      */
-    private static void writeMember(ObjectOutputStream out, Member member) throws IOException {
+    private static void writeMember(ObjectOutputStream out, Member member, Class<?> from)
+            throws IOException {
         if (member == null) {
             out.writeBoolean(false);
             return;
@@ -348,7 +380,7 @@ final class MemberBox implements Serializable {
             throw new IllegalArgumentException("not Method or Constructor");
         out.writeBoolean(member instanceof Method);
         out.writeObject(member.getName());
-        out.writeObject(member.getDeclaringClass());
+        out.writeObject(from);
         if (member instanceof Method) {
             writeParameters(out, ((Method) member).getParameterTypes());
         } else {
@@ -356,19 +388,23 @@ final class MemberBox implements Serializable {
         }
     }
 
-    /** Reads a Method or a Constructor from the stream. */
-    private static Member readMember(ObjectInputStream in)
+    /**
+     * Reads a Method or a Constructor from the stream.
+     *
+     * @return an entry holding the parent class of this member and the member itself
+     */
+    private static Map.Entry<Class<?>, Member> readMember(ObjectInputStream in)
             throws IOException, ClassNotFoundException {
         if (!in.readBoolean()) return null;
         boolean isMethod = in.readBoolean();
         String name = (String) in.readObject();
-        Class<?> declaring = (Class<?>) in.readObject();
+        Class<?> from = (Class<?>) in.readObject();
         Class<?>[] parms = readParameters(in);
         try {
             if (isMethod) {
-                return declaring.getMethod(name, parms);
+                return Map.entry(from, from.getMethod(name, parms));
             }
-            return declaring.getConstructor(parms);
+            return Map.entry(from, from.getConstructor(parms));
         } catch (NoSuchMethodException e) {
             throw new IOException("Cannot find member: " + e);
         }
@@ -425,5 +461,17 @@ final class MemberBox implements Serializable {
             result[i] = primitives[in.readByte()];
         }
         return result;
+    }
+
+    public boolean isVararg() {
+        return parameters.isVarArg();
+    }
+
+    public JavaParameters getParameters() {
+        return parameters;
+    }
+
+    public boolean[] getArgNullability() {
+        return parameters.getNullabilities();
     }
 }

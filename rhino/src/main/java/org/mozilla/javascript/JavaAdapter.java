@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.javascript.nat.type.TypeInfo;
 
 public final class JavaAdapter implements IdFunctionCall {
     /**
@@ -101,7 +102,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
         Scriptable scope = ScriptableObject.getTopLevelScope(obj);
-        NativeJavaObject res = new NativeJavaObject(scope, adapter, null, true);
+        NativeJavaObject res = new NativeJavaObject(scope, adapter, TypeInfo.NONE, true);
         res.setPrototype(obj);
         return res;
     }
@@ -565,7 +566,7 @@ public final class JavaAdapter implements IdFunctionCall {
             if (0 != (argsToWrap & (1 << i))) {
                 Object arg = args[i];
                 if (!(arg instanceof Scriptable)) {
-                    args[i] = cx.getWrapFactory().wrap(cx, scope, arg, null);
+                    args[i] = cx.getWrapFactory().wrap(cx, scope, arg, TypeInfo.NONE);
                 }
             }
         }
