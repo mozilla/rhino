@@ -86,10 +86,10 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        double val = ScriptRuntime.toNumber(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        double val = ScriptRuntime.toNumber(c);
         ByteIo.writeFloat32(
                 arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;

@@ -821,12 +821,12 @@ public class ScriptRuntime {
         }
         double integerIndex = toInteger(val);
         if (integerIndex < 0) {
-            throw rangeError("index out of range");
+            throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
         // ToLength
         double index = Math.min(integerIndex, NativeNumber.MAX_SAFE_INTEGER);
         if (integerIndex != index) {
-            throw rangeError("index out of range");
+            throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
         return (int) index;
     }
