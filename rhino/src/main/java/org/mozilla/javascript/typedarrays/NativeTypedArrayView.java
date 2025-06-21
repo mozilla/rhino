@@ -520,16 +520,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     public boolean isTypedArrayOutOfBounds() {
-        if (arrayBuffer.isDetached()) {
-            return true;
-        }
-
-        int bufferByteLength = arrayBuffer.getLength();
-
-        int byteOffsetStart = offset;
-        int byteOffsetEnd = offset + byteLength;
-
-        return byteOffsetStart > bufferByteLength || byteOffsetEnd > bufferByteLength;
+        return arrayBuffer.isDetached() || outOfRange;
     }
 
     /**
