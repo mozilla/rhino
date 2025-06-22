@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
@@ -53,12 +52,11 @@ public interface TypeInfoFactory extends Serializable {
      * types from being unloaded
      *
      * <p>For actions with scope available, the TypeInfoFactory can be obtained via {@link
-     * #get(Scriptable)}. The {@link ClassCache} itself is attached to provided scope (see {@link
-     * ClassCache#get(Scriptable)})
+     * #get(Scriptable)}.
      */
     TypeInfoFactory GLOBAL =
             new WeakReferenceFactory() {
-                protected Object readResolve() {
+                private Object readResolve() {
                     return GLOBAL;
                 }
             };
@@ -258,29 +256,49 @@ public interface TypeInfoFactory extends Serializable {
         return null;
     }
 
+    /**
+     * Associate this TypeInfoFactory object with the given top-level scope.
+     *
+     * @param topScope scope to associate this TypeInfoFactory object with.
+     * @return {@code true} if no previous TypeInfoFactory object were associated with the scope and
+     *     this TypeInfoFactory were successfully associated, false otherwise.
+     * @throws IllegalArgumentException if provided scope is not top scope
+     * @see #get(Scriptable scope)
+     */
     default boolean associate(ScriptableObject topScope) {
         if (topScope.getParentScope() != null) {
-            // Can only associate cache with top level scope
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("provided scope not top scope");
         }
         return this == topScope.associateValue("TypeInfoFactory", this);
     }
 
+    /**
+     * Search for TypeInfoFactory in the given scope.If none was found, it will try to associate a
+     * new ClassCache object to the top scope.
+     *
+     * @param scope scope to search for TypeInfoFactory object.
+     * @return previously associated TypeInfoFactory object, or a new instance of TypeInfoFactory if
+     *     none was found
+     * @throws IllegalArgumentException if the top scope of provided scope have no associated
+     *     TypeInfoFactory, and cannot have TypeInfoFactory associated due to the top scope not
+     *     being a {@link ScriptableObject}
+     * @see #associate(ScriptableObject topScope)
+     */
     static TypeInfoFactory get(Scriptable scope) {
-        TypeInfoFactory cache =
+        TypeInfoFactory got =
                 (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
-        if (cache == null) {
+        if (got == null) {
             // we expect this to not happen frequently, so computing top scope twice is acceptable
             var topScope = ScriptableObject.getTopLevelScope(scope);
             if (!(topScope instanceof ScriptableObject)) {
                 // Note: it's originally a RuntimeException, the super class of
                 // IllegalArgumentException, so this will not break error catching
                 throw new IllegalArgumentException(
-                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
+                        "top scope have no associated TypeInfoFactory and cannot have TypeInfoFactory associated due to not being a ScriptableObject");
             }
-            cache = new ConcurrentFactory();
-            cache.associate(((ScriptableObject) topScope));
+            got = new ConcurrentFactory();
+            got.associate(((ScriptableObject) topScope));
         }
-        return cache;
+        return got;
     }
 }
