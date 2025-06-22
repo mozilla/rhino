@@ -21,6 +21,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
@@ -51,10 +53,15 @@ public interface TypeInfoFactory extends Serializable {
      * types from being unloaded
      *
      * <p>For actions with scope available, the TypeInfoFactory can be obtained via {@link
-     * ClassCache#getTypeFactory()}. The {@link ClassCache} itself is attached to provided scope
-     * (see {@link ClassCache#get(Scriptable)})
+     * #get(Scriptable)}. The {@link ClassCache} itself is attached to provided scope (see {@link
+     * ClassCache#get(Scriptable)})
      */
-    TypeInfoFactory GLOBAL = new WeakReferenceFactory();
+    TypeInfoFactory GLOBAL =
+            new WeakReferenceFactory() {
+                protected Object readResolve() {
+                    return GLOBAL;
+                }
+            };
 
     /**
      * TypeInfoFactory used by very few actions with the intention of not caching any used types
@@ -249,5 +256,31 @@ public interface TypeInfoFactory extends Serializable {
             return TypeInfo.BIG_INT;
         }
         return null;
+    }
+
+    default boolean associate(ScriptableObject topScope) {
+        if (topScope.getParentScope() != null) {
+            // Can only associate cache with top level scope
+            throw new IllegalArgumentException();
+        }
+        return this == topScope.associateValue("TypeInfoFactory", this);
+    }
+
+    static TypeInfoFactory get(Scriptable scope) {
+        TypeInfoFactory cache =
+                (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
+        if (cache == null) {
+            // we expect this to not happen frequently, so computing top scope twice is acceptable
+            var topScope = ScriptableObject.getTopLevelScope(scope);
+            if (!(topScope instanceof ScriptableObject)) {
+                // Note: it's originally a RuntimeException, the super class of
+                // IllegalArgumentException, so this will not break error catching
+                throw new IllegalArgumentException(
+                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
+            }
+            cache = new ConcurrentFactory();
+            cache.associate(((ScriptableObject) topScope));
+        }
+        return cache;
     }
 }

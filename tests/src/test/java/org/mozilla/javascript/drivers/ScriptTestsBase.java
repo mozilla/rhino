@@ -35,7 +35,7 @@ import org.mozilla.javascript.tools.shell.Global;
 @RunWith(BlockJUnit4ClassRunner.class)
 public abstract class ScriptTestsBase {
 
-    private Object executeRhinoScript(int optLevel) {
+    private Object executeRhinoScript(boolean interpretedMode) {
         RhinoTest anno = this.getClass().getAnnotation(RhinoTest.class);
         assertNotNull(anno);
 
@@ -65,7 +65,7 @@ public abstract class ScriptTestsBase {
                 suiteName = "inline.js";
             }
 
-            cx.setOptimizationLevel(optLevel);
+            cx.setInterpretedMode(interpretedMode);
             cx.setLanguageVersion(jsVersion);
 
             Global global = new Global(cx);
@@ -146,17 +146,12 @@ public abstract class ScriptTestsBase {
     }
 
     @Test
-    public void rhinoTestNoOpt() {
-        assertEquals("success", executeRhinoScript(-1));
+    public void rhinoTestInterpreted() {
+        assertEquals("success", executeRhinoScript(true));
     }
 
     @Test
-    public void rhinoTestOpt0() {
-        assertEquals("success", executeRhinoScript(0));
-    }
-
-    @Test
-    public void rhinoTestOpt9() {
-        assertEquals("success", executeRhinoScript(9));
+    public void rhinoTestCompiled() {
+        assertEquals("success", executeRhinoScript(false));
     }
 }

@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -79,7 +80,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
-        var typeInfoFactory = ClassCache.get(scope).getTypeFactory();
+        var typeInfoFactory = TypeInfoFactory.get(this);
 
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);

@@ -25,12 +25,12 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * @see NoCacheFactory factory with no cache
  * @see ConcurrentFactory factory with a strong-reference, high performance cache
  */
-public final class WeakReferenceFactory extends WithCacheFactory {
+public class WeakReferenceFactory extends WithCacheFactory {
 
     private static final long serialVersionUID = 7240510556821383410L;
 
     @Override
-    protected <K, V> Map<K, V> createTypeCache() {
+    protected final <K, V> Map<K, V> createTypeCache() {
         return Collections.synchronizedMap(new WeakHashMap<>());
     }
 }

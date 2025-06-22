@@ -166,7 +166,7 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache(cx.getFactory().getTypeFactoryProvider().apply(cx)).associate(scope);
+        new ClassCache().associate(scope);
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
         LambdaConstructor obj = NativeObject.init(scope, sealed);
