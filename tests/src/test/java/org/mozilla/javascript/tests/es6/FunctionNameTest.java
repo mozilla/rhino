@@ -21,7 +21,7 @@ class FunctionNameTest {
 
     @Test
     void letEqualsArrowFunction() {
-        Utils.assertWithAllModes_ES6("f", "var f = () => {}; f.name");
+        Utils.assertWithAllModes_ES6("f", "let f = () => {}; f.name");
     }
 
     @Test
@@ -31,6 +31,6 @@ class FunctionNameTest {
 
     @Test
     void constEqualsArrowFunction() {
-        Utils.assertWithAllModes_ES6("f", "var f = () => {}; f.name");
+        Utils.assertWithAllModes_ES6("f", "const f = () => {}; f.name");
     }
 }
