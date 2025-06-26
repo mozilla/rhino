@@ -34,7 +34,7 @@ public class Bug482203Test {
                 counter++;
                 ((Callable) cont).call(cx, scope, scope, new Object[] {null});
             }
-            assertEquals(counter, 5);
+            assertEquals(5, counter);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
         }
     }
@@ -57,7 +57,7 @@ public class Bug482203Test {
                 counter++;
                 cx.resumeContinuation(cont, scope, null);
             }
-            assertEquals(counter, 5);
+            assertEquals(5, counter);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
         }
     }
