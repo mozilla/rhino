@@ -1373,6 +1373,13 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_INIT_ARRAY] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_INIT_VALUES_IN_ORDER] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_INIT_VALUES_IN_ORDER] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_NEXT] = new DoEnumOp();
+        instructionObjs[base + Token.ENUM_ID] = new DoEnumOp();
         instructionObjs[base + Token.REF_SPECIAL] = new DoRefSpecial();
         instructionObjs[base + Token.REF_MEMBER] = new DoRefMember();
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
@@ -2600,41 +2607,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ++frame.pc;
                                     continue Loop;
                                 }
-                            case Token.ENUM_INIT_KEYS:
-                            case Token.ENUM_INIT_VALUES:
-                            case Token.ENUM_INIT_ARRAY:
-                            case Token.ENUM_INIT_VALUES_IN_ORDER:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    indexReg += iData.itsMaxVars;
-                                    int enumType =
-                                            op == Token.ENUM_INIT_KEYS
-                                                    ? ScriptRuntime.ENUMERATE_KEYS
-                                                    : op == Token.ENUM_INIT_VALUES
-                                                            ? ScriptRuntime.ENUMERATE_VALUES
-                                                            : op == Token.ENUM_INIT_VALUES_IN_ORDER
-                                                                    ? ScriptRuntime
-                                                                            .ENUMERATE_VALUES_IN_ORDER
-                                                                    : ScriptRuntime.ENUMERATE_ARRAY;
-                                    stack[indexReg] =
-                                            ScriptRuntime.enumInit(lhs, cx, frame.scope, enumType);
-                                    continue Loop;
-                                }
-                            case Token.ENUM_NEXT:
-                            case Token.ENUM_ID:
-                                {
-                                    indexReg += iData.itsMaxVars;
-                                    Object val = stack[indexReg];
-                                    ++stackTop;
-                                    stack[stackTop] =
-                                            (op == Token.ENUM_NEXT)
-                                                    ? ScriptRuntime.enumNext(val, cx)
-                                                    : ScriptRuntime.enumId(val, cx);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2725,6 +2697,39 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoEnumInit extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            state.indexReg += frame.idata.itsMaxVars;
+            int enumType =
+                    op == Token.ENUM_INIT_KEYS
+                            ? ScriptRuntime.ENUMERATE_KEYS
+                            : op == Token.ENUM_INIT_VALUES
+                                    ? ScriptRuntime.ENUMERATE_VALUES
+                                    : op == Token.ENUM_INIT_VALUES_IN_ORDER
+                                            ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER
+                                            : ScriptRuntime.ENUMERATE_ARRAY;
+            frame.stack[state.indexReg] = ScriptRuntime.enumInit(lhs, cx, frame.scope, enumType);
+            --state.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoEnumOp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            Object val = frame.stack[state.indexReg];
+            frame.stack[++state.stackTop] =
+                    (op == Token.ENUM_NEXT)
+                            ? ScriptRuntime.enumNext(val, cx)
+                            : ScriptRuntime.enumId(val, cx);
+            return null;
+        }
     }
 
     private static class DoRefSpecial extends InstructionClass {
