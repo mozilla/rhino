@@ -1373,6 +1373,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.STRING] = new DoString();
+        instructionObjs[base + Icode_SHORTNUMBER] = new DoShortNumber();
+        instructionObjs[base + Icode_INTNUMBER] = new DoIntNumber();
+        instructionObjs[base + Token.NUMBER] = new DoNumber();
+        instructionObjs[base + Token.BIGINT] = new DoBigInt();
         instructionObjs[base + Token.NAME] = new DoName();
         instructionObjs[base + Icode_NAME_INC_DEC] = new DoNameIncDec();
         instructionObjs[base + Icode_SETCONSTVAR1] = new DoSetConstVar1();
@@ -2456,29 +2461,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 stack[++stackTop] =
                                         ScriptRuntime.typeofName(frame.scope, stringReg);
                                 continue Loop;
-                            case Token.STRING:
-                                stack[++stackTop] = stringReg;
-                                continue Loop;
-                            case Icode_SHORTNUMBER:
-                                ++stackTop;
-                                stack[stackTop] = DOUBLE_MARK;
-                                sDbl[stackTop] = getShort(iCode, frame.pc);
-                                frame.pc += 2;
-                                continue Loop;
-                            case Icode_INTNUMBER:
-                                ++stackTop;
-                                stack[stackTop] = DOUBLE_MARK;
-                                sDbl[stackTop] = getInt(iCode, frame.pc);
-                                frame.pc += 4;
-                                continue Loop;
-                            case Token.NUMBER:
-                                ++stackTop;
-                                stack[stackTop] = DOUBLE_MARK;
-                                sDbl[stackTop] = iData.itsDoubleTable[indexReg];
-                                continue Loop;
-                            case Token.BIGINT:
-                                stack[++stackTop] = bigIntReg;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2569,6 +2551,54 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoString extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = state.stringReg;
+            return null;
+        }
+    }
+
+    private static class DoShortNumber extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = DOUBLE_MARK;
+            frame.sDbl[state.stackTop] = getShort(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+            return null;
+        }
+    }
+
+    private static class DoIntNumber extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = DOUBLE_MARK;
+            frame.sDbl[state.stackTop] = getInt(frame.idata.itsICode, frame.pc);
+            frame.pc += 4;
+            return null;
+        }
+    }
+
+    private static class DoNumber extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = DOUBLE_MARK;
+            frame.sDbl[state.stackTop] = frame.idata.itsDoubleTable[state.indexReg];
+            return null;
+        }
+    }
+
+    private static class DoBigInt extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = state.bigIntReg;
+            return null;
+        }
     }
 
     private static class DoName extends InstructionClass {
