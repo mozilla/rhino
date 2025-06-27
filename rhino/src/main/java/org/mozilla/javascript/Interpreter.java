@@ -1373,6 +1373,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.REF_SPECIAL] = new DoRefSpecial();
+        instructionObjs[base + Token.REF_MEMBER] = new DoRefMember();
+        instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
+        instructionObjs[base + Token.REF_NAME] = new DoRefName();
+        instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
@@ -2630,46 +2635,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     : ScriptRuntime.enumId(val, cx);
                                     continue Loop;
                                 }
-                            case Token.REF_SPECIAL:
-                                {
-                                    // stringReg: name of special property
-                                    Object obj = stack[stackTop];
-                                    if (obj == DOUBLE_MARK)
-                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.specialRef(
-                                                    obj, stringReg, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.REF_MEMBER:
-                                {
-                                    // indexReg: flags
-                                    stackTop = doRefMember(cx, stack, sDbl, stackTop, indexReg);
-                                    continue Loop;
-                                }
-                            case Token.REF_NS_MEMBER:
-                                {
-                                    // indexReg: flags
-                                    stackTop = doRefNsMember(cx, stack, sDbl, stackTop, indexReg);
-                                    continue Loop;
-                                }
-                            case Token.REF_NAME:
-                                {
-                                    // indexReg: flags
-                                    Object name = stack[stackTop];
-                                    if (name == DOUBLE_MARK)
-                                        name = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.nameRef(name, cx, frame.scope, indexReg);
-                                    continue Loop;
-                                }
-                            case Token.REF_NS_NAME:
-                                {
-                                    // indexReg: flags
-                                    stackTop =
-                                            doRefNsName(cx, frame, stack, sDbl, stackTop, indexReg);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2760,6 +2725,74 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoRefSpecial extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // stringReg: name of special property
+            Object obj = frame.stack[state.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.specialRef(obj, state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoRefMember extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object elem = frame.stack[state.stackTop];
+            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object obj = frame.stack[state.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] = ScriptRuntime.memberRef(obj, elem, cx, state.indexReg);
+            return null;
+        }
+    }
+
+    private static class DoRefNsMember extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object elem = frame.stack[state.stackTop];
+            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object ns = frame.stack[state.stackTop];
+            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object obj = frame.stack[state.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.memberRef(obj, ns, elem, cx, state.indexReg);
+            return null;
+        }
+    }
+
+    private static class DoRefName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // indexReg: flags
+            Object name = frame.stack[state.stackTop];
+            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.nameRef(name, cx, frame.scope, state.indexReg);
+            return null;
+        }
+    }
+
+    private static class DoRefNsName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object name = frame.stack[state.stackTop];
+            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object ns = frame.stack[state.stackTop];
+            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.nameRef(ns, name, cx, frame.scope, state.indexReg);
+            return null;
+        }
     }
 
     private static class DoScopeLoad extends InstructionClass {
@@ -3809,42 +3842,6 @@ public final class Interpreter extends Icode implements Evaluator {
             stack[stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, varName, cx, incrDecrMask);
         }
         ++frame.pc;
-        return stackTop;
-    }
-
-    private static int doRefMember(
-            Context cx, Object[] stack, double[] sDbl, int stackTop, int flags) {
-        Object elem = stack[stackTop];
-        if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object obj = stack[stackTop];
-        if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.memberRef(obj, elem, cx, flags);
-        return stackTop;
-    }
-
-    private static int doRefNsMember(
-            Context cx, Object[] stack, double[] sDbl, int stackTop, int flags) {
-        Object elem = stack[stackTop];
-        if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object ns = stack[stackTop];
-        if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object obj = stack[stackTop];
-        if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.memberRef(obj, ns, elem, cx, flags);
-        return stackTop;
-    }
-
-    private static int doRefNsName(
-            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop, int flags) {
-        Object name = stack[stackTop];
-        if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object ns = stack[stackTop];
-        if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.nameRef(ns, name, cx, frame.scope, flags);
         return stackTop;
     }
 
