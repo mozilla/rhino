@@ -1359,6 +1359,14 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_NAME_AND_THIS] = new DoNameAndThis();
+        instructionObjs[base + Icode_NAME_AND_THIS_OPTIONAL] = new DoNameAndThisOptional();
+        instructionObjs[base + Icode_PROP_AND_THIS] = new DoPropAndThis();
+        instructionObjs[base + Icode_PROP_AND_THIS_OPTIONAL] = new DoPropAndThisOptional();
+        instructionObjs[base + Icode_ELEM_AND_THIS] = new DoElemAndThis();
+        instructionObjs[base + Icode_ELEM_AND_THIS_OPTIONAL] = new DoElemAndThisOptional();
+        instructionObjs[base + Icode_VALUE_AND_THIS] = new DoValueAndThis();
+        instructionObjs[base + Icode_VALUE_AND_THIS_OPTIONAL] = new DoValueAndThisOptional();
         instructionObjs[base + Icode_CALLSPECIAL] = new DoCallSpecial();
         instructionObjs[base + Icode_CALLSPECIAL_OPTIONAL] = new DoCallSpecial();
         instructionObjs[base + Token.CALL] = new DoCallByteCode();
@@ -2250,85 +2258,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 indexReg += iData.itsMaxVars;
                                 stack[indexReg] = null;
                                 continue Loop;
-                            case Icode_NAME_AND_THIS:
-                                // stringReg: name
-                                ++stackTop;
-                                stack[stackTop] =
-                                        ScriptRuntime.getNameAndThis(stringReg, cx, frame.scope);
-                                continue Loop;
-                            case Icode_NAME_AND_THIS_OPTIONAL:
-                                // stringReg: name
-                                ++stackTop;
-                                stack[stackTop] =
-                                        ScriptRuntime.getNameAndThisOptional(
-                                                stringReg, cx, frame.scope);
-                                continue Loop;
-                            case Icode_PROP_AND_THIS:
-                                {
-                                    Object obj = stack[stackTop];
-                                    if (obj == DOUBLE_MARK)
-                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    // stringReg: property
-                                    stack[stackTop] =
-                                            ScriptRuntime.getPropAndThis(
-                                                    obj, stringReg, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Icode_PROP_AND_THIS_OPTIONAL:
-                                {
-                                    Object obj = stack[stackTop];
-                                    if (obj == DOUBLE_MARK)
-                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    // stringReg: property
-                                    stack[stackTop] =
-                                            ScriptRuntime.getPropAndThisOptional(
-                                                    obj, stringReg, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Icode_ELEM_AND_THIS:
-                                {
-                                    Object obj = stack[stackTop - 1];
-                                    if (obj == DOUBLE_MARK)
-                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
-                                    Object id = stack[stackTop];
-                                    if (id == DOUBLE_MARK)
-                                        id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stackTop--;
-                                    stack[stackTop] =
-                                            ScriptRuntime.getElemAndThis(obj, id, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Icode_ELEM_AND_THIS_OPTIONAL:
-                                {
-                                    Object obj = stack[stackTop - 1];
-                                    if (obj == DOUBLE_MARK)
-                                        obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
-                                    Object id = stack[stackTop];
-                                    if (id == DOUBLE_MARK)
-                                        id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stackTop--;
-                                    stack[stackTop] =
-                                            ScriptRuntime.getElemAndThisOptional(
-                                                    obj, id, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Icode_VALUE_AND_THIS:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] = ScriptRuntime.getValueAndThis(value, cx);
-                                    continue Loop;
-                                }
-                            case Icode_VALUE_AND_THIS_OPTIONAL:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.getValueAndThisOptional(value, cx);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2419,6 +2348,108 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoNameAndThis extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            // stringReg: name
+            stack[++state.stackTop] =
+                    ScriptRuntime.getNameAndThis(state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoNameAndThisOptional extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            stack[++state.stackTop] =
+                    ScriptRuntime.getNameAndThisOptional(state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoPropAndThis extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object obj = stack[state.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            // stringReg: property
+            stack[state.stackTop] =
+                    ScriptRuntime.getPropAndThis(obj, state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoPropAndThisOptional extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object obj = stack[state.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            // stringReg: property
+            stack[state.stackTop] =
+                    ScriptRuntime.getPropAndThisOptional(obj, state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoElemAndThis extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object obj = stack[state.stackTop - 1];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
+            Object id = stack[state.stackTop];
+            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[--state.stackTop] = ScriptRuntime.getElemAndThis(obj, id, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoElemAndThisOptional extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object obj = stack[state.stackTop - 1];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
+            Object id = stack[state.stackTop];
+            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[--state.stackTop] =
+                    ScriptRuntime.getElemAndThisOptional(obj, id, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoValueAndThis extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object value = stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] = ScriptRuntime.getValueAndThis(value, cx);
+            return null;
+        }
+    }
+
+    private static class DoValueAndThisOptional extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Object value = stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] = ScriptRuntime.getValueAndThisOptional(value, cx);
+            return null;
+        }
     }
 
     private static class DoCallSpecial extends InstructionClass {
