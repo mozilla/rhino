@@ -1373,6 +1373,13 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_REG_BIGINT_C0] = new DoBigIntCn();
+        instructionObjs[base + Icode_REG_BIGINT_C1] = new DoBigIntCn();
+        instructionObjs[base + Icode_REG_BIGINT_C2] = new DoBigIntCn();
+        instructionObjs[base + Icode_REG_BIGINT_C3] = new DoBigIntCn();
+        instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
+        instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
+        instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -2887,30 +2894,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 stringReg = strings[getInt(iCode, frame.pc)];
                                 frame.pc += 4;
                                 continue Loop;
-                            case Icode_REG_BIGINT_C0:
-                                bigIntReg = bigInts[0];
-                                continue Loop;
-                            case Icode_REG_BIGINT_C1:
-                                bigIntReg = bigInts[1];
-                                continue Loop;
-                            case Icode_REG_BIGINT_C2:
-                                bigIntReg = bigInts[2];
-                                continue Loop;
-                            case Icode_REG_BIGINT_C3:
-                                bigIntReg = bigInts[3];
-                                continue Loop;
-                            case Icode_REG_BIGINT1:
-                                bigIntReg = bigInts[0xFF & iCode[frame.pc]];
-                                ++frame.pc;
-                                continue Loop;
-                            case Icode_REG_BIGINT2:
-                                bigIntReg = bigInts[getIndex(iCode, frame.pc)];
-                                frame.pc += 2;
-                                continue Loop;
-                            case Icode_REG_BIGINT4:
-                                bigIntReg = bigInts[getInt(iCode, frame.pc)];
-                                frame.pc += 4;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -3001,6 +2984,41 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoBigIntCn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.bigIntReg = frame.idata.itsBigIntTable[Icode_REG_BIGINT_C0 - op];
+            return null;
+        }
+    }
+
+    private static class DoRegBigInt1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.bigIntReg = frame.idata.itsBigIntTable[0xFF & frame.idata.itsICode[frame.pc]];
+            ++frame.pc;
+            return null;
+        }
+    }
+
+    private static class DoRegBigInt2 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.bigIntReg = frame.idata.itsBigIntTable[getIndex(frame.idata.itsICode, frame.pc)];
+            frame.pc += 2;
+            return null;
+        }
+    }
+
+    private static class DoRegBigInt4 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.bigIntReg = frame.idata.itsBigIntTable[getInt(frame.idata.itsICode, frame.pc)];
+            frame.pc += 4;
+            return null;
+        }
     }
 
     private static NewState doCallByteCode(
