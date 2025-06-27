@@ -1373,6 +1373,13 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_REG_STR_C0] = new DoStringCn();
+        instructionObjs[base + Icode_REG_STR_C1] = new DoStringCn();
+        instructionObjs[base + Icode_REG_STR_C2] = new DoStringCn();
+        instructionObjs[base + Icode_REG_STR_C3] = new DoStringCn();
+        instructionObjs[base + Icode_REG_STR1] = new DoRegString1();
+        instructionObjs[base + Icode_REG_STR2] = new DoRegString2();
+        instructionObjs[base + Icode_REG_STR4] = new DoRegString4();
         instructionObjs[base + Icode_REG_BIGINT_C0] = new DoBigIntCn();
         instructionObjs[base + Icode_REG_BIGINT_C1] = new DoBigIntCn();
         instructionObjs[base + Icode_REG_BIGINT_C2] = new DoBigIntCn();
@@ -2870,30 +2877,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 indexReg = getInt(iCode, frame.pc);
                                 frame.pc += 4;
                                 continue Loop;
-                            case Icode_REG_STR_C0:
-                                stringReg = strings[0];
-                                continue Loop;
-                            case Icode_REG_STR_C1:
-                                stringReg = strings[1];
-                                continue Loop;
-                            case Icode_REG_STR_C2:
-                                stringReg = strings[2];
-                                continue Loop;
-                            case Icode_REG_STR_C3:
-                                stringReg = strings[3];
-                                continue Loop;
-                            case Icode_REG_STR1:
-                                stringReg = strings[0xFF & iCode[frame.pc]];
-                                ++frame.pc;
-                                continue Loop;
-                            case Icode_REG_STR2:
-                                stringReg = strings[getIndex(iCode, frame.pc)];
-                                frame.pc += 2;
-                                continue Loop;
-                            case Icode_REG_STR4:
-                                stringReg = strings[getInt(iCode, frame.pc)];
-                                frame.pc += 4;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2984,6 +2967,41 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoStringCn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.stringReg = frame.idata.itsStringTable[Icode_REG_STR_C0 - op];
+            return null;
+        }
+    }
+
+    private static class DoRegString1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.stringReg = frame.idata.itsStringTable[0xFF & frame.idata.itsICode[frame.pc]];
+            ++frame.pc;
+            return null;
+        }
+    }
+
+    private static class DoRegString2 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.stringReg = frame.idata.itsStringTable[getIndex(frame.idata.itsICode, frame.pc)];
+            frame.pc += 2;
+            return null;
+        }
+    }
+
+    private static class DoRegString4 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.stringReg = frame.idata.itsStringTable[getInt(frame.idata.itsICode, frame.pc)];
+            frame.pc += 4;
+            return null;
+        }
     }
 
     private static class DoBigIntCn extends InstructionClass {
