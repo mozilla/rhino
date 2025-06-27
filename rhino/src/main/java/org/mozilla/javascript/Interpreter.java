@@ -1373,6 +1373,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
+        instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
+        instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
+        instructionObjs[base + ICode_FN_STORE_HOME_OBJECT] = new DoStoreHomeObject();
+        instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
         instructionObjs[base + Token.REGEXP] = new DoRegExp();
         instructionObjs[base + Icode_TEMPLATE_LITERAL_CALLSITE] = new DoTemplateLiteralCallSite();
         instructionObjs[base + Icode_LITERAL_NEW_OBJECT] = new DoLiteralNewObject();
@@ -2665,43 +2670,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                             doRefNsName(cx, frame, stack, sDbl, stackTop, indexReg);
                                     continue Loop;
                                 }
-                            case Icode_SCOPE_LOAD:
-                                indexReg += iData.itsMaxVars;
-                                frame.scope = (Scriptable) stack[indexReg];
-                                continue Loop;
-                            case Icode_SCOPE_SAVE:
-                                indexReg += iData.itsMaxVars;
-                                stack[indexReg] = frame.scope;
-                                continue Loop;
-                            case Icode_CLOSURE_EXPR:
-                                InterpretedFunction fn =
-                                        InterpretedFunction.createFunction(
-                                                cx, frame.scope, frame.fnOrScript, indexReg);
-                                if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
-                                    Scriptable homeObject = getCurrentFrameHomeObject(frame);
-                                    if (fn.idata.itsNeedsActivation) {
-                                        fn.setHomeObject(homeObject);
-                                    }
-
-                                    stack[++stackTop] =
-                                            new ArrowFunction(
-                                                    cx, frame.scope, fn, frame.thisObj, homeObject);
-                                } else {
-                                    stack[++stackTop] = fn;
-                                }
-                                continue Loop;
-                            case ICode_FN_STORE_HOME_OBJECT:
-                                {
-                                    // Stack contains: [object, keysArray, flagsArray, valuesArray,
-                                    // function]
-                                    InterpretedFunction fun = (InterpretedFunction) stack[stackTop];
-                                    Scriptable homeObject = (Scriptable) stack[stackTop - 4];
-                                    fun.setHomeObject(homeObject);
-                                    continue Loop;
-                                }
-                            case Icode_CLOSURE_STMT:
-                                initFunction(cx, frame.scope, frame.fnOrScript, indexReg);
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2792,6 +2760,65 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoScopeLoad extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            frame.scope = (Scriptable) frame.stack[state.indexReg];
+            return null;
+        }
+    }
+
+    private static class DoScopeSave extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            frame.stack[state.indexReg] = frame.scope;
+            return null;
+        }
+    }
+
+    private static class DoClosureExpr extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            InterpretedFunction fn =
+                    InterpretedFunction.createFunction(
+                            cx, frame.scope, frame.fnOrScript, state.indexReg);
+            if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
+                Scriptable homeObject = getCurrentFrameHomeObject(frame);
+                if (fn.idata.itsNeedsActivation) {
+                    fn.setHomeObject(homeObject);
+                }
+
+                frame.stack[++state.stackTop] =
+                        new ArrowFunction(cx, frame.scope, fn, frame.thisObj, homeObject);
+            } else {
+                frame.stack[++state.stackTop] = fn;
+            }
+            return null;
+        }
+    }
+
+    private static class DoStoreHomeObject extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack contains: [object, keysArray, flagsArray, valuesArray,
+            // function]
+            InterpretedFunction fun = (InterpretedFunction) frame.stack[state.stackTop];
+            Scriptable homeObject = (Scriptable) frame.stack[state.stackTop - 4];
+            fun.setHomeObject(homeObject);
+            return null;
+        }
+    }
+
+    private static class DoClosureStatement extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            initFunction(cx, frame.scope, frame.fnOrScript, state.indexReg);
+            return null;
+        }
     }
 
     private static class DoRegExp extends InstructionClass {
