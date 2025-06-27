@@ -1373,6 +1373,15 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_ZERO] = new DoZero();
+        instructionObjs[base + Icode_ONE] = new DoOne();
+        instructionObjs[base + Token.NULL] = new DoNull();
+        instructionObjs[base + Token.THIS] = new DoThis();
+        instructionObjs[base + Token.SUPER] = new DoSuper();
+        instructionObjs[base + Token.THISFN] = new DoThisFunction();
+        instructionObjs[base + Token.FALSE] = new DoFalse();
+        instructionObjs[base + Token.TRUE] = new DoTrue();
+        instructionObjs[base + Icode_UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
         instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
@@ -2524,54 +2533,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     indexReg);
                                     continue Loop;
                                 }
-                            case Icode_ZERO:
-                                ++stackTop;
-                                stack[stackTop] = Integer.valueOf(0);
-                                continue Loop;
-                            case Icode_ONE:
-                                ++stackTop;
-                                stack[stackTop] = Integer.valueOf(1);
-                                continue Loop;
-                            case Token.NULL:
-                                stack[++stackTop] = null;
-                                continue Loop;
-                            case Token.THIS:
-                                stack[++stackTop] = frame.thisObj;
-                                continue Loop;
-                            case Token.SUPER:
-                                {
-                                    // See 9.1.1.3.5 GetSuperBase
-
-                                    // If we are referring to "super", then we always have an
-                                    // activation
-                                    // (this is done in IrFactory). The home object is stored as
-                                    // part of the
-                                    // activation frame to propagate it correctly for nested
-                                    // functions.
-                                    Scriptable homeObject = getCurrentFrameHomeObject(frame);
-                                    if (homeObject == null) {
-                                        // This if is specified in the spec, but I cannot imagine
-                                        // how the home object will ever be null since `super` is
-                                        // legal _only_ in method definitions, where we do have a
-                                        // home object!
-                                        stack[++stackTop] = Undefined.instance;
-                                    } else {
-                                        stack[++stackTop] = homeObject.getPrototype();
-                                    }
-                                    continue Loop;
-                                }
-                            case Token.THISFN:
-                                stack[++stackTop] = frame.fnOrScript;
-                                continue Loop;
-                            case Token.FALSE:
-                                stack[++stackTop] = Boolean.FALSE;
-                                continue Loop;
-                            case Token.TRUE:
-                                stack[++stackTop] = Boolean.TRUE;
-                                continue Loop;
-                            case Icode_UNDEF:
-                                stack[++stackTop] = undefined;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2662,6 +2623,95 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoZero extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = Integer.valueOf(0);
+            return null;
+        }
+    }
+
+    private static class DoOne extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = Integer.valueOf(1);
+            return null;
+        }
+    }
+
+    private static class DoNull extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = null;
+            return null;
+        }
+    }
+
+    private static class DoThis extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = frame.thisObj;
+            return null;
+        }
+    }
+
+    private static class DoSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // If we are referring to "super", then we always have an
+            // activation
+            // (this is done in IrFactory). The home object is stored as
+            // part of the
+            // activation frame to propagate it correctly for nested
+            // functions.
+            Scriptable homeObject = getCurrentFrameHomeObject(frame);
+            if (homeObject == null) {
+                // This if is specified in the spec, but I cannot imagine
+                // how the home object will ever be null since `super` is
+                // legal _only_ in method definitions, where we do have a
+                // home object!
+                frame.stack[++state.stackTop] = Undefined.instance;
+            } else {
+                frame.stack[++state.stackTop] = homeObject.getPrototype();
+            }
+            return null;
+        }
+    }
+
+    private static class DoThisFunction extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = frame.fnOrScript;
+            return null;
+        }
+    }
+
+    private static class DoFalse extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = Boolean.FALSE;
+            return null;
+        }
+    }
+
+    private static class DoTrue extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = Boolean.TRUE;
+            return null;
+        }
+    }
+
+    private static class DoUndef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = undefined;
+            return null;
+        }
     }
 
     private static class DoEnterWith extends InstructionClass {
