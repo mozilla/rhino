@@ -1373,6 +1373,8 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_DEBUGGER] = new DoDebug();
+        instructionObjs[base + Icode_LINE] = new DoLineChange();
         instructionObjs[base + Icode_REG_IND_C0] = new DoIndexCn();
         instructionObjs[base + Icode_REG_IND_C1] = new DoIndexCn();
         instructionObjs[base + Icode_REG_IND_C2] = new DoIndexCn();
@@ -2843,19 +2845,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     }
                                     continue Loop;
                                 }
-                            case Icode_DEBUGGER:
-                                if (frame.debuggerFrame != null) {
-                                    frame.debuggerFrame.onDebuggerStatement(cx);
-                                }
-                                continue Loop;
-                            case Icode_LINE:
-                                frame.pcSourceLineStart = frame.pc;
-                                if (frame.debuggerFrame != null) {
-                                    int line = getIndex(iCode, frame.pc);
-                                    frame.debuggerFrame.onLineChange(cx, line);
-                                }
-                                frame.pc += 2;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2946,6 +2935,29 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoDebug extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (frame.debuggerFrame != null) {
+                frame.debuggerFrame.onDebuggerStatement(cx);
+            }
+            return null;
+        }
+    }
+
+    private static class DoLineChange extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.pcSourceLineStart = frame.pc;
+            if (frame.debuggerFrame != null) {
+                int line = getIndex(frame.idata.itsICode, frame.pc);
+                frame.debuggerFrame.onLineChange(cx, line);
+            }
+            frame.pc += 2;
+            return null;
+        }
     }
 
     private static class DoIndexCn extends InstructionClass {
