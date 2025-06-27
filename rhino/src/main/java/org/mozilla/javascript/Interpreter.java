@@ -1373,6 +1373,13 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_SETCONSTVAR1] = new DoSetConstVar1();
+        instructionObjs[base + Icode_SETCONSTVAR] = new DoSetConstVar();
+        instructionObjs[base + Icode_SETVAR1] = new DoSetVar1();
+        instructionObjs[base + Token.SETVAR] = new DoSetVar();
+        instructionObjs[base + Icode_GETVAR1] = new DoGetVar1();
+        instructionObjs[base + Token.GETVAR] = new DoGetVar();
+        instructionObjs[base + Icode_VAR_INC_DEC] = new DoVarIncDec();
         instructionObjs[base + Icode_ZERO] = new DoZero();
         instructionObjs[base + Icode_ONE] = new DoOne();
         instructionObjs[base + Token.NULL] = new DoNull();
@@ -2479,60 +2486,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                 frame.scope, stringReg, cx, iCode[frame.pc]);
                                 ++frame.pc;
                                 continue Loop;
-                            case Icode_SETCONSTVAR1:
-                                indexReg = iCode[frame.pc++];
-                            // fallthrough
-                            case Icode_SETCONSTVAR:
-                                stackTop =
-                                        doSetConstVar(
-                                                frame,
-                                                stack,
-                                                sDbl,
-                                                stackTop,
-                                                vars,
-                                                varDbls,
-                                                varAttributes,
-                                                indexReg);
-                                continue Loop;
-                            case Icode_SETVAR1:
-                                indexReg = iCode[frame.pc++];
-                            // fallthrough
-                            case Token.SETVAR:
-                                stackTop =
-                                        doSetVar(
-                                                frame,
-                                                stack,
-                                                sDbl,
-                                                stackTop,
-                                                vars,
-                                                varDbls,
-                                                varAttributes,
-                                                indexReg);
-                                continue Loop;
-                            case Icode_GETVAR1:
-                                indexReg = iCode[frame.pc++];
-                            // fallthrough
-                            case Token.GETVAR:
-                                stackTop =
-                                        doGetVar(
-                                                frame, stack, sDbl, stackTop, vars, varDbls,
-                                                indexReg);
-                                continue Loop;
-                            case Icode_VAR_INC_DEC:
-                                {
-                                    stackTop =
-                                            doVarIncDec(
-                                                    cx,
-                                                    frame,
-                                                    stack,
-                                                    sDbl,
-                                                    stackTop,
-                                                    vars,
-                                                    varDbls,
-                                                    varAttributes,
-                                                    indexReg);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2623,6 +2576,216 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoSetConstVar1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = frame.idata.itsICode[frame.pc++];
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            if (!frame.useActivation) {
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    throw Context.reportRuntimeErrorById(
+                            "msg.var.redecl", frame.idata.argNames[state.indexReg]);
+                }
+                if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+                    vars[state.indexReg] = frame.stack[state.stackTop];
+                    varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                }
+            } else {
+                Object val = frame.stack[state.stackTop];
+                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                String stringReg = frame.idata.argNames[state.indexReg];
+                if (frame.scope instanceof ConstProperties) {
+                    ConstProperties cp = (ConstProperties) frame.scope;
+                    cp.putConst(stringReg, frame.scope, val);
+                } else throw Kit.codeBug();
+            }
+            return null;
+        }
+    }
+
+    private static class DoSetConstVar extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            if (!frame.useActivation) {
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    throw Context.reportRuntimeErrorById(
+                            "msg.var.redecl", frame.idata.argNames[state.indexReg]);
+                }
+                if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+                    vars[state.indexReg] = frame.stack[state.stackTop];
+                    varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                }
+            } else {
+                Object val = frame.stack[state.stackTop];
+                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                String stringReg = frame.idata.argNames[state.indexReg];
+                if (frame.scope instanceof ConstProperties) {
+                    ConstProperties cp = (ConstProperties) frame.scope;
+                    cp.putConst(stringReg, frame.scope, val);
+                } else throw Kit.codeBug();
+            }
+            return null;
+        }
+    }
+
+    private static class DoSetVar1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = frame.idata.itsICode[frame.pc++];
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            if (!frame.useActivation) {
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    vars[state.indexReg] = frame.stack[state.stackTop];
+                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                }
+            } else {
+                Object val = frame.stack[state.stackTop];
+                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                String stringReg = frame.idata.argNames[state.indexReg];
+                frame.scope.put(stringReg, frame.scope, val);
+            }
+            return null;
+        }
+    }
+
+    private static class DoSetVar extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            if (!frame.useActivation) {
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    vars[state.indexReg] = frame.stack[state.stackTop];
+                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                }
+            } else {
+                Object val = frame.stack[state.stackTop];
+                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                String stringReg = frame.idata.argNames[state.indexReg];
+                frame.scope.put(stringReg, frame.scope, val);
+            }
+            return null;
+        }
+    }
+
+    private static class DoGetVar1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = frame.idata.itsICode[frame.pc++];
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            ++state.stackTop;
+            if (!frame.useActivation) {
+                frame.stack[state.stackTop] = vars[state.indexReg];
+                frame.sDbl[state.stackTop] = varDbls[state.indexReg];
+            } else {
+                String stringReg = frame.idata.argNames[state.indexReg];
+                frame.stack[state.stackTop] = frame.scope.get(stringReg, frame.scope);
+            }
+            return null;
+        }
+    }
+
+    private static class DoGetVar extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            ++state.stackTop;
+            if (!frame.useActivation) {
+                frame.stack[state.stackTop] = vars[state.indexReg];
+                frame.sDbl[state.stackTop] = varDbls[state.indexReg];
+            } else {
+                String stringReg = frame.idata.argNames[state.indexReg];
+                frame.stack[state.stackTop] = frame.scope.get(stringReg, frame.scope);
+            }
+            return null;
+        }
+    }
+
+    private static class DoVarIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.sDbl;
+            // indexReg : varindex
+            ++state.stackTop;
+            int incrDecrMask = frame.idata.itsICode[frame.pc];
+            if (!frame.useActivation) {
+                Object varValue = vars[state.indexReg];
+                double d = 0.0;
+                BigInteger bi = null;
+                if (varValue == DOUBLE_MARK) {
+                    d = varDbls[state.indexReg];
+                } else {
+                    Number num = ScriptRuntime.toNumeric(varValue);
+                    if (num instanceof BigInteger) {
+                        bi = (BigInteger) num;
+                    } else {
+                        d = num.doubleValue();
+                    }
+                }
+                if (bi == null) {
+                    // double
+                    double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
+                    boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                    if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                        if (varValue != DOUBLE_MARK) {
+                            vars[state.indexReg] = DOUBLE_MARK;
+                        }
+                        varDbls[state.indexReg] = d2;
+                        frame.stack[state.stackTop] = DOUBLE_MARK;
+                        frame.sDbl[state.stackTop] = post ? d : d2;
+                    } else {
+                        if (post && varValue != DOUBLE_MARK) {
+                            frame.stack[state.stackTop] = varValue;
+                        } else {
+                            frame.stack[state.stackTop] = DOUBLE_MARK;
+                            frame.sDbl[state.stackTop] = post ? d : d2;
+                        }
+                    }
+                } else {
+                    // BigInt
+                    BigInteger result;
+                    if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                        result = bi.add(BigInteger.ONE);
+                    } else {
+                        result = bi.subtract(BigInteger.ONE);
+                    }
+
+                    boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                    if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                        vars[state.indexReg] = result;
+                        frame.stack[state.stackTop] = post ? bi : result;
+                    } else {
+                        if (post && varValue != DOUBLE_MARK) {
+                            frame.stack[state.stackTop] = varValue;
+                        } else {
+                            frame.stack[state.stackTop] = post ? bi : result;
+                        }
+                    }
+                }
+            } else {
+                String varName = frame.idata.argNames[state.indexReg];
+                frame.stack[state.stackTop] =
+                        ScriptRuntime.nameIncrDecr(frame.scope, varName, cx, incrDecrMask);
+            }
+            ++frame.pc;
+            return null;
+        }
     }
 
     private static class DoZero extends InstructionClass {
@@ -3759,154 +3922,6 @@ public final class Interpreter extends Icode implements Evaluator {
                             isOptionalChainingCall);
         }
         frame.pc += 4;
-        return stackTop;
-    }
-
-    private static int doSetConstVar(
-            CallFrame frame,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop,
-            Object[] vars,
-            double[] varDbls,
-            byte[] varAttributes,
-            int indexReg) {
-        if (!frame.useActivation) {
-            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                throw Context.reportRuntimeErrorById(
-                        "msg.var.redecl", frame.idata.argNames[indexReg]);
-            }
-            if ((varAttributes[indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-                vars[indexReg] = stack[stackTop];
-                varAttributes[indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
-                varDbls[indexReg] = sDbl[stackTop];
-            }
-        } else {
-            Object val = stack[stackTop];
-            if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-            String stringReg = frame.idata.argNames[indexReg];
-            if (frame.scope instanceof ConstProperties) {
-                ConstProperties cp = (ConstProperties) frame.scope;
-                cp.putConst(stringReg, frame.scope, val);
-            } else throw Kit.codeBug();
-        }
-        return stackTop;
-    }
-
-    private static int doSetVar(
-            CallFrame frame,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop,
-            Object[] vars,
-            double[] varDbls,
-            byte[] varAttributes,
-            int indexReg) {
-        if (!frame.useActivation) {
-            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                vars[indexReg] = stack[stackTop];
-                varDbls[indexReg] = sDbl[stackTop];
-            }
-        } else {
-            Object val = stack[stackTop];
-            if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-            String stringReg = frame.idata.argNames[indexReg];
-            frame.scope.put(stringReg, frame.scope, val);
-        }
-        return stackTop;
-    }
-
-    private static int doGetVar(
-            CallFrame frame,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop,
-            Object[] vars,
-            double[] varDbls,
-            int indexReg) {
-        ++stackTop;
-        if (!frame.useActivation) {
-            stack[stackTop] = vars[indexReg];
-            sDbl[stackTop] = varDbls[indexReg];
-        } else {
-            String stringReg = frame.idata.argNames[indexReg];
-            stack[stackTop] = frame.scope.get(stringReg, frame.scope);
-        }
-        return stackTop;
-    }
-
-    private static int doVarIncDec(
-            Context cx,
-            CallFrame frame,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop,
-            Object[] vars,
-            double[] varDbls,
-            byte[] varAttributes,
-            int indexReg) {
-        // indexReg : varindex
-        ++stackTop;
-        int incrDecrMask = frame.idata.itsICode[frame.pc];
-        if (!frame.useActivation) {
-            Object varValue = vars[indexReg];
-            double d = 0.0;
-            BigInteger bi = null;
-            if (varValue == DOUBLE_MARK) {
-                d = varDbls[indexReg];
-            } else {
-                Number num = ScriptRuntime.toNumeric(varValue);
-                if (num instanceof BigInteger) {
-                    bi = (BigInteger) num;
-                } else {
-                    d = num.doubleValue();
-                }
-            }
-            if (bi == null) {
-                // double
-                double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                    if (varValue != DOUBLE_MARK) {
-                        vars[indexReg] = DOUBLE_MARK;
-                    }
-                    varDbls[indexReg] = d2;
-                    stack[stackTop] = DOUBLE_MARK;
-                    sDbl[stackTop] = post ? d : d2;
-                } else {
-                    if (post && varValue != DOUBLE_MARK) {
-                        stack[stackTop] = varValue;
-                    } else {
-                        stack[stackTop] = DOUBLE_MARK;
-                        sDbl[stackTop] = post ? d : d2;
-                    }
-                }
-            } else {
-                // BigInt
-                BigInteger result;
-                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                    result = bi.add(BigInteger.ONE);
-                } else {
-                    result = bi.subtract(BigInteger.ONE);
-                }
-
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                    vars[indexReg] = result;
-                    stack[stackTop] = post ? bi : result;
-                } else {
-                    if (post && varValue != DOUBLE_MARK) {
-                        stack[stackTop] = varValue;
-                    } else {
-                        stack[stackTop] = post ? bi : result;
-                    }
-                }
-            }
-        } else {
-            String varName = frame.idata.argNames[indexReg];
-            stack[stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, varName, cx, incrDecrMask);
-        }
-        ++frame.pc;
         return stackTop;
     }
 
