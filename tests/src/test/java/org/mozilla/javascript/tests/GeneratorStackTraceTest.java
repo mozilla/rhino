@@ -18,7 +18,7 @@ public class GeneratorStackTraceTest {
     }
 
     private static void runWithExpectedStackTrace(final String _source, final String expected) {
-        Utils.runWithMode(
+        Utils.runWithAllModes(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     try {
@@ -28,8 +28,7 @@ public class GeneratorStackTraceTest {
                         return null;
                     }
                     throw new RuntimeException("Exception expected!");
-                },
-                true);
+                });
     }
 
     @Test
@@ -49,7 +48,7 @@ public class GeneratorStackTraceTest {
                         + "g.next();\n"
                         + "g.next();"; // This should throw
 
-        Utils.runWithMode(
+        Utils.runWithAllModes(
                 context -> {
                     try {
                         final Scriptable scope = context.initStandardObjects();
@@ -70,8 +69,7 @@ public class GeneratorStackTraceTest {
                         System.out.println("Nested Generator Exception Stack: \n" + stack);
                     }
                     return null;
-                },
-                true);
+                });
     }
 
     // Doesn't work due to our implementation of yield*.
@@ -90,7 +88,7 @@ public class GeneratorStackTraceTest {
                         + "g.next();\n"
                         + "g.next();"; // This should throw
 
-        Utils.runWithMode(
+        Utils.runWithAllModes(
                 context -> {
                     try {
                         final Scriptable scope = context.initStandardObjects();
@@ -111,13 +109,12 @@ public class GeneratorStackTraceTest {
                         System.out.println("Nested Generator Exception Stack: \n" + stack);
                     }
                     return null;
-                },
-                true);
+                });
     }
 
     @Test
     public void testJavaCallbackThrowsFromGenerator() {
-        Utils.runWithMode(
+        Utils.runWithAllModes(
                 context -> {
                     Scriptable scope = context.initStandardObjects();
                     LambdaFunction f =
@@ -156,7 +153,6 @@ public class GeneratorStackTraceTest {
                         System.out.println("Caught Java Exception from JS: " + e.getMessage());
                     }
                     return null;
-                },
-                true);
+                });
     }
 }

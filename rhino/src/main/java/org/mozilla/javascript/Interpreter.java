@@ -2092,7 +2092,7 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_SETCONSTVAR1:
                                 indexReg = iCode[frame.pc++];
                             // fallthrough
-                            case Token.SETCONSTVAR:
+                            case Icode_SETCONSTVAR:
                                 stackTop =
                                         doSetConstVar(
                                                 frame,
