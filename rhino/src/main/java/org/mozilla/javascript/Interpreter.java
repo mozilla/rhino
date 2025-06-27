@@ -1373,6 +1373,7 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.NEW] = new DoNew();
         instructionObjs[base + Token.TYPEOF] = new DoTypeOf();
         instructionObjs[base + Icode_TYPEOFNAME] = new DoTypeOfName();
         instructionObjs[base + Token.STRING] = new DoString();
@@ -2386,71 +2387,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                         break;
                                     }
                                 }
-                            case Token.NEW:
-                                {
-                                    if (instructionCounting) {
-                                        cx.instructionCount += INVOCATION_COST;
-                                    }
-                                    // stack change: function arg0 .. argN -> newResult
-                                    // indexReg: number of arguments
-                                    stackTop -= indexReg;
-
-                                    Object lhs = stack[stackTop];
-                                    if (lhs instanceof InterpretedFunction) {
-                                        InterpretedFunction f = (InterpretedFunction) lhs;
-                                        if (frame.fnOrScript.securityDomain == f.securityDomain) {
-                                            if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                                                    && f.getHomeObject() != null) {
-                                                // Only methods have home objects associated with
-                                                // them
-                                                throw ScriptRuntime.typeErrorById(
-                                                        "msg.not.ctor", f.getFunctionName());
-                                            }
-
-                                            Scriptable newInstance =
-                                                    f.createObject(cx, frame.scope);
-                                            CallFrame calleeFrame =
-                                                    initFrame(
-                                                            cx,
-                                                            frame.scope,
-                                                            newInstance,
-                                                            newInstance,
-                                                            stack,
-                                                            sDbl,
-                                                            null,
-                                                            stackTop + 1,
-                                                            indexReg,
-                                                            f,
-                                                            frame);
-
-                                            stack[stackTop] = newInstance;
-                                            frame.savedStackTop = stackTop;
-                                            frame.savedCallOp = op;
-                                            return new StateContinueResult(calleeFrame, indexReg);
-                                        }
-                                    }
-                                    if (!(lhs instanceof Constructable)) {
-                                        if (lhs == DOUBLE_MARK)
-                                            lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                        throw ScriptRuntime.notFunctionError(lhs);
-                                    }
-                                    Constructable ctor = (Constructable) lhs;
-
-                                    if (ctor instanceof IdFunctionObject) {
-                                        IdFunctionObject ifun = (IdFunctionObject) ctor;
-                                        if (NativeContinuation.isContinuationConstructor(ifun)) {
-                                            frame.stack[stackTop] =
-                                                    captureContinuation(
-                                                            cx, frame.parentFrame, false);
-                                            continue Loop;
-                                        }
-                                    }
-
-                                    Object[] outArgs =
-                                            getArgsArray(stack, sDbl, stackTop + 1, indexReg);
-                                    stack[stackTop] = ctor.construct(cx, frame.scope, outArgs);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2541,6 +2477,69 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoNew extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (state.instructionCounting) {
+                cx.instructionCount += INVOCATION_COST;
+            }
+            // stack change: function arg0 .. argN -> newResult
+            // state.indexReg: number of arguments
+            state.stackTop -= state.indexReg;
+
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs instanceof InterpretedFunction) {
+                InterpretedFunction f = (InterpretedFunction) lhs;
+                if (frame.fnOrScript.securityDomain == f.securityDomain) {
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6
+                            && f.getHomeObject() != null) {
+                        // Only methods have home objects associated with
+                        // them
+                        throw ScriptRuntime.typeErrorById("msg.not.ctor", f.getFunctionName());
+                    }
+
+                    Scriptable newInstance = f.createObject(cx, frame.scope);
+                    CallFrame calleeFrame =
+                            initFrame(
+                                    cx,
+                                    frame.scope,
+                                    newInstance,
+                                    newInstance,
+                                    frame.stack,
+                                    frame.sDbl,
+                                    null,
+                                    state.stackTop + 1,
+                                    state.indexReg,
+                                    f,
+                                    frame);
+
+                    frame.stack[state.stackTop] = newInstance;
+                    frame.savedStackTop = state.stackTop;
+                    frame.savedCallOp = op;
+                    return new StateContinueResult(calleeFrame, state.indexReg);
+                }
+            }
+            if (!(lhs instanceof Constructable)) {
+                if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                throw ScriptRuntime.notFunctionError(lhs);
+            }
+            Constructable ctor = (Constructable) lhs;
+
+            if (ctor instanceof IdFunctionObject) {
+                IdFunctionObject ifun = (IdFunctionObject) ctor;
+                if (NativeContinuation.isContinuationConstructor(ifun)) {
+                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                    return null;
+                }
+            }
+
+            Object[] outArgs =
+                    getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
+            frame.stack[state.stackTop] = ctor.construct(cx, frame.scope, outArgs);
+            return null;
+        }
     }
 
     private static class DoTypeOf extends InstructionClass {
