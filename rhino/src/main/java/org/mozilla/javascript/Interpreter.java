@@ -1290,21 +1290,9 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static class NewState {}
 
-    private static final class StateContinue extends NewState {
-        private final CallFrame frame;
-
-        private StateContinue(CallFrame frame) {
-            this.frame = frame;
-        }
-    }
-
-    private static final class NewThrowable extends NewState {
-        private final Object throwable;
-
-        private NewThrowable(Object throwable) {
-            this.throwable = throwable;
-        }
-    }
+    // Null will be used to represent simple loop continuation in new
+    // instructions, but we'll keep this type here while we move
+    // things over.
 
     private static final class ContinueLoop extends NewState {
         private final int stackTop;
@@ -1316,7 +1304,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private abstract static class InterpreterResult {}
+    private abstract static class InterpreterResult extends NewState {}
 
     private static class YieldResult extends InterpreterResult {
         private final Object yielding;
@@ -1352,6 +1340,39 @@ public final class Interpreter extends Icode implements Evaluator {
             this.frame = frame;
             this.throwable = throwable;
         }
+    }
+
+    private static final NewState BREAK_LOOP = new NewState() {};
+
+    private static final NewState BREAK_JUMPLESSRUN = new NewState() {};
+
+    private static final NewState BREAK_WITHOUT_EXTENSION = new NewState() {};
+
+    private static class InterpreterState {
+        int stackTop;
+        int indexReg;
+        BigInteger bigIntReg;
+        String stringReg;
+        final boolean instructionCounting;
+        GeneratorState generatorState;
+        Object throwable;
+
+        InterpreterState(int stackTop, int indexReg, boolean instructionCounting) {
+            this.stackTop = stackTop;
+            this.indexReg = indexReg;
+            this.instructionCounting = instructionCounting;
+        }
+    }
+
+    private abstract static class InstructionClass {
+        abstract NewState execute(Context cx, CallFrame frame, InterpreterState state, int op);
+    }
+
+    private static final InstructionClass[] instructionObjs;
+
+    static {
+        instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
+        int base = -MIN_ICODE;
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -2269,11 +2290,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                         stackTop = contLoop.stackTop;
                                         indexReg = contLoop.indexReg;
                                         continue Loop;
-                                    } else if (callState instanceof StateContinue) {
-                                        return new StateContinueResult(
-                                                ((StateContinue) callState).frame, indexReg);
-                                    } else if (callState instanceof NewThrowable) {
-                                        throwable = ((NewThrowable) callState).throwable;
+                                    } else if (callState instanceof StateContinueResult) {
+                                        return (StateContinueResult) callState;
+                                    } else if (callState instanceof ThrowableResult) {
+                                        throwable = ((ThrowableResult) callState).throwable;
                                         break withoutExceptions;
                                     } else {
                                         Kit.codeBug();
@@ -2892,9 +2912,52 @@ public final class Interpreter extends Icode implements Evaluator {
                                 frame.pc += 4;
                                 continue Loop;
                             default:
-                                dumpICode(iData);
-                                throw new RuntimeException(
-                                        "Unknown icode : " + op + " @ pc : " + (frame.pc - 1));
+                                {
+                                    NewState nextState;
+
+                                    var insn = instructionObjs[-MIN_ICODE + op];
+                                    if (insn == null) {
+                                        dumpICode(iData);
+                                        throw new RuntimeException(
+                                                "Unknown icode : "
+                                                        + op
+                                                        + " @ pc : "
+                                                        + (frame.pc - 1));
+                                    }
+
+                                    // The state will become
+                                    // persistent for an entire call
+                                    // once all instructions are moved
+                                    // to this new scheme.
+                                    InterpreterState state =
+                                            new InterpreterState(
+                                                    stackTop, indexReg, instructionCounting);
+                                    state.stringReg = stringReg;
+                                    state.bigIntReg = bigIntReg;
+                                    state.throwable = throwable;
+                                    state.generatorState = generatorState;
+
+                                    nextState = insn.execute(cx, frame, state, op);
+
+                                    stackTop = state.stackTop;
+                                    indexReg = state.indexReg;
+                                    stringReg = state.stringReg;
+                                    bigIntReg = state.bigIntReg;
+                                    throwable = state.throwable;
+                                    generatorState = state.generatorState;
+
+                                    if (nextState == null) {
+                                        continue Loop;
+                                    } else if (nextState == BREAK_LOOP) {
+                                        break Loop;
+                                    } else if (nextState == BREAK_JUMPLESSRUN) {
+                                        break jumplessRun;
+                                    } else if (nextState == BREAK_WITHOUT_EXTENSION) {
+                                        break withoutExceptions;
+                                    } else {
+                                        return (InterpreterResult) nextState;
+                                    }
+                                }
                         } // end of interpreter switch
                     } // end of extra braces.
                 } // end of jumplessRun label block
@@ -3117,7 +3180,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     frame.savedStackTop = stackTop;
                     frame.savedCallOp = op;
                 }
-                return new StateContinue(calleeFrame);
+                return new StateContinueResult(calleeFrame, indexReg);
             }
         }
 
@@ -3136,7 +3199,7 @@ public final class Interpreter extends Icode implements Evaluator {
             }
 
             // Start the real unwind job
-            return new NewThrowable(cjump);
+            return new ThrowableResult(null, cjump);
         }
 
         if (fun instanceof IdFunctionObject) {
