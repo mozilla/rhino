@@ -1373,6 +1373,8 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.NAME] = new DoName();
+        instructionObjs[base + Icode_NAME_INC_DEC] = new DoNameIncDec();
         instructionObjs[base + Icode_SETCONSTVAR1] = new DoSetConstVar1();
         instructionObjs[base + Icode_SETCONSTVAR] = new DoSetConstVar();
         instructionObjs[base + Icode_SETVAR1] = new DoSetVar1();
@@ -2477,15 +2479,6 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Token.BIGINT:
                                 stack[++stackTop] = bigIntReg;
                                 continue Loop;
-                            case Token.NAME:
-                                stack[++stackTop] = ScriptRuntime.name(cx, frame.scope, stringReg);
-                                continue Loop;
-                            case Icode_NAME_INC_DEC:
-                                stack[++stackTop] =
-                                        ScriptRuntime.nameIncrDecr(
-                                                frame.scope, stringReg, cx, iCode[frame.pc]);
-                                ++frame.pc;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2576,6 +2569,25 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = ScriptRuntime.name(cx, frame.scope, state.stringReg);
+            return null;
+        }
+    }
+
+    private static class DoNameIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] =
+                    ScriptRuntime.nameIncrDecr(
+                            frame.scope, state.stringReg, cx, frame.idata.itsICode[frame.pc]);
+            ++frame.pc;
+            return null;
+        }
     }
 
     private static class DoSetConstVar1 extends InstructionClass {
