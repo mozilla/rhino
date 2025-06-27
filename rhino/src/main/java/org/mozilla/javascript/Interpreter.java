@@ -1373,6 +1373,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_ENTERDQ] = new DoEnterDotQuery();
+        instructionObjs[base + Icode_LEAVEDQ] = new DoLeaveDotQuery();
+        instructionObjs[base + Token.DEFAULTNAMESPACE] = new DoDefaultNamespace();
+        instructionObjs[base + Token.ESCXMLATTR] = new DoEscXMLAttr();
+        instructionObjs[base + Token.ESCXMLTEXT] = new DoEscXMLText();
         instructionObjs[base + Icode_DEBUGGER] = new DoDebug();
         instructionObjs[base + Icode_LINE] = new DoLineChange();
         instructionObjs[base + Icode_REG_IND_C0] = new DoIndexCn();
@@ -2797,54 +2802,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stack[stackTop] = val;
                                     continue Loop;
                                 }
-                            case Icode_ENTERDQ:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    frame.scope = ScriptRuntime.enterDotQuery(lhs, frame.scope);
-                                    continue Loop;
-                                }
-                            case Icode_LEAVEDQ:
-                                {
-                                    boolean valBln = stack_boolean(frame, stackTop);
-                                    Object x = ScriptRuntime.updateDotQuery(valBln, frame.scope);
-                                    if (x != null) {
-                                        stack[stackTop] = x;
-                                        frame.scope = ScriptRuntime.leaveDotQuery(frame.scope);
-                                        frame.pc += 2;
-                                        continue Loop;
-                                    }
-                                    // reset stack and PC to code after ENTERDQ
-                                    --stackTop;
-                                    break jumplessRun;
-                                }
-                            case Token.DEFAULTNAMESPACE:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] = ScriptRuntime.setDefaultNamespace(value, cx);
-                                    continue Loop;
-                                }
-                            case Token.ESCXMLATTR:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value != DOUBLE_MARK) {
-                                        stack[stackTop] =
-                                                ScriptRuntime.escapeAttributeValue(value, cx);
-                                    }
-                                    continue Loop;
-                                }
-                            case Token.ESCXMLTEXT:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value != DOUBLE_MARK) {
-                                        stack[stackTop] = ScriptRuntime.escapeTextValue(value, cx);
-                                    }
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2935,6 +2892,66 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoEnterDotQuery extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.scope = ScriptRuntime.enterDotQuery(lhs, frame.scope);
+            state.stackTop--;
+            return null;
+        }
+    }
+
+    private static class DoLeaveDotQuery extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            boolean valBln = stack_boolean(frame, state.stackTop);
+            Object x = ScriptRuntime.updateDotQuery(valBln, frame.scope);
+            if (x != null) {
+                frame.stack[state.stackTop] = x;
+                frame.scope = ScriptRuntime.leaveDotQuery(frame.scope);
+                frame.pc += 2;
+                return null;
+            }
+            // reset stack and PC to code after ENTERDQ
+            --state.stackTop;
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoDefaultNamespace extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] = ScriptRuntime.setDefaultNamespace(value, cx);
+            return null;
+        }
+    }
+
+    private static class DoEscXMLAttr extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            if (value != DOUBLE_MARK) {
+                frame.stack[state.stackTop] = ScriptRuntime.escapeAttributeValue(value, cx);
+            }
+            return null;
+        }
+    }
+
+    private static class DoEscXMLText extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            if (value != DOUBLE_MARK) {
+                frame.stack[state.stackTop] = ScriptRuntime.escapeTextValue(value, cx);
+            }
+            return null;
+        }
     }
 
     private static class DoDebug extends InstructionClass {
