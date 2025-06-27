@@ -1373,6 +1373,9 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
+        instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
+        instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_ARRAY] = new DoEnumInit();
@@ -2569,44 +2572,6 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_UNDEF:
                                 stack[++stackTop] = undefined;
                                 continue Loop;
-                            case Token.ENTERWITH:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    frame.scope = ScriptRuntime.enterWith(lhs, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.LEAVEWITH:
-                                frame.scope = ScriptRuntime.leaveWith(frame.scope);
-                                continue Loop;
-                            case Token.CATCH_SCOPE:
-                                {
-                                    // stack top: exception object
-                                    // stringReg: name of exception variable
-                                    // indexReg: local for exception scope
-                                    --stackTop;
-                                    indexReg += iData.itsMaxVars;
-
-                                    boolean afterFirstScope = (iData.itsICode[frame.pc] != 0);
-                                    Throwable caughtException = (Throwable) stack[stackTop + 1];
-                                    Scriptable lastCatchScope;
-                                    if (!afterFirstScope) {
-                                        lastCatchScope = null;
-                                    } else {
-                                        lastCatchScope = (Scriptable) stack[indexReg];
-                                    }
-                                    stack[indexReg] =
-                                            ScriptRuntime.newCatchScope(
-                                                    caughtException,
-                                                    lastCatchScope,
-                                                    stringReg,
-                                                    cx,
-                                                    frame.scope);
-                                    ++frame.pc;
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2697,6 +2662,51 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoEnterWith extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.scope = ScriptRuntime.enterWith(lhs, cx, frame.scope);
+            state.stackTop--;
+            return null;
+        }
+    }
+
+    private static class DoLeaveWith extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = ScriptRuntime.leaveWith(frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoCatchScope extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+
+            // stack top: exception object
+            // state.stringReg: name of exception variable
+            // state.indexReg: local for exception scope
+            --state.stackTop;
+            state.indexReg += frame.idata.itsMaxVars;
+
+            boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
+            Throwable caughtException = (Throwable) frame.stack[state.stackTop + 1];
+            Scriptable lastCatchScope;
+            if (!afterFirstScope) {
+                lastCatchScope = null;
+            } else {
+                lastCatchScope = (Scriptable) frame.stack[state.indexReg];
+            }
+            frame.stack[state.indexReg] =
+                    ScriptRuntime.newCatchScope(
+                            caughtException, lastCatchScope, state.stringReg, cx, frame.scope);
+            ++frame.pc;
+            return null;
+        }
     }
 
     private static class DoEnumInit extends InstructionClass {
