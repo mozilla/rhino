@@ -1373,6 +1373,8 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.TYPEOF] = new DoTypeOf();
+        instructionObjs[base + Icode_TYPEOFNAME] = new DoTypeOfName();
         instructionObjs[base + Token.STRING] = new DoString();
         instructionObjs[base + Icode_SHORTNUMBER] = new DoShortNumber();
         instructionObjs[base + Icode_INTNUMBER] = new DoIntNumber();
@@ -2449,18 +2451,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stack[stackTop] = ctor.construct(cx, frame.scope, outArgs);
                                     continue Loop;
                                 }
-                            case Token.TYPEOF:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] = ScriptRuntime.typeof(lhs);
-                                    continue Loop;
-                                }
-                            case Icode_TYPEOFNAME:
-                                stack[++stackTop] =
-                                        ScriptRuntime.typeofName(frame.scope, stringReg);
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2551,6 +2541,26 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoTypeOf extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] = ScriptRuntime.typeof(lhs);
+            return null;
+        }
+    }
+
+    private static class DoTypeOfName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = ScriptRuntime.typeofName(frame.scope, state.stringReg);
+            return null;
+        }
     }
 
     private static class DoString extends InstructionClass {
