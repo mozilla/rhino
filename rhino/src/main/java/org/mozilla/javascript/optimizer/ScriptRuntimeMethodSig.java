@@ -10,7 +10,9 @@ import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.ScriptRuntime;
 
 /**
- * Holder of {@link ScriptRuntime} method information, to help with codegen
+ * INTERNAL API
+ *
+ * <p>Holder of {@link ScriptRuntime} method information, to help with codegen
  *
  * <p>Each enum value is linked to a method in {@link ScriptRuntime} via {@link CodeGenMarker}. For
  * each enum value, there should be at least and at most one method linked to it, or a fatal
@@ -120,7 +122,9 @@ public enum ScriptRuntimeMethodSig {
     }
 
     /**
-     * For linking method and corresponding enum value
+     * INTERNAL API
+     *
+     * <p>For linking method and corresponding enum value
      *
      * @see ScriptRuntimeMethodSig
      */
