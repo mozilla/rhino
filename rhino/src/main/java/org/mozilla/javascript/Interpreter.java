@@ -1373,6 +1373,17 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.REGEXP] = new DoRegExp();
+        instructionObjs[base + Icode_TEMPLATE_LITERAL_CALLSITE] = new DoTemplateLiteralCallSite();
+        instructionObjs[base + Icode_LITERAL_NEW_OBJECT] = new DoLiteralNewObject();
+        instructionObjs[base + Icode_LITERAL_NEW_ARRAY] = new DoNewArrayLit();
+        instructionObjs[base + Icode_LITERAL_SET] = new DoLiteralSet();
+        instructionObjs[base + Icode_LITERAL_GETTER] = new DoLiteralGetter();
+        instructionObjs[base + Icode_LITERAL_SETTER] = new DoLiteralSetter();
+        instructionObjs[base + Icode_LITERAL_KEY_SET] = new DoLiteralKeySet();
+        instructionObjs[base + Token.OBJECTLIT] = new DoObjectLit();
+        instructionObjs[base + Token.ARRAYLIT] = new DoArrayLiteral();
+        instructionObjs[base + Icode_SPARE_ARRAYLIT] = new DoArrayLiteral();
         instructionObjs[base + Icode_ENTERDQ] = new DoEnterDotQuery();
         instructionObjs[base + Icode_LEAVEDQ] = new DoLeaveDotQuery();
         instructionObjs[base + Token.DEFAULTNAMESPACE] = new DoDefaultNamespace();
@@ -2691,117 +2702,6 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_CLOSURE_STMT:
                                 initFunction(cx, frame.scope, frame.fnOrScript, indexReg);
                                 continue Loop;
-                            case Token.REGEXP:
-                                Object re = iData.itsRegExpLiterals[indexReg];
-                                stack[++stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
-                                continue Loop;
-                            case Icode_TEMPLATE_LITERAL_CALLSITE:
-                                Object[] templateLiterals = iData.itsTemplateLiterals;
-                                stack[++stackTop] =
-                                        ScriptRuntime.getTemplateLiteralCallSite(
-                                                cx, frame.scope, templateLiterals, indexReg);
-                                continue Loop;
-                            case Icode_LITERAL_NEW_OBJECT:
-                                {
-                                    // indexReg: index of constant with the keys
-                                    Object[] ids = (Object[]) iData.literalIds[indexReg];
-                                    boolean copyArray = iCode[frame.pc] != 0;
-                                    ++frame.pc;
-                                    ++stackTop;
-                                    stack[stackTop] = cx.newObject(frame.scope);
-                                    ++stackTop;
-                                    stack[stackTop] =
-                                            copyArray ? Arrays.copyOf(ids, ids.length) : ids;
-                                    ++stackTop;
-                                    stack[stackTop] = new int[ids.length];
-                                    ++stackTop;
-                                    stack[stackTop] = new Object[ids.length];
-                                    sDbl[stackTop] = 0;
-                                    continue Loop;
-                                }
-                            case Icode_LITERAL_NEW_ARRAY:
-                                // indexReg: number of values in the literal
-                                ++stackTop;
-                                stack[stackTop] = new int[indexReg];
-                                ++stackTop;
-                                stack[stackTop] = new Object[indexReg];
-                                sDbl[stackTop] = 0;
-                                continue Loop;
-                            case Icode_LITERAL_SET:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    int i = (int) sDbl[stackTop];
-                                    ((Object[]) stack[stackTop])[i] = value;
-                                    sDbl[stackTop] = i + 1;
-                                    continue Loop;
-                                }
-                            case Icode_LITERAL_GETTER:
-                                {
-                                    Object value = stack[stackTop];
-                                    --stackTop;
-                                    int i = (int) sDbl[stackTop];
-                                    ((Object[]) stack[stackTop])[i] = value;
-                                    ((int[]) stack[stackTop - 1])[i] = -1;
-                                    sDbl[stackTop] = i + 1;
-                                    continue Loop;
-                                }
-                            case Icode_LITERAL_SETTER:
-                                {
-                                    Object value = stack[stackTop];
-                                    --stackTop;
-                                    int i = (int) sDbl[stackTop];
-                                    ((Object[]) stack[stackTop])[i] = value;
-                                    ((int[]) stack[stackTop - 1])[i] = 1;
-                                    sDbl[stackTop] = i + 1;
-                                    continue Loop;
-                                }
-
-                            case Icode_LITERAL_KEY_SET:
-                                {
-                                    Object key = stack[stackTop];
-                                    if (key == DOUBLE_MARK)
-                                        key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Object[] ids = (Object[]) stack[stackTop - 2];
-                                    int i = (int) sDbl[stackTop];
-                                    ids[i] = key;
-                                    continue Loop;
-                                }
-                            case Token.OBJECTLIT:
-                                {
-                                    Object[] values = (Object[]) stack[stackTop];
-                                    --stackTop;
-                                    int[] getterSetters = (int[]) stack[stackTop];
-                                    --stackTop;
-                                    Object[] keys = (Object[]) stack[stackTop];
-                                    --stackTop;
-                                    Scriptable object = (Scriptable) stack[stackTop];
-                                    ScriptRuntime.fillObjectLiteral(
-                                            object, keys, values, getterSetters, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.ARRAYLIT:
-                            case Icode_SPARE_ARRAYLIT:
-                                {
-                                    Object[] data = (Object[]) stack[stackTop];
-                                    --stackTop;
-                                    int[] getterSetters = (int[]) stack[stackTop];
-                                    Object val;
-
-                                    int[] skipIndexces = null;
-                                    if (op == Icode_SPARE_ARRAYLIT) {
-                                        skipIndexces = (int[]) iData.literalIds[indexReg];
-                                    }
-                                    val =
-                                            ScriptRuntime.newArrayLiteral(
-                                                    data, skipIndexces, cx, frame.scope);
-
-                                    stack[stackTop] = val;
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2892,6 +2792,130 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoRegExp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object re = frame.idata.itsRegExpLiterals[state.indexReg];
+            frame.stack[++state.stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
+            return null;
+        }
+    }
+
+    private static class DoTemplateLiteralCallSite extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] templateLiterals = frame.idata.itsTemplateLiterals;
+            frame.stack[++state.stackTop] =
+                    ScriptRuntime.getTemplateLiteralCallSite(
+                            cx, frame.scope, templateLiterals, state.indexReg);
+            return null;
+        }
+    }
+
+    private static class DoLiteralNewObject extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // indexReg: index of constant with the keys
+            Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
+            boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
+            ++frame.pc;
+            frame.stack[++state.stackTop] = cx.newObject(frame.scope);
+            frame.stack[++state.stackTop] = copyArray ? Arrays.copyOf(ids, ids.length) : ids;
+            frame.stack[++state.stackTop] = new int[ids.length];
+            frame.stack[++state.stackTop] = new Object[ids.length];
+            frame.sDbl[state.stackTop] = 0;
+            return null;
+        }
+    }
+
+    private static class DoNewArrayLit extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // indexReg: number of values in the literal
+            frame.stack[++state.stackTop] = new int[state.indexReg];
+            frame.stack[++state.stackTop] = new Object[state.indexReg];
+            frame.sDbl[state.stackTop] = 0;
+            return null;
+        }
+    }
+
+    private static class DoLiteralSet extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            int i = (int) frame.sDbl[--state.stackTop];
+            ((Object[]) frame.stack[state.stackTop])[i] = value;
+            frame.sDbl[state.stackTop] = i + 1;
+            return null;
+        }
+    }
+
+    private static class DoLiteralGetter extends InstructionClass {
+        @Override
+        NewState execute(Context cs, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            int i = (int) frame.sDbl[--state.stackTop];
+            ((Object[]) frame.stack[state.stackTop])[i] = value;
+            ((int[]) frame.stack[--state.stackTop])[i] = -1;
+            frame.sDbl[++state.stackTop] = i + 1;
+            return null;
+        }
+    }
+
+    private static class DoLiteralSetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object value = frame.stack[state.stackTop];
+            int i = (int) frame.sDbl[--state.stackTop];
+            ((Object[]) frame.stack[state.stackTop])[i] = value;
+            ((int[]) frame.stack[--state.stackTop])[i] = 1;
+            frame.sDbl[++state.stackTop] = i + 1;
+            return null;
+        }
+    }
+
+    private static class DoLiteralKeySet extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            Object[] ids = (Object[]) frame.stack[state.stackTop - 3];
+            int i = (int) frame.sDbl[--state.stackTop];
+            ids[i] = key;
+            return null;
+        }
+    }
+
+    private static class DoObjectLit extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] values = (Object[]) frame.stack[state.stackTop];
+            int[] getterSetters = (int[]) frame.stack[--state.stackTop];
+            Object[] keys = (Object[]) frame.stack[--state.stackTop];
+            Scriptable object = (Scriptable) frame.stack[--state.stackTop];
+            ScriptRuntime.fillObjectLiteral(object, keys, values, getterSetters, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoArrayLiteral extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] data = (Object[]) frame.stack[state.stackTop--];
+            Object val;
+
+            int[] skipIndexces = null;
+            if (op == Icode_SPARE_ARRAYLIT) {
+                skipIndexces = (int[]) frame.idata.literalIds[state.indexReg];
+            }
+            val = ScriptRuntime.newArrayLiteral(data, skipIndexces, cx, frame.scope);
+
+            frame.stack[state.stackTop] = val;
+            return null;
+        }
     }
 
     private static class DoEnterDotQuery extends InstructionClass {
