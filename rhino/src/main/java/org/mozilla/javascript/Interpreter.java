@@ -1373,6 +1373,15 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_REG_IND_C0] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND_C1] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND_C2] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND_C3] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND_C4] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND_C5] = new DoIndexCn();
+        instructionObjs[base + Icode_REG_IND1] = new DoRegIndex1();
+        instructionObjs[base + Icode_REG_IND2] = new DoRegIndex2();
+        instructionObjs[base + Icode_REG_IND4] = new DoRegIndex4();
         instructionObjs[base + Icode_REG_STR_C0] = new DoStringCn();
         instructionObjs[base + Icode_REG_STR_C1] = new DoStringCn();
         instructionObjs[base + Icode_REG_STR_C2] = new DoStringCn();
@@ -2847,36 +2856,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                                 frame.pc += 2;
                                 continue Loop;
-                            case Icode_REG_IND_C0:
-                                indexReg = 0;
-                                continue Loop;
-                            case Icode_REG_IND_C1:
-                                indexReg = 1;
-                                continue Loop;
-                            case Icode_REG_IND_C2:
-                                indexReg = 2;
-                                continue Loop;
-                            case Icode_REG_IND_C3:
-                                indexReg = 3;
-                                continue Loop;
-                            case Icode_REG_IND_C4:
-                                indexReg = 4;
-                                continue Loop;
-                            case Icode_REG_IND_C5:
-                                indexReg = 5;
-                                continue Loop;
-                            case Icode_REG_IND1:
-                                indexReg = 0xFF & iCode[frame.pc];
-                                ++frame.pc;
-                                continue Loop;
-                            case Icode_REG_IND2:
-                                indexReg = getIndex(iCode, frame.pc);
-                                frame.pc += 2;
-                                continue Loop;
-                            case Icode_REG_IND4:
-                                indexReg = getInt(iCode, frame.pc);
-                                frame.pc += 4;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2967,6 +2946,41 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoIndexCn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = Icode_REG_IND_C0 - op;
+            return null;
+        }
+    }
+
+    private static class DoRegIndex1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = 0xFF & frame.idata.itsICode[frame.pc];
+            ++frame.pc;
+            return null;
+        }
+    }
+
+    private static class DoRegIndex2 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+            return null;
+        }
+    }
+
+    private static class DoRegIndex4 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg = getInt(frame.idata.itsICode, frame.pc);
+            frame.pc += 4;
+            return null;
+        }
     }
 
     private static class DoStringCn extends InstructionClass {
