@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     implementation project(':rhino')
-    implementation "org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.21"
+    implementation "org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0"
 
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0"
 }
 
 kotlin {
