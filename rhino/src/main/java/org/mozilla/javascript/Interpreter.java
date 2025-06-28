@@ -1359,6 +1359,12 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.GET_REF] = new DoGetRef();
+        instructionObjs[base + Token.SET_REF] = new DoSetRef();
+        instructionObjs[base + Token.DEL_REF] = new DoDelRef();
+        instructionObjs[base + Icode_REF_INC_DEC] = new DoRefIncDec();
+        instructionObjs[base + Token.LOCAL_LOAD] = new DoLocalLoad();
+        instructionObjs[base + Icode_LOCAL_CLEAR] = new DoLocalClear();
         instructionObjs[base + Icode_NAME_AND_THIS] = new DoNameAndThis();
         instructionObjs[base + Icode_NAME_AND_THIS_OPTIONAL] = new DoNameAndThisOptional();
         instructionObjs[base + Icode_PROP_AND_THIS] = new DoPropAndThis();
@@ -2216,48 +2222,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                             doElemIncDec(cx, frame, iCode, stack, sDbl, stackTop);
                                     continue Loop;
                                 }
-                            case Token.GET_REF:
-                                {
-                                    Ref ref = (Ref) stack[stackTop];
-                                    stack[stackTop] = ScriptRuntime.refGet(ref, cx);
-                                    continue Loop;
-                                }
-                            case Token.SET_REF:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Ref ref = (Ref) stack[stackTop];
-                                    stack[stackTop] =
-                                            ScriptRuntime.refSet(ref, value, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.DEL_REF:
-                                {
-                                    Ref ref = (Ref) stack[stackTop];
-                                    stack[stackTop] = ScriptRuntime.refDel(ref, cx);
-                                    continue Loop;
-                                }
-                            case Icode_REF_INC_DEC:
-                                {
-                                    Ref ref = (Ref) stack[stackTop];
-                                    stack[stackTop] =
-                                            ScriptRuntime.refIncrDecr(
-                                                    ref, cx, frame.scope, iCode[frame.pc]);
-                                    ++frame.pc;
-                                    continue Loop;
-                                }
-                            case Token.LOCAL_LOAD:
-                                ++stackTop;
-                                indexReg += iData.itsMaxVars;
-                                stack[stackTop] = stack[indexReg];
-                                sDbl[stackTop] = sDbl[indexReg];
-                                continue Loop;
-                            case Icode_LOCAL_CLEAR:
-                                indexReg += iData.itsMaxVars;
-                                stack[indexReg] = null;
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2348,6 +2312,77 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoGetRef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            Ref ref = (Ref) stack[state.stackTop];
+            stack[state.stackTop] = ScriptRuntime.refGet(ref, cx);
+            return null;
+        }
+    }
+
+    private static class DoSetRef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object value = stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Ref ref = (Ref) stack[state.stackTop - 1];
+            stack[--state.stackTop] = ScriptRuntime.refSet(ref, value, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoDelRef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            Ref ref = (Ref) stack[state.stackTop];
+            stack[state.stackTop] = ScriptRuntime.refDel(ref, cx);
+            return null;
+        }
+    }
+
+    private static class DoRefIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final byte[] iCode = frame.idata.itsICode;
+            Ref ref = (Ref) stack[state.stackTop];
+            stack[state.stackTop] =
+                    ScriptRuntime.refIncrDecr(ref, cx, frame.scope, iCode[frame.pc]);
+            ++frame.pc;
+            return null;
+        }
+    }
+
+    private static class DoLocalLoad extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            final InterpreterData iData = frame.idata;
+            ++state.stackTop;
+            state.indexReg += iData.itsMaxVars;
+            stack[state.stackTop] = stack[state.indexReg];
+            sDbl[state.stackTop] = sDbl[state.indexReg];
+            return null;
+        }
+    }
+
+    private static class DoLocalClear extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final InterpreterData iData = frame.idata;
+            state.indexReg += iData.itsMaxVars;
+            stack[state.indexReg] = null;
+            return null;
+        }
     }
 
     private static class DoNameAndThis extends InstructionClass {
