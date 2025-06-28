@@ -1359,6 +1359,9 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.RETURN] = new DoReturn();
+        instructionObjs[base + Token.RETURN_RESULT] = new DoReturnResult();
+        instructionObjs[base + Icode_RETUNDEF] = new DoReturnUndef();
         instructionObjs[base + Token.BITNOT] = new DoBitNot();
         instructionObjs[base + Token.BITAND] = new DoBitOp();
         instructionObjs[base + Token.BITOR] = new DoBitOp();
@@ -2040,16 +2043,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     sDbl[stackTop - 1] = d;
                                     continue Loop;
                                 }
-                            case Token.RETURN:
-                                frame.result = stack[stackTop];
-                                frame.resultDbl = sDbl[stackTop];
-                                --stackTop;
-                                break Loop;
-                            case Token.RETURN_RESULT:
-                                break Loop;
-                            case Icode_RETUNDEF:
-                                frame.result = undefined;
-                                break Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2140,6 +2133,33 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoReturn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            frame.result = stack[state.stackTop];
+            frame.resultDbl = sDbl[state.stackTop];
+            --state.stackTop;
+            return BREAK_LOOP;
+        }
+    }
+
+    private static class DoReturnResult extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            return BREAK_LOOP;
+        }
+    }
+
+    private static class DoReturnUndef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.result = undefined;
+            return BREAK_LOOP;
+        }
     }
 
     private static class DoBitNot extends InstructionClass {
