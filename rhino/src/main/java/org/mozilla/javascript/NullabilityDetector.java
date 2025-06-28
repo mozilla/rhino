@@ -8,7 +8,6 @@ public interface NullabilityDetector {
 
     NullabilityAccessor getParameterNullability(Constructor<?> constructor);
 
-    @FunctionalInterface
     interface NullabilityAccessor {
         NullabilityAccessor FALSE = (ignored) -> false;
         /**

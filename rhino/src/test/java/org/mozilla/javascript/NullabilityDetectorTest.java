@@ -48,9 +48,12 @@ public class NullabilityDetectorTest {
     }
 
     private static void assertNullabilityMatch(NullabilityDetector.NullabilityAccessor nullabilityAccessor, boolean... expected) {
-        for (int i = 0; i < expected.length; i++) {
-            Assertions.assertEquals(nullabilityAccessor.isNullable(i), expected[i]);
+        var actual = new boolean[expected.length];
+        for (int i = 0; i < actual.length; i++) {
+            actual[i] = nullabilityAccessor.isNullable(i);
         }
+
+        Assertions.assertArrayEquals(expected, actual);
     }
 
     private Method getTestClassMethod(String methodName) {
