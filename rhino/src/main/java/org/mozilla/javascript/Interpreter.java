@@ -1786,33 +1786,22 @@ public final class Interpreter extends Icode implements Evaluator {
     private static InterpreterResult interpretFunction(
             Context cx,
             CallFrame frame,
-            Object throwable,
-            GeneratorState generatorState,
-            int indexReg,
+            Object tble,
+            GeneratorState genState,
+            int iReg,
             boolean instructionCounting) {
+        final InterpreterState state =
+                new InterpreterState(frame.savedStackTop, iReg, instructionCounting);
 
         withoutExceptions:
         try {
 
             // Use local variables for constant values in frame
             // for faster access
-            final Object[] stack = frame.stack;
-            final double[] sDbl = frame.sDbl;
-            final Object[] vars = frame.varSource.stack;
-            final double[] varDbls = frame.varSource.sDbl;
-            final byte[] varAttributes = frame.varSource.stackAttributes;
-            final InterpreterData iData = frame.idata;
             final byte[] iCode = frame.idata.itsICode;
-            final String[] strings = frame.idata.itsStringTable;
-            final BigInteger[] bigInts = frame.idata.itsBigIntTable;
-            String stringReg = null;
-            BigInteger bigIntReg = null;
 
-            // Use local for stackTop as well. Since execption handlers
-            // can only exist at statement level where stack is empty,
-            // it is necessary to save/restore stackTop only across
-            // function calls and normal returns.
-            int stackTop = frame.savedStackTop;
+            state.generatorState = genState;
+            state.throwable = tble;
 
             // Store new frame in cx which is used for error reporting etc.
             cx.lastInterpreterFrame = frame;
@@ -1820,83 +1809,40 @@ public final class Interpreter extends Icode implements Evaluator {
             Loop:
             for (; ; ) {
 
-                // Exception handler assumes that PC is already incremented
-                // pass the instruction start when it searches the
-                // exception handler
-                int op = iCode[frame.pc++];
-                jumplessRun:
-                {
-                    { // Extra braces to reduce the formatting change.
-                        // Back indent to ease implementation reading
-                        switch (op) {
-                            default:
-                                {
-                                    NewState nextState;
+                NewState nextState;
+                do {
+                    // Exception handler assumes that PC is already incremented
+                    // pass the instruction start when it searches the
+                    // exception handler
+                    int op = iCode[frame.pc++];
 
-                                    var insn = instructionObjs[-MIN_ICODE + op];
-                                    if (insn == null) {
-                                        dumpICode(iData);
-                                        throw new RuntimeException(
-                                                "Unknown icode : "
-                                                        + op
-                                                        + " @ pc : "
-                                                        + (frame.pc - 1));
-                                    }
+                    var insn = instructionObjs[-MIN_ICODE + op];
 
-                                    // The state will become
-                                    // persistent for an entire call
-                                    // once all instructions are moved
-                                    // to this new scheme.
-                                    InterpreterState state =
-                                            new InterpreterState(
-                                                    stackTop, indexReg, instructionCounting);
-                                    state.stringReg = stringReg;
-                                    state.bigIntReg = bigIntReg;
-                                    state.throwable = throwable;
-                                    state.generatorState = generatorState;
+                    nextState = insn.execute(cx, frame, state, op);
+                } while (nextState == null);
 
-                                    nextState = insn.execute(cx, frame, state, op);
-
-                                    stackTop = state.stackTop;
-                                    indexReg = state.indexReg;
-                                    stringReg = state.stringReg;
-                                    bigIntReg = state.bigIntReg;
-                                    throwable = state.throwable;
-                                    generatorState = state.generatorState;
-
-                                    if (nextState == null) {
-                                        continue Loop;
-                                    } else if (nextState == BREAK_LOOP) {
-                                        break Loop;
-                                    } else if (nextState == BREAK_JUMPLESSRUN) {
-                                        break jumplessRun;
-                                    } else if (nextState == BREAK_WITHOUT_EXTENSION) {
-                                        break withoutExceptions;
-                                    } else {
-                                        return (InterpreterResult) nextState;
-                                    }
-                                }
-                        } // end of interpreter switch
-                    } // end of extra braces.
-                } // end of jumplessRun label block
-
-                // This should be reachable only for jump implementation
-                // when pc points to encoded target offset
-                if (instructionCounting) {
-                    addInstructionCount(cx, frame, 2);
-                }
-                int offset = getShort(iCode, frame.pc);
-                if (offset != 0) {
-                    // -1 accounts for pc pointing to jump opcode + 1
-                    frame.pc += offset - 1;
+                if (nextState == BREAK_LOOP) {
+                    break Loop;
+                } else if (nextState == BREAK_JUMPLESSRUN) {
+                    if (instructionCounting) {
+                        addInstructionCount(cx, frame, 2);
+                    }
+                    int offset = getShort(iCode, frame.pc);
+                    if (offset != 0) {
+                        // -1 accounts for pc pointing to jump opcode + 1
+                        frame.pc += offset - 1;
+                    } else {
+                        frame.pc = frame.idata.longJumps.get(frame.pc);
+                    }
+                    if (instructionCounting) {
+                        frame.pcPrevBranch = frame.pc;
+                    }
+                } else if (nextState == BREAK_WITHOUT_EXTENSION) {
+                    break withoutExceptions;
                 } else {
-                    frame.pc = iData.longJumps.get(frame.pc);
+                    return (InterpreterResult) nextState;
                 }
-                if (instructionCounting) {
-                    frame.pcPrevBranch = frame.pc;
-                }
-                continue Loop;
-            } // end of Loop: for
+            }
 
             exitFrame(cx, frame, null);
             if (frame.parentFrame != null) {
@@ -1905,20 +1851,20 @@ public final class Interpreter extends Icode implements Evaluator {
                     newFrame = newFrame.cloneFrozen();
                 }
                 setCallResult(newFrame, frame.result, frame.resultDbl);
-                return new StateContinueResult(newFrame, indexReg);
+                return new StateContinueResult(newFrame, state.indexReg);
             }
             return new StateBreakResult(frame);
 
         } // end of interpreter withoutExceptions: try
         catch (Throwable ex) {
-            if (throwable != null) {
+            if (state.throwable != null) {
                 // This is serious bug and it is better to track it ASAP
                 ex.printStackTrace(System.err);
                 throw new IllegalStateException();
             }
-            throwable = ex;
+            state.throwable = ex;
         }
-        return new ThrowableResult(frame, throwable);
+        return new ThrowableResult(frame, state.throwable);
     }
 
     private static class DoGenerator extends InstructionClass {
