@@ -47,7 +47,8 @@ public class NullabilityDetectorTest {
         assertNullabilityMatch(memberBox.argNullability, true, false, true, false);
     }
 
-    private static void assertNullabilityMatch(NullabilityDetector.NullabilityAccessor nullabilityAccessor, boolean... expected) {
+    private static void assertNullabilityMatch(
+            NullabilityDetector.NullabilityAccessor nullabilityAccessor, boolean... expected) {
         var actual = new boolean[expected.length];
         for (int i = 0; i < actual.length; i++) {
             actual[i] = nullabilityAccessor.isNullable(i);

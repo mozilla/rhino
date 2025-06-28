@@ -2,7 +2,6 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 public class TestNullabilityDetector implements NullabilityDetector {
     @Override
