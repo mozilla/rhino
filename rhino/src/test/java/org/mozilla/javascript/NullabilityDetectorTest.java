@@ -1,12 +1,10 @@
 package org.mozilla.javascript;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 public class NullabilityDetectorTest {
@@ -14,39 +12,45 @@ public class NullabilityDetectorTest {
     public void testNullableDetectorForMethodWithoutArgs() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function1"), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {}));
+        assertNullabilityMatch(memberBox.argNullability);
     }
 
     @Test
     public void testNullableDetectorForMethodWithOneArg() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function2"), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {true}));
+        assertNullabilityMatch(memberBox.argNullability, true);
     }
 
     @Test
     public void testNullableDetectorForMethodWithSeveralArgs() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function3"), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {true, true, true, true}));
+        assertNullabilityMatch(memberBox.argNullability, true, true, true, true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithoutArgs() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(0), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {}));
+        assertNullabilityMatch(memberBox.argNullability);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithOneArg() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(1), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {true}));
+        assertNullabilityMatch(memberBox.argNullability, true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithSeveralArgs() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(4), TypeInfoFactory.GLOBAL);
-        assertThat(memberBox.argNullability, is(new boolean[] {true, false, true, false}));
+        assertNullabilityMatch(memberBox.argNullability, true, false, true, false);
+    }
+
+    private static void assertNullabilityMatch(NullabilityDetector.NullabilityAccessor nullabilityAccessor, boolean... expected) {
+        for (int i = 0; i < expected.length; i++) {
+            Assertions.assertEquals(nullabilityAccessor.isNullable(i), expected[i]);
+        }
     }
 
     private Method getTestClassMethod(String methodName) {
