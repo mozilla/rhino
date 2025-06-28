@@ -361,7 +361,7 @@ public class AbstractEcmaObjectOperations {
      * <p><a href="https://262.ecma-international.org/12.0/#sec-lengthofarraylike">7.3.18
      * LengthOfArrayLike (obj)</a>
      */
-    static long lengthOfArrayLike(Context cx, Scriptable o) {
+    public static long lengthOfArrayLike(Context cx, Scriptable o) {
         Object value = ScriptableObject.getProperty(o, "length");
         long len = ScriptRuntime.toLength(new Object[] {value}, 0);
         return len;

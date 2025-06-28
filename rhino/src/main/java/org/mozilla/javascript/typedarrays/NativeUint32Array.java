@@ -85,10 +85,10 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        long val = Conversions.toUint32(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long val = Conversions.toUint32(c);
         ByteIo.writeUint32(
                 arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;

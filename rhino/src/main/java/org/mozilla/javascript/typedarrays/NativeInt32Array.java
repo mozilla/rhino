@@ -86,10 +86,10 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        int val = ScriptRuntime.toInt32(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = ScriptRuntime.toInt32(c);
         ByteIo.writeInt32(
                 arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;

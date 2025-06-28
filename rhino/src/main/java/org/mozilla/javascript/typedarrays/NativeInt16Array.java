@@ -85,10 +85,10 @@ public class NativeInt16Array extends NativeTypedArrayView<Short> {
 
     @Override
     protected Object js_set(int index, Object c) {
+        int val = Conversions.toInt16(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = Conversions.toInt16(c);
         ByteIo.writeInt16(
                 arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;
