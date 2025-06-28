@@ -1359,6 +1359,10 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.GOTO] = new DoGoto();
+        instructionObjs[base + Icode_GOSUB] = new DoGosub();
+        instructionObjs[base + Icode_STARTSUB] = new DoStartSub();
+        instructionObjs[base + Icode_RETSUB] = new DoRetsub();
         instructionObjs[base + Icode_POP] = new DoPop();
         instructionObjs[base + Icode_POP_RESULT] = new DoPopResult();
         instructionObjs[base + Icode_DUP] = new DoDup();
@@ -1974,48 +1978,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     }
                                     break jumplessRun;
                                 }
-                            case Token.GOTO:
-                                break jumplessRun;
-                            case Icode_GOSUB:
-                                ++stackTop;
-                                stack[stackTop] = DOUBLE_MARK;
-                                sDbl[stackTop] = frame.pc + 2;
-                                break jumplessRun;
-                            case Icode_STARTSUB:
-                                if (stackTop == frame.emptyStackTop + 1) {
-                                    // Call from Icode_GOSUB: store return PC address in the local
-                                    indexReg += iData.itsMaxVars;
-                                    stack[indexReg] = stack[stackTop];
-                                    sDbl[indexReg] = sDbl[stackTop];
-                                    --stackTop;
-                                } else {
-                                    // Call from exception handler: exception object is already
-                                    // stored
-                                    // in the local
-                                    if (stackTop != frame.emptyStackTop) Kit.codeBug();
-                                }
-                                continue Loop;
-                            case Icode_RETSUB:
-                                {
-                                    // indexReg: local to store return address
-                                    if (instructionCounting) {
-                                        addInstructionCount(cx, frame, 0);
-                                    }
-                                    indexReg += iData.itsMaxVars;
-                                    Object value = stack[indexReg];
-                                    if (value != DOUBLE_MARK) {
-                                        // Invocation from exception handler, restore object to
-                                        // rethrow
-                                        throwable = value;
-                                        break withoutExceptions;
-                                    }
-                                    // Normal return from GOSUB
-                                    frame.pc = (int) sDbl[indexReg];
-                                    if (instructionCounting) {
-                                        frame.pcPrevBranch = frame.pc;
-                                    }
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2106,6 +2068,69 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoGoto extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoGosub extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ++state.stackTop;
+            frame.stack[state.stackTop] = DOUBLE_MARK;
+            frame.sDbl[state.stackTop] = frame.pc + 2;
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoStartSub extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            final InterpreterData iData = frame.idata;
+            if (state.stackTop == frame.emptyStackTop + 1) {
+                // Call from Icode_GOSUB: store return PC address in the local
+                state.indexReg += iData.itsMaxVars;
+                stack[state.indexReg] = stack[state.stackTop];
+                sDbl[state.indexReg] = sDbl[state.stackTop];
+                --state.stackTop;
+            } else {
+                // Call from exception handler: exception object is already
+                // stored
+                // in the local
+                if (state.stackTop != frame.emptyStackTop) Kit.codeBug();
+            }
+            return null;
+        }
+    }
+
+    private static class DoRetsub extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // state.indexReg: local to store return address
+            if (state.instructionCounting) {
+                addInstructionCount(cx, frame, 0);
+            }
+            state.indexReg += frame.idata.itsMaxVars;
+            Object value = frame.stack[state.indexReg];
+            if (value != DOUBLE_MARK) {
+                // Invocation from exception handler, restore object to
+                // rethrow
+                state.throwable = value;
+                return BREAK_WITHOUT_EXTENSION;
+            }
+            // Normal return from GOSUB
+            frame.pc = (int) frame.sDbl[state.indexReg];
+            if (state.instructionCounting) {
+                frame.pcPrevBranch = frame.pc;
+            }
+            return null;
+        }
     }
 
     private static class DoPop extends InstructionClass {
