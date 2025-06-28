@@ -1359,6 +1359,16 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.DELPROP] = new DoDelName();
+        instructionObjs[base + Icode_DELNAME] = new DoDelName();
+        instructionObjs[base + Icode_DELPROP_SUPER] = new DoDelPropSuper();
+        instructionObjs[base + Token.GETPROPNOWARN] = new DoGetPropNoWarn();
+        instructionObjs[base + Token.GETPROP] = new DoGetProp();
+        instructionObjs[base + Token.GETPROP_SUPER] = new DoGetPropSuper();
+        instructionObjs[base + Token.GETPROPNOWARN_SUPER] = new DoGetPropSuper();
+        instructionObjs[base + Token.SETPROP] = new DoSetProp();
+        instructionObjs[base + Token.SETPROP_SUPER] = new DoSetPropSuper();
+        instructionObjs[base + Icode_PROP_INC_DEC] = new DoPropIncDec();
         instructionObjs[base + Token.GETELEM] = new DoGetElem();
         instructionObjs[base + Token.GETELEM_SUPER] = new DoGetElemSuper();
         instructionObjs[base + Token.SETELEM] = new DoSetElem();
@@ -2108,99 +2118,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                             ScriptRuntime.setConst(lhs, rhs, cx, stringReg);
                                     continue Loop;
                                 }
-                            case Token.DELPROP:
-                            case Icode_DELNAME:
-                                {
-                                    stackTop = doDelName(cx, frame, op, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Icode_DELPROP_SUPER:
-                                stackTop -= 1;
-                                stack[stackTop] = Boolean.FALSE;
-                                ScriptRuntime.throwDeleteOnSuperPropertyNotAllowed();
-                                continue Loop;
-                            case Token.GETPROPNOWARN:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.getObjectPropNoWarn(
-                                                    lhs, stringReg, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.GETPROP:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.getObjectProp(
-                                                    lhs, stringReg, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.GETPROP_SUPER:
-                            case Token.GETPROPNOWARN_SUPER:
-                                {
-                                    Object superObject = stack[stackTop];
-                                    if (superObject == DOUBLE_MARK) Kit.codeBug();
-                                    stack[stackTop] =
-                                            ScriptRuntime.getSuperProp(
-                                                    superObject,
-                                                    stringReg,
-                                                    cx,
-                                                    frame.scope,
-                                                    frame.thisObj,
-                                                    op == Token.GETPROPNOWARN_SUPER);
-                                    continue Loop;
-                                }
-                            case Token.SETPROP:
-                                {
-                                    Object rhs = stack[stackTop];
-                                    if (rhs == DOUBLE_MARK)
-                                        rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.setObjectProp(
-                                                    lhs, stringReg, rhs, cx, frame.scope);
-                                    continue Loop;
-                                }
-                            case Token.SETPROP_SUPER:
-                                {
-                                    Object rhs = stack[stackTop];
-                                    if (rhs == DOUBLE_MARK)
-                                        rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Object superObject = stack[stackTop];
-                                    if (superObject == DOUBLE_MARK) Kit.codeBug();
-                                    stack[stackTop] =
-                                            ScriptRuntime.setSuperProp(
-                                                    superObject,
-                                                    stringReg,
-                                                    rhs,
-                                                    cx,
-                                                    frame.scope,
-                                                    frame.thisObj);
-                                    continue Loop;
-                                }
-                            case Icode_PROP_INC_DEC:
-                                {
-                                    Object lhs = stack[stackTop];
-                                    if (lhs == DOUBLE_MARK)
-                                        lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    stack[stackTop] =
-                                            ScriptRuntime.propIncrDecr(
-                                                    lhs,
-                                                    stringReg,
-                                                    cx,
-                                                    frame.scope,
-                                                    iCode[frame.pc]);
-                                    ++frame.pc;
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2291,6 +2208,124 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoDelName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            --state.stackTop;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] =
+                    ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode_DELNAME);
+            return null;
+        }
+    }
+
+    private static class DoDelPropSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            state.stackTop -= 1;
+            stack[state.stackTop] = Boolean.FALSE;
+            ScriptRuntime.throwDeleteOnSuperPropertyNotAllowed();
+            return null;
+        }
+    }
+
+    private static class DoGetPropNoWarn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] =
+                    ScriptRuntime.getObjectPropNoWarn(lhs, state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoGetProp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] =
+                    ScriptRuntime.getObjectProp(lhs, state.stringReg, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoGetPropSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            Object superObject = stack[state.stackTop];
+            if (superObject == DOUBLE_MARK) Kit.codeBug();
+            stack[state.stackTop] =
+                    ScriptRuntime.getSuperProp(
+                            superObject,
+                            state.stringReg,
+                            cx,
+                            frame.scope,
+                            frame.thisObj,
+                            op == Token.GETPROPNOWARN_SUPER);
+            return null;
+        }
+    }
+
+    private static class DoSetProp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object lhs = stack[state.stackTop - 1];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
+            stack[--state.stackTop] =
+                    ScriptRuntime.setObjectProp(lhs, state.stringReg, rhs, cx, frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoSetPropSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object superObject = stack[state.stackTop - 1];
+            if (superObject == DOUBLE_MARK) Kit.codeBug();
+            stack[--state.stackTop] =
+                    ScriptRuntime.setSuperProp(
+                            superObject, state.stringReg, rhs, cx, frame.scope, frame.thisObj);
+            return null;
+        }
+    }
+
+    private static class DoPropIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            final byte[] iCode = frame.idata.itsICode;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] =
+                    ScriptRuntime.propIncrDecr(
+                            lhs, state.stringReg, cx, frame.scope, iCode[frame.pc]);
+            ++frame.pc;
+            return null;
+        }
     }
 
     private static class DoGetElem extends InstructionClass {
@@ -3996,17 +4031,6 @@ public final class Interpreter extends Icode implements Evaluator {
             stack[stackTop] = DOUBLE_MARK;
             sDbl[stackTop] = result.doubleValue();
         }
-        return stackTop;
-    }
-
-    private static int doDelName(
-            Context cx, CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        Object rhs = stack[stackTop];
-        if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object lhs = stack[stackTop];
-        if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode_DELNAME);
         return stackTop;
     }
 
