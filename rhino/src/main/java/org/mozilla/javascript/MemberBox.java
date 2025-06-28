@@ -31,7 +31,7 @@ final class MemberBox implements Serializable {
     private transient Member memberObject;
     private transient volatile List<TypeInfo> argTypeInfos;
     private transient volatile TypeInfo returnTypeInfo;
-    transient boolean[] argNullability;
+    transient NullabilityDetector.NullabilityAccessor argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -53,7 +53,7 @@ final class MemberBox implements Serializable {
         this.memberObject = method;
         this.argNullability =
                 nullDetector == null
-                        ? new boolean[method.getParameters().length]
+                        ? NullabilityDetector.NullabilityAccessor.FALSE
                         : nullDetector.getParameterNullability(method);
         this.vararg = method.isVarArgs();
         this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
@@ -64,7 +64,7 @@ final class MemberBox implements Serializable {
         this.memberObject = constructor;
         this.argNullability =
                 nullDetector == null
-                        ? new boolean[constructor.getParameters().length]
+                        ? NullabilityDetector.NullabilityAccessor.FALSE
                         : nullDetector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
@@ -210,7 +210,7 @@ final class MemberBox implements Serializable {
                                                     thisObj,
                                                     originalArgs[0],
                                                     nativeSetter.getArgTypes().get(0).getTypeTag(),
-                                                    nativeSetter.argNullability[0])
+                                                    nativeSetter.argNullability.isNullable(0))
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;

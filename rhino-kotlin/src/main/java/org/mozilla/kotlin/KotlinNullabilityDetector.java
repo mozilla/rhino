@@ -16,7 +16,7 @@ import org.mozilla.javascript.NullabilityDetector;
 
 public class KotlinNullabilityDetector implements NullabilityDetector {
     @Override
-    public boolean[] getParameterNullability(Method method) {
+    public NullabilityAccessor getParameterNullability(Method method) {
         int paramCount = method.getParameterTypes().length;
         KmClass kmClass = getKmClassForJavaClass(method.getDeclaringClass());
         return getMethodParameterNullabilityFromKotlinMetadata(
@@ -24,7 +24,7 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
     }
 
     @Override
-    public boolean[] getParameterNullability(Constructor<?> constructor) {
+    public NullabilityAccessor getParameterNullability(Constructor<?> constructor) {
         int paramCount = constructor.getParameterTypes().length;
         KmClass kmClass = getKmClassForJavaClass(constructor.getDeclaringClass());
         return getConstructorParameterNullabilityFromKotlinMetadata(kmClass, paramCount);
@@ -41,11 +41,10 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
         }
     }
 
-    private boolean[] getMethodParameterNullabilityFromKotlinMetadata(
+    private NullabilityAccessor getMethodParameterNullabilityFromKotlinMetadata(
             KmClass clazz, String methodName, int paramCount) {
-        boolean[] fallback = createFallbackNullabilityArray(paramCount);
         if (clazz == null) {
-            return fallback;
+            return NullabilityAccessor.FALSE;
         }
         List<KmFunction> candidates =
                 clazz.getFunctions().stream()
@@ -55,32 +54,30 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
                                                 && f.getValueParameters().size() == paramCount)
                         .collect(Collectors.toList());
         return candidates.size() == 1
-                ? createNullabilityArray(candidates.get(0).getValueParameters())
-                : fallback;
+                ? createNullabilityAccessor(candidates.get(0).getValueParameters())
+                : NullabilityAccessor.FALSE;
     }
 
-    private boolean[] getConstructorParameterNullabilityFromKotlinMetadata(
+    private NullabilityAccessor getConstructorParameterNullabilityFromKotlinMetadata(
             KmClass clazz, int paramCount) {
-        boolean[] fallback = createFallbackNullabilityArray(paramCount);
         if (clazz == null) {
-            return fallback;
+            return NullabilityAccessor.FALSE;
         }
         List<KmConstructor> candidates =
                 clazz.getConstructors().stream()
                         .filter(c -> c.getValueParameters().size() == paramCount)
                         .collect(Collectors.toList());
         return candidates.size() == 1
-                ? createNullabilityArray(candidates.get(0).getValueParameters())
-                : fallback;
+                ? createNullabilityAccessor(candidates.get(0).getValueParameters())
+                : NullabilityAccessor.FALSE;
     }
 
-    private boolean[] createNullabilityArray(List<KmValueParameter> params) {
+    private NullabilityAccessor createNullabilityAccessor(List<KmValueParameter> params) {
         boolean[] result = new boolean[params.size()];
-        int index = 0;
-        for (KmValueParameter parameter : params) {
-            result[index++] = isNullable(parameter.getType());
+        for (int i = 0; i < params.size(); i++) {
+            result[i] = isNullable(params.get(i).getType());
         }
-        return result;
+        return index -> result[index];
     }
 
     private boolean[] createFallbackNullabilityArray(int paramCount) {

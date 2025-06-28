@@ -418,7 +418,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = args[i];
                     Object converted =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.argNullability.isNullable(i));
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -433,7 +433,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = (i < argsLength) ? args[i] : Undefined.instance;
                     invokeArgs[i] =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.argNullability.isNullable(i));
                 }
             }
 
