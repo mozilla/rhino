@@ -1359,6 +1359,22 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.BITNOT] = new DoBitNot();
+        instructionObjs[base + Token.BITAND] = new DoBitOp();
+        instructionObjs[base + Token.BITOR] = new DoBitOp();
+        instructionObjs[base + Token.BITXOR] = new DoBitOp();
+        instructionObjs[base + Token.LSH] = new DoBitOp();
+        instructionObjs[base + Token.RSH] = new DoBitOp();
+        instructionObjs[base + Token.URSH] = new DoUnsignedRightShift();
+        instructionObjs[base + Token.POS] = new DoPositive();
+        instructionObjs[base + Token.NEG] = new DoNegative();
+        instructionObjs[base + Token.ADD] = new DoAdd();
+        instructionObjs[base + Token.SUB] = new DoArithmetic();
+        instructionObjs[base + Token.MUL] = new DoArithmetic();
+        instructionObjs[base + Token.DIV] = new DoArithmetic();
+        instructionObjs[base + Token.MOD] = new DoArithmetic();
+        instructionObjs[base + Token.EXP] = new DoArithmetic();
+        instructionObjs[base + Token.NOT] = new DoNot();
         instructionObjs[base + Token.BINDNAME] = new DoBindName();
         instructionObjs[base + Token.STRICT_SETNAME] = new DoSetName();
         instructionObjs[base + Token.SETNAME] = new DoSetName();
@@ -2034,64 +2050,6 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Icode_RETUNDEF:
                                 frame.result = undefined;
                                 break Loop;
-                            case Token.BITNOT:
-                                {
-                                    stackTop = doBitNOT(frame, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.BITAND:
-                            case Token.BITOR:
-                            case Token.BITXOR:
-                            case Token.LSH:
-                            case Token.RSH:
-                                {
-                                    stackTop = doBitOp(frame, op, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.URSH:
-                                {
-                                    double lDbl = stack_double(frame, stackTop - 1);
-                                    int rIntValue = stack_int32(frame, stackTop) & 0x1F;
-                                    stack[--stackTop] = DOUBLE_MARK;
-                                    sDbl[stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
-                                    continue Loop;
-                                }
-                            case Token.POS:
-                                {
-                                    double rDbl = stack_double(frame, stackTop);
-                                    stack[stackTop] = DOUBLE_MARK;
-                                    sDbl[stackTop] = rDbl;
-                                    continue Loop;
-                                }
-                            case Token.NEG:
-                                {
-                                    Number rNum = stack_numeric(frame, stackTop);
-                                    Number rNegNum = ScriptRuntime.negate(rNum);
-                                    if (rNegNum instanceof BigInteger) {
-                                        stack[stackTop] = rNegNum;
-                                    } else {
-                                        stack[stackTop] = DOUBLE_MARK;
-                                        sDbl[stackTop] = rNegNum.doubleValue();
-                                    }
-                                    continue Loop;
-                                }
-                            case Token.ADD:
-                                --stackTop;
-                                doAdd(stack, sDbl, stackTop, cx);
-                                continue Loop;
-                            case Token.SUB:
-                            case Token.MUL:
-                            case Token.DIV:
-                            case Token.MOD:
-                            case Token.EXP:
-                                {
-                                    stackTop = doArithmetic(frame, op, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.NOT:
-                                stack[stackTop] =
-                                        ScriptRuntime.wrapBoolean(!stack_boolean(frame, stackTop));
-                                continue Loop;
                             default:
                                 {
                                     NewState nextState;
@@ -2182,6 +2140,309 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoBitNot extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Number value = stack_numeric(frame, state.stackTop);
+            Number result = ScriptRuntime.bitwiseNOT(value);
+            if (result instanceof BigInteger) {
+                stack[state.stackTop] = result;
+            } else {
+                stack[state.stackTop] = DOUBLE_MARK;
+                sDbl[state.stackTop] = result.doubleValue();
+            }
+            return null;
+        }
+    }
+
+    private static class DoBitOp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            if (stack[state.stackTop] == DOUBLE_MARK && stack[state.stackTop - 1] == DOUBLE_MARK) {
+                doFastBitOp(cx, frame, state, op);
+                return null;
+            }
+            Number lValue = stack_numeric(frame, state.stackTop - 1);
+            Number rValue = stack_numeric(frame, state.stackTop);
+            state.stackTop--;
+
+            Number result = null;
+            switch (op) {
+                case Token.BITAND:
+                    result = ScriptRuntime.bitwiseAND(lValue, rValue);
+                    break;
+                case Token.BITOR:
+                    result = ScriptRuntime.bitwiseOR(lValue, rValue);
+                    break;
+                case Token.BITXOR:
+                    result = ScriptRuntime.bitwiseXOR(lValue, rValue);
+                    break;
+                case Token.LSH:
+                    result = ScriptRuntime.leftShift(lValue, rValue);
+                    break;
+                case Token.RSH:
+                    result = ScriptRuntime.signedRightShift(lValue, rValue);
+                    break;
+            }
+
+            if (result instanceof BigInteger) {
+                stack[state.stackTop] = result;
+            } else {
+                stack[state.stackTop] = DOUBLE_MARK;
+                sDbl[state.stackTop] = result.doubleValue();
+            }
+            return null;
+        }
+
+        private static NewState doFastBitOp(
+                Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            double lValue = sDbl[state.stackTop - 1];
+            double rValue = sDbl[state.stackTop];
+            state.stackTop--;
+
+            double result = 0.0;
+            switch (op) {
+                case Token.BITAND:
+                    result = ScriptRuntime.bitwiseAND(lValue, rValue);
+                    break;
+                case Token.BITOR:
+                    result = ScriptRuntime.bitwiseOR(lValue, rValue);
+                    break;
+                case Token.BITXOR:
+                    result = ScriptRuntime.bitwiseXOR(lValue, rValue);
+                    break;
+                case Token.LSH:
+                    result = ScriptRuntime.leftShift(lValue, rValue);
+                    break;
+                case Token.RSH:
+                    result = ScriptRuntime.signedRightShift(lValue, rValue);
+                    break;
+            }
+
+            stack[state.stackTop] = DOUBLE_MARK;
+            sDbl[state.stackTop] = result;
+            return null;
+        }
+    }
+
+    private static class DoUnsignedRightShift extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            double lDbl = stack_double(frame, state.stackTop - 1);
+            int rIntValue = stack_int32(frame, state.stackTop) & 0x1F;
+            stack[--state.stackTop] = DOUBLE_MARK;
+            sDbl[state.stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
+            return null;
+        }
+    }
+
+    private static class DoPositive extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            double rDbl = stack_double(frame, state.stackTop);
+            stack[state.stackTop] = DOUBLE_MARK;
+            sDbl[state.stackTop] = rDbl;
+            return null;
+        }
+    }
+
+    private static class DoNegative extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Number rNum = stack_numeric(frame, state.stackTop);
+            Number rNegNum = ScriptRuntime.negate(rNum);
+            if (rNegNum instanceof BigInteger) {
+                stack[state.stackTop] = rNegNum;
+            } else {
+                stack[state.stackTop] = DOUBLE_MARK;
+                sDbl[state.stackTop] = rNegNum.doubleValue();
+            }
+            return null;
+        }
+    }
+
+    private static class DoAdd extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object rhs = frame.stack[state.stackTop];
+            Object lhs = frame.stack[--state.stackTop];
+            double d;
+            boolean leftRightOrder;
+            if (rhs == DOUBLE_MARK) {
+                d = frame.sDbl[state.stackTop + 1];
+                if (lhs == DOUBLE_MARK) {
+                    frame.sDbl[state.stackTop] += d;
+                    return null;
+                }
+                leftRightOrder = true;
+                // fallthrough to object + number code
+            } else if (lhs == DOUBLE_MARK) {
+                d = frame.sDbl[state.stackTop];
+                lhs = rhs;
+                leftRightOrder = false;
+                // fallthrough to object + number code
+            } else {
+                if (lhs instanceof Scriptable || rhs instanceof Scriptable) {
+                    frame.stack[state.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
+
+                    // the next two else if branches are a bit more tricky
+                    // to reduce method calls
+                } else if (lhs instanceof CharSequence) {
+                    if (rhs instanceof CharSequence) {
+                        frame.stack[state.stackTop] =
+                                new ConsString((CharSequence) lhs, (CharSequence) rhs);
+                    } else {
+                        frame.stack[state.stackTop] =
+                                new ConsString(
+                                        (CharSequence) lhs, ScriptRuntime.toCharSequence(rhs));
+                    }
+                } else if (rhs instanceof CharSequence) {
+                    frame.stack[state.stackTop] =
+                            new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence) rhs);
+
+                } else {
+                    Number lNum =
+                            (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
+                    Number rNum =
+                            (rhs instanceof Number) ? (Number) rhs : ScriptRuntime.toNumeric(rhs);
+
+                    if (lNum instanceof BigInteger && rNum instanceof BigInteger) {
+                        frame.stack[state.stackTop] = ((BigInteger) lNum).add((BigInteger) rNum);
+                    } else if (lNum instanceof BigInteger || rNum instanceof BigInteger) {
+                        throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+                    } else {
+                        frame.stack[state.stackTop] = DOUBLE_MARK;
+                        frame.sDbl[state.stackTop] = lNum.doubleValue() + rNum.doubleValue();
+                    }
+                }
+                return null;
+            }
+
+            // handle object(lhs) + number(d) code
+            if (lhs instanceof Scriptable) {
+                rhs = ScriptRuntime.wrapNumber(d);
+                if (!leftRightOrder) {
+                    Object tmp = lhs;
+                    lhs = rhs;
+                    rhs = tmp;
+                }
+                frame.stack[state.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
+            } else if (lhs instanceof CharSequence) {
+                CharSequence rstr = ScriptRuntime.numberToString(d, 10);
+                if (leftRightOrder) {
+                    frame.stack[state.stackTop] = new ConsString((CharSequence) lhs, rstr);
+                } else {
+                    frame.stack[state.stackTop] = new ConsString(rstr, (CharSequence) lhs);
+                }
+            } else {
+                Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
+                if (lNum instanceof BigInteger) {
+                    throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+                } else {
+                    frame.stack[state.stackTop] = DOUBLE_MARK;
+                    frame.sDbl[state.stackTop] = lNum.doubleValue() + d;
+                }
+            }
+            return null;
+        }
+    }
+
+    private static class DoArithmetic extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            if (stack[state.stackTop] == DOUBLE_MARK && stack[state.stackTop - 1] == DOUBLE_MARK) {
+                doFastArithemtic(cx, frame, state, op);
+                return null;
+            }
+
+            Number lNum = stack_numeric(frame, state.stackTop - 1);
+            Number rNum = stack_numeric(frame, state.stackTop);
+            --state.stackTop;
+
+            Number result = null;
+            switch (op) {
+                case Token.SUB:
+                    result = ScriptRuntime.subtract(lNum, rNum);
+                    break;
+                case Token.MUL:
+                    result = ScriptRuntime.multiply(lNum, rNum);
+                    break;
+                case Token.DIV:
+                    result = ScriptRuntime.divide(lNum, rNum);
+                    break;
+                case Token.MOD:
+                    result = ScriptRuntime.remainder(lNum, rNum);
+                    break;
+                case Token.EXP:
+                    result = ScriptRuntime.exponentiate(lNum, rNum);
+                    break;
+            }
+
+            if (result instanceof BigInteger) {
+                stack[state.stackTop] = result;
+            } else {
+                stack[state.stackTop] = DOUBLE_MARK;
+                sDbl[state.stackTop] = result.doubleValue();
+            }
+            return null;
+        }
+
+        private static NewState doFastArithemtic(
+                Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            double lNum = sDbl[state.stackTop - 1];
+            double rNum = sDbl[state.stackTop];
+            state.stackTop--;
+
+            double result = 0.0;
+            switch (op) {
+                case Token.SUB:
+                    result = lNum - rNum;
+                    break;
+                case Token.MUL:
+                    result = lNum * rNum;
+                    break;
+                case Token.DIV:
+                    result = lNum / rNum;
+                    break;
+                case Token.MOD:
+                    result = lNum % rNum;
+                    break;
+                case Token.EXP:
+                    result = Math.pow(lNum, rNum);
+                    break;
+            }
+
+            stack[state.stackTop] = DOUBLE_MARK;
+            sDbl[state.stackTop] = result;
+            return null;
+        }
+    }
+
+    private static class DoNot extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            stack[state.stackTop] = !stack_boolean(frame, state.stackTop);
+            return null;
+        }
     }
 
     private static class DoBindName extends InstructionClass {
@@ -3969,86 +4230,6 @@ public final class Interpreter extends Icode implements Evaluator {
         return stackTop;
     }
 
-    private static int doFastBitOp(
-            CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        double lValue = sDbl[stackTop - 1];
-        double rValue = sDbl[stackTop];
-        stackTop--;
-
-        double result = 0.0;
-        switch (op) {
-            case Token.BITAND:
-                result = ScriptRuntime.bitwiseAND(lValue, rValue);
-                break;
-            case Token.BITOR:
-                result = ScriptRuntime.bitwiseOR(lValue, rValue);
-                break;
-            case Token.BITXOR:
-                result = ScriptRuntime.bitwiseXOR(lValue, rValue);
-                break;
-            case Token.LSH:
-                result = ScriptRuntime.leftShift(lValue, rValue);
-                break;
-            case Token.RSH:
-                result = ScriptRuntime.signedRightShift(lValue, rValue);
-                break;
-        }
-
-        stack[stackTop] = DOUBLE_MARK;
-        sDbl[stackTop] = result;
-
-        return stackTop;
-    }
-
-    private static int doBitOp(
-            CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        if (stack[stackTop] == DOUBLE_MARK && stack[stackTop - 1] == DOUBLE_MARK) {
-            return doFastBitOp(frame, op, stack, sDbl, stackTop);
-        }
-        Number lValue = stack_numeric(frame, stackTop - 1);
-        Number rValue = stack_numeric(frame, stackTop);
-        stackTop--;
-
-        Number result = null;
-        switch (op) {
-            case Token.BITAND:
-                result = ScriptRuntime.bitwiseAND(lValue, rValue);
-                break;
-            case Token.BITOR:
-                result = ScriptRuntime.bitwiseOR(lValue, rValue);
-                break;
-            case Token.BITXOR:
-                result = ScriptRuntime.bitwiseXOR(lValue, rValue);
-                break;
-            case Token.LSH:
-                result = ScriptRuntime.leftShift(lValue, rValue);
-                break;
-            case Token.RSH:
-                result = ScriptRuntime.signedRightShift(lValue, rValue);
-                break;
-        }
-
-        if (result instanceof BigInteger) {
-            stack[stackTop] = result;
-        } else {
-            stack[stackTop] = DOUBLE_MARK;
-            sDbl[stackTop] = result.doubleValue();
-        }
-        return stackTop;
-    }
-
-    private static int doBitNOT(CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
-        Number value = stack_numeric(frame, stackTop);
-        Number result = ScriptRuntime.bitwiseNOT(value);
-        if (result instanceof BigInteger) {
-            stack[stackTop] = result;
-        } else {
-            stack[stackTop] = DOUBLE_MARK;
-            sDbl[stackTop] = result.doubleValue();
-        }
-        return stackTop;
-    }
-
     private static boolean doEquals(Object[] stack, double[] sDbl, int stackTop) {
         Object rhs = stack[stackTop + 1];
         Object lhs = stack[stackTop];
@@ -4472,158 +4653,6 @@ public final class Interpreter extends Icode implements Evaluator {
         } else {
             return ScriptRuntime.toBoolean(x);
         }
-    }
-
-    private static void doAdd(Object[] stack, double[] sDbl, int stackTop, Context cx) {
-        Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        double d;
-        boolean leftRightOrder;
-        if (rhs == DOUBLE_MARK) {
-            d = sDbl[stackTop + 1];
-            if (lhs == DOUBLE_MARK) {
-                sDbl[stackTop] += d;
-                return;
-            }
-            leftRightOrder = true;
-            // fallthrough to object + number code
-        } else if (lhs == DOUBLE_MARK) {
-            d = sDbl[stackTop];
-            lhs = rhs;
-            leftRightOrder = false;
-            // fallthrough to object + number code
-        } else {
-            if (lhs instanceof Scriptable || rhs instanceof Scriptable) {
-                stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
-
-                // the next two else if branches are a bit more tricky
-                // to reduce method calls
-            } else if (lhs instanceof CharSequence) {
-                if (rhs instanceof CharSequence) {
-                    stack[stackTop] = new ConsString((CharSequence) lhs, (CharSequence) rhs);
-                } else {
-                    stack[stackTop] =
-                            new ConsString((CharSequence) lhs, ScriptRuntime.toCharSequence(rhs));
-                }
-            } else if (rhs instanceof CharSequence) {
-                stack[stackTop] =
-                        new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence) rhs);
-
-            } else {
-                Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
-                Number rNum = (rhs instanceof Number) ? (Number) rhs : ScriptRuntime.toNumeric(rhs);
-
-                if (lNum instanceof BigInteger && rNum instanceof BigInteger) {
-                    stack[stackTop] = ((BigInteger) lNum).add((BigInteger) rNum);
-                } else if (lNum instanceof BigInteger || rNum instanceof BigInteger) {
-                    throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
-                } else {
-                    stack[stackTop] = DOUBLE_MARK;
-                    sDbl[stackTop] = lNum.doubleValue() + rNum.doubleValue();
-                }
-            }
-            return;
-        }
-
-        // handle object(lhs) + number(d) code
-        if (lhs instanceof Scriptable) {
-            rhs = ScriptRuntime.wrapNumber(d);
-            if (!leftRightOrder) {
-                Object tmp = lhs;
-                lhs = rhs;
-                rhs = tmp;
-            }
-            stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
-        } else if (lhs instanceof CharSequence) {
-            CharSequence rstr = ScriptRuntime.numberToString(d, 10);
-            if (leftRightOrder) {
-                stack[stackTop] = new ConsString((CharSequence) lhs, rstr);
-            } else {
-                stack[stackTop] = new ConsString(rstr, (CharSequence) lhs);
-            }
-        } else {
-            Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
-            if (lNum instanceof BigInteger) {
-                throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
-            } else {
-                stack[stackTop] = DOUBLE_MARK;
-                sDbl[stackTop] = lNum.doubleValue() + d;
-            }
-        }
-    }
-
-    private static int doFastArithemtic(
-            CallFrame frame,
-            int op,
-            double lNum,
-            double rNum,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop) {
-        stackTop--;
-
-        double result = 0.0;
-        switch (op) {
-            case Token.SUB:
-                result = lNum - rNum;
-                break;
-            case Token.MUL:
-                result = lNum * rNum;
-                break;
-            case Token.DIV:
-                result = lNum / rNum;
-                break;
-            case Token.MOD:
-                result = lNum % rNum;
-                break;
-            case Token.EXP:
-                result = Math.pow(lNum, rNum);
-                break;
-        }
-
-        stack[stackTop] = DOUBLE_MARK;
-        sDbl[stackTop] = result;
-
-        return stackTop;
-    }
-
-    private static int doArithmetic(
-            CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        if (stack[stackTop] == DOUBLE_MARK && stack[stackTop - 1] == DOUBLE_MARK) {
-            return doFastArithemtic(
-                    frame, op, sDbl[stackTop - 1], sDbl[stackTop], stack, sDbl, stackTop);
-        }
-
-        Number lNum = stack_numeric(frame, stackTop - 1);
-        Number rNum = stack_numeric(frame, stackTop);
-        --stackTop;
-
-        Number result = null;
-        switch (op) {
-            case Token.SUB:
-                result = ScriptRuntime.subtract(lNum, rNum);
-                break;
-            case Token.MUL:
-                result = ScriptRuntime.multiply(lNum, rNum);
-                break;
-            case Token.DIV:
-                result = ScriptRuntime.divide(lNum, rNum);
-                break;
-            case Token.MOD:
-                result = ScriptRuntime.remainder(lNum, rNum);
-                break;
-            case Token.EXP:
-                result = ScriptRuntime.exponentiate(lNum, rNum);
-                break;
-        }
-
-        if (result instanceof BigInteger) {
-            stack[stackTop] = result;
-        } else {
-            stack[stackTop] = DOUBLE_MARK;
-            sDbl[stackTop] = result.doubleValue();
-        }
-        return stackTop;
     }
 
     private static Object[] getArgsArray(Object[] stack, double[] sDbl, int shift, int count) {
