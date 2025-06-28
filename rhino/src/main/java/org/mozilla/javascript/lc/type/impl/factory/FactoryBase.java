@@ -74,21 +74,25 @@ public interface FactoryBase extends TypeInfoFactory {
         return transformed;
     }
 
-    /// Compute consolidation mapping from the input class. Used by
-    /// [#getConsolidationMapping(java.lang.Class)]
-    ///
-    /// Example:
-    /// ```java
-    /// class A<Ta> {}
-    /// class B<Tb> extends A<Tb> {}
-    ///
-    /// interface C<Tc> {}
-    /// interface D<Td> extends B<Td> {}
-    ///
-    /// class E<Te> extends B<Te> implements D<String> {}
-    /// ```
-    /// and input class is `E.class`. The result mapping will then be: `Ta -> Te`, `Tb -> Te`, `Tc
-    /// -> String`, `Td -> String`
+    /**
+     * Compute consolidation mapping from the input class. Used by {@link
+     * #getConsolidationMapping(java.lang.Class)}
+     *
+     * <p>Example:
+     *
+     * <pre>
+     * class A<Ta> {}
+     * class B<Tb> extends A<Tb> {}
+     *
+     * interface C<Tc> {}
+     * interface D<Td> extends B<Td> {}
+     *
+     * class E<Te> extends B<Te> implements D<String> {}
+     * </pre>
+     *
+     * and input class is {@code E.class}. The result mapping will then be: {@code Ta -> Te}, {@code
+     * Tb -> Te}, {@code Tc -> String}, {@code Td -> String}
+     */
     default Map<VariableTypeInfo, TypeInfo> computeConsolidationMapping(Class<?> type) {
         var mapping = new HashMap<VariableTypeInfo, TypeInfo>();
 
