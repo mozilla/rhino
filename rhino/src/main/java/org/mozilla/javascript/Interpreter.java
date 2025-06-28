@@ -1359,6 +1359,21 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.GE] = new DoCompare();
+        instructionObjs[base + Token.LE] = new DoCompare();
+        instructionObjs[base + Token.GT] = new DoCompare();
+        instructionObjs[base + Token.LT] = new DoCompare();
+        instructionObjs[base + Token.IN] = new DoInOrInstanceof();
+        instructionObjs[base + Token.INSTANCEOF] = new DoInOrInstanceof();
+        instructionObjs[base + Token.EQ] = new DoEquals();
+        instructionObjs[base + Token.NE] = new DoNotEquals();
+        instructionObjs[base + Token.SHEQ] = new DoShallowEquals();
+        instructionObjs[base + Token.SHNE] = new DoShallowNotEquals();
+        instructionObjs[base + Token.IFNE] = new DoIfNE();
+        instructionObjs[base + Token.IFEQ] = new DoIfEQ();
+        instructionObjs[base + Icode_IFEQ_POP] = new DoIfEQPop();
+        instructionObjs[base + Icode_IF_NULL_UNDEF] = new DoIfNullUndef();
+        instructionObjs[base + Icode_IF_NOT_NULL_UNDEF] = new DoIfNotNullUndef();
         instructionObjs[base + Token.GOTO] = new DoGoto();
         instructionObjs[base + Icode_GOSUB] = new DoGosub();
         instructionObjs[base + Icode_STARTSUB] = new DoStartSub();
@@ -1907,77 +1922,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     throwable = stack[indexReg];
                                     break withoutExceptions;
                                 }
-                            case Token.GE:
-                            case Token.LE:
-                            case Token.GT:
-                            case Token.LT:
-                                {
-                                    stackTop = doCompare(frame, op, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.IN:
-                            case Token.INSTANCEOF:
-                                {
-                                    stackTop = doInOrInstanceof(cx, op, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.EQ:
-                            case Token.NE:
-                                {
-                                    --stackTop;
-                                    boolean valBln = doEquals(stack, sDbl, stackTop);
-                                    valBln ^= (op == Token.NE);
-                                    stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
-                                    continue Loop;
-                                }
-                            case Token.SHEQ:
-                            case Token.SHNE:
-                                {
-                                    --stackTop;
-                                    boolean valBln = doShallowEquals(stack, sDbl, stackTop);
-                                    valBln ^= (op == Token.SHNE);
-                                    stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
-                                    continue Loop;
-                                }
-                            case Token.IFNE:
-                                if (stack_boolean(frame, stackTop--)) {
-                                    frame.pc += 2;
-                                    continue Loop;
-                                }
-                                break jumplessRun;
-                            case Token.IFEQ:
-                                if (!stack_boolean(frame, stackTop--)) {
-                                    frame.pc += 2;
-                                    continue Loop;
-                                }
-                                break jumplessRun;
-                            case Icode_IFEQ_POP:
-                                if (!stack_boolean(frame, stackTop--)) {
-                                    frame.pc += 2;
-                                    continue Loop;
-                                }
-                                stack[stackTop--] = null;
-                                break jumplessRun;
-                            case Icode_IF_NULL_UNDEF:
-                                {
-                                    Object val = frame.stack[stackTop];
-                                    --stackTop;
-                                    if (val != null && !Undefined.isUndefined(val)) {
-                                        frame.pc += 2;
-                                        continue Loop;
-                                    }
-                                    break jumplessRun;
-                                }
-                            case Icode_IF_NOT_NULL_UNDEF:
-                                {
-                                    Object val = frame.stack[stackTop];
-                                    --stackTop;
-                                    if (val == null || Undefined.isUndefined(val)) {
-                                        frame.pc += 2;
-                                        continue Loop;
-                                    }
-                                    break jumplessRun;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2068,6 +2012,212 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoCompare extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            Object lhs = stack[--state.stackTop];
+            boolean valBln;
+            if (lhs == DOUBLE_MARK && rhs == DOUBLE_MARK) {
+                valBln =
+                        ScriptRuntime.compareTo(sDbl[state.stackTop], sDbl[state.stackTop + 1], op);
+                stack[state.stackTop] = valBln;
+                return null;
+            }
+            object_compare:
+            {
+                number_compare:
+                {
+                    Number rNum, lNum;
+                    if (rhs == DOUBLE_MARK) {
+                        rNum = sDbl[state.stackTop + 1];
+                        lNum = stack_numeric(frame, state.stackTop);
+                    } else if (lhs == DOUBLE_MARK) {
+                        rNum = ScriptRuntime.toNumeric(rhs);
+                        lNum = sDbl[state.stackTop];
+                    } else {
+                        break number_compare;
+                    }
+                    valBln = ScriptRuntime.compare(lNum, rNum, op);
+                    break object_compare;
+                }
+                valBln = ScriptRuntime.compare(lhs, rhs, op);
+            }
+            stack[state.stackTop] = valBln;
+            return null;
+        }
+    }
+
+    private static class DoInOrInstanceof extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object lhs = stack[--state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            boolean valBln;
+            if (op == Token.IN) {
+                valBln = ScriptRuntime.in(lhs, rhs, cx);
+            } else {
+                valBln = ScriptRuntime.instanceOf(lhs, rhs, cx);
+            }
+            stack[state.stackTop] = valBln;
+            return null;
+        }
+    }
+
+    private static class DoEquals extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            final boolean res = doEquals(state, stack, sDbl);
+            stack[state.stackTop] = res;
+            return null;
+        }
+    }
+
+    private static class DoNotEquals extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            final boolean res = doEquals(state, stack, sDbl);
+            stack[state.stackTop] = !res;
+            return null;
+        }
+    }
+
+    private static boolean doEquals(InterpreterState state, Object[] stack, double[] sDbl) {
+        final Object rhs = stack[state.stackTop--];
+        final Object lhs = stack[state.stackTop];
+        final boolean res;
+        if (rhs == DOUBLE_MARK) {
+            if (lhs == DOUBLE_MARK) {
+                res = (sDbl[state.stackTop] == sDbl[state.stackTop + 1]);
+            } else {
+                res = ScriptRuntime.eqNumber(sDbl[state.stackTop + 1], lhs);
+            }
+        } else if (lhs == DOUBLE_MARK) {
+            res = ScriptRuntime.eqNumber(sDbl[state.stackTop], rhs);
+        } else {
+            res = ScriptRuntime.eq(lhs, rhs);
+        }
+        return res;
+    }
+
+    private static class DoShallowEquals extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            final boolean res = doShallowEquals(state, stack, sDbl);
+            stack[state.stackTop] = res;
+            return null;
+        }
+    }
+
+    private static class DoShallowNotEquals extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            final boolean res = doShallowEquals(state, stack, sDbl);
+            stack[state.stackTop] = !res;
+            return null;
+        }
+    }
+
+    private static boolean doShallowEquals(InterpreterState state, Object[] stack, double[] sDbl) {
+        final Object rhs = stack[state.stackTop--];
+        final Object lhs = stack[state.stackTop];
+        final boolean res;
+        if (rhs == DOUBLE_MARK) {
+            double rDbl = sDbl[state.stackTop + 1];
+            if (lhs == DOUBLE_MARK) {
+                res = rDbl == sDbl[state.stackTop];
+            } else if (lhs instanceof Number && !(lhs instanceof BigInteger)) {
+                res = rDbl == ((Number) lhs).doubleValue();
+            } else {
+                res = false;
+            }
+        } else if (lhs == DOUBLE_MARK) {
+            double ldbl = sDbl[state.stackTop];
+            if (rhs instanceof Number && !(rhs instanceof BigInteger)) {
+                res = ldbl == ((Number) rhs).doubleValue();
+            } else {
+                res = false;
+            }
+        } else {
+            res = ScriptRuntime.shallowEq(lhs, rhs);
+        }
+        return res;
+    }
+
+    private static class DoIfNE extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (stack_boolean(frame, state.stackTop--)) {
+                frame.pc += 2;
+                return null;
+            }
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoIfEQ extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (!stack_boolean(frame, state.stackTop--)) {
+                frame.pc += 2;
+                return null;
+            }
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoIfEQPop extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (!stack_boolean(frame, state.stackTop--)) {
+                frame.pc += 2;
+                return null;
+            }
+            frame.stack[state.stackTop--] = null;
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoIfNullUndef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object val = frame.stack[state.stackTop];
+            --state.stackTop;
+            if (val != null && !Undefined.isUndefined(val)) {
+                frame.pc += 2;
+                return null;
+            }
+            return BREAK_JUMPLESSRUN;
+        }
+    }
+
+    private static class DoIfNotNullUndef extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object val = frame.stack[state.stackTop];
+            --state.stackTop;
+            if (val == null || Undefined.isUndefined(val)) {
+                frame.pc += 2;
+                return null;
+            }
+            return BREAK_JUMPLESSRUN;
+        }
     }
 
     private static class DoGoto extends InstructionClass {
@@ -4259,98 +4409,6 @@ public final class Interpreter extends Icode implements Evaluator {
         } else {
             return null;
         }
-    }
-
-    private static int doInOrInstanceof(
-            Context cx, int op, Object[] stack, double[] sDbl, int stackTop) {
-        Object rhs = stack[stackTop];
-        if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object lhs = stack[stackTop];
-        if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        boolean valBln;
-        if (op == Token.IN) {
-            valBln = ScriptRuntime.in(lhs, rhs, cx);
-        } else {
-            valBln = ScriptRuntime.instanceOf(lhs, rhs, cx);
-        }
-        stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
-        return stackTop;
-    }
-
-    private static int doCompare(
-            CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        --stackTop;
-        Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        boolean valBln;
-        if (lhs == DOUBLE_MARK && rhs == DOUBLE_MARK) {
-            valBln = ScriptRuntime.compareTo(sDbl[stackTop], sDbl[stackTop + 1], op);
-            stack[stackTop] = valBln;
-            return stackTop;
-        }
-        object_compare:
-        {
-            number_compare:
-            {
-                Number rNum, lNum;
-                if (rhs == DOUBLE_MARK) {
-                    rNum = sDbl[stackTop + 1];
-                    lNum = stack_numeric(frame, stackTop);
-                } else if (lhs == DOUBLE_MARK) {
-                    rNum = ScriptRuntime.toNumeric(rhs);
-                    lNum = sDbl[stackTop];
-                } else {
-                    break number_compare;
-                }
-                valBln = ScriptRuntime.compare(lNum, rNum, op);
-                break object_compare;
-            }
-            valBln = ScriptRuntime.compare(lhs, rhs, op);
-        }
-        stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
-        return stackTop;
-    }
-
-    private static boolean doEquals(Object[] stack, double[] sDbl, int stackTop) {
-        Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        if (rhs == DOUBLE_MARK) {
-            if (lhs == DOUBLE_MARK) {
-                return (sDbl[stackTop] == sDbl[stackTop + 1]);
-            }
-            return ScriptRuntime.eqNumber(sDbl[stackTop + 1], lhs);
-        }
-        if (lhs == DOUBLE_MARK) {
-            return ScriptRuntime.eqNumber(sDbl[stackTop], rhs);
-        }
-        return ScriptRuntime.eq(lhs, rhs);
-    }
-
-    private static boolean doShallowEquals(Object[] stack, double[] sDbl, int stackTop) {
-        Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        double rdbl, ldbl;
-        if (rhs == DOUBLE_MARK) {
-            rdbl = sDbl[stackTop + 1];
-            if (lhs == DOUBLE_MARK) {
-                ldbl = sDbl[stackTop];
-            } else if (lhs instanceof Number && !(lhs instanceof BigInteger)) {
-                ldbl = ((Number) lhs).doubleValue();
-            } else {
-                return false;
-            }
-        } else if (lhs == DOUBLE_MARK) {
-            ldbl = sDbl[stackTop];
-            if (rhs instanceof Number && !(rhs instanceof BigInteger)) {
-                rdbl = ((Number) rhs).doubleValue();
-            } else {
-                return false;
-            }
-        } else {
-            return ScriptRuntime.shallowEq(lhs, rhs);
-        }
-        return (ldbl == rdbl);
     }
 
     private static CallFrame processThrowable(
