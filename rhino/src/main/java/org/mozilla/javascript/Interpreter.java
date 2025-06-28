@@ -1359,6 +1359,8 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.THROW] = new DoThrow();
+        instructionObjs[base + Token.RETHROW] = new DoRethrow();
         instructionObjs[base + Token.GE] = new DoCompare();
         instructionObjs[base + Token.LE] = new DoCompare();
         instructionObjs[base + Token.GT] = new DoCompare();
@@ -1903,25 +1905,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     si, iData.itsSourceFile, sourceLine);
                                     break Loop;
                                 }
-                            case Token.THROW:
-                                {
-                                    Object value = stack[stackTop];
-                                    if (value == DOUBLE_MARK)
-                                        value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-
-                                    int sourceLine = getIndex(iCode, frame.pc);
-                                    throwable =
-                                            new JavaScriptException(
-                                                    value, iData.itsSourceFile, sourceLine);
-                                    break withoutExceptions;
-                                }
-                            case Token.RETHROW:
-                                {
-                                    indexReg += iData.itsMaxVars;
-                                    throwable = stack[indexReg];
-                                    break withoutExceptions;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2012,6 +1995,47 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoRethrow extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            state.throwable = frame.stack[state.indexReg];
+            return BREAK_WITHOUT_EXTENSION;
+        }
+    }
+
+    private static class DoThrow extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.throwable =
+                    throwObject(
+                            frame,
+                            frame.stack,
+                            frame.sDbl,
+                            frame.idata,
+                            frame.idata.itsICode,
+                            state);
+            --state.stackTop;
+            return BREAK_WITHOUT_EXTENSION;
+        }
+
+        private static Object throwObject(
+                CallFrame frame,
+                final Object[] stack,
+                final double[] sDbl,
+                final InterpreterData iData,
+                final byte[] iCode,
+                InterpreterState state) {
+            Object throwable;
+            Object value = stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+
+            int sourceLine = getIndex(iCode, frame.pc);
+            throwable = new JavaScriptException(value, iData.itsSourceFile, sourceLine);
+            return throwable;
+        }
     }
 
     private static class DoCompare extends InstructionClass {
