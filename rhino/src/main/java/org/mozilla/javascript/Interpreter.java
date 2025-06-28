@@ -1359,6 +1359,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.GETELEM] = new DoGetElem();
+        instructionObjs[base + Token.GETELEM_SUPER] = new DoGetElemSuper();
+        instructionObjs[base + Token.SETELEM] = new DoSetElem();
+        instructionObjs[base + Token.SETELEM_SUPER] = new DoSetElemSuper();
+        instructionObjs[base + Icode_ELEM_INC_DEC] = new DoElemIncDec();
         instructionObjs[base + Token.GET_REF] = new DoGetRef();
         instructionObjs[base + Token.SET_REF] = new DoSetRef();
         instructionObjs[base + Token.DEL_REF] = new DoDelRef();
@@ -2196,32 +2201,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ++frame.pc;
                                     continue Loop;
                                 }
-                            case Token.GETELEM:
-                                {
-                                    stackTop = doGetElem(cx, frame, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.GETELEM_SUPER:
-                                {
-                                    stackTop = doGetElemSuper(cx, frame, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.SETELEM:
-                                {
-                                    stackTop = doSetElem(cx, frame, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Token.SETELEM_SUPER:
-                                {
-                                    stackTop = doSetElemSuper(cx, frame, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
-                            case Icode_ELEM_INC_DEC:
-                                {
-                                    stackTop =
-                                            doElemIncDec(cx, frame, iCode, stack, sDbl, stackTop);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2312,6 +2291,122 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoGetElem extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object lhs = stack[--state.stackTop];
+            if (lhs == DOUBLE_MARK) {
+                lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            }
+            Object value;
+            Object id = stack[state.stackTop + 1];
+            if (id != DOUBLE_MARK) {
+                value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
+            } else {
+                double d = sDbl[state.stackTop + 1];
+                value = ScriptRuntime.getObjectIndex(lhs, d, cx, frame.scope);
+            }
+            stack[state.stackTop] = value;
+            return null;
+        }
+    }
+
+    private static class DoGetElemSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object superObject = stack[--state.stackTop];
+            if (superObject == DOUBLE_MARK) Kit.codeBug();
+            Object value;
+            Object id = stack[state.stackTop + 1];
+            if (id != DOUBLE_MARK) {
+                value = ScriptRuntime.getSuperElem(superObject, id, cx, frame.scope, frame.thisObj);
+            } else {
+                double d = sDbl[state.stackTop + 1];
+                value = ScriptRuntime.getSuperIndex(superObject, d, cx, frame.scope, frame.thisObj);
+            }
+            stack[state.stackTop] = value;
+            return null;
+        }
+    }
+
+    private static class DoSetElem extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) {
+                rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            }
+            state.stackTop -= 2;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) {
+                lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            }
+            Object value;
+            Object id = stack[state.stackTop + 1];
+            if (id != DOUBLE_MARK) {
+                value = ScriptRuntime.setObjectElem(lhs, id, rhs, cx, frame.scope);
+            } else {
+                double d = sDbl[state.stackTop + 1];
+                value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx, frame.scope);
+            }
+            stack[state.stackTop] = value;
+            return null;
+        }
+    }
+
+    private static class DoSetElemSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) {
+                rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            }
+            state.stackTop -= 2;
+            Object superObject = stack[state.stackTop];
+            if (superObject == DOUBLE_MARK) Kit.codeBug();
+            Object value;
+            Object id = stack[state.stackTop + 1];
+            if (id != DOUBLE_MARK) {
+                value =
+                        ScriptRuntime.setSuperElem(
+                                superObject, id, rhs, cx, frame.scope, frame.thisObj);
+            } else {
+                double d = sDbl[state.stackTop + 1];
+                value =
+                        ScriptRuntime.setSuperIndex(
+                                superObject, d, rhs, cx, frame.scope, frame.thisObj);
+            }
+            stack[state.stackTop] = value;
+            return null;
+        }
+    }
+
+    private static class DoElemIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            final byte[] iCode = frame.idata.itsICode;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            --state.stackTop;
+            Object lhs = stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            stack[state.stackTop] =
+                    ScriptRuntime.elemIncrDecr(lhs, rhs, cx, frame.scope, iCode[frame.pc]);
+            ++frame.pc;
+            return null;
+        }
     }
 
     private static class DoGetRef extends InstructionClass {
@@ -3912,107 +4007,6 @@ public final class Interpreter extends Icode implements Evaluator {
         Object lhs = stack[stackTop];
         if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode_DELNAME);
-        return stackTop;
-    }
-
-    private static int doGetElem(
-            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
-        --stackTop;
-        Object lhs = stack[stackTop];
-        if (lhs == DOUBLE_MARK) {
-            lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        }
-        Object value;
-        Object id = stack[stackTop + 1];
-        if (id != DOUBLE_MARK) {
-            value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
-        } else {
-            double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.getObjectIndex(lhs, d, cx, frame.scope);
-        }
-        stack[stackTop] = value;
-        return stackTop;
-    }
-
-    private static int doGetElemSuper(
-            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
-        --stackTop;
-        Object superObject = stack[stackTop];
-        if (superObject == DOUBLE_MARK) Kit.codeBug();
-        Object value;
-        Object id = stack[stackTop + 1];
-        if (id != DOUBLE_MARK) {
-            value = ScriptRuntime.getSuperElem(superObject, id, cx, frame.scope, frame.thisObj);
-        } else {
-            double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.getSuperIndex(superObject, d, cx, frame.scope, frame.thisObj);
-        }
-        stack[stackTop] = value;
-        return stackTop;
-    }
-
-    private static int doSetElem(
-            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
-        stackTop -= 2;
-        Object rhs = stack[stackTop + 2];
-        if (rhs == DOUBLE_MARK) {
-            rhs = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
-        }
-        Object lhs = stack[stackTop];
-        if (lhs == DOUBLE_MARK) {
-            lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        }
-        Object value;
-        Object id = stack[stackTop + 1];
-        if (id != DOUBLE_MARK) {
-            value = ScriptRuntime.setObjectElem(lhs, id, rhs, cx, frame.scope);
-        } else {
-            double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx, frame.scope);
-        }
-        stack[stackTop] = value;
-        return stackTop;
-    }
-
-    private static int doSetElemSuper(
-            Context cx, CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
-        stackTop -= 2;
-        Object rhs = stack[stackTop + 2];
-        if (rhs == DOUBLE_MARK) {
-            rhs = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
-        }
-        Object superObject = stack[stackTop];
-        if (superObject == DOUBLE_MARK) Kit.codeBug();
-        Object value;
-        Object id = stack[stackTop + 1];
-        if (id != DOUBLE_MARK) {
-            value =
-                    ScriptRuntime.setSuperElem(
-                            superObject, id, rhs, cx, frame.scope, frame.thisObj);
-        } else {
-            double d = sDbl[stackTop + 1];
-            value =
-                    ScriptRuntime.setSuperIndex(
-                            superObject, d, rhs, cx, frame.scope, frame.thisObj);
-        }
-        stack[stackTop] = value;
-        return stackTop;
-    }
-
-    private static int doElemIncDec(
-            Context cx,
-            CallFrame frame,
-            byte[] iCode,
-            Object[] stack,
-            double[] sDbl,
-            int stackTop) {
-        Object rhs = stack[stackTop];
-        if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        --stackTop;
-        Object lhs = stack[stackTop];
-        if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.elemIncrDecr(lhs, rhs, cx, frame.scope, iCode[frame.pc]);
-        ++frame.pc;
         return stackTop;
     }
 
