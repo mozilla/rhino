@@ -1359,6 +1359,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_POP] = new DoPop();
+        instructionObjs[base + Icode_POP_RESULT] = new DoPopResult();
+        instructionObjs[base + Icode_DUP] = new DoDup();
+        instructionObjs[base + Icode_DUP2] = new DoDup2();
+        instructionObjs[base + Icode_SWAP] = new DoSwap();
         instructionObjs[base + Token.RETURN] = new DoReturn();
         instructionObjs[base + Token.RETURN_RESULT] = new DoReturnResult();
         instructionObjs[base + Icode_RETUNDEF] = new DoReturnUndef();
@@ -2011,38 +2016,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     }
                                     continue Loop;
                                 }
-                            case Icode_POP:
-                                stack[stackTop] = null;
-                                stackTop--;
-                                continue Loop;
-                            case Icode_POP_RESULT:
-                                frame.result = stack[stackTop];
-                                frame.resultDbl = sDbl[stackTop];
-                                stack[stackTop] = null;
-                                --stackTop;
-                                continue Loop;
-                            case Icode_DUP:
-                                stack[stackTop + 1] = stack[stackTop];
-                                sDbl[stackTop + 1] = sDbl[stackTop];
-                                stackTop++;
-                                continue Loop;
-                            case Icode_DUP2:
-                                stack[stackTop + 1] = stack[stackTop - 1];
-                                sDbl[stackTop + 1] = sDbl[stackTop - 1];
-                                stack[stackTop + 2] = stack[stackTop];
-                                sDbl[stackTop + 2] = sDbl[stackTop];
-                                stackTop += 2;
-                                continue Loop;
-                            case Icode_SWAP:
-                                {
-                                    Object o = stack[stackTop];
-                                    stack[stackTop] = stack[stackTop - 1];
-                                    stack[stackTop - 1] = o;
-                                    double d = sDbl[stackTop];
-                                    sDbl[stackTop] = sDbl[stackTop - 1];
-                                    sDbl[stackTop - 1] = d;
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2133,6 +2106,70 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoPop extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            stack[state.stackTop] = null;
+            state.stackTop--;
+            return null;
+        }
+    }
+
+    private static class DoPopResult extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            frame.result = stack[state.stackTop];
+            frame.resultDbl = sDbl[state.stackTop];
+            stack[state.stackTop] = null;
+            --state.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoDup extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            stack[state.stackTop + 1] = stack[state.stackTop];
+            sDbl[state.stackTop + 1] = sDbl[state.stackTop];
+            state.stackTop++;
+            return null;
+        }
+    }
+
+    private static class DoDup2 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            stack[state.stackTop + 1] = stack[state.stackTop - 1];
+            sDbl[state.stackTop + 1] = sDbl[state.stackTop - 1];
+            stack[state.stackTop + 2] = stack[state.stackTop];
+            sDbl[state.stackTop + 2] = sDbl[state.stackTop];
+            state.stackTop += 2;
+            return null;
+        }
+    }
+
+    private static class DoSwap extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object o = stack[state.stackTop];
+            stack[state.stackTop] = stack[state.stackTop - 1];
+            stack[state.stackTop - 1] = o;
+            double d = sDbl[state.stackTop];
+            sDbl[state.stackTop] = sDbl[state.stackTop - 1];
+            sDbl[state.stackTop - 1] = d;
+            return null;
+        }
     }
 
     private static class DoReturn extends InstructionClass {
