@@ -1359,6 +1359,11 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Icode_GENERATOR] = new DoGenerator();
+        instructionObjs[base + Token.YIELD] = new DoYield();
+        instructionObjs[base + Icode_YIELD_STAR] = new DoYield();
+        instructionObjs[base + Icode_GENERATOR_END] = new DoGeneratorEnd();
+        instructionObjs[base + Icode_GENERATOR_RETURN] = new DoGeneratorReturn();
         instructionObjs[base + Token.THROW] = new DoThrow();
         instructionObjs[base + Token.RETHROW] = new DoRethrow();
         instructionObjs[base + Token.GE] = new DoCompare();
@@ -1824,87 +1829,6 @@ public final class Interpreter extends Icode implements Evaluator {
                     { // Extra braces to reduce the formatting change.
                         // Back indent to ease implementation reading
                         switch (op) {
-                            case Icode_GENERATOR:
-                                {
-                                    if (!frame.frozen) {
-                                        // First time encountering this opcode: create new generator
-                                        // object and return
-                                        frame.pc--; // we want to come back here when we resume
-                                        CallFrame generatorFrame = captureFrameForGenerator(frame);
-                                        generatorFrame.frozen = true;
-                                        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                                            frame.result =
-                                                    new ES6Generator(
-                                                            frame.scope,
-                                                            generatorFrame.fnOrScript,
-                                                            generatorFrame);
-                                        } else {
-                                            frame.result =
-                                                    new NativeGenerator(
-                                                            frame.scope,
-                                                            generatorFrame.fnOrScript,
-                                                            generatorFrame);
-                                        }
-                                        break Loop;
-                                    }
-                                    // We are now resuming execution. Fall through to YIELD case.
-                                }
-                            // fall through...
-                            case Token.YIELD:
-                            case Icode_YIELD_STAR:
-                                {
-                                    /* This is both where we yield
-                                     * from and re-enter the
-                                     * generator. */
-                                    if (!frame.frozen) {
-                                        return new YieldResult(
-                                                freezeGenerator(
-                                                        cx,
-                                                        frame,
-                                                        stackTop,
-                                                        generatorState,
-                                                        op == Icode_YIELD_STAR));
-                                    }
-                                    Object obj = thawGenerator(frame, stackTop, generatorState, op);
-                                    if (obj != Scriptable.NOT_FOUND) {
-                                        throwable = obj;
-                                        break withoutExceptions;
-                                    }
-                                    continue Loop;
-                                }
-                            case Icode_GENERATOR_END:
-                                {
-                                    // throw StopIteration
-                                    frame.frozen = true;
-                                    int sourceLine = getIndex(iCode, frame.pc);
-                                    generatorState.returnedException =
-                                            new JavaScriptException(
-                                                    NativeIterator.getStopIterationObject(
-                                                            frame.scope),
-                                                    frame.idata.itsSourceFile,
-                                                    sourceLine);
-                                    break Loop;
-                                }
-                            case Icode_GENERATOR_RETURN:
-                                {
-                                    // throw StopIteration with the value of "return"
-                                    frame.frozen = true;
-                                    frame.result = stack[stackTop];
-                                    frame.resultDbl = sDbl[stackTop];
-                                    --stackTop;
-
-                                    NativeIterator.StopIteration si =
-                                            new NativeIterator.StopIteration(
-                                                    (frame.result == DOUBLE_MARK)
-                                                            ? Double.valueOf(frame.resultDbl)
-                                                            : frame.result);
-
-                                    int sourceLine = getIndex(iCode, frame.pc);
-                                    generatorState.returnedException =
-                                            new JavaScriptException(
-                                                    si, iData.itsSourceFile, sourceLine);
-                                    break Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -1995,6 +1919,152 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoGenerator extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (!frame.frozen) {
+                // First time encountering this opcode: create new generator
+                // object and return
+                generatorCreate(cx, frame);
+                return BREAK_LOOP;
+            }
+            /* This is both where we yield from and re-enter the
+             * generator.
+             */
+            if (!frame.frozen) {
+                return new YieldResult(
+                        freezeGenerator(
+                                cx, frame, state, state.generatorState, op == Icode_YIELD_STAR));
+            }
+            Object obj = thawGenerator(frame, state, state.generatorState, op);
+            if (obj != Scriptable.NOT_FOUND) {
+                state.throwable = obj;
+                return BREAK_WITHOUT_EXTENSION;
+            }
+            return null;
+        }
+
+        private static void generatorCreate(Context cx, CallFrame frame) {
+            // First time encountering this opcode: create new generator
+            // object and return
+            frame.pc--; // we want to come back here when we resume
+            CallFrame generatorFrame = captureFrameForGenerator(frame);
+            generatorFrame.frozen = true;
+            if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                frame.result =
+                        new ES6Generator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
+            } else {
+                frame.result =
+                        new NativeGenerator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
+            }
+        }
+    }
+
+    private static Object freezeGenerator(
+            Context cx,
+            CallFrame frame,
+            InterpreterState state,
+            GeneratorState generatorState,
+            boolean yieldStar) {
+        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+            // Error: no yields when generator is closing
+            throw ScriptRuntime.typeErrorById("msg.yield.closing");
+        }
+        // return to our caller (which should be a method of NativeGenerator)
+        frame.frozen = true;
+        frame.result = frame.stack[state.stackTop];
+        frame.resultDbl = frame.sDbl[state.stackTop];
+        frame.savedStackTop = state.stackTop;
+        frame.pc--; // we want to come back here when we resume
+        ScriptRuntime.exitActivationFunction(cx);
+        final Object result =
+                (frame.result != DOUBLE_MARK)
+                        ? frame.result
+                        : ScriptRuntime.wrapNumber(frame.resultDbl);
+        if (yieldStar) {
+            return new ES6Generator.YieldStarResult(result);
+        }
+        return result;
+    }
+
+    private static Object thawGenerator(
+            CallFrame frame, InterpreterState state, GeneratorState generatorState, int op) {
+        // we are resuming execution
+        frame.frozen = false;
+        int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+        frame.pc += 2; // skip line number data
+        if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
+            // processing a call to <generator>.throw(exception): must
+            // act as if exception was thrown from resumption point.
+            return new JavaScriptException(
+                    generatorState.value, frame.idata.itsSourceFile, sourceLine);
+        }
+        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+            return generatorState.value;
+        }
+        if (generatorState.operation != NativeGenerator.GENERATOR_SEND) throw Kit.codeBug();
+        if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {
+            frame.stack[state.stackTop] = generatorState.value;
+        }
+        return Scriptable.NOT_FOUND;
+    }
+
+    private static class DoYield extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            /* This is both where we yield from and re-enter the
+             * generator.
+             */
+            if (!frame.frozen) {
+                return new YieldResult(
+                        freezeGenerator(
+                                cx, frame, state, state.generatorState, op == Icode_YIELD_STAR));
+            }
+            Object obj = thawGenerator(frame, state, state.generatorState, op);
+            if (obj != Scriptable.NOT_FOUND) {
+                state.throwable = obj;
+                return BREAK_WITHOUT_EXTENSION;
+            }
+            return null;
+        }
+    }
+
+    private static class DoGeneratorEnd extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // throw StopIteration
+            frame.frozen = true;
+            int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+            state.generatorState.returnedException =
+                    new JavaScriptException(
+                            NativeIterator.getStopIterationObject(frame.scope),
+                            frame.idata.itsSourceFile,
+                            sourceLine);
+            return BREAK_LOOP;
+        }
+    }
+
+    private static class DoGeneratorReturn extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // throw StopIteration with the value of "return"
+            frame.frozen = true;
+            frame.result = frame.stack[state.stackTop];
+            frame.resultDbl = frame.sDbl[state.stackTop--];
+
+            NativeIterator.StopIteration si =
+                    new NativeIterator.StopIteration(
+                            (frame.result == DOUBLE_MARK)
+                                    ? Double.valueOf(frame.resultDbl)
+                                    : frame.result);
+
+            int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+            state.generatorState.returnedException =
+                    new JavaScriptException(si, frame.idata.itsSourceFile, sourceLine);
+            return BREAK_LOOP;
+        }
     }
 
     private static class DoRethrow extends InstructionClass {
@@ -4527,55 +4597,6 @@ public final class Interpreter extends Icode implements Evaluator {
         }
         frame.throwable = throwable;
         return frame;
-    }
-
-    private static Object freezeGenerator(
-            Context cx,
-            CallFrame frame,
-            int stackTop,
-            GeneratorState generatorState,
-            boolean yieldStar) {
-        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
-            // Error: no yields when generator is closing
-            throw ScriptRuntime.typeErrorById("msg.yield.closing");
-        }
-        // return to our caller (which should be a method of NativeGenerator)
-        frame.frozen = true;
-        frame.result = frame.stack[stackTop];
-        frame.resultDbl = frame.sDbl[stackTop];
-        frame.savedStackTop = stackTop;
-        frame.pc--; // we want to come back here when we resume
-        ScriptRuntime.exitActivationFunction(cx);
-        final Object result =
-                (frame.result != DOUBLE_MARK)
-                        ? frame.result
-                        : ScriptRuntime.wrapNumber(frame.resultDbl);
-        if (yieldStar) {
-            return new ES6Generator.YieldStarResult(result);
-        }
-        return result;
-    }
-
-    private static Object thawGenerator(
-            CallFrame frame, int stackTop, GeneratorState generatorState, int op) {
-        // we are resuming execution
-        frame.frozen = false;
-        int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
-        frame.pc += 2; // skip line number data
-        if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
-            // processing a call to <generator>.throw(exception): must
-            // act as if exception was thrown from resumption point.
-            return new JavaScriptException(
-                    generatorState.value, frame.idata.itsSourceFile, sourceLine);
-        }
-        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
-            return generatorState.value;
-        }
-        if (generatorState.operation != NativeGenerator.GENERATOR_SEND) throw Kit.codeBug();
-        if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {
-            frame.stack[stackTop] = generatorState.value;
-        }
-        return Scriptable.NOT_FOUND;
     }
 
     private static Scriptable getApplyThis(
