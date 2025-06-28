@@ -2,7 +2,6 @@ package org.mozilla.javascript.lc.type.impl.factory;
 
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
-
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;

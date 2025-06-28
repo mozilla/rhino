@@ -30,7 +30,8 @@ public abstract class WithCacheFactory implements FactoryBase {
     private transient Map<Class<?>, InterfaceTypeInfo> interfaceCache = createTypeCache();
     private transient Map<Class<?>, EnumTypeInfo> enumCache = createTypeCache();
 
-    private transient Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> consolidationMappingCache = createConsolidationMappingCache();
+    private transient Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> consolidationMappingCache =
+            createConsolidationMappingCache();
 
     protected abstract <K, V> Map<K, V> createTypeCache();
 
@@ -62,7 +63,8 @@ public abstract class WithCacheFactory implements FactoryBase {
         if (from == null || from == Object.class || from.isPrimitive()) {
             return Map.of();
         }
-        // no computeIfAbsent because `computeTypeReplacement(...)` will recursively call this method again
+        // no computeIfAbsent because `computeTypeReplacement(...)` will recursively call this
+        // method again
         var got = consolidationMappingCache.get(from);
         if (got == null) {
             got = computeConsolidationMapping(from);

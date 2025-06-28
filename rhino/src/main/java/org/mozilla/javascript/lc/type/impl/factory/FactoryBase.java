@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -61,9 +60,7 @@ public interface FactoryBase extends TypeInfoFactory {
     }
 
     private static Map<VariableTypeInfo, TypeInfo> transformMapping(
-        Map<VariableTypeInfo, TypeInfo> mapping,
-        Map<VariableTypeInfo, TypeInfo> transformer
-    ) {
+            Map<VariableTypeInfo, TypeInfo> mapping, Map<VariableTypeInfo, TypeInfo> transformer) {
         if (mapping.isEmpty()) {
             return Map.of();
         } else if (mapping.size() == 1) {
@@ -77,35 +74,37 @@ public interface FactoryBase extends TypeInfoFactory {
         return transformed;
     }
 
+    /// Compute consolidation mapping from the input class. Used by
+    /// [#getConsolidationMapping(java.lang.Class)]
+    ///
+    /// Example:
+    /// ```java
+    /// class A<Ta> {}
+    /// class B<Tb> extends A<Tb> {}
+    ///
+    /// interface C<Tc> {}
+    /// interface D<Td> extends B<Td> {}
+    ///
+    /// class E<Te> extends B<Te> implements D<String> {}
+    /// ```
+    /// and input class is `E.class`. The result mapping will then be: `Ta -> Te`, `Tb -> Te`, `Tc
+    /// -> String`, `Td -> String`
     default Map<VariableTypeInfo, TypeInfo> computeConsolidationMapping(Class<?> type) {
         var mapping = new HashMap<VariableTypeInfo, TypeInfo>();
 
-        /*
-         * (classes are named as 'XXX': A, B, C, ...)
-         * (type variables are named as 'Tx': Ta, Tb, Tc, ...)
-         *
-         * let's consider a rather extreme case:
-         *
-         * class A<Ta> {}
-         * interface B<Tb> {}
-         * class C<Tc> extends A<Tc> {}
-         * class D<Td> extends C<Td> implements B<A<Td>> {}
-         *
-         * assuming that input 'type' is D.class
-         */
-
-        // in our D.class example, this will collect mapping from C<Td>, forming Tc -> Td
+        // in our E.class example, this will collect mapping from B<Te>, forming Tb -> Te
         extractSuperMapping(type.getGenericSuperclass(), mapping);
 
-        // in our D.class example, this will collect mapping from B<A<Td>>, forming Tb -> A<Td>
+        // in our E.class example, this will collect mapping from D<String>, forming Td -> String
         for (var genericInterface : type.getGenericInterfaces()) {
             extractSuperMapping(genericInterface, mapping);
         }
 
-        // mapping from super
-        // in our D.class example, super mapping will only include Ta -> Tc
+        // extract mappings for superclasses/interfaces
+        // in our E.class example, super mapping will include Ta -> Tb
         var superMapping = getConsolidationMapping(type.getSuperclass());
 
+        // in our E.class example, interface mapping will include Tc -> Td
         var interfaces = type.getInterfaces();
         var interfaceMappings = new ArrayList<Map<VariableTypeInfo, TypeInfo>>(interfaces.length);
         for (var interface_ : interfaces) {
@@ -116,18 +115,19 @@ public interface FactoryBase extends TypeInfoFactory {
             return Map.copyOf(mapping);
         }
 
-        // transform super mapping to make it able to directly map a type to types used by D.class
+        // transform super mapping to make it able to directly map a type to types used by E.class,
         // then merge them together
+        // Example: Ta -> Tb (from `superMapping`) will be transformed by Tb -> Te (from `mapping`),
+        // forming Ta -> Te
         var merged = new HashMap<>(transformMapping(superMapping, mapping));
         for (var interfaceMapping : interfaceMappings) {
             merged.putAll(transformMapping(interfaceMapping, mapping));
         }
         merged.putAll(mapping);
 
-        // in our D.class example, our mapping will include Ta -> Td, Tb -> A<Td>, Tc -> Td.
-        // This means that all related type (Ta, Tb, Tc) can be directly mapped to
-        // the type used by D.class (Td), so we only need to apply the mapping ONCE, which will be
-        // important for performance
+        // Result: `Ta -> Te`, `Tb -> Te`, `Tc -> String`, `Td -> String`
+        // This means that all type variables from superclass / interface (Ta, Tb, Tc, Td) can be
+        // eliminated by applying the mapping ONCE, which will be important for performance
         return Map.copyOf(merged);
     }
 
@@ -145,11 +145,10 @@ public interface FactoryBase extends TypeInfoFactory {
         final var args = parameterized.getActualTypeArguments(); // T is mapped to
 
         if (params.length != args.length) {
-            throw new IllegalArgumentException(String.format(
-                "typeParameters.length != actualTypeArguments.length (%s != %s)",
-                params.length,
-                args.length
-            ));
+            throw new IllegalArgumentException(
+                    String.format(
+                            "typeParameters.length != actualTypeArguments.length (%s != %s)",
+                            params.length, args.length));
         }
 
         for (int i = 0; i < args.length; i++) {
