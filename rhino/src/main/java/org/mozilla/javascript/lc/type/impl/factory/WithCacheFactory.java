@@ -7,6 +7,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
@@ -29,7 +30,11 @@ public abstract class WithCacheFactory implements FactoryBase {
     private transient Map<Class<?>, InterfaceTypeInfo> interfaceCache = createTypeCache();
     private transient Map<Class<?>, EnumTypeInfo> enumCache = createTypeCache();
 
+    private transient Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> consolidationMappingCache = createConsolidationMappingCache();
+
     protected abstract <K, V> Map<K, V> createTypeCache();
+
+    protected abstract <K, V> Map<K, V> createConsolidationMappingCache();
 
     @Override
     public TypeInfo create(Class<?> clazz) {
@@ -52,6 +57,20 @@ public abstract class WithCacheFactory implements FactoryBase {
                 typeVariable, raw -> new VariableTypeInfoImpl(raw, this));
     }
 
+    @Override
+    public Map<VariableTypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {
+        if (from == null || from == Object.class || from.isPrimitive()) {
+            return Map.of();
+        }
+        // no computeIfAbsent because `computeTypeReplacement(...)` will recursively call this method again
+        var got = consolidationMappingCache.get(from);
+        if (got == null) {
+            got = computeConsolidationMapping(from);
+            consolidationMappingCache.put(from, got);
+        }
+        return got;
+    }
+
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
     }
@@ -62,5 +81,6 @@ public abstract class WithCacheFactory implements FactoryBase {
         basicClassCache = createTypeCache();
         interfaceCache = createTypeCache();
         enumCache = createTypeCache();
+        consolidationMappingCache = createConsolidationMappingCache();
     }
 }
