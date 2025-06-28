@@ -1359,6 +1359,10 @@ public final class Interpreter extends Icode implements Evaluator {
     static {
         instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
         int base = -MIN_ICODE;
+        instructionObjs[base + Token.BINDNAME] = new DoBindName();
+        instructionObjs[base + Token.STRICT_SETNAME] = new DoSetName();
+        instructionObjs[base + Token.SETNAME] = new DoSetName();
+        instructionObjs[base + Icode_SETCONST] = new DoSetConst();
         instructionObjs[base + Token.DELPROP] = new DoDelName();
         instructionObjs[base + Icode_DELNAME] = new DoDelName();
         instructionObjs[base + Icode_DELPROP_SUPER] = new DoDelPropSuper();
@@ -2088,36 +2092,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                 stack[stackTop] =
                                         ScriptRuntime.wrapBoolean(!stack_boolean(frame, stackTop));
                                 continue Loop;
-                            case Token.BINDNAME:
-                                stack[++stackTop] = ScriptRuntime.bind(cx, frame.scope, stringReg);
-                                continue Loop;
-                            case Token.STRICT_SETNAME:
-                            case Token.SETNAME:
-                                {
-                                    Object rhs = stack[stackTop];
-                                    if (rhs == DOUBLE_MARK)
-                                        rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Scriptable lhs = (Scriptable) stack[stackTop];
-                                    stack[stackTop] =
-                                            op == Token.SETNAME
-                                                    ? ScriptRuntime.setName(
-                                                            lhs, rhs, cx, frame.scope, stringReg)
-                                                    : ScriptRuntime.strictSetName(
-                                                            lhs, rhs, cx, frame.scope, stringReg);
-                                    continue Loop;
-                                }
-                            case Icode_SETCONST:
-                                {
-                                    Object rhs = stack[stackTop];
-                                    if (rhs == DOUBLE_MARK)
-                                        rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-                                    --stackTop;
-                                    Scriptable lhs = (Scriptable) stack[stackTop];
-                                    stack[stackTop] =
-                                            ScriptRuntime.setConst(lhs, rhs, cx, stringReg);
-                                    continue Loop;
-                                }
                             default:
                                 {
                                     NewState nextState;
@@ -2208,6 +2182,47 @@ public final class Interpreter extends Icode implements Evaluator {
             throwable = ex;
         }
         return new ThrowableResult(frame, throwable);
+    }
+
+    private static class DoBindName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            stack[++state.stackTop] = ScriptRuntime.bind(cx, frame.scope, state.stringReg);
+            return null;
+        }
+    }
+
+    private static class DoSetName extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Scriptable lhs = (Scriptable) stack[state.stackTop - 1];
+            stack[state.stackTop - 1] =
+                    op == Token.SETNAME
+                            ? ScriptRuntime.setName(lhs, rhs, cx, frame.scope, state.stringReg)
+                            : ScriptRuntime.strictSetName(
+                                    lhs, rhs, cx, frame.scope, state.stringReg);
+            --state.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoSetConst extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+            Object rhs = stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Scriptable lhs = (Scriptable) stack[state.stackTop - 1];
+            stack[state.stackTop - 1] = ScriptRuntime.setConst(lhs, rhs, cx, state.stringReg);
+            --state.stackTop;
+            return null;
+        }
     }
 
     private static class DoDelName extends InstructionClass {
