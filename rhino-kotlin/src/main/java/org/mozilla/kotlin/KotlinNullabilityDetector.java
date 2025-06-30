@@ -79,8 +79,4 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
         }
         return index -> result[index];
     }
-
-    private boolean[] createFallbackNullabilityArray(int paramCount) {
-        return new boolean[paramCount];
-    }
 }
