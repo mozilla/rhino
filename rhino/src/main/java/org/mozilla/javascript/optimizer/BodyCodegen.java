@@ -1116,14 +1116,7 @@ class BodyCodegen {
                             codegen.mainClassName,
                             codegen.getCompiledRegexpName(scriptOrFn, i),
                             "Ljava/lang/Object;");
-                    cfw.addInvoke(
-                            ByteCode.INVOKESTATIC,
-                            "org/mozilla/javascript/ScriptRuntime",
-                            "wrapRegExp",
-                            "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/Object;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                    ScriptRuntimeMethodSig.wrapRegExp.addInvoke(cfw);
                 }
                 break;
 
@@ -1839,14 +1832,7 @@ class BodyCodegen {
                 codegen.getTemplateLiteralName(scriptOrFn),
                 "[Ljava/lang/Object;");
         cfw.addPush(index);
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;I"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.getTemplateLiteralCallSite.addInvoke(cfw);
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {

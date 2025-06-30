@@ -5843,10 +5843,12 @@ public class ScriptRuntime {
         return result;
     }
 
+    @CodeGenMarker(ScriptRuntimeMethodSig.wrapRegExp)
     public static Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
         return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
+    @CodeGenMarker(ScriptRuntimeMethodSig.getTemplateLiteralCallSite)
     public static Scriptable getTemplateLiteralCallSite(
             Context cx, Scriptable scope, Object[] strings, int index) {
         Object callsite = strings[index];

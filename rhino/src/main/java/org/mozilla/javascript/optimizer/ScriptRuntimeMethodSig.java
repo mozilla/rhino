@@ -86,7 +86,9 @@ public enum ScriptRuntimeMethodSig {
     in,
     enterDotQuery,
     updateDotQuery,
-    leaveDotQuery;
+    leaveDotQuery,
+    wrapRegExp,
+    getTemplateLiteralCallSite;
 
     private static final String CLASS_INTERNAL_NAME =
             ScriptRuntime.class.getName().replace('.', '/');
