@@ -24,6 +24,7 @@ import org.mozilla.javascript.ScriptRuntime;
  *
  * @author ZZZank
  */
+@SuppressWarnings("ImmutableEnumChecker") // fields are mutated only once, at class initialization
 public enum ScriptRuntimeMethodSig {
     padAndRestArguments,
     padArguments,
