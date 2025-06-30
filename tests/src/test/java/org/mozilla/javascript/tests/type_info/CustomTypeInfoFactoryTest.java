@@ -33,7 +33,7 @@ public class CustomTypeInfoFactoryTest {
                                         var mod = m.getModifiers();
                                         return Modifier.isPublic(mod) && Modifier.isStatic(mod);
                                     })
-                            .filter(m -> m.getName().equals("exampleGenericMethod"))
+                            .filter(m -> m.getName().equals("exampleFunctionObjectMethod"))
                             .findFirst()
                             .orElseThrow();
             Assertions.assertThrowsExactly(
