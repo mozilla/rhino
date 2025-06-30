@@ -260,8 +260,8 @@ public interface TypeInfoFactory extends Serializable {
      * Associate this TypeInfoFactory object with the given top-level scope.
      *
      * @param topScope scope to associate this TypeInfoFactory object with.
-     * @return {@code true} if no previous TypeInfoFactory object were associated with the scope and
-     *     this TypeInfoFactory were successfully associated, false otherwise.
+     * @return {@code true} if no previous TypeInfoFactory object was associated with the scope and
+     *     this TypeInfoFactory is successfully associated, {@code false} otherwise.
      * @throws IllegalArgumentException if provided scope is not top scope
      * @see #get(Scriptable scope)
      */
@@ -291,8 +291,6 @@ public interface TypeInfoFactory extends Serializable {
             // we expect this to not happen frequently, so computing top scope twice is acceptable
             var topScope = ScriptableObject.getTopLevelScope(scope);
             if (!(topScope instanceof ScriptableObject)) {
-                // Note: it's originally a RuntimeException, the super class of
-                // IllegalArgumentException, so this will not break error catching
                 throw new IllegalArgumentException(
                         "top scope have no associated TypeInfoFactory and cannot have TypeInfoFactory associated due to not being a ScriptableObject");
             }
