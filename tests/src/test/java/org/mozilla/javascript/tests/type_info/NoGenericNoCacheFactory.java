@@ -3,7 +3,7 @@ package org.mozilla.javascript.tests.type_info;
 import java.lang.reflect.TypeVariable;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
@@ -13,9 +13,8 @@ import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
 import org.mozilla.javascript.lc.type.impl.factory.FactoryBase;
 
 /**
- * {@link org.mozilla.javascript.lc.type.TypeInfoFactory} implementation with no cache, and no
- * generic support, as an example usage of custom type factory via {@link
- * org.mozilla.javascript.ContextFactory#setTypeFactoryProvider(Function)}
+ * {@link TypeInfoFactory} implementation with no cache, and no generic support, as an example usage
+ * of custom type factory via {@link TypeInfoFactory#associate(ScriptableObject)}
  *
  * @author ZZZank
  */
