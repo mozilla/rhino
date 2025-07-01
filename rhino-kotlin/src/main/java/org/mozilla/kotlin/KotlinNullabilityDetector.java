@@ -17,7 +17,7 @@ import org.mozilla.javascript.NullabilityDetector;
 public class KotlinNullabilityDetector implements NullabilityDetector {
     @Override
     public NullabilityAccessor getParameterNullability(Method method) {
-        int paramCount = method.getParameterTypes().length;
+        int paramCount = method.getParameterCount();
         KmClass kmClass = getKmClassForJavaClass(method.getDeclaringClass());
         return getMethodParameterNullabilityFromKotlinMetadata(
                 kmClass, method.getName(), paramCount);
@@ -25,7 +25,7 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
 
     @Override
     public NullabilityAccessor getParameterNullability(Constructor<?> constructor) {
-        int paramCount = constructor.getParameterTypes().length;
+        int paramCount = constructor.getParameterCount();
         KmClass kmClass = getKmClassForJavaClass(constructor.getDeclaringClass());
         return getConstructorParameterNullabilityFromKotlinMetadata(kmClass, paramCount);
     }
@@ -77,6 +77,6 @@ public class KotlinNullabilityDetector implements NullabilityDetector {
         for (int i = 0; i < params.size(); i++) {
             result[i] = isNullable(params.get(i).getType());
         }
-        return index -> result[index];
+        return NullabilityAccessor.compress(result);
     }
 }
