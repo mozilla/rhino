@@ -31,7 +31,7 @@ final class MemberBox implements Serializable {
     private transient Member memberObject;
     private transient volatile List<TypeInfo> argTypeInfos;
     private transient volatile TypeInfo returnTypeInfo;
-    transient NullabilityDetector.NullabilityAccessor argNullability;
+    private transient volatile NullabilityDetector.NullabilityAccessor argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -51,10 +51,9 @@ final class MemberBox implements Serializable {
 
     private void init(Method method, TypeInfoFactory factory) {
         this.memberObject = method;
-        this.argNullability =
-                nullDetector == null
-                        ? NullabilityDetector.NullabilityAccessor.FALSE
-                        : nullDetector.getParameterNullability(method);
+        if (nullDetector == null) {
+            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
+        }
         this.vararg = method.isVarArgs();
         this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
         this.returnTypeInfo = factory.create(method.getGenericReturnType());
@@ -62,10 +61,9 @@ final class MemberBox implements Serializable {
 
     private void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
-        this.argNullability =
-                nullDetector == null
-                        ? NullabilityDetector.NullabilityAccessor.FALSE
-                        : nullDetector.getParameterNullability(constructor);
+        if (nullDetector == null) {
+            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
+        }
         this.vararg = constructor.isVarArgs();
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
@@ -109,6 +107,22 @@ final class MemberBox implements Serializable {
 
     List<TypeInfo> getArgTypes() {
         return argTypeInfos;
+    }
+
+    public NullabilityDetector.NullabilityAccessor getArgNullability() {
+        var got = this.argNullability;
+        if (got == null) {
+            synchronized (this) {
+                got = this.argNullability;
+                if (got == null) {
+                    got = this.isMethod()
+                        ? nullDetector.getParameterNullability(this.method())
+                        : nullDetector.getParameterNullability(this.ctor());
+                    this.argNullability = got;
+                }
+            }
+        }
+        return got;
     }
 
     TypeInfo getReturnType() {

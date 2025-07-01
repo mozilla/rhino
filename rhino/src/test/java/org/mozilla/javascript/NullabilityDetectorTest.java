@@ -14,39 +14,39 @@ public class NullabilityDetectorTest {
     public void testNullableDetectorForMethodWithoutArgs() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function1"), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability);
+        assertNullabilityMatch(memberBox.getArgNullability());
     }
 
     @Test
     public void testNullableDetectorForMethodWithOneArg() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function2"), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability, true);
+        assertNullabilityMatch(memberBox.getArgNullability(), true);
     }
 
     @Test
     public void testNullableDetectorForMethodWithSeveralArgs() {
         MemberBox memberBox =
                 new MemberBox(getTestClassMethod("function3"), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability, true, true, true, true);
+        assertNullabilityMatch(memberBox.getArgNullability(), true, true, true, true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithoutArgs() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(0), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability);
+        assertNullabilityMatch(memberBox.getArgNullability());
     }
 
     @Test
     public void testNullableDetectorForConstructorWithOneArg() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(1), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability, true);
+        assertNullabilityMatch(memberBox.getArgNullability(), true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithSeveralArgs() {
         MemberBox memberBox = new MemberBox(getTestClassConstructor(4), TypeInfoFactory.GLOBAL);
-        assertNullabilityMatch(memberBox.argNullability, true, false, true, false);
+        assertNullabilityMatch(memberBox.getArgNullability(), true, false, true, false);
     }
 
     @Test

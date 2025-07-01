@@ -423,7 +423,7 @@ public class FunctionObject extends BaseFunction {
                                     scope,
                                     arg,
                                     typeTags[i],
-                                    member.argNullability.isNullable(i));
+                                    member.getArgNullability().isNullable(i));
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -443,7 +443,7 @@ public class FunctionObject extends BaseFunction {
                                     scope,
                                     arg,
                                     typeTags[i],
-                                    member.argNullability.isNullable(i));
+                                    member.getArgNullability().isNullable(i));
                 }
             }
 
