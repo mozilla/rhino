@@ -115,9 +115,10 @@ final class MemberBox implements Serializable {
             synchronized (this) {
                 got = this.argNullability;
                 if (got == null) {
-                    got = this.isMethod()
-                        ? nullDetector.getParameterNullability(this.method())
-                        : nullDetector.getParameterNullability(this.ctor());
+                    got =
+                            this.isMethod()
+                                    ? nullDetector.getParameterNullability(this.method())
+                                    : nullDetector.getParameterNullability(this.ctor());
                     this.argNullability = got;
                 }
             }
