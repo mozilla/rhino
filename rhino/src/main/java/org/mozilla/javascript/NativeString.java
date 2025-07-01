@@ -148,6 +148,7 @@ final class NativeString extends ScriptableObject {
 
         if (sealed) {
             c.sealObject();
+            ((NativeString) c.getPrototypeProperty()).sealObject();
         }
         ScriptableObject.defineProperty(scope, CLASS_NAME, c, DONTENUM);
     }
