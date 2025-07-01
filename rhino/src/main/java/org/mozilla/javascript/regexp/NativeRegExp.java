@@ -4092,7 +4092,8 @@ public class NativeRegExp extends IdScriptableObject {
         if (thisObj instanceof NativeRegExp) {
             var regexp = (NativeRegExp) thisObj;
             var exec = ScriptableObject.getProperty(regexp, "exec");
-            if (exec instanceof IdFunctionObject
+            if ((regexp.lastIndexAttr & READONLY) == 0
+                    && exec instanceof IdFunctionObject
                     && ((IdFunctionObject) exec).methodId() == Id_exec
                     && ((IdFunctionObject) exec).getTag() == REGEXP_TAG)
                 return regexp.symbolReplaceFastPath(cx, scope, (NativeRegExp) thisObj, args);
