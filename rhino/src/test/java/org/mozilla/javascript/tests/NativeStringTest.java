@@ -6,11 +6,14 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.Locale;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -82,6 +85,25 @@ public class NativeStringTest {
 
                     final Object rep = cx.evaluateString(scope, js, "test.js", 0, null);
                     assertEquals("\u0069", rep);
+                    return null;
+                });
+    }
+
+    @Test
+    public void stringIsSealedCorrectly() {
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = new TopLevel();
+                    cx.initStandardObjects(scope, true);
+
+                    assertThrows(
+                            EvaluatorException.class,
+                            () -> cx.evaluateString(scope, "String.a = 'a'", "test.js", 1, null));
+                    assertThrows(
+                            EvaluatorException.class,
+                            () ->
+                                    cx.evaluateString(
+                                            scope, "String.prototype.a = 'a'", "test.js", 1, null));
                     return null;
                 });
     }
