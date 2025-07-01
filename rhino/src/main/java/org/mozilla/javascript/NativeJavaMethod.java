@@ -43,7 +43,7 @@ public class NativeJavaMethod extends BaseFunction {
 
     @Deprecated
     public NativeJavaMethod(Method method, String name) {
-        this(new MemberBox(method, TypeInfoFactory.GLOBAL), name);
+        this(MemberBox.of(method, TypeInfoFactory.GLOBAL), name);
     }
 
     @Override

@@ -83,10 +83,10 @@ public class FunctionObject extends BaseFunction {
         var typeInfoFactory = TypeInfoFactory.get(this);
 
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
+            member = MemberBox.of((Constructor<?>) methodOrConstructor, typeInfoFactory);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor, typeInfoFactory);
+            member = MemberBox.of((Method) methodOrConstructor, typeInfoFactory);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
@@ -418,7 +418,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = args[i];
                     Object converted =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.isArgNullable(i));
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -433,7 +433,7 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = (i < argsLength) ? args[i] : Undefined.instance;
                     invokeArgs[i] =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(cx, scope, arg, typeTags[i], member.isArgNullable(i));
                 }
             }
 

@@ -25,13 +25,13 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  *
  * @author Igor Bukanov
  */
-final class MemberBox implements Serializable {
+abstract class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
     private transient volatile List<TypeInfo> argTypeInfos;
     private transient volatile TypeInfo returnTypeInfo;
-    transient boolean[] argNullability;
+
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -41,31 +41,92 @@ final class MemberBox implements Serializable {
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method, TypeInfoFactory factory) {
-        init(method, factory);
+    private static class NoNullabilityBox extends MemberBox {
+
+        @Override
+        boolean isArgNullable(int argIdx) {
+            return false;
+        }
     }
 
-    MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
-        init(constructor, factory);
+    private static class SimpleBox extends MemberBox {
+        private transient int argNullability;
+
+        @Override
+        void init(Method method, TypeInfoFactory factory) {
+            super.init(method, factory);
+            if (nullDetector == null) throw Kit.codeBug();
+            this.argNullability = nullDetector.getParameterNullabilitySimple(method);
+        }
+
+        @Override
+        void init(Constructor<?> constructor, TypeInfoFactory factory) {
+            super.init(constructor, factory);
+            if (nullDetector == null) throw Kit.codeBug();
+            this.argNullability = nullDetector.getParameterNullabilitySimple(constructor);
+        }
+
+        @Override
+        boolean isArgNullable(int argIdx) {
+            return (argNullability & (1 << argIdx)) != 0;
+        }
     }
 
-    private void init(Method method, TypeInfoFactory factory) {
+    private static class ExtendedBox extends MemberBox {
+        private transient boolean[] argNullability;
+
+        @Override
+        void init(Method method, TypeInfoFactory factory) {
+            super.init(method, factory);
+            if (nullDetector == null) throw Kit.codeBug();
+            this.argNullability = nullDetector.getParameterNullability(method);
+        }
+
+        @Override
+        void init(Constructor<?> constructor, TypeInfoFactory factory) {
+            super.init(constructor, factory);
+            if (nullDetector == null) throw Kit.codeBug();
+            this.argNullability = nullDetector.getParameterNullability(constructor);
+        }
+
+        @Override
+        boolean isArgNullable(int argIdx) {
+            return argNullability[argIdx];
+        }
+    }
+
+    private static MemberBox of(int paramCount) {
+        if (nullDetector == null) {
+            return new NoNullabilityBox();
+        } else if (paramCount > 32) {
+            return new ExtendedBox();
+        } else {
+            return new SimpleBox();
+        }
+    }
+
+    static MemberBox of(Method method, TypeInfoFactory factory) {
+        MemberBox box = of(method.getParameters().length);
+        box.init(method, factory);
+        return box;
+    }
+
+    static MemberBox of(Constructor<?> constructor, TypeInfoFactory factory) {
+        MemberBox box = of(constructor.getParameters().length);
+        box.init(constructor, factory);
+        return box;
+    }
+
+    void init(Method method, TypeInfoFactory factory) {
         this.memberObject = method;
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[method.getParameters().length]
-                        : nullDetector.getParameterNullability(method);
+
         this.vararg = method.isVarArgs();
         this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
         this.returnTypeInfo = factory.create(method.getGenericReturnType());
     }
 
-    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
+    void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[constructor.getParameters().length]
-                        : nullDetector.getParameterNullability(constructor);
         this.vararg = constructor.isVarArgs();
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
@@ -150,6 +211,8 @@ final class MemberBox implements Serializable {
         return ScriptRuntime.shallowEq(function, f);
     }
 
+    abstract boolean isArgNullable(int argIdx);
+
     /** Function returned by calls to __lookupGetter__ */
     Function asGetterFunction(final String name, final Scriptable scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
@@ -210,7 +273,7 @@ final class MemberBox implements Serializable {
                                                     thisObj,
                                                     originalArgs[0],
                                                     nativeSetter.getArgTypes().get(0).getTypeTag(),
-                                                    nativeSetter.argNullability[0])
+                                                    nativeSetter.isArgNullable(0))
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
