@@ -2380,7 +2380,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop = literalSetter(stack, stackTop);
                                     continue Loop;
                                 }
-
+                            case Icode_SPREAD:
+                                {
+                                    // TODO
+                                    throw new UnsupportedOperationException("TODO");
+                                }
                             case Icode_LITERAL_KEY_SET:
                                 {
                                     stackTop = literalKeySet(stack, stackTop, DBL_MRK, sDbl);

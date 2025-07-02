@@ -1428,8 +1428,15 @@ class CodeGenerator extends Icode {
             Object propertyId = propertyIds == null ? null : propertyIds[i];
             if (propertyId instanceof Node) {
                 // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
-                Node computedPropertyNode = (Node) propertyId;
-                visitExpression(computedPropertyNode.first, 0);
+                Node propNode = (Node) propertyId;
+                visitExpression(propNode.getFirstChild(), 0);
+                if (((Node) propertyId).type == Token.DOTDOTDOT) {
+                    addIcode(Icode_SPREAD);
+                    stackChange(-1);
+                    child = child.getNext();
+                    i++;
+                    continue;
+                }
             } else if (propertyId instanceof String) {
                 addStringOp(Token.STRING, (String) propertyId);
                 stackChange(1);
