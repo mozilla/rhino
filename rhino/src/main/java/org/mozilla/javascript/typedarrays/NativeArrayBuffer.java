@@ -63,6 +63,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

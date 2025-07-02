@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
@@ -224,6 +225,7 @@ public class NativeDataView extends NativeArrayBufferView {
 
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

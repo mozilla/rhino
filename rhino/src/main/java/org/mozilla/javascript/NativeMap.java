@@ -137,6 +137,7 @@ public class NativeMap extends ScriptableObject {
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

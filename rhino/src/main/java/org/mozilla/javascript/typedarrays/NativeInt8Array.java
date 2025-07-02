@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -55,6 +56,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

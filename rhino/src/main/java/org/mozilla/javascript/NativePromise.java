@@ -78,6 +78,7 @@ public class NativePromise extends ScriptableObject {
                 SymbolKey.TO_STRING_TAG, "Promise", DONTENUM | READONLY);
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

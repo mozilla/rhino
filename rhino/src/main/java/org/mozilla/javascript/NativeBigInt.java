@@ -66,6 +66,7 @@ final class NativeBigInt extends ScriptableObject {
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
         return constructor;
     }

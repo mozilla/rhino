@@ -40,6 +40,7 @@ final class NativeBoolean extends ScriptableObject {
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
             constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
         }
     }
 
