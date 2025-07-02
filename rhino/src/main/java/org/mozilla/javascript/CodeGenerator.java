@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.mozilla.javascript.ast.*;
 
 /** Generates bytecode for the Interpreter. */
@@ -956,29 +955,7 @@ class CodeGenerator extends Icode {
             case Token.NUMBER:
                 {
                     double num = node.getDouble();
-                    int inum = (int) num;
-                    if (inum == num) {
-                        if (inum == 0) {
-                            addIcode(Icode_ZERO);
-                            // Check for negative zero
-                            if (1.0 / num < 0.0) {
-                                addToken(Token.NEG);
-                            }
-                        } else if (inum == 1) {
-                            addIcode(Icode_ONE);
-                        } else if ((short) inum == inum) {
-                            addIcode(Icode_SHORTNUMBER);
-                            // write short as uin16 bit pattern
-                            addUint16(inum & 0xFFFF);
-                        } else {
-                            addIcode(Icode_INTNUMBER);
-                            addInt(inum);
-                        }
-                    } else {
-                        int index = getDoubleIndex(num);
-                        addIndexOp(Token.NUMBER, index);
-                    }
-                    stackChange(1);
+                    addNumber(num);
                 }
                 break;
 
@@ -1169,6 +1146,32 @@ class CodeGenerator extends Icode {
         if (savedStackDepth + 1 != stackDepth) {
             Kit.codeBug();
         }
+    }
+
+    private void addNumber(double num) {
+        int inum = (int) num;
+        if (inum == num) {
+            if (inum == 0) {
+                addIcode(Icode_ZERO);
+                // Check for negative zero
+                if (1.0 / num < 0.0) {
+                    addToken(Token.NEG);
+                }
+            } else if (inum == 1) {
+                addIcode(Icode_ONE);
+            } else if ((short) inum == inum) {
+                addIcode(Icode_SHORTNUMBER);
+                // write short as uin16 bit pattern
+                addUint16(inum & 0xFFFF);
+            } else {
+                addIcode(Icode_INTNUMBER);
+                addInt(inum);
+            }
+        } else {
+            int index = getDoubleIndex(num);
+            addIndexOp(Token.NUMBER, index);
+        }
+        stackChange(1);
     }
 
     private void finishGetElemGeneration(Node child) {
@@ -1405,24 +1408,58 @@ class CodeGenerator extends Icode {
         }
     }
 
-    private void visitObjectLiteralWithSpread(Node node, Node child) {
-        addIcode(Icode_NEWOBJECT);
-        stackChange(+1);
+    private void visitObjectLiteralWithSpread(
+            Node node, Node child, Object[] propertyIds, int count) {
+        // TODO: should work with -ve indices
+        //        addIndexOp(Icode_LITERAL_NEW_OBJECT, -count);
+        addIcode(Icode_REG_IND4);
+        addInt(-count);
+        addIcode(Icode_LITERAL_NEW_OBJECT);
+        addUint8(0); // unused
+        stackChange(+2);
         // TODO(abs):
         // iterate over the object and add them one at a time
         // - normal property
         // - computed property
         // - new bytecode for spread
+
+        int i = 0;
+        while (child != null) {
+            Object propertyId = propertyIds == null ? null : propertyIds[i];
+            if (propertyId instanceof Node) {
+                // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+                Node computedPropertyNode = (Node) propertyId;
+                visitExpression(computedPropertyNode.first, 0);
+            } else if (propertyId instanceof String) {
+                addStringOp(Token.STRING, (String) propertyId);
+                stackChange(1);
+            } else if (propertyId instanceof Integer) {
+                addNumber((Integer) propertyId);
+            } else {
+                throw badTree(node);
+            }
+            addIcode(Icode_LITERAL_KEY_SET);
+            stackChange(-1);
+            // Value
+            visitLiteralValue(child);
+            child = child.getNext();
+            i++;
+        }
+
+        addToken(Token.OBJECTLIT);
+        stackChange(-1);
     }
 
     private void visitObjectLiteral(Node node, Node child) {
-        if (node.getIntProp(Node.CONTAINS_SPREAD, 0) == 1) {
-            visitObjectLiteralWithSpread(node, child);
+        Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int count = propertyIds == null ? 0 : propertyIds.length;
+
+        // TODO: should only be for spread
+        if (node.getIntProp(Node.CONTAINS_SPREAD, 0) == 1 || true) {
+            visitObjectLiteralWithSpread(node, child, propertyIds, count);
             return;
         }
 
-        Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-        int count = propertyIds == null ? 0 : propertyIds.length;
         boolean hasAnyComputedProperty =
                 propertyIds != null
                         && Arrays.stream(propertyIds).anyMatch(id -> id instanceof Node);

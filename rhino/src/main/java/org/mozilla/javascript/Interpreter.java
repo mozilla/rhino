@@ -604,8 +604,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_LITERAL_NEW_OBJECT:
                     {
                         boolean copyArray = iCode[pc++] != 0;
-                        Object[] keys = (Object[]) idata.literalIds[indexReg];
-                        out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
+                        if (indexReg < 0) {
+                            out.println(tname + " length: " + -indexReg);
+                        } else {
+                            Object[] keys = (Object[]) idata.literalIds[indexReg];
+                            out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
+                        }
                         break;
                     }
                 case Icode_SPARE_ARRAYLIT:
@@ -2353,7 +2357,9 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_LITERAL_NEW_OBJECT:
                                 {
-                                    stackTop = literalNewObject(cx, frame, indexReg, iCode, stackTop, stack);
+                                    stackTop =
+                                            literalNewObject(
+                                                    cx, frame, indexReg, iCode, stackTop, stack);
                                     continue Loop;
                                 }
                             case Icode_LITERAL_NEW_ARRAY:
@@ -2380,13 +2386,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                     stackTop = literalKeySet(stack, stackTop, DBL_MRK, sDbl);
                                     continue Loop;
                                 }
-                            case Icode_NEWOBJECT:
-                            {
-                                // create empty object
-                                ++stackTop;
-                                stack[stackTop] = cx.newObject(frame.scope);
-                                continue Loop;
-                            }
                             case Token.OBJECTLIT:
                                 {
                                     stackTop = objectLit(cx, frame, stack, stackTop);
@@ -2733,25 +2732,29 @@ public final class Interpreter extends Icode implements Evaluator {
                 : ScriptRuntime.wrapNumber(interpreterResultDbl);
     }
 
-    private static int literalNewObject(Context cx,
-                                        CallFrame frame,
-                                        int indexReg,
-                                        byte[] iCode,
-                                        int stackTop,
-                                        Object[] stack) {
+    private static int literalNewObject(
+            Context cx, CallFrame frame, int indexReg, byte[] iCode, int stackTop, Object[] stack) {
         // indexReg: index of constant with the keys
-        Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
-        boolean copyArray = iCode[frame.pc] != 0;
-        ++frame.pc;
-        ++stackTop;
-        stack[stackTop] = cx.newObject(frame.scope);
-        ++stackTop;
-        stack[stackTop] =
-                new NewLiteralStorage(
-                        copyArray
-                                ? Arrays.copyOf(ids, ids.length)
-                                : ids);
-        return stackTop;
+        // indexReg > 0, create arrays
+        // indexReg: -1, no key (eg: spread)
+        if (indexReg <= 0) {
+            ++frame.pc;
+            ++stackTop;
+            stack[stackTop] = cx.newObject(frame.scope);
+            ++stackTop;
+            stack[stackTop] = new NewLiteralStorage(-indexReg, true);
+            return stackTop;
+        } else {
+            Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
+            boolean copyArray = iCode[frame.pc] != 0;
+            ++frame.pc;
+            ++stackTop;
+            stack[stackTop] = cx.newObject(frame.scope);
+            ++stackTop;
+            stack[stackTop] =
+                    new NewLiteralStorage(copyArray ? Arrays.copyOf(ids, ids.length) : ids);
+            return stackTop;
+        }
     }
 
     private static int literalNewArray(int stackTop, Object[] stack, int indexReg) {
@@ -2763,8 +2766,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static int literalSet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
         Object value = stack[stackTop];
-        if (value == DBL_MRK)
-            value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
         var store = (NewLiteralStorage) stack[stackTop];
         store.pushValue(value);
@@ -2789,8 +2791,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static int literalKeySet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
         Object key = stack[stackTop];
-        if (key == DBL_MRK)
-            key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        if (key == DBL_MRK) key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
         var store = (NewLiteralStorage) stack[stackTop];
         store.pushKey(key);
@@ -2811,18 +2812,15 @@ public final class Interpreter extends Icode implements Evaluator {
         return stackTop;
     }
 
-    private static void arrayLit(Context cx, CallFrame frame, Object[] stack, int stackTop, int op, int indexReg) {
+    private static void arrayLit(
+            Context cx, CallFrame frame, Object[] stack, int stackTop, int op, int indexReg) {
         var store = (NewLiteralStorage) stack[stackTop];
         int[] skipIndexces = null;
         if (op == Icode_SPARE_ARRAYLIT) {
             skipIndexces = (int[]) frame.idata.literalIds[indexReg];
         }
         stack[stackTop] =
-                ScriptRuntime.newArrayLiteral(
-                        store.getValues(),
-                        skipIndexces,
-                        cx,
-                        frame.scope);
+                ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
     }
 
     private static NewState doCallByteCode(

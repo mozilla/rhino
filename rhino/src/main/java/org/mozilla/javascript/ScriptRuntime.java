@@ -5427,12 +5427,18 @@ public class ScriptRuntime {
                 ScriptableObject so = (ScriptableObject) object;
                 Callable getterOrSetter = (Callable) value;
                 boolean isSetter = getterSetter == 1;
-                Integer index = id instanceof Integer ? (Integer) id : null;
-                Object key =
-                        index != null
-                                ? null
-                                : (id instanceof Symbol ? id : ScriptRuntime.toString(id));
-                so.setGetterOrSetter(key, index == null ? 0 : index, getterOrSetter, isSetter);
+                if (id instanceof Symbol) {
+                    so.setGetterOrSetter(id, 0, getterOrSetter, isSetter);
+                } else if (id instanceof Integer && ((Integer) id) >= 0) {
+                    so.setGetterOrSetter(null, (Integer) id, getterOrSetter, isSetter);
+                } else {
+                    StringIdOrIndex s = toStringIdOrIndex(id);
+                    so.setGetterOrSetter(
+                            s.getStringId(),
+                            s.getIndex() == -1 ? 0 : s.getIndex(),
+                            getterOrSetter,
+                            isSetter);
+                }
             }
         }
     }

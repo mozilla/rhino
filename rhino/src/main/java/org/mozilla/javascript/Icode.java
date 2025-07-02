@@ -162,11 +162,8 @@ abstract class Icode {
             // delete super.prop
             Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
 
-            // to create empty obj
-            Icode_NEWOBJECT = Icode_DELPROP_SUPER - 1,
-
             // Last icode
-            MIN_ICODE = Icode_NEWOBJECT;
+            MIN_ICODE = Icode_DELPROP_SUPER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -356,8 +353,6 @@ abstract class Icode {
                 return "CALL_ON_SUPER";
             case Icode_DELPROP_SUPER:
                 return "DELPROP_SUPER";
-            case Icode_NEWOBJECT:
-                return "NEWOBJECT";
         }
 
         // icode without name
