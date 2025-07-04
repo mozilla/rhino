@@ -7,6 +7,7 @@
 package org.mozilla.javascript.typedarrays;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -24,6 +25,7 @@ import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.IteratorLikeIterable;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
@@ -245,6 +247,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineMethod(ta, s, "values", 0, NativeTypedArrayView::js_values);
             defineMethod(ta, s, "with", 2, NativeTypedArrayView::js_with);
             defineMethod(ta, s, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
+
+            ta.defineConstructorMethod(
+                    scope, "from", 1, NativeTypedArrayView::js_from, DONTENUM, DONTENUM | READONLY);
 
             ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
         }
@@ -1154,7 +1159,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 }
             }
         } else {
-            throw ScriptRuntime.typeErrorById("msg.typed.array.ctor.incompatible", methodName);
+            throw ScriptRuntime.typeErrorById(
+                    "msg.typed.array.receiver.incompatible", "prototype." + methodName);
         }
 
         return (NativeTypedArrayView<?>) newArray;
@@ -1231,6 +1237,114 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         for (int k = 0; k < self.length; ++k) {
             Object fromValue = (k == actualIndex) ? argsValue : self.js_get(k);
             result.put(k, result, fromValue);
+        }
+
+        return result;
+    }
+
+    private static Object js_from(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length < 1) {
+            throw ScriptRuntime.typeErrorById("msg.missing.argument");
+        }
+        final Scriptable items = ScriptRuntime.toObject(scope, args[0]);
+        if (!AbstractEcmaObjectOperations.isConstructor(cx, thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.constructor.expected");
+        }
+        Constructable constructable = (Constructable) thisObj;
+
+        Function mapFn = null;
+        Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
+        Scriptable mapFnThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        if (!Undefined.isUndefined(mapArg)) {
+            if (!(mapArg instanceof Function)) {
+                throw ScriptRuntime.typeErrorById("msg.map.function.not");
+            }
+            mapFn = (Function) mapArg;
+            if (args.length >= 3) {
+                mapFnThisArg = ScriptableObject.ensureScriptable(args[2]);
+            }
+        }
+
+        Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
+        if (!(iteratorProp == Scriptable.NOT_FOUND)
+                // Optimization: Although NativeArrays have iterators, we don't want to
+                // them here to avoid copying the contents to determine the
+                // length.
+                // However, with this the test262 test
+                // built-ins/TypedArray/from/iterated-array-changed-by-tonumber.js
+                // doesn't pass.
+                && !(items instanceof NativeArray)
+                && !Undefined.isUndefined(iteratorProp)) {
+            final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
+            if (!Undefined.isUndefined(iterator)) {
+                return fromIterator(cx, scope, constructable, iterator, mapFn, mapFnThisArg);
+            }
+        }
+
+        return fromArrayLike(cx, scope, constructable, items, mapFn, mapFnThisArg);
+    }
+
+    private static Object fromIterator(
+            Context cx,
+            Scriptable scope,
+            Constructable constructable,
+            Object iterator,
+            Function mapFn,
+            Scriptable mapFnThisArg) {
+
+        List<Object> values = new ArrayList<>();
+        IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator);
+        for (Object temp : it) {
+            values.add(temp);
+        }
+
+        Scriptable result = constructable.construct(cx, scope, new Object[] {values.size()});
+
+        if (!(result instanceof NativeTypedArrayView)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
+        }
+
+        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
+        for (int k = 0; k < values.size(); k++) {
+            Object temp = values.get(k);
+            if (mapFn != null) {
+                temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, (long) k});
+            }
+            typedArray.setArrayElement(k, temp);
+        }
+
+        return result;
+    }
+
+    private static Object fromArrayLike(
+            Context cx,
+            Scriptable scope,
+            Constructable constructable,
+            Scriptable items,
+            Function mapFn,
+            Scriptable mapFnThisArg) {
+
+        final int length = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
+        Scriptable result = constructable.construct(cx, scope, new Object[] {length});
+
+        if (!(result instanceof NativeTypedArrayView)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
+        }
+
+        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
+        if (typedArray.length < length) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
+        }
+
+        for (int k = 0; k < length; k++) {
+            Object temp =
+                    (items instanceof NativeArray)
+                            ? ((NativeArray) items).get(k)
+                            : ScriptRuntime.getObjectIndex(items, k, cx, scope);
+            if (mapFn != null) {
+                temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, k});
+            }
+            typedArray.setArrayElement(k, temp);
         }
 
         return result;

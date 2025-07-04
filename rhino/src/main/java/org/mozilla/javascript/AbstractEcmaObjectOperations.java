@@ -491,7 +491,7 @@ public class AbstractEcmaObjectOperations {
      * <p><a href="https://262.ecma-international.org/12.0/#sec-isconstructor">7.2.4 IsConstructor
      * (argument)</a>
      */
-    static boolean isConstructor(Context cx, Object argument) {
+    public static boolean isConstructor(Context cx, Object argument) {
         /*
            The abstract operation IsConstructor takes argument argument (an ECMAScript language value).
            It determines if argument is a function object with a [[Construct]] internal method.
