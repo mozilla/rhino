@@ -1267,13 +1267,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
         if (!(iteratorProp == Scriptable.NOT_FOUND)
-                // Optimization: Although NativeArrays have iterators, we don't want to
-                // them here to avoid copying the contents to determine the
-                // length.
+                // Optimization: Although NativeArrays and TypedArrays have iterators,
+                // we don't want to use them here to avoid copying the contents
+                // to determine the length.
                 // However, with this the test262 test
                 // built-ins/TypedArray/from/iterated-array-changed-by-tonumber.js
                 // doesn't pass.
                 && !(items instanceof NativeArray)
+                && !(items instanceof NativeTypedArrayView<?>)
                 && !Undefined.isUndefined(iteratorProp)) {
             final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
             if (!Undefined.isUndefined(iterator)) {
