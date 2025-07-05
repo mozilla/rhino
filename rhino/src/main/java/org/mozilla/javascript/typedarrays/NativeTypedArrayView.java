@@ -250,6 +250,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
             ta.defineConstructorMethod(
                     scope, "from", 1, NativeTypedArrayView::js_from, DONTENUM, DONTENUM | READONLY);
+            ta.defineConstructorMethod(
+                    scope, "of", 0, NativeTypedArrayView::js_of, DONTENUM, DONTENUM | READONLY);
 
             ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
         }
@@ -1346,6 +1348,30 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, k});
             }
             typedArray.setArrayElement(k, temp);
+        }
+
+        return result;
+    }
+
+    private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!AbstractEcmaObjectOperations.isConstructor(cx, thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.constructor.expected");
+        }
+        Constructable constructable = (Constructable) thisObj;
+
+        Scriptable result = constructable.construct(cx, scope, new Object[] {args.length});
+
+        if (!(result instanceof NativeTypedArrayView)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "of");
+        }
+
+        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
+        if (typedArray.length < args.length) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
+        }
+
+        for (int k = 0; k < args.length; k++) {
+            typedArray.setArrayElement(k, args[k]);
         }
 
         return result;
