@@ -1308,8 +1308,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Object temp;
             if (listFromIterator != null) {
                 temp = listFromIterator.get(k);
-            } else if (items instanceof NativeArray || items instanceof NativeTypedArrayView<?>) {
-                temp = items.get(k, items);
+            } else if (items instanceof List<?>) {
+                try {
+                    temp = ((List<?>) items).get(k);
+                } catch (IndexOutOfBoundsException e) {
+                    temp = Undefined.instance;
+                }
             } else {
                 temp = ScriptRuntime.getObjectIndex(items, k, cx, scope);
             }
