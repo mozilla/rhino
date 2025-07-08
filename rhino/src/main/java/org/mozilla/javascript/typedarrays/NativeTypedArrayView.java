@@ -1267,86 +1267,57 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             }
         }
 
+        List<Object> listFromIterator = null;
         Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
+        // Optimization: When items is an instance of java.util.List and also have an iterator,
+        // we don't use the iterator to avoid copying the contents to determine the length.
+        // However, with this the test262 test
+        // built-ins/TypedArray/from/iterated-array-changed-by-tonumber.js
+        // doesn't pass.
         if (!(iteratorProp == Scriptable.NOT_FOUND)
-                // Optimization: Although NativeArrays and TypedArrays have iterators,
-                // we don't want to use them here to avoid copying the contents
-                // to determine the length.
-                // However, with this the test262 test
-                // built-ins/TypedArray/from/iterated-array-changed-by-tonumber.js
-                // doesn't pass.
-                && !(items instanceof NativeArray)
-                && !(items instanceof NativeTypedArrayView<?>)
+                && !(items instanceof List) // NativeArray and NativeTypedArrayView
                 && !Undefined.isUndefined(iteratorProp)) {
             final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
             if (!Undefined.isUndefined(iterator)) {
-                return fromIterator(cx, scope, constructable, iterator, mapFn, mapFnThisArg);
+                IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator);
+                listFromIterator = new ArrayList<>();
+                for (Object temp : it) {
+                    listFromIterator.add(temp);
+                }
             }
         }
 
-        return fromArrayLike(cx, scope, constructable, items, mapFn, mapFnThisArg);
-    }
-
-    private static Object fromIterator(
-            Context cx,
-            Scriptable scope,
-            Constructable constructable,
-            Object iterator,
-            Function mapFn,
-            Scriptable mapFnThisArg) {
-
-        List<Object> values = new ArrayList<>();
-        IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator);
-        for (Object temp : it) {
-            values.add(temp);
+        int size;
+        if (listFromIterator != null) {
+            size = listFromIterator.size();
+        } else {
+            size = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
         }
 
-        Scriptable result = constructable.construct(cx, scope, new Object[] {values.size()});
-
+        Scriptable result = constructable.construct(cx, scope, new Object[] {size});
         if (!(result instanceof NativeTypedArrayView)) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
         }
 
         NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
-        for (int k = 0; k < values.size(); k++) {
-            Object temp = values.get(k);
-            if (mapFn != null) {
-                temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, (long) k});
-            }
-            typedArray.setArrayElement(k, temp);
-        }
-
-        return result;
-    }
-
-    private static Object fromArrayLike(
-            Context cx,
-            Scriptable scope,
-            Constructable constructable,
-            Scriptable items,
-            Function mapFn,
-            Scriptable mapFnThisArg) {
-
-        final int length = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
-        Scriptable result = constructable.construct(cx, scope, new Object[] {length});
-
-        if (!(result instanceof NativeTypedArrayView)) {
-            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
-        }
-
-        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
-        if (typedArray.length < length) {
+        if (typedArray.length < size) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
         }
 
-        for (int k = 0; k < length; k++) {
-            Object temp =
-                    (items instanceof NativeArray)
-                            ? ((NativeArray) items).get(k)
-                            : ScriptRuntime.getObjectIndex(items, k, cx, scope);
+        for (int k = 0; k < size; k++) {
+            Object temp;
+            if (listFromIterator != null) {
+                temp = listFromIterator.get(k);
+            } else if (items instanceof NativeArray || items instanceof NativeTypedArrayView<?>) {
+                temp = items.get(k, items);
+            } else {
+                temp = ScriptRuntime.getObjectIndex(items, k, cx, scope);
+            }
+
             if (mapFn != null) {
                 temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, k});
             }
+
             typedArray.setArrayElement(k, temp);
         }
 
