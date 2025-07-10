@@ -726,11 +726,18 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     public void setHomeObject(Scriptable homeObject) {
-        this.homeObject = homeObject;
+        assert getHomeObject() == null;
+
+        // The if is necessary because, for lambda inside an activation, we always try to propagate
+        // the home object from the activation, regardless of whether it is null or not. It's easier
+        // to do one check here than two, one in the interpreter and one in the compiled classes.
+        if (homeObject != null) {
+            associateValue(HOME_OBJECT_KEY, homeObject);
+        }
     }
 
     public Scriptable getHomeObject() {
-        return homeObject;
+        return (Scriptable) getAssociatedValue(HOME_OBJECT_KEY);
     }
 
     private static final int Id_constructor = 1,
@@ -746,7 +753,8 @@ public class BaseFunction extends ScriptableObject implements Function {
     private Object argumentsObj = NOT_FOUND;
     private Object nameValue = null;
     private boolean isGeneratorFunction = false;
-    private Scriptable homeObject = null;
+
+    private static final String HOME_OBJECT_KEY = "_funHomeObject";
 
     // For function object instances, attributes are
     //  {configurable:false, enumerable:false};
