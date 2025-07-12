@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -56,7 +57,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     protected void initMembers() {
         Class<?> dynamicType;
-        if (javaObject != null) {
+        if (javaObject != null && !staticType.isInterface()) { // CHECKME: is this correct?
             dynamicType = javaObject.getClass();
         } else {
             dynamicType = staticType;
@@ -923,6 +924,19 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 }
                 return new JavaIterableIterator(scope, (Iterable) javaObject);
             };
+
+    protected NativeJavaObject cast(Scriptable scope, Class<?> c) {
+        if (Map.class == c) {
+            if (c == staticType && getClass() == NativeJavaMap.class) return this;
+            return new NativeJavaMap(scope, javaObject, c);
+        } else if (List.class == c) {
+            if (c == staticType && getClass() == NativeJavaList.class) return this;
+            return new NativeJavaList(scope, javaObject, c);
+        } else {
+            if (c == staticType && getClass() == NativeJavaObject.class) return this;
+            return new NativeJavaObject(scope, javaObject, c);
+        }
+    }
 
     private static final class JavaIterableIterator extends ES6Iterator {
         private static final long serialVersionUID = 1L;
