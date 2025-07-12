@@ -991,43 +991,4 @@ public class NativeObject extends ScriptableObject implements Map {
             return NativeObject.this.size();
         }
     }
-
-    private static final int ConstructorId_getPrototypeOf = -1,
-            ConstructorId_keys = -2,
-            ConstructorId_getOwnPropertyNames = -3,
-            ConstructorId_getOwnPropertyDescriptor = -4,
-            ConstructorId_getOwnPropertyDescriptors = -5,
-            ConstructorId_defineProperty = -6,
-            ConstructorId_isExtensible = -7,
-            ConstructorId_preventExtensions = -8,
-            ConstructorId_defineProperties = -9,
-            ConstructorId_create = -10,
-            ConstructorId_isSealed = -11,
-            ConstructorId_isFrozen = -12,
-            ConstructorId_seal = -13,
-            ConstructorId_freeze = -14,
-            ConstructorId_getOwnPropertySymbols = -15,
-            ConstructorId_assign = -16,
-            ConstructorId_is = -17,
-
-            // ES6
-            ConstructorId_setPrototypeOf = -18,
-            ConstructorId_entries = -19,
-            ConstructorId_fromEntries = -20,
-            ConstructorId_values = -21,
-            ConstructorId_hasOwn = -22,
-            ConstructorId_groupBy = -23,
-            Id_constructor = 1,
-            Id_toString = 2,
-            Id_toLocaleString = 3,
-            Id_valueOf = 4,
-            Id_hasOwnProperty = 5,
-            Id_propertyIsEnumerable = 6,
-            Id_isPrototypeOf = 7,
-            Id_toSource = 8,
-            Id___defineGetter__ = 9,
-            Id___defineSetter__ = 10,
-            Id___lookupGetter__ = 11,
-            Id___lookupSetter__ = 12,
-            MAX_PROTOTYPE_ID = 12;
 }
