@@ -145,7 +145,7 @@ public class FunctionPrototypeSymbolHasInstanceTest {
                         + "f.prototype = Symbol(); \n"
                         + "f[Symbol.hasInstance]({})";
         Utils.assertEcmaErrorES6(
-                "TypeError: 'prototype' property of '' is not an object. (test#3)", script);
+                "TypeError: 'prototype' property of 'f' is not an object. (test#3)", script);
     }
 
     @Test
