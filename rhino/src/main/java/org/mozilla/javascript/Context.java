@@ -19,7 +19,6 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2805,12 +2804,9 @@ public class Context implements Closeable {
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
 
-    // For the interpreter to store the last frame for error reports etc.
+    // For the interpreter to store the last frame for error reports
+    // etc. Previous frames can all be derived from this.
     Object lastInterpreterFrame;
-
-    // For the interpreter to store information about previous invocations
-    // interpreter invocations
-    Deque<Object> previousInterpreterInvocations;
 
     // For instruction counting (interpreter only)
     int instructionCount;
