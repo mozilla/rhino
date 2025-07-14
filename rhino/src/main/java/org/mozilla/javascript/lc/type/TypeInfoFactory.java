@@ -260,16 +260,16 @@ public interface TypeInfoFactory extends Serializable {
      * Associate this TypeInfoFactory object with the given top-level scope.
      *
      * @param topScope scope to associate this TypeInfoFactory object with.
-     * @return {@code true} if no previous TypeInfoFactory object was associated with the scope and
-     *     this TypeInfoFactory is successfully associated, {@code false} otherwise.
+     * @return {@code this} if no previous TypeInfoFactory object was associated with the scope and
+     *     this TypeInfoFactory is successfully associated, or the old associated factory otherwise.
      * @throws IllegalArgumentException if provided scope is not top scope
      * @see #get(Scriptable scope)
      */
-    default boolean associate(ScriptableObject topScope) {
+    default TypeInfoFactory associate(ScriptableObject topScope) {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
         }
-        return this == topScope.associateValue("TypeInfoFactory", this);
+        return (TypeInfoFactory) topScope.associateValue("TypeInfoFactory", this);
     }
 
     /**
