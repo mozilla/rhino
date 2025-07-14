@@ -50,6 +50,20 @@ public class CustomTypeInfoFactoryTest {
     }
 
     @Test
+    public void associateAfterInit() throws Exception {
+        var contextFactory = new ContextFactory();
+
+        try (var cx = contextFactory.enterContext()) {
+            var scope = cx.initStandardObjects();
+
+            var toAssociate = AlwaysFailFactory.INSTANCE;
+            var associated = toAssociate.associate(scope);
+
+            Assertions.assertNotSame(toAssociate, associated);
+        }
+    }
+
+    @Test
     public void associate() throws Exception {
         var contextFactory = new ContextFactory();
 
