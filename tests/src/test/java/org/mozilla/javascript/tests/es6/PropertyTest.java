@@ -28,6 +28,7 @@ public class PropertyTest {
 
                     try {
                         final MyHostObject myHostObject = new MyHostObject();
+                        myHostObject.setParentScope(scope);
 
                         // define custom getter method
                         final Method getter = MyHostObject.class.getMethod("getFoo");
@@ -65,6 +66,7 @@ public class PropertyTest {
 
                     try {
                         final MyHostObject myHostObject = new MyHostObject();
+                        myHostObject.setParentScope(scope);
 
                         // define custom getter method
                         final Method getter = MyHostObject.class.getMethod("getFoo");
@@ -102,6 +104,7 @@ public class PropertyTest {
 
                     try {
                         final MyHostObject myHostObject = new MyHostObject();
+                        myHostObject.setParentScope(scope);
 
                         // define custom getter method
                         Method getter = MyHostObject.class.getMethod("getFoo");
@@ -142,6 +145,7 @@ public class PropertyTest {
 
             try {
                 final MyHostObject myHostObject = new MyHostObject();
+                myHostObject.setParentScope(scope);
 
                 // define custom getter method
                 final Method getter = MyHostObject.class.getMethod("getFoo");

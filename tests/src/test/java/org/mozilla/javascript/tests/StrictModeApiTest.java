@@ -46,6 +46,7 @@ public class StrictModeApiTest {
                     try {
                         Scriptable scope = cx.initSafeStandardObjects();
                         final MyHostObject prototype = new MyHostObject();
+                        prototype.setParentScope(scope);
                         ScriptableObject.defineClass(scope, MyHostObject.class);
                         final Method readMethod = MyHostObject.class.getMethod("jsxGet_x");
                         prototype.defineProperty(
