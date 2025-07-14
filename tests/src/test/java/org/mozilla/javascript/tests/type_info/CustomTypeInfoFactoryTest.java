@@ -23,8 +23,9 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
 
         try (var cx = contextFactory.enterContext()) {
-            var scope = cx.initStandardObjects();
+            var scope = new NativeObject();
             AlwaysFailFactory.INSTANCE.associate(scope);
+            cx.initStandardObjects(scope);
 
             var method =
                     Arrays.stream(CustomTypeInfoFactoryTest.class.getDeclaredMethods())
@@ -53,8 +54,9 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
 
         try (var cx = contextFactory.enterContext()) {
-            var scope = cx.initStandardObjects();
+            var scope = new NativeObject();
             new NoGenericNoCacheFactory().associate(scope);
+            cx.initStandardObjects(scope);
 
             var typeFactory = TypeInfoFactory.get(scope);
 
@@ -80,8 +82,9 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = cx.initStandardObjects();
+            var scope = new NativeObject();
             new NoGenericNoCacheFactory().associate(scope);
+            cx.initStandardObjects(scope);
 
             data = simulateSer(scope);
         }
@@ -99,8 +102,9 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = cx.initStandardObjects();
+            var scope = new NativeObject();
             TypeInfoFactory.GLOBAL.associate(scope);
+            cx.initStandardObjects(scope);
 
             data = simulateSer(scope);
         }
