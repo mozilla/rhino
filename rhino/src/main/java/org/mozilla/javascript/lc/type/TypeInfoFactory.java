@@ -21,7 +21,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
@@ -259,6 +258,9 @@ public interface TypeInfoFactory extends Serializable {
     /**
      * Associate this TypeInfoFactory object with the given top-level scope.
      *
+     * <p>NOTE: If you're about associate a custom TypeInfoFactory to a scope, call this method
+     * before {@code initStandardObjects(...)} or {@code initSafeStandardObjects(...)}
+     *
      * @param topScope scope to associate this TypeInfoFactory object with.
      * @return {@code this} if no previous TypeInfoFactory object was associated with the scope and
      *     this TypeInfoFactory is successfully associated, or the old associated factory otherwise.
@@ -273,29 +275,19 @@ public interface TypeInfoFactory extends Serializable {
     }
 
     /**
-     * Search for TypeInfoFactory in the given scope.If none was found, it will try to associate a
-     * new ClassCache object to the top scope.
+     * Search for TypeInfoFactory in the given scope.
      *
      * @param scope scope to search for TypeInfoFactory object.
-     * @return previously associated TypeInfoFactory object, or a new instance of TypeInfoFactory if
-     *     none was found
+     * @return previously associated TypeInfoFactory object.
      * @throws IllegalArgumentException if the top scope of provided scope have no associated
-     *     TypeInfoFactory, and cannot have TypeInfoFactory associated due to the top scope not
-     *     being a {@link ScriptableObject}
+     *     TypeInfoFactory.
      * @see #associate(ScriptableObject topScope)
      */
     static TypeInfoFactory get(Scriptable scope) {
         TypeInfoFactory got =
                 (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
         if (got == null) {
-            // we expect this to not happen frequently, so computing top scope twice is acceptable
-            var topScope = ScriptableObject.getTopLevelScope(scope);
-            if (!(topScope instanceof ScriptableObject)) {
-                throw new IllegalArgumentException(
-                        "top scope have no associated TypeInfoFactory and cannot have TypeInfoFactory associated due to not being a ScriptableObject");
-            }
-            got = new ConcurrentFactory();
-            got.associate(((ScriptableObject) topScope));
+            throw new IllegalArgumentException("top scope have no associated TypeInfoFactory");
         }
         return got;
     }
