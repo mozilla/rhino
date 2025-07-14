@@ -53,12 +53,25 @@ public class NullabilityDetectorTest {
     public void testNullabilityCompressor() {
         for (var nullabilityPolicy :
                 List.<NullabilityAccessor>of(i -> i % 2 != 0, i -> false, i -> true)) {
-            for (var paramCount : new int[] {1, 2, 5, 12, 31, 32, 33, 34, 56, 78}) {
+            for (var paramCount : new int[] {0, 1, 2, 5, 12, 31, 32, 33, 34, 56, 78}) {
                 var toTest = new boolean[paramCount];
                 for (var i = 0; i < toTest.length; i++) {
                     toTest[i] = nullabilityPolicy.isNullable(i);
                 }
-                assertNullabilityMatch(NullabilityAccessor.compress(toTest), toTest);
+                var compressed = NullabilityAccessor.compress(toTest);
+
+                assertNullabilityMatch(compressed, toTest);
+                for (var invalidInputs : new int[] {-2, -1, paramCount, paramCount + 1, paramCount * 2}) {
+                    try {
+                        compressed.isNullable(invalidInputs);
+                        // no exception -> valid
+                    } catch (IndexOutOfBoundsException ignored) {
+                        // IndexOutOfBounds -> valid
+                    } catch (Throwable e) {
+                        // exceptions not listed in javadoc -> invalid
+                        Assertions.fail("NullabilityAccessor threw an exception that is not IndexOutOfBoundsException", e);
+                    }
+                }
             }
         }
     }
