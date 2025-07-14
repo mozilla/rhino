@@ -112,16 +112,14 @@ final class MemberBox implements Serializable {
     public NullabilityDetector.NullabilityAccessor getArgNullability() {
         var got = this.argNullability;
         if (got == null) {
-            synchronized (this) {
-                got = this.argNullability;
-                if (got == null) {
-                    got =
-                            this.isMethod()
-                                    ? nullDetector.getParameterNullability(this.method())
-                                    : nullDetector.getParameterNullability(this.ctor());
-                    this.argNullability = got;
-                }
-            }
+            // synchronization is optional, because `getParameterNullability(...)` will always
+            // give `NullabilityAccessor` with same behaviour, which is because arg nullability
+            // for a certain method/constructor will not change at runtime
+            got =
+                    this.isMethod()
+                            ? nullDetector.getParameterNullability(this.method())
+                            : nullDetector.getParameterNullability(this.ctor());
+            this.argNullability = got;
         }
         return got;
     }
