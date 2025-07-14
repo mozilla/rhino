@@ -61,7 +61,8 @@ public class NullabilityDetectorTest {
                 var compressed = NullabilityAccessor.compress(toTest);
 
                 assertNullabilityMatch(compressed, toTest);
-                for (var invalidInputs : new int[] {-2, -1, paramCount, paramCount + 1, paramCount * 2}) {
+                for (var invalidInputs :
+                        new int[] {-2, -1, paramCount, paramCount + 1, paramCount * 2}) {
                     try {
                         compressed.isNullable(invalidInputs);
                         // no exception -> valid
@@ -69,7 +70,9 @@ public class NullabilityDetectorTest {
                         // IndexOutOfBounds -> valid
                     } catch (Throwable e) {
                         // exceptions not listed in javadoc -> invalid
-                        Assertions.fail("NullabilityAccessor threw an exception that is not IndexOutOfBoundsException", e);
+                        Assertions.fail(
+                                "NullabilityAccessor threw an exception that is not IndexOutOfBoundsException",
+                                e);
                     }
                 }
             }
