@@ -29,9 +29,9 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
-    private transient volatile List<TypeInfo> argTypeInfos;
-    private transient volatile TypeInfo returnTypeInfo;
-    private transient volatile NullabilityDetector.NullabilityAccessor argNullability;
+    private transient List<TypeInfo> argTypeInfos;
+    private transient TypeInfo returnTypeInfo;
+    private transient NullabilityDetector.NullabilityAccessor argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
