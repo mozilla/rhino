@@ -284,10 +284,26 @@ public interface TypeInfoFactory extends Serializable {
      * @see #associate(ScriptableObject topScope)
      */
     static TypeInfoFactory get(Scriptable scope) {
-        TypeInfoFactory got =
-                (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
+        var got = getOrElse(scope, null);
         if (got == null) {
             throw new IllegalArgumentException("top scope have no associated TypeInfoFactory");
+        }
+        return got;
+    }
+
+    /**
+     * Search for TypeInfoFactory in the given scope. When none was found, {@code fallback} is
+     * returned instead
+     *
+     * @param scope scope to search for TypeInfoFactory object.
+     * @return previously associated TypeInfoFactory object, or {@code fallback} if none was found
+     * @see #get(Scriptable)
+     * @see #associate(ScriptableObject topScope)
+     */
+    static TypeInfoFactory getOrElse(Scriptable scope, TypeInfoFactory fallback) {
+        var got = (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
+        if (got == null) {
+            return fallback;
         }
         return got;
     }

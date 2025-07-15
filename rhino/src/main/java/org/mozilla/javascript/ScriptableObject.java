@@ -1501,7 +1501,8 @@ public abstract class ScriptableObject extends SlotMapOwner
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
         MemberBox getterBox = null;
         if (getter != null) {
-            getterBox = new MemberBox(getter, TypeInfoFactory.get(this));
+            getterBox =
+                    new MemberBox(getter, TypeInfoFactory.getOrElse(this, TypeInfoFactory.GLOBAL));
 
             boolean delegatedForm;
             if (!Modifier.isStatic(getter.getModifiers())) {
