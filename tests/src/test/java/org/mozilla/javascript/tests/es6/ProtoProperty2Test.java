@@ -13,7 +13,7 @@ import org.mozilla.javascript.testutils.Utils;
  * https://exploringjs.com/es6/ch_oop-besides-classes.html#sec_proto
  *
  * <p>Test are written with asserts for older language versions, because the old code has some
- * switches for the used versions. This shold help to maintain backward compatibility.
+ * switches for the used versions. This should help to maintain backward compatibility.
  */
 public class ProtoProperty2Test {
 

@@ -545,7 +545,7 @@ public class Dim {
                 result = scriptable;
             } else if (name.equals(NativeObject.PROTO_PROPERTY)) {
                 result = scriptable.getPrototype();
-            } else if (name.equals("__parent__")) {
+            } else if (name.equals(NativeObject.PARENT_PROPERTY)) {
                 result = scriptable.getParentScope();
             } else {
                 result = ScriptableObject.getProperty(scriptable, name);
@@ -595,7 +595,7 @@ public class Dim {
                 ids[extra++] = NativeObject.PROTO_PROPERTY;
             }
             if (parent != null) {
-                ids[extra++] = "__parent__";
+                ids[extra++] = NativeObject.PARENT_PROPERTY;
             }
         }
 

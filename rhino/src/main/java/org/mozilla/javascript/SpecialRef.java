@@ -32,7 +32,7 @@ class SpecialRef extends Ref {
         int type;
         if (name.equals(NativeObject.PROTO_PROPERTY)) {
             type = SPECIAL_PROTO;
-        } else if (name.equals("__parent__")) {
+        } else if (name.equals(NativeObject.PARENT_PROPERTY)) {
             type = SPECIAL_PARENT;
         } else {
             throw new IllegalArgumentException(name);

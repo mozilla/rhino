@@ -31,6 +31,7 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final String CLASS_NAME = "Object";
 
     public static final String PROTO_PROPERTY = "__proto__";
+    public static final String PARENT_PROPERTY = "__parent__";
 
     static LambdaConstructor init(Context cx, Scriptable s, boolean sealed) {
         LambdaConstructor ctor =
