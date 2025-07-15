@@ -67,8 +67,6 @@ public class WriteReadOnlyPropertyTest {
         contextFactory.call(
                 cx -> {
                     final ScriptableObject top = cx.initStandardObjects();
-                    foo.setParentScope(top);
-
                     ScriptableObject.putProperty(top, "foo", foo);
 
                     cx.evaluateString(top, script, "script", 0, null);

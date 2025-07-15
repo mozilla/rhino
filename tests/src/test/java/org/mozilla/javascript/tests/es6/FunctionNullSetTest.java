@@ -32,7 +32,6 @@ public class FunctionNullSetTest {
                         try {
                             final Scriptable scope = cx.initSafeStandardObjects();
                             final MyHostObject prototype = new MyHostObject();
-                            prototype.setParentScope(scope);
                             ScriptableObject.defineClass(scope, MyHostObject.class);
                             final Method getterMethod =
                                     MyHostObject.class.getMethod("jsxGet_onclick");
