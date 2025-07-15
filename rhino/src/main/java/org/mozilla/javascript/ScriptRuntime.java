@@ -2143,19 +2143,8 @@ public class ScriptRuntime {
         return wrapBoolean(ref.delete(cx));
     }
 
-    static boolean isSpecialProperty(String s, int languageVersion) {
-        if (languageVersion >= Context.VERSION_ES6) {
-            return s.equals("__parent__");
-        }
-
-        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals("__parent__");
-    }
-
-    // for the super handling, we still not language dependent
-    // have a look at the comment in for more details
-    // org.mozilla.javascript.IRFactory.createPropertyGet()
-    static boolean isSpecialSuperProperty(String s) {
-        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals("__parent__");
+    static boolean isSpecialProperty(String s) {
+        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals(NativeObject.PARENT_PROPERTY);
     }
 
     /**
@@ -5429,7 +5418,8 @@ public class ScriptRuntime {
                         object.put(s.index, object, value);
                     } else {
                         String stringId = s.stringId;
-                        if (isSpecialProperty(stringId, cx.getLanguageVersion())) {
+                        if (cx.getLanguageVersion() < Context.VERSION_ES6
+                                && isSpecialProperty(stringId)) {
                             Ref ref = specialRef(object, stringId, cx, scope);
                             ref.set(cx, scope, value);
                         } else if (cx.getLanguageVersion() >= Context.VERSION_ES6

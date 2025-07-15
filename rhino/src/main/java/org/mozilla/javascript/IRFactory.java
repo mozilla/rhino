@@ -2025,8 +2025,8 @@ public final class IRFactory {
             }
             parser.checkActivationName(name, Token.GETPROP);
 
-            if (target.getType() == Token.SUPER && ScriptRuntime.isSpecialSuperProperty(name)) {
-                // We have access to super.__proto__ or super.__parent__.
+            if (target.getType() == Token.SUPER && NativeObject.PROTO_PROPERTY.equals(name)) {
+                // We have access to super.__proto__.
                 // This needs to behave in the same way as this.__proto__ - it really is not
                 // obvious why, but you can test it in v8 or any other engine. So, we just
                 // replace SUPER with THIS in the AST. It's a bit hacky, but it works - see the
@@ -2048,8 +2048,10 @@ public final class IRFactory {
                     getRef.putIntProp(Node.OPTIONAL_CHAINING, 1);
                 }
                 return getRef;
-            } else if (ScriptRuntime.isSpecialProperty(
-                    name, parser.compilerEnv.getLanguageVersion())) {
+            }
+
+            if (parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6
+                    && ScriptRuntime.isSpecialProperty(name)) {
                 Node ref = new Node(Token.REF_SPECIAL, target);
                 ref.putProp(Node.NAME_PROP, name);
                 Node getRef = new Node(Token.GET_REF, ref);
