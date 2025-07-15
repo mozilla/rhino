@@ -43,21 +43,56 @@ publishing {
     }
 }
 decycle {
-    // package o.m.j.json contains only one class. Maybe move it to o.m.j
-    ignoring from: "org.mozilla.javascript.json.JsonParser", to: "org.mozilla.javascript.**"
-    // o.m.j.commonjs is strongly coupled to o.m.j
-    ignoring from: "org.mozilla.javascript.commonjs.**", to: "org.mozilla.javascript.**"
-    // o.m.j.debug is strongly coupled to o.m.j
-    ignoring from: "org.mozilla.javascript.debug.**", to: "org.mozilla.javascript.**"
-    // o.m.j.xml is strongly coupled to o.m.j (xmlimpl already in separate module)
-    ignoring from: "org.mozilla.javascript.xml.**", to: "org.mozilla.javascript.**"
+    /*
+     * The Decycle plugin is designed to ensure cycle-freedom between Java
+     * packages or to explicitly document cases where a cycle is tolerated
+     * or intentional.
+     * From a modularization perspective, it is always beneficial to keep the
+     * architecture as cycle-free as possible. If future development in Rhino
+     * introduces new cycles, developers must assess whether there is a valid
+     * justification for the cycle or whether it can be avoided - e.g., by
+     * using the ServiceLoader mechanism
+     */
 
-    // TODO: easy to remove
-    ignoring from: "org.mozilla.classfile.**", to: "org.mozilla.javascript.Kit"
+    // accepted cycle: package o.m.j.json contains only one class. Maybe move it to o.m.j
+    ignoring from: "org.mozilla.javascript.NativeJSON", to: "org.mozilla.javascript.json.JsonParser*"
 
-    // TODO: Should be possible to remove cycle between o.m.j.ast and o.m.j
-    ignoring from: "org.mozilla.javascript.ast.**", to: "org.mozilla.javascript.**"
+    // accepted cycle: but would be easy to solve - FunctionObject uses only an "instanceOf ModuleScope"
+    ignoring from: "org.mozilla.javascript.FunctionObject", to: "org.mozilla.javascript.commonjs.module.ModuleScope"
 
-    // TODO: o.m.j.typedarrays can be decoupled with serviceLoader pattern
-    ignoring from: "org.mozilla.javascript.typedarrays.**", to: "org.mozilla.javascript.**"
+    // accepted cycle: o.m.j.debug is strongly coupled to o.m.j
+    ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Kit"
+    ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Context"
+    ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Scriptable"
+
+    // accepted cycle: o.m.j.xml is strongly coupled to o.m.j (xmlimpl already in separate module)
+    ignoring from: "org.mozilla.javascript.*", to: "org.mozilla.javascript.xml.*"
+
+    // accepted cycle: o.m.j.ast is strongly coupled to o.m.j
+    ignoring from: "org.mozilla.javascript.*", to: "org.mozilla.javascript.ast.*"
+
+    // accepted cycle: typedarrays are strongly coupled. (See #1893 of an idea, how to remove)
+    ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.typedarrays.*"
+    ignoring from: "org.mozilla.javascript.NativeArrayIterator", to: "org.mozilla.javascript.typedarrays.NativeTypedArrayView"
+
+    // TODO: easy to remove: See #1890
+    ignoring from: "org.mozilla.classfile.ClassFileWriter\$StackMapTable", to: "org.mozilla.javascript.Kit"
+
+    // TODO: Long-term-plan: LiveConnect should be moved to a separate module
+    // TODO: Move all "Native*" classes to o.m.j.lc
+    ignoring from: "org.mozilla.javascript.Native*", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    // CHECKME: Can we move JavaMembers + MemberBox also to o.m.j.lc
+    ignoring from: "org.mozilla.javascript.JavaMembers", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    ignoring from: "org.mozilla.javascript.MemberBox", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    ignoring from: "org.mozilla.javascript.AccessorSlot\$MemberBoxSetter", to: "org.mozilla.javascript.lc.type.TypeInfo"
+    // CHECKME: Can we remove dependency to typeinfo from these objects?
+    ignoring from: "org.mozilla.javascript.ScriptableObject", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
+    ignoring from: "org.mozilla.javascript.FunctionObject", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    ignoring from: "org.mozilla.javascript.Context", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+
+    // currently accepted cycles (may be resolved, when it is clear, how to separate the liveconnect stuff)
+    ignoring from: "org.mozilla.javascript.lc.type.TypeInfoFactory", to: "org.mozilla.javascript.lc.type.impl.factory.*"
+    ignoring from: "org.mozilla.javascript.lc.type.TypeInfo", to: "org.mozilla.javascript.lc.type.impl.*"
+    ignoring from: "org.mozilla.javascript.lc.type.TypeFormatContext", to: "org.mozilla.javascript.lc.type.impl.ClassSignatureFormatContext"
+
 }
