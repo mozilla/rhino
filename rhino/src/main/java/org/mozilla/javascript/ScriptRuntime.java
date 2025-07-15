@@ -2143,7 +2143,10 @@ public class ScriptRuntime {
         return wrapBoolean(ref.delete(cx));
     }
 
-    static boolean isSpecialProperty(String s) {
+    static boolean isSpecialProperty(String s, int languageVersion) {
+        if (languageVersion >= Context.VERSION_ES6) {
+            return s.equals("__proto__");
+        }
         return s.equals("__proto__") || s.equals("__parent__");
     }
 
@@ -5416,7 +5419,7 @@ public class ScriptRuntime {
                     StringIdOrIndex s = toStringIdOrIndex(id);
                     if (s.stringId == null) {
                         object.put(s.index, object, value);
-                    } else if (isSpecialProperty(s.stringId)) {
+                    } else if (isSpecialProperty(s.stringId, cx.getLanguageVersion())) {
                         Ref ref = specialRef(object, s.stringId, cx, scope);
                         ref.set(cx, scope, value);
                     } else {
