@@ -2382,8 +2382,61 @@ public final class Interpreter extends Icode implements Evaluator {
                                 }
                             case Icode_SPREAD:
                                 {
-                                    // TODO
-                                    throw new UnsupportedOperationException("TODO");
+                                    // stack: [..., NewLiteralStorage, sourceObj]
+                                    Object source = stack[stackTop];
+                                    --stackTop;
+                                    NewLiteralStorage store = (NewLiteralStorage) stack[stackTop];
+
+                                    if (source != null && source != Undefined.instance) {
+                                        Scriptable src =
+                                                ScriptRuntime.toObjectOrNull(
+                                                        cx, source, frame.scope);
+                                        if (src != null) {
+                                            Object[] ids = ScriptableObject.getPropertyIds(src);
+                                            for (Object id : ids) {
+                                                boolean enumerable = true;
+                                                if (src instanceof ScriptableObject) {
+                                                    int attrs = 0;
+                                                    if (id instanceof String) {
+                                                        attrs =
+                                                                ((ScriptableObject) src)
+                                                                        .getAttributes((String) id);
+                                                    } else if (id instanceof Integer) {
+                                                        attrs =
+                                                                ((ScriptableObject) src)
+                                                                        .getAttributes((int) id);
+                                                    } else if (id instanceof SymbolKey) {
+                                                        attrs =
+                                                                ((ScriptableObject) src)
+                                                                        .getAttributes(
+                                                                                (SymbolKey) id);
+                                                    }
+                                                    enumerable =
+                                                            (attrs & ScriptableObject.DONTENUM)
+                                                                    == 0;
+                                                }
+                                                if (enumerable) {
+                                                    Object value = null;
+                                                    if (id instanceof String) {
+                                                        value =
+                                                                ScriptableObject.getProperty(
+                                                                        src, (String) id);
+                                                    } else if (id instanceof Integer) {
+                                                        value =
+                                                                ScriptableObject.getProperty(
+                                                                        src, (int) id);
+                                                    } else if (id instanceof SymbolKey) {
+                                                        value =
+                                                                ScriptableObject.getProperty(
+                                                                        src, (SymbolKey) id);
+                                                    }
+                                                    store.pushKey(id);
+                                                    store.pushValue(value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    continue Loop;
                                 }
                             case Icode_LITERAL_KEY_SET:
                                 {

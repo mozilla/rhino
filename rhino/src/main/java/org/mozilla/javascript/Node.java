@@ -19,8 +19,6 @@ import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 
-import static org.mozilla.javascript.Token.DOTDOTDOT;
-
 /**
  * This class implements the root of the intermediate representation.
  *
@@ -446,7 +444,6 @@ public class Node implements Iterable<Node> {
                     return "super_property_access";
                 case CONTAINS_SPREAD:
                     return "contains_spread";
-
 
                 default:
                     Kit.codeBug();

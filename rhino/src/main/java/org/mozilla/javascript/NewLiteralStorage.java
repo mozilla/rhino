@@ -19,27 +19,41 @@ public final class NewLiteralStorage {
         this.values = new Object[length];
     }
 
+    private void ensureCapacity() {
+        int minLen = index + 1;
+        int curLen = values.length;
+        if (minLen > curLen) {
+            int newLen = Math.max(curLen * 2, minLen);
+            if (keys != null) keys = java.util.Arrays.copyOf(keys, newLen);
+            getterSetters = java.util.Arrays.copyOf(getterSetters, newLen);
+            values = java.util.Arrays.copyOf(values, newLen);
+        }
+    }
+
     public void pushValue(Object value) {
-        this.values[this.index] = value;
-        this.index++;
+        ensureCapacity();
+        values[index++] = value;
     }
 
     public void pushGetter(Object value) {
-        this.getterSetters[this.index] = -1;
-        this.pushValue(value);
+        ensureCapacity();
+        getterSetters[index] = -1;
+        pushValue(value);
     }
 
     public void pushSetter(Object value) {
-        this.getterSetters[this.index] = +1;
-        this.pushValue(value);
+        ensureCapacity();
+        getterSetters[index] = +1;
+        pushValue(value);
+    }
+
+    public void pushKey(Object key) {
+        ensureCapacity();
+        keys[index] = key;
     }
 
     public void setGetterSetterFlagAt(int index, int flag) {
         this.getterSetters[index] = flag;
-    }
-
-    public void pushKey(Object key) {
-        this.keys[this.index] = key;
     }
 
     public Object[] getKeys() {
