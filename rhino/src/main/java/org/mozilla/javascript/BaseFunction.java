@@ -26,6 +26,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static final String APPLY_TAG = "APPLY_TAG";
     private static final String CALL_TAG = "CALL_TAG";
+    private static final String PROTOTYPE_PROPERTY_NAME = "prototype";
 
     static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor ctor =
@@ -120,12 +121,13 @@ public class BaseFunction extends ScriptableObject implements Function {
         var proto = new NativeObject();
 
         var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
-        var functionProto = (Scriptable) ScriptableObject.getProperty(function, "prototype");
+        var functionProto =
+                (Scriptable) ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
         proto.setPrototype(functionProto);
 
         var iterator = (Scriptable) ScriptableObject.getProperty(scope, "Iterator");
-        var iteratorPrototype = ScriptableObject.getProperty(iterator, "prototype");
-        ScriptableObject.putProperty(proto, "prototype", iteratorPrototype);
+        var iteratorPrototype = ScriptableObject.getProperty(iterator, PROTOTYPE_PROPERTY_NAME);
+        ScriptableObject.putProperty(proto, PROTOTYPE_PROPERTY_NAME, iteratorPrototype);
 
         LambdaConstructor ctor =
                 new LambdaConstructor(
@@ -225,10 +227,10 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createPrototypeProperty() {
-        if (!has("prototype", this)) {
+        if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             ScriptableObject.defineBuiltInProperty(
                     this,
-                    "prototype",
+                    PROTOTYPE_PROPERTY_NAME,
                     prototypePropertyAttributes,
                     BaseFunction::prototypeGetter,
                     BaseFunction::prototypeSetter,
@@ -306,7 +308,7 @@ public class BaseFunction extends ScriptableObject implements Function {
      */
     @Override
     public boolean hasInstance(Scriptable instance) {
-        Object protoProp = ScriptableObject.getProperty(this, "prototype");
+        Object protoProp = ScriptableObject.getProperty(this, PROTOTYPE_PROPERTY_NAME);
         if (protoProp instanceof Scriptable) {
             return ScriptRuntime.jsDelegatesTo(instance, (Scriptable) protoProp);
         }
@@ -340,7 +342,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                     ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
                             .getPrototypeProperty();
         else {
-            protoProp = ScriptableObject.getProperty(thisObj, "prototype");
+            protoProp = ScriptableObject.getProperty(thisObj, PROTOTYPE_PROPERTY_NAME);
         }
 
         if (ScriptRuntime.isObject(protoProp)) {
@@ -474,7 +476,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
         prototypeProperty = (value != null) ? value : UniqueTag.NULL_VALUE;
         createPrototypeProperty();
-        setAttributes("prototype", DONTENUM | PERMANENT | READONLY);
+        setAttributes(PROTOTYPE_PROPERTY_NAME, DONTENUM | PERMANENT | READONLY);
     }
 
     protected Scriptable getClassPrototype() {
@@ -593,7 +595,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         prototypePropertyAttributes = attributes;
         getMap().compute(
                         this,
-                        "prototype",
+                        PROTOTYPE_PROPERTY_NAME,
                         0,
                         (k, i, s) -> {
                             if (s != null) {
@@ -628,7 +630,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected synchronized Object setupDefaultPrototype(Scriptable scope) {
-        if (!has("prototype", this)) {
+        if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             createPrototypeProperty();
         }
         NativeObject obj = new NativeObject();
