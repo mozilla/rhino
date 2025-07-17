@@ -628,7 +628,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected synchronized Object setupDefaultPrototype(Scriptable scope) {
-        if (!has("prototyoe", this)) {
+        if (!has("prototype", this)) {
             createPrototypeProperty();
         }
         NativeObject obj = new NativeObject();
