@@ -292,6 +292,35 @@ public class LambdaAccessorSlotTest {
     }
 
     @Test
+    public void testSetterOnlyUsing_getOwnPropertyDescriptor_missingValue() {
+        Utils.runWithAllModes(
+                cx -> {
+                    Scriptable scope = cx.initStandardObjects();
+                    StatusHolder.init(scope)
+                            .definePrototypeProperty(
+                                    cx,
+                                    "status",
+                                    null,
+                                    (thisObj, value) -> self(thisObj).setStatus(value),
+                                    DONTENUM);
+
+                    Object shObj =
+                            cx.evaluateString(
+                                    scope,
+                                    "s = new StatusHolder('InProgress');"
+                                            + "f = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(s), 'status');"
+                                            + "f.set.call(s);"
+                                            + "s",
+                                    "source",
+                                    1,
+                                    null);
+                    var statusHolder = (StatusHolder) shObj;
+                    assertEquals("NewStatus: undefined", statusHolder.getStatus());
+                    return null;
+                });
+    }
+
+    @Test
     public void testSetValueUsing_getOwnPropertyDescriptor() {
         Utils.runWithAllModes(
                 cx -> {
@@ -548,7 +577,7 @@ public class LambdaAccessorSlotTest {
         }
 
         public void setStatus(Object value) {
-            this.status = "NewStatus: " + (String) value;
+            this.status = "NewStatus: " + (Undefined.isUndefined(value) ? "undefined" : value);
         }
     }
 }
