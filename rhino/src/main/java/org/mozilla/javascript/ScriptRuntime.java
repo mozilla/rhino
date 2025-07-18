@@ -169,7 +169,7 @@ public class ScriptRuntime {
         new ClassCache().associate(scope);
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
-        LambdaConstructor obj = NativeObject.init(scope, sealed);
+        LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
 
         Scriptable objectProto = obj.getPrototype();
 
@@ -2143,7 +2143,11 @@ public class ScriptRuntime {
         return wrapBoolean(ref.delete(cx));
     }
 
-    static boolean isSpecialProperty(String s) {
+    static boolean isSpecialProperty(String s, int languageVersion) {
+        if (languageVersion >= Context.VERSION_ES6) {
+            return s.equals("__parent__");
+        }
+
         return s.equals("__proto__") || s.equals("__parent__");
     }
 
@@ -5416,11 +5420,21 @@ public class ScriptRuntime {
                     StringIdOrIndex s = toStringIdOrIndex(id);
                     if (s.stringId == null) {
                         object.put(s.index, object, value);
-                    } else if (isSpecialProperty(s.stringId)) {
-                        Ref ref = specialRef(object, s.stringId, cx, scope);
-                        ref.set(cx, scope, value);
                     } else {
-                        object.put(s.stringId, object, value);
+                        String stringId = s.stringId;
+                        if (isSpecialProperty(stringId, cx.getLanguageVersion())) {
+                            Ref ref = specialRef(object, stringId, cx, scope);
+                            ref.set(cx, scope, value);
+                        } else if (cx.getLanguageVersion() >= Context.VERSION_ES6
+                                && "__proto__".equals(stringId)) {
+                            if (value == null) {
+                                object.setPrototype(null);
+                            } else if (value instanceof Scriptable) {
+                                NativeObject.js_protoSetter(object, value);
+                            }
+                        } else {
+                            object.put(stringId, object, value);
+                        }
                     }
                 }
             } else {
