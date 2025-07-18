@@ -1736,7 +1736,12 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 if (slot instanceof AccessorSlot) {
                                     fslot = (AccessorSlot) slot;
                                 } else {
-                                    fslot = new AccessorSlot(slot);
+                                    if ((slot instanceof LambdaAccessorSlot)
+                                            && "__proto__".equals(key)) {
+                                        fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
+                                    } else {
+                                        fslot = new AccessorSlot(slot);
+                                    }
                                     slot = fslot;
                                 }
                                 if (getter != NOT_FOUND) {

@@ -25,6 +25,17 @@ public class LambdaAccessorSlot extends Slot {
         super(oldSlot);
     }
 
+    AccessorSlot asAccessorSlot() {
+        AccessorSlot accessorSlot = new AccessorSlot(this);
+        if (getterFunction != null) {
+            accessorSlot.getter = new AccessorSlot.FunctionGetter(getterFunction);
+        }
+        if (setterFunction != null) {
+            accessorSlot.setter = new AccessorSlot.FunctionSetter(setterFunction);
+        }
+        return accessorSlot;
+    }
+
     @Override
     LambdaAccessorSlot copySlot() {
         var newSlot = new LambdaAccessorSlot(this);
@@ -141,7 +152,8 @@ public class LambdaAccessorSlot extends Slot {
                             "set " + super.name,
                             1,
                             (cx1, scope1, thisObj, args) -> {
-                                setter.accept(thisObj, args[0]);
+                                setter.accept(
+                                        thisObj, args.length > 0 ? args[0] : Undefined.instance);
                                 return Undefined.instance;
                             });
         }
