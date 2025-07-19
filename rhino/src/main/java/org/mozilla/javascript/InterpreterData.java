@@ -83,6 +83,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
     boolean isStrict;
     boolean topLevel;
     boolean isES6Generator;
+    boolean isShorthand;
 
     Object[] literalIds;
 

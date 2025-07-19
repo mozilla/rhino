@@ -52,7 +52,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
     static InterpretedFunction createFunction(
             Context cx, Scriptable scope, InterpreterData idata, Object staticSecurityDomain) {
         InterpretedFunction f = new InterpretedFunction(idata, staticSecurityDomain);
-        f.initScriptFunction(cx, scope, f.idata.isES6Generator);
+        f.initScriptFunction(cx, scope, f.idata.isES6Generator, f.idata.isShorthand);
         return f;
     }
 
@@ -60,7 +60,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
     static InterpretedFunction createFunction(
             Context cx, Scriptable scope, InterpretedFunction parent, int index) {
         InterpretedFunction f = new InterpretedFunction(parent, index);
-        f.initScriptFunction(cx, scope, f.idata.isES6Generator);
+        f.initScriptFunction(cx, scope, f.idata.isES6Generator, f.idata.isShorthand);
         return f;
     }
 

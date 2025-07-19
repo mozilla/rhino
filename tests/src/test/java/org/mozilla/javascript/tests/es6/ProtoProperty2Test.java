@@ -894,6 +894,44 @@ public class ProtoProperty2Test {
     }
 
     @Test
+    public void protoInitFunction() {
+        String script =
+                "var proto = function(){};"
+                        + "var a = { __proto__: proto };"
+                        + "var s1 = '__'; var s2 = 'proto';"
+                        + "var res = '';"
+                        + "res += Object.getPrototypeOf(a) === a.__proto__;"
+                        + "res += Object.getPrototypeOf(a) === proto;"
+                        + "res += ' / ';"
+                        + "res += a.__proto__ === proto;"
+                        + "res += ' / ';"
+                        + "res += a['__proto__'] === proto;"
+                        + "res += ' / ';"
+                        + "res += a[s1 + s2 + s1] === proto;";
+
+        Utils.assertWithAllModes_1_5("truetrue / true / false / false", script);
+        Utils.assertWithAllModes_1_8("truetrue / true / false / false", script);
+        Utils.assertWithAllModes_ES6("truetrue / true / true / true", script);
+    }
+
+    @Test
+    public void protoInitFunctionShorthand() {
+        String script =
+                "var a = { __proto__(){} };"
+                        + "var s1 = '__'; var s2 = 'proto';"
+                        + "var res = '';"
+                        + "res += Object.getPrototypeOf(a) === Object.__proto__;"
+                        + "res += ' / ';"
+                        + "res += typeof a.__proto__;"
+                        + "res += ' / ';"
+                        + "res += Object.getOwnPropertyDescriptor(a, '__proto__');";
+
+        Utils.assertWithAllModes_1_5("false / function / undefined", script);
+        Utils.assertWithAllModes_1_8("false / function / undefined", script);
+        Utils.assertWithAllModes_ES6("false / function / [object Object]", script);
+    }
+
+    @Test
     public void protoInitUndefined() {
         String script =
                 "var proto = undefined;"
