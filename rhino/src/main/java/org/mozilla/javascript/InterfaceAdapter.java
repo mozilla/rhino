@@ -6,8 +6,12 @@
 
 package org.mozilla.javascript;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.HashSet;
 
 /**
@@ -72,8 +76,57 @@ public class InterfaceAdapter {
             adapter = new InterfaceAdapter(cf, cl);
             cache.cacheInterfaceAdapter(cl, adapter);
         }
-        return VMBridge.instance.newInterfaceProxy(
-                adapter.proxyHelper, cf, adapter, object, topScope);
+        return newInterfaceProxy(adapter.proxyHelper, cf, adapter, object, topScope);
+    }
+
+    private static Object newInterfaceProxy(
+            Object proxyHelper,
+            final ContextFactory cf,
+            final InterfaceAdapter adapter,
+            final Object target,
+            final Scriptable topScope) {
+        Constructor<?> c = (Constructor<?>) proxyHelper;
+
+        InvocationHandler handler =
+                new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) {
+                        // In addition to methods declared in the interface, proxies
+                        // also route some java.lang.Object methods through the
+                        // invocation handler.
+                        if (method.getDeclaringClass() == Object.class) {
+                            String methodName = method.getName();
+                            if (methodName.equals("equals")) {
+                                Object other = args[0];
+                                // Note: we could compare a proxy and its wrapped function
+                                // as equal here but that would break symmetry of equal().
+                                // The reason == suffices here is that proxies are cached
+                                // in ScriptableObject (see NativeJavaObject.coerceType())
+                                return Boolean.valueOf(proxy == other);
+                            }
+                            if (methodName.equals("hashCode")) {
+                                return Integer.valueOf(target.hashCode());
+                            }
+                            if (methodName.equals("toString")) {
+                                return "Proxy[" + target.toString() + "]";
+                            }
+                        }
+                        return adapter.invoke(cf, target, topScope, proxy, method, args);
+                    }
+                };
+        Object proxy;
+        try {
+            proxy = c.newInstance(handler);
+        } catch (InvocationTargetException ex) {
+            throw Context.throwAsScriptRuntimeEx(ex);
+        } catch (IllegalAccessException ex) {
+            // Should not happen
+            throw new IllegalStateException(ex);
+        } catch (InstantiationException ex) {
+            // Should not happen
+            throw new IllegalStateException(ex);
+        }
+        return proxy;
     }
 
     /**
@@ -95,7 +148,23 @@ public class InterfaceAdapter {
     }
 
     private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
-        this.proxyHelper = VMBridge.instance.getInterfaceProxyHelper(cf, new Class[] {cl});
+        this.proxyHelper = getInterfaceProxyHelper(cf, new Class[] {cl});
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces) {
+        // XXX: How to handle interfaces array withclasses from different
+        // class loaders? Using cf.getApplicationClassLoader() ?
+        ClassLoader loader = interfaces[0].getClassLoader();
+        Class<?> cl = Proxy.getProxyClass(loader, interfaces);
+        Constructor<?> c;
+        try {
+            c = cl.getConstructor(InvocationHandler.class);
+        } catch (NoSuchMethodException ex) {
+            // Should not happen
+            throw new IllegalStateException(ex);
+        }
+        return c;
     }
 
     public Object invoke(

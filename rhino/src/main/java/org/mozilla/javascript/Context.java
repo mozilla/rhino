@@ -453,8 +453,7 @@ public class Context implements Closeable {
      * @see ContextFactory#call(ContextAction)
      */
     public static Context getCurrentContext() {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        return VMBridge.instance.getContext(helper);
+        return ContextHolder.getContext();
     }
 
     /**
@@ -489,8 +488,7 @@ public class Context implements Closeable {
     }
 
     static final Context enter(Context cx, ContextFactory factory) {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context old = VMBridge.instance.getContext(helper);
+        Context old = ContextHolder.getContext();
         if (old != null) {
             cx = old;
         } else {
@@ -510,7 +508,7 @@ public class Context implements Closeable {
                             "can not use Context instance already associated with some thread");
                 }
             }
-            VMBridge.instance.setContext(helper, cx);
+            ContextHolder.setContext(cx);
         }
         ++cx.enterCount;
         return cx;
@@ -527,14 +525,13 @@ public class Context implements Closeable {
      * @see ContextFactory#enterContext()
      */
     public static void exit() {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context cx = VMBridge.instance.getContext(helper);
+        Context cx = ContextHolder.getContext();
         if (cx == null) {
             throw new IllegalStateException("Calling Context.exit without previous Context.enter");
         }
         if (cx.enterCount < 1) Kit.codeBug();
         if (--cx.enterCount == 0) {
-            VMBridge.instance.setContext(helper, null);
+            ContextHolder.clearContext();
             cx.factory.onContextReleased(cx);
         }
     }
@@ -543,8 +540,7 @@ public class Context implements Closeable {
     public void close() {
         if (enterCount < 1) Kit.codeBug();
         if (--enterCount == 0) {
-            Object helper = VMBridge.instance.getThreadContextHelper();
-            VMBridge.instance.setContext(helper, null);
+            ContextHolder.clearContext();
             factory.onContextReleased(this);
         }
     }
