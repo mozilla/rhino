@@ -33,7 +33,6 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
-import org.mozilla.javascript.lc.java.ClassCache;
 import org.mozilla.javascript.lc.java.NativeJavaObject;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -2204,8 +2203,6 @@ public class Context implements Closeable {
 
     /**
      * @deprecated
-     * @see ClassCache#get(Scriptable)
-     * @see ClassCache#setCachingEnabled(boolean)
      */
     @Deprecated
     public static void setCachingEnabled(boolean cachingEnabled) {}

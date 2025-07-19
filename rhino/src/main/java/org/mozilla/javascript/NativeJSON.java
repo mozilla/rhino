@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import org.mozilla.javascript.json.JsonParser;
-import org.mozilla.javascript.lc.java.NativeJavaObject;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -305,8 +304,8 @@ public final class NativeJSON extends ScriptableObject {
         } else if (state.cx.getLanguageVersion() >= Context.VERSION_ES6
                 && value instanceof NativeBigInt) {
             value = ((NativeBigInt) value).getDefaultValue(ScriptRuntime.BigIntegerClass);
-        } else if (value instanceof NativeJavaObject) {
-            unwrappedJavaValue = ((NativeJavaObject) value).unwrap();
+        } else if (value instanceof Wrapper) {
+            unwrappedJavaValue = ((Wrapper) value).unwrap();
             if (!(unwrappedJavaValue instanceof Map
                     || unwrappedJavaValue instanceof Collection
                     || unwrappedJavaValue.getClass().isArray())) {
@@ -594,8 +593,8 @@ public final class NativeJSON extends ScriptableObject {
         if (o instanceof NativeArray) {
             return true;
         }
-        if (o instanceof NativeJavaObject) {
-            Object unwrapped = ((NativeJavaObject) o).unwrap();
+        if (o instanceof Wrapper) {
+            Object unwrapped = ((Wrapper) o).unwrap();
             return (unwrapped instanceof Collection) || unwrapped.getClass().isArray();
         }
         return false;
