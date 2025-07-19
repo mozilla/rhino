@@ -5429,6 +5429,12 @@ public class ScriptRuntime {
                                 && "__proto__".equals(stringId)) {
                             if (value == null) {
                                 object.setPrototype(null);
+                            } else if (value instanceof NativeFunction) {
+                                if (((NativeFunction) value).isShorthand()) {
+                                    object.put(stringId, object, value);
+                                } else {
+                                    NativeObject.js_protoSetter(object, value);
+                                }
                             } else if (value instanceof Scriptable) {
                                 NativeObject.js_protoSetter(object, value);
                             }
