@@ -2024,7 +2024,7 @@ public final class IRFactory {
                 return parser.createName(name);
             }
             parser.checkActivationName(name, Token.GETPROP);
-            if (ScriptRuntime.isSpecialProperty(name)) {
+            if (ScriptRuntime.isSpecialProperty(name, parser.compilerEnv.getLanguageVersion())) {
                 if (target.getType() == Token.SUPER) {
                     // We have an access to super.__proto__ or super.__parent__.
                     // This needs to behave in the same way as this.__proto__ - it really is not
