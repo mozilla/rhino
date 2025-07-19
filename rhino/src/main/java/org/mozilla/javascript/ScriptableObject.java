@@ -1677,14 +1677,26 @@ public abstract class ScriptableObject extends SlotMapOwner
             int index) {
         // this property lookup cannot happen from inside getMap().compute lambda
         // as it risks causing a deadlock if ThreadSafeSlotMapContainer is used
-        // and `this` is in prototype chain of `desc`
-        Object enumerable = getProperty(desc, "enumerable");
-        Object writable = getProperty(desc, "writable");
-        Object configurable = getProperty(desc, "configurable");
-        Object getter = getProperty(desc, "get");
-        Object setter = getProperty(desc, "set");
-        Object value = getProperty(desc, "value");
-        boolean accessorDescriptor = isAccessorDescriptor(desc);
+        // and `this` is in the prototype chain of `desc`
+        final Object enumerable = getProperty(desc, "enumerable");
+        final Object writable = getProperty(desc, "writable");
+        final Object configurable = getProperty(desc, "configurable");
+        final boolean accessorDescriptor = isAccessorDescriptor(desc);
+
+        // getProperty() processes the whole prototype chain,
+        // we should do this only if we need the result later
+        final Object getter;
+        final Object setter;
+        final Object value;
+        if (accessorDescriptor) {
+            getter = getProperty(desc, "get");
+            setter = getProperty(desc, "set");
+            value = null;
+        } else {
+            getter = null;
+            setter = null;
+            value = getProperty(desc, "value");
+        }
 
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
