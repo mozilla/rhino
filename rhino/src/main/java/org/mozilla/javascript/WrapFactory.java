@@ -11,6 +11,11 @@ package org.mozilla.javascript;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.lc.java.NativeJavaArray;
+import org.mozilla.javascript.lc.java.NativeJavaClass;
+import org.mozilla.javascript.lc.java.NativeJavaList;
+import org.mozilla.javascript.lc.java.NativeJavaMap;
+import org.mozilla.javascript.lc.java.NativeJavaObject;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class

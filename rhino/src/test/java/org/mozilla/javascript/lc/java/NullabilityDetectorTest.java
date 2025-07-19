@@ -1,4 +1,4 @@
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

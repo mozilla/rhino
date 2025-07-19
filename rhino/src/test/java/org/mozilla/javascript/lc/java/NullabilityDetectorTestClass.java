@@ -1,4 +1,4 @@
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 class NullabilityDetectorTestClass {
     public NullabilityDetectorTestClass() {

@@ -2,13 +2,14 @@ package org.mozilla.javascript;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mozilla.javascript.FunctionObject.*;
+import static org.mozilla.javascript.lc.java.FunctionObject.*;
 
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mozilla.javascript.lc.java.FunctionObject;
 import org.mozilla.javascript.testutils.Utils;
 
 @RunWith(Parameterized.class)

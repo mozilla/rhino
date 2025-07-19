@@ -22,6 +22,10 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.lc.java.ClassCache;
+import org.mozilla.javascript.lc.java.ImporterTopLevel;
+import org.mozilla.javascript.lc.java.NativeJavaMap;
+import org.mozilla.javascript.lc.java.NativeJavaObject;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
@@ -280,22 +284,27 @@ public class ScriptRuntime {
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                s, "Packages", "org.mozilla.javascript.lc.java.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
+                s, "getClass", "org.mozilla.javascript.lc.java.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+                s, "JavaAdapter", "org.mozilla.javascript.lc.java.JavaAdapter", sealed, true);
+        new LazilyLoadedCtor(
+                s, "JavaImporter", "org.mozilla.javascript.lc.java.ImporterTopLevel", sealed, true);
 
         for (String packageName : getTopPackageNames()) {
             new LazilyLoadedCtor(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                    s,
+                    packageName,
+                    "org.mozilla.javascript.lc.java.NativeJavaTopPackage",
+                    sealed,
+                    true);
         }
 
         return s;
     }
 
-    static String[] getTopPackageNames() {
+    public static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name"))
                 ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
@@ -6025,7 +6034,7 @@ public class ScriptRuntime {
      * implementations, return null. If there is more than one implementation, throw a fatal
      * exception, since this indicates that the classpath was configured incorrectly.
      */
-    static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
+    public static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
         Iterator<T> it = ServiceLoader.load(serviceClass).iterator();
         if (it.hasNext()) {
             T result = it.next();

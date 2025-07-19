@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import org.mozilla.javascript.json.JsonParser;
+import org.mozilla.javascript.lc.java.NativeJavaObject;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**

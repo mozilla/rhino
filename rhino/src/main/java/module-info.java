@@ -14,6 +14,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.xml;
     exports org.mozilla.javascript.config;
     exports org.mozilla.javascript.lc.type;
+    exports org.mozilla.javascript.lc.java;
 
     uses org.mozilla.javascript.RegExpLoader;
     uses org.mozilla.javascript.xml.XMLLoader;

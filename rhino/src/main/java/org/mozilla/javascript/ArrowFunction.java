@@ -80,7 +80,7 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         if (targetFunction instanceof BaseFunction) {
             return ((BaseFunction) targetFunction).decompile(indent, flags);
         }

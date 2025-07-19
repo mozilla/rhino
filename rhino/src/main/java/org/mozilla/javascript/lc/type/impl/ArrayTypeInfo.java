@@ -2,7 +2,7 @@ package org.mozilla.javascript.lc.type.impl;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.lc.java.FunctionObject;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
