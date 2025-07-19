@@ -9,11 +9,13 @@ import org.mozilla.javascript.testutils.Utils;
 
 public class GeneratorStackTraceTest {
 
+    static final String LS = System.getProperty("line.separator");
+
     @Test
     public void testGeneratorStackTraces() {
         String script =
                 "function* f2() { yield 1; throw 'hello'; yield 3; }; var g = f2(); g.next(); g.next();";
-        String expected = "\tat test.js:0 (f2)\n" + "\tat test.js:0\n";
+        String expected = "\tat test.js:0 (f2)" + LS + "\tat test.js:0" + LS;
         runWithExpectedStackTrace(script, expected);
     }
 
