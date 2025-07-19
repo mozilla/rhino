@@ -22,7 +22,7 @@ import java.util.Set;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-public class NativeJavaPackage extends ScriptableObject {
+public class NativeJavaPackage extends ScriptableObject implements JavaEquals {
     private static final long serialVersionUID = 7445054382212031523L;
 
     NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {

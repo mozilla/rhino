@@ -17,7 +17,8 @@ package org.mozilla.javascript;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-public class NativeJavaTopPackage extends NativeJavaPackage implements Function, IdFunctionCall {
+public class NativeJavaTopPackage extends NativeJavaPackage
+        implements Function, IdFunctionCall, StatelessEquals {
     private static final long serialVersionUID = -1455787259477709999L;
 
     // we know these are packages so we can skip the class check
