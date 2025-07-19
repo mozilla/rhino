@@ -81,6 +81,7 @@ public class FunctionNode extends ScriptNode {
     private int lp = -1;
     private int rp = -1;
     private boolean hasRestParameter;
+    private boolean isShorthand;
 
     @Override
     public List<Object> getDefaultParams() {
@@ -332,6 +333,15 @@ public class FunctionNode extends ScriptNode {
 
     public void setHasRestParameter(boolean hasRestParameter) {
         this.hasRestParameter = hasRestParameter;
+    }
+
+    @Override
+    public boolean isShorthand() {
+        return isShorthand;
+    }
+
+    public void setIsShorthand() {
+        isShorthand = true;
     }
 
     public void addResumptionPoint(Node target) {
