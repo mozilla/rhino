@@ -22,8 +22,7 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public void register(ScriptableObject scope, boolean sealed) {
         NativeRegExpStringIterator.init(scope, sealed);
-        new LazilyLoadedCtor(
-                scope, "RegExp", "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
+        new LazilyLoadedCtor(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
 
     @Override
