@@ -659,7 +659,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
         cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "createAdapterWrapper",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/Object;"
@@ -731,7 +731,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
         // Run script and save resulting scope
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "runScript",
                 "(Lorg/mozilla/javascript/Script;" + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.ASTORE_1);
@@ -747,7 +747,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
         cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "createAdapterWrapper",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/Object;"
@@ -906,7 +906,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
 
                 cfw.addInvoke(
                         ByteCode.INVOKESTATIC,
-                        "org/mozilla/javascript/JavaAdapter",
+                        "org/mozilla/javascript/lc/java/JavaAdapter",
                         "convertResult",
                         "(Ljava/lang/Object;" + "Ljava/lang/Class;" + ")Ljava/lang/Object;");
             }
@@ -944,7 +944,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
         cfw.addPush(methodName);
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "getFunction",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/String;"
@@ -972,7 +972,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
         // method in.
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "callMethod",
                 "(Lorg/mozilla/javascript/ContextFactory;"
                         + "Lorg/mozilla/javascript/Scriptable;"
