@@ -675,7 +675,7 @@ public class Context implements Closeable {
     }
 
     @SuppressWarnings("DoNotCallSuggester")
-    static void onSealedMutation() {
+    public static void onSealedMutation() {
         throw new IllegalStateException();
     }
 
@@ -2225,7 +2225,7 @@ public class Context implements Closeable {
      */
     public final WrapFactory getWrapFactory() {
         if (wrapFactory == null) {
-            wrapFactory = new WrapFactory();
+            wrapFactory = LcBridge.instance.newWrapFactory();
         }
         return wrapFactory;
     }

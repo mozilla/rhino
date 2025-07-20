@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -22,10 +21,6 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.lc.java.ClassCache;
-import org.mozilla.javascript.lc.java.ImporterTopLevel;
-import org.mozilla.javascript.lc.java.NativeJavaMap;
-import org.mozilla.javascript.lc.java.NativeJavaObject;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
@@ -170,7 +165,7 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache().associate(scope);
+        LcBridge.instance.associateClassCache(scope);
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
         LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
@@ -216,8 +211,7 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        LcBridge.instance.init(scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -4698,21 +4692,7 @@ public class ScriptRuntime {
     // ------------------
 
     public static ScriptableObject getGlobal(Context cx) {
-        final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
-        Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
-        if (globalClass != null) {
-            try {
-                Class<?>[] parm = {ScriptRuntime.ContextClass};
-                Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
-                Object[] arg = {cx};
-                return (ScriptableObject) globalClassCtor.newInstance(arg);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                // fall through...
-            }
-        }
-        return new ImporterTopLevel(cx);
+        return LcBridge.instance.getGlobal(cx);
     }
 
     public static boolean hasTopCall(Context cx) {

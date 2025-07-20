@@ -78,21 +78,6 @@ decycle {
     // TODO: easy to remove: See #1890
     ignoring from: "org.mozilla.classfile.ClassFileWriter\$StackMapTable", to: "org.mozilla.javascript.Kit"
 
-    // TODO: Long-term-plan: LiveConnect should be moved to a separate module
-    // TODO: Move all "Native*" classes to o.m.j.lc
-    // ignoring from: "org.mozilla.javascript.Native*", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-    ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.java.*"
-    ignoring from: "org.mozilla.javascript.WrapFactory", to: "org.mozilla.javascript.lc.java.*"
-    // CHECKME: Can we move JavaMembers + MemberBox also to o.m.j.lc
-
-    // ignoring from: "org.mozilla.javascript.JavaMembers", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-    // ignoring from: "org.mozilla.javascript.MemberBox", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-    // ignoring from: "org.mozilla.javascript.AccessorSlot\$MemberBoxSetter", to: "org.mozilla.javascript.lc.type.TypeInfo"
-    // CHECKME: Can we remove dependency to typeinfo from these objects?
-    // ignoring from: "org.mozilla.javascript.ScriptableObject", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
-    // ignoring from: "org.mozilla.javascript.FunctionObject", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-    // ignoring from: "org.mozilla.javascript.Context", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-
     // currently accepted cycles (may be resolved, when it is clear, how to separate the liveconnect stuff)
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfoFactory", to: "org.mozilla.javascript.lc.type.impl.factory.*"
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfo", to: "org.mozilla.javascript.lc.type.impl.*"

@@ -2,13 +2,13 @@ package org.mozilla.javascript.lc.java;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.LcBridge;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.WrapFactory;
 
 public class LcBridgeImpl implements LcBridge {
 
@@ -46,5 +46,25 @@ public class LcBridgeImpl implements LcBridge {
     public <T> T jsToJava(Object value, Class<T> desiredType) throws EvaluatorException {
         return (T) LiveConnect.jsToJava(value, desiredType);
     }
-    
+
+    @Override
+    public WrapFactory newWrapFactory() {
+        return new WrapFactoryImpl();
+    }
+
+    @Override
+    public void associateClassCache(ScriptableObject scope) {
+        new ClassCache().associate(scope);
+    }
+
+    @Override
+    public ScriptableObject getGlobal(Context cx) {
+        return LiveConnect.getGlobal(cx);
+    }
+
+    @Override
+    public void init(ScriptableObject scope, boolean sealed) {
+        NativeJavaObject.init(scope, sealed);
+        NativeJavaMap.init(scope, sealed);
+    }
 }

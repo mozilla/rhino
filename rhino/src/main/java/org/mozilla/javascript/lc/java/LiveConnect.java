@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -464,6 +465,24 @@ public class LiveConnect {
 
     public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
         return NativeJavaObject.coerceTypeImpl(desiredType, value);
+    }
+
+    public static ScriptableObject getGlobal(Context cx) {
+        final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
+        Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
+        if (globalClass != null) {
+            try {
+                Class<?>[] parm = {ScriptRuntime.ContextClass};
+                Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
+                Object[] arg = {cx};
+                return (ScriptableObject) globalClassCtor.newInstance(arg);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                // fall through...
+            }
+        }
+        return new ImporterTopLevel(cx);
     }
 
     @SuppressWarnings({"unchecked"})

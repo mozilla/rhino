@@ -32,4 +32,11 @@ public interface LcBridge {
 
     <T> T jsToJava(Object value, Class<T> desiredType) throws EvaluatorException;
 
+    WrapFactory newWrapFactory();
+
+    void associateClassCache(ScriptableObject scope);
+
+    ScriptableObject getGlobal(Context cx);
+
+    void init(ScriptableObject scope, boolean sealed);
 }
