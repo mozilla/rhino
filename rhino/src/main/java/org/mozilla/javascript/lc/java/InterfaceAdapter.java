@@ -209,7 +209,7 @@ public class InterfaceAdapter {
                 if (resultType == Void.TYPE) {
                     return null;
                 }
-                return Context.jsToJava(null, resultType);
+                return LiveConnect.jsToJava(null, resultType);
             }
             if (!(value instanceof Callable)) {
                 throw Context.reportRuntimeErrorById("msg.not.function.interface", methodName);
@@ -235,7 +235,7 @@ public class InterfaceAdapter {
         if (javaResultType == Void.TYPE) {
             result = null;
         } else {
-            result = Context.jsToJava(result, javaResultType);
+            result = LiveConnect.jsToJava(result, javaResultType);
         }
         return result;
     }

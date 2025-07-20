@@ -1048,7 +1048,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     static <T extends Scriptable> BaseFunction buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        return LcLib.instance.buildClassCtor(scope, clazz, sealed, mapInheritance);
+        return LcBridge.instance.buildClassCtor(scope, clazz, sealed, mapInheritance);
     }
 
     /**
@@ -1155,7 +1155,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void defineProperty(String propertyName, Class<?> clazz, int attributes) {
-        LcLib.instance.defineProperty(this, propertyName, clazz, attributes);
+        LcBridge.instance.defineProperty(this, propertyName, clazz, attributes);
     }
 
     /**
@@ -1207,7 +1207,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
-        LcLib.instance.defineProperty(this, propertyName, delegateTo, getter, setter, attributes);
+        LcBridge.instance.defineProperty(
+                this, propertyName, delegateTo, getter, setter, attributes);
     }
 
     /**
@@ -1732,7 +1733,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see org.mozilla.javascript.lc.java.FunctionObject
      */
     public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
-        LcLib.instance.defineFunctionProperties(this, names, clazz, attributes);
+        LcBridge.instance.defineFunctionProperties(this, names, clazz, attributes);
     }
 
     /**

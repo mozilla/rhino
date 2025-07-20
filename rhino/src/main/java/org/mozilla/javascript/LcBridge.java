@@ -3,12 +3,13 @@ package org.mozilla.javascript;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import org.mozilla.javascript.lc.type.TypeInfo;
 
-public interface LcLib {
-    LcLib instance =
+/** This class is intended to keep API compatibility for a while. */
+@Deprecated
+public interface LcBridge {
+    LcBridge instance =
             Objects.requireNonNull(
-                    ScriptRuntime.loadOneServiceImplementation(LcLib.class),
+                    ScriptRuntime.loadOneServiceImplementation(LcBridge.class),
                     "LiveConnect library not in classpath");
 
     <T extends Scriptable> BaseFunction buildClassCtor(
@@ -29,5 +30,6 @@ public interface LcLib {
     void defineFunctionProperties(
             ScriptableObject target, String[] names, Class<?> clazz, int attributes);
 
-    Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException;
+    <T> T jsToJava(Object value, Class<T> desiredType) throws EvaluatorException;
+
 }

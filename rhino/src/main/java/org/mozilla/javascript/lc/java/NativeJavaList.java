@@ -130,7 +130,7 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (index >= 0) {
-            Object javaValue = Context.jsToJava(value, Object.class);
+            Object javaValue = LiveConnect.jsToJava(value, Object.class);
             if (index == list.size()) {
                 list.add(javaValue); // use "add" at the end of list.
             } else {

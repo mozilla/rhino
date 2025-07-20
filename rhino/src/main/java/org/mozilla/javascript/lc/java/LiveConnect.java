@@ -13,7 +13,6 @@ import java.util.Objects;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.LcLib;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -25,10 +24,9 @@ import org.mozilla.javascript.annotations.JSStaticFunction;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
-public class LcLibImpl implements LcLib {
+public class LiveConnect {
 
-    @Override
-    public <T extends Scriptable> BaseFunction buildClassCtor(
+    public static <T extends Scriptable> BaseFunction buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
@@ -260,10 +258,9 @@ public class LcLibImpl implements LcLib {
      *     will be searched for "getFoo" and "setFoo" methods.
      * @param clazz the Java class to search for the getter and setter
      * @param attributes the attributes of the JavaScript property
-     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     * @see Scriptable#put(String, Scriptable, Object)
      */
-    @Override
-    public void defineProperty(
+    public static void defineProperty(
             ScriptableObject target, String propertyName, Class<?> clazz, int attributes) {
         int length = propertyName.length();
         if (length == 0) throw new IllegalArgumentException();
@@ -332,8 +329,7 @@ public class LcLibImpl implements LcLib {
      * @param setter the method to invoke to set the value of the property
      * @param attributes the attributes of the JavaScript property
      */
-    @Override
-    public void defineProperty(
+    public static void defineProperty(
             ScriptableObject target,
             String propertyName,
             Object delegateTo,
@@ -439,8 +435,7 @@ public class LcLibImpl implements LcLib {
      * @param attributes the attributes of the new properties
      * @see FunctionObject
      */
-    @Override
-    public void defineFunctionProperties(
+    public static void defineFunctionProperties(
             ScriptableObject target, String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (String name : names) {
@@ -453,8 +448,21 @@ public class LcLibImpl implements LcLib {
         }
     }
 
-    @Override
-    public Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
+    /**
+     * Convert a JavaScript value into the desired type. Uses the semantics defined with
+     * LiveConnect3 and throws an Illegal argument exception if the conversion cannot be performed.
+     *
+     * @param value the JavaScript value to convert
+     * @param desiredType the Java type to convert to. Primitive Java types are represented using
+     *     the TYPE fields in the corresponding wrapper class in java.lang.
+     * @return the converted value
+     * @throws EvaluatorException if the conversion cannot be performed
+     */
+    public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+        return jsToJava(value, TypeInfoFactory.GLOBAL.create(desiredType));
+    }
+
+    public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
         return NativeJavaObject.coerceTypeImpl(desiredType, value);
     }
 

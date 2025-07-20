@@ -153,7 +153,7 @@ public class NativeJavaMethod extends BaseFunction {
             // marshall the explicit parameters
             Object[] newArgs = new Object[argTypes.size()];
             for (int i = 0; i < argTypes.size() - 1; i++) {
-                newArgs[i] = Context.jsToJava(args[i], argTypes.get(i));
+                newArgs[i] = LiveConnect.jsToJava(args[i], argTypes.get(i));
             }
 
             Object varArgs;
@@ -166,13 +166,15 @@ public class NativeJavaMethod extends BaseFunction {
                             || args[args.length - 1] instanceof NativeJavaArray)) {
                 // convert the ECMA array into a native array
                 varArgs =
-                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
+                        LiveConnect.jsToJava(
+                                args[args.length - 1], argTypes.get(argTypes.size() - 1));
             } else {
                 // marshall the variable parameters
                 var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
                 varArgs = componentType.newArray(args.length - argTypes.size() + 1);
                 for (int i = 0; i < Array.getLength(varArgs); i++) {
-                    Object value = Context.jsToJava(args[argTypes.size() - 1 + i], componentType);
+                    Object value =
+                            LiveConnect.jsToJava(args[argTypes.size() - 1 + i], componentType);
                     Array.set(varArgs, i, value);
                 }
             }
@@ -186,7 +188,7 @@ public class NativeJavaMethod extends BaseFunction {
             Object[] origArgs = args;
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
-                Object coerced = Context.jsToJava(arg, argTypes.get(i));
+                Object coerced = LiveConnect.jsToJava(arg, argTypes.get(i));
                 if (coerced != arg) {
                     if (origArgs == args) {
                         args = args.clone();

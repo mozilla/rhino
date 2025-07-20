@@ -514,7 +514,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     /** Type-munging for field setting and method invocation. Conforms to LC3 specification */
-    public static Object coerceTypeImpl(TypeInfo type, Object value) {
+    static Object coerceTypeImpl(TypeInfo type, Object value) {
         if (value != null && type.is(value.getClass())) {
             return value;
         }

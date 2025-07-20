@@ -205,7 +205,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
             // marshall the explicit parameter
             Object[] newArgs = new Object[argTypes.size()];
             for (int i = 0; i < argTypes.size() - 1; i++) {
-                newArgs[i] = Context.jsToJava(args[i], argTypes.get(i));
+                newArgs[i] = LiveConnect.jsToJava(args[i], argTypes.get(i));
             }
 
             Object varArgs;
@@ -218,13 +218,15 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
                             || args[args.length - 1] instanceof NativeJavaArray)) {
                 // convert the ECMA array into a native array
                 varArgs =
-                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
+                        LiveConnect.jsToJava(
+                                args[args.length - 1], argTypes.get(argTypes.size() - 1));
             } else {
                 // marshall the variable parameter
                 var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
                 varArgs = componentType.newArray(args.length - argTypes.size() + 1);
                 for (int i = 0; i < Array.getLength(varArgs); i++) {
-                    Object value = Context.jsToJava(args[argTypes.size() - 1 + i], componentType);
+                    Object value =
+                            LiveConnect.jsToJava(args[argTypes.size() - 1 + i], componentType);
                     Array.set(varArgs, i, value);
                 }
             }
@@ -237,7 +239,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
             Object[] origArgs = args;
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
-                Object x = Context.jsToJava(arg, argTypes.get(i));
+                Object x = LiveConnect.jsToJava(arg, argTypes.get(i));
                 if (x != arg) {
                     if (args == origArgs) {
                         args = origArgs.clone();

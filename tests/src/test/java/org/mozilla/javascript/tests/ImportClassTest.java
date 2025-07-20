@@ -20,6 +20,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.lc.java.ImporterTopLevel;
+import org.mozilla.javascript.lc.java.LiveConnect;
 import org.mozilla.javascript.lc.java.NativeJavaClass;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
@@ -65,15 +66,15 @@ public class ImportClassTest {
                                 + "importClass(java.util.UUID);\n"
                                 + "UUID.randomUUID();\n"); // calls getPkgProperty("UUID",
         // NativeJavaPackage, true)
-        assertTrue(Context.jsToJava(result, UUID.class) instanceof UUID);
+        assertTrue(LiveConnect.jsToJava(result, UUID.class) instanceof UUID);
     }
 
     @Test
     public void importInSameContext() {
         Object result = runScript("importClass(java.util.UUID);UUID.randomUUID();");
-        assertTrue(Context.jsToJava(result, UUID.class) instanceof UUID);
+        assertTrue(LiveConnect.jsToJava(result, UUID.class) instanceof UUID);
         result = runScript("importClass(java.util.UUID);UUID.randomUUID();");
-        assertTrue(Context.jsToJava(result, UUID.class) instanceof UUID);
+        assertTrue(LiveConnect.jsToJava(result, UUID.class) instanceof UUID);
     }
 
     @Test

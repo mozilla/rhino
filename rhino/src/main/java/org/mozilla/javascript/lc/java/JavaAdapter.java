@@ -113,7 +113,7 @@ public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
             // Avoid an error for an undefined value; return null instead.
             return null;
         }
-        return Context.jsToJava(result, c);
+        return LiveConnect.jsToJava(result, c);
     }
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {

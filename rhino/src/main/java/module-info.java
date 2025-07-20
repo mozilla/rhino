@@ -1,3 +1,6 @@
+import org.mozilla.javascript.LcBridge;
+import org.mozilla.javascript.lc.java.LcBridgeImpl;
+
 module org.mozilla.rhino {
     uses org.mozilla.javascript.NullabilityDetector;
 
@@ -16,15 +19,15 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.lc.type;
     exports org.mozilla.javascript.lc.java;
 
-    uses org.mozilla.javascript.LcLib;
+    uses LcBridge;
     uses org.mozilla.javascript.RegExpLoader;
     uses org.mozilla.javascript.xml.XMLLoader;
     uses org.mozilla.javascript.config.RhinoPropertiesLoader;
 
     provides org.mozilla.javascript.RegExpLoader with
             org.mozilla.javascript.regexp.RegExpLoaderImpl;
-    provides org.mozilla.javascript.LcLib with
-            org.mozilla.javascript.lc.java.LcLibImpl;
+    provides LcBridge with
+            LcBridgeImpl;
 
     requires java.compiler;
     requires jdk.dynalink;

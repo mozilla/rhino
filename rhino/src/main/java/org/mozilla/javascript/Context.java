@@ -33,9 +33,6 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
-import org.mozilla.javascript.lc.java.NativeJavaObject;
-import org.mozilla.javascript.lc.type.TypeInfo;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -1834,13 +1831,11 @@ public class Context implements Closeable {
      *     the TYPE fields in the corresponding wrapper class in java.lang.
      * @return the converted value
      * @throws EvaluatorException if the conversion cannot be performed
+     * @deprecated please migrate to LiveConnect.jsToJava
      */
+    @Deprecated
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
-        return jsToJava(value, TypeInfoFactory.GLOBAL.create(desiredType));
-    }
-
-    public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
-        return NativeJavaObject.coerceTypeImpl(desiredType, value);
+        return LcBridge.instance.jsToJava(value, desiredType);
     }
 
     /**

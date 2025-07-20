@@ -149,7 +149,7 @@ class JavaMembers {
             // setter to use:
             if (bp.setters == null || value == null) {
                 var setType = bp.setter.getArgTypes().get(0);
-                Object[] args = {Context.jsToJava(value, setType)};
+                Object[] args = {LiveConnect.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
                 } catch (Exception ex) {
@@ -170,7 +170,7 @@ class JavaMembers {
                 throw Context.reportRuntimeErrorById(str, name);
             }
             Field field = (Field) member;
-            Object javaValue = Context.jsToJava(value, field.getType());
+            Object javaValue = LiveConnect.jsToJava(value, field.getType());
             try {
                 field.set(javaObject, javaValue);
             } catch (IllegalAccessException accessEx) {
