@@ -215,6 +215,16 @@ public class NativeDateTest {
     }
 
     @Test
+    public void ctorDateTimeMillisecondsRounding() {
+        // Test proper rounding instead of truncation for high precision inputs
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.124Z", "new Date('2025-05-07T09:05:20.1235Z').toISOString()");
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.124Z",
+                "new Date('2025-05-07T09:05:20.123567Z').toISOString()");
+    }
+
+    @Test
     public void ctorDateTimeMillisecondsFourDigtsWrongZone() {
         ctorDateTimeStringThrows(
                 EcmaError.class,

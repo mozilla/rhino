@@ -988,24 +988,51 @@ final class NativeDate extends IdScriptableObject {
                 // milli secs are different, digit 2 and 3 are optional
                 int value = 0;
                 int digitsFound = 0;
+                boolean shouldRound = false;
+
                 for (; i < len; i++) {
                     char c = s.charAt(i);
                     if (c < '0' || c > '9') {
                         break;
                     }
 
-                    // skip more digits
                     if (digitsFound < 3) {
                         value = 10 * value + (c - '0');
                         digitsFound++;
+                    } else if (digitsFound == 3) {
+                        // Use 4th digit for rounding decision
+                        shouldRound = (c >= '5');
+                        digitsFound++;
+                        // Skip remaining digits
                     }
                 }
+
                 if (digitsFound == 0) {
                     state = ERROR;
                     break loop;
                 }
+
                 if (digitsFound < 3) {
                     value = value * (digitsFound == 1 ? 100 : 10);
+                } else if (shouldRound) {
+                    value++;
+                    // Handle overflow: 1000ms -> add 1 second
+                    if (value >= 1000) {
+                        value = 0;
+                        // Increment seconds (will be handled by Date constructor)
+                        if (values[SEC] < 59) {
+                            values[SEC]++;
+                        } else {
+                            values[SEC] = 0;
+                            // Let Date constructor handle minute/hour/day overflow
+                            if (values[MIN] < 59) {
+                                values[MIN]++;
+                            } else {
+                                values[MIN] = 0;
+                                values[HOUR]++;
+                            }
+                        }
+                    }
                 }
                 values[state] = value;
 
