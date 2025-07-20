@@ -8,11 +8,10 @@ import org.mozilla.javascript.xml.XMLLoader;
 public class XMLLoaderImpl implements XMLLoader {
     @Override
     public void load(ScriptableObject scope, boolean sealed) {
-        String implClass = XMLLibImpl.class.getName();
-        new LazilyLoadedCtor(scope, "XML", implClass, sealed, true);
-        new LazilyLoadedCtor(scope, "XMLList", implClass, sealed, true);
-        new LazilyLoadedCtor(scope, "Namespace", implClass, sealed, true);
-        new LazilyLoadedCtor(scope, "QName", implClass, sealed, true);
+        new LazilyLoadedCtor(scope, "XML", sealed, true, XMLLibImpl::init);
+        new LazilyLoadedCtor(scope, "XMLList", sealed, true, XMLLibImpl::init);
+        new LazilyLoadedCtor(scope, "Namespace", sealed, true, XMLLibImpl::init);
+        new LazilyLoadedCtor(scope, "QName", sealed, true, XMLLibImpl::init);
     }
 
     @Override

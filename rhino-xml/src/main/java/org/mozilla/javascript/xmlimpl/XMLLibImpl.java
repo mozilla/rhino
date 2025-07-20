@@ -38,12 +38,13 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         XMLLibImpl lib = new XMLLibImpl(scope);
         XMLLib bound = lib.bindToScope(scope);
         if (bound == lib) {
             lib.exportToScope(sealed);
         }
+        return null; // search in property
     }
 
     @Override
