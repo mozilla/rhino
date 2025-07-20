@@ -155,12 +155,14 @@ public class NativeDateTest {
                 "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78Z').toISOString()");
     }
 
+    @Test
     public void ctorDateTimeMillisecondsOnlyTwoDigitsPlus() {
         ctorDateTimeString(
                 "2025-05-07T05:05:20.780Z",
                 "new Date('2025-05-07T09:05:20.78+04:00').toISOString()");
     }
 
+    @Test
     public void ctorDateTimeMillisecondsOnlyTwoDigitsMinus() {
         ctorDateTimeString(
                 "2025-05-07T13:05:20.780Z",
