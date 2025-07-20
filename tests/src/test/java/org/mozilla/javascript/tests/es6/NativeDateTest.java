@@ -231,11 +231,11 @@ public class NativeDateTest {
         // Test basic millisecond overflow (999.5+ ms -> next second)
         ctorDateTimeString(
                 "2025-05-07T09:05:21.000Z", "new Date('2025-05-07T09:05:20.9995Z').toISOString()");
-        
+
         // Test cascading overflow (second -> minute)
         ctorDateTimeString(
                 "2025-05-07T09:06:00.000Z", "new Date('2025-05-07T09:05:59.9999Z').toISOString()");
-        
+
         // Test end of day overflow
         ctorDateTimeString(
                 "2025-05-08T00:00:00.000Z", "new Date('2025-05-07T23:59:59.9995Z').toISOString()");
