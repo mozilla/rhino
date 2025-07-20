@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.WrappedException;
 
 /**
@@ -53,9 +53,38 @@ public class Shell extends ScriptableObject {
 
             // Define some global functions particular to the shell. Note
             // that these functions are not part of ECMA.
-            String[] names = {"print", "quit", "version", "load", "help"};
-            shell.defineFunctionProperties(names, Shell.class, ScriptableObject.DONTENUM);
 
+            shell.defineProperty(
+                    shell,
+                    "print",
+                    0,
+                    Shell::print,
+                    ScriptableObject.DONTENUM,
+                    ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+
+            shell.defineProperty(
+                    shell,
+                    "version",
+                    0,
+                    Shell::version,
+                    ScriptableObject.DONTENUM,
+                    ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+
+            shell.defineProperty(
+                    shell,
+                    "load",
+                    0,
+                    Shell::load,
+                    ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
+                    ScriptableObject.DONTENUM);
+
+            shell.defineProperty(
+                    shell,
+                    "help",
+                    1,
+                    Shell::help,
+                    ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
+                    ScriptableObject.DONTENUM);
             args = processOptions(cx, args);
 
             // Set up "arguments" in the global scope to contain the command
@@ -117,7 +146,7 @@ public class Shell extends ScriptableObject {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public void help() {
+    private static Object help(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         p("");
         p("Command                Description");
         p("=======                ===========");
@@ -134,6 +163,7 @@ public class Shell extends ScriptableObject {
         p("quit()                 Quit the shell. ");
         p("version([number])      Get or set the JavaScript version number.");
         p("");
+        return Undefined.instance;
     }
 
     /**
@@ -146,9 +176,8 @@ public class Shell extends ScriptableObject {
      * @param cx the current Context for this thread
      * @param thisObj the JavaScript <code>this</code> object
      * @param args the array of arguments
-     * @param funObj the function object of the invoked JavaScript function
      */
-    public static void print(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (int i = 0; i < args.length; i++) {
             if (i > 0) System.out.print(" ");
 
@@ -158,6 +187,7 @@ public class Shell extends ScriptableObject {
             System.out.print(s);
         }
         System.out.println();
+        return Undefined.instance;
     }
 
     /**
@@ -167,8 +197,9 @@ public class Shell extends ScriptableObject {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public void quit() {
+    public Object quit(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         quitting = true;
+        return Undefined.instance;
     }
 
     /**
@@ -179,10 +210,9 @@ public class Shell extends ScriptableObject {
      * @param cx the current Context for this thread
      * @param thisObj the JavaScript <code>this</code> object
      * @param args the array of arguments
-     * @param funObj the function object of the invoked JavaScript function
      * @return the version no as double
      */
-    public static double version(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static double version(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         double result = cx.getLanguageVersion();
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
@@ -199,13 +229,13 @@ public class Shell extends ScriptableObject {
      * @param cx the current Context for this thread
      * @param thisObj the JavaScript <code>this</code> object
      * @param args the array of arguments
-     * @param funObj the function object of the invoked JavaScript function
      */
-    public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object load(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Shell shell = (Shell) getTopLevelScope(thisObj);
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }
+        return Undefined.instance;
     }
 
     /**
