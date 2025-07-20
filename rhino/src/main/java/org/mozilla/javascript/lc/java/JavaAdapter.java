@@ -39,10 +39,11 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.SecurityUtilities;
+import org.mozilla.javascript.StatelessEquals;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
 
-public final class JavaAdapter implements IdFunctionCall {
+public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
      * hash table.
