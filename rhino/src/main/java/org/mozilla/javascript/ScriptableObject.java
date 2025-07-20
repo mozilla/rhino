@@ -1737,7 +1737,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                                     fslot = (AccessorSlot) slot;
                                 } else {
                                     if ((slot instanceof LambdaAccessorSlot)
-                                            && "__proto__".equals(key)) {
+                                            && NativeObject.PROTO_PROPERTY.equals(key)) {
                                         fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
                                     } else {
                                         fslot = new AccessorSlot(slot);
@@ -2783,7 +2783,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     private boolean putImpl(
             Object key, int index, Scriptable start, Object value, boolean isThrow) {
-        // This method is very hot (basically called on each assignment)
+        // This method is very hot (basically called on each assignment),
         // so we inline the extensible/sealed checks below.
         Slot slot;
         if (this != start) {

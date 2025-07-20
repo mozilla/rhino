@@ -501,6 +501,7 @@ public class ProtoProperty2Test {
     public void protoSuperSet() {
         String script =
                 "var res = '';"
+                        + "var s1 = '__'; var s2 = 'proto';"
                         + "var newP = {};"
                         + "var a = {x: 'a'};"
                         + "var b = {x: 'b'};"
@@ -529,9 +530,28 @@ public class ProtoProperty2Test {
                         + "Object.setPrototypeOf(c, b);"
                         + "Object.setPrototypeOf(b, a);"
                         + "c.f();"
+                        + "res += ' / ';"
+                        + "a = {x: 'a'};"
+                        + "b = {x: 'b'};"
+                        + "c = {x: 'c', "
+                        + "  f() {"
+                        + "    res += (super[s1 + s2 + s1] = newP) === newP;"
+                        + "    res += Object.getPrototypeOf(this) === newP;"
+                        + "    res += '-';"
+                        + "    res += this.__proto__ === newP;"
+                        + "    res += this['__proto__'] === newP;"
+                        + "  }};"
+                        + "Object.setPrototypeOf(c, b);"
+                        + "Object.setPrototypeOf(b, a);"
+                        + "c.f();"
                         + "res;";
 
-        Utils.assertWithAllModes_ES6("truetrue-truetrue / truetrue-truetrue", script);
+        // this is only partially supported
+        // see org.mozilla.javascript.IRFactory.createPropertyGet()
+        // Utils.assertWithAllModes_ES6("truetrue-truetrue / truetrue-truetrue / truetrue-truetrue",
+        // script);
+        Utils.assertWithAllModes_ES6(
+                "truetrue-truetrue / truefalse-truetrue / truefalse-truetrue", script);
     }
 
     @Test

@@ -2148,7 +2148,14 @@ public class ScriptRuntime {
             return s.equals("__parent__");
         }
 
-        return s.equals("__proto__") || s.equals("__parent__");
+        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals("__parent__");
+    }
+
+    // for the super handling, we still not language dependent
+    // have a look at the comment in for more details
+    // org.mozilla.javascript.IRFactory.createPropertyGet()
+    static boolean isSpecialSuperProperty(String s) {
+        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals("__parent__");
     }
 
     /**
@@ -5426,7 +5433,7 @@ public class ScriptRuntime {
                             Ref ref = specialRef(object, stringId, cx, scope);
                             ref.set(cx, scope, value);
                         } else if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                                && "__proto__".equals(stringId)) {
+                                && NativeObject.PROTO_PROPERTY.equals(stringId)) {
                             if (value == null) {
                                 object.setPrototype(null);
                             } else if (value instanceof NativeFunction) {

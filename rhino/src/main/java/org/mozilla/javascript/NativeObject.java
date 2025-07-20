@@ -30,6 +30,8 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
 
+    public static final String PROTO_PROPERTY = "__proto__";
+
     static LambdaConstructor init(Context cx, Scriptable s, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
@@ -92,7 +94,7 @@ public class NativeObject extends ScriptableObject implements Map {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             ctor.definePrototypeProperty(
                     cx,
-                    "__proto__",
+                    PROTO_PROPERTY,
                     NativeObject::js_protoGetter,
                     NativeObject::js_protoSetter,
                     DONTENUM | READONLY);
@@ -291,7 +293,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Object o =
                 (ScriptableObject)
                         ScriptRuntimeES6.requireObjectCoercible(
-                                null, thisObj, CLASS_NAME, "__proto__");
+                                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
         if (!(proto instanceof Scriptable) && proto != null) {
             return /* undefined */;
         }
