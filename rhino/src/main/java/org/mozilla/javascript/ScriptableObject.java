@@ -26,8 +26,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.debug.DebuggableObject;
-import org.mozilla.javascript.lc.java.FunctionObject;
-import org.mozilla.javascript.lc.java.LiveConnect;
 
 /**
  * This is the default implementation of the Scriptable interface. This class provides convenient
@@ -949,8 +947,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * <p>If the method's name is "jsConstructor", the method is considered to define the body of
      * the constructor. Only one method of this name may be defined. You may use the varargs forms
-     * for constructors documented in {@link FunctionObject#FunctionObject(String, Member,
-     * Scriptable)}
+     * for constructors documented in {@link
+     * org.mozilla.javascript.lc.java.FunctionObject#FunctionObject(String, Member, Scriptable)}
      *
      * <p>If no method is found that can serve as constructor, a Java constructor will be selected
      * to serve as the JavaScript constructor in the following manner. If the class has only one
@@ -978,7 +976,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @exception InvocationTargetException if an exception is thrown during execution of methods of
      *     the named class
      * @see org.mozilla.javascript.Function
-     * @see FunctionObject
+     * @see org.mozilla.javascript.lc.java.FunctionObject
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject #defineProperty(String, Class, int)
      */
@@ -1050,7 +1048,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     static <T extends Scriptable> BaseFunction buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        return LiveConnect.buildClassCtor(scope, clazz, sealed, mapInheritance);
+        return LcLib.instance.buildClassCtor(scope, clazz, sealed, mapInheritance);
     }
 
     /**
@@ -1157,7 +1155,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void defineProperty(String propertyName, Class<?> clazz, int attributes) {
-        LiveConnect.defineProperty(this, propertyName, clazz, attributes);
+        LcLib.instance.defineProperty(this, propertyName, clazz, attributes);
     }
 
     /**
@@ -1209,7 +1207,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
-        LiveConnect.defineProperty(this, propertyName, delegateTo, getter, setter, attributes);
+        LcLib.instance.defineProperty(this, propertyName, delegateTo, getter, setter, attributes);
     }
 
     /**
@@ -1731,10 +1729,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param names the names of the Methods to add as function properties
      * @param clazz the class to search for the Methods
      * @param attributes the attributes of the new properties
-     * @see FunctionObject
+     * @see org.mozilla.javascript.lc.java.FunctionObject
      */
     public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
-        LiveConnect.defineFunctionProperties(this, names, clazz, attributes);
+        LcLib.instance.defineFunctionProperties(this, names, clazz, attributes);
     }
 
     /**

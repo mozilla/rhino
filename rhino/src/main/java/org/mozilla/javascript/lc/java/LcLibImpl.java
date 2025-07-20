@@ -12,6 +12,8 @@ import java.util.Locale;
 import java.util.Objects;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.LcLib;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -20,11 +22,13 @@ import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.annotations.JSSetter;
 import org.mozilla.javascript.annotations.JSStaticFunction;
+import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
-public class LiveConnect {
+public class LcLibImpl implements LcLib {
 
-    public static <T extends Scriptable> BaseFunction buildClassCtor(
+    @Override
+    public <T extends Scriptable> BaseFunction buildClassCtor(
             Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
@@ -258,7 +262,8 @@ public class LiveConnect {
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
-    public static void defineProperty(
+    @Override
+    public void defineProperty(
             ScriptableObject target, String propertyName, Class<?> clazz, int attributes) {
         int length = propertyName.length();
         if (length == 0) throw new IllegalArgumentException();
@@ -327,7 +332,8 @@ public class LiveConnect {
      * @param setter the method to invoke to set the value of the property
      * @param attributes the attributes of the JavaScript property
      */
-    public static void defineProperty(
+    @Override
+    public void defineProperty(
             ScriptableObject target,
             String propertyName,
             Object delegateTo,
@@ -433,7 +439,8 @@ public class LiveConnect {
      * @param attributes the attributes of the new properties
      * @see FunctionObject
      */
-    public static void defineFunctionProperties(
+    @Override
+    public void defineFunctionProperties(
             ScriptableObject target, String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (String name : names) {
@@ -444,6 +451,11 @@ public class LiveConnect {
             FunctionObject f = new FunctionObject(name, m, target);
             target.defineProperty(name, f, attributes);
         }
+    }
+
+    @Override
+    public Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
+        return NativeJavaObject.coerceTypeImpl(desiredType, value);
     }
 
     @SuppressWarnings({"unchecked"})
