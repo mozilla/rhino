@@ -391,10 +391,12 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      *
-     * @exception IllegalAccessException if access is not available to a reflected class member
-     * @exception InstantiationException if unable to instantiate the named class
-     * @exception InvocationTargetException if an exception is thrown during execution of methods of
-     *     the named class
+     * @exception org.mozilla.javascript.WrappedException IllegalAccessException if access is not
+     *     available to a reflected class member
+     * @exception org.mozilla.javascript.WrappedException InstantiationException if unable to
+     *     instantiate the named class
+     * @exception org.mozilla.javascript.WrappedException InvocationTargetException if an exception
+     *     is thrown during execution of methods of the named class
      * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
      */
     @SuppressWarnings({"unchecked"})
@@ -419,8 +421,10 @@ public class Global extends ImporterTopLevel {
      * single argument is expected. This argument should be the name of a class that implements the
      * Script interface, as will any script compiled by jsc.
      *
-     * @exception IllegalAccessException if access is not available to the class
-     * @exception InstantiationException if unable to instantiate the named class
+     * @exception org.mozilla.javascript.WrappedException IllegalAccessException if access is not
+     *     available to the class
+     * @exception org.mozilla.javascript.WrappedException InstantiationException if unable to
+     *     instantiate the named class
      */
     private static Object loadClass(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -992,7 +996,7 @@ public class Global extends ImporterTopLevel {
 
     private static Global getInstance(Scriptable scope) {
         Scriptable ret = scope;
-        if (!(ret instanceof Global)) ret = ret.getParentScope();
+        while (!(ret instanceof Global) && ret != null) ret = ret.getParentScope();
         if (!(ret instanceof Global))
             throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
         return (Global) ret;
