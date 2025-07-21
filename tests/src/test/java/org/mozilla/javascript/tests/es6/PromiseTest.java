@@ -50,7 +50,8 @@ public class PromiseTest {
 
     @Test
     public void withResolversPromiseType() {
-        final String script = "var result = Promise.withResolvers(); result.promise instanceof Promise";
+        final String script =
+                "var result = Promise.withResolvers(); result.promise instanceof Promise";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
