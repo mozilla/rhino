@@ -116,7 +116,7 @@ final class NativeBigInt extends ScriptableObject {
         }
 
         BigInteger modulus = BigInteger.ONE.shiftLeft(bits); // 2^bits
-        
+
         if (isSigned) {
             return asSignedN(bigInt, bits, modulus);
         } else {
@@ -127,12 +127,12 @@ final class NativeBigInt extends ScriptableObject {
     private static BigInteger asUnsignedN(BigInteger bigInt, BigInteger modulus) {
         // For unsigned: return bigInt modulo 2^bits, ensuring non-negative result
         BigInteger result = bigInt.remainder(modulus);
-        
+
         // Ensure result is non-negative for unsigned representation
         if (result.signum() < 0) {
             result = result.add(modulus);
         }
-        
+
         return result;
     }
 
@@ -141,20 +141,20 @@ final class NativeBigInt extends ScriptableObject {
         BigInteger halfModulus = BigInteger.ONE.shiftLeft(bits - 1); // 2^(bits-1)
         BigInteger minValue = halfModulus.negate(); // -2^(bits-1)
         BigInteger maxValue = halfModulus.subtract(BigInteger.ONE); // 2^(bits-1) - 1
-        
+
         // If the number already fits in the signed range, return as is
         if (bigInt.compareTo(minValue) >= 0 && bigInt.compareTo(maxValue) <= 0) {
             return bigInt;
         }
-        
+
         // Compute unsigned result first
         BigInteger result = asUnsignedN(bigInt, modulus);
-        
+
         // Convert to signed range if needed
         if (result.compareTo(halfModulus) >= 0) {
             result = result.subtract(modulus);
         }
-        
+
         return result;
     }
 
