@@ -50,4 +50,69 @@ assertEquals(a.map(_ => 'a'), ['a', 'a']);
 	assertEquals(JSON.stringify(symbolValues), symbolValuesToAssert);
 })();
 
+(function TestArrayFromThisArgWithMapping() {
+	var thisValue = {multiplier: 2};
+	
+	var result = Array.from([1, 2, 3], function(x) {
+		return x * this.multiplier;
+	}, thisValue);
+	
+	assertEquals(result, [2, 4, 6]);
+})();
+
+(function TestArrayFromThisArgWithIterator() {
+	var thisValue = {prefix: 'item'};
+	var iterable = new Set(['a', 'b', 'c']);
+	
+	var result = Array.from(iterable, function(x, i) {
+		return this.prefix + i + ':' + x;
+	}, thisValue);
+	
+	assertEquals(result, ['item0:a', 'item1:b', 'item2:c']);
+})();
+
+(function TestArrayFromThisArgUndefined() {
+	var result = Array.from([1, 2], function(x) {
+		return typeof this === 'object' && this !== null;
+	}, undefined);
+	
+	assertEquals(result, [true, true]);
+})();
+
+(function TestArrayFromThisArgNull() {
+	var result = Array.from([1, 2], function(x) {
+		return typeof this === 'object' && this !== null;
+	}, null);
+	
+	assertEquals(result, [true, true]);
+})();
+
+(function TestArrayFromThisArgStrictModeUndefined() {
+	'use strict';
+	var result = Array.from([1, 2], function(x) {
+		return this === undefined;
+	}, undefined);
+	
+	assertEquals(result, [true, true]);
+})();
+
+(function TestArrayFromThisArgStrictModeNull() {
+	'use strict';
+	var result = Array.from([1, 2], function(x) {
+		return this === null;
+	}, null);
+	
+	assertEquals(result, [true, true]);
+})();
+
+(function TestArrayFromThisArgStrictModeObject() {
+	'use strict';
+	var thisValue = {value: 'strict'};
+	var result = Array.from([1], function(x) {
+		return this.value === 'strict';
+	}, thisValue);
+	
+	assertEquals(result, [true]);
+})();
+
 "success";
