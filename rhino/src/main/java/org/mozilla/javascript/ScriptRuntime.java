@@ -217,7 +217,7 @@ public class ScriptRuntime {
         // Depends on the old reflection-based lazy loading mechanism
         // to property initialize the prototype.
         new LazilyLoadedCtor(
-                scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
+                scope, "Continuation",  sealed, true, NativeContinuation::init);
 
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             if (xmlLoaderImpl != null) {
