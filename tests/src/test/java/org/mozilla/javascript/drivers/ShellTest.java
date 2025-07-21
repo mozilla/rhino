@@ -428,12 +428,15 @@ public class ShellTest {
             global.init(cx);
 
             // invoke after init(...) to make sure ClassCache is available for FunctionObject
-            global.defineFunctionProperties(
-                    new String[] {"options"},
-                    ShellTest.class,
+            global.defineProperty(
+                    global,
+                    "options",
+                    0,
+                    ShellTest::options,
                     ScriptableObject.DONTENUM
                             | ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY);
+                            | ScriptableObject.READONLY,
+                    ScriptableObject.DONTENUM | ScriptableObject.READONLY);
 
             try {
                 runFileIfExists(
@@ -491,7 +494,7 @@ public class ShellTest {
     // It looks like this toggles jit compiler mode in spidermonkey
     // when called with "jit" as argument. Our version is a no-op
     // and returns an empty string.
-    public static String options() {
+    public static String options(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return "";
     }
 }

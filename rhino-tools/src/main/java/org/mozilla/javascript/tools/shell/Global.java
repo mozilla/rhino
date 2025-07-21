@@ -245,9 +245,7 @@ public class Global extends ImporterTopLevel {
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
-        Environment.defineClass(this);
-        Environment environment = new Environment(this);
-        defineProperty("environment", environment, ScriptableObject.DONTENUM);
+        Environment.init(cx,this, false);
 
         history = (NativeArray) cx.newArray(this, 0);
         defineProperty("history", history, ScriptableObject.DONTENUM);
