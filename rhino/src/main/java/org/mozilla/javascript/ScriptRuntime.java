@@ -1021,6 +1021,37 @@ public class ScriptRuntime {
         }
     }
 
+    public static String jsToJavaString(Object val) {
+        for (; ; ) {
+            if (val == null) {
+                return null;
+            }
+            if (Undefined.isUndefined(val)) {
+                return "undefined";
+            }
+            if (val instanceof String) {
+                return (String) val;
+            }
+            if (val instanceof BigInteger) {
+                return ((BigInteger) val).toString(10);
+            }
+            if (val instanceof Number) {
+                // XXX should we just teach NativeNumber.stringValue()
+                // about Numbers?
+                return numberToString(((Number) val).doubleValue(), 10);
+            }
+            if (val instanceof Scriptable) {
+                // Assert: val is an Object
+                val = toPrimitive(val, StringClass);
+                // Assert: val is a primitive
+            } else if (val instanceof Wrapper) {
+                val = ((Wrapper) val).unwrap();
+            } else {
+                return val.toString();
+            }
+        }
+    }
+
     static String defaultObjectToString(Scriptable obj) {
         if (obj == null) return "[object Null]";
         if (Undefined.isUndefined(obj)) return "[object Undefined]";
