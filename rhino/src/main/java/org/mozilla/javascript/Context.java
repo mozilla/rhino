@@ -1835,6 +1835,12 @@ public class Context implements Closeable {
      */
     @Deprecated
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+        if (desiredType == Object.class) {
+            return ScriptRuntime.jsToJavaObject(value);
+        }
+        if (desiredType == String.class) {
+            return ScriptRuntime.jsToJavaString(value);
+        }
         return LcBridge.instance.jsToJava(value, desiredType);
     }
 

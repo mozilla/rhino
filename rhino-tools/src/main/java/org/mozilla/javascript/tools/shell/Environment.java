@@ -14,14 +14,13 @@
 
 package org.mozilla.javascript.tools.shell;
 
+import java.util.Map;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-
-import java.util.Map;
 
 /**
  * Environment, intended to be instantiated at global scope, provides a natural way to access System
@@ -30,79 +29,79 @@ import java.util.Map;
  * @author Patrick C. Beard
  */
 public class Environment extends ScriptableObject {
-	static final long serialVersionUID = -430727378460177065L;
+    static final long serialVersionUID = -430727378460177065L;
 
-	private Environment thePrototypeInstance = null;
-	private static final String CLASS_NAME = "Environment";
+    private Environment thePrototypeInstance = null;
+    private static final String CLASS_NAME = "Environment";
 
-	static Object init(Context cx, ScriptableObject scope, boolean sealed) {
-		LambdaConstructor ctor = new LambdaConstructor(scope, CLASS_NAME, 1, Environment::new);
+    static Object init(Context cx, ScriptableObject scope, boolean sealed) {
+        LambdaConstructor ctor = new LambdaConstructor(scope, CLASS_NAME, 1, Environment::new);
 
-		var proto = new NativeArray(0);
-		ctor.setPrototypeScriptable(proto);
-		Environment environment = new Environment(cx, scope, new Object[0]);
-		scope.defineProperty("environment", environment, ScriptableObject.DONTENUM);
-		if (sealed) {
-			ctor.sealObject();
-			((ScriptableObject) ctor.getPrototypeProperty()).sealObject();
-		}
-		return ctor;
-	}
+        var proto = new NativeArray(0);
+        ctor.setPrototypeScriptable(proto);
+        Environment environment = new Environment(cx, scope, new Object[0]);
+        scope.defineProperty("environment", environment, ScriptableObject.DONTENUM);
+        if (sealed) {
+            ctor.sealObject();
+            ((ScriptableObject) ctor.getPrototypeProperty()).sealObject();
+        }
+        return ctor;
+    }
 
-	@Override
-	public String getClassName() {
-		return CLASS_NAME;
-	}
+    @Override
+    public String getClassName() {
+        return CLASS_NAME;
+    }
 
-	public Environment() {
-		if (thePrototypeInstance == null) thePrototypeInstance = this;
-	}
+    public Environment() {
+        if (thePrototypeInstance == null) thePrototypeInstance = this;
+    }
 
-	public Environment(Context cx, Scriptable scope, Object[] args) {
-		setParentScope(scope);
-		Object ctor = ScriptRuntime.getTopLevelProp(scope, "Environment");
-		if (ctor != null && ctor instanceof Scriptable) {
-			Scriptable s = (Scriptable) ctor;
-			setPrototype((Scriptable) s.get("prototype", s));
-		}
-	}
+    public Environment(Context cx, Scriptable scope, Object[] args) {
+        setParentScope(scope);
+        Object ctor = ScriptRuntime.getTopLevelProp(scope, "Environment");
+        if (ctor != null && ctor instanceof Scriptable) {
+            Scriptable s = (Scriptable) ctor;
+            setPrototype((Scriptable) s.get("prototype", s));
+        }
+    }
 
-	@Override
-	public boolean has(String name, Scriptable start) {
-		if (this == thePrototypeInstance) return super.has(name, start);
+    @Override
+    public boolean has(String name, Scriptable start) {
+        if (this == thePrototypeInstance) return super.has(name, start);
 
-		return (System.getProperty(name) != null);
-	}
+        return (System.getProperty(name) != null);
+    }
 
-	@Override
-	public Object get(String name, Scriptable start) {
-		if (this == thePrototypeInstance) return super.get(name, start);
+    @Override
+    public Object get(String name, Scriptable start) {
+        if (this == thePrototypeInstance) return super.get(name, start);
 
-		String result = System.getProperty(name);
-		if (result != null) return ScriptRuntime.toObject(getParentScope(), result);
-		else return Scriptable.NOT_FOUND;
-	}
+        String result = System.getProperty(name);
+        if (result != null) return ScriptRuntime.toObject(getParentScope(), result);
+        else return Scriptable.NOT_FOUND;
+    }
 
-	@Override
-	public void put(String name, Scriptable start, Object value) {
-		if (this == thePrototypeInstance) super.put(name, start, value);
-		else System.getProperties().put(name, ScriptRuntime.toString(value));
-	}
+    @Override
+    public void put(String name, Scriptable start, Object value) {
+        if (this == thePrototypeInstance) super.put(name, start, value);
+        else System.getProperties().put(name, ScriptRuntime.toString(value));
+    }
 
-	private Object[] collectIds() {
-		Map<Object, Object> props = System.getProperties();
-		return props.keySet().toArray();
-	}
+    private Object[] collectIds() {
+        Map<Object, Object> props = System.getProperties();
+        return props.keySet().toArray();
+    }
 
-	@Override
-	public Object[] getIds() {
-		if (this == thePrototypeInstance) return super.getIds();
-		return collectIds();
-	}
+    @Override
+    public Object[] getIds() {
+        if (this == thePrototypeInstance) return super.getIds();
+        return collectIds();
+    }
 
-	@Override
-	public Object[] getAllIds() {
-		if (this == thePrototypeInstance) return super.getAllIds();
-		return collectIds();
-	}
+    @Override
+    public Object[] getAllIds() {
+        if (this == thePrototypeInstance) return super.getAllIds();
+        return collectIds();
+    }
 }

@@ -165,7 +165,9 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        LcBridge.instance.associateClassCache(scope);
+        if (LcBridge.instance != null) {
+            LcBridge.instance.associateClassCache(scope);
+        }
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
         LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
@@ -211,13 +213,14 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        LcBridge.instance.init(scope, sealed);
+        if (LcBridge.instance != null) {
+            LcBridge.instance.init(scope, sealed);
+        }
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
         // to property initialize the prototype.
-        new LazilyLoadedCtor(
-                scope, "Continuation",  sealed, true, NativeContinuation::init);
+        new LazilyLoadedCtor(scope, "Continuation", sealed, true, NativeContinuation::init);
 
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             if (xmlLoaderImpl != null) {
@@ -1048,6 +1051,43 @@ public class ScriptRuntime {
                 val = ((Wrapper) val).unwrap();
             } else {
                 return val.toString();
+            }
+        }
+    }
+
+    public static Object jsToJavaObject(Object val) {
+        for (; ; ) {
+            if (val == null) {
+                return null;
+            }
+            if (Undefined.isUndefined(val)) {
+                return "undefined";
+            }
+
+            if (val instanceof Long) {
+                return val;
+            }
+            if (val instanceof BigInteger) {
+                return val;
+            }
+            if (val instanceof Number) {
+                double d = ((Number) val).doubleValue();
+                Context context = Context.getCurrentContext();
+                if ((context != null)
+                        && context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+                    // to process numbers like 2.0 as 2 without decimal place
+                    long roundedValue = Math.round(d);
+                    if (roundedValue == d) {
+
+                        return Long.valueOf(roundedValue);
+                    }
+                }
+                return Double.valueOf(d);
+            }
+            if (val instanceof Wrapper) {
+                val = ((Wrapper) val).unwrap();
+            } else {
+                return val;
             }
         }
     }
@@ -4723,7 +4763,10 @@ public class ScriptRuntime {
     // ------------------
 
     public static ScriptableObject getGlobal(Context cx) {
-        return LcBridge.instance.getGlobal(cx);
+        if (LcBridge.instance != null) {
+            return LcBridge.instance.getGlobal(cx);
+        }
+        return new TopLevel();
     }
 
     public static boolean hasTopCall(Context cx) {
@@ -5084,26 +5127,27 @@ public class ScriptRuntime {
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
             }
-
-            if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "javaException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
-            }
-            if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "rhinoException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
+            if (LcBridge.instance != null) {
+                if (javaException != null && isVisible(cx, javaException)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "javaException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
+                if (isVisible(cx, re)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "rhinoException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
             }
             obj = errorObject;
         }
@@ -5183,26 +5227,27 @@ public class ScriptRuntime {
         if (errorObject instanceof NativeError) {
             ((NativeError) errorObject).setStackProvider(re);
         }
-
-        if (javaException != null && isVisible(cx, javaException)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "javaException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
-        }
-        if (isVisible(cx, re)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "rhinoException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
+        if (LcBridge.instance != null) {
+            if (javaException != null && isVisible(cx, javaException)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "javaException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
+            if (isVisible(cx, re)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "rhinoException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
         }
         return errorObject;
     }
