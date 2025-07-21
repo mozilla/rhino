@@ -105,16 +105,6 @@ public abstract class ScriptableObject extends SlotMapOwner
     private boolean isExtensible = true;
     private boolean isSealed = false;
 
-    private static final Method GET_ARRAY_LENGTH;
-
-    static {
-        try {
-            GET_ARRAY_LENGTH = ScriptableObject.class.getMethod("getExternalArrayLength");
-        } catch (NoSuchMethodException nsm) {
-            throw new RuntimeException(nsm);
-        }
-    }
-
     protected static ScriptableObject buildDataDescriptor(
             Scriptable scope, Object value, int attributes) {
         ScriptableObject desc = new NativeObject();
@@ -705,7 +695,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             delete("length");
         } else {
             // Define "length" to return whatever length the List gives us.
-            defineProperty("length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
+            defineProperty("length", this::getExternalArrayLength, null, READONLY | DONTENUM);
         }
     }
 
@@ -723,7 +713,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * This is a function used by setExternalArrayData to dynamically get the "length" property
      * value.
      */
-    public Object getExternalArrayLength() {
+    private Object getExternalArrayLength() {
         return Integer.valueOf(externalData == null ? 0 : externalData.getArrayLength());
     }
 
