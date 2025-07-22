@@ -105,6 +105,7 @@ public class Test262SuiteTest {
                             "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
                             "tail-call-optimization",
+                            "upsert",
                             "u180e"));
 
     static {
