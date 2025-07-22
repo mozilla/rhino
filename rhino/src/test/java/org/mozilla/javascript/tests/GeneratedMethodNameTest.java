@@ -77,8 +77,8 @@ public class GeneratedMethodNameTest {
                 "var myFunc = function() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
                         + "  if (m != 'myFunc') throw 'got '  + m;"
-                        + "}\n" +
-                        "myFunc();";
+                        + "}\n"
+                        + "myFunc();";
         doTest(scriptCode);
     }
 
