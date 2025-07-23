@@ -1224,7 +1224,7 @@ public final class IRFactory {
             }
 
             // Infer function name is missing on rhs
-            if (left instanceof Name && right instanceof Name && right.type == Token.FUNCTION) {
+            if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
                 var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
                 FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
                 if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
