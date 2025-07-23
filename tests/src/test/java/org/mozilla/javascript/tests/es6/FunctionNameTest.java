@@ -33,4 +33,29 @@ class FunctionNameTest {
     void constEqualsArrowFunction() {
         Utils.assertWithAllModes_ES6("f", "const f = () => {}; f.name");
     }
+
+    @Test
+    void assignmentVarFunction() {
+        Utils.assertWithAllModes_ES6("f", "var f; f = function(){}; f.name");
+    }
+
+    @Test
+    void assignmentVarArrow() {
+        Utils.assertWithAllModes_ES6("f", "var f; f = () => {}; f.name");
+    }
+
+    @Test
+    void assignmentLetFunction() {
+        Utils.assertWithAllModes_ES6("f", "let f; f = function(){}; f.name");
+    }
+
+    @Test
+    void assignmentLetArrow() {
+        Utils.assertWithAllModes_ES6("f", "let f; f = () => {}; f.name");
+    }
+
+    @Test
+    void assignmentShouldNotInferIfParenthesized() {
+        Utils.assertWithAllModes_ES6("", "var f; (f) = function(){}; f.name");
+    }
 }

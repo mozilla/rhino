@@ -448,19 +448,26 @@ public final class IRFactory {
 
     private Node transformAssignment(Assignment node) {
         AstNode right = node.getRight();
-        AstNode left = parser.removeParens(node.getLeft());
+        AstNode originalLeft = node.getLeft();
+        AstNode left = parser.removeParens(originalLeft);
+        boolean shouldTryToInferName = (originalLeft == left);  // If we removed parens, we won't try to infer name
         left = transformAssignmentLeft(node, left, right);
 
         Node target = null;
         if (isDestructuring(left)) {
             target = left;
+            shouldTryToInferName = false;
         } else {
             target = transform(left);
         }
 
         astNodePos.push(left);
         try {
-            return createAssignment(node.getType(), target, transform(right));
+            Node transformedRight = transform(right);
+            if (shouldTryToInferName) {
+                inferNameIfMissing(node.getLeft(), transformedRight);
+            }
+            return createAssignment(node.getType(), target, transformedRight);
         } finally {
             astNodePos.pop();
         }
@@ -1224,13 +1231,7 @@ public final class IRFactory {
             }
 
             // Infer function name is missing on rhs
-            if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
-                var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
-                FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
-                if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
-                    functionNode.setFunctionName((Name) left);
-                }
-            }
+            inferNameIfMissing(left, right);
 
             if (var.isDestructuring()) {
                 if (right == null) { // TODO:  should this ever happen?
@@ -2364,6 +2365,17 @@ public final class IRFactory {
         }
 
         throw Kit.codeBug();
+    }
+
+    /** Infer function name is missing on rhs. In the future, will also handle class names. */
+    private void inferNameIfMissing(Node left, Node right) {
+        if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
+            var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
+            FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
+            if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+                functionNode.setFunctionName((Name) left);
+            }
+        }
     }
 
     private Node propagateSuperFromLhs(Node result, Node left) {
