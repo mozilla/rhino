@@ -400,6 +400,15 @@ public class Context implements Closeable {
     @Deprecated public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
 
     /**
+     * Stores the current context per thread.
+     *
+     * <p>Note: former methods (VMBridge) have used an Object[] for performance reasons. This seems
+     * to be outdated. ThreadLocal.get/set gives better performance. (But do not use
+     * ThreadLocal.remove.) See ContextThreadLocalBenchmark
+     */
+    private static final ThreadLocal<Context> currentContext = new ThreadLocal<>();
+
+    /**
      * Creates a new Context. The context will be associated with the {@link
      * ContextFactory#getGlobal() global context factory}. By default, the new context will run in
      * compiled mode and use the {@link #VERSION_ES6} language version, which supports features as
@@ -454,7 +463,7 @@ public class Context implements Closeable {
      * @see ContextFactory#call(ContextAction)
      */
     public static Context getCurrentContext() {
-        return ContextHolder.getContext();
+        return currentContext.get();
     }
 
     /**
@@ -489,7 +498,7 @@ public class Context implements Closeable {
     }
 
     static final Context enter(Context cx, ContextFactory factory) {
-        Context old = ContextHolder.getContext();
+        Context old = currentContext.get();
         if (old != null) {
             cx = old;
         } else {
@@ -509,7 +518,7 @@ public class Context implements Closeable {
                             "can not use Context instance already associated with some thread");
                 }
             }
-            ContextHolder.setContext(cx);
+            currentContext.set(cx);
         }
         ++cx.enterCount;
         return cx;
@@ -526,14 +535,13 @@ public class Context implements Closeable {
      * @see ContextFactory#enterContext()
      */
     public static void exit() {
-        Context cx = ContextHolder.getContext();
+        Context cx = currentContext.get();
         if (cx == null) {
             throw new IllegalStateException("Calling Context.exit without previous Context.enter");
         }
         if (cx.enterCount < 1) Kit.codeBug();
         if (--cx.enterCount == 0) {
-            ContextHolder.clearContext();
-            cx.factory.onContextReleased(cx);
+            releaseContext(cx);
         }
     }
 
@@ -541,9 +549,16 @@ public class Context implements Closeable {
     public void close() {
         if (enterCount < 1) Kit.codeBug();
         if (--enterCount == 0) {
-            ContextHolder.clearContext();
-            factory.onContextReleased(this);
+            if (currentContext.get() != this) Kit.codeBug();
+            releaseContext(this);
         }
+    }
+
+    private static void releaseContext(Context cx) {
+        // do not use contextLocal.remove() here, as this might be much slower, when the same thread
+        // creates a new context. See ContextThreadLocalBenchmark.
+        currentContext.set(null);
+        cx.factory.onContextReleased(cx);
     }
 
     /**
