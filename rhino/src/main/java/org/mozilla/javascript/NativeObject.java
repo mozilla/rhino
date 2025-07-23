@@ -30,7 +30,9 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
 
-    static LambdaConstructor init(Scriptable s, boolean sealed) {
+    public static final String PROTO_PROPERTY = "__proto__";
+
+    static LambdaConstructor init(Context cx, Scriptable s, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         s,
@@ -45,6 +47,7 @@ public class NativeObject extends ScriptableObject implements Map {
                 };
 
         var proto = new NativeObject();
+        proto.setParentScope(s);
         ctor.setPrototypeProperty(proto);
         proto.defineProperty("constructor", ctor, DONTENUM);
 
@@ -88,6 +91,15 @@ public class NativeObject extends ScriptableObject implements Map {
 
         ctor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
         ScriptableObject.defineProperty(s, CLASS_NAME, ctor, DONTENUM);
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ctor.definePrototypeProperty(
+                    cx,
+                    PROTO_PROPERTY,
+                    NativeObject::js_protoGetter,
+                    NativeObject::js_protoSetter,
+                    DONTENUM | READONLY);
+        }
+
         if (sealed) {
             ctor.sealObject();
             ((NativeObject) ctor.getPrototypeProperty()).sealObject();
@@ -259,6 +271,42 @@ public class NativeObject extends ScriptableObject implements Map {
         return ScriptRuntime.wrapBoolean(result);
     }
 
+    private static Object js_protoGetter(Scriptable thisObj) {
+        /*
+        Let O be ? ToObject(this value).
+        2. Return ? O.[[GetPrototypeOf]]().
+        */
+        ScriptableObject o = (ScriptableObject) ScriptRuntime.toObject(thisObj, thisObj);
+        return o.getPrototype();
+    }
+
+    public static void js_protoSetter(Scriptable thisObj, Object proto) {
+        /*
+        Let O be ? RequireObjectCoercible(this value).
+        2. If proto is not an Object and proto is not null, return undefined.
+        3. If O is not an Object, return undefined.
+        4. Let status be ? O.[[SetPrototypeOf]](proto).
+        5. If status is false, throw a TypeError exception.
+        6. Return undefined.
+        */
+
+        Object o =
+                (ScriptableObject)
+                        ScriptRuntimeES6.requireObjectCoercible(
+                                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
+        if (!(proto instanceof Scriptable) && proto != null) {
+            return /* undefined */;
+        }
+
+        if (ScriptRuntime.isSymbol(proto)) {
+            return;
+        }
+        if (!(o instanceof Scriptable) || ScriptRuntime.isSymbol(o)) {
+            return;
+        }
+        setPrototypeOf(o, (Scriptable) proto);
+    }
+
     private static Object js_defineGetter(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return js_defineGetterOrSetter(cx, scope, false, thisObj, args);
@@ -357,25 +405,36 @@ public class NativeObject extends ScriptableObject implements Map {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             ScriptRuntimeES6.requireObjectCoercible(cx, arg0, OBJECT_TAG, "setPrototypeOf");
         }
-        if (!(arg0 instanceof ScriptableObject)) {
-            return arg0;
+        return setPrototypeOf(arg0, proto);
+    }
+
+    private static Object setPrototypeOf(Object thisObj, Scriptable proto) {
+        if (proto instanceof Symbol) {
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
         }
-        ScriptableObject obj = (ScriptableObject) arg0;
-        if (!obj.isExtensible()) {
+
+        if (!(thisObj instanceof ScriptableObject)) {
+            return thisObj;
+        }
+        ScriptableObject thisScriptable = (ScriptableObject) thisObj;
+        if (thisScriptable.getPrototype() == proto) {
+            return thisObj;
+        }
+        if (!thisScriptable.isExtensible()) {
             throw ScriptRuntime.typeErrorById("msg.not.extensible");
         }
 
         // cycle detection
         Scriptable prototypeProto = proto;
         while (prototypeProto != null) {
-            if (prototypeProto == obj) {
+            if (prototypeProto == thisScriptable) {
                 throw ScriptRuntime.typeErrorById(
-                        "msg.object.cyclic.prototype", obj.getClass().getSimpleName());
+                        "msg.object.cyclic.prototype", thisScriptable.getClass().getSimpleName());
             }
             prototypeProto = prototypeProto.getPrototype();
         }
-        obj.setPrototype(proto);
-        return obj;
+        thisScriptable.setPrototype(proto);
+        return thisScriptable;
     }
 
     private static Object js_keys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {

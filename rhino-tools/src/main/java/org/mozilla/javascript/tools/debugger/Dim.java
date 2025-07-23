@@ -24,6 +24,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeCall;
+import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -542,7 +543,7 @@ public class Dim {
             String name = (String) id;
             if (name.equals("this")) {
                 result = scriptable;
-            } else if (name.equals("__proto__")) {
+            } else if (name.equals(NativeObject.PROTO_PROPERTY)) {
                 result = scriptable.getPrototype();
             } else if (name.equals("__parent__")) {
                 result = scriptable.getParentScope();
@@ -591,7 +592,7 @@ public class Dim {
             ids = tmp;
             extra = 0;
             if (proto != null) {
-                ids[extra++] = "__proto__";
+                ids[extra++] = NativeObject.PROTO_PROPERTY;
             }
             if (parent != null) {
                 ids[extra++] = "__parent__";

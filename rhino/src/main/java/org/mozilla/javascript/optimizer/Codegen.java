@@ -743,7 +743,8 @@ public class Codegen implements Evaluator {
         final int Do_hasRestParameter = 7;
         final int Do_hasDefaultParameters = 8;
         final int Do_isStrict = 9;
-        final int SWITCH_COUNT = 10;
+        final int Do_isShorthand = 10;
+        final int SWITCH_COUNT = 11;
 
         for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
             if (methodIndex == Do_getRawSource && rawSource == null) {
@@ -797,6 +798,10 @@ public class Codegen implements Evaluator {
                 case Do_isStrict:
                     methodLocals = 1; // Only this
                     cfw.startMethod("isStrict", "()Z", ACC_PUBLIC);
+                    break;
+                case Do_isShorthand:
+                    methodLocals = 1; // Only this
+                    cfw.startMethod("isShorthand", "()Z", ACC_PUBLIC);
                     break;
                 default:
                     throw Kit.codeBug();
@@ -966,6 +971,11 @@ public class Codegen implements Evaluator {
 
                     case Do_isStrict:
                         cfw.addPush(n.isInStrictMode() ? 1 : 0);
+                        cfw.add(ByteCode.IRETURN);
+                        break;
+
+                    case Do_isShorthand:
+                        cfw.addPush(n.isShorthand() ? 1 : 0);
                         cfw.add(ByteCode.IRETURN);
                         break;
 
