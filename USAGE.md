@@ -1,6 +1,10 @@
 # Projects Using Rhino JavaScript Engine
 
-Many projects leverage the Rhino library to add JavaScript support to their Java applications. Here is a comprehensive list of notable implementations:
+Many projects leverage the Rhino library to add JavaScript support to their Java applications. Here is a comprehensive list of notable implementations.
+
+**Know of other projects using Rhino?** 🚀  
+We'd love to hear about them! If you know of any other applications, platforms, or projects that use the Rhino JavaScript engine, please share them in our community discussion: **[Report Rhino Usage Examples](https://github.com/mozilla/rhino/discussions/1425)**
+
 
 ## Enterprise & Cloud Platforms
 
@@ -15,6 +19,9 @@ Many projects leverage the Rhino library to add JavaScript support to their Java
 
 - **[ServiceNow](https://www.servicenow.com/)** - Intelligent platform for digital transformation and enterprise workflow automation  
   [Source](https://support.servicenow.com/kb?id=kb_article_view&sysparm_article=KB0721865)
+
+- **[Salesforce B2C Commerce](https://www.salesforce.com/products/commerce-cloud/ecommerce/)** - Enterprise e-commerce platform using Rhino for server-side JavaScript scripting  
+  [Source](https://developer.salesforce.com/docs/commerce/b2c-commerce/guide/demandwarejavascript.html)
 
 ## Healthcare & Integration
 
