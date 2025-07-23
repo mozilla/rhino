@@ -129,17 +129,7 @@ class BodyCodegen {
                 "org/mozilla/javascript/BaseFunction",
                 "getHomeObject",
                 "()Lorg/mozilla/javascript/Scriptable;");
-        addScriptRuntimeInvoke(
-                "createFunctionActivation",
-                "(Lorg/mozilla/javascript/NativeFunction;"
-                        + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;"
-                        + "Z"
-                        + "Z"
-                        + "Z"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.createFunctionActivation.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
 
         // create a function object
@@ -343,14 +333,7 @@ class BodyCodegen {
                     cfw.addALoad(variableObjectLocal);
                     cfw.addALoad(argsLocal);
                     cfw.addPush(parmCount);
-                    addScriptRuntimeInvoke(
-                            "padAndRestArguments",
-                            "("
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "[Ljava/lang/Object;"
-                                    + "I"
-                                    + ")[Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.padAndRestArguments.addInvoke(cfw);
                     cfw.addAStore(argsLocal);
                 } else {
                     // check length of arguments, pad if need be
@@ -361,8 +344,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.IF_ICMPGE, label);
                     cfw.addALoad(argsLocal);
                     cfw.addPush(parmCount);
-                    addScriptRuntimeInvoke(
-                            "padArguments", "([Ljava/lang/Object;I)[Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.padArguments.addInvoke(cfw);
                     cfw.addAStore(argsLocal);
                     cfw.markLabel(label);
                 }
@@ -472,27 +454,15 @@ class BodyCodegen {
                 cfw.markLabel(after);
             }
 
-            String methodName =
-                    isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
-            addScriptRuntimeInvoke(
-                    methodName,
-                    "(Lorg/mozilla/javascript/NativeFunction;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + "[Ljava/lang/Object;"
-                            + "Z"
-                            + "Z"
-                            + "Z"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + ")Lorg/mozilla/javascript/Scriptable;");
+            if (isArrow) {
+                ScriptRuntimeMethodSig.createArrowFunctionActivation.addInvoke(cfw);
+            } else {
+                ScriptRuntimeMethodSig.createFunctionActivation.addInvoke(cfw);
+            }
             cfw.addAStore(variableObjectLocal);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                    "enterActivationFunction",
-                    "(Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + ")V");
+            ScriptRuntimeMethodSig.enterActivationFunction.addInvoke(cfw);
         } else {
             debugVariableName = "global";
             cfw.addALoad(funObjLocal);
@@ -500,14 +470,7 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addPush(0); // false to indicate it is not eval script
-            addScriptRuntimeInvoke(
-                    "initScript",
-                    "(Lorg/mozilla/javascript/NativeFunction;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + "Z"
-                            + ")V");
+            ScriptRuntimeMethodSig.initScript.addInvoke(cfw);
         }
 
         enterAreaStartLabel = cfw.acquireLabel();
@@ -692,7 +655,7 @@ class BodyCodegen {
     private void generateActivationExit() {
         if (fnCurrent == null || hasVarsInRegs) throw Kit.codeBug();
         cfw.addALoad(contextLocal);
-        addScriptRuntimeInvoke("exitActivationFunction", "(Lorg/mozilla/javascript/Context;)V");
+        ScriptRuntimeMethodSig.exitActivationFunction.addInvoke(cfw);
     }
 
     private void generateStatement(Node node) {
@@ -785,14 +748,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
 
-                    addScriptRuntimeInvoke(
-                            "newCatchScope",
-                            "(Ljava/lang/Throwable;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                    ScriptRuntimeMethodSig.newCatchScope.addInvoke(cfw);
                     cfw.addAStore(local);
                 }
                 break;
@@ -841,22 +797,14 @@ class BodyCodegen {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "enterWith",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Lorg/mozilla/javascript/Scriptable;");
+                ScriptRuntimeMethodSig.enterWith.addInvoke(cfw);
                 cfw.addAStore(variableObjectLocal);
                 incReferenceWordLocal(variableObjectLocal);
                 break;
 
             case Token.LEAVEWITH:
                 cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "leaveWith",
-                        "(Lorg/mozilla/javascript/Scriptable;"
-                                + ")Lorg/mozilla/javascript/Scriptable;");
+                ScriptRuntimeMethodSig.leaveWith.addInvoke(cfw);
                 cfw.addAStore(variableObjectLocal);
                 decReferenceWordLocal(variableObjectLocal);
                 break;
@@ -877,13 +825,7 @@ class BodyCodegen {
                                                 ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER
                                                 : ScriptRuntime.ENUMERATE_ARRAY;
                 cfw.addPush(enumType);
-                addScriptRuntimeInvoke(
-                        "enumInit",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "I"
-                                + ")Ljava/lang/Object;");
+                ScriptRuntimeMethodSig.enumInit.addInvoke(cfw);
                 cfw.addAStore(getLocalBlockRegister(node));
                 break;
 
@@ -1067,13 +1009,7 @@ class BodyCodegen {
                 child = child.getNext();
                 generateCallArgArray(node, child, false);
                 cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "callRef",
-                        "(Lorg/mozilla/javascript/Callable;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + "[Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Lorg/mozilla/javascript/Ref;");
+                ScriptRuntimeMethodSig.callRef.addInvoke(cfw);
                 break;
 
             case Token.NUMBER:
@@ -1180,14 +1116,7 @@ class BodyCodegen {
                             codegen.mainClassName,
                             codegen.getCompiledRegexpName(scriptOrFn, i),
                             "Ljava/lang/Object;");
-                    cfw.addInvoke(
-                            ByteCode.INVOKESTATIC,
-                            "org/mozilla/javascript/ScriptRuntime",
-                            "wrapRegExp",
-                            "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/Object;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                    ScriptRuntimeMethodSig.wrapRegExp.addInvoke(cfw);
                 }
                 break;
 
@@ -1211,17 +1140,9 @@ class BodyCodegen {
                     cfw.addALoad(local);
                     cfw.addALoad(contextLocal);
                     if (type == Token.ENUM_NEXT) {
-                        addScriptRuntimeInvoke(
-                                "enumNext",
-                                "(Ljava/lang/Object;"
-                                        + "Lorg/mozilla/javascript/Context;"
-                                        + ")Ljava/lang/Boolean;");
+                        ScriptRuntimeMethodSig.enumNext.addInvoke(cfw);
                     } else {
-                        addScriptRuntimeInvoke(
-                                "enumId",
-                                "(Ljava/lang/Object;"
-                                        + "Lorg/mozilla/javascript/Context;"
-                                        + ")Ljava/lang/Object;");
+                        ScriptRuntimeMethodSig.enumId.addInvoke(cfw);
                     }
                     break;
                 }
@@ -1267,7 +1188,7 @@ class BodyCodegen {
 
             case Token.TYPEOF:
                 generateExpression(child, node);
-                addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
+                ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
                 break;
 
             case Token.TYPEOFNAME:
@@ -1376,8 +1297,7 @@ class BodyCodegen {
                     generateExpression(child, node);
                     if (childNumberFlag == -1) {
                         addObjectToNumeric();
-                        addScriptRuntimeInvoke(
-                                "negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
+                        ScriptRuntimeMethodSig.negate.addInvoke(cfw);
                     } else {
                         cfw.add(ByteCode.DNEG);
                     }
@@ -1528,33 +1448,19 @@ class BodyCodegen {
                     if (type == Token.SET_REF_OP) {
                         cfw.add(ByteCode.DUP);
                         cfw.addALoad(contextLocal);
-                        addScriptRuntimeInvoke(
-                                "refGet",
-                                "(Lorg/mozilla/javascript/Ref;"
-                                        + "Lorg/mozilla/javascript/Context;"
-                                        + ")Ljava/lang/Object;");
+                        ScriptRuntimeMethodSig.refGet.addInvoke(cfw);
                     }
                     generateExpression(child, node);
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "refSet",
-                            "(Lorg/mozilla/javascript/Ref;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.refSet.addInvoke(cfw);
                 }
                 break;
 
             case Token.DEL_REF:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "refDel",
-                        "(Lorg/mozilla/javascript/Ref;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/Object;");
+                ScriptRuntimeMethodSig.refDel.addInvoke(cfw);
                 break;
 
             case Token.DELPROP:
@@ -1572,16 +1478,11 @@ class BodyCodegen {
                     // bytecode, it's fine.
                     cfw.add(ByteCode.POP2);
                     cfw.addLoadConstant(0);
-                    addScriptRuntimeInvoke("throwDeleteOnSuperPropertyNotAllowed", "()V");
+                    ScriptRuntimeMethodSig.throwDeleteOnSuperPropertyNotAllowed.addInvoke(cfw);
                 } else {
                     cfw.addALoad(contextLocal);
                     cfw.addPush(isName);
-                    addScriptRuntimeInvoke(
-                            "delete",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Z)Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.delete.addInvoke(cfw);
                 }
                 break;
 
@@ -1642,53 +1543,28 @@ class BodyCodegen {
                         child = child.getNext();
                     } while (child != null);
                     cfw.addALoad(contextLocal);
-                    String methodName, signature;
                     switch (type) {
                         case Token.REF_MEMBER:
-                            methodName = "memberRef";
-                            signature =
-                                    "(Ljava/lang/Object;"
-                                            + "Ljava/lang/Object;"
-                                            + "Lorg/mozilla/javascript/Context;"
-                                            + "I"
-                                            + ")Lorg/mozilla/javascript/Ref;";
+                            cfw.addPush(memberTypeFlags);
+                            ScriptRuntimeMethodSig.memberRef_member.addInvoke(cfw);
                             break;
                         case Token.REF_NS_MEMBER:
-                            methodName = "memberRef";
-                            signature =
-                                    "(Ljava/lang/Object;"
-                                            + "Ljava/lang/Object;"
-                                            + "Ljava/lang/Object;"
-                                            + "Lorg/mozilla/javascript/Context;"
-                                            + "I"
-                                            + ")Lorg/mozilla/javascript/Ref;";
+                            cfw.addPush(memberTypeFlags);
+                            ScriptRuntimeMethodSig.memberRef_namespaceMember.addInvoke(cfw);
                             break;
                         case Token.REF_NAME:
-                            methodName = "nameRef";
-                            signature =
-                                    "(Ljava/lang/Object;"
-                                            + "Lorg/mozilla/javascript/Context;"
-                                            + "Lorg/mozilla/javascript/Scriptable;"
-                                            + "I"
-                                            + ")Lorg/mozilla/javascript/Ref;";
                             cfw.addALoad(variableObjectLocal);
+                            cfw.addPush(memberTypeFlags);
+                            ScriptRuntimeMethodSig.memberRef_name.addInvoke(cfw);
                             break;
                         case Token.REF_NS_NAME:
-                            methodName = "nameRef";
-                            signature =
-                                    "(Ljava/lang/Object;"
-                                            + "Ljava/lang/Object;"
-                                            + "Lorg/mozilla/javascript/Context;"
-                                            + "Lorg/mozilla/javascript/Scriptable;"
-                                            + "I"
-                                            + ")Lorg/mozilla/javascript/Ref;";
                             cfw.addALoad(variableObjectLocal);
+                            cfw.addPush(memberTypeFlags);
+                            ScriptRuntimeMethodSig.memberRef_namespaceName.addInvoke(cfw);
                             break;
                         default:
                             throw Kit.codeBug();
                     }
-                    cfw.addPush(memberTypeFlags);
-                    addScriptRuntimeInvoke(methodName, signature);
                 }
                 break;
 
@@ -1699,31 +1575,19 @@ class BodyCodegen {
             case Token.ESCXMLATTR:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "escapeAttributeValue",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/String;");
+                ScriptRuntimeMethodSig.escapeAttributeValue.addInvoke(cfw);
                 break;
 
             case Token.ESCXMLTEXT:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "escapeTextValue",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/String;");
+                ScriptRuntimeMethodSig.escapeTextValue.addInvoke(cfw);
                 break;
 
             case Token.DEFAULTNAMESPACE:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                addScriptRuntimeInvoke(
-                        "setDefaultNamespace",
-                        "(Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + ")Ljava/lang/Object;");
+                ScriptRuntimeMethodSig.setDefaultNamespace.addInvoke(cfw);
                 break;
 
             case Token.YIELD:
@@ -1792,11 +1656,7 @@ class BodyCodegen {
 
     private void finishGetRefGeneration() {
         cfw.addALoad(contextLocal);
-        addScriptRuntimeInvoke(
-                "refGet",
-                "(Lorg/mozilla/javascript/Ref;"
-                        + "Lorg/mozilla/javascript/Context;"
-                        + ")Ljava/lang/Object;");
+        ScriptRuntimeMethodSig.refGet.addInvoke(cfw);
     }
 
     private void finishRefSpecialGeneration(Node node) {
@@ -1804,13 +1664,7 @@ class BodyCodegen {
         cfw.addPush(special);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "specialRef",
-                "(Ljava/lang/Object;"
-                        + "Ljava/lang/String;"
-                        + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")Lorg/mozilla/javascript/Ref;");
+        ScriptRuntimeMethodSig.specialRef.addInvoke(cfw);
     }
 
     // Descend down the tree and return the first child that represents a yield
@@ -1978,14 +1832,7 @@ class BodyCodegen {
                 codegen.getTemplateLiteralName(scriptOrFn),
                 "[Ljava/lang/Object;");
         cfw.addPush(index);
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;I"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.getTemplateLiteralCallSite.addInvoke(cfw);
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {
@@ -2343,7 +2190,7 @@ class BodyCodegen {
                 cfw.addPush((String) id);
             } else {
                 cfw.addPush(((Integer) id).intValue());
-                addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
+                ScriptRuntimeMethodSig.wrapInt.addInvoke(cfw);
             }
         }
     }
@@ -2431,16 +2278,7 @@ class BodyCodegen {
 
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "fillObjectLiteral",
-                "("
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;"
-                        + "[Ljava/lang/Object;"
-                        + "[I"
-                        + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")V");
+        ScriptRuntimeMethodSig.fillObjectLiteral.addInvoke(cfw);
     }
 
     private void visitSpecialCall(Node node, int type, int specialType, Node child) {
@@ -2461,14 +2299,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(specialType);
 
-        addScriptRuntimeInvoke(
-                "newSpecial",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Ljava/lang/Object;"
-                        + "[Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "I"
-                        + ")Ljava/lang/Object;");
+        ScriptRuntimeMethodSig.newSpecial.addInvoke(cfw);
     }
 
     private void visitSpecialNormalCall(Node node, int specialType, Node child) {
@@ -2485,17 +2316,7 @@ class BodyCodegen {
         cfw.addPush(itsLineNumber);
         cfw.addPush(false);
 
-        addScriptRuntimeInvoke(
-                "callSpecial",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "I"
-                        + "Ljava/lang/String;IZ"
-                        + ")Ljava/lang/Object;");
+        ScriptRuntimeMethodSig.callSpecial.addInvoke(cfw);
     }
 
     private void visitSpecialOptionalChainingCall(Node node, int specialType, Node child) {
@@ -2533,17 +2354,7 @@ class BodyCodegen {
         cfw.addPush(itsLineNumber);
         cfw.addPush(true);
 
-        addScriptRuntimeInvoke(
-                "callSpecial",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "I"
-                        + "Ljava/lang/String;IZ"
-                        + ")Ljava/lang/Object;");
+        ScriptRuntimeMethodSig.callSpecial.addInvoke(cfw);
 
         cfw.markLabel(afterLabel);
     }
@@ -2639,13 +2450,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         // stack: ... functionObj cx scope
         generateCallArgArray(node, firstArgChild, false);
-        addScriptRuntimeInvoke(
-                "newObject",
-                "(Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.newObject.addInvoke(cfw);
     }
 
     private void visitOptimizedCall(Node node, OptFunctionNode target, int type, Node child) {
@@ -2742,13 +2547,7 @@ class BodyCodegen {
         generateCallArgArray(node, firstArgChild, true);
 
         if (type == Token.NEW) {
-            addScriptRuntimeInvoke(
-                    "newObject",
-                    "(Ljava/lang/Object;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
-                            + "[Ljava/lang/Object;"
-                            + ")Lorg/mozilla/javascript/Scriptable;");
+            ScriptRuntimeMethodSig.newObject.addInvoke(cfw);
         } else {
             cfw.addInvoke(
                     ByteCode.INVOKEINTERFACE,
@@ -2862,17 +2661,12 @@ class BodyCodegen {
                         if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) addDoubleWrap();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
-                        String name =
-                                isOptionalChainingCall
-                                        ? "getElemAndThisOptional"
-                                        : "getElemAndThis";
-                        addScriptRuntimeInvoke(
-                                name,
-                                "(Ljava/lang/Object;"
-                                        + "Ljava/lang/Object;"
-                                        + "Lorg/mozilla/javascript/Context;"
-                                        + "Lorg/mozilla/javascript/Scriptable;"
-                                        + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;");
+
+                        if (isOptionalChainingCall) {
+                            ScriptRuntimeMethodSig.getElemAndThisOptional.addInvoke(cfw);
+                        } else {
+                            ScriptRuntimeMethodSig.getElemAndThis.addInvoke(cfw);
+                        }
                     }
                     break;
                 }
@@ -2893,13 +2687,12 @@ class BodyCodegen {
                 {
                     generateExpression(node, parent);
                     cfw.addALoad(contextLocal);
-                    String name =
-                            isOptionalChainingCall ? "getValueAndThisOptional" : "getValueAndThis";
-                    addScriptRuntimeInvoke(
-                            name,
-                            "(Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;");
+
+                    if (isOptionalChainingCall) {
+                        ScriptRuntimeMethodSig.getValueAndThisOptional.addInvoke(cfw);
+                    } else {
+                        ScriptRuntimeMethodSig.getValueAndThis.addInvoke(cfw);
+                    }
                     break;
                 }
         }
@@ -3482,7 +3275,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
                     int stack = cfw.getStackTop();
                     cfw.addALoad(dcp_register);
-                    addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
+                    ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
                     int beyond = cfw.acquireLabel();
                     cfw.add(ByteCode.GOTO, beyond);
                     cfw.markLabel(isNumberLabel, stack);
@@ -3490,18 +3283,14 @@ class BodyCodegen {
                     cfw.markLabel(beyond);
                 } else {
                     cfw.addALoad(varRegisters[varIndex]);
-                    addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
+                    ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
                 }
                 return;
             }
         }
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(node.getString());
-        addScriptRuntimeInvoke(
-                "typeofName",
-                "(Lorg/mozilla/javascript/Scriptable;"
-                        + "Ljava/lang/String;"
-                        + ")Ljava/lang/String;");
+        ScriptRuntimeMethodSig.typeofName.addInvoke(cfw);
     }
 
     /**
@@ -3534,7 +3323,7 @@ class BodyCodegen {
     private void addInstructionCount(int count) {
         cfw.addALoad(contextLocal);
         cfw.addPush(count);
-        addScriptRuntimeInvoke("addInstructionCount", "(Lorg/mozilla/javascript/Context;" + "I)V");
+        ScriptRuntimeMethodSig.addInstructionCount.addInvoke(cfw);
     }
 
     private void visitIncDec(Node node) {
@@ -3635,12 +3424,7 @@ class BodyCodegen {
                 cfw.addPush(child.getString()); // push name
                 cfw.addALoad(contextLocal);
                 cfw.addPush(incrDecrMask);
-                addScriptRuntimeInvoke(
-                        "nameIncrDecr",
-                        "(Lorg/mozilla/javascript/Scriptable;"
-                                + "Ljava/lang/String;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "I)Ljava/lang/Object;");
+                ScriptRuntimeMethodSig.nameIncrDecr.addInvoke(cfw);
                 break;
             case Token.GETPROPNOWARN:
                 throw Kit.codeBug();
@@ -3652,13 +3436,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     cfw.addPush(incrDecrMask);
-                    addScriptRuntimeInvoke(
-                            "propIncrDecr",
-                            "(Ljava/lang/Object;"
-                                    + "Ljava/lang/String;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "I)Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.propIncrDecr.addInvoke(cfw);
                     break;
                 }
             case Token.GETELEM:
@@ -3679,14 +3457,7 @@ class BodyCodegen {
                                         + "I"
                                         + ")Ljava/lang/Object;");
                     } else {
-                        addScriptRuntimeInvoke(
-                                "elemIncrDecr",
-                                "(Ljava/lang/Object;"
-                                        + "Ljava/lang/Object;"
-                                        + "Lorg/mozilla/javascript/Context;"
-                                        + "Lorg/mozilla/javascript/Scriptable;"
-                                        + "I"
-                                        + ")Ljava/lang/Object;");
+                        ScriptRuntimeMethodSig.elemIncrDecr.addInvoke(cfw);
                     }
                     break;
                 }
@@ -3697,12 +3468,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     cfw.addPush(incrDecrMask);
-                    addScriptRuntimeInvoke(
-                            "refIncrDecr",
-                            "(Lorg/mozilla/javascript/Ref;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "I)Ljava/lang/Object;");
+                    ScriptRuntimeMethodSig.refIncrDecr.addInvoke(cfw);
                     break;
                 }
             default:
@@ -3826,21 +3592,16 @@ class BodyCodegen {
 
             switch (type) {
                 case Token.SUB:
-                    addScriptRuntimeInvoke(
-                            "subtract", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.subtract.addInvoke(cfw);
                     break;
                 case Token.MUL:
-                    addScriptRuntimeInvoke(
-                            "multiply", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.multiply.addInvoke(cfw);
                     break;
                 case Token.DIV:
-                    addScriptRuntimeInvoke(
-                            "divide", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.divide.addInvoke(cfw);
                     break;
                 case Token.MOD:
-                    addScriptRuntimeInvoke(
-                            "remainder",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.remainder.addInvoke(cfw);
                     break;
                 default:
                     throw Kit.codeBug(Token.typeToName(type));
@@ -3864,8 +3625,7 @@ class BodyCodegen {
             cfw.addALoad(reg);
             addObjectToNumeric();
 
-            addScriptRuntimeInvoke(
-                    "exponentiate", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+            ScriptRuntimeMethodSig.exponentiate.addInvoke(cfw);
         }
     }
 
@@ -3874,9 +3634,9 @@ class BodyCodegen {
         generateExpression(child, node);
         if (childNumberFlag == -1) {
             addObjectToNumeric();
-            addScriptRuntimeInvoke("bitwiseNOT", "(Ljava/lang/Number;)Ljava/lang/Number;");
+            ScriptRuntimeMethodSig.bitwiseNOT.addInvoke(cfw);
         } else {
-            addScriptRuntimeInvoke("toInt32", "(D)I");
+            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
             cfw.addPush(-1); // implement ~a as (a ^ -1)
             cfw.add(ByteCode.IXOR);
             cfw.add(ByteCode.I2D);
@@ -3910,37 +3670,27 @@ class BodyCodegen {
 
             switch (type) {
                 case Token.BITOR:
-                    addScriptRuntimeInvoke(
-                            "bitwiseOR",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.bitwiseOR.addInvoke(cfw);
                     break;
                 case Token.BITXOR:
-                    addScriptRuntimeInvoke(
-                            "bitwiseXOR",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.bitwiseXOR.addInvoke(cfw);
                     break;
                 case Token.BITAND:
-                    addScriptRuntimeInvoke(
-                            "bitwiseAND",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.bitwiseAND.addInvoke(cfw);
                     break;
                 case Token.RSH:
-                    addScriptRuntimeInvoke(
-                            "signedRightShift",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.signedRightShift.addInvoke(cfw);
                     break;
                 case Token.LSH:
-                    addScriptRuntimeInvoke(
-                            "leftShift",
-                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    ScriptRuntimeMethodSig.leftShift.addInvoke(cfw);
                     break;
                 default:
                     throw Kit.codeBug(Token.typeToName(type));
             }
         } else {
-            addScriptRuntimeInvoke("toInt32", "(D)I");
+            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
             generateExpression(child.getNext(), node);
-            addScriptRuntimeInvoke("toInt32", "(D)I");
+            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
 
             switch (type) {
                 case Token.BITOR:
@@ -4014,12 +3764,11 @@ class BodyCodegen {
             generateExpression(child, node);
             generateExpression(rChild, node);
             cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                    (type == Token.INSTANCEOF) ? "instanceOf" : "in",
-                    "(Ljava/lang/Object;"
-                            + "Ljava/lang/Object;"
-                            + "Lorg/mozilla/javascript/Context;"
-                            + ")Z");
+            if (type == Token.INSTANCEOF) {
+                ScriptRuntimeMethodSig.instanceOf.addInvoke(cfw);
+            } else {
+                ScriptRuntimeMethodSig.in.addInvoke(cfw);
+            }
             cfw.add(ByteCode.IFNE, trueGOTO);
             cfw.add(ByteCode.GOTO, falseGOTO);
             return;
@@ -4448,11 +4197,7 @@ class BodyCodegen {
         updateLineNumber(node);
         generateExpression(child, node);
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "enterDotQuery",
-                "(Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.enterDotQuery.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
 
         // add push null/pop with label in between to simplify code for loop
@@ -4466,16 +4211,12 @@ class BodyCodegen {
         generateExpression(child.getNext(), node);
         addDynamicInvoke("MATH:TOBOOLEAN", Signatures.MATH_TO_BOOLEAN);
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "updateDotQuery",
-                "(Z" + "Lorg/mozilla/javascript/Scriptable;" + ")Ljava/lang/Object;");
+        ScriptRuntimeMethodSig.updateDotQuery.addInvoke(cfw);
         cfw.add(ByteCode.DUP);
         cfw.add(ByteCode.IFNULL, queryLoopStart);
         // stack: ... non_null_result_of_updateDotQuery
         cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke(
-                "leaveDotQuery",
-                "(Lorg/mozilla/javascript/Scriptable;" + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeMethodSig.leaveDotQuery.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
     }
 
@@ -4543,14 +4284,6 @@ class BodyCodegen {
             cfw.addPush(size);
             cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
         }
-    }
-
-    private void addScriptRuntimeInvoke(String methodName, String methodSignature) {
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org.mozilla.javascript.ScriptRuntime",
-                methodName,
-                methodSignature);
     }
 
     private void addOptRuntimeInvoke(String methodName, String methodSignature) {
