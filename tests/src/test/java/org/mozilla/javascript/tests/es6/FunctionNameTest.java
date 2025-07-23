@@ -35,6 +35,11 @@ class FunctionNameTest {
     }
 
     @Test
+    void nonAnonymousFunctionsDontGetOverriddenInDeclaration() {
+        Utils.assertWithAllModes_ES6("g", "var f = function g() {}; f.name");
+    }
+
+    @Test
     void assignmentVarFunction() {
         Utils.assertWithAllModes_ES6("f", "var f; f = function(){}; f.name");
     }
@@ -57,5 +62,10 @@ class FunctionNameTest {
     @Test
     void assignmentShouldNotInferIfParenthesized() {
         Utils.assertWithAllModes_ES6("", "var f; (f) = function(){}; f.name");
+    }
+
+    @Test
+    void nonAnonymousFunctionsDontGetOverriddenInAssignment() {
+        Utils.assertWithAllModes_ES6("g", "var f; f = function g() {}; f.name");
     }
 }
