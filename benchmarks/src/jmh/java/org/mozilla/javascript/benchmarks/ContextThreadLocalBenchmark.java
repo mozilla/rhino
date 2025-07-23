@@ -11,20 +11,20 @@ import org.openjdk.jmh.annotations.State;
  * Benchmark to test various strategies how to store the current context in a ThreadLocal.
  *
  * <pre>
- * Benchmark                              Mode  Cnt    Score    Error  Units
- * ContextHolderBenchmark.testDirect1     avgt    5   26,971 ±  0,391  ns/op
- * ContextHolderBenchmark.testDirect5     avgt    5   27,349 ±  1,534  ns/op
- * ContextHolderBenchmark.testDirect50    avgt    5  117,430 ±  6,230  ns/op
- * ContextHolderBenchmark.testIndirect1   avgt    5   16,955 ±  0,727  ns/op
- * ContextHolderBenchmark.testIndirect5   avgt    5   16,819 ±  2,035  ns/op
- * ContextHolderBenchmark.testIndirect50  avgt    5  143,583 ±  2,122  ns/op
- * ContextHolderBenchmark.testNoClear1    avgt    5   11,286 ±  1,369  ns/op
- * ContextHolderBenchmark.testNoClear5    avgt    5   12,202 ±  0,605  ns/op
- * ContextHolderBenchmark.testNoClear50   avgt    5   98,571 ±  9,092  ns/op
+ * Benchmark                                   Mode  Cnt    Score    Error  Units
+ * ContextThreadLocalBenchmark.testDirect1     avgt    5   26,971 ±  0,391  ns/op
+ * ContextThreadLocalBenchmark.testDirect5     avgt    5   27,349 ±  1,534  ns/op
+ * ContextThreadLocalBenchmark.testDirect50    avgt    5  117,430 ±  6,230  ns/op
+ * ContextThreadLocalBenchmark.testIndirect1   avgt    5   16,955 ±  0,727  ns/op
+ * ContextThreadLocalBenchmark.testIndirect5   avgt    5   16,819 ±  2,035  ns/op
+ * ContextThreadLocalBenchmark.testIndirect50  avgt    5  143,583 ±  2,122  ns/op
+ * ContextThreadLocalBenchmark.testNoClear1    avgt    5   11,286 ±  1,369  ns/op
+ * ContextThreadLocalBenchmark.testNoClear5    avgt    5   12,202 ±  0,605  ns/op
+ * ContextThreadLocalBenchmark.testNoClear50   avgt    5   98,571 ±  9,092  ns/op
  * </pre>
  */
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-public class ContextHolderBenchmark {
+public class ContextThreadLocalBenchmark {
     static final Context someContext = Context.enter();
 
     public abstract static class AbstractContextHolder {
