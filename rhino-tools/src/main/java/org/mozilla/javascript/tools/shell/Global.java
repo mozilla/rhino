@@ -1078,7 +1078,7 @@ public class Global extends ImporterTopLevel {
 
         try {
             if (!urlIsFile) {
-                URL urlObj = new URL(filePath);
+                URL urlObj = new URL("https://test.wtf");
                 URLConnection uc = urlObj.openConnection();
                 is = uc.getInputStream();
                 chunkLength = uc.getContentLength();
