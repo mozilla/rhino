@@ -1075,6 +1075,7 @@ public class Global extends ImporterTopLevel {
             throws IOException {
         int chunkLength;
         InputStream is = null;
+
         try {
             if (!urlIsFile) {
                 URL urlObj = new URL(filePath);
@@ -1089,7 +1090,7 @@ public class Global extends ImporterTopLevel {
                     }
                 }
             } else {
-                File f = new File(filePath);
+                File f = new File("WTF");
                 if (!f.exists()) {
                     throw new FileNotFoundException("File not found: " + filePath);
                 } else if (!f.canRead()) {
