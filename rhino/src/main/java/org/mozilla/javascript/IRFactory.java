@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
@@ -450,7 +451,8 @@ public final class IRFactory {
         AstNode right = node.getRight();
         AstNode originalLeft = node.getLeft();
         AstNode left = parser.removeParens(originalLeft);
-        boolean shouldTryToInferName = (originalLeft == left);  // If we removed parens, we won't try to infer name
+        boolean shouldTryToInferName =
+                (originalLeft == left); // If we removed parens, we won't try to infer name
         left = transformAssignmentLeft(node, left, right);
 
         Node target = null;
@@ -968,11 +970,16 @@ public final class IRFactory {
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
                 Object propKey = Parser.getPropKey(prop.getLeft());
+                Node inferrableName = null;
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
                     properties[i++] = theId;
                 } else {
                     properties[i++] = propKey;
+                    assert propKey instanceof String || propKey instanceof Integer;
+                    inferrableName = parser.createName(Objects.toString(propKey));
+                    inferrableName.setLineColumnNumber(
+                            prop.getLeft().getLineno(), prop.getLeft().getColumn());
                 }
 
                 Node right = transform(prop.getRight());
@@ -982,6 +989,12 @@ public final class IRFactory {
                     right = createUnary(Token.SET, right);
                 } else if (prop.isNormalMethod()) {
                     right = createUnary(Token.METHOD, right);
+                } else {
+                    // Methods/getter/setter have already it set correctly;
+                    // this "if" will infer cases such as "{ ..., x: function() {}, ... }"
+                    if (inferrableName != null) {
+                        inferNameIfMissing(inferrableName, right);
+                    }
                 }
                 object.addChildToBack(right);
             }
@@ -1444,7 +1457,7 @@ public final class IRFactory {
             propagateRequiresArgumentObjectFromNestedArrowFunctions(fnNode);
         }
 
-        if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
+        if (functionType == FunctionNode.FUNCTION_EXPRESSION && !fnNode.isMethod()) {
             Name name = fnNode.getFunctionName();
             if (name != null
                     && name.length() != 0
@@ -1456,6 +1469,7 @@ public final class IRFactory {
                 // function's name to the function value, but only if the
                 // function doesn't already define a formal parameter, var,
                 // or nested function with the same name.
+                // Note that it doesn't make sense on method shorthands!
                 fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
                 Node setFn =
                         new Node(
@@ -2368,7 +2382,7 @@ public final class IRFactory {
     }
 
     /** Infer function name is missing on rhs. In the future, will also handle class names. */
-    private void inferNameIfMissing(Node left, Node right) {
+    private void inferNameIfMissing(Object left, Node right) {
         if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
             var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
             FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
