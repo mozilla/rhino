@@ -81,4 +81,16 @@ public class PromiseTest {
                         + "'success'"; // Just verify the reject call doesn't throw
         Utils.assertWithAllModes_ES6("success", script);
     }
+
+    @Test
+    public void withResolversNonObjectThisThrows() {
+        final String script =
+                "try {"
+                        + "  Promise.withResolvers.call(null);"
+                        + "  'should not reach here';"
+                        + "} catch(e) {"
+                        + "  e instanceof TypeError && e.message.includes('not an object');"
+                        + "}";
+        Utils.assertWithAllModes_ES6(true, script);
+    }
 }
