@@ -546,12 +546,8 @@ public class ProtoProperty2Test {
                         + "c.f();"
                         + "res;";
 
-        // this is only partially supported
-        // see org.mozilla.javascript.IRFactory.createPropertyGet()
-        // Utils.assertWithAllModes_ES6("truetrue-truetrue / truetrue-truetrue / truetrue-truetrue",
-        // script);
         Utils.assertWithAllModes_ES6(
-                "truetrue-truetrue / truefalse-truetrue / truefalse-truetrue", script);
+                "truetrue-truetrue / truetrue-truetrue / truetrue-truetrue", script);
     }
 
     @Test

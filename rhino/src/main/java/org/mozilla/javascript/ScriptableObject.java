@@ -2490,7 +2490,10 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Variant of putProperty to handle super.name = value */
     public static void putSuperProperty(
             Scriptable superObj, Scriptable thisObj, String name, Object value) {
-        superObj.put(name, thisObj, value);
+        // in contrast to putProperty we start searching at superObj
+        Scriptable base = getBase(superObj, name);
+        if (base == null) base = superObj;
+        base.put(name, thisObj, value);
     }
 
     /** This is a version of putProperty for Symbol keys. */
