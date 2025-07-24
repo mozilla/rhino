@@ -2391,7 +2391,10 @@ public final class IRFactory {
                 if (prefix != null) {
                     functionNode.setFunctionName(name.withPrefix(prefix));
                 } else {
-                    functionNode.setFunctionName(name);
+                    // Ignore weird edge case
+                    if (!name.getIdentifier().equals("__proto__")) {
+                        functionNode.setFunctionName(name);
+                    }
                 }
             }
         }
