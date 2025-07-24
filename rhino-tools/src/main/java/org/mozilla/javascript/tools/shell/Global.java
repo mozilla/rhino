@@ -782,14 +782,14 @@ public class Global extends ImporterTopLevel {
      *
      * <p>The first form converts file's context to string using the default character coding.
      */
+        // the file path is not sanitized here.And even if it did, it would hardly increase
+        // security, since we can access Packages.java.io.File directly
+        @SuppressWarnings("codeql")
     private static Object readFile(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
-        // the file path is not sanitized here.And even if it did, it would hardly increase
-        // security, since we can access Packages.java.io.File directly
-        @SuppressWarnings("codeql")
         String path = ScriptRuntime.toString(args[0]);
         Charset charset =
                 args.length < 2
