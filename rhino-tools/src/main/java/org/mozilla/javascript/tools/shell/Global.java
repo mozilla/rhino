@@ -617,102 +617,108 @@ public class Global extends ImporterTopLevel {
         String[] environment = null;
         Scriptable params = null;
         Object[] addArgs = null;
-        if (args[L - 1] instanceof Scriptable) {
-            params = (Scriptable) args[L - 1];
-            --L;
-            Object envObj = ScriptableObject.getProperty(params, "env");
-            if (envObj != Scriptable.NOT_FOUND) {
-                if (envObj == null) {
-                    environment = new String[0];
-                } else {
-                    if (!(envObj instanceof Scriptable)) {
-                        throw reportRuntimeError("msg.runCommand.bad.env");
-                    }
-                    Scriptable envHash = (Scriptable) envObj;
-                    Object[] ids = ScriptableObject.getPropertyIds(envHash);
-                    environment = new String[ids.length];
-                    for (int i = 0; i != ids.length; ++i) {
-                        Object keyObj = ids[i], val;
-                        String key;
-                        if (keyObj instanceof String) {
-                            key = (String) keyObj;
-                            val = ScriptableObject.getProperty(envHash, key);
-                        } else {
-                            int ikey = ((Number) keyObj).intValue();
-                            key = Integer.toString(ikey);
-                            val = ScriptableObject.getProperty(envHash, ikey);
+        try {
+            if (args[L - 1] instanceof Scriptable) {
+                params = (Scriptable) args[L - 1];
+                --L;
+                Object envObj = ScriptableObject.getProperty(params, "env");
+                if (envObj != Scriptable.NOT_FOUND) {
+                    if (envObj == null) {
+                        environment = new String[0];
+                    } else {
+                        if (!(envObj instanceof Scriptable)) {
+                            throw reportRuntimeError("msg.runCommand.bad.env");
                         }
-                        if (val == ScriptableObject.NOT_FOUND) {
-                            val = Undefined.instance;
+                        Scriptable envHash = (Scriptable) envObj;
+                        Object[] ids = ScriptableObject.getPropertyIds(envHash);
+                        environment = new String[ids.length];
+                        for (int i = 0; i != ids.length; ++i) {
+                            Object keyObj = ids[i], val;
+                            String key;
+                            if (keyObj instanceof String) {
+                                key = (String) keyObj;
+                                val = ScriptableObject.getProperty(envHash, key);
+                            } else {
+                                int ikey = ((Number) keyObj).intValue();
+                                key = Integer.toString(ikey);
+                                val = ScriptableObject.getProperty(envHash, ikey);
+                            }
+                            if (val == ScriptableObject.NOT_FOUND) {
+                                val = Undefined.instance;
+                            }
+                            environment[i] = key + '=' + ScriptRuntime.toString(val);
                         }
-                        environment[i] = key + '=' + ScriptRuntime.toString(val);
                     }
                 }
-            }
-            Object wdObj = ScriptableObject.getProperty(params, "dir");
-            if (wdObj != Scriptable.NOT_FOUND) {
-                wd = new File(ScriptRuntime.toString(wdObj));
-            }
+                Object wdObj = ScriptableObject.getProperty(params, "dir");
+                if (wdObj != Scriptable.NOT_FOUND) {
+                    wd = new File(ScriptRuntime.toString(wdObj));
+                }
 
-            Object inObj = ScriptableObject.getProperty(params, "input");
-            if (inObj != Scriptable.NOT_FOUND) {
-                in = toInputStream(inObj);
-            }
-            outObj = ScriptableObject.getProperty(params, "output");
-            if (outObj != Scriptable.NOT_FOUND) {
-                out = toOutputStream(outObj);
-                if (out == null) {
-                    outBytes = new ByteArrayOutputStream();
-                    out = outBytes;
+                Object inObj = ScriptableObject.getProperty(params, "input");
+                if (inObj != Scriptable.NOT_FOUND) {
+                    in = toInputStream(inObj);
+                }
+                outObj = ScriptableObject.getProperty(params, "output");
+                if (outObj != Scriptable.NOT_FOUND) {
+                    out = toOutputStream(outObj);
+                    if (out == null) {
+                        outBytes = new ByteArrayOutputStream();
+                        out = outBytes;
+                    }
+                }
+                errObj = ScriptableObject.getProperty(params, "err");
+                if (errObj != Scriptable.NOT_FOUND) {
+                    err = toOutputStream(errObj);
+                    if (err == null) {
+                        errBytes = new ByteArrayOutputStream();
+                        err = errBytes;
+                    }
+                }
+                Object addArgsObj = ScriptableObject.getProperty(params, "args");
+                if (addArgsObj != Scriptable.NOT_FOUND) {
+                    Scriptable s = Context.toObject(addArgsObj, getTopLevelScope(thisObj));
+                    addArgs = cx.getElements(s);
                 }
             }
-            errObj = ScriptableObject.getProperty(params, "err");
-            if (errObj != Scriptable.NOT_FOUND) {
-                err = toOutputStream(errObj);
-                if (err == null) {
-                    errBytes = new ByteArrayOutputStream();
-                    err = errBytes;
+            Global global = getInstance(funObj);
+            if (out == null) {
+                out = global.getOut();
+            }
+            if (err == null) {
+                err = global.getErr();
+            }
+            // If no explicit input stream, do not send any input to process,
+            // in particular, do not use System.in to avoid deadlocks
+            // when waiting for user input to send to process which is already
+            // terminated as it is not always possible to interrupt read method.
+
+            String[] cmd = new String[(addArgs == null) ? L : L + addArgs.length];
+            for (int i = 0; i != L; ++i) {
+                cmd[i] = ScriptRuntime.toString(args[i]);
+            }
+            if (addArgs != null) {
+                for (int i = 0; i != addArgs.length; ++i) {
+                    cmd[L + i] = ScriptRuntime.toString(addArgs[i]);
                 }
             }
-            Object addArgsObj = ScriptableObject.getProperty(params, "args");
-            if (addArgsObj != Scriptable.NOT_FOUND) {
-                Scriptable s = Context.toObject(addArgsObj, getTopLevelScope(thisObj));
-                addArgs = cx.getElements(s);
+
+            int exitCode = runProcess(cmd, environment, wd, in, out, err);
+            if (outBytes != null) {
+                String s =
+                        ScriptRuntime.toString(outObj) + outBytes.toString(StandardCharsets.UTF_8);
+                ScriptableObject.putProperty(params, "output", s);
             }
-        }
-        Global global = getInstance(funObj);
-        if (out == null) {
-            out = global.getOut();
-        }
-        if (err == null) {
-            err = global.getErr();
-        }
-        // If no explicit input stream, do not send any input to process,
-        // in particular, do not use System.in to avoid deadlocks
-        // when waiting for user input to send to process which is already
-        // terminated as it is not always possible to interrupt read method.
-
-        String[] cmd = new String[(addArgs == null) ? L : L + addArgs.length];
-        for (int i = 0; i != L; ++i) {
-            cmd[i] = ScriptRuntime.toString(args[i]);
-        }
-        if (addArgs != null) {
-            for (int i = 0; i != addArgs.length; ++i) {
-                cmd[L + i] = ScriptRuntime.toString(addArgs[i]);
+            if (errBytes != null) {
+                String s =
+                        ScriptRuntime.toString(errObj) + errBytes.toString(StandardCharsets.UTF_8);
+                ScriptableObject.putProperty(params, "err", s);
             }
-        }
 
-        int exitCode = runProcess(cmd, environment, wd, in, out, err);
-        if (outBytes != null) {
-            String s = ScriptRuntime.toString(outObj) + outBytes.toString(StandardCharsets.UTF_8);
-            ScriptableObject.putProperty(params, "output", s);
+            return exitCode;
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
-        if (errBytes != null) {
-            String s = ScriptRuntime.toString(errObj) + errBytes.toString(StandardCharsets.UTF_8);
-            ScriptableObject.putProperty(params, "err", s);
-        }
-
-        return exitCode;
     }
 
     /** The seal function seals all supplied arguments. */
