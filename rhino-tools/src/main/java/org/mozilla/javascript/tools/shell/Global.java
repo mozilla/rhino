@@ -179,7 +179,7 @@ public class Global extends ImporterTopLevel {
      * <p>This method is defined as a JavaScript function.
      */
     private static Object help(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        PrintStream out = getInstance(scope).getOut();
+        PrintStream out = getInstance(thisObj).getOut();
         out.println(ToolErrorReporter.getMessage("msg.help"));
         return Undefined.instance;
     }
@@ -197,16 +197,16 @@ public class Global extends ImporterTopLevel {
      * JavaScript function.
      */
     private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return doPrint(args, scope, true);
+        return doPrint(args, thisObj, true);
     }
 
     /** Print just as in "print," but without the trailing newline. */
     private static Object write(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return doPrint(args, scope, false);
+        return doPrint(args, thisObj, false);
     }
 
-    private static Object doPrint(Object[] args, Scriptable scope, boolean newline) {
-        PrintStream out = getInstance(scope).getOut();
+    private static Object doPrint(Object[] args, Scriptable thisObj, boolean newline) {
+        PrintStream out = getInstance(thisObj).getOut();
         for (int i = 0; i < args.length; i++) {
             if (i > 0) out.print(" ");
 
@@ -227,7 +227,7 @@ public class Global extends ImporterTopLevel {
      * <p>This method is defined as a JavaScript function.
      */
     private static Object quit(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Global global = getInstance(scope);
+        Global global = getInstance(thisObj);
         if (global.quitAction != null) {
             int exitCode = (args.length == 0 ? 0 : ScriptRuntime.toInt32(args[0]));
             global.quitAction.quit(cx, exitCode);
@@ -419,7 +419,7 @@ public class Global extends ImporterTopLevel {
             return Boolean.FALSE;
         }
         String session = Context.toString(args[0]);
-        Global global = getInstance(scope);
+        Global global = getInstance(thisObj);
         return global.runDoctest(cx, global, session, null, 0);
     }
 
@@ -705,7 +705,7 @@ public class Global extends ImporterTopLevel {
                     addArgs = cx.getElements(s);
                 }
             }
-            Global global = getInstance(scope);
+            Global global = getInstance(thisObj);
             if (out == null) {
                 out = global.getOut();
             }
@@ -882,12 +882,10 @@ public class Global extends ImporterTopLevel {
         sealedStdLib = value;
     }
 
-    private static Global getInstance(Scriptable scope) {
-        Scriptable ret = scope;
-        if (!(ret instanceof Global)) ret = ret.getParentScope();
-        if (!(ret instanceof Global))
-            throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
-        return (Global) ret;
+    private static Global getInstance(Scriptable thisObj) {
+        if (!(thisObj instanceof Global))
+            throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(thisObj));
+        return (Global) thisObj;
     }
 
     /**
@@ -1100,7 +1098,7 @@ public class Global extends ImporterTopLevel {
      */
     private static Object readline(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Global self = getInstance(scope);
+        Global self = getInstance(thisObj);
         try {
             if (args.length > 0) {
                 return self.console.readLine(Context.toString(args[0]));
