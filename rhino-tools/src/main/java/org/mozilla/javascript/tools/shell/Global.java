@@ -1073,49 +1073,7 @@ public class Global extends ImporterTopLevel {
 
     private static String readUrl(String filePath, String charCoding, boolean urlIsFile)
             throws IOException {
-        int chunkLength;
-        InputStream is = null;
-
-        try {
-            if (!urlIsFile) {
-                URL urlObj = new URL("https://test.wtf");
-                URLConnection uc = urlObj.openConnection();
-                is = uc.getInputStream();
-                chunkLength = uc.getContentLength();
-                if (chunkLength <= 0) chunkLength = 1024;
-                if (charCoding == null) {
-                    String type = uc.getContentType();
-                    if (type != null) {
-                        charCoding = getCharCodingFromType(type);
-                    }
-                }
-            } else {
-                File f = new File("WTF");
-                if (!f.exists()) {
-                    throw new FileNotFoundException("File not found: " + filePath);
-                } else if (!f.canRead()) {
-                    throw new IOException("Cannot read file: " + filePath);
-                }
-                long length = f.length();
-                chunkLength = (int) length;
-                if (chunkLength != length) throw new IOException("Too big file size: " + length);
-
-                if (chunkLength == 0) {
-                    return "";
-                }
-
-                is = new FileInputStream(f);
-            }
-
-            try (Reader r =
-                    new InputStreamReader(
-                            is,
-                            charCoding == null ? Charset.defaultCharset().name() : charCoding)) {
-                return readReader(r, chunkLength);
-            }
-        } finally {
-            if (is != null) is.close();
-        }
+      return "test";
     }
 
     /**
