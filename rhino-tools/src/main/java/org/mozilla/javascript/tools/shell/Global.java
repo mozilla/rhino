@@ -787,6 +787,9 @@ public class Global extends ImporterTopLevel {
         if (args.length == 0) {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
+        // the file path is not sanitized here.And even if it did, it would hardly increase
+        // security, since we can access Packages.java.io.File directly
+        @SuppressWarnings("codeql")
         String path = ScriptRuntime.toString(args[0]);
         Charset charset =
                 args.length < 2
@@ -794,9 +797,6 @@ public class Global extends ImporterTopLevel {
                         : Charset.forName(ScriptRuntime.toString(args[1]));
 
         try {
-            // the file path is not sanitized here.And even if it did, it would hardly increase
-            // security, since we can access Packages.java.io.File directly
-            @SuppressWarnings("codeql")
             File f = new File(path);
             if (!f.exists()) {
                 throw new FileNotFoundException("File not found: " + path);
