@@ -988,25 +988,21 @@ final class NativeDate extends IdScriptableObject {
                 // milli secs are different, digit 2 and 3 are optional
                 int value = 0;
                 int digitsFound = 0;
-
                 for (; i < len; i++) {
                     char c = s.charAt(i);
                     if (c < '0' || c > '9') {
                         break;
                     }
-
                     if (digitsFound < 3) {
                         value = 10 * value + (c - '0');
                         digitsFound++;
                     }
                     // Simply ignore any digits beyond the first 3
                 }
-
                 if (digitsFound == 0) {
                     state = ERROR;
                     break loop;
                 }
-
                 if (digitsFound < 3) {
                     value = value * (digitsFound == 1 ? 100 : 10);
                 }
