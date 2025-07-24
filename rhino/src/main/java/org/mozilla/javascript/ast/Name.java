@@ -137,6 +137,12 @@ public class Name extends AstNode {
         return makeIndent(depth) + (identifier == null ? "<null>" : identifier);
     }
 
+    public Name withPrefix(String prefix) {
+        Name clone = new Name(this.getPosition(), this.getLength(), prefix + this.identifier);
+        clone.setLineColumnNumber(this.getLineno(), this.getColumn());
+        return clone;
+    }
+
     /** Visits this node. There are no children to visit. */
     @Override
     public void visit(NodeVisitor v) {

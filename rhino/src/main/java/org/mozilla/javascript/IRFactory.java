@@ -2391,10 +2391,7 @@ public final class IRFactory {
                 Name name = (Name) left;
 
                 if (prefix != null) {
-                    Name newName = new Name(name.getPosition(), name.getLength());
-                    newName.setIdentifier(prefix + name.getIdentifier());
-                    newName.setLineColumnNumber(name.getLineno(), name.getColumn());
-                    functionNode.setFunctionName(newName);
+                    functionNode.setFunctionName(name.withPrefix(prefix));
                 } else {
                     functionNode.setFunctionName(name);
                 }
