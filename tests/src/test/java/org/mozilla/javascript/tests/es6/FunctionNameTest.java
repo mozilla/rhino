@@ -75,6 +75,11 @@ class FunctionNameTest {
     }
 
     @Test
+    void declarationMixedWithAssignment() {
+        Utils.assertWithAllModes_ES6("g", "var f = g = () => {}; f.name");
+    }
+
+    @Test
     void propertyFunction() {
         Utils.assertWithAllModes_ES6("x", "o = { x: function(){} }; o.x.name");
     }
