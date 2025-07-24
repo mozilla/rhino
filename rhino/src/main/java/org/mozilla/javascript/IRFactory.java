@@ -2389,7 +2389,7 @@ public final class IRFactory {
 
         if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
             Name name = (Name) left;
-            if (name.getIdentifier().equals("__proto__")) {
+            if (name.getIdentifier().equals(NativeObject.PROTO_PROPERTY)) {
                 // Ignore weird edge case
                 return;
             }
