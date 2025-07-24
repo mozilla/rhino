@@ -68,4 +68,9 @@ class FunctionNameTest {
     void nonAnonymousFunctionsDontGetOverriddenInAssignment() {
         Utils.assertWithAllModes_ES6("g", "var f; f = function g() {}; f.name");
     }
+
+    @Test
+    void reassignDoesntOverride() {
+        Utils.assertWithAllModes_ES6("f", "var f; f = function() {}; g = f; g.name");
+    }
 }
