@@ -549,7 +549,8 @@ public class Context implements Closeable {
     public void close() {
         if (enterCount < 1) Kit.codeBug();
         if (--enterCount == 0) {
-            if (currentContext.get() != this) Kit.codeBug();
+            assert (currentContext.get() == this)
+                    : "currentContext: " + currentContext.get() + ", this: " + this;
             releaseContext(this);
         }
     }
