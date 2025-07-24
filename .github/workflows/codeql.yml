@@ -37,7 +37,6 @@ jobs:
           ~/.gradle/wrapper
           ~/.gradle/caches
         key: ${{ runner.os }}-gradle-cache-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-        if: ${{ matrix.language == 'java' }}
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -72,4 +71,3 @@ jobs:
       run: |
         rm -f ~/.gradle/caches/modules-2/modules-2.lock
         rm -f ~/.gradle/caches/modules-2/gc.properties
-      if: ${{ matrix.language == 'java' }}
