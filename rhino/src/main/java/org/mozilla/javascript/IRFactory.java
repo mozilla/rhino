@@ -1470,7 +1470,6 @@ public final class IRFactory {
                 // function's name to the function value, but only if the
                 // function doesn't already define a formal parameter, var,
                 // or nested function with the same name.
-                // Note that it doesn't make sense on method shorthands!
                 fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
                 Node setFn =
                         new Node(
