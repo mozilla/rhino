@@ -47,6 +47,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Synchronizer;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
@@ -278,10 +279,12 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      *
-     * @exception IllegalAccessException if access is not available to a reflected class member
-     * @exception InstantiationException if unable to instantiate the named class
-     * @exception InvocationTargetException if an exception is thrown during execution of methods of
-     *     the named class
+     * @exception WrappedException (cause: IllegalAccessException) if access is not available to a
+     *     reflected class member
+     * @exception WrappedException (cause: InstantiationException) if unable to instantiate the
+     *     named class
+     * @exception WrappedException (cause: InvocationTargetException) if an exception is thrown
+     *     during execution of methods of the named class
      * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
      */
     @SuppressWarnings({"unchecked"})
@@ -306,8 +309,10 @@ public class Global extends ImporterTopLevel {
      * single argument is expected. This argument should be the name of a class that implements the
      * Script interface, as will any script compiled by jsc.
      *
-     * @exception IllegalAccessException if access is not available to the class
-     * @exception InstantiationException if unable to instantiate the named class
+     * @exception WrappedException (cause: IllegalAccessException) if access is not available to the
+     *     class
+     * @exception WrappedException (cause: InstantiationException) if unable to instantiate the
+     *     named class
      */
     private static Object loadClass(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
