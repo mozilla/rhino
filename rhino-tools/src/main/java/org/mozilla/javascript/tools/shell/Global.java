@@ -789,6 +789,11 @@ public class Global extends ImporterTopLevel {
         }
         String path = ScriptRuntime.toString(args[0]);
         Charset charset = args.length < 2 ? Charset.defaultCharset() : Charset.forName(ScriptRuntime.toString(args[1]));
+        
+        if (path.contains("..") || path.contains("/") || path.contains("\\")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
+
         try {
             File f = new File(path);
             if (!f.exists()) {
