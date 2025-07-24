@@ -14,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -122,14 +121,17 @@ public class Global extends ImporterTopLevel {
         defineProperty(this, "readline", 0, Global::readline, DONTENUM, DONTENUM | READONLY);
         defineProperty(this, "readFile", 1, Global::readFile, DONTENUM, DONTENUM | READONLY);
         defineProperty(this, "readUrl", 1, Global::readUrl, DONTENUM, DONTENUM | READONLY);
-       defineProperty(this, "runCommand", 1, Global::runCommand, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "seal", 0, Global::seal, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "serialize", 2, Global::serialize, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "spawn", 1, Global::spawn, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "sync", 1, Global::sync, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "toint32", 0, Global::toint32, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "version", 0, Global::version, DONTENUM, DONTENUM | READONLY);
-//        defineProperty(this, "write", 0, Global::write, DONTENUM, DONTENUM | READONLY);
+        defineProperty(this, "runCommand", 1, Global::runCommand, DONTENUM, DONTENUM | READONLY);
+        //        defineProperty(this, "seal", 0, Global::seal, DONTENUM, DONTENUM | READONLY);
+        //        defineProperty(this, "serialize", 2, Global::serialize, DONTENUM, DONTENUM |
+        // READONLY);
+        //        defineProperty(this, "spawn", 1, Global::spawn, DONTENUM, DONTENUM | READONLY);
+        //        defineProperty(this, "sync", 1, Global::sync, DONTENUM, DONTENUM | READONLY);
+        //        defineProperty(this, "toint32", 0, Global::toint32, DONTENUM, DONTENUM |
+        // READONLY);
+        //        defineProperty(this, "version", 0, Global::version, DONTENUM, DONTENUM |
+        // READONLY);
+        //        defineProperty(this, "write", 0, Global::write, DONTENUM, DONTENUM | READONLY);
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
@@ -459,20 +461,6 @@ public class Global extends ImporterTopLevel {
             String resultString = "";
             ErrorReporter savedErrorReporter = cx.getErrorReporter();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
             try {
                 testCount++;
@@ -493,20 +481,6 @@ public class Global extends ImporterTopLevel {
                 resultString +=
                         err.toString(StandardCharsets.UTF_8) + out.toString(StandardCharsets.UTF_8);
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             if (!doctestOutputMatches(expectedString.toString(), resultString)) {
                 String message =
@@ -814,12 +788,9 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
         String path = ScriptRuntime.toString(args[0]);
-        Charset charset = Charset.defaultCharset();
-        if (args.length >= 2) {
-            charset = Charset.forName(ScriptRuntime.toString(args[1]));
-        }
-        try (InputStream is = new FileInputStream(path)){
-            return new String(is.readAllBytes(), charset);
+        Charset charSet = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
+        try {
+            return readUrl(path, charSet, true);
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -844,13 +815,10 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readUrl.bad.args");
         }
         String url = ScriptRuntime.toString(args[0]);
-        Charset charset = Charset.defaultCharset();
-        if (args.length >= 2) {
-            charset = Charset.forName(ScriptRuntime.toString(args[1]));
-        }
+        Charset charSet = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
 
-        try (InputStream is = new URL(url).openStream()){
-            return new String(is.readAllBytes(), charset);
+        try {
+            return readUrl(url, charSet, false);
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -1071,6 +1039,42 @@ public class Global extends ImporterTopLevel {
         return os;
     }
 
+    private static String readUrl(String filePath, Charset charset, boolean urlIsFile)
+            throws IOException {
+
+        if (!urlIsFile) {
+            URL urlObj = new URL(filePath);
+            URLConnection uc = urlObj.openConnection();
+            try (InputStream is = uc.getInputStream()) {
+
+                if (charset == null) {
+                    String type = uc.getContentType();
+                    if (type != null) {
+                        charset = getCharsetFromType(type);
+                    }
+                }
+                if (charset == null) {
+                    charset = Charset.defaultCharset();
+                }
+                return new String(is.readAllBytes(), charset);
+            }
+        } else {
+            File f = new File(filePath);
+            if (!f.exists()) {
+                throw new FileNotFoundException("File not found: " + filePath);
+            } else if (!f.canRead()) {
+                throw new IOException("Cannot read file: " + filePath);
+            }
+            if (charset == null) {
+                charset = Charset.defaultCharset();
+            }
+            try (InputStream is = new FileInputStream(f)) {
+
+                return new String(is.readAllBytes(), charset);
+            }
+        }
+    }
+
     /**
      * The readline reads one line from the standard input. "Prompt" is optional.
      *
@@ -1093,7 +1097,7 @@ public class Global extends ImporterTopLevel {
         }
     }
 
-    private static String getCharCodingFromType(String type) {
+    private static Charset getCharsetFromType(String type) {
         int i = type.indexOf(';');
         if (i >= 0) {
             int end = type.length();
@@ -1118,7 +1122,7 @@ public class Global extends ImporterTopLevel {
                         while (type.charAt(end - 1) <= ' ') {
                             --end;
                         }
-                        return type.substring(i, end);
+                        return Charset.forName(type.substring(i, end));
                     }
                 }
             }
@@ -1128,6 +1132,24 @@ public class Global extends ImporterTopLevel {
 
     private static String readReader(Reader reader) throws IOException {
         return readReader(reader, 4096);
+    }
+
+    private static String readReader(Reader reader, int initialBufferSize) throws IOException {
+        char[] buffer = new char[initialBufferSize];
+        int offset = 0;
+        for (; ; ) {
+            int n = reader.read(buffer, offset, buffer.length - offset);
+            if (n < 0) {
+                break;
+            }
+            offset += n;
+            if (offset == buffer.length) {
+                char[] tmp = new char[buffer.length * 2];
+                System.arraycopy(buffer, 0, tmp, 0, offset);
+                buffer = tmp;
+            }
+        }
+        return new String(buffer, 0, offset);
     }
 
     static RuntimeException reportRuntimeError(String msgId) {
