@@ -55,7 +55,7 @@ import org.mozilla.javascript.xml.XMLLib;
  * @author Norris Boyd
  * @author Brendan Eich
  */
-public class Context implements Closeable {
+public class Context implements AutoCloseable {
     /**
      * Language versions.
      *

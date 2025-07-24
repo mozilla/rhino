@@ -63,7 +63,7 @@ This release includes committs from 29 different committers. Thanks to you all f
 [All Java Interop related cases](https://github.com/mozilla/rhino/issues?q=milestone%3A%22Release+1.7.14%22+label%3A%22Java+Interop%22)
 
 ## Embedding Rhino
-* #864 Context now implements Closable (@gbrail)
+* #864 Context now implements Closeable (@gbrail)
 * #865 Introduction of LambdaFunction and LambdaConstructor, to be used to represent Java lambda functions as native JavaScript functions and also can be used to construct an entire class out of lambdas (@gbrail)
 * #911 Throw InternalError instead of wrapped JavaException if thrown Java Exception class is not visible due to class shutter (@youngj)
 
