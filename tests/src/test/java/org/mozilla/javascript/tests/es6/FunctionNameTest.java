@@ -86,47 +86,47 @@ class FunctionNameTest {
 
     @Test
     void propertyArrow() {
-        Utils.assertWithAllModes_ES6("x", "({x: () => {}}).x.name");
+        Utils.assertWithAllModes_ES6("x", "o = { x: () => {} }; o.x.name");
     }
 
     @Test
     void method() {
-        Utils.assertWithAllModes_ES6("x", "({x() {}}).x.name");
+        Utils.assertWithAllModes_ES6("x", "o = { x() {} }; o.x.name");
     }
 
     @Test
     void methodNumericLiteral() {
-        Utils.assertWithAllModes_ES6("1", "({1() {}})['1'].name");
+        Utils.assertWithAllModes_ES6("1", "o = { 1() {} }; o['1'].name");
     }
 
     @Test
     void methodBooleanLiteral() {
-        Utils.assertWithAllModes_ES6("false", "({false() {}})['false'].name");
+        Utils.assertWithAllModes_ES6("false", "o = { false() {} }; o['false'].name");
     }
 
     @Test
     void methodComputedProperty() {
         // TODO: this is not working at the moment, because it cannot be done statically
         //  but needs to be done at runtime
-        Utils.assertWithAllModes_ES6("", "({ [1 + 2]() {}})['3'].name");
+        Utils.assertWithAllModes_ES6("", "o = { [1 + 2]() {} }; o['3'].name");
     }
 
     @Test
     void methodGenerators() {
-        Utils.assertWithAllModes_ES6("x", "({*x() {}}).x.name");
+        Utils.assertWithAllModes_ES6("x", "o = { *x() {} }; o.x.name");
     }
 
     @Test
     void getter() {
         Utils.assertWithAllModes_ES6(
                 "get x",
-                "var o = {get x(){}}; var desc = Object.getOwnPropertyDescriptor(o, \"x\"); desc.get.name");
+                "var o = { get x(){} }; var desc = Object.getOwnPropertyDescriptor(o, \"x\"); desc.get.name");
     }
 
     @Test
     void setter() {
         Utils.assertWithAllModes_ES6(
                 "set x",
-                "var o = {set x(v){}}; var desc = Object.getOwnPropertyDescriptor(o, \"x\"); desc.set.name");
+                "var o = { set x(v){} }; var desc = Object.getOwnPropertyDescriptor(o, \"x\"); desc.set.name");
     }
 }
