@@ -2381,14 +2381,13 @@ public final class IRFactory {
         throw Kit.codeBug();
     }
 
-    /** Infer function name is missing on rhs. In the future, will also handle class names. */
+    /** Infer function name is missing on rhs. In the future, should also handle class names. */
     private void inferNameIfMissing(Object left, Node right, String prefix) {
         if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
             var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
             FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
             if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
                 Name name = (Name) left;
-
                 if (prefix != null) {
                     functionNode.setFunctionName(name.withPrefix(prefix));
                 } else {
