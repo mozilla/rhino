@@ -814,12 +814,12 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
         String path = ScriptRuntime.toString(args[0]);
-        String charCoding = null;
+        Charset charset = Charset.defaultCharset();
         if (args.length >= 2) {
-            charCoding = ScriptRuntime.toString(args[1]);
+            charset = Charset.forName(ScriptRuntime.toString(args[1]));
         }
-        try {
-            return readUrl(path, charCoding, true);
+        try (InputStream is = new FileInputStream(path)){
+            return new String(is.readAllBytes(), charset);
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -844,13 +844,13 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readUrl.bad.args");
         }
         String url = ScriptRuntime.toString(args[0]);
-        String charCoding = null;
+        Charset charset = Charset.defaultCharset();
         if (args.length >= 2) {
-            charCoding = ScriptRuntime.toString(args[1]);
+            charset = Charset.forName(ScriptRuntime.toString(args[1]));
         }
 
-        try {
-            return readUrl(url, charCoding, false);
+        try (InputStream is = new URL(url).openStream()){
+            return new String(is.readAllBytes(), charset);
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -1071,11 +1071,6 @@ public class Global extends ImporterTopLevel {
         return os;
     }
 
-    private static String readUrl(String filePath, String charCoding, boolean urlIsFile)
-            throws IOException {
-      return "test";
-    }
-
     /**
      * The readline reads one line from the standard input. "Prompt" is optional.
      *
@@ -1133,24 +1128,6 @@ public class Global extends ImporterTopLevel {
 
     private static String readReader(Reader reader) throws IOException {
         return readReader(reader, 4096);
-    }
-
-    private static String readReader(Reader reader, int initialBufferSize) throws IOException {
-        char[] buffer = new char[initialBufferSize];
-        int offset = 0;
-        for (; ; ) {
-            int n = reader.read(buffer, offset, buffer.length - offset);
-            if (n < 0) {
-                break;
-            }
-            offset += n;
-            if (offset == buffer.length) {
-                char[] tmp = new char[buffer.length * 2];
-                System.arraycopy(buffer, 0, tmp, 0, offset);
-                buffer = tmp;
-            }
-        }
-        return new String(buffer, 0, offset);
     }
 
     static RuntimeException reportRuntimeError(String msgId) {
