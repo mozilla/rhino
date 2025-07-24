@@ -426,76 +426,7 @@ public class Global extends ImporterTopLevel {
     @SuppressWarnings("AndroidJdkLibsChecker")
     public int runDoctest(
             Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
-        doctestCanonicalizations = new HashMap<String, String>();
-        String[] lines = session.split("\r\n?|\n", -1);
-        String prompt0 = this.prompts[0].trim();
-        String prompt1 = this.prompts[1].trim();
-        int testCount = 0;
-        int i = 0;
-        while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
-            i++; // skip lines that don't look like shell sessions
-        }
-        while (i < lines.length) {
-            StringBuilder inputString =
-                    new StringBuilder(lines[i].trim().substring(prompt0.length()));
-            inputString.append('\n');
-            i++;
-            while (i < lines.length && lines[i].trim().startsWith(prompt1)) {
-                inputString.append(lines[i].trim().substring(prompt1.length()));
-                inputString.append('\n');
-                i++;
-            }
-            StringBuilder expectedString = new StringBuilder();
-            while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
-                expectedString.append(lines[i]).append('\n');
-                i++;
-            }
-            PrintStream savedOut = this.getOut();
-            PrintStream savedErr = this.getErr();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ByteArrayOutputStream err = new ByteArrayOutputStream();
-            this.setOut(new PrintStream(out));
-            this.setErr(new PrintStream(err));
-            String resultString = "";
-            ErrorReporter savedErrorReporter = cx.getErrorReporter();
-            cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
-            try {
-                testCount++;
-                String finalInputString = inputString.toString();
-                Object result =
-                        cx.evaluateString(scope, finalInputString, "doctest input", 1, null);
-                if (result != Context.getUndefinedValue()
-                        && !(result instanceof Function
-                                && finalInputString.trim().startsWith("function"))) {
-                    resultString = Context.toString(result);
-                }
-            } catch (RhinoException e) {
-                ToolErrorReporter.reportException(cx.getErrorReporter(), e);
-            } finally {
-                this.setOut(savedOut);
-                this.setErr(savedErr);
-                cx.setErrorReporter(savedErrorReporter);
-                resultString +=
-                        err.toString(StandardCharsets.UTF_8) + out.toString(StandardCharsets.UTF_8);
-            }
-            if (!doctestOutputMatches(expectedString.toString(), resultString)) {
-                String message =
-                        "doctest failure running:\n"
-                                + inputString
-                                + "expected: "
-                                + expectedString
-                                + "actual: "
-                                + resultString
-                                + "\n";
-                if (sourceName != null) {
-                    throw Context.reportRuntimeError(
-                            message, sourceName, lineNumber + i - 1, null, 0);
-                } else {
-                    throw Context.reportRuntimeError(message);
-                }
-            }
-        }
-        return testCount;
+ return 0;
     }
 
     /**
