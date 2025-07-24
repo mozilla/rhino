@@ -788,9 +788,17 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
         String path = ScriptRuntime.toString(args[0]);
-        Charset charSet = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
+        Charset charset = args.length < 2 ? Charset.defaultCharset() : Charset.forName(ScriptRuntime.toString(args[1]));
         try {
-            return readUrl(path, charSet, true);
+            File f = new File(path);
+            if (!f.exists()) {
+                throw new FileNotFoundException("File not found: " + path);
+            } else if (!f.canRead()) {
+                throw new IOException("Cannot read file: " + path);
+            }
+            try (InputStream is = new FileInputStream(f)) {
+                return new String(is.readAllBytes(), charset);
+            }
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -815,10 +823,24 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readUrl.bad.args");
         }
         String url = ScriptRuntime.toString(args[0]);
-        Charset charSet = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
+        Charset charset = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
 
         try {
-            return readUrl(url, charSet, false);
+            URL urlObj = new URL(url);
+            URLConnection uc = urlObj.openConnection();
+            try (InputStream is = uc.getInputStream()) {
+
+                if (charset == null) {
+                    String type = uc.getContentType();
+                    if (type != null) {
+                        charset = getCharsetFromType(type);
+                    }
+                }
+                if (charset == null) {
+                    charset = Charset.defaultCharset();
+                }
+                return new String(is.readAllBytes(), charset);
+            }
         } catch (IOException e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
@@ -1037,42 +1059,6 @@ public class Global extends ImporterTopLevel {
             }
         }
         return os;
-    }
-
-    private static String readUrl(String filePath, Charset charset, boolean urlIsFile)
-            throws IOException {
-
-        if (!urlIsFile) {
-            URL urlObj = new URL(filePath);
-            URLConnection uc = urlObj.openConnection();
-            try (InputStream is = uc.getInputStream()) {
-
-                if (charset == null) {
-                    String type = uc.getContentType();
-                    if (type != null) {
-                        charset = getCharsetFromType(type);
-                    }
-                }
-                if (charset == null) {
-                    charset = Charset.defaultCharset();
-                }
-                return new String(is.readAllBytes(), charset);
-            }
-        } else {
-            File f = new File(filePath);
-            if (!f.exists()) {
-                throw new FileNotFoundException("File not found: " + filePath);
-            } else if (!f.canRead()) {
-                throw new IOException("Cannot read file: " + filePath);
-            }
-            if (charset == null) {
-                charset = Charset.defaultCharset();
-            }
-            try (InputStream is = new FileInputStream(f)) {
-
-                return new String(is.readAllBytes(), charset);
-            }
-        }
     }
 
     /**
