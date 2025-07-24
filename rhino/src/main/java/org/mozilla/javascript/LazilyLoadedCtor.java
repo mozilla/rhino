@@ -144,7 +144,11 @@ public final class LazilyLoadedCtor implements Serializable {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
-                Object value = ScriptableObject.buildClassCtor(scope, cl, sealed, false);
+                if (LcBridge.instance == null) {
+                    throw new IllegalStateException(
+                            "LiveConnect for " + className + "." + propertyName + " not present");
+                }
+                Object value = LcBridge.instance.buildClassCtor(scope, cl, sealed, false);
                 if (value != null) {
                     return value;
                 }

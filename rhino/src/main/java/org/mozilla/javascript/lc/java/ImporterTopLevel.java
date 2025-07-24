@@ -6,9 +6,16 @@
 
 // API class
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import java.util.ArrayList;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
 
 /**
  * Class ImporterTopLevel

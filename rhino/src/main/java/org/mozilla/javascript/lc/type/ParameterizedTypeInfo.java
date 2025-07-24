@@ -2,8 +2,8 @@ package org.mozilla.javascript.lc.type;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
-import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.java.FunctionObject;
 
 /**
  * a {@link TypeInfo} implementation representing {@link ParameterizedType}

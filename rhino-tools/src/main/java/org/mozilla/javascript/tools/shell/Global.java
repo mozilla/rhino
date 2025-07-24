@@ -37,7 +37,6 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Function;
-import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.RhinoException;
@@ -52,6 +51,7 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
 import org.mozilla.javascript.commonjs.module.provider.SoftCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.lc.java.ImporterTopLevel;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
 import org.mozilla.javascript.tools.ToolErrorReporter;
@@ -108,35 +108,144 @@ public class Global extends ImporterTopLevel {
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
         NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
-        String[] names = {
-            "defineClass",
-            "deserialize",
-            "doctest",
-            "gc",
-            "help",
-            "load",
-            "loadClass",
-            "print",
-            "quit",
-            "readline",
-            "readFile",
-            "readUrl",
-            "runCommand",
-            "seal",
-            "serialize",
-            "spawn",
-            "sync",
-            "toint32",
-            "version",
-            "write"
-        };
-        defineFunctionProperties(names, Global.class, ScriptableObject.DONTENUM);
+
+        defineProperty(
+                this,
+                "defineClass",
+                1,
+                Global::defineClass,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "deserialize",
+                1,
+                Global::deserialize,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "doctest",
+                1,
+                Global::doctest,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "gc",
+                0,
+                Global::gc,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "help",
+                0,
+                Global::help,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "load",
+                1,
+                Global::load,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "loadClass",
+                1,
+                Global::loadClass,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "print",
+                0,
+                Global::print,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "quit",
+                0,
+                Global::quit,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "readline",
+                0,
+                Global::readline,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "readFile",
+                0,
+                Global::readFile,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "readUrl",
+                0,
+                Global::readUrl,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "runCommand",
+                0,
+                Global::runCommand,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "seal",
+                0,
+                Global::seal,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "serialize",
+                2,
+                Global::serialize,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "spawn",
+                0,
+                Global::spawn,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "sync",
+                0,
+                Global::sync,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "version",
+                0,
+                Global::version,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        defineProperty(
+                this,
+                "write",
+                0,
+                Global::write,
+                ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
-        Environment.defineClass(this);
-        Environment environment = new Environment(this);
-        defineProperty("environment", environment, ScriptableObject.DONTENUM);
+        Environment.init(cx, this, false);
 
         history = (NativeArray) cx.newArray(this, 0);
         defineProperty("history", history, ScriptableObject.DONTENUM);
@@ -179,13 +288,15 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public static void help(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        PrintStream out = getInstance(funObj).getOut();
+    private static Object help(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        PrintStream out = getInstance(scope).getOut();
         out.println(ToolErrorReporter.getMessage("msg.help"));
+        return Undefined.instance;
     }
 
-    public static void gc(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         System.gc();
+        return Undefined.instance;
     }
 
     /**
@@ -195,17 +306,17 @@ public class Global extends ImporterTopLevel {
      * "varargs" form, which allows it to handle an arbitrary number of arguments supplied to the
      * JavaScript function.
      */
-    public static Object print(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        return doPrint(args, funObj, true);
+    private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return doPrint(args, scope, true);
     }
 
     /** Print just as in "print," but without the trailing newline. */
-    public static Object write(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        return doPrint(args, funObj, false);
+    private static Object write(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return doPrint(args, scope, false);
     }
 
-    private static Object doPrint(Object[] args, Function funObj, boolean newline) {
-        PrintStream out = getInstance(funObj).getOut();
+    private static Object doPrint(Object[] args, Scriptable scope, boolean newline) {
+        PrintStream out = getInstance(scope).getOut();
         for (int i = 0; i < args.length; i++) {
             if (i > 0) out.print(" ");
 
@@ -225,12 +336,13 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public static void quit(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Global global = getInstance(funObj);
+    private static Object quit(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Global global = getInstance(scope);
         if (global.quitAction != null) {
             int exitCode = (args.length == 0 ? 0 : ScriptRuntime.toInt32(args[0]));
             global.quitAction.quit(cx, exitCode);
         }
+        return Undefined.instance;
     }
 
     /**
@@ -238,7 +350,7 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public static double version(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static double version(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);
@@ -251,7 +363,7 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      */
-    public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object load(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (Object arg : args) {
             String file = Context.toString(arg);
             try {
@@ -268,6 +380,7 @@ public class Global extends ImporterTopLevel {
                 throw Context.reportRuntimeError(msg);
             }
         }
+        return Undefined.instance;
     }
 
     /**
@@ -276,20 +389,27 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      *
-     * @exception IllegalAccessException if access is not available to a reflected class member
-     * @exception InstantiationException if unable to instantiate the named class
-     * @exception InvocationTargetException if an exception is thrown during execution of methods of
-     *     the named class
+     * @exception org.mozilla.javascript.WrappedException IllegalAccessException if access is not
+     *     available to a reflected class member
+     * @exception org.mozilla.javascript.WrappedException InstantiationException if unable to
+     *     instantiate the named class
+     * @exception org.mozilla.javascript.WrappedException InvocationTargetException if an exception
+     *     is thrown during execution of methods of the named class
      * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
      */
     @SuppressWarnings({"unchecked"})
-    public static void defineClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IllegalAccessException, InstantiationException, InvocationTargetException {
+    private static Object defineClass(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Class<?> clazz = getClass(args);
         if (!Scriptable.class.isAssignableFrom(clazz)) {
             throw reportRuntimeError("msg.must.implement.Scriptable");
         }
-        ScriptableObject.defineClass(thisObj, (Class<? extends Scriptable>) clazz);
+        try {
+            ScriptableObject.defineClass(thisObj, (Class<? extends Scriptable>) clazz);
+        } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
+        }
+        return Undefined.instance;
     }
 
     /**
@@ -299,20 +419,28 @@ public class Global extends ImporterTopLevel {
      * single argument is expected. This argument should be the name of a class that implements the
      * Script interface, as will any script compiled by jsc.
      *
-     * @exception IllegalAccessException if access is not available to the class
-     * @exception InstantiationException if unable to instantiate the named class
+     * @exception org.mozilla.javascript.WrappedException IllegalAccessException if access is not
+     *     available to the class
+     * @exception org.mozilla.javascript.WrappedException InstantiationException if unable to
+     *     instantiate the named class
      */
-    public static void loadClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IllegalAccessException,
-                    InstantiationException,
-                    NoSuchMethodException,
-                    InvocationTargetException {
+    private static Object loadClass(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Class<?> clazz = getClass(args);
         if (!Script.class.isAssignableFrom(clazz)) {
             throw reportRuntimeError("msg.must.implement.Script");
         }
-        Script script = (Script) clazz.getDeclaredConstructor().newInstance();
+        Script script = null;
+        try {
+            script = (Script) clazz.getDeclaredConstructor().newInstance();
+        } catch (IllegalAccessException
+                | InstantiationException
+                | NoSuchMethodException
+                | InvocationTargetException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
+        }
         script.exec(cx, thisObj, thisObj);
+        return Undefined.instance;
     }
 
     private static Class<?> getClass(Object[] args) {
@@ -332,8 +460,8 @@ public class Global extends ImporterTopLevel {
         }
     }
 
-    public static void serialize(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException {
+    private static Object serialize(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 2) {
             throw Context.reportRuntimeError(
                     "Expected an object to serialize and a filename to write "
@@ -341,25 +469,32 @@ public class Global extends ImporterTopLevel {
         }
         Object obj = args[0];
         String filename = Context.toString(args[1]);
-        FileOutputStream fos = new FileOutputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
-        try (ScriptableOutputStream out = new ScriptableOutputStream(fos, scope)) {
-            out.writeObject(obj);
+        try {
+            FileOutputStream fos = new FileOutputStream(filename);
+            Scriptable topLevelScope = ScriptableObject.getTopLevelScope(thisObj);
+            try (ScriptableOutputStream out = new ScriptableOutputStream(fos, topLevelScope)) {
+                out.writeObject(obj);
+            }
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
+        return Undefined.instance;
     }
 
-    public static Object deserialize(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException, ClassNotFoundException {
+    private static Object deserialize(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) {
             throw Context.reportRuntimeError("Expected a filename to read the serialization from");
         }
         String filename = Context.toString(args[0]);
         try (FileInputStream fis = new FileInputStream(filename)) {
-            Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
-            try (ObjectInputStream in = new ScriptableInputStream(fis, scope)) {
+            Scriptable topLevelScope = ScriptableObject.getTopLevelScope(thisObj);
+            try (ObjectInputStream in = new ScriptableInputStream(fis, topLevelScope)) {
                 Object deserialized = in.readObject();
-                return Context.toObject(deserialized, scope);
+                return Context.toObject(deserialized, topLevelScope);
             }
+        } catch (ClassNotFoundException | IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
     }
 
@@ -389,12 +524,12 @@ public class Global extends ImporterTopLevel {
      * Example: doctest("js&gt; function f() {\n &gt; return 3;\n &gt; }\njs&gt; f();\n3\n");
      * returns 2 (since 2 tests were executed).
      */
-    public static Object doctest(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object doctest(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
             return Boolean.FALSE;
         }
         String session = Context.toString(args[0]);
-        Global global = getInstance(funObj);
+        Global global = getInstance(scope);
         return global.runDoctest(cx, global, session, null, 0);
     }
 
@@ -524,8 +659,7 @@ public class Global extends ImporterTopLevel {
      * <p>js&gt; function g() { a = 7; } js&gt; a = 3; 3 js&gt; spawn(g) Thread[Thread-1,5,main]
      * js&gt; a 3
      */
-    public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Scriptable scope = funObj.getParentScope();
+    private static Object spawn(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Runner runner;
         if (args.length != 0 && args[0] instanceof Function) {
             Object[] newArgs = null;
@@ -555,7 +689,7 @@ public class Global extends ImporterTopLevel {
      * print("exit"); })}; js&gt; spawn(function() {o.f(5);}); Thread[Thread-0,5,main] entry js&gt;
      * spawn(function() {o.f(5);}); Thread[Thread-1,5,main] js&gt; exit entry exit
      */
-    public static Object sync(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object sync(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length >= 1 && args.length <= 2 && args[0] instanceof Function) {
             Object syncObject = null;
             if (args.length == 2 && args[1] != Undefined.instance) {
@@ -603,8 +737,8 @@ public class Global extends ImporterTopLevel {
      * </ul>
      */
     @SuppressWarnings("AndroidJdkLibsChecker")
-    public static Object runCommand(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException {
+    private static Object runCommand(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         int L = args.length;
         if (L == 0 || (L == 1 && args[0] instanceof Scriptable)) {
             throw reportRuntimeError("msg.runCommand.bad.args");
@@ -617,106 +751,112 @@ public class Global extends ImporterTopLevel {
         String[] environment = null;
         Scriptable params = null;
         Object[] addArgs = null;
-        if (args[L - 1] instanceof Scriptable) {
-            params = (Scriptable) args[L - 1];
-            --L;
-            Object envObj = ScriptableObject.getProperty(params, "env");
-            if (envObj != Scriptable.NOT_FOUND) {
-                if (envObj == null) {
-                    environment = new String[0];
-                } else {
-                    if (!(envObj instanceof Scriptable)) {
-                        throw reportRuntimeError("msg.runCommand.bad.env");
-                    }
-                    Scriptable envHash = (Scriptable) envObj;
-                    Object[] ids = ScriptableObject.getPropertyIds(envHash);
-                    environment = new String[ids.length];
-                    for (int i = 0; i != ids.length; ++i) {
-                        Object keyObj = ids[i], val;
-                        String key;
-                        if (keyObj instanceof String) {
-                            key = (String) keyObj;
-                            val = ScriptableObject.getProperty(envHash, key);
-                        } else {
-                            int ikey = ((Number) keyObj).intValue();
-                            key = Integer.toString(ikey);
-                            val = ScriptableObject.getProperty(envHash, ikey);
+        try {
+            if (args[L - 1] instanceof Scriptable) {
+                params = (Scriptable) args[L - 1];
+                --L;
+                Object envObj = ScriptableObject.getProperty(params, "env");
+                if (envObj != Scriptable.NOT_FOUND) {
+                    if (envObj == null) {
+                        environment = new String[0];
+                    } else {
+                        if (!(envObj instanceof Scriptable)) {
+                            throw reportRuntimeError("msg.runCommand.bad.env");
                         }
-                        if (val == ScriptableObject.NOT_FOUND) {
-                            val = Undefined.instance;
+                        Scriptable envHash = (Scriptable) envObj;
+                        Object[] ids = ScriptableObject.getPropertyIds(envHash);
+                        environment = new String[ids.length];
+                        for (int i = 0; i != ids.length; ++i) {
+                            Object keyObj = ids[i], val;
+                            String key;
+                            if (keyObj instanceof String) {
+                                key = (String) keyObj;
+                                val = ScriptableObject.getProperty(envHash, key);
+                            } else {
+                                int ikey = ((Number) keyObj).intValue();
+                                key = Integer.toString(ikey);
+                                val = ScriptableObject.getProperty(envHash, ikey);
+                            }
+                            if (val == ScriptableObject.NOT_FOUND) {
+                                val = Undefined.instance;
+                            }
+                            environment[i] = key + '=' + ScriptRuntime.toString(val);
                         }
-                        environment[i] = key + '=' + ScriptRuntime.toString(val);
                     }
                 }
-            }
-            Object wdObj = ScriptableObject.getProperty(params, "dir");
-            if (wdObj != Scriptable.NOT_FOUND) {
-                wd = new File(ScriptRuntime.toString(wdObj));
-            }
+                Object wdObj = ScriptableObject.getProperty(params, "dir");
+                if (wdObj != Scriptable.NOT_FOUND) {
+                    wd = new File(ScriptRuntime.toString(wdObj));
+                }
 
-            Object inObj = ScriptableObject.getProperty(params, "input");
-            if (inObj != Scriptable.NOT_FOUND) {
-                in = toInputStream(inObj);
-            }
-            outObj = ScriptableObject.getProperty(params, "output");
-            if (outObj != Scriptable.NOT_FOUND) {
-                out = toOutputStream(outObj);
-                if (out == null) {
-                    outBytes = new ByteArrayOutputStream();
-                    out = outBytes;
+                Object inObj = ScriptableObject.getProperty(params, "input");
+                if (inObj != Scriptable.NOT_FOUND) {
+                    in = toInputStream(inObj);
+                }
+                outObj = ScriptableObject.getProperty(params, "output");
+                if (outObj != Scriptable.NOT_FOUND) {
+                    out = toOutputStream(outObj);
+                    if (out == null) {
+                        outBytes = new ByteArrayOutputStream();
+                        out = outBytes;
+                    }
+                }
+                errObj = ScriptableObject.getProperty(params, "err");
+                if (errObj != Scriptable.NOT_FOUND) {
+                    err = toOutputStream(errObj);
+                    if (err == null) {
+                        errBytes = new ByteArrayOutputStream();
+                        err = errBytes;
+                    }
+                }
+                Object addArgsObj = ScriptableObject.getProperty(params, "args");
+                if (addArgsObj != Scriptable.NOT_FOUND) {
+                    Scriptable s = Context.toObject(addArgsObj, getTopLevelScope(thisObj));
+                    addArgs = cx.getElements(s);
                 }
             }
-            errObj = ScriptableObject.getProperty(params, "err");
-            if (errObj != Scriptable.NOT_FOUND) {
-                err = toOutputStream(errObj);
-                if (err == null) {
-                    errBytes = new ByteArrayOutputStream();
-                    err = errBytes;
+            Global global = getInstance(scope);
+            if (out == null) {
+                out = global.getOut();
+            }
+            if (err == null) {
+                err = global.getErr();
+            }
+            // If no explicit input stream, do not send any input to process,
+            // in particular, do not use System.in to avoid deadlocks
+            // when waiting for user input to send to process which is already
+            // terminated as it is not always possible to interrupt read method.
+
+            String[] cmd = new String[(addArgs == null) ? L : L + addArgs.length];
+            for (int i = 0; i != L; ++i) {
+                cmd[i] = ScriptRuntime.toString(args[i]);
+            }
+            if (addArgs != null) {
+                for (int i = 0; i != addArgs.length; ++i) {
+                    cmd[L + i] = ScriptRuntime.toString(addArgs[i]);
                 }
             }
-            Object addArgsObj = ScriptableObject.getProperty(params, "args");
-            if (addArgsObj != Scriptable.NOT_FOUND) {
-                Scriptable s = Context.toObject(addArgsObj, getTopLevelScope(thisObj));
-                addArgs = cx.getElements(s);
+
+            int exitCode = runProcess(cmd, environment, wd, in, out, err);
+            if (outBytes != null) {
+                String s =
+                        ScriptRuntime.toString(outObj) + outBytes.toString(StandardCharsets.UTF_8);
+                ScriptableObject.putProperty(params, "output", s);
             }
-        }
-        Global global = getInstance(funObj);
-        if (out == null) {
-            out = global.getOut();
-        }
-        if (err == null) {
-            err = global.getErr();
-        }
-        // If no explicit input stream, do not send any input to process,
-        // in particular, do not use System.in to avoid deadlocks
-        // when waiting for user input to send to process which is already
-        // terminated as it is not always possible to interrupt read method.
-
-        String[] cmd = new String[(addArgs == null) ? L : L + addArgs.length];
-        for (int i = 0; i != L; ++i) {
-            cmd[i] = ScriptRuntime.toString(args[i]);
-        }
-        if (addArgs != null) {
-            for (int i = 0; i != addArgs.length; ++i) {
-                cmd[L + i] = ScriptRuntime.toString(addArgs[i]);
+            if (errBytes != null) {
+                String s =
+                        ScriptRuntime.toString(errObj) + errBytes.toString(StandardCharsets.UTF_8);
+                ScriptableObject.putProperty(params, "err", s);
             }
-        }
 
-        int exitCode = runProcess(cmd, environment, wd, in, out, err);
-        if (outBytes != null) {
-            String s = ScriptRuntime.toString(outObj) + outBytes.toString(StandardCharsets.UTF_8);
-            ScriptableObject.putProperty(params, "output", s);
+            return exitCode;
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
-        if (errBytes != null) {
-            String s = ScriptRuntime.toString(errObj) + errBytes.toString(StandardCharsets.UTF_8);
-            ScriptableObject.putProperty(params, "err", s);
-        }
-
-        return exitCode;
     }
 
     /** The seal function seals all supplied arguments. */
-    public static void seal(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    private static Object seal(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
             if (!(arg instanceof ScriptableObject) || arg == Undefined.instance) {
@@ -732,6 +872,7 @@ public class Global extends ImporterTopLevel {
             Object arg = args[i];
             ((ScriptableObject) arg).sealObject();
         }
+        return Undefined.instance;
     }
 
     /**
@@ -747,8 +888,8 @@ public class Global extends ImporterTopLevel {
      *
      * The first form converts file's context to string using the default character coding.
      */
-    public static Object readFile(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException {
+    private static Object readFile(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
@@ -757,8 +898,11 @@ public class Global extends ImporterTopLevel {
         if (args.length >= 2) {
             charCoding = ScriptRuntime.toString(args[1]);
         }
-
-        return readUrl(path, charCoding, true);
+        try {
+            return readUrl(path, charCoding, true);
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
+        }
     }
 
     /**
@@ -775,8 +919,7 @@ public class Global extends ImporterTopLevel {
      *
      * The first form converts file's context to string using the default charCoding.
      */
-    public static Object readUrl(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException {
+    private static Object readUrl(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
             throw reportRuntimeError("msg.shell.readUrl.bad.args");
         }
@@ -786,7 +929,11 @@ public class Global extends ImporterTopLevel {
             charCoding = ScriptRuntime.toString(args[1]);
         }
 
-        return readUrl(url, charCoding, false);
+        try {
+            return readUrl(url, charCoding, false);
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
+        }
     }
 
     /** Convert the argument to int32 number. */
@@ -845,11 +992,12 @@ public class Global extends ImporterTopLevel {
         sealedStdLib = value;
     }
 
-    private static Global getInstance(Function function) {
-        Scriptable scope = function.getParentScope();
-        if (!(scope instanceof Global))
+    private static Global getInstance(Scriptable scope) {
+        Scriptable ret = scope;
+        while (!(ret instanceof Global) && ret != null) ret = ret.getParentScope();
+        if (!(ret instanceof Global))
             throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
-        return (Global) scope;
+        return (Global) ret;
     }
 
     /**
@@ -1060,14 +1208,17 @@ public class Global extends ImporterTopLevel {
      * readline(prompt)
      * </pre>
      */
-    public static Object readline(Context cx, Scriptable thisObj, Object[] args, Function funObj)
-            throws IOException {
-        Global self = getInstance(funObj);
-
-        if (args.length > 0) {
-            return self.console.readLine(Context.toString(args[0]));
+    private static Object readline(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Global self = getInstance(scope);
+        try {
+            if (args.length > 0) {
+                return self.console.readLine(Context.toString(args[0]));
+            }
+            return self.console.readLine();
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
-        return self.console.readLine();
     }
 
     private static String getCharCodingFromType(String type) {

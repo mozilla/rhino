@@ -146,39 +146,12 @@ public class AccessorSlot extends Slot {
         return setter.isSameSetterFunction(function);
     }
 
-    interface Getter {
+    public interface Getter {
         Object getValue(Scriptable start);
 
         Function asGetterFunction(final String name, final Scriptable scope);
 
         boolean isSameGetterFunction(Object getter);
-    }
-
-    /** This is a Getter that delegates to a Java function via a MemberBox. */
-    static final class MemberBoxGetter implements Getter {
-        final MemberBox member;
-
-        MemberBoxGetter(MemberBox member) {
-            this.member = member;
-        }
-
-        @Override
-        public Object getValue(Scriptable start) {
-            if (member.delegateTo == null) {
-                return member.invoke(start, ScriptRuntime.emptyArgs);
-            }
-            return member.invoke(member.delegateTo, new Object[] {start});
-        }
-
-        @Override
-        public Function asGetterFunction(String name, Scriptable scope) {
-            return member.asGetterFunction(name, scope);
-        }
-
-        @Override
-        public boolean isSameGetterFunction(Object function) {
-            return member.isSameGetterFunction(function);
-        }
     }
 
     /** This is a getter that delegates to a JavaScript function. */
@@ -212,50 +185,12 @@ public class AccessorSlot extends Slot {
         }
     }
 
-    interface Setter {
+    public interface Setter {
         boolean setValue(Object value, Scriptable owner, Scriptable start);
 
         Function asSetterFunction(final String name, final Scriptable scope);
 
         boolean isSameSetterFunction(Object getter);
-    }
-
-    /** Invoke the setter on this slot via reflection using MemberBox. */
-    static final class MemberBoxSetter implements Setter {
-        final MemberBox member;
-
-        MemberBoxSetter(MemberBox member) {
-            this.member = member;
-        }
-
-        @Override
-        public boolean setValue(Object value, Scriptable owner, Scriptable start) {
-            Context cx = Context.getContext();
-            var pTypes = member.getArgTypes();
-            // XXX: cache tag since it is already calculated in
-            // defineProperty ?
-            var valueType = pTypes.get(pTypes.size() - 1);
-            boolean isNullable = member.getArgNullability().isNullable(pTypes.size() - 1);
-            int tag = valueType.getTypeTag();
-            Object actualArg = FunctionObject.convertArg(cx, start, value, tag, isNullable);
-
-            if (member.delegateTo == null) {
-                member.invoke(start, new Object[] {actualArg});
-            } else {
-                member.invoke(member.delegateTo, new Object[] {start, actualArg});
-            }
-            return true;
-        }
-
-        @Override
-        public Function asSetterFunction(String name, Scriptable scope) {
-            return member.asSetterFunction(name, scope);
-        }
-
-        @Override
-        public boolean isSameSetterFunction(Object function) {
-            return member.isSameSetterFunction(function);
-        }
     }
 
     /**

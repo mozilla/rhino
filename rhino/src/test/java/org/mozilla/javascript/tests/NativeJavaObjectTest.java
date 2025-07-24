@@ -12,8 +12,8 @@ import static org.junit.Assert.assertTrue;
 import java.math.BigInteger;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.lc.java.NativeJavaObject;
 
 public class NativeJavaObjectTest {
 

@@ -4,12 +4,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashSet;
 import java.util.Set;
+import org.mozilla.javascript.ClassShutter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JavaEquals;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.WrapFactory;
 
 /**
  * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
@@ -22,7 +30,7 @@ import java.util.Set;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-public class NativeJavaPackage extends ScriptableObject {
+public class NativeJavaPackage extends ScriptableObject implements JavaEquals {
     private static final long serialVersionUID = 7445054382212031523L;
 
     NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {

@@ -142,9 +142,12 @@ final class EqualObjectGraphs {
         if (o1 instanceof Wrapper) {
             return o2 instanceof Wrapper
                     && equalGraphs(((Wrapper) o1).unwrap(), ((Wrapper) o2).unwrap());
-        } else if (o1 instanceof NativeJavaTopPackage) {
+        } else if (o1 instanceof StatelessEquals) {
             // stateless objects, must check before Scriptable
-            return o2 instanceof NativeJavaTopPackage;
+            return o2 != null && o1.getClass() == o2.getClass();
+        } else if (o1 instanceof JavaEquals) {
+            // java equals objects, must check before Scriptable
+            return o1.equals(o2);
         } else if (o1 instanceof Scriptable) {
             return o2 instanceof Scriptable && equalScriptables((Scriptable) o1, (Scriptable) o2);
         } else if (o1 instanceof SymbolKey) {
@@ -160,10 +163,6 @@ final class EqualObjectGraphs {
             return o2 instanceof Map<?, ?> && equalMaps((Map<?, ?>) o1, (Map<?, ?>) o2);
         } else if (o1 instanceof Set<?>) {
             return o2 instanceof Set<?> && equalSets((Set<?>) o1, (Set<?>) o2);
-        } else if (o1 instanceof NativeGlobal) {
-            return o2 instanceof NativeGlobal; // stateless objects
-        } else if (o1 instanceof JavaAdapter) {
-            return o2 instanceof JavaAdapter; // stateless objects
         }
 
         // Fallback case for everything else.
@@ -193,8 +192,6 @@ final class EqualObjectGraphs {
             return s2 instanceof NativeContinuation
                     && NativeContinuation.equalImplementations(
                             (NativeContinuation) s1, (NativeContinuation) s2);
-        } else if (s1 instanceof NativeJavaPackage) {
-            return s1.equals(s2); // Overridden appropriately
         } else if (s1 instanceof IdFunctionObject) {
             return s2 instanceof IdFunctionObject
                     && IdFunctionObject.equalObjectGraphs(

@@ -33,8 +33,6 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
-import org.mozilla.javascript.lc.type.TypeInfo;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -453,8 +451,7 @@ public class Context implements Closeable {
      * @see ContextFactory#call(ContextAction)
      */
     public static Context getCurrentContext() {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        return VMBridge.instance.getContext(helper);
+        return ContextHolder.getContext();
     }
 
     /**
@@ -489,8 +486,7 @@ public class Context implements Closeable {
     }
 
     static final Context enter(Context cx, ContextFactory factory) {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context old = VMBridge.instance.getContext(helper);
+        Context old = ContextHolder.getContext();
         if (old != null) {
             cx = old;
         } else {
@@ -510,7 +506,7 @@ public class Context implements Closeable {
                             "can not use Context instance already associated with some thread");
                 }
             }
-            VMBridge.instance.setContext(helper, cx);
+            ContextHolder.setContext(cx);
         }
         ++cx.enterCount;
         return cx;
@@ -527,14 +523,13 @@ public class Context implements Closeable {
      * @see ContextFactory#enterContext()
      */
     public static void exit() {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context cx = VMBridge.instance.getContext(helper);
+        Context cx = ContextHolder.getContext();
         if (cx == null) {
             throw new IllegalStateException("Calling Context.exit without previous Context.enter");
         }
         if (cx.enterCount < 1) Kit.codeBug();
         if (--cx.enterCount == 0) {
-            VMBridge.instance.setContext(helper, null);
+            ContextHolder.clearContext();
             cx.factory.onContextReleased(cx);
         }
     }
@@ -543,8 +538,7 @@ public class Context implements Closeable {
     public void close() {
         if (enterCount < 1) Kit.codeBug();
         if (--enterCount == 0) {
-            Object helper = VMBridge.instance.getThreadContextHelper();
-            VMBridge.instance.setContext(helper, null);
+            ContextHolder.clearContext();
             factory.onContextReleased(this);
         }
     }
@@ -681,7 +675,7 @@ public class Context implements Closeable {
     }
 
     @SuppressWarnings("DoNotCallSuggester")
-    static void onSealedMutation() {
+    public static void onSealedMutation() {
         throw new IllegalStateException();
     }
 
@@ -1006,7 +1000,7 @@ public class Context implements Closeable {
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
-    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+    public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }
@@ -1837,13 +1831,17 @@ public class Context implements Closeable {
      *     the TYPE fields in the corresponding wrapper class in java.lang.
      * @return the converted value
      * @throws EvaluatorException if the conversion cannot be performed
+     * @deprecated please migrate to LiveConnect.jsToJava
      */
+    @Deprecated
     public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
-        return jsToJava(value, TypeInfoFactory.GLOBAL.create(desiredType));
-    }
-
-    public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
-        return NativeJavaObject.coerceTypeImpl(desiredType, value);
+        if (desiredType == Object.class) {
+            return ScriptRuntime.jsToJavaObject(value);
+        }
+        if (desiredType == String.class) {
+            return ScriptRuntime.jsToJavaString(value);
+        }
+        return LcBridge.instance.jsToJava(value, desiredType);
     }
 
     /**
@@ -2134,7 +2132,7 @@ public class Context implements Closeable {
         hasClassShutter = true;
     }
 
-    final synchronized ClassShutter getClassShutter() {
+    public final synchronized ClassShutter getClassShutter() {
         return classShutter;
     }
 
@@ -2206,8 +2204,6 @@ public class Context implements Closeable {
 
     /**
      * @deprecated
-     * @see ClassCache#get(Scriptable)
-     * @see ClassCache#setCachingEnabled(boolean)
      */
     @Deprecated
     public static void setCachingEnabled(boolean cachingEnabled) {}
@@ -2235,7 +2231,7 @@ public class Context implements Closeable {
      */
     public final WrapFactory getWrapFactory() {
         if (wrapFactory == null) {
-            wrapFactory = new WrapFactory();
+            wrapFactory = LcBridge.instance.newWrapFactory();
         }
         return wrapFactory;
     }
@@ -2500,7 +2496,7 @@ public class Context implements Closeable {
     /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
-    static Context getContext() {
+    public static Context getContext() {
         Context cx = getCurrentContext();
         if (cx == null) {
             throw new RuntimeException("No Context associated with current Thread");

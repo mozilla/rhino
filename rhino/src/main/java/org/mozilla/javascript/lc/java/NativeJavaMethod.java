@@ -4,13 +4,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.DecompilerFlag;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
@@ -89,7 +99,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    protected String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
         boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {
@@ -143,7 +153,7 @@ public class NativeJavaMethod extends BaseFunction {
             // marshall the explicit parameters
             Object[] newArgs = new Object[argTypes.size()];
             for (int i = 0; i < argTypes.size() - 1; i++) {
-                newArgs[i] = Context.jsToJava(args[i], argTypes.get(i));
+                newArgs[i] = LiveConnect.jsToJava(args[i], argTypes.get(i));
             }
 
             Object varArgs;
@@ -156,13 +166,15 @@ public class NativeJavaMethod extends BaseFunction {
                             || args[args.length - 1] instanceof NativeJavaArray)) {
                 // convert the ECMA array into a native array
                 varArgs =
-                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
+                        LiveConnect.jsToJava(
+                                args[args.length - 1], argTypes.get(argTypes.size() - 1));
             } else {
                 // marshall the variable parameters
                 var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
                 varArgs = componentType.newArray(args.length - argTypes.size() + 1);
                 for (int i = 0; i < Array.getLength(varArgs); i++) {
-                    Object value = Context.jsToJava(args[argTypes.size() - 1 + i], componentType);
+                    Object value =
+                            LiveConnect.jsToJava(args[argTypes.size() - 1 + i], componentType);
                     Array.set(varArgs, i, value);
                 }
             }
@@ -176,7 +188,7 @@ public class NativeJavaMethod extends BaseFunction {
             Object[] origArgs = args;
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
-                Object coerced = Context.jsToJava(arg, argTypes.get(i));
+                Object coerced = LiveConnect.jsToJava(arg, argTypes.get(i));
                 if (coerced != arg) {
                     if (origArgs == args) {
                         args = args.clone();

@@ -15,6 +15,9 @@
 package org.mozilla.javascript.tools.shell;
 
 import java.util.Map;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.LambdaConstructor;
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -29,25 +32,32 @@ public class Environment extends ScriptableObject {
     static final long serialVersionUID = -430727378460177065L;
 
     private Environment thePrototypeInstance = null;
+    private static final String CLASS_NAME = "Environment";
 
-    public static void defineClass(ScriptableObject scope) {
-        try {
-            ScriptableObject.defineClass(scope, Environment.class);
-        } catch (Exception e) {
-            throw new Error(e.getMessage());
+    static Object init(Context cx, ScriptableObject scope, boolean sealed) {
+        LambdaConstructor ctor = new LambdaConstructor(scope, CLASS_NAME, 1, Environment::new);
+
+        var proto = new NativeArray(0);
+        ctor.setPrototypeScriptable(proto);
+        Environment environment = new Environment(cx, scope, new Object[0]);
+        scope.defineProperty("environment", environment, ScriptableObject.DONTENUM);
+        if (sealed) {
+            ctor.sealObject();
+            ((ScriptableObject) ctor.getPrototypeProperty()).sealObject();
         }
+        return ctor;
     }
 
     @Override
     public String getClassName() {
-        return "Environment";
+        return CLASS_NAME;
     }
 
     public Environment() {
         if (thePrototypeInstance == null) thePrototypeInstance = this;
     }
 
-    public Environment(ScriptableObject scope) {
+    public Environment(Context cx, Scriptable scope, Object[] args) {
         setParentScope(scope);
         Object ctor = ScriptRuntime.getTopLevelProp(scope, "Environment");
         if (ctor != null && ctor instanceof Scriptable) {

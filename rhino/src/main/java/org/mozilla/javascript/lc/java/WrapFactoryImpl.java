@@ -6,19 +6,27 @@
 
 // API class
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.WrapFactory;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
- * and call {@link Context#setWrapFactory(WrapFactory)} Once an instance of this class or an
+ * and call {@link Context#setWrapFactory(WrapFactoryImpl)} Once an instance of this class or an
  * extension of this class is enabled for a given context (by calling setWrapFactory on that
  * context), Rhino will call the methods of this class whenever it needs to wrap a value resulting
  * from a call to a Java method or an access to a Java field.
  *
- * @see org.mozilla.javascript.Context#setWrapFactory(WrapFactory)
+ * @see org.mozilla.javascript.Context#setWrapFactory(WrapFactoryImpl)
  * @since 1.5 Release 4
  */
-public interface WrapFactory {
+public class WrapFactoryImpl implements WrapFactory {
     /**
      * Wrap the object.
      *
@@ -40,7 +48,36 @@ public interface WrapFactory {
      *     class, staticType will be used instead.
      * @return the wrapped value.
      */
-    Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType);
+    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+        if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
+            return obj;
+        }
+        if (staticType != null && staticType.isPrimitive()) {
+            if (staticType == Void.TYPE) return Undefined.instance;
+            if (staticType == Character.TYPE) return Integer.valueOf(((Character) obj).charValue());
+            return obj;
+        }
+        if (!isJavaPrimitiveWrap()) {
+            if (obj instanceof String
+                    || obj instanceof Boolean
+                    || obj instanceof Integer
+                    || obj instanceof Byte
+                    || obj instanceof Short
+                    || obj instanceof Long
+                    || obj instanceof Float
+                    || obj instanceof Double
+                    || obj instanceof BigInteger) {
+                return obj;
+            } else if (obj instanceof Character) {
+                return String.valueOf(((Character) obj).charValue());
+            }
+        }
+        Class<?> cls = obj.getClass();
+        if (cls.isArray()) {
+            return NativeJavaArray.wrap(scope, obj);
+        }
+        return wrapAsJavaObject(cx, scope, obj, staticType);
+    }
 
     /**
      * Wrap an object newly created by a constructor call.
@@ -50,7 +87,16 @@ public interface WrapFactory {
      * @param obj the object to be wrapped
      * @return the wrapped value.
      */
-    Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj);
+    public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj) {
+        if (obj instanceof Scriptable) {
+            return (Scriptable) obj;
+        }
+        Class<?> cls = obj.getClass();
+        if (cls.isArray()) {
+            return NativeJavaArray.wrap(scope, obj);
+        }
+        return wrapAsJavaObject(cx, scope, obj, null);
+    }
 
     /**
      * Wrap Java object as Scriptable instance to allow full access to its methods and fields from
@@ -69,8 +115,15 @@ public interface WrapFactory {
      *     class, staticType will be used instead.
      * @return the wrapped value which shall not be null
      */
-    Scriptable wrapAsJavaObject(
-            Context cx, Scriptable scope, Object javaObject, Class<?> staticType);
+    public Scriptable wrapAsJavaObject(
+            Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
+        if (List.class.isAssignableFrom(javaObject.getClass())) {
+            return new NativeJavaList(scope, javaObject);
+        } else if (Map.class.isAssignableFrom(javaObject.getClass())) {
+            return new NativeJavaMap(scope, javaObject);
+        }
+        return new NativeJavaObject(scope, javaObject, staticType);
+    }
 
     /**
      * Wrap a Java class as Scriptable instance to allow access to its static members and fields and
@@ -84,7 +137,9 @@ public interface WrapFactory {
      * @return the wrapped value which shall not be null
      * @since 1.7R3
      */
-    Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass);
+    public Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass) {
+        return new NativeJavaClass(scope, javaClass);
+    }
 
     /**
      * Return <code>false</code> if result of Java method, which is instance of <code>String</code>,
@@ -94,10 +149,20 @@ public interface WrapFactory {
      * should be wrapped as any other Java object and scripts can access any Java method available
      * in these objects. Use {@link #setJavaPrimitiveWrap(boolean)} to change this.
      */
-    boolean isJavaPrimitiveWrap();
+    public final boolean isJavaPrimitiveWrap() {
+        return javaPrimitiveWrap;
+    }
 
     /**
      * @see #isJavaPrimitiveWrap()
      */
-    void setJavaPrimitiveWrap(boolean value);
+    public final void setJavaPrimitiveWrap(boolean value) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.isSealed()) {
+            Context.onSealedMutation();
+        }
+        javaPrimitiveWrap = value;
+    }
+
+    private boolean javaPrimitiveWrap = true;
 }

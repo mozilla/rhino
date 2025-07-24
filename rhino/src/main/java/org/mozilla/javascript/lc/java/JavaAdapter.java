@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -25,8 +25,25 @@ import java.util.Map;
 import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.IdFunctionCall;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.SecurityUtilities;
+import org.mozilla.javascript.StatelessEquals;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 
-public final class JavaAdapter implements IdFunctionCall {
+public final class JavaAdapter implements IdFunctionCall, StatelessEquals {
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
      * hash table.
@@ -96,7 +113,7 @@ public final class JavaAdapter implements IdFunctionCall {
             // Avoid an error for an undefined value; return null instead.
             return null;
         }
-        return Context.jsToJava(result, c);
+        return LiveConnect.jsToJava(result, c);
     }
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
@@ -642,7 +659,7 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "createAdapterWrapper",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/Object;"
@@ -714,7 +731,7 @@ public final class JavaAdapter implements IdFunctionCall {
         // Run script and save resulting scope
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "runScript",
                 "(Lorg/mozilla/javascript/Script;" + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.ASTORE_1);
@@ -730,7 +747,7 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "createAdapterWrapper",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/Object;"
@@ -889,7 +906,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
                 cfw.addInvoke(
                         ByteCode.INVOKESTATIC,
-                        "org/mozilla/javascript/JavaAdapter",
+                        "org/mozilla/javascript/lc/java/JavaAdapter",
                         "convertResult",
                         "(Ljava/lang/Object;" + "Ljava/lang/Class;" + ")Ljava/lang/Object;");
             }
@@ -927,7 +944,7 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.addPush(methodName);
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "getFunction",
                 "(Lorg/mozilla/javascript/Scriptable;"
                         + "Ljava/lang/String;"
@@ -955,7 +972,7 @@ public final class JavaAdapter implements IdFunctionCall {
         // method in.
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/JavaAdapter",
+                "org/mozilla/javascript/lc/java/JavaAdapter",
                 "callMethod",
                 "(Lorg/mozilla/javascript/ContextFactory;"
                         + "Lorg/mozilla/javascript/Scriptable;"

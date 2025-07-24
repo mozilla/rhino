@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.FunctionObject;
+import org.mozilla.javascript.lc.java.FunctionObject;
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;

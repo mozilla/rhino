@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.lc.java;
 
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
@@ -24,6 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.ClassShutter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
@@ -142,7 +149,7 @@ class JavaMembers {
             // setter to use:
             if (bp.setters == null || value == null) {
                 var setType = bp.setter.getArgTypes().get(0);
-                Object[] args = {Context.jsToJava(value, setType)};
+                Object[] args = {LiveConnect.jsToJava(value, setType)};
                 try {
                     bp.setter.invoke(javaObject, args);
                 } catch (Exception ex) {
@@ -163,7 +170,7 @@ class JavaMembers {
                 throw Context.reportRuntimeErrorById(str, name);
             }
             Field field = (Field) member;
-            Object javaValue = Context.jsToJava(value, field.getType());
+            Object javaValue = LiveConnect.jsToJava(value, field.getType());
             try {
                 field.set(javaObject, javaValue);
             } catch (IllegalAccessException accessEx) {

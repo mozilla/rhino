@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -166,7 +165,9 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        new ClassCache().associate(scope);
+        if (LcBridge.instance != null) {
+            LcBridge.instance.associateClassCache(scope);
+        }
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
         LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
@@ -212,14 +213,14 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        if (LcBridge.instance != null) {
+            LcBridge.instance.init(scope, sealed);
+        }
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
         // to property initialize the prototype.
-        new LazilyLoadedCtor(
-                scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
+        new LazilyLoadedCtor(scope, "Continuation", sealed, true, NativeContinuation::init);
 
         if (cx.hasFeature(Context.FEATURE_E4X)) {
             if (xmlLoaderImpl != null) {
@@ -280,22 +281,27 @@ public class ScriptRuntime {
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                s, "Packages", "org.mozilla.javascript.lc.java.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
+                s, "getClass", "org.mozilla.javascript.lc.java.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+                s, "JavaAdapter", "org.mozilla.javascript.lc.java.JavaAdapter", sealed, true);
+        new LazilyLoadedCtor(
+                s, "JavaImporter", "org.mozilla.javascript.lc.java.ImporterTopLevel", sealed, true);
 
         for (String packageName : getTopPackageNames()) {
             new LazilyLoadedCtor(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                    s,
+                    packageName,
+                    "org.mozilla.javascript.lc.java.NativeJavaTopPackage",
+                    sealed,
+                    true);
         }
 
         return s;
     }
 
-    static String[] getTopPackageNames() {
+    public static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name"))
                 ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
@@ -1014,6 +1020,74 @@ public class ScriptRuntime {
             } else {
                 warnAboutNonJSObject(val);
                 return val.toString();
+            }
+        }
+    }
+
+    public static String jsToJavaString(Object val) {
+        for (; ; ) {
+            if (val == null) {
+                return null;
+            }
+            if (Undefined.isUndefined(val)) {
+                return "undefined";
+            }
+            if (val instanceof String) {
+                return (String) val;
+            }
+            if (val instanceof BigInteger) {
+                return ((BigInteger) val).toString(10);
+            }
+            if (val instanceof Number) {
+                // XXX should we just teach NativeNumber.stringValue()
+                // about Numbers?
+                return numberToString(((Number) val).doubleValue(), 10);
+            }
+            if (val instanceof Scriptable) {
+                // Assert: val is an Object
+                val = toPrimitive(val, StringClass);
+                // Assert: val is a primitive
+            } else if (val instanceof Wrapper) {
+                val = ((Wrapper) val).unwrap();
+            } else {
+                return val.toString();
+            }
+        }
+    }
+
+    public static Object jsToJavaObject(Object val) {
+        for (; ; ) {
+            if (val == null) {
+                return null;
+            }
+            if (Undefined.isUndefined(val)) {
+                return "undefined";
+            }
+
+            if (val instanceof Long) {
+                return val;
+            }
+            if (val instanceof BigInteger) {
+                return val;
+            }
+            if (val instanceof Number) {
+                double d = ((Number) val).doubleValue();
+                Context context = Context.getCurrentContext();
+                if ((context != null)
+                        && context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+                    // to process numbers like 2.0 as 2 without decimal place
+                    long roundedValue = Math.round(d);
+                    if (roundedValue == d) {
+
+                        return Long.valueOf(roundedValue);
+                    }
+                }
+                return Double.valueOf(d);
+            }
+            if (val instanceof Wrapper) {
+                val = ((Wrapper) val).unwrap();
+            } else {
+                return val;
             }
         }
     }
@@ -4689,21 +4763,10 @@ public class ScriptRuntime {
     // ------------------
 
     public static ScriptableObject getGlobal(Context cx) {
-        final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
-        Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
-        if (globalClass != null) {
-            try {
-                Class<?>[] parm = {ScriptRuntime.ContextClass};
-                Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
-                Object[] arg = {cx};
-                return (ScriptableObject) globalClassCtor.newInstance(arg);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                // fall through...
-            }
+        if (LcBridge.instance != null) {
+            return LcBridge.instance.getGlobal(cx);
         }
-        return new ImporterTopLevel(cx);
+        return new TopLevel();
     }
 
     public static boolean hasTopCall(Context cx) {
@@ -5064,26 +5127,27 @@ public class ScriptRuntime {
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
             }
-
-            if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "javaException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
-            }
-            if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-                ScriptableObject.defineProperty(
-                        errorObject,
-                        "rhinoException",
-                        wrap,
-                        ScriptableObject.PERMANENT
-                                | ScriptableObject.READONLY
-                                | ScriptableObject.DONTENUM);
+            if (LcBridge.instance != null) {
+                if (javaException != null && isVisible(cx, javaException)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "javaException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
+                if (isVisible(cx, re)) {
+                    Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                    ScriptableObject.defineProperty(
+                            errorObject,
+                            "rhinoException",
+                            wrap,
+                            ScriptableObject.PERMANENT
+                                    | ScriptableObject.READONLY
+                                    | ScriptableObject.DONTENUM);
+                }
             }
             obj = errorObject;
         }
@@ -5163,26 +5227,27 @@ public class ScriptRuntime {
         if (errorObject instanceof NativeError) {
             ((NativeError) errorObject).setStackProvider(re);
         }
-
-        if (javaException != null && isVisible(cx, javaException)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "javaException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
-        }
-        if (isVisible(cx, re)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-            ScriptableObject.defineProperty(
-                    errorObject,
-                    "rhinoException",
-                    wrap,
-                    ScriptableObject.PERMANENT
-                            | ScriptableObject.READONLY
-                            | ScriptableObject.DONTENUM);
+        if (LcBridge.instance != null) {
+            if (javaException != null && isVisible(cx, javaException)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "javaException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
+            if (isVisible(cx, re)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                ScriptableObject.defineProperty(
+                        errorObject,
+                        "rhinoException",
+                        wrap,
+                        ScriptableObject.PERMANENT
+                                | ScriptableObject.READONLY
+                                | ScriptableObject.DONTENUM);
+            }
         }
         return errorObject;
     }
@@ -6025,7 +6090,7 @@ public class ScriptRuntime {
      * implementations, return null. If there is more than one implementation, throw a fatal
      * exception, since this indicates that the classpath was configured incorrectly.
      */
-    static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
+    public static <T> T loadOneServiceImplementation(Class<T> serviceClass) {
         Iterator<T> it = ServiceLoader.load(serviceClass).iterator();
         if (it.hasNext()) {
             T result = it.next();
