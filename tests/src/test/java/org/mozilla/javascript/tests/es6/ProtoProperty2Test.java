@@ -1224,10 +1224,8 @@ public class ProtoProperty2Test {
                 "false / false / undefined / undefined /  # truetrue / new", script);
         Utils.assertWithAllModes_1_8(
                 "false / false / undefined / undefined /  # truetrue / new", script);
-        // Utils.assertWithAllModes_ES6("true / false / undefined / get __proto__ / set # truetrue /
-        // new", script);
         Utils.assertWithAllModes_ES6(
-                "true / false / undefined / get __proto__ /  # truetrue / new", script);
+                "true / false / undefined / get __proto__ / set # truetrue / new", script);
     }
 
     @Test

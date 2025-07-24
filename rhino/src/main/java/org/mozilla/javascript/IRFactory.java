@@ -2383,18 +2383,24 @@ public final class IRFactory {
 
     /** Infer function name is missing on rhs. In the future, should also handle class names. */
     private void inferNameIfMissing(Object left, Node right, String prefix) {
+        if (parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+            return;
+        }
+
         if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
+            Name name = (Name) left;
+            if (name.getIdentifier().equals("__proto__")) {
+                // Ignore weird edge case
+                return;
+            }
+
             var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
             FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
             if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
-                Name name = (Name) left;
                 if (prefix != null) {
                     functionNode.setFunctionName(name.withPrefix(prefix));
                 } else {
-                    // Ignore weird edge case
-                    if (!name.getIdentifier().equals("__proto__")) {
-                        functionNode.setFunctionName(name);
-                    }
+                    functionNode.setFunctionName(name);
                 }
             }
         }

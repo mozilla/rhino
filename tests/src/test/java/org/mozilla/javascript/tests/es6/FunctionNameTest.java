@@ -129,4 +129,14 @@ class FunctionNameTest {
                 "set x",
                 "var o = { set x(v){} }; var desc = Object.getOwnPropertyDescriptor(o, \"x\"); desc.set.name");
     }
+
+    @Test
+    void protoIsASpecialName() {
+        Utils.assertWithAllModes_ES6("", "var o = { __proto__() {} }; o.__proto__.name");
+    }
+
+    @Test
+    void inferenceIsNotUsedInEs5() {
+        Utils.assertWithAllModes_1_8("", "var f = function() {}; f.name");
+    }
 }
