@@ -50,7 +50,12 @@ public class NativePromise extends ScriptableObject {
         constructor.defineConstructorMethod(
                 scope, "any", 1, NativePromise::any, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "withResolvers", 0, NativePromise::withResolvers, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "withResolvers",
+                0,
+                NativePromise::withResolvers,
+                DONTENUM,
+                DONTENUM | READONLY);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
@@ -316,20 +321,21 @@ public class NativePromise extends ScriptableObject {
     }
 
     // Promise.withResolvers
-    private static Object withResolvers(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object withResolvers(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
-        
+
         // Create a capability which properly constructs a promise with resolve/reject functions
         Capability cap = new Capability(cx, scope, thisObj);
-        
+
         // Create the result object with promise, resolve, and reject properties
         Scriptable result = cx.newObject(scope);
         result.put("promise", result, cap.promise);
         result.put("resolve", result, cap.resolve);
         result.put("reject", result, cap.reject);
-        
+
         return result;
     }
 
