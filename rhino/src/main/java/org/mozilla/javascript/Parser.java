@@ -4028,17 +4028,14 @@ public class Parser {
             case GET_ENTRY:
                 pn.setIsGetterMethod();
                 fn.setFunctionIsGetterMethod();
-                createNameForMethod(fn, propName, "get ");
                 break;
             case SET_ENTRY:
                 pn.setIsSetterMethod();
                 fn.setFunctionIsSetterMethod();
-                createNameForMethod(fn, propName, "set ");
                 break;
             case METHOD_ENTRY:
                 pn.setIsNormalMethod();
                 fn.setFunctionIsNormalMethod();
-                createNameForMethod(fn, propName, "");
                 if (isGenerator) {
                     fn.setIsES6Generator();
                 }
@@ -4056,25 +4053,6 @@ public class Parser {
 
     private Name createNameNode() {
         return createNameNode(false, Token.NAME);
-    }
-
-    private void createNameForMethod(FunctionNode fn, AstNode propName, String prefix) {
-        if (propName instanceof GeneratorMethodDefinition) {
-            // Unwrap
-            propName = ((GeneratorMethodDefinition) propName).getMethodName();
-        }
-        if (propName instanceof ComputedPropertyKey) {
-            // We need to do this at runtime
-            return;
-        }
-
-        String identifier = prefix + propName.toSource();
-
-        Name name = new Name(propName.getPosition(), propName.getLength());
-        name.setIdentifier(identifier);
-        name.setType(propName.getType());
-        name.setLineColumnNumber(propName.getLineno(), propName.getColumn());
-        fn.setFunctionName(name);
     }
 
     /**

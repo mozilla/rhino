@@ -467,7 +467,7 @@ public final class IRFactory {
         try {
             Node transformedRight = transform(right);
             if (shouldTryToInferName) {
-                inferNameIfMissing(node.getLeft(), transformedRight);
+                inferNameIfMissing(node.getLeft(), transformedRight, null);
             }
             return createAssignment(node.getType(), target, transformedRight);
         } finally {
@@ -983,18 +983,19 @@ public final class IRFactory {
                 }
 
                 Node right = transform(prop.getRight());
+                if (inferrableName != null) {
+                    inferNameIfMissing(
+                            inferrableName,
+                            right,
+                            prop.isGetterMethod() ? "get " : prop.isSetterMethod() ? "set " : null);
+                }
+
                 if (prop.isGetterMethod()) {
                     right = createUnary(Token.GET, right);
                 } else if (prop.isSetterMethod()) {
                     right = createUnary(Token.SET, right);
                 } else if (prop.isNormalMethod()) {
                     right = createUnary(Token.METHOD, right);
-                } else {
-                    // Methods/getter/setter have already it set correctly;
-                    // this "if" will infer cases such as "{ ..., x: function() {}, ... }"
-                    if (inferrableName != null) {
-                        inferNameIfMissing(inferrableName, right);
-                    }
                 }
                 object.addChildToBack(right);
             }
@@ -1244,7 +1245,7 @@ public final class IRFactory {
             }
 
             // Infer function name is missing on rhs
-            inferNameIfMissing(left, right);
+            inferNameIfMissing(left, right, null);
 
             if (var.isDestructuring()) {
                 if (right == null) { // TODO:  should this ever happen?
@@ -1457,7 +1458,7 @@ public final class IRFactory {
             propagateRequiresArgumentObjectFromNestedArrowFunctions(fnNode);
         }
 
-        if (functionType == FunctionNode.FUNCTION_EXPRESSION && !fnNode.isMethod()) {
+        if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
             Name name = fnNode.getFunctionName();
             if (name != null
                     && name.length() != 0
@@ -2382,12 +2383,21 @@ public final class IRFactory {
     }
 
     /** Infer function name is missing on rhs. In the future, will also handle class names. */
-    private void inferNameIfMissing(Object left, Node right) {
+    private void inferNameIfMissing(Object left, Node right, String prefix) {
         if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
             var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
             FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
             if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
-                functionNode.setFunctionName((Name) left);
+                Name name = (Name) left;
+
+                if (prefix != null) {
+                    Name newName = new Name(name.getPosition(), name.getLength());
+                    newName.setIdentifier(prefix + name.getIdentifier());
+                    newName.setLineColumnNumber(name.getLineno(), name.getColumn());
+                    functionNode.setFunctionName(newName);
+                } else {
+                    functionNode.setFunctionName(name);
+                }
             }
         }
     }
