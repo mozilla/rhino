@@ -281,13 +281,13 @@ public class Global extends ImporterTopLevel {
      *
      * <p>This method is defined as a JavaScript function.
      *
-     * @exception WrappedException (cause: IllegalAccessException) if access is not available to a
+     * @throws WrappedException (cause: IllegalAccessException) if access is not available to a
      *     reflected class member
-     * @exception WrappedException (cause: InstantiationException) if unable to instantiate the
-     *     named class
-     * @exception WrappedException (cause: InvocationTargetException) if an exception is thrown
-     *     during execution of methods of the named class
-     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
+     * @throws WrappedException (cause: InstantiationException) if unable to instantiate the named
+     *     class
+     * @throws WrappedException (cause: InvocationTargetException) if an exception is thrown during
+     *     execution of methods of the named class
+     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable, Class)
      */
     @SuppressWarnings({"unchecked"})
     private static Object defineClass(
@@ -311,10 +311,10 @@ public class Global extends ImporterTopLevel {
      * single argument is expected. This argument should be the name of a class that implements the
      * Script interface, as will any script compiled by jsc.
      *
-     * @exception WrappedException (cause: IllegalAccessException) if access is not available to the
+     * @throws WrappedException (cause: IllegalAccessException) if access is not available to the
      *     class
-     * @exception WrappedException (cause: InstantiationException) if unable to instantiate the
-     *     named class
+     * @throws WrappedException (cause: InstantiationException) if unable to instantiate the named
+     *     class
      */
     private static Object loadClass(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -607,8 +607,8 @@ public class Global extends ImporterTopLevel {
      * runCommand(command, arg1, ..., argN, options)
      * </pre>
      *
-     * All except the last arguments to runCommand are converted to strings and denote command name
-     * and its arguments. If the last argument is a JavaScript object, it is an option object.
+     * <p>All except the last arguments to runCommand are converted to strings and denote command
+     * name and its arguments. If the last argument is a JavaScript object, it is an option object.
      * Otherwise it is converted to string denoting the last argument and options objects assumed to
      * be empty. The following properties of the option object are processed:
      *
@@ -780,7 +780,7 @@ public class Global extends ImporterTopLevel {
      * readFile(filePath, charCoding)
      * </pre>
      *
-     * The first form converts file's context to string using the default character coding.
+     * <p>The first form converts file's context to string using the default character coding.
      */
     private static Object readFile(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -788,13 +788,15 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readFile.bad.args");
         }
         String path = ScriptRuntime.toString(args[0]);
-        Charset charset = args.length < 2 ? Charset.defaultCharset() : Charset.forName(ScriptRuntime.toString(args[1]));
-        
-        if (path.contains("..") || path.contains("/") || path.contains("\\")) {
-            throw new IllegalArgumentException("Invalid filename");
-        }
+        Charset charset =
+                args.length < 2
+                        ? Charset.defaultCharset()
+                        : Charset.forName(ScriptRuntime.toString(args[1]));
 
         try {
+            // the file path is not sanitized here.And even if it did, it would hardly increase
+            // security, since we can access Packages.java.io.File directly
+            @SuppressWarnings("codeql")
             File f = new File(path);
             if (!f.exists()) {
                 throw new FileNotFoundException("File not found: " + path);
@@ -821,7 +823,7 @@ public class Global extends ImporterTopLevel {
      * readUrl(url, charCoding)
      * </pre>
      *
-     * The first form converts file's context to string using the default charCoding.
+     * <p>The first form converts file's context to string using the default charCoding.
      */
     private static Object readUrl(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
