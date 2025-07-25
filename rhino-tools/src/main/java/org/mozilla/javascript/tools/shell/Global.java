@@ -830,22 +830,12 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.shell.readUrl.bad.args");
         }
         String url = ScriptRuntime.toString(args[0]);
-        Charset charset = args.length < 2 ? null : Charset.forName(ScriptRuntime.toString(args[1]));
+        Charset charset = Charset.defaultCharset();
 
         try {
             URL urlObj = new URL(url);
             URLConnection uc = urlObj.openConnection();
             try (InputStream is = uc.getInputStream()) {
-
-                if (charset == null) {
-                    String type = uc.getContentType();
-                    if (type != null) {
-                        charset = getCharsetFromType(type);
-                    }
-                }
-                if (charset == null) {
-                    charset = Charset.defaultCharset();
-                }
                 return new String(is.readAllBytes(), charset);
             }
         } catch (IOException e) {
