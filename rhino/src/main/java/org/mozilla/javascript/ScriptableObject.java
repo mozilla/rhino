@@ -1499,9 +1499,11 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
+        var typeFactory = TypeInfoFactory.getOrElse(this, TypeInfoFactory.GLOBAL);
+
         MemberBox getterBox = null;
         if (getter != null) {
-            getterBox = new MemberBox(getter, TypeInfoFactory.get(this));
+            getterBox = new MemberBox(getter, typeFactory);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(getter.getModifiers())) {
@@ -1542,7 +1544,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (setter.getReturnType() != Void.TYPE)
                 throw Context.reportRuntimeErrorById("msg.setter.return", setter.toString());
 
-            setterBox = new MemberBox(setter, TypeInfoFactory.get(this));
+            setterBox = new MemberBox(setter, typeFactory);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(setter.getModifiers())) {

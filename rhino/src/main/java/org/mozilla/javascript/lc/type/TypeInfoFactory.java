@@ -21,7 +21,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
@@ -259,45 +258,52 @@ public interface TypeInfoFactory extends Serializable {
     /**
      * Associate this TypeInfoFactory object with the given top-level scope.
      *
+     * <p>NOTE: If you're about associate a custom TypeInfoFactory to a scope, call this method
+     * before {@code initStandardObjects(...)} or {@code initSafeStandardObjects(...)}
+     *
      * @param topScope scope to associate this TypeInfoFactory object with.
-     * @return {@code true} if no previous TypeInfoFactory object were associated with the scope and
-     *     this TypeInfoFactory were successfully associated, false otherwise.
+     * @return {@code this} if no previous TypeInfoFactory object was associated with the scope and
+     *     this TypeInfoFactory is successfully associated, or the old associated factory otherwise.
      * @throws IllegalArgumentException if provided scope is not top scope
      * @see #get(Scriptable scope)
      */
-    default boolean associate(ScriptableObject topScope) {
+    default TypeInfoFactory associate(ScriptableObject topScope) {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
         }
-        return this == topScope.associateValue("TypeInfoFactory", this);
+        return (TypeInfoFactory) topScope.associateValue("TypeInfoFactory", this);
     }
 
     /**
-     * Search for TypeInfoFactory in the given scope.If none was found, it will try to associate a
-     * new ClassCache object to the top scope.
+     * Search for TypeInfoFactory in the given scope.
      *
      * @param scope scope to search for TypeInfoFactory object.
-     * @return previously associated TypeInfoFactory object, or a new instance of TypeInfoFactory if
-     *     none was found
+     * @return previously associated TypeInfoFactory object.
      * @throws IllegalArgumentException if the top scope of provided scope have no associated
-     *     TypeInfoFactory, and cannot have TypeInfoFactory associated due to the top scope not
-     *     being a {@link ScriptableObject}
+     *     TypeInfoFactory.
      * @see #associate(ScriptableObject topScope)
      */
     static TypeInfoFactory get(Scriptable scope) {
-        TypeInfoFactory got =
-                (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
+        var got = getOrElse(scope, null);
         if (got == null) {
-            // we expect this to not happen frequently, so computing top scope twice is acceptable
-            var topScope = ScriptableObject.getTopLevelScope(scope);
-            if (!(topScope instanceof ScriptableObject)) {
-                // Note: it's originally a RuntimeException, the super class of
-                // IllegalArgumentException, so this will not break error catching
-                throw new IllegalArgumentException(
-                        "top scope have no associated TypeInfoFactory and cannot have TypeInfoFactory associated due to not being a ScriptableObject");
-            }
-            got = new ConcurrentFactory();
-            got.associate(((ScriptableObject) topScope));
+            throw new IllegalArgumentException("top scope have no associated TypeInfoFactory");
+        }
+        return got;
+    }
+
+    /**
+     * Search for TypeInfoFactory in the given scope. When none was found, {@code fallback} is
+     * returned instead
+     *
+     * @param scope scope to search for TypeInfoFactory object.
+     * @return previously associated TypeInfoFactory object, or {@code fallback} if none was found
+     * @see #get(Scriptable)
+     * @see #associate(ScriptableObject topScope)
+     */
+    static TypeInfoFactory getOrElse(Scriptable scope, TypeInfoFactory fallback) {
+        var got = (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
+        if (got == null) {
+            return fallback;
         }
         return got;
     }

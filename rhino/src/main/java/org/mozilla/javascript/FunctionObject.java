@@ -80,7 +80,9 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
-        var typeInfoFactory = TypeInfoFactory.get(this);
+        // fallback to global factory for compatibility with old behaviour, where the `scope` can be
+        // an object not yet initialized via `initStandardObject(...)`
+        var typeInfoFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
 
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
