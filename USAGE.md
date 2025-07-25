@@ -50,6 +50,12 @@ We'd love to hear about them! If you know of any other applications, platforms, 
 - **[Adobe Experience Manager (AEM) 6.5](https://business.adobe.com/products/experience-manager/adobe-experience-manager.html)** - Comprehensive content management solution for marketing content and digital assets  
   [Source](https://developer.adobe.com/experience-manager/reference-materials/6-5/javadoc/overview-summary.html)
 
+- **[MagicDraw 2024](https://www.3ds.com/products/catia/no-magic/magicdraw)** - Disual UML, SysML, BPMN, and UPDM modeling tool with team collaboration support  
+  [Source](https://docs.nomagic.com/spaces/MD2024x/pages/136727575/Deprecated+JavaScript+Nashorn)
+
+- **[IntelliJ IDEA](https://www.jetbrains.com/idea/)** - IDE for Professional Development in Java and Kotlin
+  [Source](https://www.jetbrains.com/legal/third-party-software/?product=IIU)
+
 ## Data & Analytics
 
 - **[Apache Druid 31.0.1](https://druid.apache.org/)** - Real-time analytics database designed for fast slice-and-dice analytics on large datasets  
