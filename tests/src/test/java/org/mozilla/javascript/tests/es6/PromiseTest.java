@@ -89,7 +89,7 @@ public class PromiseTest {
                         + "  Promise.withResolvers.call(null);"
                         + "  'should not reach here';"
                         + "} catch(e) {"
-                        + "  e instanceof TypeError && e.message.includes('not an object');"
+                        + "  e instanceof TypeError && e.message.includes('Expected argument of type object');"
                         + "}";
         Utils.assertWithAllModes_ES6(true, script);
     }
