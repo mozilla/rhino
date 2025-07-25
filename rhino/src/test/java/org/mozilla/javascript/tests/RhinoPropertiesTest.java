@@ -1,7 +1,6 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Map;
@@ -153,6 +152,7 @@ public class RhinoPropertiesTest {
         RhinoProperties properties = new RhinoProperties();
         properties.loadDefaults();
         // TODO: can/shoud we set an environment value. so check, if we can read PATH
-        assertNotNull(properties.get("path"));
+        // for now, we check for Path (and PATH)
+        assertNotNull(properties.get("Path"));
     }
 }
