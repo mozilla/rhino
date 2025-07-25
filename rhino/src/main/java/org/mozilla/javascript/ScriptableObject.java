@@ -2506,7 +2506,10 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Variant of putProperty to handle super[key] = value where key is a symbol */
     public static void putSuperProperty(
             Scriptable superObj, Scriptable thisObj, Symbol key, Object value) {
-        ensureSymbolScriptable(superObj).put(key, thisObj, value);
+        // in contrast to putProperty we start searching at superObj
+        Scriptable base = getBase(superObj, key);
+        if (base == null) base = superObj;
+        ensureSymbolScriptable(base).put(key, thisObj, value);
     }
 
     /**
@@ -2554,7 +2557,10 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Variant of putProperty to handle super[index] = value where index is integer */
     public static void putSuperProperty(
             Scriptable superObj, Scriptable thisObj, int index, Object value) {
-        superObj.put(index, thisObj, value);
+        // in contrast to putProperty we start searching at superObj
+        Scriptable base = getBase(superObj, index);
+        if (base == null) base = superObj;
+        base.put(index, thisObj, value);
     }
 
     /**
