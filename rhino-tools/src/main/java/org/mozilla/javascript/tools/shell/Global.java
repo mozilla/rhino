@@ -280,7 +280,7 @@ public class Global extends ImporterTopLevel {
      * @exception InstantiationException if unable to instantiate the named class
      * @exception InvocationTargetException if an exception is thrown during execution of methods of
      *     the named class
-     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
+     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable, Class)
      */
     @SuppressWarnings({"unchecked"})
     public static void defineClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)
@@ -872,38 +872,34 @@ public class Global extends ImporterTopLevel {
     }
 
     private static InputStream toInputStream(Object value) throws IOException {
-        InputStream is = null;
-        String s = null;
-        if (value instanceof Wrapper) {
-            Object unwrapped = ((Wrapper) value).unwrap();
-            if (unwrapped instanceof InputStream) {
-                is = (InputStream) unwrapped;
-            } else if (unwrapped instanceof byte[]) {
-                is = new ByteArrayInputStream((byte[]) unwrapped);
-            } else if (unwrapped instanceof Reader) {
-                s = readReader((Reader) unwrapped);
-            } else if (unwrapped instanceof char[]) {
-                s = new String((char[]) unwrapped);
-            }
+        while (value instanceof Wrapper) {
+            value = ((Wrapper) value).unwrap();
         }
-        if (is == null) {
-            if (s == null) {
-                s = ScriptRuntime.toString(value);
-            }
-            is = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
+        if (value instanceof InputStream) {
+            return (InputStream) value;
         }
-        return is;
+        if (value instanceof byte[]) {
+            return new ByteArrayInputStream((byte[]) value);
+        }
+        String s;
+        if (value instanceof Reader) {
+            s = readReader((Reader) value);
+        } else if (value instanceof char[]) {
+            s = new String((char[]) value);
+        } else {
+            s = ScriptRuntime.toString(value);
+        }
+        return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
     }
 
     private static OutputStream toOutputStream(Object value) {
-        OutputStream os = null;
-        if (value instanceof Wrapper) {
-            Object unwrapped = ((Wrapper) value).unwrap();
-            if (unwrapped instanceof OutputStream) {
-                os = (OutputStream) unwrapped;
-            }
+        while (value instanceof Wrapper) {
+            value = ((Wrapper) value).unwrap();
         }
-        return os;
+        if (value instanceof OutputStream) {
+            return (OutputStream) value;
+        }
+        return null;
     }
 
     private static String readUrl(String filePath, String charCoding, boolean urlIsFile)
