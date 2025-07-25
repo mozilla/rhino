@@ -1244,9 +1244,6 @@ public final class IRFactory {
                 right = transform(init);
             }
 
-            // Infer function name is missing on rhs
-            inferNameIfMissing(left, right, null);
-
             if (var.isDestructuring()) {
                 if (right == null) { // TODO:  should this ever happen?
                     node.addChildToBack(left);
@@ -1262,6 +1259,7 @@ public final class IRFactory {
                     }
                 }
             } else {
+                inferNameIfMissing(left, right, null);
                 if (right != null) {
                     left.addChildToBack(right);
                 }
