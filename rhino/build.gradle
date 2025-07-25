@@ -89,6 +89,8 @@ decycle {
     ignoring from: "org.mozilla.javascript.ScriptableObject", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
     ignoring from: "org.mozilla.javascript.FunctionObject", to: "org.mozilla.javascript.lc.type.TypeInfo*"
     ignoring from: "org.mozilla.javascript.Context", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
+    ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory"
 
     // currently accepted cycles (may be resolved, when it is clear, how to separate the liveconnect stuff)
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfoFactory", to: "org.mozilla.javascript.lc.type.impl.factory.*"
