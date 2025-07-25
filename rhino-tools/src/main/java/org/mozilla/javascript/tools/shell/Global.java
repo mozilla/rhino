@@ -108,20 +108,20 @@ public class Global extends ImporterTopLevel {
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
         NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
-
-        defineProperty(this, "defineClass", 1, Global::defineClass, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "deserialize", 1, Global::deserialize, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "doctest", 1, Global::doctest, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "gc", 0, Global::gc, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "help", 0, Global::help, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "load", 0, Global::load, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "loadClass", 1, Global::loadClass, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "print", 0, Global::print, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "quit", 0, Global::quit, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "readline", 0, Global::readline, DONTENUM, DONTENUM | READONLY);
+//
+//        defineProperty(this, "defineClass", 1, Global::defineClass, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "deserialize", 1, Global::deserialize, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "doctest", 1, Global::doctest, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "gc", 0, Global::gc, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "help", 0, Global::help, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "load", 0, Global::load, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "loadClass", 1, Global::loadClass, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "print", 0, Global::print, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "quit", 0, Global::quit, DONTENUM, DONTENUM | READONLY);
+//        defineProperty(this, "readline", 0, Global::readline, DONTENUM, DONTENUM | READONLY);
         defineProperty(this, "readFile", 1, Global::readFile, DONTENUM, DONTENUM | READONLY);
         defineProperty(this, "readUrl", 1, Global::readUrl, DONTENUM, DONTENUM | READONLY);
-        defineProperty(this, "runCommand", 1, Global::runCommand, DONTENUM, DONTENUM | READONLY);
+        //defineProperty(this, "runCommand", 1, Global::runCommand, DONTENUM, DONTENUM | READONLY);
         //        defineProperty(this, "seal", 0, Global::seal, DONTENUM, DONTENUM | READONLY);
         //        defineProperty(this, "serialize", 2, Global::serialize, DONTENUM, DONTENUM |
         // READONLY);
