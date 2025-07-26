@@ -2025,31 +2025,6 @@ public final class IRFactory {
             }
             parser.checkActivationName(name, Token.GETPROP);
 
-            if (target.getType() == Token.SUPER && NativeObject.PROTO_PROPERTY.equals(name)) {
-                // We have access to super.__proto__.
-                // This needs to behave in the same way as this.__proto__ - it really is not
-                // obvious why, but you can test it in v8 or any other engine. So, we just
-                // replace SUPER with THIS in the AST. It's a bit hacky, but it works - see the
-                // test cases in SuperTest!
-                if (!(target instanceof KeywordLiteral)) {
-                    throw Kit.codeBug();
-                }
-                KeywordLiteral oldTarget = (KeywordLiteral) target;
-                target =
-                        new KeywordLiteral(
-                                oldTarget.getPosition(), oldTarget.getLength(), Token.THIS);
-                target.setLineColumnNumber(oldTarget.getLineno(), oldTarget.getColumn());
-
-                Node ref = new Node(Token.REF_SPECIAL, target);
-                ref.putProp(Node.NAME_PROP, name);
-                Node getRef = new Node(Token.GET_REF, ref);
-                if (type == Token.QUESTION_DOT) {
-                    ref.putIntProp(Node.OPTIONAL_CHAINING, 1);
-                    getRef.putIntProp(Node.OPTIONAL_CHAINING, 1);
-                }
-                return getRef;
-            }
-
             if (parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6
                     && ScriptRuntime.isSpecialProperty(name)) {
                 Node ref = new Node(Token.REF_SPECIAL, target);
