@@ -46,4 +46,49 @@ public class BigIntTest {
         Utils.assertWithAllModes_ES6(true, "'9007199254740993' >= 9007199254740992n");
         Utils.assertWithAllModes_ES6(true, "'9007199254740993' > 9007199254740992n");
     }
+
+    @Test
+    public void asUintN() {
+        // Test the specific issue reported in GitHub issue #1573
+        Utils.assertWithAllModes_ES6("18446744073709551615", "BigInt.asUintN(64, -1n).toString()");
+        Utils.assertWithAllModes_ES6("4294967295", "BigInt.asUintN(32, -1n).toString()");
+        Utils.assertWithAllModes_ES6("65535", "BigInt.asUintN(16, -1n).toString()");
+        Utils.assertWithAllModes_ES6("255", "BigInt.asUintN(8, -1n).toString()");
+        Utils.assertWithAllModes_ES6("15", "BigInt.asUintN(4, -1n).toString()");
+        Utils.assertWithAllModes_ES6("1", "BigInt.asUintN(1, -1n).toString()");
+
+        // Test positive values
+        Utils.assertWithAllModes_ES6("255", "BigInt.asUintN(8, 255n).toString()");
+        Utils.assertWithAllModes_ES6("0", "BigInt.asUintN(8, 256n).toString()");
+        Utils.assertWithAllModes_ES6("1", "BigInt.asUintN(8, 257n).toString()");
+
+        // Test zero bits edge case
+        Utils.assertWithAllModes_ES6("0", "BigInt.asUintN(0, 123n).toString()");
+
+        // Test equality with expected BigInt values (the main issue case)
+        Utils.assertWithAllModes_ES6(
+                true, "BigInt.asUintN(64, -1n) === BigInt('0xffffffffffffffff')");
+    }
+
+    @Test
+    public void asIntN() {
+        // Test signed truncation
+        Utils.assertWithAllModes_ES6("127", "BigInt.asIntN(8, 127n).toString()");
+        Utils.assertWithAllModes_ES6("-128", "BigInt.asIntN(8, 128n).toString()");
+        Utils.assertWithAllModes_ES6("-1", "BigInt.asIntN(8, 255n).toString()");
+        Utils.assertWithAllModes_ES6("0", "BigInt.asIntN(8, 256n).toString()");
+
+        // Test negative values
+        Utils.assertWithAllModes_ES6("-1", "BigInt.asIntN(8, -1n).toString()");
+        Utils.assertWithAllModes_ES6("-128", "BigInt.asIntN(8, -128n).toString()");
+        Utils.assertWithAllModes_ES6("127", "BigInt.asIntN(8, -129n).toString()");
+
+        // Test 32-bit boundaries
+        Utils.assertWithAllModes_ES6("2147483647", "BigInt.asIntN(32, 2147483647n).toString()");
+        Utils.assertWithAllModes_ES6("-2147483648", "BigInt.asIntN(32, 2147483648n).toString()");
+        Utils.assertWithAllModes_ES6("-1", "BigInt.asIntN(32, 4294967295n).toString()");
+
+        // Test zero bits edge case
+        Utils.assertWithAllModes_ES6("0", "BigInt.asIntN(0, 123n).toString()");
+    }
 }

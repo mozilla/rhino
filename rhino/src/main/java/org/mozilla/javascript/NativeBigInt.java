@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 /** This class implements the BigInt native object. */
 final class NativeBigInt extends ScriptableObject {
@@ -116,28 +115,47 @@ final class NativeBigInt extends ScriptableObject {
             return BigInteger.ZERO;
         }
 
-        byte[] bytes = bigInt.toByteArray();
+        BigInteger modulus = BigInteger.ONE.shiftLeft(bits); // 2^bits
 
-        int newBytesLen = (bits / Byte.SIZE) + 1;
-        if (newBytesLen > bytes.length) {
+        if (isSigned) {
+            return asSignedN(bigInt, bits, modulus);
+        } else {
+            return asUnsignedN(bigInt, modulus);
+        }
+    }
+
+    private static BigInteger asUnsignedN(BigInteger bigInt, BigInteger modulus) {
+        // For unsigned: return bigInt modulo 2^bits, ensuring non-negative result
+        BigInteger result = bigInt.remainder(modulus);
+
+        // Ensure result is non-negative for unsigned representation
+        if (result.signum() < 0) {
+            result = result.add(modulus);
+        }
+
+        return result;
+    }
+
+    private static BigInteger asSignedN(BigInteger bigInt, int bits, BigInteger modulus) {
+        // For signed: use two's complement representation
+        BigInteger halfModulus = BigInteger.ONE.shiftLeft(bits - 1); // 2^(bits-1)
+        BigInteger minValue = halfModulus.negate(); // -2^(bits-1)
+        BigInteger maxValue = halfModulus.subtract(BigInteger.ONE); // 2^(bits-1) - 1
+
+        // If the number already fits in the signed range, return as is
+        if (bigInt.compareTo(minValue) >= 0 && bigInt.compareTo(maxValue) <= 0) {
             return bigInt;
         }
 
-        byte[] newBytes = Arrays.copyOfRange(bytes, bytes.length - newBytesLen, bytes.length);
+        // Compute unsigned result first
+        BigInteger result = asUnsignedN(bigInt, modulus);
 
-        int mod = bits % Byte.SIZE;
-        if (isSigned) {
-            if (mod == 0) {
-                newBytes[0] = newBytes[1] < 0 ? (byte) -1 : 0;
-            } else if ((newBytes[0] & (1 << (mod - 1))) != 0) {
-                newBytes[0] = (byte) (newBytes[0] | (-1 << mod));
-            } else {
-                newBytes[0] = (byte) (newBytes[0] & ((1 << mod) - 1));
-            }
-        } else {
-            newBytes[0] = (byte) (newBytes[0] & ((1 << mod) - 1));
+        // Convert to signed range if needed
+        if (result.compareTo(halfModulus) >= 0) {
+            result = result.subtract(modulus);
         }
-        return new BigInteger(newBytes);
+
+        return result;
     }
 
     @Override
