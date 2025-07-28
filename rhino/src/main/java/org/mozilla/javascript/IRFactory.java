@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
@@ -448,19 +449,27 @@ public final class IRFactory {
 
     private Node transformAssignment(Assignment node) {
         AstNode right = node.getRight();
-        AstNode left = parser.removeParens(node.getLeft());
+        AstNode originalLeft = node.getLeft();
+        AstNode left = parser.removeParens(originalLeft);
+        boolean shouldTryToInferName =
+                (originalLeft == left); // If we removed parens, we won't try to infer name
         left = transformAssignmentLeft(node, left, right);
 
         Node target = null;
         if (isDestructuring(left)) {
             target = left;
+            shouldTryToInferName = false;
         } else {
             target = transform(left);
         }
 
         astNodePos.push(left);
         try {
-            return createAssignment(node.getType(), target, transform(right));
+            Node transformedRight = transform(right);
+            if (shouldTryToInferName) {
+                inferNameIfMissing(node.getLeft(), transformedRight, null);
+            }
+            return createAssignment(node.getType(), target, transformedRight);
         } finally {
             astNodePos.pop();
         }
@@ -961,14 +970,26 @@ public final class IRFactory {
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
                 Object propKey = Parser.getPropKey(prop.getLeft());
+                Node inferrableName = null;
                 if (propKey == null) {
                     Node theId = transform(prop.getLeft());
                     properties[i++] = theId;
                 } else {
                     properties[i++] = propKey;
+                    assert propKey instanceof String || propKey instanceof Integer;
+                    inferrableName = parser.createName(Objects.toString(propKey));
+                    inferrableName.setLineColumnNumber(
+                            prop.getLeft().getLineno(), prop.getLeft().getColumn());
                 }
 
                 Node right = transform(prop.getRight());
+                if (inferrableName != null) {
+                    inferNameIfMissing(
+                            inferrableName,
+                            right,
+                            prop.isGetterMethod() ? "get " : prop.isSetterMethod() ? "set " : null);
+                }
+
                 if (prop.isGetterMethod()) {
                     right = createUnary(Token.GET, right);
                 } else if (prop.isSetterMethod()) {
@@ -1238,6 +1259,7 @@ public final class IRFactory {
                     }
                 }
             } else {
+                inferNameIfMissing(left, right, null);
                 if (right != null) {
                     left.addChildToBack(right);
                 }
@@ -2330,6 +2352,31 @@ public final class IRFactory {
         }
 
         throw Kit.codeBug();
+    }
+
+    /** Infer function name is missing on rhs. In the future, should also handle class names. */
+    private void inferNameIfMissing(Object left, Node right, String prefix) {
+        if (parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+            return;
+        }
+
+        if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
+            Name name = (Name) left;
+            if (name.getIdentifier().equals(NativeObject.PROTO_PROPERTY)) {
+                // Ignore weird edge case
+                return;
+            }
+
+            var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
+            FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
+            if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+                if (prefix != null) {
+                    functionNode.setFunctionName(name.withPrefix(prefix));
+                } else {
+                    functionNode.setFunctionName(name);
+                }
+            }
+        }
     }
 
     private Node propagateSuperFromLhs(Node result, Node left) {
