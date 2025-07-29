@@ -746,57 +746,6 @@ public class Global extends ImporterTopLevel {
         return (Global) scope;
     }
 
-    /**
-     * Runs the given process using Runtime.exec(). If any of in, out, err is null, the
-     * corresponding process stream will be closed immediately, otherwise it will be closed as soon
-     * as all data will be read from/written to process
-     *
-     * @return Exit value of process.
-     * @throws IOException If there was an error executing the process.
-     */
-    private static int runProcess(
-            String[] cmd,
-            String[] environment,
-            File wd,
-            InputStream in,
-            OutputStream out,
-            OutputStream err,
-            int timeout)
-            throws IOException {
-        return ExecUtil.runProcess(cmd, environment, wd, in, out, err, timeout);
-    }
-
-    private static InputStream toInputStream(Object value) throws IOException {
-        while (value instanceof Wrapper) {
-            value = ((Wrapper) value).unwrap();
-        }
-        if (value instanceof InputStream) {
-            return (InputStream) value;
-        }
-        if (value instanceof byte[]) {
-            return new ByteArrayInputStream((byte[]) value);
-        }
-        String s;
-        if (value instanceof Reader) {
-            s = readReader((Reader) value);
-        } else if (value instanceof char[]) {
-            s = new String((char[]) value);
-        } else {
-            s = ScriptRuntime.toString(value);
-        }
-        return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static OutputStream toOutputStream(Object value) {
-        while (value instanceof Wrapper) {
-            value = ((Wrapper) value).unwrap();
-        }
-        if (value instanceof OutputStream) {
-            return (OutputStream) value;
-        }
-        return null;
-    }
-
     private static String readUrl(String filePath, String charCoding, boolean urlIsFile)
             throws IOException {
         int chunkLength;

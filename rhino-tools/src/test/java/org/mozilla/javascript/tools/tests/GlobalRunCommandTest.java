@@ -215,10 +215,10 @@ public class GlobalRunCommandTest {
      *
      * <p>This test is disabled.
      *
-     * <p>it runs about 35s and transfers 40GB of data. The expected throughput is slightly 1GB/s
+     * <p>it runs about 25s and transfers 40GB of data. The expected throughput is slightly below 2GB/s
      */
     @Test
-    //@Disabled
+    @Disabled
     public void testStreaming10gb() {
         long tenGig = 10_000_000_000L;
         Utils.runWithAllModes(
