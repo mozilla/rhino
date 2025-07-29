@@ -121,7 +121,7 @@ public class TopLevel extends IdScriptableObject {
         }
     }
 
-    /** Clears the cache, this is necessary, when standard objects are reinitialized. */
+    /** Clears the cache; this is necessary, when standard objects are reinitialized. */
     void clearCache() {
         ctors = null;
         errors = null;
