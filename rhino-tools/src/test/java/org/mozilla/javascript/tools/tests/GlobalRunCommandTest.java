@@ -97,7 +97,7 @@ public class GlobalRunCommandTest {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     var g = new Global(cx);
                     ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-                    g.put("stdOut", g, stdOut);
+                    g.put("stdOut", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
                     var result =
                             cx.evaluateString(
                                     g,
@@ -127,9 +127,9 @@ public class GlobalRunCommandTest {
                     ByteArrayInputStream stdIn = new ByteArrayInputStream("Hello World".getBytes());
                     ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
                     ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-                    g.put("stdIn", g, stdIn);
-                    g.put("stdOut", g, stdOut);
-                    g.put("stdErr", g, stdErr);
+                    g.put("stdIn", g, cx.getWrapFactory().wrap(cx,g,stdIn, InputStream.class));
+                    g.put("stdOut", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
+                    g.put("stdErr", g, cx.getWrapFactory().wrap(cx,g,stdErr, OutputStream.class));
                     cx.evaluateString(g, STDIN_TO_STDOUT, "test.js", 1, null);
                     g.put("stdIn", g, "Some error");
                     cx.evaluateString(g, STDIN_TO_STDERR, "test.js", 1, null);
@@ -159,9 +159,10 @@ public class GlobalRunCommandTest {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     var g = new Global(cx);
                     FakeOutputStream stdOut = new FakeOutputStream();
-                    g.put("stdIn", g, new FakeInputStream(bytes));
-                    g.put("stdOut", g, stdOut);
-                    g.put("stdErr", g, stdOut);
+
+                    g.put("stdIn", g, cx.getWrapFactory().wrap(cx,g,new FakeInputStream(bytes), InputStream.class));
+                    g.put("stdOut", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
+                    g.put("stdErr", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
                     var result = cx.evaluateString(g, STDIN_TO_STDOUT, "test.js", 1, null);
                     assertInstanceOf(Number.class, result);
                     assertEquals(0, ((Number) result).intValue());
@@ -190,9 +191,9 @@ public class GlobalRunCommandTest {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     var g = new Global(cx);
                     FakeOutputStream stdOut = new FakeOutputStream();
-                    g.put("stdIn", g, new ThrowingInputStream());
-                    g.put("stdOut", g, stdOut);
-                    g.put("stdErr", g, stdOut);
+                    g.put("stdIn", g, cx.getWrapFactory().wrap(cx,g,new ThrowingInputStream(), InputStream.class));
+                    g.put("stdOut", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
+                    g.put("stdErr", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
 
                     assertThrows(
                             WrappedException.class,
@@ -217,7 +218,7 @@ public class GlobalRunCommandTest {
      * <p>it runs about 35s and transfers 40GB of data. The expected throughput is slightly 1GB/s
      */
     @Test
-    @Disabled
+    //@Disabled
     public void testStreaming10gb() {
         long tenGig = 10_000_000_000L;
         Utils.runWithAllModes(
@@ -226,11 +227,11 @@ public class GlobalRunCommandTest {
                     var g = new Global(cx);
                     FakeOutputStream stdOut = new FakeOutputStream();
                     FakeOutputStream stdErr = new FakeOutputStream();
-                    g.put("stdIn", g, new FakeInputStream(tenGig));
-                    g.put("stdOut", g, stdOut);
-                    g.put("stdErr", g, stdErr);
+                    g.put("stdIn", g, cx.getWrapFactory().wrap(cx,g,new FakeInputStream(tenGig), InputStream.class));
+                    g.put("stdOut", g, cx.getWrapFactory().wrap(cx,g,stdOut, OutputStream.class));
+                    g.put("stdErr", g, cx.getWrapFactory().wrap(cx,g,stdErr, OutputStream.class));
                     cx.evaluateString(g, STDIN_TO_STDOUT, "test.js", 1, null);
-                    g.put("stdIn", g, new FakeInputStream(tenGig));
+                    g.put("stdIn", g, cx.getWrapFactory().wrap(cx,g,new FakeInputStream(tenGig), InputStream.class));
                     cx.evaluateString(g, STDIN_TO_STDERR, "test.js", 1, null);
 
                     try {
