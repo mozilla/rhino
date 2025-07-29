@@ -1,211 +1,370 @@
 package org.mozilla.javascript.tools.shell;
 
-import org.mozilla.javascript.Context;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * Helper class for <code>global.runCommand</code>.
  *
  * @author Roland Praml, Foconis Analytics GmbH
  */
+@SuppressWarnings("AndroidJdkLibsChecker")
 class ExecUtil {
-	private ExecUtil() {
-	}
+    private ExecUtil() {}
 
+    private static final Object[] emptyArray = new Object[0];
 
-	/**
-	 * Runs the given process using Runtime.exec(). If any of in, out, err is null, the
-	 * corresponding process stream will be closed immediately, otherwise it will be closed as soon
-	 * as all data will be read from/written to process
-	 *
-	 * @return Exit value of process.
-	 * @throws IOException If there was an error executing the process.
-	 */
-	static int runProcess(
-			String[] cmd,
-			String[] environment,
-			File wd,
-			InputStream in,
-			OutputStream out,
-			OutputStream err)
-			throws IOException {
-		Process p = Runtime.getRuntime().exec(cmd, environment, wd);
+    static int runCommand(Global global, Scriptable thisObj, Object[] args) throws IOException {
+        int len = args.length;
+        if (len == 0 || (len == 1 && args[0] instanceof Scriptable)) {
+            throw Global.reportRuntimeError("msg.runCommand.bad.args");
+        }
 
-		try (
-				PipeThread inThread = createToProcessThread(in, p.getOutputStream());
-				PipeThread outThread = createFromProcessthread(p.getInputStream(), out);
-				PipeThread errThread = createFromProcessthread(p.getErrorStream(), err);
-		) {
+        String[] environment = null;
+        File wd = null;
+        InputStream in = null;
+        OutputStream out = null;
+        OutputStream err = null;
+        Scriptable params = null;
+        Object[] addArgs = emptyArray;
+        int timeout = 0;
 
-			try {
-				// wait for process completion
-				p.waitFor();
-				stopThread(inThread);
-				stopThread(outThread);
-				stopThread(errThread);
-			} catch (InterruptedException ignore) {
-				Thread.currentThread().interrupt();
-			}
-			return p.exitValue();
-		} finally {
-			p.destroy();
-		}
-	}
+        if (args[len - 1] instanceof Scriptable) {
+            // if the last argument is an object, parse
+            // "env", "dir", "input", "output", "err", "timeout" and
+            // additional "args"
+            params = (Scriptable) args[--len];
+            environment = parseEnvironment(params);
+            wd = parseWorkingDir(params);
+            in = parseInput(params);
+            out = parseOutput(params, "output");
+            err = parseOutput(params, "err");
+            timeout = parseTimeout(params);
+            addArgs = parseAddArgs(params, thisObj);
+        }
 
-	private static PipeThread createToProcessThread(InputStream in, OutputStream out) throws IOException {
-		if (in == null) {
-			out.close();
-			return null;
-		} else {
-			return new ToProcessPipeThread(in, out);
-		}
-	}
+        if (out == null) {
+            out = global.getOut();
+        }
+        if (err == null) {
+            err = global.getErr();
+        }
 
-	private static PipeThread createFromProcessthread(InputStream in, OutputStream out) throws IOException {
-		if (out == null) {
-			in.close();
-			return null;
-		} else {
-			return new FromProcessPipeThread(in, out);
-		}
-	}
+        // If no explicit input stream, do not send any input to process,
+        // in particular, do not use System.in to avoid deadlocks
+        // when waiting for user input to send to process which is already
+        // terminated as it is not always possible to interrupt read method.
 
-	private static void stopThread(PipeThread thread) throws InterruptedException {
-		if (thread != null) {
-			thread.join();
-		}
-	}
+        String[] cmd = new String[len + addArgs.length];
+        for (int i = 0; i != len; ++i) {
+            cmd[i] = ScriptRuntime.toString(args[i]);
+        }
+        for (int i = 0; i != addArgs.length; ++i) {
+            cmd[len + i] = ScriptRuntime.toString(addArgs[i]);
+        }
+        try {
+            return runProcess(cmd, environment, wd, in, out, err, timeout);
+        } finally {
+            if (out instanceof ReturnBuffer) {
+                ScriptableObject.putProperty(params, "output", out.toString());
+            }
+            if (err instanceof ReturnBuffer) {
+                ScriptableObject.putProperty(params, "err", out.toString());
+            }
+        }
+    }
 
-	private static Throwable handleException(PipeThread thread, Throwable currentException) {
-		if (thread == null || thread.error == null) {
-			return currentException;
-		} else if (currentException == null) {
-			return thread.error;
-		} else {
-			currentException.addSuppressed(thread.error);
-			return currentException;
-		}
-	}
+    private static String[] parseEnvironment(Scriptable params) {
+        Object obj = ScriptableObject.getProperty(params, "env");
+        if (obj == Scriptable.NOT_FOUND) {
+            return null;
+        }
+        if (obj == null) {
+            return new String[0];
+        } else {
+            if (!(obj instanceof Scriptable)) {
+                throw Global.reportRuntimeError("msg.runCommand.bad.env");
+            }
+            Scriptable envHash = (Scriptable) obj;
+            Object[] ids = ScriptableObject.getPropertyIds(envHash);
+            String[] environment = new String[ids.length];
+            for (int i = 0; i != ids.length; ++i) {
+                Object keyObj = ids[i], val;
+                String key;
+                if (keyObj instanceof String) {
+                    key = (String) keyObj;
+                    val = ScriptableObject.getProperty(envHash, key);
+                } else {
+                    int ikey = ((Number) keyObj).intValue();
+                    key = Integer.toString(ikey);
+                    val = ScriptableObject.getProperty(envHash, ikey);
+                }
+                if (val == ScriptableObject.NOT_FOUND) {
+                    val = Undefined.instance;
+                }
+                environment[i] = key + '=' + ScriptRuntime.toString(val);
+            }
+            return environment;
+        }
+    }
 
-	/**
-	 * A PipeThread copies data from <code>from</code> to <code>to</code>. There are two implementations which are slightly different in stream closing and exception handling
-	 * <ul>
-	 *     <li><b>FromProcessPipeThread:</b> Reads from the process (stdOut/stdErr)</li>
-	 *     <li><b>ToProcessPipeThread:</b> Writes to the process (stdIn)</li>
-	 * </ul>
-	 */
-	private abstract static class PipeThread extends Thread implements Closeable {
+    private static File parseWorkingDir(Scriptable params) {
+        Object obj = ScriptableObject.getProperty(params, "dir");
+        if (obj == Scriptable.NOT_FOUND) {
+            return null;
+        }
+        if (obj instanceof Wrapper) {
+            obj = ((Wrapper) obj).unwrap();
+        }
+        if (obj instanceof File) {
+            return (File) obj;
+        }
+        return new File(ScriptRuntime.toString(obj));
+    }
 
-		PipeThread(InputStream from, OutputStream to) {
-			setDaemon(true);
-			this.from = from;
-			this.to = to;
-		}
+    private static InputStream parseInput(Scriptable params) throws IOException {
+        Object obj = ScriptableObject.getProperty(params, "input");
+        if (obj == Scriptable.NOT_FOUND) {
+            return null;
+        }
+        if (obj instanceof Wrapper) {
+            obj = ((Wrapper) obj).unwrap();
+        }
+        if (obj instanceof InputStream) {
+            return (InputStream) obj;
+        }
+        if (obj instanceof byte[]) {
+            return new ByteArrayInputStream((byte[]) obj);
+        }
+        String s;
+        if (obj instanceof Reader) {
+            s = Global.readReader((Reader) obj);
+        } else if (obj instanceof char[]) {
+            s = new String((char[]) obj);
+        } else {
+            s = ScriptRuntime.toString(obj);
+        }
+        return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
+    }
 
-		@Override
-		public final void run() {
-			try {
-				copyStream();
-				to.flush();
-			} catch (Throwable t) {
-				if (t instanceof InterruptedException) {
-					// ignore
-				} else {
-					error = t;
-				}
-			} finally {
-				try {
-					closeStream();
-				} catch (IOException ignore) {
-					// Ignore errors on close. On Windows JVM may throw invalid
-					// refrence exception if process terminates too fast.
-				}
-			}
-		}
+    private static OutputStream parseOutput(Scriptable params, String type) throws IOException {
+        Object obj = ScriptableObject.getProperty(params, type);
+        if (obj == Scriptable.NOT_FOUND) {
+            return null;
+        }
+        if (obj instanceof Wrapper) {
+            obj = ((Wrapper) obj).unwrap();
+        }
+        if (obj instanceof OutputStream) {
+            return (OutputStream) obj;
+        }
+        return new ReturnBuffer(ScriptRuntime.toString(obj));
+    }
 
-		abstract void copyStream() throws IOException;
+    private static int parseTimeout(Scriptable params) {
+        Object obj = ScriptableObject.getProperty(params, "timeout");
+        if (obj == Scriptable.NOT_FOUND) {
+            return -1;
+        }
+        return ScriptRuntime.toInt32(obj);
+    }
 
-		abstract void closeStream() throws IOException;
+    private static Object[] parseAddArgs(Scriptable params, Scriptable scope) {
+        Object obj = ScriptableObject.getProperty(params, "args");
+        if (obj == Scriptable.NOT_FOUND) {
+            return emptyArray;
+        }
+        Scriptable s = Context.toObject(obj, Global.getTopLevelScope(scope));
+        return ScriptRuntime.getArrayElements(s);
+    }
 
-		@Override
-		public void close() {
-			try {
-				join();
-			} catch (InterruptedException e) {
-				// ignore
-			}
-			if (error != null) {
-				Context.throwAsScriptRuntimeEx(error);
-			}
-		}
+    /**
+     * Runs the given process using Runtime.exec(). If any of in, out, err is null, the
+     * corresponding process stream will be closed immediately, otherwise it will be closed as soon
+     * as all data will be read from/written to process
+     *
+     * @return Exit value of process.
+     * @throws IOException If there was an error executing the process.
+     */
+    static int runProcess(
+            String[] cmd,
+            String[] environment,
+            File wd,
+            InputStream in,
+            OutputStream out,
+            OutputStream err,
+            int timeout)
+            throws IOException {
+        Process p = Runtime.getRuntime().exec(cmd, environment, wd);
 
-		private static final int SIZE = 8192; // aligned with the default buffer size in BufferedWriter
-		final byte[] buffer = new byte[SIZE];
-		final OutputStream to;
-		final InputStream from;
-		Throwable error;
-	}
+        // use try-with-resources with sophisticated error handling
+        // When multiple streams will throw an error, the errors are added as suppressed exceptions
+        // and do not hide the original exception.
+        try (PipeThread inThread = startPipeThread(in, p.getOutputStream(), p.getOutputStream());
+                PipeThread outThread =
+                        startPipeThread(p.getInputStream(), out, p.getInputStream());
+                PipeThread errThread =
+                        startPipeThread(p.getErrorStream(), err, p.getErrorStream());
+                KillThread killThread = startKillThread(p, timeout); ) {
 
-	private static class FromProcessPipeThread extends PipeThread {
-		public FromProcessPipeThread(InputStream from, OutputStream to) {
-			super(from, to);
-		}
+            try {
+                // wait for process completion
+                p.waitFor();
+            } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
+            }
 
-		@Override
-		public void copyStream() throws IOException {
-			int n;
-			for (; ; ) {
-				try {
-					n = from.read(buffer);
-				} catch (IOException ex) {
-					// Ignore exception as it can be cause by closed pipe
-					break;
-				}
-				if (n < 0) {
-					break;
-				}
-				to.write(buffer, 0, n);
-			}
-		}
+            int exitCode = p.exitValue();
+            if (exitCode != 0 || (killThread != null && killThread.killed)) {
+                // on abnormal process termination - do not throw errors of streams in
+                // try-with-resources
+                if (inThread != null) inThread.reportErrors = false;
+                if (outThread != null) outThread.reportErrors = false;
+                if (errThread != null) errThread.reportErrors = false;
+            }
+            return exitCode;
+        } finally {
+            p.destroy();
+        }
+    }
 
-		@Override
-		void closeStream() throws IOException {
-			from.close();
-		}
-	}
+    /** Creates a kill-thread, that Kills the process after specified timeout. */
+    private static KillThread startKillThread(Process process, int timeout) {
+        if (timeout <= 0) {
+            return null;
+        }
+        KillThread killThread = new KillThread(process, timeout);
+        killThread.start();
+        return killThread;
+    }
 
-	private static class ToProcessPipeThread extends PipeThread {
-		public ToProcessPipeThread(InputStream from, OutputStream to) {
-			super(from, to);
-		}
+    /**
+     * Creates a pipe-thread, that transfers all data from <code>in</code> to <code>out</code>.
+     *
+     * <p>The <code>processStream</code> is closed, when everything is transferred and may signalize
+     * the process, to terminate.
+     */
+    private static PipeThread startPipeThread(
+            InputStream in, OutputStream out, Closeable processStream) throws IOException {
+        if (in == null) {
+            out.close();
+            return null;
+        } else if (out == null) {
+            in.close();
+            return null;
+        } else {
+            PipeThread pipeThread = new PipeThread(in, out, processStream);
+            pipeThread.start();
+            return pipeThread;
+        }
+    }
 
-		@Override
-		public void copyStream() throws IOException {
-			int n;
-			for (; ; ) {
-				n = from.read(buffer);
-				if (n < 0) {
-					break;
-				}
-				try {
-					to.write(buffer, 0, n);
-				} catch (IOException ex) {
-					// Ignore exception as it can be cause by closed pipe
-					break;
-				}
-			}
-		}
+    /**
+     * A PipeThread transfers data from <code>in</code> to <code>out</code>. When an error occurs,
+     * the error is stored and thrown in close().
+     */
+    private static class PipeThread extends Thread implements AutoCloseable {
+        private final OutputStream out;
+        private final InputStream in;
+        private final Closeable streamToClose;
+        private Throwable error;
+        boolean reportErrors = true;
 
-		@Override
-		void closeStream() throws IOException {
-			to.close();
-		}
-	}
+        PipeThread(InputStream in, OutputStream out, Closeable streamToClose) {
+            setDaemon(true);
 
+            this.in = in;
+            this.out = out;
+            this.streamToClose = streamToClose;
+        }
+
+        @Override
+        public final void run() {
+            try {
+                in.transferTo(out);
+                out.flush();
+            } catch (Throwable t) {
+                error = t;
+            } finally {
+                try {
+                    streamToClose.close();
+                } catch (IOException ignore) {
+                    // ignroe exception at end.
+                }
+            }
+        }
+
+        @Override
+        public void close() {
+            for (; ; ) {
+                try {
+                    join();
+                    break;
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+            if (reportErrors && error != null) {
+                Context.throwAsScriptRuntimeEx(error);
+            }
+        }
+    }
+
+    /** Used to kill process after timeout. */
+    private static class KillThread extends Thread implements AutoCloseable {
+        private final Process process;
+        private final int timeout;
+        volatile boolean killed;
+
+        public KillThread(Process process, int timeout) {
+            setDaemon(true);
+            this.process = process;
+            this.timeout = timeout;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(timeout);
+                killed = true;
+                process.destroy();
+            } catch (InterruptedException e) {
+                interrupt(); // re-interrupt this thread.
+            }
+        }
+
+        @Override
+        public void close() {
+            interrupt();
+        }
+    }
+
+    /**
+     * Used as marked ByteArrayOutputStream. It indicates, that the content should be returned in
+     * the "args" object.
+     */
+    private static class ReturnBuffer extends ByteArrayOutputStream {
+
+        public ReturnBuffer(String init) {
+            writeBytes(init.getBytes(StandardCharsets.UTF_8));
+        }
+
+        @Override
+        public synchronized String toString() {
+            return super.toString(StandardCharsets.UTF_8);
+        }
+    }
 }
-
