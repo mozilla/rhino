@@ -173,8 +173,6 @@ public class ScriptRuntime {
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
         LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
 
-        Scriptable objectProto = obj.getPrototype();
-
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
         ScriptableObject functionPrototype = (ScriptableObject) function.getPrototypeProperty();
 
@@ -3300,9 +3298,8 @@ public class ScriptRuntime {
     /**
      * Perform function call in reference context. Should always return value that can be passed to
      * {@link #refGet(Ref, Context)} or {@link #refSet(Ref, Object, Context)} arbitrary number of
-     * times. The args array reference should not be stored in any object that is can be
-     * GC-reachable after this method returns. If this is necessary, store args.clone(), not args
-     * array itself.
+     * times. The args array reference should not be stored in any object that can be GC-reachable
+     * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
     public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
