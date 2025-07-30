@@ -68,7 +68,8 @@ public class Node implements Iterable<Node> {
             OBJECT_LITERAL_DESTRUCTURING = 29,
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
-            LAST_PROP = SUPER_PROPERTY_ACCESS;
+            LAST_PROP = SUPER_PROPERTY_ACCESS,
+            FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -378,75 +379,85 @@ public class Node implements Iterable<Node> {
         return new NodeIterator();
     }
 
-    private static final String propToString(int propType) {
-        if (Token.printTrees) {
-            // If Context.printTrees is false, the compiler
-            // can remove all these strings.
-            switch (propType) {
-                case FUNCTION_PROP:
-                    return "function";
-                case LOCAL_PROP:
-                    return "local";
-                case LOCAL_BLOCK_PROP:
-                    return "local_block";
-                case REGEXP_PROP:
-                    return "regexp";
-                case CASEARRAY_PROP:
-                    return "casearray";
-
-                case TARGETBLOCK_PROP:
-                    return "targetblock";
-                case VARIABLE_PROP:
-                    return "variable";
-                case ISNUMBER_PROP:
-                    return "isnumber";
-                case DIRECTCALL_PROP:
-                    return "directcall";
-
-                case SPECIALCALL_PROP:
-                    return "specialcall";
-                case SKIP_INDEXES_PROP:
-                    return "skip_indexes";
-                case OBJECT_IDS_PROP:
-                    return "object_ids_prop";
-                case INCRDECR_PROP:
-                    return "incrdecr_prop";
-                case CATCH_SCOPE_PROP:
-                    return "catch_scope_prop";
-                case LABEL_ID_PROP:
-                    return "label_id_prop";
-                case MEMBER_TYPE_PROP:
-                    return "member_type_prop";
-                case NAME_PROP:
-                    return "name_prop";
-                case CONTROL_BLOCK_PROP:
-                    return "control_block_prop";
-                case PARENTHESIZED_PROP:
-                    return "parenthesized_prop";
-                case GENERATOR_END_PROP:
-                    return "generator_end";
-                case DESTRUCTURING_ARRAY_LENGTH:
-                    return "destructuring_array_length";
-                case DESTRUCTURING_NAMES:
-                    return "destructuring_names";
-                case DESTRUCTURING_PARAMS:
-                    return "destructuring_params";
-                case EXPRESSION_CLOSURE_PROP:
-                    return "expression_closure_prop";
-                case TEMPLATE_LITERAL_PROP:
-                    return "template_literal";
-                case TRAILING_COMMA:
-                    return "trailing comma";
-                case OPTIONAL_CHAINING:
-                    return "optional_chaining";
-                case SUPER_PROPERTY_ACCESS:
-                    return "super_property_access";
-
-                default:
-                    Kit.codeBug();
-            }
+    private static String propToString(int propType) {
+        if (!Token.printTrees) {
+            return null;
         }
-        return null;
+        // If Context.printTrees is false, the compiler
+        // can remove all these strings.
+        return propName(propType);
+    }
+
+    static String propName(int propType) {
+        switch (propType) {
+            case FUNCTION_PROP:
+                return "function";
+            case LOCAL_PROP:
+                return "local";
+            case LOCAL_BLOCK_PROP:
+                return "local_block";
+            case REGEXP_PROP:
+                return "regexp";
+            case CASEARRAY_PROP:
+                return "casearray";
+
+            case TARGETBLOCK_PROP:
+                return "targetblock";
+            case VARIABLE_PROP:
+                return "variable";
+            case ISNUMBER_PROP:
+                return "isnumber";
+            case DIRECTCALL_PROP:
+                return "directcall";
+
+            case SPECIALCALL_PROP:
+                return "specialcall";
+            case SKIP_INDEXES_PROP:
+                return "skip_indexes";
+            case OBJECT_IDS_PROP:
+                return "object_ids_prop";
+            case INCRDECR_PROP:
+                return "incrdecr_prop";
+            case CATCH_SCOPE_PROP:
+                return "catch_scope_prop";
+            case LABEL_ID_PROP:
+                return "label_id_prop";
+            case MEMBER_TYPE_PROP:
+                return "member_type_prop";
+            case NAME_PROP:
+                return "name_prop";
+            case CONTROL_BLOCK_PROP:
+                return "control_block_prop";
+            case PARENTHESIZED_PROP:
+                return "parenthesized_prop";
+            case GENERATOR_END_PROP:
+                return "generator_end";
+            case DESTRUCTURING_ARRAY_LENGTH:
+                return "destructuring_array_length";
+            case DESTRUCTURING_NAMES:
+                return "destructuring_names";
+            case DESTRUCTURING_PARAMS:
+                return "destructuring_params";
+            case JSDOC_PROP:
+                return "jsdoc";
+            case EXPRESSION_CLOSURE_PROP:
+                return "expression_closure_prop";
+            case ARROW_FUNCTION_PROP:
+                return "arrow_function";
+            case TEMPLATE_LITERAL_PROP:
+                return "template_literal";
+            case TRAILING_COMMA:
+                return "trailing comma";
+            case OBJECT_LITERAL_DESTRUCTURING:
+                return "object_literal_destructuring";
+            case OPTIONAL_CHAINING:
+                return "optional_chaining";
+            case SUPER_PROPERTY_ACCESS:
+                return "super_property_access";
+            default:
+                Kit.codeBug();
+                return null;
+        }
     }
 
     private PropListItem lookupProperty(int propType) {
