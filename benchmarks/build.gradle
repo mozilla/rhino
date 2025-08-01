@@ -32,10 +32,7 @@ jmh {
             }
         }
     }
-    jvmArgs = ['-XX:+BackgroundCompilation',
-//                '-XX:+UnlockDiagnosticVMOptions',
-//                '-XX:+PrintInlining'
-    ]
+    jvmArgs = ['-XX:+BackgroundCompilation']
     benchmarkMode = ['avgt']
     fork = 1
     iterations = 5
