@@ -69,7 +69,6 @@ public class ObjectLiteralSpreadTest {
     }
 
     @Test
-    // TODO
     public void testObjectSpreadWithSymbols() {
         String script =
                 "var sym = Symbol('test');\n"

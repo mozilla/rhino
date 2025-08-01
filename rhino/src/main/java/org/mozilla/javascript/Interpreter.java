@@ -2392,7 +2392,12 @@ public final class Interpreter extends Icode implements Evaluator {
                                                 ScriptRuntime.toObjectOrNull(
                                                         cx, source, frame.scope);
                                         if (src != null) {
-                                            Object[] ids = ScriptableObject.getPropertyIds(src);
+                                            Object[] ids;
+                                            if (src instanceof ScriptableObject) {
+                                                ids = ((ScriptableObject) src).getIds(false, true);
+                                            } else {
+                                                ids = src.getIds();
+                                            }
                                             for (Object id : ids) {
                                                 boolean enumerable = true;
                                                 if (src instanceof ScriptableObject) {
@@ -2405,11 +2410,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                                         attrs =
                                                                 ((ScriptableObject) src)
                                                                         .getAttributes((int) id);
-                                                    } else if (id instanceof SymbolKey) {
+                                                    } else if (id instanceof Symbol) {
                                                         attrs =
                                                                 ((ScriptableObject) src)
                                                                         .getAttributes(
-                                                                                (SymbolKey) id);
+                                                                                (Symbol) id);
                                                     }
                                                     enumerable =
                                                             (attrs & ScriptableObject.DONTENUM)
@@ -2425,10 +2430,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                                         value =
                                                                 ScriptableObject.getProperty(
                                                                         src, (int) id);
-                                                    } else if (id instanceof SymbolKey) {
+                                                    } else if (id instanceof Symbol) {
                                                         value =
                                                                 ScriptableObject.getProperty(
-                                                                        src, (SymbolKey) id);
+                                                                        src, (Symbol) id);
                                                     }
                                                     store.pushKey(id);
                                                     store.pushValue(value);
