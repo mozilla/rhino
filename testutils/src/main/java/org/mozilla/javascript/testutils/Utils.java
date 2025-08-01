@@ -75,8 +75,8 @@ public class Utils {
      */
     public static void runWithAllModes(
             final ContextFactory contextFactory, final ContextAction<?> action) {
-        //        runWithMode(contextFactory, action, false);
-        runWithMode(contextFactory, action, true);
+            runWithMode(contextFactory, action, false);
+            runWithMode(contextFactory, action, true);
     }
 
     /**

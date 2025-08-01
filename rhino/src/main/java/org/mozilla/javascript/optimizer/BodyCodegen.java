@@ -1768,6 +1768,7 @@ class BodyCodegen {
                     break;
                 }
 
+
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
@@ -1987,6 +1988,7 @@ class BodyCodegen {
                         + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
+
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {
         int type = node.getType();
@@ -2283,26 +2285,42 @@ class BodyCodegen {
             cfw.addAStore(local);
 
             for (int i = 0; i < count; ++i) {
-                addLoadPropertyId(node, properties, i); // stack: [ki]
-                cfw.addALoad(local); // stack: [ki, store]
-                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
-                cfw.add(ByteCode.SWAP); // stack: [store, ki]
-                cfw.addInvoke(
-                        ByteCode.INVOKEVIRTUAL,
-                        "org/mozilla/javascript/NewLiteralStorage",
-                        "pushKey",
-                        "(Ljava/lang/Object;)V"); // stack: []
+                if (child.getType() == Token.DOTDOTDOT) {
+                    generateExpression(child.getFirstChild(), node); // stack: [sourceObj]
+                    cfw.addALoad(local); // stack: [sourceObj, store]
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
+                    cfw.add(ByteCode.SWAP); // stack: [store, sourceObj]
+                    cfw.addALoad(contextLocal); // stack: [store, sourceObj, context]
+                    cfw.addALoad(variableObjectLocal); // stack: [store, sourceObj, context, scope]
+                    addScriptRuntimeInvoke(
+                            "spreadOp",
+                            "(Lorg/mozilla/javascript/NewLiteralStorage;"
+                                    + "Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + ")V"); // stack: []
+                } else {
+                    addLoadPropertyId(node, properties, i); // stack: [ki]
+                    cfw.addALoad(local); // stack: [ki, store]
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
+                    cfw.add(ByteCode.SWAP); // stack: [store, ki]
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/NewLiteralStorage",
+                            "pushKey",
+                            "(Ljava/lang/Object;)V"); // stack: []
 
-                addLoadPropertyValue(node, child);
-                cfw.addALoad(local);
-                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
-                cfw.add(ByteCode.SWAP);
-                String methodName = getStoreMethodNameForLiteralProperty(child);
-                cfw.addInvoke(
-                        ByteCode.INVOKEVIRTUAL,
-                        "org/mozilla/javascript/NewLiteralStorage",
-                        methodName,
-                        "(Ljava/lang/Object;)V"); // Stack: [store]
+                    addLoadPropertyValue(node, child);
+                    cfw.addALoad(local);
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
+                    cfw.add(ByteCode.SWAP);
+                    String methodName = getStoreMethodNameForLiteralProperty(child);
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/NewLiteralStorage",
+                            methodName,
+                            "(Ljava/lang/Object;)V"); // Stack: [store]
+                }
 
                 child = child.getNext();
             }
@@ -2312,22 +2330,36 @@ class BodyCodegen {
             releaseWordLocal(local);
         } else {
             for (int i = 0; i < count; ++i) {
-                cfw.add(ByteCode.DUP); // Stack: [store, store]
-                addLoadPropertyId(node, properties, i); // Stack: [store, store, Ki]
-                cfw.addInvoke(
-                        ByteCode.INVOKEVIRTUAL,
-                        "org/mozilla/javascript/NewLiteralStorage",
-                        "pushKey",
-                        "(Ljava/lang/Object;)V"); // Stack: [store]
+                if (child.getType() == Token.DOTDOTDOT) {
+                    cfw.add(ByteCode.DUP); // stack: [store, store]
+                    generateExpression(child.getFirstChild(), node); // stack: [store, sourceObj]
+                    cfw.addALoad(contextLocal); // stack: [store, sourceObj, context]
+                    cfw.addALoad(variableObjectLocal); // stack: [store, sourceObj, context, scope]
+                    addScriptRuntimeInvoke(
+                            "spreadOp",
+                            "(Lorg/mozilla/javascript/NewLiteralStorage;"
+                                    + "Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + ")V"); // stack: []
+                } else {
+                    cfw.add(ByteCode.DUP); // Stack: [store, store]
+                    addLoadPropertyId(node, properties, i); // Stack: [store, store, Ki]
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/NewLiteralStorage",
+                            "pushKey",
+                            "(Ljava/lang/Object;)V"); // Stack: [store]
 
-                cfw.add(ByteCode.DUP); // Stack: [store, store]
-                addLoadPropertyValue(node, child); // Stack: [store, store, Vi]
-                String methodName = getStoreMethodNameForLiteralProperty(child);
-                cfw.addInvoke(
-                        ByteCode.INVOKEVIRTUAL,
-                        "org/mozilla/javascript/NewLiteralStorage",
-                        methodName,
-                        "(Ljava/lang/Object;)V"); // Stack: [store]
+                    cfw.add(ByteCode.DUP); // Stack: [store, store]
+                    addLoadPropertyValue(node, child); // Stack: [store, store, Vi]
+                    String methodName = getStoreMethodNameForLiteralProperty(child);
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/NewLiteralStorage",
+                            methodName,
+                            "(Ljava/lang/Object;)V"); // Stack: [store]
+                }
 
                 child = child.getNext();
             }

@@ -1410,18 +1410,11 @@ class CodeGenerator extends Icode {
 
     private void visitObjectLiteralWithSpread(
             Node node, Node child, Object[] propertyIds, int count) {
-        // TODO: should work with -ve indices
-        //        addIndexOp(Icode_LITERAL_NEW_OBJECT, -count);
         addIcode(Icode_REG_IND4);
         addInt(-count);
         addIcode(Icode_LITERAL_NEW_OBJECT);
         addUint8(0); // unused
         stackChange(+2);
-        // TODO(abs):
-        // iterate over the object and add them one at a time
-        // - normal property
-        // - computed property
-        // - new bytecode for spread
 
         int i = 0;
         while (child != null) {
@@ -1461,7 +1454,6 @@ class CodeGenerator extends Icode {
         Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         int count = propertyIds == null ? 0 : propertyIds.length;
 
-        // TODO: should only be for spread
         if (node.getIntProp(Node.CONTAINS_SPREAD, 0) == 1 || true) {
             visitObjectLiteralWithSpread(node, child, propertyIds, count);
             return;

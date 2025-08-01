@@ -5443,6 +5443,52 @@ public class ScriptRuntime {
         }
     }
 
+    public static void spreadOp (
+            NewLiteralStorage store,
+            Object source,
+            Context cx,
+            Scriptable scope) {
+        if (source != null && source != Undefined.instance) {
+            Scriptable src = toObjectOrNull(cx, source, scope);
+            if (src != null) {
+                Object[] ids;
+                if (src instanceof ScriptableObject) {
+                    ids = ((ScriptableObject) src).getIds(false, true);
+                } else {
+                    ids = src.getIds();
+                }
+                
+                for (Object id : ids) {
+                    boolean enumerable = true;
+                    if (src instanceof ScriptableObject) {
+                        int attrs = 0;
+                        if (id instanceof String) {
+                            attrs = ((ScriptableObject) src).getAttributes((String) id);
+                        } else if (id instanceof Integer) {
+                            attrs = ((ScriptableObject) src).getAttributes((int) id);
+                        } else if (id instanceof Symbol) {
+                            attrs = ((ScriptableObject) src).getAttributes((Symbol) id);
+                        }
+                        enumerable = (attrs & ScriptableObject.DONTENUM) == 0;
+                    }
+                    
+                    if (enumerable) {
+                        Object value = null;
+                        if (id instanceof String) {
+                            value = ScriptableObject.getProperty(src, (String) id);
+                        } else if (id instanceof Integer) {
+                            value = ScriptableObject.getProperty(src, (int) id);
+                        } else if (id instanceof Symbol) {
+                            value = ScriptableObject.getProperty(src, (Symbol) id);
+                        }
+                        store.pushKey(id);
+                        store.pushValue(value);
+                    }
+                }
+            }
+        }
+    }
+
     public static boolean isArrayObject(Object obj) {
         return obj instanceof NativeArray || obj instanceof Arguments;
     }
