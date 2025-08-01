@@ -1768,7 +1768,6 @@ class BodyCodegen {
                     break;
                 }
 
-
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
@@ -1988,7 +1987,6 @@ class BodyCodegen {
                         + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
-
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {
         int type = node.getType();

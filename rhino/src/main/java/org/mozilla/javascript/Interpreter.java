@@ -2413,8 +2413,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                                     } else if (id instanceof Symbol) {
                                                         attrs =
                                                                 ((ScriptableObject) src)
-                                                                        .getAttributes(
-                                                                                (Symbol) id);
+                                                                        .getAttributes((Symbol) id);
                                                     }
                                                     enumerable =
                                                             (attrs & ScriptableObject.DONTENUM)

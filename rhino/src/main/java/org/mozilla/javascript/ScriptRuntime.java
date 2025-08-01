@@ -5443,11 +5443,8 @@ public class ScriptRuntime {
         }
     }
 
-    public static void spreadOp (
-            NewLiteralStorage store,
-            Object source,
-            Context cx,
-            Scriptable scope) {
+    public static void spreadOp(
+            NewLiteralStorage store, Object source, Context cx, Scriptable scope) {
         if (source != null && source != Undefined.instance) {
             Scriptable src = toObjectOrNull(cx, source, scope);
             if (src != null) {
@@ -5457,7 +5454,7 @@ public class ScriptRuntime {
                 } else {
                     ids = src.getIds();
                 }
-                
+
                 for (Object id : ids) {
                     boolean enumerable = true;
                     if (src instanceof ScriptableObject) {
@@ -5471,7 +5468,7 @@ public class ScriptRuntime {
                         }
                         enumerable = (attrs & ScriptableObject.DONTENUM) == 0;
                     }
-                    
+
                     if (enumerable) {
                         Object value = null;
                         if (id instanceof String) {
