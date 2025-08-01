@@ -1279,10 +1279,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 && !Undefined.isUndefined(iteratorProp)) {
             final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
             if (!Undefined.isUndefined(iterator)) {
-                IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator);
-                listFromIterator = new ArrayList<>();
-                for (Object temp : it) {
-                    listFromIterator.add(temp);
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                    listFromIterator = new ArrayList<>();
+                    for (Object temp : it) {
+                        listFromIterator.add(temp);
+                    }
                 }
             }
         }
