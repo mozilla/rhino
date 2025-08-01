@@ -1292,6 +1292,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (listFromIterator != null) {
             size = listFromIterator.size();
         } else {
+            long sizeLong = AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
+            if (sizeLong > Integer.MAX_VALUE) {
+                throw ScriptRuntime.rangeErrorById("msg.arraylength.bad");
+            }
+
             size = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
         }
 
