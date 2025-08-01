@@ -5445,7 +5445,7 @@ public class ScriptRuntime {
 
     public static void spreadOp(
             NewLiteralStorage store, Object source, Context cx, Scriptable scope) {
-        if (source != null && source != Undefined.instance) {
+        if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = toObjectOrNull(cx, source, scope);
             if (src != null) {
                 Object[] ids;
