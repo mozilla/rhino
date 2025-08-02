@@ -23,7 +23,11 @@ interface LockAwareSlotMap extends SlotMap {
      * org.mozilla.javascript.SlotMap.SlotComputer)}.
      */
     <S extends Slot> S computeWithLock(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute);
+            SlotMapOwner owner,
+            CompoundOperationMap compoundOp,
+            Object key,
+            int index,
+            SlotComputer<S> compute);
 
     /** The equivalent of {@link SlotMap#add(SlotMapOwner, Slot)}. */
     void addWithLock(SlotMapOwner owner, Slot newSlot);

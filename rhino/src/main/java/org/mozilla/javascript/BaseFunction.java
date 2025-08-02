@@ -597,7 +597,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         this,
                         PROTOTYPE_PROPERTY_NAME,
                         0,
-                        (k, i, s) -> {
+                        (k, i, s, m, o) -> {
                             if (s != null) {
                                 s.setAttributes(attributes);
                             }

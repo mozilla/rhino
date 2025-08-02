@@ -81,11 +81,11 @@ public class SlotMapTest {
         assertEquals(1 + startingSize, obj.getMap().size());
         assertFalse(obj.getMap().isEmpty());
         Slot newSlot = new Slot(slot);
-        obj.getMap().compute(obj, "foo", 0, (k, i, e) -> newSlot);
+        obj.getMap().compute(obj, "foo", 0, (k, i, e, m, o) -> newSlot);
         Slot foundNewSlot = obj.getMap().query("foo", 0);
         assertEquals("Testing", foundNewSlot.value);
         assertSame(foundNewSlot, newSlot);
-        obj.getMap().compute(obj, "foo", 0, (k, ii, e) -> null);
+        obj.getMap().compute(obj, "foo", 0, (k, ii, e, m, o) -> null);
         assertNull(obj.getMap().query("foo", 0));
         assertEquals(0 + startingSize, obj.getMap().size());
         if (startingSize == 0) {
@@ -104,11 +104,11 @@ public class SlotMapTest {
         assertEquals(1 + startingSize, obj.getMap().size());
         assertFalse(obj.getMap().isEmpty());
         Slot newSlot = new Slot(slot);
-        obj.getMap().compute(obj, null, 11, (k, i, e) -> newSlot);
+        obj.getMap().compute(obj, null, 11, (k, i, e, m, o) -> newSlot);
         Slot foundNewSlot = obj.getMap().query(null, 11);
         assertEquals("Testing", foundNewSlot.value);
         assertSame(foundNewSlot, newSlot);
-        obj.getMap().compute(obj, null, 11, (k, ii, e) -> null);
+        obj.getMap().compute(obj, null, 11, (k, ii, e, m, o) -> null);
         assertNull(obj.getMap().query(null, 11));
         assertEquals(0 + startingSize, obj.getMap().size());
         if (startingSize == 0) {
@@ -128,7 +128,7 @@ public class SlotMapTest {
                                 obj,
                                 "one",
                                 0,
-                                (k, i, e) -> {
+                                (k, i, e, m, o) -> {
                                     assertEquals(k, "one");
                                     assertEquals(i, 0);
                                     assertNotNull(e);
@@ -151,7 +151,7 @@ public class SlotMapTest {
                                 obj,
                                 "one",
                                 0,
-                                (k, i, e) -> {
+                                (k, i, e, m, o) -> {
                                     assertEquals(k, "one");
                                     assertEquals(i, 0);
                                     assertNull(e);
@@ -177,7 +177,7 @@ public class SlotMapTest {
                                 obj,
                                 "one",
                                 0,
-                                (k, i, e) -> {
+                                (k, i, e, m, o) -> {
                                     assertEquals(k, "one");
                                     assertEquals(i, 0);
                                     assertNotNull(e);
@@ -211,13 +211,13 @@ public class SlotMapTest {
             int ix = rand.nextInt(NUM_INDICES);
             Slot slot = obj.getMap().query(null, ix);
             assertNotNull(slot);
-            obj.getMap().compute(obj, null, ix, (k, j, e) -> new Slot(slot));
+            obj.getMap().compute(obj, null, ix, (k, j, e, m, o) -> new Slot(slot));
         }
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(KEYS.length);
             Slot slot = obj.getMap().query(KEYS[ix], 0);
             assertNotNull(slot);
-            obj.getMap().compute(obj, KEYS[ix], 0, (k, j, e) -> new Slot(slot));
+            obj.getMap().compute(obj, KEYS[ix], 0, (k, j, e, m, o) -> new Slot(slot));
         }
         verifyIndicesAndKeys();
 
@@ -226,13 +226,13 @@ public class SlotMapTest {
         HashSet<Integer> removedIds = new HashSet<>();
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(NUM_INDICES);
-            obj.getMap().compute(obj, null, ix, (k, ii, e) -> null);
+            obj.getMap().compute(obj, null, ix, (k, ii, e, m, o) -> null);
             removedIds.add(ix);
         }
         HashSet<String> removedKeys = new HashSet<>();
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(NUM_INDICES);
-            obj.getMap().compute(obj, KEYS[ix], ix, (k, ii, e) -> null);
+            obj.getMap().compute(obj, KEYS[ix], ix, (k, idx, e, m, o) -> null);
             removedKeys.add(KEYS[ix]);
         }
 
