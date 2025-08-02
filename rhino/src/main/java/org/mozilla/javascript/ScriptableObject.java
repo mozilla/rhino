@@ -393,7 +393,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    private static Slot checkSlotRemoval(Object key, int index, Slot slot) {
+    private static Slot checkSlotRemoval(
+            Object key, int index, Slot slot, CompoundOperationMap compoundOp, SlotMapOwner owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
             Context cx = Context.getContext();
             if (cx.isStrictMode()) {
@@ -1707,7 +1708,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                         owner,
                         key,
                         index,
-                        (k, ix, existing) -> {
+                        (k, ix, existing, compoundOpMap, o) -> {
                             if (checkValid) {
                                 owner.checkPropertyChangeForSlot(id, existing, desc);
                             }
@@ -1874,7 +1875,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                         this,
                         key,
                         0,
-                        (id, index, existing) -> {
+                        (id, index, existing, compoundOpMap, o) -> {
                             if (existing != null) {
                                 // it's dangerous to use `this` as scope inside slotMap.compute.
                                 // It can cause deadlock when ThreadSafeSlotMapContainer is used
@@ -2951,7 +2952,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     /*
      * These are handy for changing slot types in one "compute" operation.
      */
-    private static AccessorSlot ensureAccessorSlot(Object name, int index, Slot existing) {
+    private static AccessorSlot ensureAccessorSlot(
+            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
         if (existing == null) {
             return new AccessorSlot(name, index);
         } else if (existing instanceof AccessorSlot) {
@@ -2961,7 +2963,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
     }
 
-    private static LazyLoadSlot ensureLazySlot(Object name, int index, Slot existing) {
+    private static LazyLoadSlot ensureLazySlot(
+            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
         if (existing == null) {
             return new LazyLoadSlot(name, index);
         } else if (existing instanceof LazyLoadSlot) {
@@ -2971,7 +2974,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
     }
 
-    private static LambdaSlot ensureLambdaSlot(Object name, int index, Slot existing) {
+    private static LambdaSlot ensureLambdaSlot(
+            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
         if (existing == null) {
             return new LambdaSlot(name, index);
         } else if (existing instanceof LambdaSlot) {
