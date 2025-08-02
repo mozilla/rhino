@@ -20,7 +20,12 @@ public interface SlotMap extends Iterable<Slot> {
     @SuppressWarnings("AndroidJdkLibsChecker")
     @FunctionalInterface
     public interface SlotComputer<S extends Slot> {
-        S compute(Object key, int index, Slot existing);
+        S compute(
+                Object key,
+                int index,
+                Slot existing,
+                CompoundOperationMap mutableMap,
+                SlotMapOwner owner);
     }
 
     /** Return the size of the map. */
@@ -58,7 +63,19 @@ public interface SlotMap extends Iterable<Slot> {
      * code and is more efficient than making multiple calls to this interface. In order to allow
      * use of multiple Slot subclasses, this function is templatized.
      */
-    <S extends Slot> S compute(SlotMapOwner owner, Object key, int index, SlotComputer<S> compute);
+    default <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+        try (var mutableMap = owner.startCompoundOp(true)) {
+            return mutableMap.compute(owner, mutableMap, key, index, compute);
+        }
+    }
+
+    <S extends Slot> S compute(
+            SlotMapOwner owner,
+            CompoundOperationMap mutableMap,
+            Object key,
+            int index,
+            SlotComputer<S> compute);
 
     /**
      * Insert a new slot to the map. Both "name" and "indexOrHash" must be populated. Note that
@@ -77,5 +94,9 @@ public interface SlotMap extends Iterable<Slot> {
 
     default int dirtySize() {
         return size();
+    }
+
+    default CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
+        return new CompoundOperationMap(owner);
     }
 }
