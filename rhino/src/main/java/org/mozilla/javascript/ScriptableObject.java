@@ -1680,7 +1680,9 @@ public abstract class ScriptableObject extends SlotMapOwner
 
             return ((BuiltInSlot<?>) aSlot).applyNewDescriptor(id, info, checkValid, key, index);
         } else {
-            return defineOrdinaryProperty(this, id, info, checkValid, key, index);
+            try (var map = startCompoundOp(true)) {
+                return defineOrdinaryProperty(this, map, id, info, checkValid, key, index);
+            }
         }
     }
 
@@ -1706,6 +1708,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     static boolean defineOrdinaryProperty(
             ScriptableObject owner,
+            CompoundOperationMap compoundOp,
             Object id,
             DescriptorInfo info,
             boolean checkValid,
@@ -1713,81 +1716,81 @@ public abstract class ScriptableObject extends SlotMapOwner
             int index) {
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
-        owner.getMap()
-                .compute(
-                        owner,
-                        key,
-                        index,
-                        (k, ix, existing, map, mapOwner) -> {
-                            if (checkValid) {
-                                owner.checkPropertyChangeForSlot(id, existing, info);
-                            }
+        compoundOp.compute(
+                owner,
+                compoundOp,
+                key,
+                index,
+                (k, ix, existing, map, mapOwner) -> {
+                    if (checkValid) {
+                        owner.checkPropertyChangeForSlot(id, existing, info);
+                    }
 
-                            Slot slot;
-                            int attributes;
+                    Slot slot;
+                    int attributes;
 
-                            if (existing == null) {
-                                slot = new Slot(k, ix, 0);
-                                attributes =
-                                        applyDescriptorToAttributeBitset(
-                                                DONTENUM | READONLY | PERMANENT,
-                                                info.enumerable,
-                                                info.writable,
-                                                info.configurable);
+                    if (existing == null) {
+                        slot = new Slot(k, ix, 0);
+                        attributes =
+                                applyDescriptorToAttributeBitset(
+                                        DONTENUM | READONLY | PERMANENT,
+                                        info.enumerable,
+                                        info.writable,
+                                        info.configurable);
+                    } else {
+                        slot = existing;
+                        attributes =
+                                applyDescriptorToAttributeBitset(
+                                        existing.getAttributes(),
+                                        info.enumerable,
+                                        info.writable,
+                                        info.configurable);
+                    }
+
+                    if (info.accessorDescriptor) {
+                        AccessorSlot fslot;
+                        if (slot instanceof AccessorSlot) {
+                            fslot = (AccessorSlot) slot;
+                        } else {
+                            if ((slot instanceof LambdaAccessorSlot)
+                                    && NativeObject.PROTO_PROPERTY.equals(key)) {
+                                fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
                             } else {
-                                slot = existing;
-                                attributes =
-                                        applyDescriptorToAttributeBitset(
-                                                existing.getAttributes(),
-                                                info.enumerable,
-                                                info.writable,
-                                                info.configurable);
+                                fslot = new AccessorSlot(slot);
                             }
+                            slot = fslot;
+                        }
+                        if (info.getter != NOT_FOUND) {
+                            fslot.getter = new AccessorSlot.FunctionGetter(info.getter);
+                        }
 
-                            if (info.accessorDescriptor) {
-                                AccessorSlot fslot;
-                                if (slot instanceof AccessorSlot) {
-                                    fslot = (AccessorSlot) slot;
-                                } else {
-                                    if ((slot instanceof LambdaAccessorSlot)
-                                            && NativeObject.PROTO_PROPERTY.equals(key)) {
-                                        fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
-                                    } else {
-                                        fslot = new AccessorSlot(slot);
-                                    }
-                                    slot = fslot;
-                                }
-                                if (info.getter != NOT_FOUND) {
-                                    fslot.getter = new AccessorSlot.FunctionGetter(info.getter);
-                                }
+                        if (info.setter != NOT_FOUND) {
+                            fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
+                        }
+                        fslot.value = Undefined.instance;
+                    } else if (slot instanceof BuiltInSlot) {
+                        if (info.value != NOT_FOUND) {
+                            ((BuiltInSlot<?>) slot)
+                                    .setValueFromDescriptor(info.value, owner, owner, true);
+                        }
+                    } else {
+                        if (!slot.isValueSlot() && isDataDescriptor(info)) {
+                            // Replace a non-base slot with a regular slot
+                            slot = new Slot(slot);
+                        }
 
-                                if (info.setter != NOT_FOUND) {
-                                    fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
-                                }
-                                fslot.value = Undefined.instance;
-                            } else if (slot instanceof BuiltInSlot) {
-                                if (info.value != NOT_FOUND) {
-                                    ((BuiltInSlot<?>) slot)
-                                            .setValueFromDescriptor(info.value, owner, owner, true);
-                                }
-                            } else {
-                                if (!slot.isValueSlot() && isDataDescriptor(info)) {
-                                    // Replace a non-base slot with a regular slot
-                                    slot = new Slot(slot);
-                                }
+                        if (info.value != NOT_FOUND) {
+                            slot.value = info.value;
+                        } else if (existing == null) {
+                            // Ensure we don't get a zombie value if we have switched a lot
+                            slot.value = Undefined.instance;
+                        }
+                    }
 
-                                if (info.value != NOT_FOUND) {
-                                    slot.value = info.value;
-                                } else if (existing == null) {
-                                    // Ensure we don't get a zombie value if we have switched a lot
-                                    slot.value = Undefined.instance;
-                                }
-                            }
-
-                            // After all that, whatever we return now ends up in the map
-                            slot.setAttributes(attributes);
-                            return slot;
-                        });
+                    // After all that, whatever we return now ends up in the map
+                    slot.setAttributes(attributes);
+                    return slot;
+                });
         return true;
     }
 
