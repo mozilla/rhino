@@ -2250,9 +2250,8 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
             toInitialize.clear();
 
-            long stamp = getMap().readLock();
-            try {
-                for (Slot slot : getMap()) {
+            try (var map = startCompoundOp(false)) {
+                for (Slot slot : map) {
                     Object value = slot.value;
                     if (value instanceof LazilyLoadedCtor) {
                         toInitialize.add(slot);
@@ -2261,8 +2260,6 @@ public abstract class ScriptableObject extends SlotMapOwner
                 if (toInitialize.isEmpty()) {
                     isSealed = true;
                 }
-            } finally {
-                getMap().unlockRead(stamp);
             }
         }
     }
@@ -2989,9 +2986,8 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        final long stamp = getMap().readLock();
-        try {
-            int objectsCount = getMap().dirtySize();
+        try (var map = startCompoundOp(false)) {
+            int objectsCount = map.dirtySize();
             if (objectsCount == 0) {
                 out.writeInt(0);
             } else {
@@ -3000,8 +2996,6 @@ public abstract class ScriptableObject extends SlotMapOwner
                     out.writeObject(slot);
                 }
             }
-        } finally {
-            getMap().unlockRead(stamp);
         }
     }
 

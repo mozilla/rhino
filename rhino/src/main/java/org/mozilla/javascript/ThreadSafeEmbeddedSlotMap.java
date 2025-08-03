@@ -136,12 +136,17 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public long readLock() {
+    public long getReadLock() {
         return lock.readLock();
     }
 
     @Override
-    public void unlockRead(long stamp) {
+    public long getWriteLock() {
+        return lock.writeLock();
+    }
+
+    @Override
+    public void releaseLock(long stamp) {
         lock.unlock(stamp);
     }
 

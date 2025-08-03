@@ -87,8 +87,14 @@ public abstract class SlotMapOwner {
                 SlotComputer<S> c) {
             var newSlot = c.compute(key, index, null, compoundOp, owner);
             if (newSlot != null) {
+                if (!compoundOp.isTouched()) {
                 var map = new SingleEntrySlotMap(newSlot);
                 owner.setMap(map);
+                } else {
+                    // The map has been touched so delegate the add (can't do
+                    // a compute because that might be recursive).
+                    compoundOp.add(owner, newSlot);
+                }
             }
             return newSlot;
         }
@@ -137,6 +143,13 @@ public abstract class SlotMapOwner {
         private SlotMap replaceMapAndAddSlot(SlotMapOwner owner, Slot newSlot) {
             var map = new ThreadSafeSingleEntrySlotMap(newSlot);
             return ThreadedAccess.checkAndReplaceMap(owner, this, map);
+        }
+
+        @Override
+        public CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
+            var map = new ThreadSafeEmbeddedSlotMap();
+            return ThreadedAccess.checkAndReplaceMap(owner, this, map)
+                    .startCompoundOp(owner, forWriting);
         }
     }
 
@@ -264,14 +277,20 @@ public abstract class SlotMapOwner {
                 Object key,
                 int index,
                 SlotComputer<S> c) {
+            var currentMap = checkAndReplaceMap(owner);
+            return currentMap.compute(owner, compoundOp, key, index, c);
+        }
+
+        @Override
+        public CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
+            return checkAndReplaceMap(owner).startCompoundOp(owner, forWriting);
+        }
+
+        private SlotMap checkAndReplaceMap(SlotMapOwner owner) {
             var newMap = new ThreadSafeEmbeddedSlotMap(2);
             newMap.add(null, slot);
             var currentMap = ThreadedAccess.checkAndReplaceMap(owner, this, newMap);
-            if (currentMap == this) {
-                return newMap.compute(owner, compoundOp, key, index, c);
-            } else {
-                return currentMap.compute(owner, compoundOp, key, index, c);
-            }
+            return currentMap;
         }
     }
 
