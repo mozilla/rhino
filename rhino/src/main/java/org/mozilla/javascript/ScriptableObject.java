@@ -763,7 +763,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     @Override
     public Object[] getIds() {
-        return getIds(false, false);
+        try (var map = startCompoundOp(false)) {
+            return getIds(map, false, false);
+        }
     }
 
     /**
@@ -777,7 +779,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     @Override
     public Object[] getAllIds() {
-        return getIds(true, false);
+        try (var map = startCompoundOp(false)) {
+            return getIds(map, true, false);
+        }
     }
 
     /**
@@ -1599,7 +1603,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param props a map of property ids to property descriptors
      */
     public void defineOwnProperties(Context cx, ScriptableObject props) {
-        Object[] ids = props.getIds(false, true);
+        Object[] ids;
+        try (var map = props.startCompoundOp(false)) {
+            ids = props.getIds(map, false, true);
+        }
         ScriptableObject[] descs = new ScriptableObject[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
@@ -2895,7 +2902,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         return slot;
     }
 
-    Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
+    Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
         Object[] a;
         int externalLen = (externalData == null ? 0 : externalData.getArrayLength());
 
@@ -2907,29 +2914,24 @@ public abstract class ScriptableObject extends SlotMapOwner
                 a[i] = Integer.valueOf(i);
             }
         }
-        if (getMap().isEmpty()) {
+        if (map.isEmpty()) {
             return a;
         }
 
         int c = externalLen;
-        final long stamp = getMap().readLock();
-        try {
-            for (Slot slot : getMap()) {
-                if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
-                        && (getSymbols || !(slot.name instanceof Symbol))) {
-                    if (c == externalLen) {
-                        // Special handling to combine external array with additional properties
-                        Object[] oldA = a;
-                        a = new Object[getMap().dirtySize() + externalLen];
-                        if (oldA != null) {
-                            System.arraycopy(oldA, 0, a, 0, externalLen);
-                        }
+        for (Slot slot : map) {
+            if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
+                    && (getSymbols || !(slot.name instanceof Symbol))) {
+                if (c == externalLen) {
+                    // Special handling to combine external array with additional properties
+                    Object[] oldA = a;
+                    a = new Object[map.dirtySize() + externalLen];
+                    if (oldA != null) {
+                        System.arraycopy(oldA, 0, a, 0, externalLen);
                     }
-                    a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
                 }
+                a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
             }
-        } finally {
-            getMap().unlockRead(stamp);
         }
 
         Object[] result;
