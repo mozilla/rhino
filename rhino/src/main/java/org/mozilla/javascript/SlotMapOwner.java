@@ -88,8 +88,8 @@ public abstract class SlotMapOwner {
             var newSlot = c.compute(key, index, null, compoundOp, owner);
             if (newSlot != null) {
                 if (!compoundOp.isTouched()) {
-                var map = new SingleEntrySlotMap(newSlot);
-                owner.setMap(map);
+                    var map = new SingleEntrySlotMap(newSlot);
+                    owner.setMap(map);
                 } else {
                     // The map has been touched so delegate the add (can't do
                     // a compute because that might be recursive).
@@ -343,8 +343,8 @@ public abstract class SlotMapOwner {
      * Returns an {@link AutoCloseable} map which can be used for compound operations. If the
      * underlying map is thread safe then this will perform any locking required to ensure that no
      * other operation will mutate the map during this. It is vital to either close the returned
-     * {@link CompoundOperationMap} manually or to claim this in a try-with-resources block which will
-     * do that for you.
+     * {@link CompoundOperationMap} manually or to claim this in a try-with-resources block which
+     * will do that for you.
      */
     final CompoundOperationMap startCompoundOp(boolean forWriting) {
         return slotMap.startCompoundOp(this, forWriting);
