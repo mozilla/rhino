@@ -389,6 +389,22 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
+    public void deleteInternal(CompoundOperationMap compoundOp, String id) {
+        compoundOp.compute(this, id, 0, ScriptableObject::checkSlotRemoval);
+    }
+
+    public void deleteInternal(CompoundOperationMap mutableMap, int index) {
+        if (dense != null
+                && 0 <= index
+                && index < dense.length
+                && !isSealed()
+                && (denseOnly || !isGetterOrSetter(mutableMap, null, index, true))) {
+            dense[index] = NOT_FOUND;
+        } else {
+            mutableMap.compute(this, null, index, ScriptableObject::checkSlotRemoval);
+        }
+    }
+
     @Override
     public Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
         Object[] superIds = super.getIds(map, nonEnumerable, getSymbols);
@@ -889,6 +905,19 @@ public class NativeArray extends ScriptableObject implements List {
             target.delete(i);
         } else {
             target.delete(Long.toString(index));
+        }
+    }
+
+    private static void deleteElem(
+            CompoundOperationMap compoundOp, NativeArray target, long index) {
+        int i = (int) index;
+        if (i == index) {
+            checkNotSealed(target, null, i);
+            target.deleteInternal(compoundOp, i);
+        } else {
+            var strIndex = Long.toString(index);
+            checkNotSealed(target, strIndex, 0);
+            compoundOp.compute(target, strIndex, 0, ScriptableObject::checkSlotRemoval);
         }
     }
 

@@ -88,8 +88,8 @@ public abstract class SlotMapOwner {
             var newSlot = c.compute(key, index, null, compoundOp, owner);
             if (newSlot != null) {
                 if (!compoundOp.isTouched()) {
-                var map = new SingleEntrySlotMap(newSlot);
-                owner.setMap(map);
+                    var map = new SingleEntrySlotMap(newSlot);
+                    owner.setMap(map);
                 } else {
                     // The map has been touched so delegate the add (can't do
                     // a compute because that might be recursive).
