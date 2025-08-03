@@ -390,8 +390,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
-        Object[] superIds = super.getIds(nonEnumerable, getSymbols);
+    public Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+        Object[] superIds = super.getIds(map, nonEnumerable, getSymbols);
         if (dense == null) {
             return superIds;
         }
