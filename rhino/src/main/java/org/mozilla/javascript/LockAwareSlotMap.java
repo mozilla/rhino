@@ -31,4 +31,16 @@ interface LockAwareSlotMap extends SlotMap {
 
     /** The equivalent of {@link SlotMap#add(SlotMapOwner, Slot)}. */
     void addWithLock(SlotMapOwner owner, Slot newSlot);
+
+    long getReadLock();
+
+    long getWriteLock();
+
+    void releaseLock(long lock);
+
+    @Override
+    default CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
+        long stamp = forWriting ? getWriteLock() : getReadLock();
+        return new ThreadSafeCompoundOperationMap(owner, this, stamp);
+    }
 }
