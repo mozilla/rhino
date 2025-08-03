@@ -83,15 +83,6 @@ public interface SlotMap extends Iterable<Slot> {
      */
     void add(SlotMapOwner owner, Slot newSlot);
 
-    default long readLock() {
-        // No locking in the default implementation
-        return 0L;
-    }
-
-    default void unlockRead(long stamp) {
-        // No locking in the default implementation
-    }
-
     default int dirtySize() {
         return size();
     }

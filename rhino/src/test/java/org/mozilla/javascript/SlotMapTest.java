@@ -257,31 +257,27 @@ public class SlotMapTest {
     }
 
     private void verifyIndicesAndKeys() {
-        long lockStamp = 0;
-        lockStamp = obj.getMap().readLock();
-        try {
-            Iterator<Slot> it = obj.getMap().iterator();
+        try (var map = obj.startCompoundOp(false)) {
+            Iterator<Slot> it = map.iterator();
             for (int i = 0; i < startingSize; i++) {
                 // Skip initial slots
                 it.next();
             }
             for (int i = 0; i < NUM_INDICES; i++) {
-                Slot slot = obj.getMap().query(null, i);
+                Slot slot = map.query(null, i);
                 assertNotNull(slot);
                 assertEquals(i, slot.value);
                 assertTrue(it.hasNext());
                 assertEquals(slot, it.next());
             }
             for (String key : KEYS) {
-                Slot slot = obj.getMap().query(key, 0);
+                Slot slot = map.query(key, 0);
                 assertNotNull(slot);
                 assertEquals(key, slot.value);
                 assertTrue(it.hasNext());
                 assertEquals(slot, it.next());
             }
             assertFalse(it.hasNext());
-        } finally {
-            obj.getMap().unlockRead(lockStamp);
         }
     }
 
