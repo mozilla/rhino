@@ -194,6 +194,9 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             boolean checkValid,
             Object key,
             int index) {
-        return ScriptableObject.defineOrdinaryProperty(builtIn, id, info, checkValid, key, index);
+        try (var map = builtIn.startCompoundOp(true)) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    builtIn, map, id, info, checkValid, key, index);
+        }
     }
 }

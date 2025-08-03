@@ -34,12 +34,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     /*
      * Optimization possibilities and open issues:
-     * - Long vs. double schizophrenia.  I suspect it might be better
+     * - Long vs. double schizophrenia. I suspect it might be better
      * to use double throughout.
      *
      * - Functions that need a new Array call "new Array" in the
      * current scope rather than using a hardwired constructor;
-     * "Array" could be redefined.  It turns out that js calls the
+     * "Array" could be redefined. It turns out that js calls the
      * equivalent of "new Array" in the current scope, except that it
      * always gets at least an object back, even when Array == null.
      */
@@ -581,8 +581,10 @@ public class NativeArray extends ScriptableObject implements List {
         Object value = info.value;
 
         if (value == NOT_FOUND) {
-            return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, info, checkValid, key, index);
+            try (var map = builtIn.startCompoundOp(true)) {
+                return ScriptableObject.defineOrdinaryProperty(
+                        builtIn, map, id, info, checkValid, key, index);
+            }
         }
 
         // 10.2.4.2 Steps 2 - 6
@@ -591,29 +593,32 @@ public class NativeArray extends ScriptableObject implements List {
         Object writable = info.writable;
         // 10.2.4.2 9 is true by definition
 
-        // 10.2.4.2 10-11
-        if (newLength >= builtIn.length) {
-            return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, info, checkValid, key, index);
-        }
+        try (var map = builtIn.startCompoundOp(true)) {
+            // 10.2.4.2 10-11
+            if (newLength >= builtIn.length) {
+                return ScriptableObject.defineOrdinaryProperty(
+                        builtIn, map, id, info, checkValid, key, index);
+            }
 
-        boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
-        if (!currentWritable) {
-            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
-        }
-        boolean newWritable = true;
-        if (writable != NOT_FOUND) {
-            newWritable = isTrue(writable);
-            info.writable = true;
-        }
+            boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
+            if (!currentWritable) {
+                throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
+            }
+            boolean newWritable = true;
+            if (writable != NOT_FOUND) {
+                newWritable = isTrue(writable);
+                info.writable = true;
+            }
 
-        // The standard set path that will be done by this call will
-        // clear any elements as required.
-        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, info, checkValid, key, index)) {
-            var currentAttrs = current.getAttributes();
-            var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
-            current.setAttributes(newAttrs);
-            return true;
+            // The standard set path that will be done by this call will
+            // clear any elements as required.
+            if (ScriptableObject.defineOrdinaryProperty(
+                    builtIn, map, id, info, checkValid, key, index)) {
+                var currentAttrs = current.getAttributes();
+                var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
+                current.setAttributes(newAttrs);
+                return true;
+            }
         }
         return false;
     }
