@@ -1688,7 +1688,15 @@ public abstract class ScriptableObject extends SlotMapOwner
             return ((BuiltInSlot<?>) aSlot).applyNewDescriptor(id, info, checkValid, key, index);
         } else {
             try (var map = startCompoundOp(true)) {
-                return defineOrdinaryProperty(this, map, id, info, checkValid, key, index);
+                return defineOrdinaryProperty(
+                        ScriptableObject::setSlotValue,
+                        this,
+                        map,
+                        id,
+                        info,
+                        checkValid,
+                        key,
+                        index);
             }
         }
     }
@@ -1714,6 +1722,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     static boolean defineOrdinaryProperty(
+            PropDescValueSetter descValueSetter,
             ScriptableObject owner,
             CompoundOperationMap compoundOp,
             Object id,
@@ -1754,51 +1763,72 @@ public abstract class ScriptableObject extends SlotMapOwner
                                         info.configurable);
                     }
 
-                    if (info.accessorDescriptor) {
-                        AccessorSlot fslot;
-                        if (slot instanceof AccessorSlot) {
-                            fslot = (AccessorSlot) slot;
-                        } else {
-                            if ((slot instanceof LambdaAccessorSlot)
-                                    && NativeObject.PROTO_PROPERTY.equals(key)) {
-                                fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
-                            } else {
-                                fslot = new AccessorSlot(slot);
-                            }
-                            slot = fslot;
-                        }
-                        if (info.getter != NOT_FOUND) {
-                            fslot.getter = new AccessorSlot.FunctionGetter(info.getter);
-                        }
-
-                        if (info.setter != NOT_FOUND) {
-                            fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
-                        }
-                        fslot.value = Undefined.instance;
-                    } else if (slot instanceof BuiltInSlot) {
-                        if (info.value != NOT_FOUND) {
-                            ((BuiltInSlot<?>) slot)
-                                    .setValueFromDescriptor(info.value, owner, owner, true);
-                        }
-                    } else {
-                        if (!slot.isValueSlot() && isDataDescriptor(info)) {
-                            // Replace a non-base slot with a regular slot
-                            slot = new Slot(slot);
-                        }
-
-                        if (info.value != NOT_FOUND) {
-                            slot.value = info.value;
-                        } else if (existing == null) {
-                            // Ensure we don't get a zombie value if we have switched a lot
-                            slot.value = Undefined.instance;
-                        }
-                    }
+                    slot = descValueSetter.execute(owner, info, key, existing, map, slot);
 
                     // After all that, whatever we return now ends up in the map
                     slot.setAttributes(attributes);
                     return slot;
                 });
         return true;
+    }
+
+    interface PropDescValueSetter {
+        Slot execute(
+                ScriptableObject owner,
+                DescriptorInfo info,
+                Object key,
+                Slot existing,
+                CompoundOperationMap map,
+                Slot slot);
+    }
+
+    static Slot setSlotValue(
+            ScriptableObject owner,
+            DescriptorInfo info,
+            Object key,
+            Slot existing,
+            CompoundOperationMap map,
+            Slot slot) {
+        if (info.accessorDescriptor) {
+            AccessorSlot fslot;
+            if (slot instanceof AccessorSlot) {
+                fslot = (AccessorSlot) slot;
+            } else {
+                if ((slot instanceof LambdaAccessorSlot)
+                        && NativeObject.PROTO_PROPERTY.equals(key)) {
+                    fslot = ((LambdaAccessorSlot) slot).asAccessorSlot();
+                } else {
+                    fslot = new AccessorSlot(slot);
+                }
+                slot = fslot;
+            }
+            if (info.getter != NOT_FOUND) {
+                fslot.getter = new AccessorSlot.FunctionGetter(info.getter);
+            }
+
+            if (info.setter != NOT_FOUND) {
+                fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
+            }
+            fslot.value = Undefined.instance;
+        } else if (slot instanceof BuiltInSlot) {
+            if (info.value != NOT_FOUND) {
+                ((BuiltInSlot<?>) slot).setValueFromDescriptor(info.value, owner, owner, true);
+            }
+        } else {
+            if (!slot.isValueSlot() && isDataDescriptor(info)) {
+                // Replace a non-base slot with a regular slot
+                slot = new Slot(slot);
+            }
+
+            if (info.value != NOT_FOUND) {
+                slot.value = info.value;
+            } else if (existing == null) {
+                // Ensure we don't get a zombie value if we have switched a lot
+                slot.value = Undefined.instance;
+            }
+        }
+
+        return slot;
     }
 
     /**
