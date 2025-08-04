@@ -5491,32 +5491,18 @@ public class ScriptRuntime {
                     ids = src.getIds();
                 }
 
+                // getIds() can return a string, int or a symbol
                 for (Object id : ids) {
-                    boolean enumerable = true;
-                    if (src instanceof ScriptableObject) {
-                        int attrs = 0;
-                        if (id instanceof String) {
-                            attrs = ((ScriptableObject) src).getAttributes((String) id);
-                        } else if (id instanceof Integer) {
-                            attrs = ((ScriptableObject) src).getAttributes((int) id);
-                        } else if (id instanceof Symbol) {
-                            attrs = ((ScriptableObject) src).getAttributes((Symbol) id);
-                        }
-                        enumerable = (attrs & ScriptableObject.DONTENUM) == 0;
+                    Object value = null;
+                    if (id instanceof String) {
+                        value = ScriptableObject.getProperty(src, (String) id);
+                    } else if (id instanceof Integer) {
+                        value = ScriptableObject.getProperty(src, (int) id);
+                    } else if (id instanceof Symbol) {
+                        value = ScriptableObject.getProperty(src, (Symbol) id);
                     }
-
-                    if (enumerable) {
-                        Object value = null;
-                        if (id instanceof String) {
-                            value = ScriptableObject.getProperty(src, (String) id);
-                        } else if (id instanceof Integer) {
-                            value = ScriptableObject.getProperty(src, (int) id);
-                        } else if (id instanceof Symbol) {
-                            value = ScriptableObject.getProperty(src, (Symbol) id);
-                        }
-                        store.pushKey(id);
-                        store.pushValue(value);
-                    }
+                    store.pushKey(id);
+                    store.pushValue(value);
                 }
             }
         }

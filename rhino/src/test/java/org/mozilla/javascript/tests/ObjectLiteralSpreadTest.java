@@ -1,13 +1,14 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.testutils.Utils;
 
 public class ObjectLiteralSpreadTest {
     @Test
     public void testObjectLiteralSpread() {
-        String script = "var x = { a: 'a' };\n" + "var y = { ...x, b: 'b' };\n" + "y.a + y.b";
-        Utils.assertWithAllModes_ES6("ab", script);
+        String script = "var x = { a: 'a', 3: 'd' };\n" + "var y = { ...x, b: 'b' };\n" + "y.a + y.b + y[3.0]";
+        Utils.assertWithAllModes_ES6("abd", script);
     }
 
     @Test
@@ -89,5 +90,15 @@ public class ObjectLiteralSpreadTest {
                         + "var obj2 = { ...obj1 };\n"
                         + "obj2[sym] === 'value' && obj2[sym] === obj1[sym]";
         Utils.assertWithAllModes_ES6(true, script);
+    }
+
+    @Test
+    public void testObjectSpreadWithEnumerable() {
+        String script =
+                "var x = {};\n" +
+                        "Object.defineProperty(x, 'd', { value: 4, enumerable: false})\n" +
+                        "var y = { ...x};\n" +
+                        "y.d";
+        Utils.assertWithAllModes_ES6(Undefined.instance, script);
     }
 }
