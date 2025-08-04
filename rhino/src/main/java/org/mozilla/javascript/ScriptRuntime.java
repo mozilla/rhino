@@ -5480,7 +5480,7 @@ public class ScriptRuntime {
     }
 
     public static void spreadOp(
-            NewLiteralStorage store, Object source, Context cx, Scriptable scope) {
+            Context cx, Scriptable scope, NewLiteralStorage store, Object source) {
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = toObjectOrNull(cx, source, scope);
             if (src != null) {

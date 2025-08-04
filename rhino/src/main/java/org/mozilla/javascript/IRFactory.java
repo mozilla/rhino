@@ -980,26 +980,29 @@ public final class IRFactory {
                     object.addChildToBack(transformedSpreadNode);
                 } else {
                     Object propKey = Parser.getPropKey(prop.getLeft());
-                    Node inferrableName = null;if (propKey == null) {
+                    Node inferrableName = null;
+                    if (propKey == null) {
                         Node theId = transform(prop.getLeft());
                         properties[i++] = theId;
                     } else {
                         properties[i++] = propKey;
-                    assert propKey instanceof String || propKey instanceof Integer;
-                    inferrableName = parser.createName(Objects.toString(propKey));
-                    inferrableName.setLineColumnNumber(
-                            prop.getLeft().getLineno(), prop.getLeft().getColumn());
-                }
+                        assert propKey instanceof String || propKey instanceof Integer;
+                        inferrableName = parser.createName(Objects.toString(propKey));
+                        inferrableName.setLineColumnNumber(
+                                prop.getLeft().getLineno(), prop.getLeft().getColumn());
+                    }
 
                     Node right = transform(prop.getRight());
                     if (inferrableName != null) {
-                    inferNameIfMissing(
-                            inferrableName,
-                            right,
-                            prop.isGetterMethod() ? "get " : prop.isSetterMethod() ? "set " : null);
-                }
+                        inferNameIfMissing(
+                                inferrableName,
+                                right,
+                                prop.isGetterMethod()
+                                        ? "get "
+                                        : prop.isSetterMethod() ? "set " : null);
+                    }
 
-                if (prop.isGetterMethod()) {
+                    if (prop.isGetterMethod()) {
                         right = createUnary(Token.GET, right);
                     } else if (prop.isSetterMethod()) {
                         right = createUnary(Token.SET, right);

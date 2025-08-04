@@ -451,15 +451,15 @@ public class Node implements Iterable<Node> {
                 return "trailing comma";
             case OBJECT_LITERAL_DESTRUCTURING:
                 return "object_literal_destructuring";
-                case OPTIONAL_CHAINING:
-                    return "optional_chaining";
-                case SUPER_PROPERTY_ACCESS:
-                    return "super_property_access";
-                case CONTAINS_SPREAD:
-                    return "contains_spread";
+            case OPTIONAL_CHAINING:
+                return "optional_chaining";
+            case SUPER_PROPERTY_ACCESS:
+                return "super_property_access";
+            case CONTAINS_SPREAD:
+                return "contains_spread";
 
-                default:
-                    Kit.codeBug();
+            default:
+                Kit.codeBug();
 
                 return null;
         }

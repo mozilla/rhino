@@ -2284,18 +2284,18 @@ class BodyCodegen {
 
             for (int i = 0; i < count; ++i) {
                 if (child.getType() == Token.DOTDOTDOT) {
-                    generateExpression(child.getFirstChild(), node); // stack: [sourceObj]
-                    cfw.addALoad(local); // stack: [sourceObj, store]
+                    cfw.addALoad(contextLocal); // stack: [context]
+                    cfw.addALoad(variableObjectLocal); // stack: [context, scope]
+                    generateExpression(child.getFirstChild(), node); // stack: [context, scope, sourceObj]
+                    cfw.addALoad(local); // stack: [context, scope, sourceObj, store]
                     cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
-                    cfw.add(ByteCode.SWAP); // stack: [store, sourceObj]
-                    cfw.addALoad(contextLocal); // stack: [store, sourceObj, context]
-                    cfw.addALoad(variableObjectLocal); // stack: [store, sourceObj, context, scope]
+                    cfw.add(ByteCode.SWAP); // stack: [context, scope, store, sourceObj]
                     addScriptRuntimeInvoke(
                             "spreadOp",
-                            "(Lorg/mozilla/javascript/NewLiteralStorage;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
+                                    "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/NewLiteralStorage;"
+                                    + "Ljava/lang/Object;"
                                     + ")V"); // stack: []
                 } else {
                     addLoadPropertyId(node, properties, i); // stack: [ki]
@@ -2330,16 +2330,18 @@ class BodyCodegen {
             for (int i = 0; i < count; ++i) {
                 if (child.getType() == Token.DOTDOTDOT) {
                     cfw.add(ByteCode.DUP); // stack: [store, store]
-                    generateExpression(child.getFirstChild(), node); // stack: [store, sourceObj]
-                    cfw.addALoad(contextLocal); // stack: [store, sourceObj, context]
-                    cfw.addALoad(variableObjectLocal); // stack: [store, sourceObj, context, scope]
+                    cfw.addALoad(contextLocal); // stack: [store, store, context]
+                    cfw.add(ByteCode.SWAP); // stack: [store, context, store]
+                    cfw.addALoad(variableObjectLocal); // stack: [store, context, store, scope]
+                    cfw.add(ByteCode.SWAP); // stack [store, context, scope, store]
+                    generateExpression(child.getFirstChild(), node); // stack: [store, context, scope, store, sourceObj]
                     addScriptRuntimeInvoke(
                             "spreadOp",
-                            "(Lorg/mozilla/javascript/NewLiteralStorage;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
+                                    "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
-                                    + ")V"); // stack: []
+                                    + "Lorg/mozilla/javascript/NewLiteralStorage;"
+                                    + "Ljava/lang/Object;"
+                                    + ")V"); // stack: [store]
                 } else {
                     cfw.add(ByteCode.DUP); // Stack: [store, store]
                     addLoadPropertyId(node, properties, i); // Stack: [store, store, Ki]

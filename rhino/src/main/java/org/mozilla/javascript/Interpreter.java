@@ -4216,9 +4216,7 @@ public final class Interpreter extends Icode implements Evaluator {
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
 
             if (source != null && source != Undefined.instance) {
-                Scriptable src =
-                        ScriptRuntime.toObjectOrNull(
-                                cx, source, frame.scope);
+                Scriptable src = ScriptRuntime.toObjectOrNull(cx, source, frame.scope);
                 if (src != null) {
                     Object[] ids;
                     if (src instanceof ScriptableObject) {
@@ -4231,36 +4229,22 @@ public final class Interpreter extends Icode implements Evaluator {
                         if (src instanceof ScriptableObject) {
                             int attrs = 0;
                             if (id instanceof String) {
-                                attrs =
-                                        ((ScriptableObject) src)
-                                                .getAttributes((String) id);
+                                attrs = ((ScriptableObject) src).getAttributes((String) id);
                             } else if (id instanceof Integer) {
-                                attrs =
-                                        ((ScriptableObject) src)
-                                                .getAttributes((int) id);
+                                attrs = ((ScriptableObject) src).getAttributes((int) id);
                             } else if (id instanceof Symbol) {
-                                attrs =
-                                        ((ScriptableObject) src)
-                                                .getAttributes((Symbol) id);
+                                attrs = ((ScriptableObject) src).getAttributes((Symbol) id);
                             }
-                            enumerable =
-                                    (attrs & ScriptableObject.DONTENUM)
-                                            == 0;
+                            enumerable = (attrs & ScriptableObject.DONTENUM) == 0;
                         }
                         if (enumerable) {
                             Object value = null;
                             if (id instanceof String) {
-                                value =
-                                        ScriptableObject.getProperty(
-                                                src, (String) id);
+                                value = ScriptableObject.getProperty(src, (String) id);
                             } else if (id instanceof Integer) {
-                                value =
-                                        ScriptableObject.getProperty(
-                                                src, (int) id);
+                                value = ScriptableObject.getProperty(src, (int) id);
                             } else if (id instanceof Symbol) {
-                                value =
-                                        ScriptableObject.getProperty(
-                                                src, (Symbol) id);
+                                value = ScriptableObject.getProperty(src, (Symbol) id);
                             }
                             store.pushKey(id);
                             store.pushValue(value);

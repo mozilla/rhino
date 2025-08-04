@@ -36,6 +36,19 @@ public class ObjectLiteralSpreadTest {
     }
 
     @Test
+    public void testObjectSpreadBasicGenerator() {
+        String script =
+                "var obj1 = { a: 1, b: 2 };\n" +
+                        "function *gen() {\n" +
+                        "    yield { ...obj1, c: 3 }\n" +
+                        "}\n" +
+                        "var g = gen();\n" +
+                        "var obj = g.next().value;\n" +
+                        "obj.a + obj.b + obj.c;\n";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
     public void testObjectSpreadOverride() {
         String script =
                 "var obj1 = { a: 1, b: 2 };\n"
