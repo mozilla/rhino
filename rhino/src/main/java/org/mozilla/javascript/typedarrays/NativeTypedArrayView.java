@@ -7,6 +7,7 @@
 package org.mozilla.javascript.typedarrays;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -24,6 +25,7 @@ import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.IteratorLikeIterable;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
@@ -245,6 +247,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineMethod(ta, s, "values", 0, NativeTypedArrayView::js_values);
             defineMethod(ta, s, "with", 2, NativeTypedArrayView::js_with);
             defineMethod(ta, s, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
+
+            ta.defineConstructorMethod(
+                    scope, "from", 1, NativeTypedArrayView::js_from, DONTENUM, DONTENUM | READONLY);
+            ta.defineConstructorMethod(
+                    scope, "of", 0, NativeTypedArrayView::js_of, DONTENUM, DONTENUM | READONLY);
 
             ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
         }
@@ -1154,7 +1161,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 }
             }
         } else {
-            throw ScriptRuntime.typeErrorById("msg.typed.array.ctor.incompatible", methodName);
+            throw ScriptRuntime.typeErrorById(
+                    "msg.typed.array.receiver.incompatible", "prototype." + methodName);
         }
 
         return (NativeTypedArrayView<?>) newArray;
@@ -1231,6 +1239,120 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         for (int k = 0; k < self.length; ++k) {
             Object fromValue = (k == actualIndex) ? argsValue : self.js_get(k);
             result.put(k, result, fromValue);
+        }
+
+        return result;
+    }
+
+    private static Object js_from(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length < 1) {
+            throw ScriptRuntime.typeErrorById("msg.missing.argument");
+        }
+        final Scriptable items = ScriptRuntime.toObject(scope, args[0]);
+        if (!AbstractEcmaObjectOperations.isConstructor(cx, thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.constructor.expected");
+        }
+        Constructable constructable = (Constructable) thisObj;
+
+        Function mapFn = null;
+        Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
+        Scriptable mapFnThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        if (!Undefined.isUndefined(mapArg)) {
+            if (!(mapArg instanceof Function)) {
+                throw ScriptRuntime.typeErrorById("msg.map.function.not");
+            }
+            mapFn = (Function) mapArg;
+            if (args.length >= 3) {
+                mapFnThisArg = ScriptableObject.ensureScriptable(args[2]);
+            }
+        }
+
+        List<Object> listFromIterator = null;
+        Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
+        // Optimization: When items is an instance of java.util.List and also have an iterator,
+        // we don't use the iterator to avoid copying the contents to determine the length.
+        // However, with this the test262 test
+        // built-ins/TypedArray/from/iterated-array-changed-by-tonumber.js
+        // doesn't pass.
+        if (!(iteratorProp == Scriptable.NOT_FOUND)
+                && !(items instanceof List) // NativeArray and NativeTypedArrayView
+                && !Undefined.isUndefined(iteratorProp)) {
+            final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
+            if (!Undefined.isUndefined(iterator)) {
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                    listFromIterator = new ArrayList<>();
+                    for (Object temp : it) {
+                        listFromIterator.add(temp);
+                    }
+                }
+            }
+        }
+
+        int size;
+        if (listFromIterator != null) {
+            size = listFromIterator.size();
+        } else {
+            long sizeLong = AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
+            if (sizeLong > Integer.MAX_VALUE) {
+                throw ScriptRuntime.rangeErrorById("msg.arraylength.bad");
+            }
+
+            size = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
+        }
+
+        Scriptable result = constructable.construct(cx, scope, new Object[] {size});
+        if (!(result instanceof NativeTypedArrayView)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
+        }
+
+        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
+        if (typedArray.length < size) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
+        }
+
+        for (int k = 0; k < size; k++) {
+            Object temp;
+            if (listFromIterator != null) {
+                temp = listFromIterator.get(k);
+            } else if (items instanceof List<?>) {
+                try {
+                    temp = ((List<?>) items).get(k);
+                } catch (IndexOutOfBoundsException e) {
+                    temp = Undefined.instance;
+                }
+            } else {
+                temp = ScriptRuntime.getObjectIndex(items, k, cx, scope);
+            }
+
+            if (mapFn != null) {
+                temp = mapFn.call(cx, scope, mapFnThisArg, new Object[] {temp, k});
+            }
+
+            typedArray.setArrayElement(k, temp);
+        }
+
+        return result;
+    }
+
+    private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!AbstractEcmaObjectOperations.isConstructor(cx, thisObj)) {
+            throw ScriptRuntime.typeErrorById("msg.constructor.expected");
+        }
+        Constructable constructable = (Constructable) thisObj;
+
+        Scriptable result = constructable.construct(cx, scope, new Object[] {args.length});
+
+        if (!(result instanceof NativeTypedArrayView)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "of");
+        }
+
+        NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
+        if (typedArray.length < args.length) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
+        }
+
+        for (int k = 0; k < args.length; k++) {
+            typedArray.setArrayElement(k, args[k]);
         }
 
         return result;
