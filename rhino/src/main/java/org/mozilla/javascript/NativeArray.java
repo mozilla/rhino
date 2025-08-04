@@ -261,16 +261,20 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public Object get(int index, Scriptable start) {
-        if (!denseOnly && isGetterOrSetter(null, index, false)) return super.get(index, start);
+        var slot = denseOnly ? null : getMap().query(null, index);
+        if (!denseOnly && slot != null && slot.isSetterSlot()) return slot.getValue(start);
         if (dense != null && 0 <= index && index < dense.length) return dense[index];
-        return super.get(index, start);
+        return slot == null ? NOT_FOUND : slot.getValue(start);
     }
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (!denseOnly && isGetterOrSetter(null, index, false)) return super.has(index, start);
+        var slot = denseOnly ? null : getMap().query(null, index);
+        if (slot != null) {
+            return true;
+        }
         if (dense != null && 0 <= index && index < dense.length) return dense[index] != NOT_FOUND;
-        return super.has(index, start);
+        return false;
     }
 
     private static long toArrayIndex(Object id) {
@@ -340,11 +344,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
+        var slot = denseOnly ? null : getMap().query(null, index);
         if (start == this
                 && !isSealed()
                 && dense != null
                 && 0 <= index
-                && (denseOnly || !isGetterOrSetter(null, index, true))) {
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             if (!isExtensible() && this.length <= index) {
                 return;
             } else if (index < dense.length) {
@@ -378,11 +383,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void delete(int index) {
+        var slot = denseOnly ? null : getMap().query(null, index);
         if (dense != null
                 && 0 <= index
                 && index < dense.length
                 && !isSealed()
-                && (denseOnly || !isGetterOrSetter(null, index, true))) {
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             dense[index] = NOT_FOUND;
         } else {
             super.delete(index);
@@ -394,11 +400,12 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     public void deleteInternal(CompoundOperationMap compoundOp, int index) {
+        var slot = denseOnly ? null : compoundOp.query(null, index);
         if (dense != null
                 && 0 <= index
                 && index < dense.length
                 && !isSealed()
-                && (denseOnly || !isGetterOrSetter(compoundOp, null, index, true))) {
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             dense[index] = NOT_FOUND;
         } else {
             compoundOp.compute(this, null, index, ScriptableObject::checkSlotRemoval);
