@@ -118,6 +118,9 @@ class CodeGenerator extends Icode {
         if (theFunction.isES6Generator()) {
             itsData.isES6Generator = true;
         }
+        if (theFunction.isShorthand()) {
+            itsData.isShorthand = true;
+        }
 
         generateICodeFromTree(theFunction.getLastChild());
     }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -29,9 +30,9 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
-    private transient volatile List<TypeInfo> argTypeInfos;
-    private transient volatile TypeInfo returnTypeInfo;
-    transient boolean[] argNullability;
+    private transient List<TypeInfo> argTypeInfos;
+    private transient TypeInfo returnTypeInfo;
+    private transient NullabilityDetector.NullabilityAccessor argNullability;
     transient boolean vararg;
 
     transient Function asGetterFunction;
@@ -51,10 +52,9 @@ final class MemberBox implements Serializable {
 
     private void init(Method method, TypeInfoFactory factory) {
         this.memberObject = method;
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[method.getParameters().length]
-                        : nullDetector.getParameterNullability(method);
+        if (nullDetector == null) {
+            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
+        }
         this.vararg = method.isVarArgs();
         this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
         this.returnTypeInfo = factory.create(method.getGenericReturnType());
@@ -62,10 +62,9 @@ final class MemberBox implements Serializable {
 
     private void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
-        this.argNullability =
-                nullDetector == null
-                        ? new boolean[constructor.getParameters().length]
-                        : nullDetector.getParameterNullability(constructor);
+        if (nullDetector == null) {
+            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
+        }
         this.vararg = constructor.isVarArgs();
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
@@ -109,6 +108,21 @@ final class MemberBox implements Serializable {
 
     List<TypeInfo> getArgTypes() {
         return argTypeInfos;
+    }
+
+    public NullabilityDetector.NullabilityAccessor getArgNullability() {
+        var got = this.argNullability;
+        if (got == null) {
+            // synchronization is optional, because `getParameterNullability(...)` will always
+            // give `NullabilityAccessor` with same behaviour, which is because arg nullability
+            // for a certain method/constructor will not change at runtime
+            got =
+                    this.isMethod()
+                            ? nullDetector.getParameterNullability(this.method())
+                            : nullDetector.getParameterNullability(this.ctor());
+            this.argNullability = got;
+        }
+        return got;
     }
 
     TypeInfo getReturnType() {
@@ -210,7 +224,7 @@ final class MemberBox implements Serializable {
                                                     thisObj,
                                                     originalArgs[0],
                                                     nativeSetter.getArgTypes().get(0).getTypeTag(),
-                                                    nativeSetter.argNullability[0])
+                                                    nativeSetter.getArgNullability().isNullable(0))
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
                                 setterThis = thisObj;
@@ -260,7 +274,7 @@ final class MemberBox implements Serializable {
                     memberObject = accessible;
                     method = accessible;
                 } else {
-                    if (!VMBridge.instance.tryToMakeAccessible(method)) {
+                    if (!tryToMakeAccessible(method)) {
                         throw Context.throwAsScriptRuntimeEx(ex);
                     }
                 }
@@ -286,7 +300,7 @@ final class MemberBox implements Serializable {
             try {
                 return ctor.newInstance(args);
             } catch (IllegalAccessException ex) {
-                if (!VMBridge.instance.tryToMakeAccessible(ctor)) {
+                if (!tryToMakeAccessible(ctor)) {
                     throw Context.throwAsScriptRuntimeEx(ex);
                 }
             }
@@ -294,6 +308,14 @@ final class MemberBox implements Serializable {
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean tryToMakeAccessible(AccessibleObject accessible) {
+        if (!accessible.isAccessible()) {
+            accessible.setAccessible(true);
+        }
+        return true;
     }
 
     private static Method searchAccessibleMethod(Method method, Class<?>[] params) {

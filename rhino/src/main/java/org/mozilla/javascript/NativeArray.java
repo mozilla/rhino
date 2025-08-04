@@ -650,7 +650,7 @@ public class NativeArray extends ScriptableObject implements List {
         final Scriptable items =
                 ScriptRuntime.toObject(scope, (args.length >= 1) ? args[0] : Undefined.instance);
         Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
-        Scriptable thisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        Scriptable thisArg = null;
         final boolean mapping = !Undefined.isUndefined(mapArg);
         Function mapFn = null;
 
@@ -659,9 +659,9 @@ public class NativeArray extends ScriptableObject implements List {
                 throw ScriptRuntime.typeErrorById("msg.map.function.not");
             }
             mapFn = (Function) mapArg;
-            if (args.length >= 3) {
-                thisArg = ensureScriptable(args[2]);
-            }
+
+            Object callThisArg = args.length >= 3 ? args[2] : Undefined.SCRIPTABLE_UNDEFINED;
+            thisArg = ScriptRuntime.getApplyOrCallThis(cx, scope, callThisArg, 1, mapFn);
         }
 
         Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);

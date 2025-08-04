@@ -155,12 +155,14 @@ public class NativeDateTest {
                 "2025-05-07T09:05:20.780Z", "new Date('2025-05-07T09:05:20.78Z').toISOString()");
     }
 
+    @Test
     public void ctorDateTimeMillisecondsOnlyTwoDigitsPlus() {
         ctorDateTimeString(
                 "2025-05-07T05:05:20.780Z",
                 "new Date('2025-05-07T09:05:20.78+04:00').toISOString()");
     }
 
+    @Test
     public void ctorDateTimeMillisecondsOnlyTwoDigitsMinus() {
         ctorDateTimeString(
                 "2025-05-07T13:05:20.780Z",
@@ -212,6 +214,31 @@ public class NativeDateTest {
     public void ctorDateTimeMillisecondsFourDigts() {
         ctorDateTimeString(
                 "2025-05-07T09:05:20.123Z", "new Date('2025-05-07T09:05:20.1234Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsTruncation() {
+        // Test truncation (not rounding) for high precision inputs - matches browser behavior
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.123Z", "new Date('2025-05-07T09:05:20.1235Z').toISOString()");
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.123Z",
+                "new Date('2025-05-07T09:05:20.123567Z').toISOString()");
+    }
+
+    @Test
+    public void ctorDateTimeMillisecondsTruncationEdgeCases() {
+        // Test truncation at edge cases - no overflow with truncation
+        ctorDateTimeString(
+                "2025-05-07T09:05:20.999Z", "new Date('2025-05-07T09:05:20.9995Z').toISOString()");
+
+        // Test high millisecond values are truncated, not rounded
+        ctorDateTimeString(
+                "2025-05-07T09:05:59.999Z", "new Date('2025-05-07T09:05:59.9999Z').toISOString()");
+
+        // Test end of day truncation
+        ctorDateTimeString(
+                "2025-05-07T23:59:59.999Z", "new Date('2025-05-07T23:59:59.9995Z').toISOString()");
     }
 
     @Test

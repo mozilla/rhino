@@ -993,12 +993,11 @@ final class NativeDate extends IdScriptableObject {
                     if (c < '0' || c > '9') {
                         break;
                     }
-
-                    // skip more digits
                     if (digitsFound < 3) {
                         value = 10 * value + (c - '0');
                         digitsFound++;
                     }
+                    // Simply ignore any digits beyond the first 3
                 }
                 if (digitsFound == 0) {
                     state = ERROR;

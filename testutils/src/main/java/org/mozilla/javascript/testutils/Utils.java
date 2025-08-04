@@ -63,8 +63,8 @@ public class Utils {
      * @param action the action to execute
      */
     public static void runWithAllModes(final ContextAction<?> action) {
-        runWithMode(action, false);
         runWithMode(action, true);
+        runWithMode(action, false);
     }
 
     /**
@@ -75,8 +75,8 @@ public class Utils {
      */
     public static void runWithAllModes(
             final ContextFactory contextFactory, final ContextAction<?> action) {
-        runWithMode(contextFactory, action, false);
         runWithMode(contextFactory, action, true);
+        runWithMode(contextFactory, action, false);
     }
 
     /**

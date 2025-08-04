@@ -22,6 +22,7 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
@@ -167,11 +168,10 @@ public class ScriptRuntime {
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         new ClassCache().associate(scope);
+        new ConcurrentFactory().associate(scope);
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
-        LambdaConstructor obj = NativeObject.init(scope, sealed);
-
-        Scriptable objectProto = obj.getPrototype();
+        LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
         ScriptableObject functionPrototype = (ScriptableObject) function.getPrototypeProperty();
@@ -211,9 +211,6 @@ public class ScriptRuntime {
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
-
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -277,6 +274,9 @@ public class ScriptRuntime {
     public static ScriptableObject initStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+
+        NativeJavaObject.init(s, sealed);
+        NativeJavaMap.init(s, sealed);
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
@@ -2144,7 +2144,7 @@ public class ScriptRuntime {
     }
 
     static boolean isSpecialProperty(String s) {
-        return s.equals("__proto__") || s.equals("__parent__");
+        return s.equals(NativeObject.PROTO_PROPERTY) || s.equals(NativeObject.PARENT_PROPERTY);
     }
 
     /**
@@ -3298,9 +3298,8 @@ public class ScriptRuntime {
     /**
      * Perform function call in reference context. Should always return value that can be passed to
      * {@link #refGet(Ref, Context)} or {@link #refSet(Ref, Object, Context)} arbitrary number of
-     * times. The args array reference should not be stored in any object that is can be
-     * GC-reachable after this method returns. If this is necessary, store args.clone(), not args
-     * array itself.
+     * times. The args array reference should not be stored in any object that can be GC-reachable
+     * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
     public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
@@ -3791,6 +3790,10 @@ public class ScriptRuntime {
         }
     }
 
+    public static double bitwiseAND(double val1, double val2) {
+        return (double) (toInt32(val1) & toInt32(val2));
+    }
+
     public static Number bitwiseAND(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).and((BigInteger) val2);
@@ -3802,6 +3805,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) & toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double bitwiseOR(double val1, double val2) {
+        return (double) (toInt32(val1) | toInt32(val2));
     }
 
     public static Number bitwiseOR(Number val1, Number val2) {
@@ -3817,6 +3824,10 @@ public class ScriptRuntime {
         }
     }
 
+    public static double bitwiseXOR(double val1, double val2) {
+        return (double) (toInt32(val1) ^ toInt32(val2));
+    }
+
     public static Number bitwiseXOR(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).xor((BigInteger) val2);
@@ -3828,6 +3839,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) ^ toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double leftShift(double val1, double val2) {
+        return (double) (toInt32(val1) << toInt32(val2));
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
@@ -3848,6 +3863,10 @@ public class ScriptRuntime {
             int result = toInt32(val1.doubleValue()) << toInt32(val2.doubleValue());
             return Double.valueOf(result);
         }
+    }
+
+    public static double signedRightShift(double val1, double val2) {
+        return (double) (toInt32(val1) >> toInt32(val2));
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
@@ -4669,7 +4688,7 @@ public class ScriptRuntime {
         }
     }
 
-    private static boolean compareTo(double d1, double d2, int op) {
+    static boolean compareTo(double d1, double d2, int op) {
         switch (op) {
             case Token.GE:
                 return d1 >= d2;
@@ -5416,11 +5435,28 @@ public class ScriptRuntime {
                     StringIdOrIndex s = toStringIdOrIndex(id);
                     if (s.stringId == null) {
                         object.put(s.index, object, value);
-                    } else if (isSpecialProperty(s.stringId)) {
-                        Ref ref = specialRef(object, s.stringId, cx, scope);
-                        ref.set(cx, scope, value);
                     } else {
-                        object.put(s.stringId, object, value);
+                        String stringId = s.stringId;
+                        if (cx.getLanguageVersion() < Context.VERSION_ES6
+                                && isSpecialProperty(stringId)) {
+                            Ref ref = specialRef(object, stringId, cx, scope);
+                            ref.set(cx, scope, value);
+                        } else if (cx.getLanguageVersion() >= Context.VERSION_ES6
+                                && NativeObject.PROTO_PROPERTY.equals(stringId)) {
+                            if (value == null) {
+                                object.setPrototype(null);
+                            } else if (value instanceof NativeFunction) {
+                                if (((NativeFunction) value).isShorthand()) {
+                                    object.put(stringId, object, value);
+                                } else {
+                                    NativeObject.js_protoSetter(object, value);
+                                }
+                            } else if (value instanceof Scriptable) {
+                                NativeObject.js_protoSetter(object, value);
+                            }
+                        } else {
+                            object.put(stringId, object, value);
+                        }
                     }
                 }
             } else {

@@ -22,7 +22,7 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
- * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
+ * This class reflects non-Array Java objects into the JavaScript environment. It reflects fields
  * directly, and uses NativeJavaMethod objects to reflect (possibly overloaded) methods. It also
  * provides iterator support for all iterable objects.
  *

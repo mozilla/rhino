@@ -10,10 +10,10 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import javax.script.ScriptContext;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 
 /**
  * This class defines the following built-in functions for the RhinoScriptEngine.
@@ -36,21 +36,28 @@ public class Builtins {
             stdout = sc.getWriter();
         }
 
-        scope.defineFunctionProperties(
-                new String[] {"print"},
-                Builtins.class,
-                ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
+        scope.defineProperty(
+                scope,
+                "print",
+                0,
+                Builtins::print,
+                ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
+                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 
-    public static void print(Context cx, Scriptable thisObj, Object[] args, Function f)
-            throws IOException {
-        Builtins self = getSelf(thisObj);
-        for (Object arg : args) {
-            self.stdout.write(ScriptRuntime.toString(arg));
+    private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        try {
+            Builtins self = getSelf(thisObj);
+            for (Object arg : args) {
+                self.stdout.write(ScriptRuntime.toString(arg));
+            }
+            self.stdout.write('\n');
+            // ref bug https://github.com/mozilla/rhino/issues/1356
+            self.stdout.flush();
+        } catch (IOException e) {
+            throw Context.throwAsScriptRuntimeEx(e);
         }
-        self.stdout.write('\n');
-        // ref bug https://github.com/mozilla/rhino/issues/1356
-        self.stdout.flush();
+        return Undefined.instance;
     }
 
     private static Builtins getSelf(Scriptable scope) {

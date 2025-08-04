@@ -46,6 +46,8 @@ JavaDoc for all the APIs:
 
 [https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
 
+[List of projects using Rhino](USAGE.md)
+
 ## Code Structure
 
 Rhino 1.7.15 and before were primarily used in a single JAR called "rhino.jar".

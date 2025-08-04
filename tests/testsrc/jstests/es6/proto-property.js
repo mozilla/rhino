@@ -8,11 +8,16 @@ let obj = {};
 assertTrue(obj.__proto__ === Object.prototype);
 assertEquals(undefined, obj.__proto__ = undefined);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = true);
+
+// tested with chrome 138
+// assertEquals(undefined, obj.__proto__ = true);
+assertEquals(true, obj.__proto__ = true);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = 12345);
+// assertEquals(undefined, obj.__proto__ = 12345);
+assertEquals(12345, obj.__proto__ = 12345);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = 'foobar');
+// assertEquals(undefined, obj.__proto__ = 'foobar');
+assertEquals('foobar', obj.__proto__ = 'foobar');
 assertTrue(obj.__proto__ === Object.prototype);
 
 // __proto__ on an object can indeed be set to another object

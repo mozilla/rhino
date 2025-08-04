@@ -12,14 +12,14 @@ import java.util.Map;
 
 /**
  * <code>NativeJavaMap</code> is a wrapper for java objects implementing <code>java.util.Map
- * </code> interface. When {@link Context#FEATURE_ENABLE_JAVA_MAP_ACCESS} is enabled, property based
+ * </code> interface. When {@link Context#FEATURE_ENABLE_JAVA_MAP_ACCESS} is enabled, property-based
  * access like <code>map[key]</code> is delegated to {@link Map#get(Object)} or {@link
  * Map#put(Object, Object)} operations so that a <code>JavaMap</code> acts very similar to a
  * javascript <code>Object</code> There is also an iterator to iterate over entries with <code>
  * for .. of</code>.
  *
  * <p><b>Limitations:</b> The wrapped map should have <code>String</code> or <code>Integer</code> as
- * key. Otherwise, property based access may not work properly.
+ * key. Otherwise, property-based access may not work properly.
  */
 public class NativeJavaMap extends NativeJavaObject {
 

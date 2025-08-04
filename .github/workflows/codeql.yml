@@ -30,6 +30,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Cache Gradle Modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/wrapper
+          ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-cache-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
@@ -57,3 +65,9 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+
+    - name: Cleanup Gradle Cache
+      # Cleans up the Gradle caches before being cached
+      run: |
+        rm -f ~/.gradle/caches/modules-2/modules-2.lock
+        rm -f ~/.gradle/caches/modules-2/gc.properties

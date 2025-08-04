@@ -80,7 +80,9 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
-        var typeInfoFactory = TypeInfoFactory.get(this);
+        // fallback to global factory for compatibility with old behaviour, where the `scope` can be
+        // an object not yet initialized via `initStandardObject(...)`
+        var typeInfoFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
 
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
@@ -418,7 +420,12 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = args[i];
                     Object converted =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(
+                                    cx,
+                                    scope,
+                                    arg,
+                                    typeTags[i],
+                                    member.getArgNullability().isNullable(i));
                     if (arg != converted) {
                         if (invokeArgs == args) {
                             invokeArgs = args.clone();
@@ -433,7 +440,12 @@ public class FunctionObject extends BaseFunction {
                 for (int i = 0; i != parmsLength; ++i) {
                     Object arg = (i < argsLength) ? args[i] : Undefined.instance;
                     invokeArgs[i] =
-                            convertArg(cx, scope, arg, typeTags[i], member.argNullability[i]);
+                            convertArg(
+                                    cx,
+                                    scope,
+                                    arg,
+                                    typeTags[i],
+                                    member.getArgNullability().isNullable(i));
                 }
             }
 

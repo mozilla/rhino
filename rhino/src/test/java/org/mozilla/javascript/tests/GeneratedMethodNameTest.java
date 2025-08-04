@@ -64,9 +64,19 @@ public class GeneratedMethodNameTest {
     @Test
     public void anonymousFunction() throws Exception {
         final String scriptCode =
-                "var myFunc = function() {\n"
+                "(function() {\n"
                         + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
                         + "  if (m != 'anonymous') throw 'got '  + m;"
+                        + "})();";
+        doTest(scriptCode);
+    }
+
+    @Test
+    public void anonymousFunctionAssignedToVariable() throws Exception {
+        final String scriptCode =
+                "var myFunc = function() {\n"
+                        + " var m = javaNameGetter.readCurrentFunctionJavaName();\n"
+                        + "  if (m != 'myFunc') throw 'got '  + m;"
                         + "}\n"
                         + "myFunc();";
         doTest(scriptCode);

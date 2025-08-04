@@ -256,6 +256,10 @@ public class ScriptNode extends Scope {
         return null;
     }
 
+    public boolean isShorthand() {
+        return false;
+    }
+
     // Overridden in FunctionNode
     public void putDestructuringRvalues(Node left, Node right) {}
 
