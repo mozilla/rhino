@@ -393,15 +393,15 @@ public class NativeArray extends ScriptableObject implements List {
         compoundOp.compute(this, id, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    public void deleteInternal(CompoundOperationMap mutableMap, int index) {
+    public void deleteInternal(CompoundOperationMap compoundOp, int index) {
         if (dense != null
                 && 0 <= index
                 && index < dense.length
                 && !isSealed()
-                && (denseOnly || !isGetterOrSetter(mutableMap, null, index, true))) {
+                && (denseOnly || !isGetterOrSetter(compoundOp, null, index, true))) {
             dense[index] = NOT_FOUND;
         } else {
-            mutableMap.compute(this, null, index, ScriptableObject::checkSlotRemoval);
+            compoundOp.compute(this, null, index, ScriptableObject::checkSlotRemoval);
         }
     }
 
@@ -577,12 +577,26 @@ public class NativeArray extends ScriptableObject implements List {
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
-        builtIn.setLength(value);
+        double d = ScriptRuntime.toNumber(value);
+        try (var map = builtIn.startCompoundOp(true)) {
+            builtIn.setLength(map, d);
+        }
         return true;
     }
 
     private static void lengthAttrSetter(NativeArray builtIn, int attrs) {
         builtIn.lengthAttr = attrs;
+    }
+
+    private static Slot lengthDescSetValue(
+            ScriptableObject owner,
+            DescriptorInfo info,
+            Object key,
+            Slot existing,
+            CompoundOperationMap map,
+            Slot slot) {
+        ((NativeArray) owner).setLength(map, (Double) info.value);
+        return slot;
     }
 
     protected static boolean arraySetLength(
@@ -593,18 +607,20 @@ public class NativeArray extends ScriptableObject implements List {
             boolean checkValid,
             Object key,
             int index) {
+        PropDescValueSetter descSetter = NativeArray::lengthDescSetValue;
         // 10.2.4.2 Step 1.
         Object value = info.value;
 
         if (value == NOT_FOUND) {
             try (var map = builtIn.startCompoundOp(true)) {
                 return ScriptableObject.defineOrdinaryProperty(
-                        builtIn, map, id, info, checkValid, key, index);
+                        (o, i, k, e, m, s) -> s, builtIn, map, id, info, checkValid, key, index);
             }
         }
 
         // 10.2.4.2 Steps 2 - 6
         long newLength = checkLength(value);
+        info.value = (double) newLength;
 
         Object writable = info.writable;
         // 10.2.4.2 9 is true by definition
@@ -613,7 +629,7 @@ public class NativeArray extends ScriptableObject implements List {
             // 10.2.4.2 10-11
             if (newLength >= builtIn.length) {
                 return ScriptableObject.defineOrdinaryProperty(
-                        builtIn, map, id, info, checkValid, key, index);
+                        descSetter, builtIn, map, id, info, checkValid, key, index);
             }
 
             boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
@@ -629,7 +645,7 @@ public class NativeArray extends ScriptableObject implements List {
             // The standard set path that will be done by this call will
             // clear any elements as required.
             if (ScriptableObject.defineOrdinaryProperty(
-                    builtIn, map, id, info, checkValid, key, index)) {
+                    descSetter, builtIn, map, id, info, checkValid, key, index)) {
                 var currentAttrs = current.getAttributes();
                 var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
                 current.setAttributes(newAttrs);
@@ -777,15 +793,14 @@ public class NativeArray extends ScriptableObject implements List {
         return denseOnly;
     }
 
-    private boolean setLength(Object val) {
+    private boolean setLength(CompoundOperationMap compoundOp, double d) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
          * 2. If Result(1) is false, return.
          * ?
          */
-        double d = ScriptRuntime.toNumber(val);
-        long longVal = ScriptRuntime.toUint32(val);
+        long longVal = ScriptRuntime.toUint32(d);
 
         if ((lengthAttr & READONLY) != 0) {
             return false;
@@ -817,22 +832,22 @@ public class NativeArray extends ScriptableObject implements List {
             // remove all properties between longVal and length
             if (length - longVal > 0x1000) {
                 // assume that the representation is sparse
-                Object[] e = getIds(); // will only find in object itself
+                Object[] e = getIds(compoundOp, false, false); // will only find in object itself
                 for (Object id : e) {
                     if (id instanceof String) {
                         // > MAXINT will appear as string
                         String strId = (String) id;
                         long index = toArrayIndex(strId);
-                        if (index >= longVal) delete(strId);
+                        if (index >= longVal) deleteInternal(compoundOp, strId);
                     } else {
                         int index = ((Integer) id).intValue();
-                        if (index >= longVal) delete(index);
+                        if (index >= longVal) deleteInternal(compoundOp, index);
                     }
                 }
             } else {
                 // assume a dense representation
                 for (long i = longVal; i < length; i++) {
-                    deleteElem(this, i);
+                    deleteElem(compoundOp, this, i);
                 }
             }
         }
@@ -1421,7 +1436,9 @@ public class NativeArray extends ScriptableObject implements List {
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
                     nar.dense = copy;
-                    nar.setLength(intLen);
+                    try (var map = nar.startCompoundOp(true)) {
+                        nar.setLength(map, intLen);
+                    }
                 } else {
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);
