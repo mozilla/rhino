@@ -7,7 +7,10 @@ import org.mozilla.javascript.testutils.Utils;
 public class ObjectLiteralSpreadTest {
     @Test
     public void testObjectLiteralSpread() {
-        String script = "var x = { a: 'a', 3: 'd' };\n" + "var y = { ...x, b: 'b' };\n" + "y.a + y.b + y[3.0]";
+        String script =
+                "var x = { a: 'a', 3: 'd' };\n"
+                        + "var y = { ...x, b: 'b' };\n"
+                        + "y.a + y.b + y[3.0]";
         Utils.assertWithAllModes_ES6("abd", script);
     }
 
@@ -39,13 +42,13 @@ public class ObjectLiteralSpreadTest {
     @Test
     public void testObjectSpreadBasicGenerator() {
         String script =
-                "var obj1 = { a: 1, b: 2 };\n" +
-                        "function *gen() {\n" +
-                        "    yield { ...obj1, c: 3 }\n" +
-                        "}\n" +
-                        "var g = gen();\n" +
-                        "var obj = g.next().value;\n" +
-                        "obj.a + obj.b + obj.c;\n";
+                "var obj1 = { a: 1, b: 2 };\n"
+                        + "function *gen() {\n"
+                        + "    yield { ...obj1, c: 3 }\n"
+                        + "}\n"
+                        + "var g = gen();\n"
+                        + "var obj = g.next().value;\n"
+                        + "obj.a + obj.b + obj.c;\n";
         Utils.assertWithAllModes_ES6(6, script);
     }
 
@@ -95,10 +98,10 @@ public class ObjectLiteralSpreadTest {
     @Test
     public void testObjectSpreadWithEnumerable() {
         String script =
-                "var x = {};\n" +
-                        "Object.defineProperty(x, 'd', { value: 4, enumerable: false})\n" +
-                        "var y = { ...x};\n" +
-                        "y.d";
+                "var x = {};\n"
+                        + "Object.defineProperty(x, 'd', { value: 4, enumerable: false})\n"
+                        + "var y = { ...x};\n"
+                        + "y.d";
         Utils.assertWithAllModes_ES6(Undefined.instance, script);
     }
 }

@@ -2286,13 +2286,14 @@ class BodyCodegen {
                 if (child.getType() == Token.DOTDOTDOT) {
                     cfw.addALoad(contextLocal); // stack: [context]
                     cfw.addALoad(variableObjectLocal); // stack: [context, scope]
-                    generateExpression(child.getFirstChild(), node); // stack: [context, scope, sourceObj]
+                    generateExpression(
+                            child.getFirstChild(), node); // stack: [context, scope, sourceObj]
                     cfw.addALoad(local); // stack: [context, scope, sourceObj, store]
                     cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
                     cfw.add(ByteCode.SWAP); // stack: [context, scope, store, sourceObj]
                     addScriptRuntimeInvoke(
                             "spreadOp",
-                                    "(Lorg/mozilla/javascript/Context;"
+                            "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
@@ -2334,10 +2335,12 @@ class BodyCodegen {
                     cfw.add(ByteCode.SWAP); // stack: [store, context, store]
                     cfw.addALoad(variableObjectLocal); // stack: [store, context, store, scope]
                     cfw.add(ByteCode.SWAP); // stack [store, context, scope, store]
-                    generateExpression(child.getFirstChild(), node); // stack: [store, context, scope, store, sourceObj]
+                    generateExpression(
+                            child.getFirstChild(),
+                            node); // stack: [store, context, scope, store, sourceObj]
                     addScriptRuntimeInvoke(
                             "spreadOp",
-                                    "(Lorg/mozilla/javascript/Context;"
+                            "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
