@@ -294,15 +294,7 @@ class ExecUtil {
         @Override
         public final void run() {
             try {
-                // A buffer size of 4096 gives the best performance (~25 sec in testStreaming10gb)
-                // in.transferTo(out) is way slower (~35s)
-                 
-                byte[] buffer = new byte[4096];
-                int read;
-                while ((read = in.read(buffer, 0, buffer.length)) >= 0) {
-                    out.write(buffer, 0, read);
-                   // out.flush(); // flush must be inside loop
-                }
+                in.transferTo(out);
             } catch (Throwable t) {
                 error = t;
             } finally {
