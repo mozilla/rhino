@@ -33,9 +33,9 @@ public class GlobalRunCommandTest {
                     ? "runCommand('powershell.exe', '-c', '[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardOutput())', { input: stdIn, output: stdOut, err: stdErr })"
                     : "runCommand('/usr/bin/cat', { input: stdIn, output: stdOut, err: stdErr })";
     private static final String STDIN_TO_STDERR =
-    isWindows
-            ? "runCommand('powershell.exe', '-c', '[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError())', { input: stdIn, output: stdOut, err: stdErr })"
-            :            "runCommand('/usr/bin/env', 'bash', '-c', 'cat >&2', { input: stdIn, output: stdOut, err: stdErr })";
+            isWindows
+                    ? "runCommand('powershell.exe', '-c', '[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError())', { input: stdIn, output: stdOut, err: stdErr })"
+                    : "runCommand('/usr/bin/env', 'bash', '-c', 'cat >&2', { input: stdIn, output: stdOut, err: stdErr })";
 
     @Test
     public void test() {
@@ -231,11 +231,20 @@ public class GlobalRunCommandTest {
      *
      * <p>This test is disabled.
      *
-     * <p>it runs about 25s (on windows ~55s) and transfers 40GB of data. The expected throughput is slightly below
-     * 2GB/s (windows ~1GB/s)
+     * <p>I tried to compare <code>
+     * while ((read = in.read(buffer, 0, 4096)) >= 0) {} out.write / out.flush }</code> vs <code>
+     * in.transferTo(out)</code>
+     *
+     * <ul>
+     *   <li>A buffer of 4096 gives the max. performance on <b>on linux</b> and iis ~30% faster than
+     *       <code>in.transferTo</code>
+     *   <li><code>in.transferTo</code> is twice as fast as using a buffer <b>on windows</b>
+     * </ul>
+     *
+     * <p>The expected transferrate is ~1-2GB/s - the test is disabled, as it takes a long time
      */
     @Test
-    //@Disabled
+    @Disabled
     public void testStreaming10gb() {
         long tenGig = 10_000_000_000L;
         Utils.runWithAllModes(
