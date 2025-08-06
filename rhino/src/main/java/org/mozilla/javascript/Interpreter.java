@@ -4214,44 +4214,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Object source = frame.stack[state.stackTop];
             --state.stackTop;
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
-
-            if (source != null && source != Undefined.instance) {
-                Scriptable src = ScriptRuntime.toObjectOrNull(cx, source, frame.scope);
-                if (src != null) {
-                    Object[] ids;
-                    if (src instanceof ScriptableObject) {
-                        ids = ((ScriptableObject) src).getIds(false, true);
-                    } else {
-                        ids = src.getIds();
-                    }
-                    for (Object id : ids) {
-                        boolean enumerable = true;
-                        if (src instanceof ScriptableObject) {
-                            int attrs = 0;
-                            if (id instanceof String) {
-                                attrs = ((ScriptableObject) src).getAttributes((String) id);
-                            } else if (id instanceof Integer) {
-                                attrs = ((ScriptableObject) src).getAttributes((int) id);
-                            } else if (id instanceof Symbol) {
-                                attrs = ((ScriptableObject) src).getAttributes((Symbol) id);
-                            }
-                            enumerable = (attrs & ScriptableObject.DONTENUM) == 0;
-                        }
-                        if (enumerable) {
-                            Object value = null;
-                            if (id instanceof String) {
-                                value = ScriptableObject.getProperty(src, (String) id);
-                            } else if (id instanceof Integer) {
-                                value = ScriptableObject.getProperty(src, (int) id);
-                            } else if (id instanceof Symbol) {
-                                value = ScriptableObject.getProperty(src, (Symbol) id);
-                            }
-                            store.pushKey(id);
-                            store.pushValue(value);
-                        }
-                    }
-                }
-            }
+            ScriptRuntime.spreadOp(cx, frame.scope, store, source);
             return null;
         }
     }
