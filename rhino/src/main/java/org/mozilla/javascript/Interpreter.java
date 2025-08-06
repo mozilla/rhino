@@ -3308,7 +3308,7 @@ public final class Interpreter extends Icode implements Evaluator {
                         } else {
                             // Call: shift args left, starting from 2nd
                             if (state.indexReg > 0) {
-                                if (state.indexReg > 1) {
+                                if (state.indexReg > 1 && blen == 0) {
                                     System.arraycopy(
                                             stack,
                                             state.stackTop + 2,
@@ -3321,6 +3321,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                             sDbl,
                                             state.stackTop + 1,
                                             state.indexReg - 1);
+                                } else if (state.indexReg > 1) {
+                                    System.arraycopy(
+                                            boundArgs, 1, boundArgs, 0, boundArgs.length - 1);
+                                    blen--;
                                 }
                                 state.indexReg--;
                             }
