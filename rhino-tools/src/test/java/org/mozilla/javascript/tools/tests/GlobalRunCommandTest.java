@@ -37,6 +37,7 @@ public class GlobalRunCommandTest {
                     ? "runCommand('powershell.exe', '-c', '[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError())', { input: stdIn, output: stdOut, err: stdErr })"
                     : "runCommand('/usr/bin/env', 'bash', '-c', 'cat >&2', { input: stdIn, output: stdOut, err: stdErr })";
 
+    /** This is a simple 'hello world' test and tests the process return value. */
     @Test
     public void test() {
         String cmd =
@@ -54,6 +55,10 @@ public class GlobalRunCommandTest {
                 });
     }
 
+    /**
+     * Tests, if we can read the stdout of the process. The stdout is stored into an existing
+     * args-property.
+     */
     @Test
     public void testReturnOutput() {
         String cmd =
@@ -75,27 +80,9 @@ public class GlobalRunCommandTest {
                 });
     }
 
-    @Test
-    public void testTimeout() {
-        String cmd =
-                isWindows
-                        ? "runCommand('ping',{ timeout: 500, args : ['127.0.0.1', '-n', 5] })"
-                        : "runCommand('/usr/bin/sleep',{ timeout: 500, args : [5] })";
-        Utils.runWithAllModes(
-                cx -> {
-                    cx.setLanguageVersion(Context.VERSION_ES6);
-                    var g = new Global(cx);
-                    long start = System.currentTimeMillis();
-                    var result = cx.evaluateString(g, cmd, "test.js", 1, null);
-                    long duration = System.currentTimeMillis() - start;
-                    assertTrue(duration >= 500);
-                    assertTrue(duration <= 1500);
-                    assertInstanceOf(Number.class, result);
-                    assertEquals(isWindows ? 1 : 143, ((Number) result).intValue()); // Sigterm
-                    return null;
-                });
-    }
-
+    /**
+     * Tests, if we can read the stdout of the process. The stdout is written to an outputStream.
+     */
     @Test
     public void testWithOutputStream() {
         String cmd =
@@ -125,6 +112,7 @@ public class GlobalRunCommandTest {
                 });
     }
 
+    /** Test, if input (stdIn) and output (stdOut/stdErr) will work. */
     @Test
     public void testWithInAndOut() {
 
@@ -156,7 +144,7 @@ public class GlobalRunCommandTest {
 
     /**
      * Tests, if we can stream more than 4G. This ensures, that there is no limiting (32 bit) buffer
-     * in the pipeline. Note: This test runs only in interpreted mode, to saves ome time
+     * in the pipeline. Note: This test runs only in interpreted mode, to saves some time
      */
     @Test
     public void testStreamingMoreThan4G() {
@@ -190,11 +178,33 @@ public class GlobalRunCommandTest {
     }
 
     /**
-     * This test streams 10GB through stdout + stderr in interpreted and compiled mode.
-     *
-     * <p>This test is disabled.
-     *
-     * <p>it runs about 35s and transfers 40GB of data. The expected throughput is slightly 1GB/s
+     * Thests, if the timeout will work. A command, that runs ~5sec should be terminated after
+     * 500ms.
+     */
+    @Test
+    public void testTimeout() {
+        String cmd =
+                isWindows
+                        ? "runCommand('ping',{ timeout: 500, args : ['127.0.0.1', '-n', 5] })"
+                        : "runCommand('/usr/bin/sleep',{ timeout: 500, args : [5] })";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    var g = new Global(cx);
+                    long start = System.currentTimeMillis();
+                    var result = cx.evaluateString(g, cmd, "test.js", 1, null);
+                    long duration = System.currentTimeMillis() - start;
+                    assertTrue(duration >= 500);
+                    assertTrue(duration <= 1500);
+                    assertInstanceOf(Number.class, result);
+                    assertEquals(isWindows ? 1 : 143, ((Number) result).intValue()); // Sigterm
+                    return null;
+                });
+    }
+
+    /**
+     * Test, if we get an exception, when the inputStream throws an error. It is expected, that the
+     * exception is passed to the caller
      */
     @Test
     public void testThrowOnInpupt() {
@@ -220,8 +230,42 @@ public class GlobalRunCommandTest {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    // assertEquals(tenGig, stdOut.bytes);
-                    // assertEquals(tenGig, stdErr.bytes);
+                    assertEquals(0, stdOut.bytes);
+                    return null;
+                });
+    }
+
+    /**
+     * Test, if we get an exception, when the outputstream throws an error. It is expected, that the
+     * exception is passed to the caller
+     */
+    @Test
+    public void testThrowOnOutput() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    var g = new Global(cx);
+
+                    g.put("stdIn", g, "hello world");
+                    g.put(
+                            "stdOut",
+                            g,
+                            cx.getWrapFactory()
+                                    .wrap(cx, g, new ThrowingOutputStream(), OutputStream.class));
+                    g.put(
+                            "stdErr",
+                            g,
+                            cx.getWrapFactory()
+                                    .wrap(cx, g, new ThrowingOutputStream(), OutputStream.class));
+
+                    assertThrows(
+                            WrappedException.class,
+                            () -> cx.evaluateString(g, STDIN_TO_STDOUT, "test.js", 1, null));
+
+                    assertThrows(
+                            WrappedException.class,
+                            () -> cx.evaluateString(g, STDIN_TO_STDERR, "test.js", 1, null));
+
                     return null;
                 });
     }
