@@ -123,9 +123,12 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
             Class<?> c = getClassObject();
             Scriptable p = (Scriptable) args[0];
             do {
-                if (p instanceof Wrapper) {
-                    Object o = ((Wrapper) p).unwrap();
-                    if (c.isInstance(o)) return p;
+                if (p instanceof NativeJavaObject) {
+                    Object o = ((NativeJavaObject) p).unwrap();
+                    if (c.isInstance(o)) {
+                        // rewrap with given static type
+                        return ((NativeJavaObject) p).cast(scope, c);
+                    }
                 }
                 p = p.getPrototype();
             } while (p != null);
