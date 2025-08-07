@@ -3288,6 +3288,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         stack,
                                         sDbl,
+                                        boundArgs,
                                         state.stackTop + 1,
                                         state.indexReg,
                                         fun,
@@ -4566,14 +4567,19 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx,
             Object[] stack,
             double[] sDbl,
+            Object[] boundArgs,
             int thisIdx,
             int indexReg,
             Callable target,
             CallFrame frame) {
         Object obj;
         if (indexReg != 0) {
-            obj = stack[thisIdx];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
+            if (boundArgs != null && boundArgs.length > 0) {
+                obj = boundArgs[0];
+            } else {
+                obj = stack[thisIdx];
+                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
+            }
         } else {
             obj = null;
         }
