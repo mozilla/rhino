@@ -18,4 +18,18 @@ public class BoundFunctionTest {
 
         Utils.assertWithAllModes_ES6("bound foo", code);
     }
+
+    @Test
+    public void invokeBoundCallManyArgs() {
+        /* This test is a little fiddly. The call to bind causes the
+        max stack size to be high enough that it could mask the
+        bug, so we have to make the call to the bound in function
+        in another function which has a smaller stack. */
+        String code =
+                "function f() { return 'Hello!'; };\n"
+                        + "var b = f.call.bind(f, 1, 2, 3);\n"
+                        + "(function(){ return b(); })();";
+
+        Utils.assertWithAllModes_ES6("Hello!", code);
+    }
 }

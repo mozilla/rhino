@@ -3288,6 +3288,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         stack,
                                         sDbl,
+                                        boundArgs,
                                         state.stackTop + 1,
                                         state.indexReg,
                                         fun,
@@ -3296,19 +3297,28 @@ public final class Interpreter extends Icode implements Evaluator {
                             // Apply: second argument after new "this"
                             // should be array-like
                             // and we'll spread its elements on the stack
-                            Object[] callArgs =
-                                    state.indexReg < 2
-                                            ? ScriptRuntime.emptyArgs
-                                            : ScriptRuntime.getApplyArguments(
-                                                    cx, stack[state.stackTop + 2]);
+                            final Object[] callArgs;
+                            if (blen > 1) {
+                                callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
+                            } else if (state.indexReg < 2) {
+                                callArgs = ScriptRuntime.emptyArgs;
+                            } else {
+                                callArgs =
+                                        ScriptRuntime.getApplyArguments(
+                                                cx, stack[state.stackTop - blen + 2]);
+                            }
+
                             int alen = callArgs.length;
-                            boundArgs = appendBoundArgs(boundArgs, callArgs);
-                            blen = blen + alen;
+                            // We're coming from the outside, so this
+                            // is replacing any bound args we might
+                            // have had already.
+                            boundArgs = callArgs;
+                            blen = alen;
                             state.indexReg = alen;
                         } else {
                             // Call: shift args left, starting from 2nd
                             if (state.indexReg > 0) {
-                                if (state.indexReg > 1) {
+                                if (state.indexReg > 1 && blen == 0) {
                                     System.arraycopy(
                                             stack,
                                             state.stackTop + 2,
@@ -3321,6 +3331,10 @@ public final class Interpreter extends Icode implements Evaluator {
                                             sDbl,
                                             state.stackTop + 1,
                                             state.indexReg - 1);
+                                } else if (state.indexReg > 1) {
+                                    System.arraycopy(
+                                            boundArgs, 1, boundArgs, 0, boundArgs.length - 1);
+                                    blen--;
                                 }
                                 state.indexReg--;
                             }
@@ -3339,7 +3353,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     fun = bfun.getTargetFunction();
                     funThisObj = bfun.getCallThis(cx, calleeScope);
                     Object[] bArgs = bfun.getBoundArgs();
-                    boundArgs = appendBoundArgs(boundArgs, bArgs);
+                    boundArgs = addBoundArgs(boundArgs, bArgs);
                     blen = blen + bArgs.length;
                     state.indexReg += blen;
                 } else if (fun instanceof NoSuchMethodShim) {
@@ -4431,14 +4445,18 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static Object[] appendBoundArgs(Object[] boundArgs, Object[] newArgs) {
+    /**
+     * Adds the new args to the bound args. Because we're unwrapping things in reverse order they
+     * are actually prepended.
+     */
+    private static Object[] addBoundArgs(Object[] boundArgs, Object[] newArgs) {
         if (newArgs.length == 0) {
             return boundArgs;
         } else if (boundArgs == null) {
             return newArgs;
         } else {
-            Object[] result = Arrays.copyOf(boundArgs, boundArgs.length + newArgs.length);
-            System.arraycopy(newArgs, 0, result, boundArgs.length, newArgs.length);
+            Object[] result = Arrays.copyOf(newArgs, boundArgs.length + newArgs.length);
+            System.arraycopy(boundArgs, 0, result, newArgs.length, boundArgs.length);
             return result;
         }
     }
@@ -4549,14 +4567,19 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx,
             Object[] stack,
             double[] sDbl,
+            Object[] boundArgs,
             int thisIdx,
             int indexReg,
             Callable target,
             CallFrame frame) {
         Object obj;
         if (indexReg != 0) {
-            obj = stack[thisIdx];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
+            if (boundArgs != null && boundArgs.length > 0) {
+                obj = boundArgs[0];
+            } else {
+                obj = stack[thisIdx];
+                if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[thisIdx]);
+            }
         } else {
             obj = null;
         }
