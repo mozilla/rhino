@@ -54,6 +54,7 @@ import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Spread;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -231,6 +232,8 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
+            case Token.DOTDOTDOT:
+                return transformSpread((Spread) node);
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -969,35 +972,45 @@ public final class IRFactory {
             int size = elems.size(), i = 0;
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
-                Object propKey = Parser.getPropKey(prop.getLeft());
-                Node inferrableName = null;
-                if (propKey == null) {
-                    Node theId = transform(prop.getLeft());
-                    properties[i++] = theId;
+                if (prop.getLeft() instanceof Spread) {
+                    AstNode left = prop.getLeft();
+                    var transformedSpreadNode = transform(left);
+                    properties[i++] = transformedSpreadNode;
+                    object.putIntProp(Node.CONTAINS_SPREAD, 1);
+                    object.addChildToBack(transformedSpreadNode);
                 } else {
-                    properties[i++] = propKey;
-                    assert propKey instanceof String || propKey instanceof Integer;
-                    inferrableName = parser.createName(Objects.toString(propKey));
-                    inferrableName.setLineColumnNumber(
-                            prop.getLeft().getLineno(), prop.getLeft().getColumn());
-                }
+                    Object propKey = Parser.getPropKey(prop.getLeft());
+                    Node inferrableName = null;
+                    if (propKey == null) {
+                        Node theId = transform(prop.getLeft());
+                        properties[i++] = theId;
+                    } else {
+                        properties[i++] = propKey;
+                        assert propKey instanceof String || propKey instanceof Integer;
+                        inferrableName = parser.createName(Objects.toString(propKey));
+                        inferrableName.setLineColumnNumber(
+                                prop.getLeft().getLineno(), prop.getLeft().getColumn());
+                    }
 
-                Node right = transform(prop.getRight());
-                if (inferrableName != null) {
-                    inferNameIfMissing(
-                            inferrableName,
-                            right,
-                            prop.isGetterMethod() ? "get " : prop.isSetterMethod() ? "set " : null);
-                }
+                    Node right = transform(prop.getRight());
+                    if (inferrableName != null) {
+                        inferNameIfMissing(
+                                inferrableName,
+                                right,
+                                prop.isGetterMethod()
+                                        ? "get "
+                                        : prop.isSetterMethod() ? "set " : null);
+                    }
 
-                if (prop.isGetterMethod()) {
-                    right = createUnary(Token.GET, right);
-                } else if (prop.isSetterMethod()) {
-                    right = createUnary(Token.SET, right);
-                } else if (prop.isNormalMethod()) {
-                    right = createUnary(Token.METHOD, right);
+                    if (prop.isGetterMethod()) {
+                        right = createUnary(Token.GET, right);
+                    } else if (prop.isSetterMethod()) {
+                        right = createUnary(Token.SET, right);
+                    } else if (prop.isNormalMethod()) {
+                        right = createUnary(Token.METHOD, right);
+                    }
+                    object.addChildToBack(right);
                 }
-                object.addChildToBack(right);
             }
         }
         object.putProp(Node.OBJECT_IDS_PROP, properties);
@@ -1291,6 +1304,11 @@ public final class IRFactory {
         Node kid = node.getValue() == null ? null : transform(node.getValue());
         if (kid != null) return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
         return new Node(node.getType(), node.getLineno(), node.getColumn());
+    }
+
+    private Node transformSpread(Spread node) {
+        Node kid = transform(node.getExpression());
+        return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
     }
 
     private Node transformXmlLiteral(XmlLiteral node) {

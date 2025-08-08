@@ -46,6 +46,7 @@ import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
+import org.mozilla.javascript.ast.Spread;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -895,7 +896,8 @@ class ParserLineColumnNumberTest {
                                 + " c() { return 3; },\n"
                                 + " d: function() { return 4; },\n"
                                 + " get e() { return 5; },\n"
-                                + " set f(value) { this._f = value; }\n"
+                                + " set f(value) { this._f = value; },\n"
+                                + " ...g\n"
                                 + "}");
         ExpressionStatement expressionStatement =
                 assertInstanceOf(ExpressionStatement.class, root.getFirstChild());
@@ -905,7 +907,7 @@ class ParserLineColumnNumberTest {
         assertLineColumnAre(assignment, 0, 2);
         ObjectLiteral objectLiteral = assertInstanceOf(ObjectLiteral.class, assignment.getRight());
         assertLineColumnAre(objectLiteral, 0, 6);
-        assertEquals(6, objectLiteral.getElements().size());
+        assertEquals(7, objectLiteral.getElements().size());
 
         ObjectProperty propA =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(0));
@@ -944,6 +946,13 @@ class ParserLineColumnNumberTest {
         assertLineColumnAre(propF, 5, 2);
         assertLineColumnAre(propF.getLeft(), 5, 2);
         assertLineColumnAre(propF.getRight(), 5, 6);
+
+        ObjectProperty propG =
+                assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(6));
+        assertLineColumnAre(propG, 6, 2);
+        assertLineColumnAre(propG.getLeft(), 6, 2);
+        assertLineColumnAre(((Spread) propG.getLeft()).getExpression(), 6, 5);
+        assertNull(propG.getRight());
     }
 
     @Test

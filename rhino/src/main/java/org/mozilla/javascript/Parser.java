@@ -62,6 +62,7 @@ import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Spread;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -3785,6 +3786,20 @@ public class Parser {
             AstNode pname = objliteralProperty();
             if (pname == null) {
                 reportError("msg.bad.prop");
+            } else if (pname instanceof Spread) {
+                // TODO: it doesn't seem right to create an object property?
+                // with just the left hand side.
+                ObjectProperty prop = new ObjectProperty();
+                prop.setNodeType(Token.DOTDOTDOT);
+
+                // TODO:
+                AstNode spreadExpr = ((Spread) pname).getExpression();
+                if (spreadExpr instanceof Name || spreadExpr instanceof StringLiteral) {
+                    // For complicated reasons, parsing a name does not advance the token
+                    spreadExpr.setLineColumnNumber(lineNumber(), columnNumber());
+                }
+                prop.setLeft(pname);
+                elems.add(prop);
             } else {
                 propertyName = ts.getString();
                 int ppos = ts.tokenBeg;
@@ -3928,6 +3943,23 @@ public class Parser {
             case Token.NUMBER:
             case Token.BIGINT:
                 pname = createNumericLiteral(tt, true);
+                break;
+
+            case Token.DOTDOTDOT:
+                if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    int pos = ts.tokenBeg;
+                    nextToken();
+                    int lineno = lineNumber();
+                    int column = columnNumber();
+
+                    AstNode exprNode = assignExpr();
+                    pname = new Spread(pos, ts.tokenEnd - pos);
+                    pname.setLineColumnNumber(lineno, column);
+                    ((Spread) pname).setExpression(exprNode);
+                } else {
+                    reportError("msg.bad.prop");
+                    return null;
+                }
                 break;
 
             case Token.LB:

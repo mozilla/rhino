@@ -5463,12 +5463,47 @@ public class ScriptRuntime {
                 ScriptableObject so = (ScriptableObject) object;
                 Callable getterOrSetter = (Callable) value;
                 boolean isSetter = getterSetter == 1;
-                Integer index = id instanceof Integer ? (Integer) id : null;
-                Object key =
-                        index != null
-                                ? null
-                                : (id instanceof Symbol ? id : ScriptRuntime.toString(id));
-                so.setGetterOrSetter(key, index == null ? 0 : index, getterOrSetter, isSetter);
+                if (id instanceof Symbol) {
+                    so.setGetterOrSetter(id, 0, getterOrSetter, isSetter);
+                } else if (id instanceof Integer && ((Integer) id) >= 0) {
+                    so.setGetterOrSetter(null, (Integer) id, getterOrSetter, isSetter);
+                } else {
+                    StringIdOrIndex s = toStringIdOrIndex(id);
+                    so.setGetterOrSetter(
+                            s.getStringId(),
+                            s.getIndex() == -1 ? 0 : s.getIndex(),
+                            getterOrSetter,
+                            isSetter);
+                }
+            }
+        }
+    }
+
+    public static void spreadOp(
+            Context cx, Scriptable scope, NewLiteralStorage store, Object source) {
+        if (source != null && !Undefined.isUndefined(source)) {
+            Scriptable src = toObjectOrNull(cx, source, scope);
+            if (src != null) {
+                Object[] ids;
+                if (src instanceof ScriptableObject) {
+                    ids = ((ScriptableObject) src).getIds(false, true);
+                } else {
+                    ids = src.getIds();
+                }
+
+                // getIds() can return a string, int or a symbol
+                for (Object id : ids) {
+                    Object value = null;
+                    if (id instanceof String) {
+                        value = ScriptableObject.getProperty(src, (String) id);
+                    } else if (id instanceof Integer) {
+                        value = ScriptableObject.getProperty(src, (int) id);
+                    } else if (id instanceof Symbol) {
+                        value = ScriptableObject.getProperty(src, (Symbol) id);
+                    }
+                    store.pushKey(id);
+                    store.pushValue(value);
+                }
             }
         }
     }

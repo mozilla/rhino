@@ -713,8 +713,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_LITERAL_NEW_OBJECT:
                     {
                         boolean copyArray = iCode[pc++] != 0;
-                        Object[] keys = (Object[]) idata.literalIds[indexReg];
-                        out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
+                        if (indexReg < 0) {
+                            out.println(tname + " length: " + -indexReg);
+                        } else {
+                            Object[] keys = (Object[]) idata.literalIds[indexReg];
+                            out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
+                        }
                         break;
                     }
                 case Icode_SPARE_ARRAYLIT:
@@ -1491,13 +1495,14 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
+        instructionObjs[base + Icode_SPREAD] = new DoSpread();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + ICode_FN_STORE_HOME_OBJECT] = new DoStoreHomeObject();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
         instructionObjs[base + Token.REGEXP] = new DoRegExp();
         instructionObjs[base + Icode_TEMPLATE_LITERAL_CALLSITE] = new DoTemplateLiteralCallSite();
         instructionObjs[base + Icode_LITERAL_NEW_OBJECT] = new DoLiteralNewObject();
-        instructionObjs[base + Icode_LITERAL_NEW_ARRAY] = new DoNewArrayLit();
+        instructionObjs[base + Icode_LITERAL_NEW_ARRAY] = new DoLiteralNewArray();
         instructionObjs[base + Icode_LITERAL_SET] = new DoLiteralSet();
         instructionObjs[base + Icode_LITERAL_GETTER] = new DoLiteralGetter();
         instructionObjs[base + Icode_LITERAL_SETTER] = new DoLiteralSetter();
@@ -1779,6 +1784,97 @@ public final class Interpreter extends Icode implements Evaluator {
         } finally {
             cx.lastInterpreterFrame = oldFrame;
         }
+    }
+
+    private static int literalNewObject(
+            Context cx, CallFrame frame, int indexReg, byte[] iCode, int stackTop, Object[] stack) {
+        // indexReg: index of constant with the keys
+        // indexReg > 0, create arrays
+        // indexReg: -1, no key (eg: spread)
+        if (indexReg <= 0) {
+            ++frame.pc;
+            ++stackTop;
+            stack[stackTop] = cx.newObject(frame.scope);
+            ++stackTop;
+            stack[stackTop] = new NewLiteralStorage(-indexReg, true);
+            return stackTop;
+        } else {
+            Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
+            boolean copyArray = iCode[frame.pc] != 0;
+            ++frame.pc;
+            ++stackTop;
+            stack[stackTop] = cx.newObject(frame.scope);
+            ++stackTop;
+            stack[stackTop] =
+                    new NewLiteralStorage(copyArray ? Arrays.copyOf(ids, ids.length) : ids);
+            return stackTop;
+        }
+    }
+
+    private static int literalNewArray(int stackTop, Object[] stack, int indexReg) {
+        // indexReg: number of values in the literal
+        ++stackTop;
+        stack[stackTop] = new NewLiteralStorage(indexReg, false);
+        return stackTop;
+    }
+
+    private static int literalSet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
+        Object value = stack[stackTop];
+        if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushValue(value);
+        return stackTop;
+    }
+
+    private static int literalGetter(Object[] stack, int stackTop) {
+        Object value = stack[stackTop];
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushGetter(value);
+        return stackTop;
+    }
+
+    private static int literalSetter(Object[] stack, int stackTop) {
+        Object value = stack[stackTop];
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushSetter(value);
+        return stackTop;
+    }
+
+    private static int literalKeySet(Object[] stack, int stackTop, Object DBL_MRK, double[] sDbl) {
+        Object key = stack[stackTop];
+        if (key == DBL_MRK) key = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        var store = (NewLiteralStorage) stack[stackTop];
+        store.pushKey(key);
+        return stackTop;
+    }
+
+    private static int objectLit(Context cx, CallFrame frame, Object[] stack, int stackTop) {
+        var store = (NewLiteralStorage) stack[stackTop];
+        --stackTop;
+        Scriptable object = (Scriptable) stack[stackTop];
+        ScriptRuntime.fillObjectLiteral(
+                object,
+                store.getKeys(),
+                store.getValues(),
+                store.getGetterSetters(),
+                cx,
+                frame.scope);
+        return stackTop;
+    }
+
+    private static void arrayLit(
+            Context cx, CallFrame frame, Object[] stack, int stackTop, int op, int indexReg) {
+        var store = (NewLiteralStorage) stack[stackTop];
+        int[] skipIndexces = null;
+        if (op == Icode_SPARE_ARRAYLIT) {
+            skipIndexces = (int[]) frame.idata.literalIds[indexReg];
+        }
+        stack[stackTop] =
+                ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
     }
 
     private static final Object DBL_MRK = DOUBLE_MARK;
@@ -4119,8 +4215,20 @@ public final class Interpreter extends Icode implements Evaluator {
             // Stack contains: [object, keysArray, flagsArray, valuesArray,
             // function]
             InterpretedFunction fun = (InterpretedFunction) frame.stack[state.stackTop];
-            Scriptable homeObject = (Scriptable) frame.stack[state.stackTop - 4];
+            Scriptable homeObject = (Scriptable) frame.stack[state.stackTop - 2];
             fun.setHomeObject(homeObject);
+            return null;
+        }
+    }
+
+    private static class DoSpread extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // stack: [..., NewLiteralStorage, sourceObj]
+            Object source = frame.stack[state.stackTop];
+            --state.stackTop;
+            NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
+            ScriptRuntime.spreadOp(cx, frame.scope, store, source);
             return null;
         }
     }
@@ -4157,25 +4265,34 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: index of constant with the keys
-            Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
-            boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
-            ++frame.pc;
-            frame.stack[++state.stackTop] = cx.newObject(frame.scope);
-            frame.stack[++state.stackTop] = copyArray ? Arrays.copyOf(ids, ids.length) : ids;
-            frame.stack[++state.stackTop] = new int[ids.length];
-            frame.stack[++state.stackTop] = new Object[ids.length];
-            frame.sDbl[state.stackTop] = 0;
+            // indexReg > 0, create arrays
+            // indexReg: -1, no key (eg: spread)
+            if (state.indexReg <= 0) {
+                ++frame.pc;
+                ++state.stackTop;
+                frame.stack[state.stackTop] = cx.newObject(frame.scope);
+                ++state.stackTop;
+                frame.stack[state.stackTop] = new NewLiteralStorage(-state.indexReg, true);
+            } else {
+                Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
+                boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
+                ++frame.pc;
+                ++state.stackTop;
+                frame.stack[state.stackTop] = cx.newObject(frame.scope);
+                ++state.stackTop;
+                frame.stack[state.stackTop] =
+                        new NewLiteralStorage(copyArray ? Arrays.copyOf(ids, ids.length) : ids);
+            }
+
             return null;
         }
     }
 
-    private static class DoNewArrayLit extends InstructionClass {
+    private static class DoLiteralNewArray extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: number of values in the literal
-            frame.stack[++state.stackTop] = new int[state.indexReg];
-            frame.stack[++state.stackTop] = new Object[state.indexReg];
-            frame.sDbl[state.stackTop] = 0;
+            frame.stack[++state.stackTop] = new NewLiteralStorage(state.indexReg, false);
             return null;
         }
     }
@@ -4184,10 +4301,10 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object value = frame.stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            int i = (int) frame.sDbl[--state.stackTop];
-            ((Object[]) frame.stack[state.stackTop])[i] = value;
-            frame.sDbl[state.stackTop] = i + 1;
+            if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            store.pushValue(value);
             return null;
         }
     }
@@ -4196,10 +4313,9 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cs, CallFrame frame, InterpreterState state, int op) {
             Object value = frame.stack[state.stackTop];
-            int i = (int) frame.sDbl[--state.stackTop];
-            ((Object[]) frame.stack[state.stackTop])[i] = value;
-            ((int[]) frame.stack[--state.stackTop])[i] = -1;
-            frame.sDbl[++state.stackTop] = i + 1;
+            --state.stackTop;
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            store.pushGetter(value);
             return null;
         }
     }
@@ -4208,10 +4324,9 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object value = frame.stack[state.stackTop];
-            int i = (int) frame.sDbl[--state.stackTop];
-            ((Object[]) frame.stack[state.stackTop])[i] = value;
-            ((int[]) frame.stack[--state.stackTop])[i] = 1;
-            frame.sDbl[++state.stackTop] = i + 1;
+            --state.stackTop;
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            store.pushSetter(value);
             return null;
         }
     }
@@ -4220,10 +4335,10 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object key = frame.stack[state.stackTop];
-            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            Object[] ids = (Object[]) frame.stack[state.stackTop - 3];
-            int i = (int) frame.sDbl[--state.stackTop];
-            ids[i] = key;
+            if (key == DBL_MRK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            store.pushKey(key);
             return null;
         }
     }
@@ -4231,11 +4346,16 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoObjectLit extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object[] values = (Object[]) frame.stack[state.stackTop];
-            int[] getterSetters = (int[]) frame.stack[--state.stackTop];
-            Object[] keys = (Object[]) frame.stack[--state.stackTop];
-            Scriptable object = (Scriptable) frame.stack[--state.stackTop];
-            ScriptRuntime.fillObjectLiteral(object, keys, values, getterSetters, cx, frame.scope);
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            --state.stackTop;
+            Scriptable object = (Scriptable) frame.stack[state.stackTop];
+            ScriptRuntime.fillObjectLiteral(
+                    object,
+                    store.getKeys(),
+                    store.getValues(),
+                    store.getGetterSetters(),
+                    cx,
+                    frame.scope);
             return null;
         }
     }
@@ -4243,16 +4363,13 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoArrayLiteral extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object[] data = (Object[]) frame.stack[state.stackTop--];
-            Object val;
-
+            var store = (NewLiteralStorage) frame.stack[state.stackTop];
             int[] skipIndexces = null;
             if (op == Icode_SPARE_ARRAYLIT) {
                 skipIndexces = (int[]) frame.idata.literalIds[state.indexReg];
             }
-            val = ScriptRuntime.newArrayLiteral(data, skipIndexces, cx, frame.scope);
-
-            frame.stack[state.stackTop] = val;
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
             return null;
         }
     }
