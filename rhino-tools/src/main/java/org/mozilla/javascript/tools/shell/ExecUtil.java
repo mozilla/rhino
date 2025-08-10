@@ -166,7 +166,7 @@ class ExecUtil {
         return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static OutputStream parseOutput(Scriptable params, String type) throws IOException {
+    private static OutputStream parseOutput(Scriptable params, String type) {
         Object obj = ScriptableObject.getProperty(params, type);
         if (obj == Scriptable.NOT_FOUND) {
             return null;
@@ -209,7 +209,7 @@ class ExecUtil {
     }
 
     /**
-     * Waits for the process and passes input and outputstream. If any of in, out, err is null, the
+     * Waits for the process and passes input- and outputStream. If any of in, out, err is null, the
      * corresponding process stream will be closed immediately, otherwise it will be closed as soon
      * as all data will be read from/written to process
      *
@@ -228,7 +228,7 @@ class ExecUtil {
                         startPipeThread(p.getInputStream(), out, p.getInputStream());
                 PipeThread errThread =
                         startPipeThread(p.getErrorStream(), err, p.getErrorStream());
-                KillThread killThread = startKillThread(p, timeout); ) {
+                KillThread killThread = startKillThread(p, timeout)) {
 
             try {
                 // wait for process completion
@@ -311,7 +311,7 @@ class ExecUtil {
                 try {
                     streamToClose.close();
                 } catch (IOException ignore) {
-                    // ignroe exception at end.
+                    // ignore exception at end.
                 }
             }
         }
@@ -327,7 +327,7 @@ class ExecUtil {
                 }
             }
             if (reportErrors && error != null) {
-                Context.throwAsScriptRuntimeEx(error);
+                throw Context.throwAsScriptRuntimeEx(error);
             }
         }
     }
