@@ -39,6 +39,7 @@ class ExecUtil {
         OutputStream out = null;
         OutputStream err = null;
         Scriptable params = null;
+        Global.CommandExecutor commandExecutor = null;
         Object[] addArgs = emptyArray;
         int timeout = 0;
 
@@ -54,6 +55,7 @@ class ExecUtil {
             err = parseOutput(params, "err");
             timeout = parseTimeout(params);
             addArgs = parseAddArgs(params, thisObj);
+            commandExecutor = parseCommandLauncher(params);
         }
 
         if (out == null) {
@@ -61,6 +63,9 @@ class ExecUtil {
         }
         if (err == null) {
             err = global.getErr();
+        }
+        if (commandExecutor == null) {
+            commandExecutor = Runtime.getRuntime()::exec;
         }
 
         // If no explicit input stream, do not send any input to process,
@@ -76,7 +81,8 @@ class ExecUtil {
             cmd[len + i] = ScriptRuntime.toString(addArgs[i]);
         }
         try {
-            return runProcess(cmd, environment, wd, in, out, err, timeout);
+            Process p = commandExecutor.exec(cmd, environment, wd);
+            return waitForProcess(p, in, out, err, timeout);
         } finally {
             if (out instanceof ReturnBuffer) {
                 ScriptableObject.putProperty(params, "output", out.toString());
@@ -191,24 +197,28 @@ class ExecUtil {
         return ScriptRuntime.getArrayElements(s);
     }
 
+    private static Global.CommandExecutor parseCommandLauncher(Scriptable params) {
+        Object obj = ScriptableObject.getProperty(params, "commandExecutor");
+        if (obj == Scriptable.NOT_FOUND) {
+            return null;
+        }
+        if (obj instanceof Wrapper) {
+            obj = ((Wrapper) obj).unwrap();
+        }
+        return (Global.CommandExecutor) obj;
+    }
+
     /**
-     * Runs the given process using Runtime.exec(). If any of in, out, err is null, the
+     * Waits for the process and passes input and outputstream. If any of in, out, err is null, the
      * corresponding process stream will be closed immediately, otherwise it will be closed as soon
      * as all data will be read from/written to process
      *
      * @return Exit value of process.
      * @throws IOException If there was an error executing the process.
      */
-    static int runProcess(
-            String[] cmd,
-            String[] environment,
-            File wd,
-            InputStream in,
-            OutputStream out,
-            OutputStream err,
-            int timeout)
+    private static int waitForProcess(
+            Process p, InputStream in, OutputStream out, OutputStream err, int timeout)
             throws IOException {
-        Process p = Runtime.getRuntime().exec(cmd, environment, wd);
 
         // use try-with-resources with sophisticated error handling
         // When multiple streams will throw an error, the errors are added as suppressed exceptions
