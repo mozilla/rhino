@@ -873,6 +873,17 @@ public class Global extends ImporterTopLevel {
         String message = ToolErrorReporter.getMessage(msgId, msgArg);
         return Context.reportRuntimeError(message);
     }
+
+    /**
+     * optioal interface to specify a launcher, that creates a process for the runCommand method.
+     *
+     * <p>Note: This is mainly for unit testing
+     */
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    @FunctionalInterface
+    public interface CommandExecutor {
+        Process exec(String[] cmdarray, String[] envp, File dir) throws IOException;
+    }
 }
 
 class Runner implements Runnable, ContextAction<Object> {
