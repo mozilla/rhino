@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import java.util.Arrays;
+
 /** Used to store the support structures for a literal object (or array) being built. */
 public final class NewLiteralStorage {
     private Object[] keys;
@@ -19,41 +21,61 @@ public final class NewLiteralStorage {
         this.values = new Object[length];
     }
 
-    private void ensureCapacity() {
-        int minLen = index + 1;
-        int curLen = values.length;
-        if (minLen > curLen) {
-            int newLen = Math.max(curLen * 2, minLen);
-            if (keys != null) keys = java.util.Arrays.copyOf(keys, newLen);
-            getterSetters = java.util.Arrays.copyOf(getterSetters, newLen);
-            values = java.util.Arrays.copyOf(values, newLen);
-        }
-    }
-
     public void pushValue(Object value) {
-        ensureCapacity();
         values[index++] = value;
     }
 
     public void pushGetter(Object value) {
-        ensureCapacity();
         getterSetters[index] = -1;
         pushValue(value);
     }
 
     public void pushSetter(Object value) {
-        ensureCapacity();
         getterSetters[index] = +1;
         pushValue(value);
     }
 
     public void pushKey(Object key) {
-        ensureCapacity();
         keys[index] = key;
     }
 
-    public void setGetterSetterFlagAt(int index, int flag) {
-        this.getterSetters[index] = flag;
+    public void spread(Context cx, Scriptable scope, Object source) {
+        if (source != null && !Undefined.isUndefined(source)) {
+            Scriptable src = ScriptRuntime.toObjectOrNull(cx, source, scope);
+            if (src != null) {
+                Object[] ids;
+                if (src instanceof ScriptableObject) {
+                    ids = ((ScriptableObject) src).getIds(false, true);
+                } else {
+                    ids = src.getIds();
+                }
+
+                // Resize all the arrays
+                int newLen =
+                        values.length
+                                - 1
+                                + ids.length; // -1 because we had a placeholder "key" for the
+                // spread
+                keys = Arrays.copyOf(keys, newLen);
+                getterSetters = Arrays.copyOf(getterSetters, newLen);
+                values = Arrays.copyOf(values, newLen);
+
+                // getIds() can return a string, int or a symbol
+                for (Object id : ids) {
+                    Object value = null;
+                    if (id instanceof String) {
+                        value = ScriptableObject.getProperty(src, (String) id);
+                    } else if (id instanceof Integer) {
+                        value = ScriptableObject.getProperty(src, (int) id);
+                    } else if (id instanceof Symbol) {
+                        value = ScriptableObject.getProperty(src, (Symbol) id);
+                    }
+
+                    pushKey(id);
+                    pushValue(value);
+                }
+            }
+        }
     }
 
     public Object[] getKeys() {

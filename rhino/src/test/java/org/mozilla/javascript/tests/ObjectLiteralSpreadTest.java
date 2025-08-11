@@ -56,9 +56,9 @@ public class ObjectLiteralSpreadTest {
     public void testObjectSpreadOverride() {
         String script =
                 "var obj1 = { a: 1, b: 2 };\n"
-                        + "var obj2 = { a: 3, ...obj1 };\n"
+                        + "var obj2 = { a: 3, ...obj1, b: 4 };\n"
                         + "obj2.a + obj2.b";
-        Utils.assertWithAllModes_ES6(3, script);
+        Utils.assertWithAllModes_ES6(5, script);
     }
 
     @Test

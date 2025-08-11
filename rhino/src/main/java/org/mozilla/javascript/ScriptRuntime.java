@@ -5479,35 +5479,6 @@ public class ScriptRuntime {
         }
     }
 
-    public static void spreadOp(
-            Context cx, Scriptable scope, NewLiteralStorage store, Object source) {
-        if (source != null && !Undefined.isUndefined(source)) {
-            Scriptable src = toObjectOrNull(cx, source, scope);
-            if (src != null) {
-                Object[] ids;
-                if (src instanceof ScriptableObject) {
-                    ids = ((ScriptableObject) src).getIds(false, true);
-                } else {
-                    ids = src.getIds();
-                }
-
-                // getIds() can return a string, int or a symbol
-                for (Object id : ids) {
-                    Object value = null;
-                    if (id instanceof String) {
-                        value = ScriptableObject.getProperty(src, (String) id);
-                    } else if (id instanceof Integer) {
-                        value = ScriptableObject.getProperty(src, (int) id);
-                    } else if (id instanceof Symbol) {
-                        value = ScriptableObject.getProperty(src, (Symbol) id);
-                    }
-                    store.pushKey(id);
-                    store.pushValue(value);
-                }
-            }
-        }
-    }
-
     public static boolean isArrayObject(Object obj) {
         return obj instanceof NativeArray || obj instanceof Arguments;
     }

@@ -2291,8 +2291,8 @@ class BodyCodegen {
                     cfw.addALoad(local); // stack: [context, scope, sourceObj, store]
                     cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
                     cfw.add(ByteCode.SWAP); // stack: [context, scope, store, sourceObj]
-                    addScriptRuntimeInvoke(
-                            "spreadOp",
+                    addOptRuntimeInvoke(
+                            "spread",
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
@@ -2338,8 +2338,8 @@ class BodyCodegen {
                     generateExpression(
                             child.getFirstChild(),
                             node); // stack: [store, context, scope, store, sourceObj]
-                    addScriptRuntimeInvoke(
-                            "spreadOp",
+                    addOptRuntimeInvoke(
+                            "spread",
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"

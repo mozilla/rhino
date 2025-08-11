@@ -14,6 +14,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
+import org.mozilla.javascript.NewLiteralStorage;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -304,6 +305,11 @@ public final class OptRuntime extends ScriptRuntime {
 
     public static boolean isNullOrUndefined(Object obj) {
         return obj == null || Undefined.isUndefined(obj);
+    }
+
+    public static void spread(
+            Context cx, Scriptable scope, NewLiteralStorage store, Object source) {
+        store.spread(cx, scope, source);
     }
 
     public static class GeneratorState {
