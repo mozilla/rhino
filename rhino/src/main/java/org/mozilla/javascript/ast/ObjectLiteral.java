@@ -31,10 +31,10 @@ import org.mozilla.javascript.Token;
  */
 public class ObjectLiteral extends AstNode implements DestructuringForm {
 
-    private static final List<ObjectProperty> NO_ELEMS =
+    private static final List<AbstractObjectProperty> NO_ELEMS =
             Collections.unmodifiableList(new ArrayList<>());
 
-    private List<ObjectProperty> elements;
+    private List<AbstractObjectProperty> elements;
     boolean isDestructuring;
 
     {
@@ -52,7 +52,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
     }
 
     /** Returns the element list. Returns an immutable empty list if there are no elements. */
-    public List<ObjectProperty> getElements() {
+    public List<AbstractObjectProperty> getElements() {
         return elements != null ? elements : NO_ELEMS;
     }
 
@@ -62,12 +62,12 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
      *
      * @param elements the element list. Can be {@code null}.
      */
-    public void setElements(List<ObjectProperty> elements) {
+    public void setElements(List<AbstractObjectProperty> elements) {
         if (elements == null) {
             this.elements = null;
         } else {
             if (this.elements != null) this.elements.clear();
-            for (ObjectProperty o : elements) addElement(o);
+            for (AbstractObjectProperty o : elements) addElement(o);
         }
     }
 
@@ -77,7 +77,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
      * @param element the property node to append to the end of the list
      * @throws IllegalArgumentException} if element is {@code null}
      */
-    public void addElement(ObjectProperty element) {
+    public void addElement(AbstractObjectProperty element) {
         assertNotNull(element);
         if (elements == null) {
             elements = new ArrayList<>();
@@ -112,7 +112,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
         if (elements != null) {
             int i = 0;
             sb.append("\n");
-            for (AstNode element : elements) {
+            for (AbstractObjectProperty element : elements) {
                 sb.append(element.toSource(depth));
                 if (sb.charAt(sb.length() - 1) == '\n') {
                     sb.deleteCharAt(sb.length() - 1);
@@ -132,7 +132,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
-            for (ObjectProperty prop : getElements()) {
+            for (AbstractObjectProperty prop : getElements()) {
                 prop.visit(v);
             }
         }
