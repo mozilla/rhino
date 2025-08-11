@@ -460,7 +460,6 @@ public class Node implements Iterable<Node> {
 
             default:
                 Kit.codeBug();
-
                 return null;
         }
     }

@@ -1429,11 +1429,15 @@ class CodeGenerator extends Icode {
         int i = 0;
         while (child != null) {
             Object propertyId = propertyIds == null ? null : propertyIds[i];
+
             if (propertyId instanceof Node) {
-                // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
+                // Might be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression,
+                // or a spread node.
                 Node propNode = (Node) propertyId;
                 visitExpression(propNode.getFirstChild(), 0);
+
                 if (((Node) propertyId).type == Token.DOTDOTDOT) {
+                    // It's actually a spread! We need to do a "continue" to avoid setting it as key
                     addIcode(Icode_SPREAD);
                     stackChange(-1);
                     child = child.getNext();

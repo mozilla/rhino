@@ -714,7 +714,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     {
                         boolean copyArray = iCode[pc++] != 0;
                         if (indexReg < 0) {
-                            out.println(tname + " length: " + -indexReg);
+                            out.println(tname + " length: " + (-indexReg - 1));
                         } else {
                             Object[] keys = (Object[]) idata.literalIds[indexReg];
                             out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
@@ -4116,18 +4116,6 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoSpread extends InstructionClass {
-        @Override
-        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            // stack: [..., NewLiteralStorage, sourceObj]
-            Object source = frame.stack[state.stackTop];
-            --state.stackTop;
-            NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
-            store.spread(cx, frame.scope, source);
-            return null;
-        }
-    }
-
     private static class DoClosureStatement extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
@@ -4159,22 +4147,18 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoLiteralNewObject extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            // indexReg: index of constant with the keys
-            // indexReg > 0, create arrays
-            // indexReg: < 0, we have a spread, so no keys array
+            ++frame.pc;
+            ++state.stackTop;
+            frame.stack[state.stackTop] = cx.newObject(frame.scope);
+            ++state.stackTop;
+
+            // indexReg > 0: index of constant with the keys
+            // indexReg < 0: we have a spread, so no keys array, but we know the length
             if (state.indexReg < 0) {
-                ++frame.pc;
-                ++state.stackTop;
-                frame.stack[state.stackTop] = cx.newObject(frame.scope);
-                ++state.stackTop;
                 frame.stack[state.stackTop] = new NewLiteralStorage(-state.indexReg - 1, true);
             } else {
                 Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
                 boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
-                ++frame.pc;
-                ++state.stackTop;
-                frame.stack[state.stackTop] = cx.newObject(frame.scope);
-                ++state.stackTop;
                 frame.stack[state.stackTop] =
                         new NewLiteralStorage(copyArray ? Arrays.copyOf(ids, ids.length) : ids);
             }
@@ -4196,7 +4180,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object value = frame.stack[state.stackTop];
-            if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             --state.stackTop;
             var store = (NewLiteralStorage) frame.stack[state.stackTop];
             store.pushValue(value);
@@ -4230,10 +4214,22 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object key = frame.stack[state.stackTop];
-            if (key == DBL_MRK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             --state.stackTop;
             var store = (NewLiteralStorage) frame.stack[state.stackTop];
             store.pushKey(key);
+            return null;
+        }
+    }
+
+    private static class DoSpread extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // stack: [..., NewLiteralStorage, sourceObj]
+            Object source = frame.stack[state.stackTop];
+            --state.stackTop;
+            NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
+            store.spread(cx, frame.scope, source);
             return null;
         }
     }

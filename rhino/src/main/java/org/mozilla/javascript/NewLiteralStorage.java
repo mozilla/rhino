@@ -40,36 +40,37 @@ public final class NewLiteralStorage {
     }
 
     public void spread(Context cx, Scriptable scope, Object source) {
+        // See ECMAScript 13.2.5.5
         if (source != null && !Undefined.isUndefined(source)) {
-            Scriptable src = ScriptRuntime.toObjectOrNull(cx, source, scope);
-            if (src != null) {
-                Object[] ids;
-                if (src instanceof ScriptableObject) {
-                    ids = ((ScriptableObject) src).getIds(false, true);
+            Scriptable src = ScriptRuntime.toObject(cx, scope, source);
+            Object[] ids;
+            if (src instanceof ScriptableObject) {
+                ids = ((ScriptableObject) src).getIds(false, true);
+            } else {
+                ids = src.getIds();
+            }
+
+            // Resize all the arrays
+            int newLen = values.length + ids.length;
+            keys = Arrays.copyOf(keys, newLen);
+            getterSetters = Arrays.copyOf(getterSetters, newLen);
+            values = Arrays.copyOf(values, newLen);
+
+            // getIds() can only return a string, int or a symbol
+            for (Object id : ids) {
+                Object value = null;
+                if (id instanceof String) {
+                    value = ScriptableObject.getProperty(src, (String) id);
+                } else if (id instanceof Integer) {
+                    value = ScriptableObject.getProperty(src, (int) id);
+                } else if (id instanceof Symbol) {
+                    value = ScriptableObject.getProperty(src, (Symbol) id);
                 } else {
-                    ids = src.getIds();
+                    throw Kit.codeBug();
                 }
 
-                // Resize all the arrays
-                int newLen = values.length + ids.length;
-                keys = Arrays.copyOf(keys, newLen);
-                getterSetters = Arrays.copyOf(getterSetters, newLen);
-                values = Arrays.copyOf(values, newLen);
-
-                // getIds() can return a string, int or a symbol
-                for (Object id : ids) {
-                    Object value = null;
-                    if (id instanceof String) {
-                        value = ScriptableObject.getProperty(src, (String) id);
-                    } else if (id instanceof Integer) {
-                        value = ScriptableObject.getProperty(src, (int) id);
-                    } else if (id instanceof Symbol) {
-                        value = ScriptableObject.getProperty(src, (Symbol) id);
-                    }
-
-                    pushKey(id);
-                    pushValue(value);
-                }
+                pushKey(id);
+                pushValue(value);
             }
         }
     }
