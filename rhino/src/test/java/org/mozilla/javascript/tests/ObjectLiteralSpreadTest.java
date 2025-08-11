@@ -206,4 +206,16 @@ public class ObjectLiteralSpreadTest {
                         + "arr.map(function(item) { return item.a + item.b + item.c; })[0];";
         Utils.assertWithAllModes_ES6(6, script);
     }
+
+    @Test
+    public void testSimpleObjectLiteralNoSpread() {
+        String script = "var obj = { a: 1, b: 2 }; obj.a + obj.b;";
+        Utils.assertWithAllModes_ES6(3, script);
+    }
+
+    @Test
+    public void testSimpleArrayLiteralNoSpread() {
+        String script = "var obj = [1, 2]; obj[0] + obj[1];";
+        Utils.assertWithAllModes_ES6(3, script);
+    }
 }
