@@ -92,4 +92,28 @@ public class ObjectLiteralSpreadTest {
                         + "obj.a + obj.b + obj.c;\n";
         Utils.assertWithAllModes_ES6(6, script);
     }
+
+    @Test
+    public void testObjectSpreadNonObjects() {
+        String script =
+                "var result = { ...1, ...false, ...Symbol.match };\n"
+                        + "Object.keys(result).length";
+        Utils.assertWithAllModes_ES6(0, script);
+    }
+
+    @Test
+    public void testObjectSpreadArray() {
+        String script =
+                "var result = { ...['a', 'b'] };\n"
+                        + "result[0] + result[1] + ':' + Object.keys(result).length";
+        Utils.assertWithAllModes_ES6("ab:2", script);
+    }
+
+    @Test
+    public void testObjectSpreadString() {
+        String script =
+                "var result = { ...'abc' };\n"
+                        + "result[0] + result[1] + result[2] + ':' + Object.keys(result).length";
+        Utils.assertWithAllModes_ES6("abc:3", script);
+    }
 }
