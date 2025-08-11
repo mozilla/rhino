@@ -4161,13 +4161,13 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: index of constant with the keys
             // indexReg > 0, create arrays
-            // indexReg: < 0, no key (eg: spread)
+            // indexReg: < 0, we have a spread, so no keys array
             if (state.indexReg < 0) {
                 ++frame.pc;
                 ++state.stackTop;
                 frame.stack[state.stackTop] = cx.newObject(frame.scope);
                 ++state.stackTop;
-                frame.stack[state.stackTop] = new NewLiteralStorage(-state.indexReg, true);
+                frame.stack[state.stackTop] = new NewLiteralStorage(-state.indexReg - 1, true);
             } else {
                 Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
                 boolean copyArray = frame.idata.itsICode[frame.pc] != 0;

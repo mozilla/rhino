@@ -64,7 +64,9 @@ public class ObjectLiteralSpreadTest {
     @Test
     public void testObjectSpreadGetterKeys() {
         String script =
-                "var obj1 = { get x() { return 1; } };\n" + "var obj2 = { ...obj1 };\n" + "obj2.x";
+                "var obj1 = { get foo() { return 1; } };\n"
+                        + "var obj2 = { ...obj1 };\n"
+                        + "obj2.foo";
         Utils.assertWithAllModes_ES6(1, script);
     }
 

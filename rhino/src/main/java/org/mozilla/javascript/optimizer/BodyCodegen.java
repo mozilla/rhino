@@ -2253,7 +2253,7 @@ class BodyCodegen {
     private void addLoadProperty(Node node, Node child, Object[] properties, int count) {
         cfw.add(ByteCode.NEW, "org/mozilla/javascript/NewLiteralStorage");
         cfw.add(ByteCode.DUP);
-        cfw.addLoadConstant(count);
+        cfw.addLoadConstant(count - node.getIntProp(Node.NUMBER_OF_SPREAD, 0));
         cfw.addLoadConstant(1);
         cfw.addInvoke(
                 ByteCode.INVOKESPECIAL,

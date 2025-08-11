@@ -1421,7 +1421,7 @@ class CodeGenerator extends Icode {
     private void visitObjectLiteralWithSpread(
             Node node, Node child, Object[] propertyIds, int count) {
         addIcode(Icode_REG_IND4);
-        addInt(-count);
+        addInt(-count - 1); // -1 to enforce it's negative even for {...x}
         addIcode(Icode_LITERAL_NEW_OBJECT);
         addUint8(0); // unused
         stackChange(+2);
@@ -1464,8 +1464,9 @@ class CodeGenerator extends Icode {
         Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         int count = propertyIds == null ? 0 : propertyIds.length;
 
-        if (node.getIntProp(Node.CONTAINS_SPREAD, 0) == 1) {
-            visitObjectLiteralWithSpread(node, child, propertyIds, count);
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        if (numberOfSpread > 0) {
+            visitObjectLiteralWithSpread(node, child, propertyIds, count - numberOfSpread);
             return;
         }
 
