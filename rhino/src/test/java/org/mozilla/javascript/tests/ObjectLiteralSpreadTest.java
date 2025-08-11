@@ -104,4 +104,106 @@ public class ObjectLiteralSpreadTest {
                         + "y.d";
         Utils.assertWithAllModes_ES6(Undefined.instance, script);
     }
+
+    @Test
+    public void testObjectSpreadInFunctionCall() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "function test(arg) { return arg.a + arg.b + arg.c; }\n"
+                        + "test({ ...obj, c: 3 });";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInMethodCall() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "var target = {\n"
+                        + "  test: function(arg) { return arg.a + arg.b + arg.c; }\n"
+                        + "};\n"
+                        + "target.test({ ...obj, c: 3 });";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInConstructorCall() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "function TestConstructor(arg) {\n"
+                        + "  this.result = arg.a + arg.b + arg.c;\n"
+                        + "}\n"
+                        + "var instance = new TestConstructor({ ...obj, c: 3 });\n"
+                        + "instance.result;";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInGetterContext() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "var target = {\n"
+                        + "  _value: null,\n"
+                        + "  get testGetter() {\n"
+                        + "    return this._value.a + this._value.b + this._value.c;\n"
+                        + "  },\n"
+                        + "  setValue: function(val) { this._value = val; }\n"
+                        + "};\n"
+                        + "target.setValue({ ...obj, c: 3 });\n"
+                        + "target.testGetter;";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInSetterContext() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "var target = {\n"
+                        + "  _result: 0,\n"
+                        + "  set testSetter(val) {\n"
+                        + "    this._result = val.a + val.b + val.c;\n"
+                        + "  },\n"
+                        + "  get result() { return this._result; }\n"
+                        + "};\n"
+                        + "target.testSetter = { ...obj, c: 3 };\n"
+                        + "target.result;";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInChainedMethodCalls() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "var target = {\n"
+                        + "  process: function(arg) {\n"
+                        + "    this.value = arg.a + arg.b + arg.c;\n"
+                        + "    return this;\n"
+                        + "  },\n"
+                        + "  getValue: function() { return this.value; }\n"
+                        + "};\n"
+                        + "target.process({ ...obj, c: 3 }).getValue();";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInNestedFunctionCalls() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "function outer(arg) {\n"
+                        + "  function inner(val) {\n"
+                        + "    return val.a + val.b + val.c;\n"
+                        + "  }\n"
+                        + "  return inner(arg);\n"
+                        + "}\n"
+                        + "outer({ ...obj, c: 3 });";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
+
+    @Test
+    public void testObjectSpreadInArrayMethodCall() {
+        String script =
+                "var obj = { a: 1, b: 2 };\n"
+                        + "var arr = [{ ...obj, c: 3 }];\n"
+                        + "arr.map(function(item) { return item.a + item.b + item.c; })[0];";
+        Utils.assertWithAllModes_ES6(6, script);
+    }
 }
