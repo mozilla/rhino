@@ -58,12 +58,12 @@ public final class NewLiteralStorage {
 
             // getIds() can only return a string, int or a symbol
             for (Object id : ids) {
-                Object value = null;
+                Object value;
                 if (id instanceof String) {
                     value = ScriptableObject.getProperty(src, (String) id);
                 } else if (id instanceof Integer) {
                     value = ScriptableObject.getProperty(src, (int) id);
-                } else if (id instanceof Symbol) {
+                } else if (ScriptRuntime.isSymbol(id)) {
                     value = ScriptableObject.getProperty(src, (Symbol) id);
                 } else {
                     throw Kit.codeBug();
