@@ -93,7 +93,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 CallFrame parentFrame,
                 CallFrame previousInterpreterFrame) {
             idata = fnOrScript.idata;
-            debuggerFrame = cx.debugger != null ? cx.debugger.getFrame(cx, idata) : null;
+            debuggerFrame = cx.impl().debugger != null ? cx.impl().debugger.getFrame(cx, idata) : null;
             useActivation = debuggerFrame != null || idata.itsNeedsActivation;
 
             emptyStackTop = (short) (idata.itsMaxVars + idata.itsMaxLocals - 1);
@@ -1043,17 +1043,17 @@ public final class Interpreter extends Icode implements Evaluator {
     @Override
     public void captureStackInfo(RhinoException ex) {
         Context cx = Context.getCurrentContext();
-        if (cx == null || cx.lastInterpreterFrame == null) {
+        if (cx == null || cx.impl().lastInterpreterFrame == null) {
             // No interpreter invocations
             ex.interpreterStackInfo = null;
         } else {
-            ex.interpreterStackInfo = cx.lastInterpreterFrame;
+            ex.interpreterStackInfo = cx.impl().lastInterpreterFrame;
         }
     }
 
     @Override
     public String getSourcePositionFromStack(Context cx, int[] linep) {
-        CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
+        CallFrame frame = (CallFrame) cx.impl().lastInterpreterFrame;
         InterpreterData idata = frame.idata;
         if (frame.pcSourceLineStart >= 0) {
             linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
@@ -1191,14 +1191,14 @@ public final class Interpreter extends Icode implements Evaluator {
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
-        if (cx.interpreterSecurityDomain != ifun.securityDomain) {
-            Object savedDomain = cx.interpreterSecurityDomain;
-            cx.interpreterSecurityDomain = ifun.securityDomain;
+        if (cx.impl().interpreterSecurityDomain != ifun.securityDomain) {
+            Object savedDomain = cx.impl().interpreterSecurityDomain;
+            cx.impl().interpreterSecurityDomain = ifun.securityDomain;
             try {
                 return ifun.securityController.callWithDomain(
                         ifun.securityDomain, cx, ifun, scope, thisObj, args);
             } finally {
-                cx.interpreterSecurityDomain = savedDomain;
+                cx.impl().interpreterSecurityDomain = savedDomain;
             }
         }
 
@@ -1215,8 +1215,8 @@ public final class Interpreter extends Icode implements Evaluator {
                         args.length,
                         ifun,
                         null);
-        frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
-        cx.isContinuationsTopCall = false;
+        frame.isContinuationsTopFrame = cx.impl().isContinuationsTopCall;
+        cx.impl().isContinuationsTopCall = false;
 
         return interpretLoop(cx, frame, null);
     }
@@ -1235,7 +1235,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public static Object resumeGenerator(
             Context cx, Scriptable scope, int operation, Object savedState, Object value) {
         CallFrame frame = (CallFrame) savedState;
-        CallFrame activeFrame = frame.shallowCloneFrozen((CallFrame) cx.lastInterpreterFrame);
+        CallFrame activeFrame = frame.shallowCloneFrozen((CallFrame) cx.impl().lastInterpreterFrame);
         try {
             GeneratorState generatorState = new GeneratorState(operation, value);
             if (operation == NativeGenerator.GENERATOR_CLOSE) {
@@ -1258,7 +1258,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public static Object restartContinuation(
             NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
-            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isTopLevelStrict);
+            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.impl().isTopLevelStrict);
         }
 
         Object arg;
@@ -1538,13 +1538,13 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
-        final Object oldFrame = cx.lastInterpreterFrame;
+        final Object oldFrame = cx.impl().lastInterpreterFrame;
         try {
             // throwable holds exception object to rethrow or catch
             // It is also used for continuation restart in which case
             // it holds ContinuationJump
 
-            final boolean instructionCounting = cx.instructionThreshold != 0;
+            final boolean instructionCounting = cx.impl().instructionThreshold != 0;
 
             String stringReg = null;
             BigInteger bigIntReg = null;
@@ -1757,12 +1757,12 @@ public final class Interpreter extends Icode implements Evaluator {
             // Do cleanups/restorations before the final return or throw
 
             if (frame != null) {
-                cx.lastInterpreterFrame =
+                cx.impl().lastInterpreterFrame =
                         frame.parentFrame == null
                                 ? frame.previousInterpreterFrame
                                 : frame.parentFrame;
             } else {
-                cx.lastInterpreterFrame = null;
+                cx.impl().lastInterpreterFrame = null;
             }
 
             if (throwable != null) {
@@ -1777,7 +1777,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     ? interpreterResult
                     : ScriptRuntime.wrapNumber(interpreterResultDbl);
         } finally {
-            cx.lastInterpreterFrame = oldFrame;
+            cx.impl().lastInterpreterFrame = oldFrame;
         }
     }
 
@@ -1804,7 +1804,7 @@ public final class Interpreter extends Icode implements Evaluator {
             state.throwable = tble;
 
             // Store new frame in cx which is used for error reporting etc.
-            cx.lastInterpreterFrame = frame;
+            cx.impl().lastInterpreterFrame = frame;
 
             Loop:
             for (; ; ) {
@@ -3174,7 +3174,7 @@ public final class Interpreter extends Icode implements Evaluator {
             boolean isOptionalChainingCall = (op == Icode_CALLSPECIAL_OPTIONAL);
 
             if (state.instructionCounting) {
-                cx.instructionCount += INVOCATION_COST;
+                cx.impl().instructionCount += INVOCATION_COST;
             }
             int callType = iCode[frame.pc] & 0xFF;
             boolean isNew = (iCode[frame.pc + 1] != 0);
@@ -3229,7 +3229,7 @@ public final class Interpreter extends Icode implements Evaluator {
             int blen = 0;
 
             if (state.instructionCounting) {
-                cx.instructionCount += INVOCATION_COST;
+                cx.impl().instructionCount += INVOCATION_COST;
             }
             // stack change: lookup_result arg0 .. argN -> result
             // indexReg: number of arguments
@@ -3483,7 +3483,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             if (state.instructionCounting) {
-                cx.instructionCount += INVOCATION_COST;
+                cx.impl().instructionCount += INVOCATION_COST;
             }
             // stack change: function arg0 .. argN -> newResult
             // state.indexReg: number of arguments
@@ -4605,7 +4605,7 @@ public final class Interpreter extends Icode implements Evaluator {
                         fnOrScript,
                         parentFrame,
                         parentFrame == null
-                                ? (CallFrame) cx.lastInterpreterFrame
+                                ? (CallFrame) cx.impl().lastInterpreterFrame
                                 : parentFrame.previousInterpreterFrame);
         frame.initializeArgs(
                 cx, callerScope, args, argsDbl, boundArgs, argShift, argCount, homeObj);
@@ -4713,10 +4713,10 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     public static NativeContinuation captureContinuation(Context cx) {
-        if (cx.lastInterpreterFrame == null || !(cx.lastInterpreterFrame instanceof CallFrame)) {
+        if (cx.impl().lastInterpreterFrame == null || !(cx.impl().lastInterpreterFrame instanceof CallFrame)) {
             throw new IllegalStateException("Interpreter frames not found");
         }
-        return captureContinuation(cx, (CallFrame) cx.lastInterpreterFrame, true);
+        return captureContinuation(cx, (CallFrame) cx.impl().lastInterpreterFrame, true);
     }
 
     private static NativeContinuation captureContinuation(
@@ -4834,10 +4834,10 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static void addInstructionCount(Context cx, CallFrame frame, int extra) {
-        cx.instructionCount += frame.pc - frame.pcPrevBranch + extra;
-        if (cx.instructionCount > cx.instructionThreshold) {
-            cx.observeInstructionCount(cx.instructionCount);
-            cx.instructionCount = 0;
+        cx.impl().instructionCount += frame.pc - frame.pcPrevBranch + extra;
+        if (cx.impl().instructionCount > cx.impl().instructionThreshold) {
+            cx.impl().observeInstructionCount(cx.impl().instructionCount);
+            cx.impl().instructionCount = 0;
         }
     }
 }

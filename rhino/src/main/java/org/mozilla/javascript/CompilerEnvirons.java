@@ -38,7 +38,7 @@ public class CompilerEnvirons {
         interpretedMode = cx.isInterpretedMode();
 
         generatingSource = cx.isGeneratingSource();
-        activationNames = cx.activationNames;
+        activationNames = cx.impl().activationNames;
 
         // Observer code generation in compiled code :
         generateObserverCount = cx.isGenerateObserverCount();
@@ -116,7 +116,7 @@ public class CompilerEnvirons {
     @Deprecated
     @SuppressWarnings("deprecation")
     public void setOptimizationLevel(int level) {
-        Context.checkOptimizationLevel(level);
+        ContextImpl.checkOptimizationLevel(level);
         interpretedMode = (level < 0);
     }
 

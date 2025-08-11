@@ -22,7 +22,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
         // avoid security breaches via passing mangled Context instances
         // with bogus SecurityController
         Context cx = Context.getContext();
-        SecurityController sc = cx.getSecurityController();
+        SecurityController sc = cx.impl().getSecurityController();
         Object dynamicDomain;
         if (sc != null) {
             dynamicDomain = sc.getDynamicSecurityDomain(staticSecurityDomain);

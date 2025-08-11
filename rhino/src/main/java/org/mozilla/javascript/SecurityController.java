@@ -91,7 +91,7 @@ public abstract class SecurityController {
         if (parent == null) {
             parent = cx.getApplicationClassLoader();
         }
-        SecurityController sc = cx.getSecurityController();
+        SecurityController sc = cx.impl().getSecurityController();
         GeneratedClassLoader loader;
         if (sc == null) {
             loader = cx.createClassLoader(parent);
@@ -103,7 +103,7 @@ public abstract class SecurityController {
     }
 
     public static Class<?> getStaticSecurityDomainClass() {
-        SecurityController sc = Context.getContext().getSecurityController();
+        SecurityController sc = Context.getContext().impl().getSecurityController();
         return sc == null ? null : sc.getStaticSecurityDomainClassInternal();
     }
 

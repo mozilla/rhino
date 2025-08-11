@@ -155,14 +155,14 @@ class NativeScript extends BaseFunction {
 
     private static Script compile(Context cx, String source) {
         int[] linep = {0};
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         if (filename == null) {
             filename = "<Script object>";
             linep[0] = 1;
         }
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
-        return cx.compileString(source, null, reporter, filename, linep[0], null, null);
+        return cx.impl().compileString(source, null, reporter, filename, linep[0], null, null);
     }
 
     private Script script;
