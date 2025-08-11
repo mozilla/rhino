@@ -51,11 +51,8 @@ public final class NewLiteralStorage {
                 }
 
                 // Resize all the arrays
-                int newLen =
-                        values.length
-                                - 1
-                                + ids.length; // -1 because we had a placeholder "key" for the
-                // spread
+                // -1 because we had a placeholder "key" for the spread
+                int newLen = values.length - 1 + ids.length;
                 keys = Arrays.copyOf(keys, newLen);
                 getterSetters = Arrays.copyOf(getterSetters, newLen);
                 values = Arrays.copyOf(values, newLen);
@@ -75,6 +72,12 @@ public final class NewLiteralStorage {
                     pushValue(value);
                 }
             }
+        } else {
+            // Resize the arrays to that it doesn't have a placeholder for the "spread"
+            int newLen = values.length - 1;
+            keys = Arrays.copyOf(keys, newLen);
+            getterSetters = Arrays.copyOf(getterSetters, newLen);
+            values = Arrays.copyOf(values, newLen);
         }
     }
 

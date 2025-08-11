@@ -36,8 +36,10 @@ public class ObjectLiteralSpreadTest {
 
     @Test
     public void testObjectSpreadWithNullUndefined() {
-        String script = "var obj = { ...null, ...undefined, a: 1 };\n" + "obj.a";
-        Utils.assertWithAllModes_ES6(1, script);
+        String script =
+                "var obj = { ...null, ...undefined, a: 1 };\n"
+                        + "obj.a + ':' + Object.keys(obj).length";
+        Utils.assertWithAllModes_ES6("1:1", script);
     }
 
     @Test
