@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import org.mozilla.javascript.ast.AbstractObjectProperty;
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
 import org.mozilla.javascript.ast.ArrayLiteral;
@@ -55,6 +56,7 @@ import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.Spread;
+import org.mozilla.javascript.ast.SpreadObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -232,8 +234,6 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
-            case Token.DOTDOTDOT:
-                return transformSpread((Spread) node);
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -276,6 +276,9 @@ public final class IRFactory {
                 }
                 if (node instanceof GeneratorMethodDefinition) {
                     return transformGeneratorMethodDefinition((GeneratorMethodDefinition) node);
+                }
+                if (node instanceof Spread) {
+                    return transformSpread((Spread) node);
                 }
                 throw new IllegalArgumentException("Can't transform: " + node);
         }
@@ -962,7 +965,7 @@ public final class IRFactory {
         // createObjectLiteral rewrites its argument as object
         // creation plus object property entries, so later compiler
         // stages don't need to know about object literals.
-        List<ObjectProperty> elems = node.getElements();
+        List<AbstractObjectProperty> elems = node.getElements();
         Node object = new Node(Token.OBJECTLIT);
         object.setLineColumnNumber(node.getLineno(), node.getColumn());
         Object[] properties;
@@ -971,29 +974,30 @@ public final class IRFactory {
         } else {
             int size = elems.size(), i = 0;
             properties = new Object[size];
-            for (ObjectProperty prop : elems) {
-                if (prop.getLeft() instanceof Spread) {
-                    AstNode left = prop.getLeft();
-                    var transformedSpreadNode = transform(left);
+            for (AbstractObjectProperty abstractProp : elems) {
+                if (abstractProp instanceof SpreadObjectProperty) {
+                    SpreadObjectProperty spreadObjectProperty = (SpreadObjectProperty) abstractProp;
+                    var transformedSpreadNode = transform(spreadObjectProperty.getSpreadNode());
                     properties[i++] = transformedSpreadNode;
                     object.putIntProp(
                             Node.NUMBER_OF_SPREAD, object.getIntProp(Node.NUMBER_OF_SPREAD, 0) + 1);
                     object.addChildToBack(transformedSpreadNode);
                 } else {
-                    Object propKey = Parser.getPropKey(prop.getLeft());
+                    ObjectProperty prop = (ObjectProperty) abstractProp;
+                    Object propKey = Parser.getPropKey(prop.getKey());
                     Node inferrableName = null;
                     if (propKey == null) {
-                        Node theId = transform(prop.getLeft());
+                        Node theId = transform(prop.getKey());
                         properties[i++] = theId;
                     } else {
                         properties[i++] = propKey;
                         assert propKey instanceof String || propKey instanceof Integer;
                         inferrableName = parser.createName(Objects.toString(propKey));
                         inferrableName.setLineColumnNumber(
-                                prop.getLeft().getLineno(), prop.getLeft().getColumn());
+                                prop.getKey().getLineno(), prop.getKey().getColumn());
                     }
 
-                    Node right = transform(prop.getRight());
+                    Node right = transform(prop.getValue());
                     if (inferrableName != null) {
                         inferNameIfMissing(
                                 inferrableName,

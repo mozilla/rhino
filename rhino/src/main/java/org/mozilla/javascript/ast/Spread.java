@@ -8,7 +8,7 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
 
-/** AST node for a spread key, i.e. `...expression` in an object literal. */
+/** AST node for a spread `...expression`. */
 public class Spread extends AstNode {
 
     private AstNode expression;

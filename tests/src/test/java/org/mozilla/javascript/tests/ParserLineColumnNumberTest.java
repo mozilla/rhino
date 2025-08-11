@@ -47,6 +47,7 @@ import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.Spread;
+import org.mozilla.javascript.ast.SpreadObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -912,47 +913,48 @@ class ParserLineColumnNumberTest {
         ObjectProperty propA =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(0));
         assertLineColumnAre(propA, 0, 7);
-        assertLineColumnAre(propA.getLeft(), 0, 7);
-        assertLineColumnAre(propA.getRight(), 0, 10);
+        assertLineColumnAre(propA.getKey(), 0, 7);
+        assertLineColumnAre(propA.getValue(), 0, 10);
 
         ObjectProperty propB =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(1));
         assertLineColumnAre(propB, 1, 2);
-        ComputedPropertyKey propBKey = assertInstanceOf(ComputedPropertyKey.class, propB.getLeft());
+        AstNode result = propB.getKey();
+        ComputedPropertyKey propBKey = assertInstanceOf(ComputedPropertyKey.class, result);
         assertLineColumnAre(propBKey, 1, 2);
         assertLineColumnAre(propBKey.getExpression(), 1, 3);
-        assertLineColumnAre(propB.getRight(), 1, 7);
+        assertLineColumnAre(propB.getValue(), 1, 7);
 
         ObjectProperty propC =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(2));
         assertLineColumnAre(propC, 2, 2);
-        assertLineColumnAre(propC.getLeft(), 2, 2);
-        assertLineColumnAre(propC.getRight(), 2, 2);
+        assertLineColumnAre(propC.getKey(), 2, 2);
+        assertLineColumnAre(propC.getValue(), 2, 2);
 
         ObjectProperty propD =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(3));
         assertLineColumnAre(propD, 3, 2);
-        assertLineColumnAre(propD.getLeft(), 3, 2);
-        assertLineColumnAre(propD.getRight(), 3, 5);
+        assertLineColumnAre(propD.getKey(), 3, 2);
+        assertLineColumnAre(propD.getValue(), 3, 5);
 
         ObjectProperty propE =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(4));
         assertLineColumnAre(propE, 4, 2);
-        assertLineColumnAre(propE.getLeft(), 4, 2);
-        assertLineColumnAre(propE.getRight(), 4, 6);
+        assertLineColumnAre(propE.getKey(), 4, 2);
+        assertLineColumnAre(propE.getValue(), 4, 6);
 
         ObjectProperty propF =
                 assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(5));
         assertLineColumnAre(propF, 5, 2);
-        assertLineColumnAre(propF.getLeft(), 5, 2);
-        assertLineColumnAre(propF.getRight(), 5, 6);
+        assertLineColumnAre(propF.getKey(), 5, 2);
+        assertLineColumnAre(propF.getValue(), 5, 6);
 
-        ObjectProperty propG =
-                assertInstanceOf(ObjectProperty.class, objectLiteral.getElements().get(6));
+        SpreadObjectProperty propG =
+                assertInstanceOf(SpreadObjectProperty.class, objectLiteral.getElements().get(6));
         assertLineColumnAre(propG, 6, 2);
-        assertLineColumnAre(propG.getLeft(), 6, 2);
-        assertLineColumnAre(((Spread) propG.getLeft()).getExpression(), 6, 5);
-        assertNull(propG.getRight());
+        Spread propGSpread = propG.getSpreadNode();
+        assertLineColumnAre(propGSpread, 6, 2);
+        assertLineColumnAre(propGSpread.getExpression(), 6, 5);
     }
 
     @Test
