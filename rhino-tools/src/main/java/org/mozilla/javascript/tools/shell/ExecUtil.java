@@ -238,7 +238,7 @@ class ExecUtil {
             }
 
             int exitCode = p.exitValue();
-            if (exitCode != 0 || (killThread != null && killThread.killed)) {
+            if (killThread != null && killThread.killed) {
                 // on abnormal process termination - do not throw errors of streams in
                 // try-with-resources
                 if (inThread != null) inThread.reportErrors = false;
@@ -289,30 +289,67 @@ class ExecUtil {
     private static class PipeThread extends Thread implements AutoCloseable {
         private final OutputStream out;
         private final InputStream in;
-        private final Closeable streamToClose;
+        private final Closeable streamOfProcess;
         private Throwable error;
         boolean reportErrors = true;
 
-        PipeThread(InputStream in, OutputStream out, Closeable streamToClose) {
+        /**
+         * Creates a new PipeThread that transfers data from <code>in</code> to <code>out</code>
+         *
+         * @param in the source
+         * @param out the destination
+         * @param streamOfProcess the stream of the process (must be either <code>in</code> or
+         *     <code>out</code>) this stream will be closed and IOExceptions on this stream will be
+         *     ignored. The other stream will not be closed!
+         */
+        PipeThread(InputStream in, OutputStream out, Closeable streamOfProcess) {
             setDaemon(true);
-
             this.in = in;
             this.out = out;
-            this.streamToClose = streamToClose;
+            this.streamOfProcess = streamOfProcess;
         }
 
         @Override
         public final void run() {
+            byte[] buffer = new byte[8192];
+            int read;
             try {
-                in.transferTo(out);
+                // normally we would use in.transferTo(out), but we do not want
+                // capture exceptions of the process-stream, so there are two code
+                // paths to handle this
+                if (in == streamOfProcess) {
+                    while ((read = readNoThrow(buffer)) >= 0) {
+                        out.write(buffer, 0, read);
+                        out.flush();
+                    }
+                } else {
+                    assert out == streamOfProcess;
+                    while ((read = in.read(buffer, 0, buffer.length)) >= 0) {
+                        try {
+                            out.write(buffer, 0, read);
+                            out.flush();
+                        } catch (IOException e) {
+                            break;
+                        }
+                    }
+                }
             } catch (Throwable t) {
                 error = t;
             } finally {
                 try {
-                    streamToClose.close();
+                    streamOfProcess.close();
                 } catch (IOException ignore) {
                     // ignore exception at end.
                 }
+            }
+        }
+
+        // helper: reads from stdOut/stdErr without throwing exceptions
+        private int readNoThrow(byte[] buffer) {
+            try {
+                return in.read(buffer, 0, buffer.length);
+            } catch (IOException e) {
+                return -1;
             }
         }
 

@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -244,19 +246,59 @@ public class GlobalRunCommandTest {
                 true);
     }
 
-    /** Tests, what happens, when the process closes the inputStream */
+    /** Tests, what happens, when the process closes the inputStream after a given amount of data */
     @ParameterizedTest
     @MethodSource("executors")
-    @Disabled
     public void testStreamingWithLimit(Global.CommandExecutor exec) {
-        long bytes = 1L << 24; // this is 0x1_0000_0000 hex
+        if (isWindows && exec instanceof ExecutorWindows) {
+            return; // no solution for windows, yet.
+        }
+        doStream(exec, "stream16MB", 0, 0);
+        doStream(exec, "stream16MB", 1024, 1024);
+        doStream(exec, "stream16MB", 1024 * 1024, 1024 * 1024);
+        doStream(
+                exec,
+                "stream16MB",
+                4096 * 4096,
+                4096 * 4096); // this is the max bytes that can be streamed
+        doStream(exec, "stream16MB", 4096 * 4096 + 1, 4096 * 4096);
+        doStream(
+                exec,
+                "stream16MB",
+                8192 * 4096,
+                4096 * 4096); // we do *NOT* expect any exception here
+
+        if (exec instanceof ExecutorLinux) {
+            return;
+        }
+        // Note: we rely on the mock here, as this behaviour is not easily to test with OS commands
+        doStream(exec, "stream16MBread", 0, 0);
+        doStream(exec, "stream16MBread", 1024, 1024);
+        doStream(exec, "stream16MBread", 1024 * 1024, 1024 * 1024);
+        doStream(
+                exec,
+                "stream16MBread",
+                4096 * 4096,
+                4096 * 4096); // this is the max bytes that can be streamed
+        doStream(exec, "stream16MBread", 4096 * 4096 + 1, 4096 * 4096);
+        doStream(
+                exec,
+                "stream16MBread",
+                8192 * 4096,
+                4096 * 4096); // we do *NOT* expect any exception here
+    }
+
+    private void doStream(Global.CommandExecutor exec, String alias, long bytes, long expected) {
         String cmd =
-                "runCommand('dd1M', { input: stdIn, output: stdOut, commandExecutor: commandExecutor })";
+                "runCommand('"
+                        + alias
+                        + "', { input: stdIn, output: stdOut, err: stdErr, commandExecutor: commandExecutor })";
         Utils.runWithMode(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     FakeOutputStream stdOut = new FakeOutputStream();
-                    var g = getGlobal(cx, exec, new FakeInputStream(bytes), stdOut);
+                    FakeOutputStream stdErr = new FakeOutputStream();
+                    var g = getGlobal(cx, exec, new FakeInputStream(bytes), stdOut, stdErr);
                     var result = cx.evaluateString(g, cmd, "test.js", 1, null);
                     assertInstanceOf(Number.class, result);
                     assertEquals(0, ((Number) result).intValue());
@@ -265,8 +307,7 @@ public class GlobalRunCommandTest {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    System.out.println(stdOut.toString());
-                    assertEquals(bytes, stdOut.bytes);
+                    assertEquals(expected, stdOut.bytes);
                     return null;
                 },
                 true);
@@ -487,12 +528,13 @@ public class GlobalRunCommandTest {
                 case "stdinToStdout":
                     cmdarray = new String[] {"/usr/bin/cat"};
                     break;
-                case "dd1M":
+                case "stream16MB":
+                case "stream16MBread": // technically the same (mock is more precise here)
                     cmdarray =
                             new String[] {
                                 "/usr/bin/dd",
-                                "bs=1024",
-                                "count=1024",
+                                "bs=4096",
+                                "count=4096",
                                 "if=/dev/stdin",
                                 "of=/dev/stdout"
                             };
@@ -595,6 +637,10 @@ public class GlobalRunCommandTest {
                     return new MockStreamCopyProcess(false);
                 case "stdinToStderr":
                     return new MockStreamCopyProcess(true);
+                case "stream16MB":
+                    return new MockStreamCopyProcess(false, 4096 * 4096, -1);
+                case "stream16MBread":
+                    return new MockStreamCopyProcess(false, -1, 4096 * 4096);
                 case "sleep5":
                     return new MockSleepProcess();
                 default:
@@ -611,13 +657,20 @@ public class GlobalRunCommandTest {
     /** Mock, that copies stdIn to stdOut/stdErr */
     private static class MockStreamCopyProcess extends Process {
         final CountDownLatch latch = new CountDownLatch(1);
-        final PipedOutputStream stdIn;
+        final OutputStream stdIn;
         final InputStream stdOut;
         final InputStream stdErr;
+        final int writeLimit;
 
         MockStreamCopyProcess(boolean toStdErr) throws IOException {
-            stdIn =
+            this(toStdErr, -1, -1);
+        }
+
+        MockStreamCopyProcess(boolean toStdErr, final int writeLimit, int readLimit)
+                throws IOException {
+            PipedOutputStream src =
                     new PipedOutputStream() {
+
                         @Override
                         public void close() throws IOException {
                             latch.countDown();
@@ -625,14 +678,18 @@ public class GlobalRunCommandTest {
                         }
                     };
             // use 1Meg pipe-size to get good performance on streaming tests.
-            PipedInputStream dest =
-                    new PipedInputStream(stdIn, 1 << 20) {
+            InputStream dest =
+                    new PipedInputStream(src, 1 << 20) {
                         @Override
                         public void close() throws IOException {
                             latch.countDown();
                             super.close();
                         }
                     };
+            stdIn = writeLimit == -1 ? src : new SizeLimitOutputStream(src, writeLimit);
+            if (readLimit != -1) {
+                dest = new SizeLimitInputStream(dest, readLimit);
+            }
             if (toStdErr) {
                 stdErr = dest;
                 stdOut = new FakeInputStream(0);
@@ -640,6 +697,7 @@ public class GlobalRunCommandTest {
                 stdErr = new FakeInputStream(0);
                 stdOut = dest;
             }
+            this.writeLimit = writeLimit;
         }
 
         @Override
@@ -674,6 +732,76 @@ public class GlobalRunCommandTest {
         @Override
         public void destroy() {
             latch.countDown();
+        }
+    }
+
+    private static class SizeLimitOutputStream extends FilterOutputStream {
+        private int bytesLeft;
+
+        public SizeLimitOutputStream(OutputStream out, int bytesLeft) {
+            super(out);
+            this.bytesLeft = bytesLeft;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            if (bytesLeft > 0) {
+                bytesLeft--;
+                out.write(b);
+            } else {
+                close();
+                throw new IOException("WriteLimit reached");
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (bytesLeft > len) {
+                bytesLeft -= len;
+                out.write(b, off, len);
+
+            } else if (bytesLeft > 0) {
+                out.write(b, off, bytesLeft);
+                bytesLeft = 0;
+            } else {
+                close();
+                throw new IOException("WriteLimit reached");
+            }
+        }
+    }
+
+    private static class SizeLimitInputStream extends FilterInputStream {
+        private int bytesLeft;
+
+        public SizeLimitInputStream(InputStream in, int bytesLeft) {
+            super(in);
+            this.bytesLeft = bytesLeft;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (bytesLeft > 0) {
+                int read = in.read();
+                if (read == -1) {
+                    bytesLeft--;
+                }
+                return read;
+            } else {
+                close();
+                throw new IOException("ReadLimit reached");
+            }
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (bytesLeft > 0) {
+                int ret = in.read(b, off, Math.min(len, bytesLeft));
+                bytesLeft -= ret;
+                return ret;
+            } else {
+                close();
+                throw new IOException("ReadLimit reached");
+            }
         }
     }
 
