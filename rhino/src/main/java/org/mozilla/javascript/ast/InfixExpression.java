@@ -166,7 +166,8 @@ public class InfixExpression extends AstNode {
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             left.visit(v);
-            // TODO(abs): do this properly, no right node for spread
+            // Spread has no right node, it doesn't make sense
+            // to retrofit a fake value node here, so we skip visiting it
             if (!(this.getLeft() instanceof Spread)) right.visit(v);
         }
     }

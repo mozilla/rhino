@@ -3787,17 +3787,15 @@ public class Parser {
             if (pname == null) {
                 reportError("msg.bad.prop");
             } else if (pname instanceof Spread) {
-                // TODO: it doesn't seem right to create an object property?
-                // with just the left hand side.
                 ObjectProperty prop = new ObjectProperty();
                 prop.setNodeType(Token.DOTDOTDOT);
 
-                // TODO:
                 AstNode spreadExpr = ((Spread) pname).getExpression();
                 if (spreadExpr instanceof Name || spreadExpr instanceof StringLiteral) {
                     // For complicated reasons, parsing a name does not advance the token
                     spreadExpr.setLineColumnNumber(lineNumber(), columnNumber());
                 }
+                // we don't set a "right" here, because it doesn't make sense for spread to have one
                 prop.setLeft(pname);
                 elems.add(prop);
             } else {
