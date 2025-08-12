@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -10,11 +11,12 @@ import org.mozilla.javascript.Scriptable;
 // Tests that continuations work across arrow function, bound function, and apply/call invocations.
 public class InterpreterFunctionPeelingTest {
     public static final Runnable CAPTURER =
-            () -> {
-                try (var cx = Context.enter()) {
-                    throw cx.captureContinuation();
-                }
-            };
+            () ->
+                    ContextFactory.getGlobal()
+                            .call(
+                                    cx -> {
+                                        throw cx.captureContinuation();
+                                    });
 
     public static void executeScript(String script) {
         try (var cx = Context.enter()) {

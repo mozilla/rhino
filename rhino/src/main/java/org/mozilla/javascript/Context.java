@@ -500,6 +500,7 @@ public class Context implements Closeable {
         Context old = currentContext.get();
         if (old != null) {
             cx = old;
+            throw new UnsupportedOperationException("NESTED"); // for testing only
         } else {
             if (cx == null) {
                 cx = factory.makeContext();
@@ -604,8 +605,45 @@ public class Context implements Closeable {
 
     /** The method implements {@link ContextFactory#call(ContextAction)} logic. */
     static <T> T call(ContextFactory factory, ContextAction<T> action) {
-        try (Context cx = enter(null, factory)) {
+        Context cx = currentContext.get();
+        if (cx != null) {
+            if (cx.isSealed()) {
+                return action.run(cx);
+            }
+            cx.seal("SECRET");
+            try {
+                return action.run(cx);
+            } finally {
+                cx.unseal("SECRET");
+            }
+        }
+        // do not nest calls
+        try (Context newCx = enter(null, factory)) {
+            return action.run(newCx);
+        }
+    }
+
+    static <T> T callExplicit(ContextFactory factory, ContextAction<T> action) {
+        Context old = currentContext.get();
+        currentContext.set(null);
+        // do not nest calls
+        try (Context newCx = enter(null, factory)) {
+            return action.run(newCx);
+        } finally {
+            currentContext.set(old);
+        }
+    }
+
+    static <T> T call(ContextFactory factory, Consumer<Context> config, ContextAction<T> action) {
+        Context cx = currentContext.get();
+        if (cx != null) {
             return action.run(cx);
+        }
+        // do not nest calls
+        try (Context newCx = enter(null, factory)) {
+            config.accept(newCx);
+            newCx.seal(null);
+            return action.run(newCx);
         }
     }
 
