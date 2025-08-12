@@ -5463,7 +5463,7 @@ public class ScriptRuntime {
                 ScriptableObject so = (ScriptableObject) object;
                 Callable getterOrSetter = (Callable) value;
                 boolean isSetter = getterSetter == 1;
-                if (id instanceof Symbol) {
+                if (isSymbol(id)) {
                     so.setGetterOrSetter(id, 0, getterOrSetter, isSetter);
                 } else if (id instanceof Integer && ((Integer) id) >= 0) {
                     so.setGetterOrSetter(null, (Integer) id, getterOrSetter, isSetter);
