@@ -9,7 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.io.IOException;
 import java.util.List;
@@ -729,16 +728,19 @@ public class ParserTest {
 
         ObjectLiteral objectLiteral = (ObjectLiteral) firstInitializer.getInitializer();
         List<AbstractObjectProperty> props = objectLiteral.getElements();
-        var firstObjectLit = assertInstanceOf(ObjectProperty.class, props.get(0));
-        var secondObjectLit = assertInstanceOf(ObjectProperty.class, props.get(1));
-        var thirdObjectLit = assertInstanceOf(ObjectProperty.class, props.get(2));
+        assertTrue(props.get(0) instanceof ObjectProperty);
+        var firstObjectLit = props.get(0);
+        assertTrue(props.get(1) instanceof ObjectProperty);
+        var secondObjectLit = props.get(1);
+        assertTrue(props.get(2) instanceof ObjectProperty);
+        var thirdObjectLit = props.get(2);
 
-        AstNode firstKey = firstObjectLit.getKey();
-        AstNode firstValue = firstObjectLit.getValue();
-        AstNode secondKey = secondObjectLit.getKey();
-        AstNode secondValue = secondObjectLit.getValue();
-        AstNode thirdKey = thirdObjectLit.getKey();
-        AstNode thirdValue = thirdObjectLit.getValue();
+        AstNode firstKey = ((ObjectProperty) firstObjectLit).getKey();
+        AstNode firstValue = ((ObjectProperty) firstObjectLit).getValue();
+        AstNode secondKey = ((ObjectProperty) secondObjectLit).getKey();
+        AstNode secondValue = ((ObjectProperty) secondObjectLit).getValue();
+        AstNode thirdKey = ((ObjectProperty) thirdObjectLit).getKey();
+        AstNode thirdValue = ((ObjectProperty) thirdObjectLit).getValue();
 
         assertLineColumnAre(1, 5, firstVarName);
         assertLineColumnAre(2, 1, objectLiteral);
