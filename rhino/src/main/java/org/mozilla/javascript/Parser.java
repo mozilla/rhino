@@ -3087,23 +3087,6 @@ public class Parser {
             memberTypeFlags = Node.DESCENDANTS_FLAG;
         }
 
-        if (!compilerEnv.isXmlAvailable()) {
-            int maybeName = nextToken();
-            if (maybeName != Token.NAME
-                    && !(compilerEnv.isReservedKeywordAsIdentifier()
-                            && TokenStream.isKeyword(
-                                    ts.getString(),
-                                    compilerEnv.getLanguageVersion(),
-                                    inUseStrictDirective))) {
-                reportError("msg.no.name.after.dot");
-            }
-
-            Name name = createNameNode(true, Token.GETPROP);
-            PropertyGet pg = new PropertyGet(pn, name, dotPos);
-            pg.setLineColumnNumber(lineno, column);
-            return pg;
-        }
-
         AstNode ref = null; // right side of . or .. operator
         int token = nextToken();
         switch (token) {
