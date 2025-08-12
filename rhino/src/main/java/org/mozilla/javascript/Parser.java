@@ -3102,16 +3102,26 @@ public class Parser {
                 break;
 
             case Token.MUL:
-                // handles: *, *::name, *::*, *::[expr]
-                saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
-                ref = propertyName(-1, memberTypeFlags);
-                break;
+                if (compilerEnv.isXmlAvailable()) {
+                    // handles: *, *::name, *::*, *::[expr]
+                    saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
+                    ref = propertyName(-1, memberTypeFlags);
+                    break;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
 
             case Token.XMLATTR:
-                // handles: '@attr', '@ns::attr', '@ns::*', '@ns::*',
-                //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
-                ref = attributeAccess();
-                break;
+                if (compilerEnv.isXmlAvailable()) {
+                    // handles: '@attr', '@ns::attr', '@ns::*', '@ns::*',
+                    //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
+                    ref = attributeAccess();
+                    break;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
 
             case Token.RESERVED:
                 {
