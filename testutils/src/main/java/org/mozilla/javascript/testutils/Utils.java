@@ -459,20 +459,36 @@ public class Utils {
      * @return a new {@link ContextFactory} with all provided features enabled
      */
     public static ContextFactory contextFactoryWithFeatures(int... features) {
-        return new ContextFactoryWithFeatures(features);
+        return new ContextFactoryWithFeatures(features, new int[0]);
+    }
+
+    /**
+     * Construct a new {@link ContextFactory}
+     *
+     * @param features the features to forcibly disable, overriding the default from {@link
+     *     ContextFactory}
+     * @return a new {@link ContextFactory} with all provided features disabled
+     */
+    public static ContextFactory contextFactoryWithFeatureDisabled(int... features) {
+        return new ContextFactoryWithFeatures(new int[0], features);
     }
 
     private static class ContextFactoryWithFeatures extends ContextFactory {
-        private final int[] features;
+        private final int[] enabledFeatures;
+        private final int[] disabledFeatures;
 
-        private ContextFactoryWithFeatures(int... features) {
-            this.features = features;
+        private ContextFactoryWithFeatures(int[] enabledFeatures, int[] disabledFeatures) {
+            this.enabledFeatures = enabledFeatures;
+            this.disabledFeatures = disabledFeatures;
         }
 
         @Override
         protected boolean hasFeature(Context cx, int featureIndex) {
-            if (IntStream.of(features).anyMatch(x -> x == featureIndex)) {
+            if (IntStream.of(enabledFeatures).anyMatch(x -> x == featureIndex)) {
                 return true;
+            }
+            if (IntStream.of(disabledFeatures).anyMatch(x -> x == featureIndex)) {
+                return false;
             }
 
             return super.hasFeature(cx, featureIndex);
