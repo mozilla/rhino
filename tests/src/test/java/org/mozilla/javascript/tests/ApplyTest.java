@@ -1,4 +1,4 @@
-package org.mozilla.javascript.tests.es6;
+package org.mozilla.javascript.tests;
 
 import org.junit.Test;
 import org.mozilla.javascript.testutils.Utils;
@@ -15,7 +15,7 @@ public class ApplyTest {
                         + "var a = f.apply;\n"
                         + "var b = a.bind(f, 'Hello!');\n"
                         + "b([1,2]);\n";
-        Utils.assertWithAllModes_ES6("Hello!", code);
+        Utils.assertWithAllModes("Hello!", code);
     }
 
     @Test
@@ -23,7 +23,7 @@ public class ApplyTest {
         String code =
                 "Function.prototype.apply.apply(function(x) {return x;}, ['b', ['Hello!', 'Goodbye!']]);";
 
-        Utils.assertWithAllModes_ES6("Hello!", code);
+        Utils.assertWithAllModes("Hello!", code);
     }
 
     @Test
@@ -34,6 +34,23 @@ public class ApplyTest {
         String code =
                 "Function.prototype.apply.apply(function(x) {return this.toString();}, ['b', ['Hello!', 'Goodbye!']]);";
 
-        Utils.assertWithAllModes_ES6("b", code);
+        Utils.assertWithAllModes("b", code);
+    }
+
+    @Test
+    public void applyToCallCallsCorrectFunction() throws Exception {
+        String script =
+                "function foo(x) {return x;};\n" + "foo.call.apply(foo, ['b', 'Hello!']);\n";
+
+        Utils.assertWithAllModes("Hello!", script);
+    }
+
+    @Test
+    public void applyToCallSetsCorrectFunctionThis() throws Exception {
+        String script =
+                "function foo(x) {return this.toString();};\n"
+                        + "foo.call.apply(foo, ['b', 'Hello!']);\n";
+
+        Utils.assertWithAllModes("b", script);
     }
 }
