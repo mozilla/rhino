@@ -29,9 +29,7 @@ public class Evaluator {
     }
 
     public static Object eval(String source, Map<String, Scriptable> bindings) {
-        try (Context cx = ContextFactory.getGlobal().enterContext()) {
-            return eval(cx, source, bindings);
-        }
+        return ContextFactory.getGlobal().call(cx -> eval(cx, source, bindings));
     }
 
     public static Object eval(Context cx, String source, Map<String, Scriptable> bindings) {

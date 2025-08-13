@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.json.JsonParser;
@@ -155,18 +156,28 @@ public class JsonParserTest {
 
     @Test
     public void testECMAKeyOrdering() throws Exception {
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            String json =
-                    "{\"foo\": \"a\", \"bar\": \"b\", \"1\": \"c\", \"-1\": \"d\", \"x\": \"e\"}";
-            NativeObject actual = (NativeObject) parser.parseValue(json);
-            // Ensure that modern ECMAScript property ordering works, which depends on
-            // valid index values being treated as numbers and not as strings.
-            assertArrayEquals(
-                    "Property ordering should match",
-                    new Object[] {1, "foo", "bar", "-1", "x"},
-                    actual.getIds());
-        }
+        ContextFactory.getGlobal()
+                .callExplicit(
+                        cx -> {
+                            cx.setLanguageVersion(Context.VERSION_ES6);
+                            String json =
+                                    "{\"foo\": \"a\", \"bar\": \"b\", \"1\": \"c\", \"-1\": \"d\", \"x\": \"e\"}";
+
+                            NativeObject actual = null;
+                            try {
+                                actual = (NativeObject) parser.parseValue(json);
+                            } catch (ParseException e) {
+                                throw new RuntimeException(e);
+                            }
+                            // Ensure that modern ECMAScript property ordering works, which depends
+                            // on
+                            // valid index values being treated as numbers and not as strings.
+                            assertArrayEquals(
+                                    "Property ordering should match",
+                                    new Object[] {1, "foo", "bar", "-1", "x"},
+                                    actual.getIds());
+                            return Void.TYPE;
+                        });
     }
 
     @Test(expected = ParseException.class)

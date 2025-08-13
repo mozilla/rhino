@@ -101,10 +101,11 @@ public class Utils {
             final ContextAction<?> action,
             final boolean interpretedMode) {
 
-        try (final Context cx = contextFactory.enterContext()) {
-            cx.setInterpretedMode(interpretedMode);
-            action.run(cx);
-        }
+        contextFactory.callExplicit(
+                cx -> {
+                    cx.setInterpretedMode(interpretedMode);
+                    return action.run(cx);
+                });
     }
 
     /**
