@@ -21,6 +21,15 @@ public class ObjectLiteralSpreadTest {
     }
 
     @Test
+    public void testObjectSpreadBeforeEs6() {
+        String script =
+                "var obj1 = { a: 1, b: 2 };\n"
+                        + "var obj2 = { ...obj1, c: 3 };\n"
+                        + "obj2.a + obj2.b + obj2.c";
+        Utils.assertEvaluatorException_1_8("invalid property id (test#2)", script);
+    }
+
+    @Test
     public void testObjectSpreadOverride() {
         String script =
                 "var obj1 = { a: 1, b: 2 };\n"
