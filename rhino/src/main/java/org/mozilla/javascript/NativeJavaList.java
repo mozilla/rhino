@@ -49,9 +49,13 @@ public class NativeJavaList extends NativeJavaObject {
 
     private List<Object> list;
 
-    @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list) {
-        super(scope, list, list.getClass());
+        this(scope, list, list.getClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    public NativeJavaList(Scriptable scope, Object list, Class<?> staticType) {
+        super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
     }
