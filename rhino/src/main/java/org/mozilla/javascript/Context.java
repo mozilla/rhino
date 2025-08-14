@@ -474,7 +474,7 @@ public class Context implements Closeable {
      * @see #call(ContextAction)
      */
     public static Context enter() {
-        return enter(null, ContextFactory.getGlobal());
+        return enter(ContextFactory.getGlobal());
     }
 
     /**
@@ -497,29 +497,42 @@ public class Context implements Closeable {
     }
 
     static final Context enter(Context cx, ContextFactory factory) {
-        Context old = currentContext.get();
-        if (old != null) {
-            cx = old;
-        } else {
-            if (cx == null) {
-                cx = factory.makeContext();
-                if (cx.enterCount != 0) {
-                    throw new IllegalStateException(
-                            "factory.makeContext() returned Context instance already associated with some thread");
-                }
-                factory.onContextCreated(cx);
-                if (factory.isSealed() && !cx.isSealed()) {
-                    cx.seal(null);
-                }
-            } else {
-                if (cx.enterCount != 0) {
-                    throw new IllegalStateException(
-                            "can not use Context instance already associated with some thread");
-                }
+        if (cx != null) {
+            if (cx.open) {
+                throw new IllegalStateException(
+                        "can not use Context instance already associated with some thread");
             }
+            cx.open = true;
+            cx.parent = currentContext.get();
             currentContext.set(cx);
+            return cx;
         }
-        ++cx.enterCount;
+        return enter(factory);
+    }
+
+    static final Context enter(ContextFactory factory) {
+        Context oldCx = currentContext.get();
+        Context cx;
+        if (oldCx != null) {
+            cx = oldCx.createChild();
+            assert cx.getClass() == oldCx.getClass()
+                    : oldCx.getClass().getName()
+                            + " must override createChild to return "
+                            + cx.getClass().getName();
+            cx.parent = oldCx;
+        } else {
+            cx = factory.makeContext();
+            if (cx.parent != null) {
+                throw new IllegalStateException(
+                        "factory.makeContext() returned Context instance already parent of other context");
+            }
+            factory.onContextCreated(cx);
+            if (factory.isSealed() && !cx.isSealed()) {
+                cx.seal(null);
+            }
+        }
+        cx.open = true;
+        currentContext.set(cx);
         return cx;
     }
 
@@ -538,27 +551,76 @@ public class Context implements Closeable {
         if (cx == null) {
             throw new IllegalStateException("Calling Context.exit without previous Context.enter");
         }
-        if (cx.enterCount < 1) Kit.codeBug();
-        if (--cx.enterCount == 0) {
-            releaseContext(cx);
-        }
+        cx.close();
+    }
+
+    protected Context createChild() {
+        Context cx = new Context(this.factory);
+        cx.copyFrom(this);
+        return cx;
+    }
+
+    private void copyFrom(Context orig) {
+        this.activationNames = orig.activationNames;
+        this.applicationClassLoader = orig.applicationClassLoader;
+        this.cachedXMLLib = orig.cachedXMLLib;
+        this.classShutter = orig.classShutter;
+        this.currentActivationCall = orig.currentActivationCall;
+        this.debugger = orig.debugger;
+        this.debuggerData = orig.debuggerData;
+        this.errorReporter = orig.errorReporter;
+        this.generateObserverCount = orig.generateObserverCount;
+        this.generatingDebug = orig.generatingDebug;
+        this.generatingDebugChanged = orig.generatingDebugChanged;
+        this.generatingSource = orig.generatingSource;
+        this.hasClassShutter = orig.hasClassShutter;
+        this.instructionCount = orig.instructionCount;
+        this.instructionThreshold = orig.instructionThreshold;
+        this.interpretedMode = orig.interpretedMode;
+        this.interpreterSecurityDomain = orig.interpreterSecurityDomain;
+        this.isContinuationsTopCall = orig.isContinuationsTopCall;
+        this.isTopLevelStrict = orig.isTopLevelStrict;
+        this.iterating = orig.iterating;
+        this.javaToJSONConverter = orig.javaToJSONConverter;
+        this.lastInterpreterFrame = orig.lastInterpreterFrame;
+        this.locale = orig.locale;
+        this.maximumInterpreterStackDepth = orig.maximumInterpreterStackDepth;
+        // Checkme: What to do with microtasks?
+        // this.microtasks = orig.microtasks;
+        this.open = orig.open;
+        this.parent = orig.parent;
+        this.propertyListeners = orig.propertyListeners;
+        this.regExpProxy = orig.regExpProxy;
+        this.scratchScriptable = orig.scratchScriptable;
+        this.scratchUint32 = orig.scratchUint32;
+        this.sealed = orig.sealed;
+        this.sealKey = orig.sealKey;
+        this.securityController = orig.securityController;
+        this.threadLocalMap = orig.threadLocalMap;
+        this.timezone = orig.timezone;
+        this.topCallScope = orig.topCallScope;
+        this.typeErrorThrower = orig.typeErrorThrower;
+        // Checkme: What to do with promises microtasks?
+        // this.unhandledPromises = orig.unhandledPromises;
+        this.useDynamicScope = orig.useDynamicScope;
+        this.version = orig.version;
+        this.wrapFactory = orig.wrapFactory;
     }
 
     @Override
     public void close() {
-        if (enterCount < 1) Kit.codeBug();
-        if (--enterCount == 0) {
+        if (open) {
+            open = false;
+            // do not use contextLocal.remove() here, as this might be much slower, when the same
+            // thread
+            // creates a new context. See ContextThreadLocalBenchmark.
             assert (currentContext.get() == this)
-                    : "currentContext: " + currentContext.get() + ", this: " + this;
-            releaseContext(this);
+                    : "context closed in wrong order: " + currentContext.get() + ", this: " + this;
+            currentContext.set(parent);
+            if (parent == null) {
+                factory.onContextReleased(this);
+            }
         }
-    }
-
-    private static void releaseContext(Context cx) {
-        // do not use contextLocal.remove() here, as this might be much slower, when the same thread
-        // creates a new context. See ContextThreadLocalBenchmark.
-        currentContext.set(null);
-        cx.factory.onContextReleased(cx);
     }
 
     /**
@@ -604,7 +666,7 @@ public class Context implements Closeable {
 
     /** The method implements {@link ContextFactory#call(ContextAction)} logic. */
     static <T> T call(ContextFactory factory, ContextAction<T> action) {
-        try (Context cx = enter(null, factory)) {
+        try (Context cx = enter(factory)) {
             return action.run(cx);
         }
     }
@@ -2805,13 +2867,15 @@ public class Context implements Closeable {
     private WrapFactory wrapFactory;
     Debugger debugger;
     private Object debuggerData;
-    private int enterCount;
     private Object propertyListeners;
     private Map<Object, Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
     private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
     private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
+
+    private Context parent;
+    private boolean open;
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
