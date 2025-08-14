@@ -53,7 +53,7 @@ public class NativeObject extends ScriptableObject implements Map {
         proto.defineProperty("constructor", ctor, DONTENUM);
 
         defOnCtor(ctor, s, "getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
-        if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
+        if (ContextImpl.getCurrentContext().impl().version >= Context.VERSION_ES6) {
             defOnCtor(ctor, s, "setPrototypeOf", 2, NativeObject::js_setPrototypeOf);
             defOnCtor(ctor, s, "entries", 1, NativeObject::js_entries);
             defOnCtor(ctor, s, "fromEntries", 1, NativeObject::js_fromEntries);

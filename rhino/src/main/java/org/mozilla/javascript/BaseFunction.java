@@ -420,15 +420,15 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
+            NativeCall activation = cx.impl().currentActivationCall;
+            boolean strictMode = cx.impl().isTopLevelStrict;
             try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
+                cx.impl().currentActivationCall = null;
+                cx.impl().isTopLevelStrict = false;
                 return jsConstructor(cx, scope, args, false);
             } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
+                cx.impl().isTopLevelStrict = strictMode;
+                cx.impl().currentActivationCall = activation;
             }
         } else {
             return jsConstructor(cx, scope, args, false);
@@ -443,15 +443,15 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
+            NativeCall activation = cx.impl().currentActivationCall;
+            boolean strictMode = cx.impl().isTopLevelStrict;
             try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
+                cx.impl().currentActivationCall = null;
+                cx.impl().isTopLevelStrict = false;
                 return jsConstructor(cx, scope, args, true);
             } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
+                cx.impl().isTopLevelStrict = strictMode;
+                cx.impl().currentActivationCall = activation;
             }
         } else {
             return jsConstructor(cx, scope, args, true);
@@ -704,7 +704,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         String source = sourceBuf.toString();
 
         int[] linep = new int[1];
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         if (filename == null) {
             filename = "<eval'ed string>";
             linep[0] = 1;
@@ -717,14 +717,14 @@ public class BaseFunction extends ScriptableObject implements Function {
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
-        Evaluator evaluator = Context.createInterpreter();
+        Evaluator evaluator = ContextImpl.createInterpreter();
         if (evaluator == null) {
             throw new JavaScriptException("Interpreter not present", filename, linep[0]);
         }
 
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        return cx.compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
+        return cx.impl().compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
     }
 
     public void setHomeObject(Scriptable homeObject) {

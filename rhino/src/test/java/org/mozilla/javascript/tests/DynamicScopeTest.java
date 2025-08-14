@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ContextImpl;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -43,7 +44,7 @@ public class DynamicScopeTest {
     }
 
     /** Sometimes a new context ist required. The constructor is protected so this */
-    private static class FreshContext extends Context {
+    private static class FreshContext extends ContextImpl {
         public FreshContext(ContextFactory contextFactory) {
             super(contextFactory);
         }

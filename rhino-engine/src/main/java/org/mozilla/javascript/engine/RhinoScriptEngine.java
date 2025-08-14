@@ -284,7 +284,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         Object ol = get(OPTIMIZATION_LEVEL);
         if (ol != null) {
             // Handle backwardly-compatible "optimization level".
-            cx.setOptimizationLevel(parseInteger(ol));
+            cx.impl().setOptimizationLevel(parseInteger(ol));
         }
         Object interpreted = get(INTERPRETED_MODE);
         if (interpreted != null) {

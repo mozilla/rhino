@@ -147,7 +147,7 @@ final class NativeNumber extends ScriptableObject {
 
     private static Object js_toFixed(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        int precisionMin = cx.version < Context.VERSION_ES6 ? -20 : 0;
+        int precisionMin = cx.impl().version < Context.VERSION_ES6 ? -20 : 0;
         double value = toSelf(thisObj).doubleValue;
         return num_to(value, args, DToA.DTOSTR_FIXED, DToA.DTOSTR_FIXED, precisionMin, 0);
     }

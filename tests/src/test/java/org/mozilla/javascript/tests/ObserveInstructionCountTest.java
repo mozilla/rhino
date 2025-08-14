@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ContextImpl;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -21,7 +22,7 @@ import org.mozilla.javascript.testutils.Utils;
  */
 public class ObserveInstructionCountTest {
 
-    static class MyContext extends Context {
+    static class MyContext extends ContextImpl {
         MyContext(ContextFactory factory) {
             super(factory);
         }

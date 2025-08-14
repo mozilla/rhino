@@ -105,7 +105,7 @@ public class NativeJavaPackage extends ScriptableObject {
 
         String className = (packageName.length() == 0) ? name : packageName + '.' + name;
         Context cx = Context.getContext();
-        ClassShutter shutter = cx.getClassShutter();
+        ClassShutter shutter = cx.impl().getClassShutter();
         Scriptable newValue = null;
         if (shutter == null || shutter.visibleToScripts(className)) {
             Class<?> cl = null;

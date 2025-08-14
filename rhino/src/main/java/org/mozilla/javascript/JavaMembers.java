@@ -45,7 +45,7 @@ class JavaMembers {
 
     JavaMembers(Scriptable scope, Class<?> cl, boolean includeProtected) {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
-            ClassShutter shutter = cx.getClassShutter();
+            ClassShutter shutter = cx.impl().getClassShutter();
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
                 throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
             }
