@@ -722,7 +722,12 @@ public class NativeObject extends ScriptableObject implements Map {
                 continue;
             }
             Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
-            Object[] ids = sourceObj.getIds();
+            Object[] ids;
+            if (sourceObj instanceof ScriptableObject) {
+                ids = ((ScriptableObject) sourceObj).getIds(false, true);
+            } else {
+                ids = sourceObj.getIds();
+            }
             for (Object key : ids) {
                 if (key instanceof Integer) {
                     int intId = (Integer) key;
@@ -730,11 +735,26 @@ public class NativeObject extends ScriptableObject implements Map {
                         Object val = sourceObj.get(intId, sourceObj);
                         AbstractEcmaObjectOperations.put(cx, targetObj, intId, val, true);
                     }
-                } else {
+                } else if (key instanceof String) {
                     String stringId = ScriptRuntime.toString(key);
                     if (sourceObj.has(stringId, sourceObj) && isEnumerable(stringId, sourceObj)) {
                         Object val = sourceObj.get(stringId, sourceObj);
                         AbstractEcmaObjectOperations.put(cx, targetObj, stringId, val, true);
+                    }
+                }
+            }
+
+            // This is a separate loop for Symbols, as they must be
+            // copied over after string properties
+            if (sourceObj instanceof ScriptableObject) {
+                for (Object key : ids) {
+                    if (key instanceof Symbol) {
+                        Symbol sym = (Symbol) key;
+                        if (((ScriptableObject) sourceObj).has(sym, sourceObj)
+                                && isEnumerable(sym, sourceObj)) {
+                            Object val = ((ScriptableObject) sourceObj).get(sym, sourceObj);
+                            AbstractEcmaObjectOperations.put(cx, targetObj, sym, val, true);
+                        }
                     }
                 }
             }
