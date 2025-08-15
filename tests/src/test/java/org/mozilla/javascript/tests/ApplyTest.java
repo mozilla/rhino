@@ -58,8 +58,8 @@ public class ApplyTest {
     public void applyToCallWithActivationCallsCorrectFunction() throws Exception {
         String script =
                 "function foo(x) {\n"
-                        + "  function inner(s) { return x };\n"
-                        + "  return inner(this);\n"
+                        + "  function inner(s) { return s };\n"
+                        + "  return inner(x);\n"
                         + "};\n"
                         + "foo.call.apply(foo, ['b', 'Hello!']);\n";
 
