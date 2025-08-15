@@ -3332,8 +3332,14 @@ public final class Interpreter extends Icode implements Evaluator {
                                             state.stackTop + 1,
                                             state.indexReg - 1);
                                 } else if (state.indexReg > 1) {
+                                    Object[] newBArgs = new Object[boundArgs.length - 1];
                                     System.arraycopy(
-                                            boundArgs, 1, boundArgs, 0, boundArgs.length - 1);
+                                            boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
+                                    boundArgs = newBArgs;
+                                    blen--;
+                                } else {
+                                    // Bound args is 1 long.
+                                    boundArgs = new Object[0];
                                     blen--;
                                 }
                                 state.indexReg--;

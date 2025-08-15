@@ -53,4 +53,29 @@ public class ApplyTest {
 
         Utils.assertWithAllModes("b", script);
     }
+
+    @Test
+    public void applyToCallWithActivationCallsCorrectFunction() throws Exception {
+        String script =
+                "function foo(x) {\n"
+                        + "  function inner(s) { return x };\n"
+                        + "  return inner(this);\n"
+                        + "};\n"
+                        + "foo.call.apply(foo, ['b', 'Hello!']);\n";
+
+        Utils.assertWithAllModes("Hello!", script);
+    }
+
+    @Test
+    public void applyToCallWithActivationSetsCorrectFunctionThis() throws Exception {
+        String script =
+                "function foo(x) {\n"
+                        // the inner function enables activation
+                        + "  function inner(s) { return s.toString() };\n"
+                        + "  return inner(this);\n"
+                        + "};\n"
+                        + "foo.call.apply(foo, ['b', 'Hello!']);\n";
+
+        Utils.assertWithAllModes("b", script);
+    }
 }
