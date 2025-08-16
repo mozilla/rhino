@@ -167,7 +167,8 @@ public class NativeJavaMethod extends BaseFunction {
         }
 
         Object returnValue = meth.invoke(javaObject, args);
-        Class<?> returnType = meth.method().getReturnType();
+        // TODO: use TypeInfo directly when WrapFactory supports it
+        Class<?> returnType = meth.getReturnType().asClass();
 
         if (debug) {
             Class<?> actualType = (returnValue == null) ? null : returnValue.getClass();
