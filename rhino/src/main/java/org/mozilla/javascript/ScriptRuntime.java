@@ -5834,6 +5834,15 @@ public class ScriptRuntime {
         }
 
         // Fallback implementation for when proxy is not available
+        return getTemplateLiteralCallSiteImpl(cx, scope, strings, index);
+    }
+
+    /**
+     * Implementation of template literal call site creation. This is public to allow the proxy to
+     * delegate back to it while maintaining proper ECMAScript compliance.
+     */
+    public static Scriptable getTemplateLiteralCallSiteImpl(
+            Context cx, Scriptable scope, Object[] strings, int index) {
         Object callsite = strings[index];
 
         if (callsite instanceof Scriptable) return (Scriptable) callsite;
