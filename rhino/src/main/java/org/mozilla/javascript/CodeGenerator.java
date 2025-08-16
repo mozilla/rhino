@@ -965,29 +965,7 @@ class CodeGenerator extends Icode {
             case Token.NUMBER:
                 {
                     double num = node.getDouble();
-                    int inum = (int) num;
-                    if (inum == num) {
-                        if (inum == 0) {
-                            addIcode(Icode_ZERO);
-                            // Check for negative zero
-                            if (1.0 / num < 0.0) {
-                                addToken(Token.NEG);
-                            }
-                        } else if (inum == 1) {
-                            addIcode(Icode_ONE);
-                        } else if ((short) inum == inum) {
-                            addIcode(Icode_SHORTNUMBER);
-                            // write short as uin16 bit pattern
-                            addUint16(inum & 0xFFFF);
-                        } else {
-                            addIcode(Icode_INTNUMBER);
-                            addInt(inum);
-                        }
-                    } else {
-                        int index = getDoubleIndex(num);
-                        addIndexOp(Token.NUMBER, index);
-                    }
-                    stackChange(1);
+                    addNumber(num);
                 }
                 break;
 
@@ -1178,6 +1156,32 @@ class CodeGenerator extends Icode {
         if (savedStackDepth + 1 != stackDepth) {
             Kit.codeBug();
         }
+    }
+
+    private void addNumber(double num) {
+        int inum = (int) num;
+        if (inum == num) {
+            if (inum == 0) {
+                addIcode(Icode_ZERO);
+                // Check for negative zero
+                if (1.0 / num < 0.0) {
+                    addToken(Token.NEG);
+                }
+            } else if (inum == 1) {
+                addIcode(Icode_ONE);
+            } else if ((short) inum == inum) {
+                addIcode(Icode_SHORTNUMBER);
+                // write short as uin16 bit pattern
+                addUint16(inum & 0xFFFF);
+            } else {
+                addIcode(Icode_INTNUMBER);
+                addInt(inum);
+            }
+        } else {
+            int index = getDoubleIndex(num);
+            addIndexOp(Token.NUMBER, index);
+        }
+        stackChange(1);
     }
 
     private void finishGetElemGeneration(Node child) {
@@ -1414,19 +1418,71 @@ class CodeGenerator extends Icode {
         }
     }
 
+    private void visitObjectLiteralWithSpread(
+            Node node, Node child, Object[] propertyIds, int count) {
+        addIcode(Icode_REG_IND4);
+        addInt(-count - 1); // -1 to enforce it's negative even for {...x}
+        addIcode(Icode_LITERAL_NEW_OBJECT);
+        addUint8(0); // unused
+        stackChange(+2);
+
+        int i = 0;
+        while (child != null) {
+            Object propertyId = propertyIds == null ? null : propertyIds[i];
+
+            if (propertyId instanceof Node) {
+                // Might be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression,
+                // or a spread node.
+                Node propNode = (Node) propertyId;
+                visitExpression(propNode.getFirstChild(), 0);
+
+                if (((Node) propertyId).type == Token.DOTDOTDOT) {
+                    // It's actually a spread! We need to do a "continue" to avoid setting it as key
+                    addIcode(Icode_SPREAD);
+                    stackChange(-1);
+                    child = child.getNext();
+                    i++;
+                    continue;
+                }
+            } else if (propertyId instanceof String) {
+                addStringOp(Token.STRING, (String) propertyId);
+                stackChange(1);
+            } else if (propertyId instanceof Integer) {
+                addNumber((Integer) propertyId);
+            } else {
+                throw badTree(node);
+            }
+            addIcode(Icode_LITERAL_KEY_SET);
+            stackChange(-1);
+            // Value
+            visitLiteralValue(child);
+            child = child.getNext();
+            i++;
+        }
+
+        addToken(Token.OBJECTLIT);
+        stackChange(-1);
+    }
+
     private void visitObjectLiteral(Node node, Node child) {
         Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         int count = propertyIds == null ? 0 : propertyIds.length;
+
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        if (numberOfSpread > 0) {
+            visitObjectLiteralWithSpread(node, child, propertyIds, count - numberOfSpread);
+            return;
+        }
+
         boolean hasAnyComputedProperty =
                 propertyIds != null
                         && Arrays.stream(propertyIds).anyMatch(id -> id instanceof Node);
-
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
 
         addIndexOp(Icode_LITERAL_NEW_OBJECT, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
-        stackChange(4);
+        stackChange(2);
 
         int i = 0;
         while (child != null) {
@@ -1448,7 +1504,7 @@ class CodeGenerator extends Icode {
 
         addToken(Token.OBJECTLIT);
 
-        stackChange(-3);
+        stackChange(-1);
     }
 
     private void visitArrayLiteral(Node node, Node child) {
@@ -1457,7 +1513,7 @@ class CodeGenerator extends Icode {
             ++count;
         }
         addIndexOp(Icode_LITERAL_NEW_ARRAY, count);
-        stackChange(2);
+        stackChange(1);
         while (child != null) {
             visitLiteralValue(child);
             child = child.getNext();
@@ -1470,7 +1526,6 @@ class CodeGenerator extends Icode {
             literalIds.add(skipIndexes);
             addIndexOp(Icode_SPARE_ARRAYLIT, index);
         }
-        stackChange(-1);
     }
 
     private void visitLiteralValue(Node child) {

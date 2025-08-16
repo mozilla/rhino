@@ -68,7 +68,8 @@ public class Node implements Iterable<Node> {
             OBJECT_LITERAL_DESTRUCTURING = 29,
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
-            LAST_PROP = SUPER_PROPERTY_ACCESS,
+            NUMBER_OF_SPREAD = 32,
+            LAST_PROP = NUMBER_OF_SPREAD,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -454,6 +455,9 @@ public class Node implements Iterable<Node> {
                 return "optional_chaining";
             case SUPER_PROPERTY_ACCESS:
                 return "super_property_access";
+            case NUMBER_OF_SPREAD:
+                return "number_of_spread";
+
             default:
                 Kit.codeBug();
                 return null;

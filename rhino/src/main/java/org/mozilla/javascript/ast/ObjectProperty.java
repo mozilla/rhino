@@ -26,11 +26,15 @@ import org.mozilla.javascript.Token;
  *       NumberLiteral
  *       BigIntLiteral</pre>
  */
-public class ObjectProperty extends InfixExpression {
+public class ObjectProperty extends AbstractObjectProperty {
 
     {
         type = Token.COLON;
     }
+
+    private AstNode key;
+    private AstNode value;
+    private boolean shorthand;
 
     /**
      * Sets the node type. Must be one of {@link Token#COLON}, {@link Token#GET}, or {@link
@@ -53,8 +57,22 @@ public class ObjectProperty extends InfixExpression {
         super(pos);
     }
 
-    public ObjectProperty(int pos, int len) {
-        super(pos, len);
+    public void setKeyAndValue(AstNode key, AstNode value) {
+        assertNotNull(key);
+        assertNotNull(value);
+
+        this.key = key;
+        this.value = value;
+
+        // compute our bounds while children have absolute positions
+        int beg = key.getPosition();
+        int end = value.getPosition() + value.getLength();
+        setBounds(beg, end);
+
+        // this updates their positions to be parent-relative
+        setLineColumnNumber(key.getLineno(), key.getColumn());
+        key.setParent(this);
+        value.setParent(this);
     }
 
     /** Marks this node as a "getter" property. */
@@ -89,6 +107,14 @@ public class ObjectProperty extends InfixExpression {
         return isGetterMethod() || isSetterMethod() || isNormalMethod();
     }
 
+    public AstNode getKey() {
+        return key;
+    }
+
+    public AstNode getValue() {
+        return value;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -98,16 +124,23 @@ public class ObjectProperty extends InfixExpression {
         } else if (isSetterMethod()) {
             sb.append("set ");
         }
-        sb.append(left.toSource(getType() == Token.COLON ? 0 : depth));
+        sb.append(key.toSource(getType() == Token.COLON ? 0 : depth));
 
         if (!shorthand) {
             if (type == Token.COLON) {
                 sb.append(": ");
             }
-            sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
+            sb.append(value.toSource(getType() == Token.COLON ? 0 : depth + 1));
         }
         return sb.toString();
     }
 
-    private boolean shorthand;
+    /** Visits this node, the key, and the value. */
+    @Override
+    public void visit(NodeVisitor v) {
+        if (v.visit(this)) {
+            key.visit(v);
+            value.visit(v);
+        }
+    }
 }

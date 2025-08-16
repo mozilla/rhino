@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.mozilla.javascript.ast.AbstractObjectProperty;
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
 import org.mozilla.javascript.ast.ArrayLiteral;
@@ -62,6 +63,8 @@ import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Spread;
+import org.mozilla.javascript.ast.SpreadObjectProperty;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
@@ -3752,7 +3755,7 @@ public class Parser {
     private ObjectLiteral objectLiteral() throws IOException {
         int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         int afterComma = -1;
-        List<ObjectProperty> elems = new ArrayList<>();
+        List<AbstractObjectProperty> elems = new ArrayList<>();
         Set<String> getterNames = null;
         Set<String> setterNames = null;
         if (this.inUseStrictDirective) {
@@ -3778,6 +3781,16 @@ public class Parser {
             AstNode pname = objliteralProperty();
             if (pname == null) {
                 reportError("msg.bad.prop");
+            } else if (pname instanceof Spread) {
+                AstNode spreadExpr = ((Spread) pname).getExpression();
+                if (spreadExpr instanceof Name || spreadExpr instanceof StringLiteral) {
+                    // For complicated reasons, parsing a name does not advance the token
+                    spreadExpr.setLineColumnNumber(lineNumber(), columnNumber());
+                }
+
+                SpreadObjectProperty spreadObjectProperty =
+                        new SpreadObjectProperty((Spread) pname);
+                elems.add(spreadObjectProperty);
             } else {
                 propertyName = ts.getString();
                 int ppos = ts.tokenBeg;
@@ -3923,6 +3936,23 @@ public class Parser {
                 pname = createNumericLiteral(tt, true);
                 break;
 
+            case Token.DOTDOTDOT:
+                if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    int pos = ts.tokenBeg;
+                    nextToken();
+                    int lineno = lineNumber();
+                    int column = columnNumber();
+
+                    AstNode exprNode = assignExpr();
+                    pname = new Spread(pos, ts.tokenEnd - pos);
+                    pname.setLineColumnNumber(lineno, column);
+                    ((Spread) pname).setExpression(exprNode);
+                } else {
+                    reportError("msg.bad.prop");
+                    return null;
+                }
+                break;
+
             case Token.LB:
                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                     int pos = ts.tokenBeg;
@@ -3989,7 +4019,7 @@ public class Parser {
             }
             AstNode nn = new Name(property.getPosition(), property.getString());
             ObjectProperty pn = new ObjectProperty();
-            pn.setLeftAndRight(property, nn);
+            pn.setKeyAndValue(property, nn);
             return pn;
         } else if (tt == Token.ASSIGN) {
             /* we're in destructuring with defaults in a object literal; treat defaults as values */
@@ -3997,13 +4027,12 @@ public class Parser {
             consumeToken(); // consume the `=`
             Assignment defaultValue = new Assignment(property, assignExpr());
             defaultValue.setType(Token.ASSIGN);
-            pn.setLeftAndRight(property, defaultValue);
+            pn.setKeyAndValue(property, defaultValue);
             return pn;
         }
         mustMatchToken(Token.COLON, "msg.no.colon.prop", true);
         ObjectProperty pn = new ObjectProperty();
-        pn.setOperatorPosition(ts.tokenBeg);
-        pn.setLeftAndRight(property, assignExpr());
+        pn.setKeyAndValue(property, assignExpr());
         return pn;
     }
 
@@ -4038,8 +4067,7 @@ public class Parser {
                 break;
         }
         int end = getNodeEnd(fn);
-        pn.setLeft(propName);
-        pn.setRight(fn);
+        pn.setKeyAndValue(propName, fn);
         pn.setLength(end - pos);
         return pn;
     }
@@ -4614,7 +4642,10 @@ public class Parser {
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         boolean defaultValuesSetup = false;
 
-        for (ObjectProperty prop : node.getElements()) {
+        for (AbstractObjectProperty abstractProp : node.getElements()) {
+            if (abstractProp instanceof SpreadObjectProperty) throw Kit.codeBug();
+            ObjectProperty prop = (ObjectProperty) abstractProp;
+
             int lineno = 0, column = 0;
             // This function is sometimes called from the IRFactory
             // when executing regression tests, and in those cases the
@@ -4623,7 +4654,7 @@ public class Parser {
                 lineno = lineNumber();
                 column = columnNumber();
             }
-            AstNode id = prop.getLeft();
+            AstNode id = prop.getKey();
 
             Node rightElem = null;
             if (id instanceof Name) {
@@ -4648,7 +4679,7 @@ public class Parser {
                 defaultValuesSetup = true;
             }
 
-            AstNode value = prop.getRight();
+            AstNode value = prop.getValue();
             if (value.getType() == Token.NAME) {
                 String name = ((Name) value).getIdentifier();
                 parent.addChildToBack(

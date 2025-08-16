@@ -22,6 +22,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.ast.AbstractObjectProperty;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
@@ -726,17 +727,20 @@ public class ParserTest {
         Name firstVarName = (Name) firstInitializer.getTarget();
 
         ObjectLiteral objectLiteral = (ObjectLiteral) firstInitializer.getInitializer();
-        List<ObjectProperty> props = objectLiteral.getElements();
-        ObjectProperty firstObjectLit = props.get(0);
-        ObjectProperty secondObjectLit = props.get(1);
-        ObjectProperty thirdObjectLit = props.get(2);
+        List<AbstractObjectProperty> props = objectLiteral.getElements();
+        assertTrue(props.get(0) instanceof ObjectProperty);
+        var firstObjectLit = props.get(0);
+        assertTrue(props.get(1) instanceof ObjectProperty);
+        var secondObjectLit = props.get(1);
+        assertTrue(props.get(2) instanceof ObjectProperty);
+        var thirdObjectLit = props.get(2);
 
-        AstNode firstKey = firstObjectLit.getLeft();
-        AstNode firstValue = firstObjectLit.getRight();
-        AstNode secondKey = secondObjectLit.getLeft();
-        AstNode secondValue = secondObjectLit.getRight();
-        AstNode thirdKey = thirdObjectLit.getLeft();
-        AstNode thirdValue = thirdObjectLit.getRight();
+        AstNode firstKey = ((ObjectProperty) firstObjectLit).getKey();
+        AstNode firstValue = ((ObjectProperty) firstObjectLit).getValue();
+        AstNode secondKey = ((ObjectProperty) secondObjectLit).getKey();
+        AstNode secondValue = ((ObjectProperty) secondObjectLit).getValue();
+        AstNode thirdKey = ((ObjectProperty) thirdObjectLit).getKey();
+        AstNode thirdValue = ((ObjectProperty) thirdObjectLit).getValue();
 
         assertLineColumnAre(1, 5, firstVarName);
         assertLineColumnAre(2, 1, objectLiteral);
@@ -982,7 +986,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        NumberLiteral number = (NumberLiteral) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        NumberLiteral number = (NumberLiteral) prop.getKey();
         assertNotNull(number.getJsDoc());
     }
 
@@ -994,9 +999,10 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        for (ObjectProperty el : lit.getElements()) {
-            assertNull(el.getLeft().getJsDoc());
-            assertNull(el.getRight().getJsDoc());
+        for (AbstractObjectProperty abstractEl : lit.getElements()) {
+            ObjectProperty el = (ObjectProperty) abstractEl;
+            assertNull(el.getKey().getJsDoc());
+            assertNull(el.getValue().getJsDoc());
         }
     }
 
@@ -1008,7 +1014,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        StringLiteral stringLit = (StringLiteral) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        StringLiteral stringLit = (StringLiteral) prop.getKey();
         assertNotNull(stringLit.getJsDoc());
     }
 
@@ -1020,8 +1027,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        ParenthesizedExpression parens =
-                (ParenthesizedExpression) lit.getElements().get(0).getRight();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        ParenthesizedExpression parens = (ParenthesizedExpression) prop.getValue();
         assertNotNull(parens.getJsDoc());
     }
 
@@ -1033,7 +1040,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        Name objLitKey = (Name) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        Name objLitKey = (Name) prop.getKey();
         assertNotNull(objLitKey.getJsDoc());
     }
 
@@ -1045,8 +1053,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        ParenthesizedExpression parens =
-                (ParenthesizedExpression) lit.getElements().get(0).getRight();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        ParenthesizedExpression parens = (ParenthesizedExpression) prop.getValue();
         assertNotNull(parens.getJsDoc());
     }
 
@@ -1058,7 +1066,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        Name objLitKey = (Name) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        Name objLitKey = (Name) prop.getKey();
         assertNotNull(objLitKey.getJsDoc());
     }
 
@@ -1070,7 +1079,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        NumberLiteral number = (NumberLiteral) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        NumberLiteral number = (NumberLiteral) prop.getKey();
         assertNotNull(number.getJsDoc());
     }
 
@@ -1082,7 +1092,8 @@ public class ParserTest {
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
         ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
-        StringLiteral stringLit = (StringLiteral) lit.getElements().get(0).getLeft();
+        ObjectProperty prop = (ObjectProperty) lit.getElements().get(0);
+        StringLiteral stringLit = (StringLiteral) prop.getKey();
         assertNotNull(stringLit.getJsDoc());
     }
 
@@ -1455,16 +1466,16 @@ public class ParserTest {
         assertTrue(((Assignment) expr.getExpression()).getRight() instanceof ObjectLiteral);
         ObjectLiteral obj = (ObjectLiteral) ((Assignment) expr.getExpression()).getRight();
         assertEquals(1, obj.getElements().size());
-        ObjectProperty g = obj.getElements().get(0);
+        ObjectProperty g = (ObjectProperty) obj.getElements().get(0);
 
-        assertTrue(g.getLeft() instanceof GeneratorMethodDefinition);
-        assertLineColumnAre(0, 7, g.getLeft());
-        AstNode genMethodName = ((GeneratorMethodDefinition) g.getLeft()).getMethodName();
+        assertTrue(g.getKey() instanceof GeneratorMethodDefinition);
+        assertLineColumnAre(0, 7, g.getKey());
+        AstNode genMethodName = ((GeneratorMethodDefinition) g.getKey()).getMethodName();
         assertTrue(genMethodName instanceof Name);
         assertLineColumnAre(0, 8, genMethodName);
 
-        assertTrue(g.getRight() instanceof FunctionNode);
-        assertTrue(((FunctionNode) g.getRight()).isES6Generator());
+        assertTrue(g.getValue() instanceof FunctionNode);
+        assertTrue(((FunctionNode) g.getValue()).isES6Generator());
     }
 
     @Test
