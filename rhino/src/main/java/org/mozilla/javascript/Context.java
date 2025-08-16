@@ -391,8 +391,9 @@ public class Context implements Closeable {
     private static final RegExpLoader regExpLoader =
             ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
 
-    private static final TemplateLiteralLoader templateLiteralLoader =
-            ScriptRuntime.loadOneServiceImplementation(TemplateLiteralLoader.class);
+    // Direct instantiation to avoid ServiceLoader issues in test environments
+    private static final TemplateLiteralProxy DEFAULT_TEMPLATE_LITERAL_PROXY = 
+            new org.mozilla.javascript.templatelit.DefaultTemplateLiteralProxy();
 
     /**
      * Convenient value to use as zero-length array of objects.
@@ -2710,8 +2711,8 @@ public class Context implements Closeable {
     }
 
     TemplateLiteralProxy getTemplateLiteralProxy() {
-        if (templateLiteralProxy == null && templateLiteralLoader != null) {
-            templateLiteralProxy = templateLiteralLoader.newProxy();
+        if (templateLiteralProxy == null) {
+            templateLiteralProxy = DEFAULT_TEMPLATE_LITERAL_PROXY;
         }
         return templateLiteralProxy;
     }
