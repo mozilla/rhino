@@ -112,7 +112,7 @@ public interface TypeInfoFactory extends Serializable {
      * class {@code B<Tb>} extends {@code A<Tb>} {}
      *
      * interface {@code C<Tc>} {}
-     * interface {@code D<Td>} extends {@code B<Td>} {}
+     * interface {@code D<Td>} extends {@code C<Td>} {}
      *
      * class {@code E<Te>} extends {@code B<Te>} implements {@code D<String>} {}
      * </pre>
