@@ -3090,23 +3090,6 @@ public class Parser {
             memberTypeFlags = Node.DESCENDANTS_FLAG;
         }
 
-        if (!compilerEnv.isXmlAvailable()) {
-            int maybeName = nextToken();
-            if (maybeName != Token.NAME
-                    && !(compilerEnv.isReservedKeywordAsIdentifier()
-                            && TokenStream.isKeyword(
-                                    ts.getString(),
-                                    compilerEnv.getLanguageVersion(),
-                                    inUseStrictDirective))) {
-                reportError("msg.no.name.after.dot");
-            }
-
-            Name name = createNameNode(true, Token.GETPROP);
-            PropertyGet pg = new PropertyGet(pn, name, dotPos);
-            pg.setLineColumnNumber(lineno, column);
-            return pg;
-        }
-
         AstNode ref = null; // right side of . or .. operator
         int token = nextToken();
         switch (token) {
@@ -3122,16 +3105,26 @@ public class Parser {
                 break;
 
             case Token.MUL:
-                // handles: *, *::name, *::*, *::[expr]
-                saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
-                ref = propertyName(-1, memberTypeFlags);
-                break;
+                if (compilerEnv.isXmlAvailable()) {
+                    // handles: *, *::name, *::*, *::[expr]
+                    saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
+                    ref = propertyName(-1, memberTypeFlags);
+                    break;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
 
             case Token.XMLATTR:
-                // handles: '@attr', '@ns::attr', '@ns::*', '@ns::*',
-                //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
-                ref = attributeAccess();
-                break;
+                if (compilerEnv.isXmlAvailable()) {
+                    // handles: '@attr', '@ns::attr', '@ns::*', '@ns::*',
+                    //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
+                    ref = attributeAccess();
+                    break;
+                } else {
+                    reportError("msg.no.name.after.dot");
+                    return makeErrorNode();
+                }
 
             case Token.RESERVED:
                 {

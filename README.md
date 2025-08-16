@@ -104,7 +104,7 @@ You can also run the benchmarks:
     ./gradlew jmh
 
 When running the benchmarks you may find a couple of environment variables useful.
-* `BENCHMARKS` if set will limit the benchmarks run to those matching
+* `BENCHMARK` if set will limit the benchmarks run to those matching
   the regular expression given.
 * `INTERPRETED` can be set to `true` or `false` to only run the
   benchmarks in interpreted or compiled mode.
