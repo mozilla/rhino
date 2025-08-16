@@ -33,4 +33,9 @@ public class ConcurrentFactory extends WithCacheFactory {
     protected final <K, V> Map<K, V> createTypeCache() {
         return new ConcurrentHashMap<>();
     }
+
+    @Override
+    protected <K, V> Map<K, V> createConsolidationMappingCache() {
+        return new ConcurrentHashMap<>();
+    }
 }
