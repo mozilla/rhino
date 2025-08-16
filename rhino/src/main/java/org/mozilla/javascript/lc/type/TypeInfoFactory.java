@@ -7,14 +7,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -110,6 +103,23 @@ public interface TypeInfoFactory extends Serializable {
     }
 
     /**
+     * Get consolidation mapping from the input class.
+     *
+     * <p>Example (for factory implemented by Rhino):
+     *
+     * <pre>
+     * class {@code A<Ta>} {}
+     * class {@code B<Tb>} extends {@code A<Tb>} {}
+     *
+     * interface {@code C<Tc>} {}
+     * interface {@code D<Td>} extends {@code B<Td>} {}
+     *
+     * class {@code E<Te>} extends {@code B<Te>} implements {@code D<String>} {}
+     * </pre>
+     *
+     * and input class is {@code E.class}. The result mapping will then be: {@code Ta -> Te}, {@code
+     * Tb -> Te}, {@code Tc -> String}, {@code Td -> String}
+     *
      * @see TypeInfo#consolidate(Map)
      */
     default Map<VariableTypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {
