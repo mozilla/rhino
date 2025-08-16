@@ -28,7 +28,7 @@ jobs:
           build-mode: none # This mode only analyzes Java. Set this to 'autobuild' or 'manual' to analyze Kotlin too.
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache Gradle Modules
       uses: actions/cache@v4
