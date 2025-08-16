@@ -44,14 +44,22 @@ final class MemberBox implements Serializable {
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
     MemberBox(Method method, TypeInfoFactory factory) {
-        init(method, factory);
+        init(method, factory, method.getDeclaringClass());
     }
 
     MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
-        init(constructor, factory);
+        init(constructor, factory, constructor.getDeclaringClass());
     }
 
-    private void init(Method method, TypeInfoFactory factory) {
+    MemberBox(Method method, TypeInfoFactory factory, Class<?> parent) {
+        init(method, factory, parent);
+    }
+
+    MemberBox(Constructor<?> constructor, TypeInfoFactory factory, Class<?> parent) {
+        init(constructor, factory, parent);
+    }
+
+    private void init(Method method, TypeInfoFactory factory, Class<?> parent) {
         this.memberObject = method;
         if (nullDetector == null) {
             this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
@@ -59,9 +67,13 @@ final class MemberBox implements Serializable {
         this.vararg = method.isVarArgs();
         this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
         this.returnTypeInfo = factory.create(method.getGenericReturnType());
+
+        var mapping = factory.getConsolidationMapping(parent);
+        this.argTypeInfos = factory.consolidateAll(this.argTypeInfos, mapping);
+        this.returnTypeInfo = returnTypeInfo.consolidate(mapping);
     }
 
-    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
+    private void init(Constructor<?> constructor, TypeInfoFactory factory, Class<?> parent) {
         this.memberObject = constructor;
         if (nullDetector == null) {
             this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
@@ -69,6 +81,9 @@ final class MemberBox implements Serializable {
         this.vararg = constructor.isVarArgs();
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
+
+        var mapping = factory.getConsolidationMapping(parent);
+        this.argTypeInfos = factory.consolidateAll(this.argTypeInfos, mapping);
     }
 
     Method method() {
@@ -426,9 +441,9 @@ final class MemberBox implements Serializable {
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
-            init((Method) member, TypeInfoFactory.GLOBAL);
+            init((Method) member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
         } else {
-            init((Constructor<?>) member, TypeInfoFactory.GLOBAL);
+            init((Constructor<?>) member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
         }
     }
 
