@@ -393,7 +393,7 @@ public class Context implements Closeable {
 
     // Direct instantiation to avoid ServiceLoader issues in test environments
     private static final TemplateLiteralProxy DEFAULT_TEMPLATE_LITERAL_PROXY =
-            new org.mozilla.javascript.templatelit.DefaultTemplateLiteralProxy();
+            new DefaultTemplateLiteralProxy();
 
     /**
      * Convenient value to use as zero-length array of objects.
