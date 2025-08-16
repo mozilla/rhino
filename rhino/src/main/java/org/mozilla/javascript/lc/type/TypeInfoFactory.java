@@ -133,6 +133,31 @@ public interface TypeInfoFactory extends Serializable {
         return Map.of();
     }
 
+    default List<TypeInfo> consolidateAll(
+            List<TypeInfo> types, Map<VariableTypeInfo, TypeInfo> mapping) {
+        if (mapping.isEmpty()) { // implicit null check
+            return types;
+        }
+
+        var size = types.size();
+
+        if (size == 0) {
+            return List.of();
+        }
+
+        if (size == 1) {
+            var type = types.get(0);
+            var consolidated = type.consolidate(mapping);
+            return types == consolidated ? types : List.of(consolidated);
+        }
+
+        var consolidatedTypes = new ArrayList<TypeInfo>(types.size());
+        for (var type : types) {
+            consolidatedTypes.add(type.consolidate(mapping));
+        }
+        return consolidatedTypes;
+    }
+
     /// helpers
 
     /**
