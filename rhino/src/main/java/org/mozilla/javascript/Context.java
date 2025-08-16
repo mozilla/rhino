@@ -391,6 +391,9 @@ public class Context implements Closeable {
     private static final RegExpLoader regExpLoader =
             ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
 
+    private static final TemplateLiteralLoader templateLiteralLoader =
+            ScriptRuntime.loadOneServiceImplementation(TemplateLiteralLoader.class);
+
     /**
      * Convenient value to use as zero-length array of objects.
      *
@@ -2706,6 +2709,13 @@ public class Context implements Closeable {
         return regExpProxy;
     }
 
+    TemplateLiteralProxy getTemplateLiteralProxy() {
+        if (templateLiteralProxy == null && templateLiteralLoader != null) {
+            templateLiteralProxy = templateLiteralLoader.newProxy();
+        }
+        return templateLiteralProxy;
+    }
+
     final boolean isVersionECMA1() {
         return version == VERSION_DEFAULT || version >= VERSION_1_3;
     }
@@ -2794,6 +2804,7 @@ public class Context implements Closeable {
     private ClassShutter classShutter;
     private ErrorReporter errorReporter;
     RegExpProxy regExpProxy;
+    TemplateLiteralProxy templateLiteralProxy;
     private Locale locale;
     private TimeZone timezone;
     private boolean generatingDebug;

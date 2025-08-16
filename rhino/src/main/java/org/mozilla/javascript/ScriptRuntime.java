@@ -5828,6 +5828,21 @@ public class ScriptRuntime {
 
     public static Scriptable getTemplateLiteralCallSite(
             Context cx, Scriptable scope, Object[] strings, int index) {
+        TemplateLiteralProxy proxy = cx.getTemplateLiteralProxy();
+        if (proxy != null) {
+            return proxy.getCallSite(cx, scope, strings, index);
+        }
+
+        // Fallback to direct implementation for when proxy is not available
+        return getTemplateLiteralCallSiteImpl(cx, scope, strings, index);
+    }
+
+    /**
+     * Implementation of template literal call site creation. This method is public to allow the
+     * proxy to delegate back to it.
+     */
+    public static Scriptable getTemplateLiteralCallSiteImpl(
+            Context cx, Scriptable scope, Object[] strings, int index) {
         Object callsite = strings[index];
 
         if (callsite instanceof Scriptable) return (Scriptable) callsite;
