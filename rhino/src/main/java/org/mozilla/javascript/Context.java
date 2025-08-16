@@ -392,7 +392,7 @@ public class Context implements Closeable {
             ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
 
     // Direct instantiation to avoid ServiceLoader issues in test environments
-    private static final TemplateLiteralProxy DEFAULT_TEMPLATE_LITERAL_PROXY = 
+    private static final TemplateLiteralProxy DEFAULT_TEMPLATE_LITERAL_PROXY =
             new org.mozilla.javascript.templatelit.DefaultTemplateLiteralProxy();
 
     /**

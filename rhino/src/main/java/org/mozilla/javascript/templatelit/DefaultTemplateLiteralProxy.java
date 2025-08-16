@@ -48,19 +48,25 @@ public class DefaultTemplateLiteralProxy implements TemplateLiteralProxy {
         // we use the public preventExtensions method and make properties non-configurable
         rawObj.preventExtensions();
         siteObj.preventExtensions();
-        
+
         // Make all properties non-configurable and non-writable
         for (Object id : rawObj.getIds()) {
             if (id instanceof Integer) {
-                rawObj.setAttributes((Integer) id, ScriptableObject.READONLY | ScriptableObject.PERMANENT);
+                rawObj.setAttributes(
+                        (Integer) id, ScriptableObject.READONLY | ScriptableObject.PERMANENT);
             }
         }
-        
+
         for (Object id : siteObj.getIds()) {
             if (id instanceof Integer) {
-                siteObj.setAttributes((Integer) id, ScriptableObject.READONLY | ScriptableObject.PERMANENT);
+                siteObj.setAttributes(
+                        (Integer) id, ScriptableObject.READONLY | ScriptableObject.PERMANENT);
             } else if ("raw".equals(id)) {
-                siteObj.setAttributes("raw", ScriptableObject.READONLY | ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
+                siteObj.setAttributes(
+                        "raw",
+                        ScriptableObject.READONLY
+                                | ScriptableObject.PERMANENT
+                                | ScriptableObject.DONTENUM);
             }
         }
 
