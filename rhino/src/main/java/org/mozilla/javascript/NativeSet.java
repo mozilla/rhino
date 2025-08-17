@@ -336,7 +336,7 @@ public class NativeSet extends ScriptableObject {
     private Object js_union(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that keys is callable
+        // Always validate that keys is callable (even though we don't use has in union)
         getKeysMethod(cx, scope, otherObj);
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -441,7 +441,7 @@ public class NativeSet extends ScriptableObject {
     private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that keys is callable
+        // Always validate that keys is callable (even though we don't use has in isSupersetOf)
         getKeysMethod(cx, scope, otherObj);
 
         // Check if all elements of other are in this
