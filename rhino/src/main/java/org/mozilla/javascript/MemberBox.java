@@ -48,15 +48,11 @@ final class MemberBox implements Serializable {
     }
 
     MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
-        init(constructor, factory, constructor.getDeclaringClass());
+        init(constructor, factory);
     }
 
     MemberBox(Method method, TypeInfoFactory factory, Class<?> parent) {
         init(method, factory, parent);
-    }
-
-    MemberBox(Constructor<?> constructor, TypeInfoFactory factory, Class<?> parent) {
-        init(constructor, factory, parent);
     }
 
     private void init(Method method, TypeInfoFactory factory, Class<?> parent) {
@@ -73,7 +69,7 @@ final class MemberBox implements Serializable {
         this.returnTypeInfo = returnTypeInfo.consolidate(mapping);
     }
 
-    private void init(Constructor<?> constructor, TypeInfoFactory factory, Class<?> parent) {
+    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
         this.memberObject = constructor;
         if (nullDetector == null) {
             this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
@@ -82,8 +78,21 @@ final class MemberBox implements Serializable {
         this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
         this.returnTypeInfo = TypeInfo.NONE;
 
-        var mapping = factory.getConsolidationMapping(parent);
-        this.argTypeInfos = factory.consolidateAll(this.argTypeInfos, mapping);
+        // Type consolidation not required for constructor.
+        // For type consolidation stage-1 (https://github.com/mozilla/rhino/pull/2023), the class
+        // should have generic parent classes to actually needs type consolidation. But for
+        // constructor, the parameter types will be already replaced with exact type, otherwise it
+        // won't compile.
+        //
+        // consider this example:
+        // class A<T> {
+        //     A(T value) { ... }
+        // }
+        // class B extends A<String> {
+        //     B(String value) { super(value); }
+        // }
+        // for class B, the constructor must have "String" instead of "T" as parameter type,
+        // otherwise it won't compile. So type consolidation stage-1 is not required for constructor
     }
 
     Method method() {
@@ -443,7 +452,7 @@ final class MemberBox implements Serializable {
         if (member instanceof Method) {
             init((Method) member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
         } else {
-            init((Constructor<?>) member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
+            init((Constructor<?>) member, TypeInfoFactory.GLOBAL);
         }
     }
 

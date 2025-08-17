@@ -547,7 +547,7 @@ class JavaMembers {
         Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
         MemberBox[] ctorMembers = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
-            ctorMembers[i] = new MemberBox(constructors[i], typeFactory, this.cl);
+            ctorMembers[i] = new MemberBox(constructors[i], typeFactory);
         }
         ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
