@@ -11,6 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -360,15 +361,14 @@ final class MemberBox implements Serializable {
 
         // marshall the variable parameters
         var varArgs =
-                (Object[])
-                        argTypes.get(argTypesLen - 1)
-                                .getComponentType()
-                                .newArray(argLen - argTypesLen + 1);
-        for (int i = 0; i < varArgs.length; i++) {
-            varArgs[i] =
+                argTypes.get(argTypesLen - 1).getComponentType().newArray(argLen - argTypesLen + 1);
+        for (int i = 0, arrayLen = Array.getLength(varArgs); i < arrayLen; i++) {
+            Array.set(
+                    varArgs,
+                    i,
                     Context.jsToJava(
                             args[argTypesLen - 1 + i],
-                            argTypes.get(argTypesLen - 1).getComponentType());
+                            argTypes.get(argTypesLen - 1).getComponentType()));
         }
         wrappedArgs[argTypesLen - 1] = varArgs;
 
