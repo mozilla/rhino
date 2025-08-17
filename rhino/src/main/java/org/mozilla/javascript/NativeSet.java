@@ -494,10 +494,7 @@ public class NativeSet extends ScriptableObject {
         }
         if (!(keysVal instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.isnt.function.in",
-                    "keys",
-                    ScriptRuntime.toString(obj),
-                    ScriptRuntime.typeof(keysVal));
+                    "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
         }
         return ((Callable) keysVal).call(cx, scope, scriptable, ScriptRuntime.emptyArgs);
     }
@@ -510,10 +507,7 @@ public class NativeSet extends ScriptableObject {
         }
         if (!(hasVal instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.isnt.function.in",
-                    "has",
-                    ScriptRuntime.toString(obj),
-                    ScriptRuntime.typeof(hasVal));
+                    "msg.isnt.function", "has", ScriptRuntime.typeof(hasVal));
         }
         return hasVal;
     }
