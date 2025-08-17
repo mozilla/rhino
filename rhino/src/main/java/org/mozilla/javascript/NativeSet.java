@@ -336,8 +336,9 @@ public class NativeSet extends ScriptableObject {
     private Object js_union(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that keys is callable (even though we don't use has in union)
+        // Validate both keys and has are callable per Test262
         getKeysMethod(cx, scope, otherObj);
+        getHas(cx, scope, otherObj);
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
@@ -361,7 +362,8 @@ public class NativeSet extends ScriptableObject {
     private Object js_difference(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that has is callable
+        // Validate both keys and has are callable per Test262
+        getKeysMethod(cx, scope, otherObj);
         Object hasMethod = getHas(cx, scope, otherObj);
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -414,7 +416,8 @@ public class NativeSet extends ScriptableObject {
     private Object js_isSubsetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that has is callable
+        // Validate both keys and has are callable per Test262
+        getKeysMethod(cx, scope, otherObj);
         Object hasMethod = getHas(cx, scope, otherObj);
 
         Object sizeVal = getSize(cx, scope, otherObj);
@@ -441,8 +444,9 @@ public class NativeSet extends ScriptableObject {
     private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Always validate that keys is callable (even though we don't use has in isSupersetOf)
+        // Validate both keys and has are callable per Test262
         getKeysMethod(cx, scope, otherObj);
+        getHas(cx, scope, otherObj);
 
         // Check if all elements of other are in this
         Object iterator = ScriptRuntime.callIterator(getKeys(cx, scope, otherObj), cx, scope);
