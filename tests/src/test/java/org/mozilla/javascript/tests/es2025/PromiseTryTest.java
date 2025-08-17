@@ -11,24 +11,20 @@ public class PromiseTryTest {
 
     @Test
     public void promiseTryBasic() {
-        final String script =
-                "typeof Promise.try === 'function'";
+        final String script = "typeof Promise.try === 'function'";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
     @Test
     public void promiseTrySyncReturnValue() {
-        final String script =
-                "var p = Promise.try(() => 42);"
-                        + "p instanceof Promise";
+        final String script = "var p = Promise.try(() => 42);" + "p instanceof Promise";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
     @Test
     public void promiseTrySyncThrow() {
         final String script =
-                "var p = Promise.try(() => { throw new Error('test'); });"
-                        + "p instanceof Promise";
+                "var p = Promise.try(() => { throw new Error('test'); });" + "p instanceof Promise";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
@@ -56,8 +52,7 @@ public class PromiseTryTest {
     @Test
     public void promiseTryReturnsPromise() {
         final String script =
-                "var p = Promise.try(() => Promise.resolve(42));"
-                        + "p instanceof Promise";
+                "var p = Promise.try(() => Promise.resolve(42));" + "p instanceof Promise";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
