@@ -320,8 +320,9 @@ final class MemberBox implements Serializable {
             if (argLen == 0) {
                 return args;
             } else if (argLen == 1) {
-                args[0] = Context.jsToJava(args[0], argTypes.get(0));
-                return args;
+                var arg = args[0];
+                var wrapped = Context.jsToJava(args[0], argTypes.get(0));
+                return wrapped == arg ? args : new Object[] {wrapped};
             }
 
             var wrappedArgs = args;
