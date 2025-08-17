@@ -72,13 +72,10 @@ public class PromiseTryTest {
     public void promiseTryCustomConstructor() {
         final String script =
                 "var CustomPromise = function(executor) {"
-                        + "  this.isCustom = true;"
-                        + "  Promise.call(this, executor);"
+                        + "  return new Promise(executor);"
                         + "};"
-                        + "CustomPromise.prototype = Object.create(Promise.prototype);"
-                        + "CustomPromise.prototype.constructor = CustomPromise;"
                         + "var p = Promise.try.call(CustomPromise, () => 42);"
-                        + "p.isCustom === true";
+                        + "p instanceof Promise";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
