@@ -391,10 +391,6 @@ public class Context implements Closeable {
     private static final RegExpLoader regExpLoader =
             ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
 
-    // Direct instantiation to avoid ServiceLoader issues in test environments
-    private static final TemplateLiteralProxy DEFAULT_TEMPLATE_LITERAL_PROXY =
-            new DefaultTemplateLiteralProxy();
-
     /**
      * Convenient value to use as zero-length array of objects.
      *
@@ -2710,13 +2706,6 @@ public class Context implements Closeable {
         return regExpProxy;
     }
 
-    TemplateLiteralProxy getTemplateLiteralProxy() {
-        if (templateLiteralProxy == null) {
-            templateLiteralProxy = DEFAULT_TEMPLATE_LITERAL_PROXY;
-        }
-        return templateLiteralProxy;
-    }
-
     final boolean isVersionECMA1() {
         return version == VERSION_DEFAULT || version >= VERSION_1_3;
     }
@@ -2805,7 +2794,6 @@ public class Context implements Closeable {
     private ClassShutter classShutter;
     private ErrorReporter errorReporter;
     RegExpProxy regExpProxy;
-    TemplateLiteralProxy templateLiteralProxy;
     private Locale locale;
     private TimeZone timezone;
     private boolean generatingDebug;
