@@ -298,6 +298,10 @@ public class NativeSet extends ScriptableObject {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
         Object sizeVal = getSize(cx, scope, otherObj);
 
+        // Always validate that keys and has are callable by calling the validation methods
+        getKeysMethod(cx, scope, otherObj);
+        Object hasMethod = getHas(cx, scope, otherObj);
+
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
 
@@ -317,7 +321,6 @@ public class NativeSet extends ScriptableObject {
             }
         } else {
             // Iterate through this and check if each item is in other
-            Object hasMethod = getHas(cx, scope, otherObj);
             for (Hashtable.Entry entry : entries) {
                 Object key = entry.key;
                 Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
@@ -332,6 +335,9 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_union(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        // Always validate that keys is callable
+        getKeysMethod(cx, scope, otherObj);
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
@@ -355,10 +361,11 @@ public class NativeSet extends ScriptableObject {
     private Object js_difference(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
+        // Always validate that has is callable
+        Object hasMethod = getHas(cx, scope, otherObj);
+
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
-
-        Object hasMethod = getHas(cx, scope, otherObj);
 
         // Add elements from this that are not in other
         for (Hashtable.Entry entry : entries) {
@@ -375,11 +382,14 @@ public class NativeSet extends ScriptableObject {
     private Object js_symmetricDifference(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
+        // Always validate that keys and has are callable
+        getKeysMethod(cx, scope, otherObj);
+        Object hasMethod = getHas(cx, scope, otherObj);
+
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
 
         // Add elements from this that are not in other
-        Object hasMethod = getHas(cx, scope, otherObj);
         for (Hashtable.Entry entry : entries) {
             Object key = entry.key;
             Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
@@ -404,6 +414,9 @@ public class NativeSet extends ScriptableObject {
     private Object js_isSubsetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
+        // Always validate that has is callable
+        Object hasMethod = getHas(cx, scope, otherObj);
+
         Object sizeVal = getSize(cx, scope, otherObj);
         int otherSize = ScriptRuntime.toInt32(sizeVal);
         int thisSize = entries.size();
@@ -412,8 +425,6 @@ public class NativeSet extends ScriptableObject {
         if (thisSize > otherSize) {
             return Boolean.FALSE;
         }
-
-        Object hasMethod = getHas(cx, scope, otherObj);
 
         // Check if all elements of this are in other
         for (Hashtable.Entry entry : entries) {
@@ -429,6 +440,9 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        // Always validate that keys is callable
+        getKeysMethod(cx, scope, otherObj);
 
         // Check if all elements of other are in this
         Object iterator = ScriptRuntime.callIterator(getKeys(cx, scope, otherObj), cx, scope);
@@ -446,6 +460,10 @@ public class NativeSet extends ScriptableObject {
     private Object js_isDisjointFrom(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
+        // Always validate that keys and has are callable
+        getKeysMethod(cx, scope, otherObj);
+        Object hasMethod = getHas(cx, scope, otherObj);
+
         Object sizeVal = getSize(cx, scope, otherObj);
         int otherSize = ScriptRuntime.toInt32(sizeVal);
         int thisSize = entries.size();
@@ -462,7 +480,6 @@ public class NativeSet extends ScriptableObject {
             }
         } else {
             // Iterate through this
-            Object hasMethod = getHas(cx, scope, otherObj);
             for (Hashtable.Entry entry : entries) {
                 Object key = entry.key;
                 Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
@@ -486,7 +503,7 @@ public class NativeSet extends ScriptableObject {
         return sizeVal;
     }
 
-    private static Object getKeys(Context cx, Scriptable scope, Object obj) {
+    private static Callable getKeysMethod(Context cx, Scriptable scope, Object obj) {
         Scriptable scriptable = ScriptableObject.ensureScriptable(obj);
         Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
         if (keysVal == Scriptable.NOT_FOUND) {
@@ -496,7 +513,13 @@ public class NativeSet extends ScriptableObject {
             throw ScriptRuntime.typeErrorById(
                     "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
         }
-        return ((Callable) keysVal).call(cx, scope, scriptable, ScriptRuntime.emptyArgs);
+        return (Callable) keysVal;
+    }
+
+    private static Object getKeys(Context cx, Scriptable scope, Object obj) {
+        Callable keysMethod = getKeysMethod(cx, scope, obj);
+        Scriptable scriptable = ScriptableObject.ensureScriptable(obj);
+        return keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs);
     }
 
     private static Object getHas(Context cx, Scriptable scope, Object obj) {
