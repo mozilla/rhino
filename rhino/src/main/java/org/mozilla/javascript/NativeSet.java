@@ -489,9 +489,12 @@ public class NativeSet extends ScriptableObject {
     private static Object getKeys(Context cx, Scriptable scope, Object obj) {
         Scriptable scriptable = ScriptableObject.ensureScriptable(obj);
         Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
-        if (keysVal == Scriptable.NOT_FOUND || !(keysVal instanceof Callable)) {
+        if (keysVal == Scriptable.NOT_FOUND) {
+            throw ScriptRuntime.typeErrorById("msg.no.properties", ScriptRuntime.toString(obj));
+        }
+        if (!(keysVal instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.isnt.function", "keys", ScriptRuntime.toString(obj));
+                    "msg.isnt.function.in", "keys", ScriptRuntime.toString(obj), ScriptRuntime.typeof(keysVal));
         }
         return ((Callable) keysVal).call(cx, scope, scriptable, ScriptRuntime.emptyArgs);
     }
@@ -499,9 +502,12 @@ public class NativeSet extends ScriptableObject {
     private static Object getHas(Context cx, Scriptable scope, Object obj) {
         Scriptable scriptable = ScriptableObject.ensureScriptable(obj);
         Object hasVal = ScriptableObject.getProperty(scriptable, "has");
-        if (hasVal == Scriptable.NOT_FOUND || !(hasVal instanceof Callable)) {
+        if (hasVal == Scriptable.NOT_FOUND) {
+            throw ScriptRuntime.typeErrorById("msg.no.properties", ScriptRuntime.toString(obj));
+        }
+        if (!(hasVal instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.isnt.function", "has", ScriptRuntime.toString(obj));
+                    "msg.isnt.function.in", "has", ScriptRuntime.toString(obj), ScriptRuntime.typeof(hasVal));
         }
         return hasVal;
     }
