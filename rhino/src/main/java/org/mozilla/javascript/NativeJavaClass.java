@@ -189,53 +189,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     static Object constructInternal(Object[] args, MemberBox ctor) {
-        var argTypes = ctor.getArgTypes();
-
-        if (ctor.vararg) {
-            // marshall the explicit parameter
-            Object[] newArgs = new Object[argTypes.size()];
-            for (int i = 0; i < argTypes.size() - 1; i++) {
-                newArgs[i] = Context.jsToJava(args[i], argTypes.get(i));
-            }
-
-            Object varArgs;
-
-            // Handle special situation where a single variable parameter
-            // is given and it is a Java or ECMA array.
-            if (args.length == argTypes.size()
-                    && (args[args.length - 1] == null
-                            || args[args.length - 1] instanceof NativeArray
-                            || args[args.length - 1] instanceof NativeJavaArray)) {
-                // convert the ECMA array into a native array
-                varArgs =
-                        Context.jsToJava(args[args.length - 1], argTypes.get(argTypes.size() - 1));
-            } else {
-                // marshall the variable parameter
-                var componentType = argTypes.get(argTypes.size() - 1).getComponentType();
-                varArgs = componentType.newArray(args.length - argTypes.size() + 1);
-                for (int i = 0; i < Array.getLength(varArgs); i++) {
-                    Object value = Context.jsToJava(args[argTypes.size() - 1 + i], componentType);
-                    Array.set(varArgs, i, value);
-                }
-            }
-
-            // add varargs
-            newArgs[argTypes.size() - 1] = varArgs;
-            // replace the original args with the new one
-            args = newArgs;
-        } else {
-            Object[] origArgs = args;
-            for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
-                Object x = Context.jsToJava(arg, argTypes.get(i));
-                if (x != arg) {
-                    if (args == origArgs) {
-                        args = origArgs.clone();
-                    }
-                    args[i] = x;
-                }
-            }
-        }
+        args = ctor.wrapArgsInternal(args);
 
         return ctor.newInstance(args);
     }
