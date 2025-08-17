@@ -348,7 +348,9 @@ final class MemberBox implements Serializable {
         // is given, and it is a Java or ECMA array or is null.
         if (argLen == argTypesLen) {
             var lastArg = args[argLen - 1];
-            if (lastArg == null || lastArg instanceof NativeArray || lastArg instanceof NativeJavaArray) {
+            if (lastArg == null
+                    || lastArg instanceof NativeArray
+                    || lastArg instanceof NativeJavaArray) {
                 // convert the ECMA array into a native array
                 wrappedArgs[argLen - 1] = Context.jsToJava(lastArg, argTypes.get(argTypesLen - 1));
                 return wrappedArgs;
@@ -356,9 +358,16 @@ final class MemberBox implements Serializable {
         }
 
         // marshall the variable parameters
-        var varArgs = (Object[]) argTypes.get(argTypesLen - 1).getComponentType().newArray(argLen - argTypesLen + 1);
+        var varArgs =
+                (Object[])
+                        argTypes.get(argTypesLen - 1)
+                                .getComponentType()
+                                .newArray(argLen - argTypesLen + 1);
         for (int i = 0; i < varArgs.length; i++) {
-            varArgs[i] = Context.jsToJava(args[argTypesLen - 1 + i], argTypes.get(argTypesLen - 1).getComponentType());
+            varArgs[i] =
+                    Context.jsToJava(
+                            args[argTypesLen - 1 + i],
+                            argTypes.get(argTypesLen - 1).getComponentType());
         }
         wrappedArgs[argTypesLen - 1] = varArgs;
 
