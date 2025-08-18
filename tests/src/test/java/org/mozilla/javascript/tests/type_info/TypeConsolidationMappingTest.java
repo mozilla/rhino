@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests.type_info;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
@@ -29,6 +30,10 @@ public class TypeConsolidationMappingTest {
         Assertions.assertEquals(
                 // T from BaseStream -> T from Stream
                 Set.of("S -> Stream<T>", "T -> T"), getAndFormatMapping(Stream.class));
+        Assertions.assertEquals(
+                // TwoGenericInterfaces<A, B, C> implements Iterator<E -> B>, Map<K -> C, V -> A>
+                Set.of("V -> A", "E -> B", "K -> C"),
+                getAndFormatMapping(TwoGenericInterfaces.class));
     }
 
     @Test
@@ -49,6 +54,10 @@ public class TypeConsolidationMappingTest {
                 // E from Enum, T from Comparable
                 Set.of("T -> NoTypeInfo", "E -> NoTypeInfo"),
                 getAndFormatMapping(NoTypeInfo.class));
+        Assertions.assertEquals(
+                // TwoInterfaces implements Iterator<E -> Integer>, Map<K -> String, V -> Double>
+                Set.of("V -> Double", "K -> String", "E -> Integer"),
+                getAndFormatMapping(TwoInterfaces.class));
     }
 
     @ParameterizedTest
@@ -64,7 +73,7 @@ public class TypeConsolidationMappingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(classes = {Iterable.class, Iterator.class, BaseStream.class})
+    @ValueSource(classes = {Iterable.class, Iterator.class, BaseStream.class, Map.class})
     public void testGenericWithNoGenericParent(Class<?> type) {
         Assertions.assertEquals(Set.of(), getAndFormatMapping(type));
     }
@@ -99,4 +108,8 @@ public class TypeConsolidationMappingTest {
     static class GenericSuperClass extends E<Integer> {}
 
     static class GenericSuperInterface implements D<Number> {}
+
+    abstract static class TwoInterfaces implements Iterator<Integer>, Map<String, Double> {}
+
+    abstract static class TwoGenericInterfaces<A, B, C> implements Iterator<B>, Map<C, A> {}
 }
