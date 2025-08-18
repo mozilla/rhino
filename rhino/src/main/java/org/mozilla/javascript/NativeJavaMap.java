@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.type.TypeInfo;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,8 +34,8 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaMap(Scriptable scope, Object map) {
-        super(scope, map, map.getClass());
+    public NativeJavaMap(Scriptable scope, Object map, TypeInfo staticType) {
+        super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
     }

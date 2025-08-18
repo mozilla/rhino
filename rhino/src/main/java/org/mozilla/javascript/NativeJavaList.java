@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.type.TypeInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,8 +52,8 @@ public class NativeJavaList extends NativeJavaObject {
     private List<Object> list;
 
     @SuppressWarnings("unchecked")
-    public NativeJavaList(Scriptable scope, Object list) {
-        super(scope, list, list.getClass());
+    public NativeJavaList(Scriptable scope, Object list, TypeInfo staticType) {
+        super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
     }

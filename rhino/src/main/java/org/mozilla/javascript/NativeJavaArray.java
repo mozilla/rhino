@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.type.TypeInfo;
+
 import java.lang.reflect.Array;
 import java.util.Objects;
 
@@ -35,7 +37,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     public NativeJavaArray(Scriptable scope, Object array) {
-        super(scope, null, ScriptRuntime.ObjectClass);
+        super(scope, null, TypeInfo.OBJECT);
         Class<?> cl = array.getClass();
         if (!cl.isArray()) {
             throw new RuntimeException("Array expected");
