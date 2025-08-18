@@ -199,7 +199,7 @@ public class ContextFactory {
      * scripts or applets.
      */
     protected Context makeContext() {
-        return new Context(this);
+        return new ContextImpl(this);
     }
 
     /**
@@ -349,8 +349,8 @@ public class ContextFactory {
     }
 
     /**
-     * Implementation of {@link Context#observeInstructionCount(int instructionCount)}. This can be
-     * used to customize {@link Context} without introducing additional subclasses.
+     * Implementation of {@link ContextImpl#observeInstructionCount(int instructionCount)}. This can
+     * be used to customize {@link Context} without introducing additional subclasses.
      */
     protected void observeInstructionCount(Context cx, int instructionCount) {}
 
@@ -514,6 +514,6 @@ public class ContextFactory {
      *     thread
      */
     public final Context enterContext(Context cx) {
-        return Context.enter(cx, this);
+        return ContextImpl.enter(cx, this);
     }
 }

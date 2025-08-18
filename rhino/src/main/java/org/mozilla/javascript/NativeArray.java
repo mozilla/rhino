@@ -959,13 +959,13 @@ public class NativeArray extends ScriptableObject implements List {
         long i = 0;
 
         boolean toplevel, iterating;
-        if (cx.iterating == null) {
+        if (cx.impl().iterating == null) {
             toplevel = true;
             iterating = false;
-            cx.iterating = new HashSet<Scriptable>();
+            cx.impl().iterating = new HashSet<Scriptable>();
         } else {
             toplevel = false;
-            iterating = cx.iterating.contains(o);
+            iterating = cx.impl().iterating.contains(o);
         }
 
         // Make sure cx.iterating is set to null when done
@@ -973,7 +973,7 @@ public class NativeArray extends ScriptableObject implements List {
         try {
             if (!iterating) {
                 // stop recursion
-                cx.iterating.add(o);
+                cx.impl().iterating.add(o);
 
                 // make toSource print null and undefined values in recent versions
                 boolean skipUndefinedAndNull =
@@ -1007,11 +1007,11 @@ public class NativeArray extends ScriptableObject implements List {
 
                 // processing of thisObj done, remove it from the recursion detector
                 // to allow thisObj to be again in the array later on
-                cx.iterating.remove(o);
+                cx.impl().iterating.remove(o);
             }
         } finally {
             if (toplevel) {
-                cx.iterating = null;
+                cx.impl().iterating = null;
             }
         }
 

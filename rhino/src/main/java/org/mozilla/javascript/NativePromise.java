@@ -100,7 +100,7 @@ public class NativePromise extends ScriptableObject {
 
         Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
         if (!cx.isStrictMode()) {
-            Scriptable tcs = cx.topCallScope;
+            Scriptable tcs = cx.impl().topCallScope;
             if (tcs != null) {
                 thisObj = tcs;
             }

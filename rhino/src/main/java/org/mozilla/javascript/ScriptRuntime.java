@@ -65,7 +65,7 @@ public class ScriptRuntime {
 
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
     public static BaseFunction typeErrorThrower(Context cx) {
-        if (cx.typeErrorThrower == null) {
+        if (cx.impl().typeErrorThrower == null) {
             BaseFunction thrower =
                     new BaseFunction() {
                         private static final long serialVersionUID = -5891740962154902286L;
@@ -81,11 +81,11 @@ public class ScriptRuntime {
                             return 0;
                         }
                     };
-            ScriptRuntime.setFunctionProtoAndParent(thrower, cx, cx.topCallScope, false);
+            ScriptRuntime.setFunctionProtoAndParent(thrower, cx, cx.impl().topCallScope, false);
             thrower.preventExtensions();
-            cx.typeErrorThrower = thrower;
+            cx.impl().typeErrorThrower = thrower;
         }
-        return cx.typeErrorThrower;
+        return cx.impl().typeErrorThrower;
     }
 
     static class NoSuchMethodShim implements Callable {
@@ -381,7 +381,7 @@ public class ScriptRuntime {
                         && ((ScriptableObject) val).avoidObjectDetection()) {
                     return false;
                 }
-                if (Context.getContext().isVersionECMA1()) {
+                if (Context.getContext().impl().isVersionECMA1()) {
                     // pure ECMA
                     return true;
                 }
@@ -1118,13 +1118,13 @@ public class ScriptRuntime {
     static String defaultObjectToSource(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         boolean toplevel, iterating;
-        if (cx.iterating == null) {
+        if (cx.impl().iterating == null) {
             toplevel = true;
             iterating = false;
-            cx.iterating = new HashSet<>();
+            cx.impl().iterating = new HashSet<>();
         } else {
             toplevel = false;
-            iterating = cx.iterating.contains(thisObj);
+            iterating = cx.impl().iterating.contains(thisObj);
         }
 
         StringBuilder result = new StringBuilder(128);
@@ -1137,7 +1137,7 @@ public class ScriptRuntime {
         // so we don't leak memory
         try {
             if (!iterating) {
-                cx.iterating.add(thisObj); // stop recursion.
+                cx.impl().iterating.add(thisObj); // stop recursion.
                 Object[] ids = thisObj.getIds();
                 for (int i = 0; i < ids.length; i++) {
                     Object id = ids[i];
@@ -1167,7 +1167,7 @@ public class ScriptRuntime {
             }
         } finally {
             if (toplevel) {
-                cx.iterating = null;
+                cx.impl().iterating = null;
             }
         }
 
@@ -1461,7 +1461,7 @@ public class ScriptRuntime {
     private static final String DEFAULT_NS_TAG = "__default_namespace__";
 
     public static Object setDefaultNamespace(Object namespace, Context cx) {
-        Scriptable scope = cx.currentActivationCall;
+        Scriptable scope = cx.impl().currentActivationCall;
         if (scope == null) {
             scope = getTopCallScope(cx);
         }
@@ -1485,7 +1485,7 @@ public class ScriptRuntime {
     }
 
     public static Object searchDefaultNamespace(Context cx) {
-        Scriptable scope = cx.currentActivationCall;
+        Scriptable scope = cx.impl().currentActivationCall;
         if (scope == null) {
             scope = getTopCallScope(cx);
         }
@@ -2386,8 +2386,8 @@ public class ScriptRuntime {
     }
 
     private static Object topScopeName(Context cx, Scriptable scope, String name) {
-        if (cx.useDynamicScope) {
-            scope = checkDynamicScope(cx.topCallScope, scope);
+        if (cx.impl().useDynamicScope) {
+            scope = checkDynamicScope(cx.impl().topCallScope, scope);
         }
         return ScriptableObject.getProperty(scope, name);
     }
@@ -2442,8 +2442,8 @@ public class ScriptRuntime {
             }
         }
         // scope here is top scope
-        if (cx.useDynamicScope) {
-            scope = checkDynamicScope(cx.topCallScope, scope);
+        if (cx.impl().useDynamicScope) {
+            scope = checkDynamicScope(cx.impl().topCallScope, scope);
         }
         if (ScriptableObject.hasProperty(scope, id)) {
             return scope;
@@ -2469,8 +2469,8 @@ public class ScriptRuntime {
             }
             // Find the top scope by walking up the scope chain.
             bound = ScriptableObject.getTopLevelScope(scope);
-            if (cx.useDynamicScope) {
-                bound = checkDynamicScope(cx.topCallScope, bound);
+            if (cx.impl().useDynamicScope) {
+                bound = checkDynamicScope(cx.impl().topCallScope, bound);
             }
             bound.put(id, bound, value);
         }
@@ -3211,8 +3211,8 @@ public class ScriptRuntime {
             thisObj = ((Scriptable) f).getParentScope();
         }
         if (thisObj == null) {
-            if (cx.topCallScope == null) throw new IllegalStateException();
-            thisObj = cx.topCallScope;
+            if (cx.impl().topCallScope == null) throw new IllegalStateException();
+            thisObj = cx.impl().topCallScope;
         }
         if (thisObj.getParentScope() != null) {
             if (thisObj instanceof NativeWith) {
@@ -3257,8 +3257,8 @@ public class ScriptRuntime {
             thisObj = ((Scriptable) f).getParentScope();
         }
         if (thisObj == null) {
-            if (cx.topCallScope == null) throw new IllegalStateException();
-            thisObj = cx.topCallScope;
+            if (cx.impl().topCallScope == null) throw new IllegalStateException();
+            thisObj = cx.impl().topCallScope;
         }
         if (thisObj.getParentScope() != null) {
             if (thisObj instanceof NativeWith) {
@@ -3505,7 +3505,7 @@ public class ScriptRuntime {
         }
         if (filename == null) {
             int[] linep = new int[1];
-            filename = Context.getSourcePositionFromStack(linep);
+            filename = ContextImpl.getSourcePositionFromStack(linep);
             if (filename != null) {
                 lineNumber = linep[0];
             } else {
@@ -3517,7 +3517,7 @@ public class ScriptRuntime {
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
-        Evaluator evaluator = Context.createInterpreter();
+        Evaluator evaluator = ContextImpl.createInterpreter();
         if (evaluator == null) {
             throw new JavaScriptException("Interpreter not present", filename, lineNumber);
         }
@@ -3535,14 +3535,15 @@ public class ScriptRuntime {
                     compilerEnvs.setAllowSuper(isInsideMethod);
                 };
         Script script =
-                cx.compileString(
-                        x.toString(),
-                        evaluator,
-                        reporter,
-                        sourceName,
-                        1,
-                        null,
-                        compilerEnvironsProcessor);
+                cx.impl()
+                        .compileString(
+                                x.toString(),
+                                evaluator,
+                                reporter,
+                                sourceName,
+                                1,
+                                null,
+                                compilerEnvironsProcessor);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable) script;
         Scriptable thisObject =
@@ -3917,8 +3918,8 @@ public class ScriptRuntime {
         search:
         {
             do {
-                if (cx.useDynamicScope && scopeChain.getParentScope() == null) {
-                    scopeChain = checkDynamicScope(cx.topCallScope, scopeChain);
+                if (cx.impl().useDynamicScope && scopeChain.getParentScope() == null) {
+                    scopeChain = checkDynamicScope(cx.impl().topCallScope, scopeChain);
                 }
                 target = scopeChain;
                 do {
@@ -4726,11 +4727,11 @@ public class ScriptRuntime {
     }
 
     public static boolean hasTopCall(Context cx) {
-        return (cx.topCallScope != null);
+        return (cx.impl().topCallScope != null);
     }
 
     public static Scriptable getTopCallScope(Context cx) {
-        Scriptable scope = cx.topCallScope;
+        Scriptable scope = cx.impl().topCallScope;
         if (scope == null) {
             throw new IllegalStateException();
         }
@@ -4744,7 +4745,7 @@ public class ScriptRuntime {
     @Deprecated
     public static Object doTopCall(
             Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
+        return doTopCall(callable, cx, scope, thisObj, args, cx.impl().isTopLevelStrict);
     }
 
     public static Object doTopCall(
@@ -4755,24 +4756,24 @@ public class ScriptRuntime {
             Object[] args,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
-        if (cx.topCallScope != null) throw new IllegalStateException();
+        if (cx.impl().topCallScope != null) throw new IllegalStateException();
 
         Object result;
-        cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
-        cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
-        boolean previousTopLevelStrict = cx.isTopLevelStrict;
-        cx.isTopLevelStrict = isTopLevelStrict;
+        cx.impl().topCallScope = ScriptableObject.getTopLevelScope(scope);
+        cx.impl().useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
+        boolean previousTopLevelStrict = cx.impl().isTopLevelStrict;
+        cx.impl().isTopLevelStrict = isTopLevelStrict;
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
         } finally {
-            cx.topCallScope = null;
+            cx.impl().topCallScope = null;
             // Cleanup cached references
-            cx.cachedXMLLib = null;
-            cx.isTopLevelStrict = previousTopLevelStrict;
+            cx.impl().cachedXMLLib = null;
+            cx.impl().isTopLevelStrict = previousTopLevelStrict;
             // Function should always call exitActivationFunction
             // if it creates activation record
-            assert (cx.currentActivationCall == null);
+            assert (cx.impl().currentActivationCall == null);
         }
         return result;
     }
@@ -4801,10 +4802,10 @@ public class ScriptRuntime {
     }
 
     public static void addInstructionCount(Context cx, int instructionsToAdd) {
-        cx.instructionCount += instructionsToAdd;
-        if (cx.instructionCount > cx.instructionThreshold) {
-            cx.observeInstructionCount(cx.instructionCount);
-            cx.instructionCount = 0;
+        cx.impl().instructionCount += instructionsToAdd;
+        if (cx.impl().instructionCount > cx.impl().instructionThreshold) {
+            cx.impl().observeInstructionCount(cx.impl().instructionCount);
+            cx.impl().instructionCount = 0;
         }
     }
 
@@ -4814,7 +4815,7 @@ public class ScriptRuntime {
             Context cx,
             Scriptable scope,
             boolean evalScript) {
-        if (cx.topCallScope == null) throw new IllegalStateException();
+        if (cx.impl().topCallScope == null) throw new IllegalStateException();
 
         int varCount = funObj.getParamAndVarCount();
         if (varCount != 0) {
@@ -4977,21 +4978,21 @@ public class ScriptRuntime {
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
-        if (cx.topCallScope == null) throw new IllegalStateException();
+        if (cx.impl().topCallScope == null) throw new IllegalStateException();
         NativeCall call = (NativeCall) scope;
-        call.parentActivationCall = cx.currentActivationCall;
-        cx.currentActivationCall = call;
+        call.parentActivationCall = cx.impl().currentActivationCall;
+        cx.impl().currentActivationCall = call;
         call.defineAttributesForArguments();
     }
 
     public static void exitActivationFunction(Context cx) {
-        NativeCall call = cx.currentActivationCall;
-        cx.currentActivationCall = call.parentActivationCall;
+        NativeCall call = cx.impl().currentActivationCall;
+        cx.impl().currentActivationCall = call.parentActivationCall;
         call.parentActivationCall = null;
     }
 
     static NativeCall findFunctionActivation(Context cx, Function f) {
-        NativeCall call = cx.currentActivationCall;
+        NativeCall call = cx.impl().currentActivationCall;
         while (call != null) {
             if (call.function == f) return call;
             call = call.parentActivationCall;
@@ -5207,7 +5208,7 @@ public class ScriptRuntime {
     }
 
     private static boolean isVisible(Context cx, Object obj) {
-        ClassShutter shutter = cx.getClassShutter();
+        ClassShutter shutter = cx.impl().getClassShutter();
         return shutter == null || shutter.visibleToScripts(obj.getClass().getName());
     }
 
@@ -5623,13 +5624,13 @@ public class ScriptRuntime {
 
     public static EcmaError constructError(String error, String message) {
         int[] linep = new int[1];
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         return constructError(error, message, filename, linep[0], null, 0);
     }
 
     public static EcmaError constructError(String error, String message, int lineNumberDelta) {
         int[] linep = new int[1];
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         if (linep[0] != 0) {
             linep[0] += lineNumberDelta;
         }
@@ -5812,12 +5813,12 @@ public class ScriptRuntime {
     }
 
     public static RegExpProxy getRegExpProxy(Context cx) {
-        return cx.getRegExpProxy();
+        return cx.impl().getRegExpProxy();
     }
 
     public static void setRegExpProxy(Context cx, RegExpProxy proxy) {
         if (proxy == null) throw new IllegalArgumentException();
-        cx.regExpProxy = proxy;
+        cx.impl().regExpProxy = proxy;
     }
 
     public static RegExpProxy checkRegExpProxy(Context cx) {
@@ -5829,7 +5830,7 @@ public class ScriptRuntime {
     }
 
     public static Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
-        return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
+        return cx.impl().getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
     public static Scriptable getTemplateLiteralCallSite(
@@ -5867,13 +5868,13 @@ public class ScriptRuntime {
 
     private static XMLLib currentXMLLib(Context cx) {
         // Scripts should be running to access this
-        if (cx.topCallScope == null) throw new IllegalStateException();
+        if (cx.impl().topCallScope == null) throw new IllegalStateException();
 
-        XMLLib xmlLib = cx.cachedXMLLib;
+        XMLLib xmlLib = cx.impl().cachedXMLLib;
         if (xmlLib == null) {
-            xmlLib = XMLLib.extractFromScope(cx.topCallScope);
+            xmlLib = XMLLib.extractFromScope(cx.impl().topCallScope);
             if (xmlLib == null) throw new IllegalStateException();
-            cx.cachedXMLLib = xmlLib;
+            cx.impl().cachedXMLLib = xmlLib;
         }
 
         return xmlLib;
@@ -5931,11 +5932,11 @@ public class ScriptRuntime {
 
     public static void storeUint32Result(Context cx, long value) {
         if ((value >>> 32) != 0) throw new IllegalArgumentException();
-        cx.scratchUint32 = value;
+        cx.impl().scratchUint32 = value;
     }
 
     public static long lastUint32Result(Context cx) {
-        long value = cx.scratchUint32;
+        long value = cx.impl().scratchUint32;
         if ((value >>> 32) != 0) throw new IllegalStateException();
         return value;
     }
@@ -5943,21 +5944,21 @@ public class ScriptRuntime {
     @Deprecated(since = "1.8.1", forRemoval = true)
     private static void storeScriptable(Context cx, Scriptable value) {
         // The previously stored scratchScriptable should be consumed
-        if (cx.scratchScriptable != null) throw new IllegalStateException();
-        cx.scratchScriptable = value;
+        if (cx.impl().scratchScriptable != null) throw new IllegalStateException();
+        cx.impl().scratchScriptable = value;
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
     public static Scriptable lastStoredScriptable(Context cx) {
-        Scriptable result = cx.scratchScriptable;
-        cx.scratchScriptable = null;
+        Scriptable result = cx.impl().scratchScriptable;
+        cx.impl().scratchScriptable = null;
         return result;
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
     public static void discardLastStoredScriptable(Context cx) {
-        if (cx.scratchScriptable == null) throw new IllegalStateException();
-        cx.scratchScriptable = null;
+        if (cx.impl().scratchScriptable == null) throw new IllegalStateException();
+        cx.impl().scratchScriptable = null;
     }
 
     static String makeUrlForGeneratedScript(
@@ -6009,7 +6010,7 @@ public class ScriptRuntime {
      */
     public static JavaScriptException throwError(Context cx, Scriptable scope, String message) {
         int[] linep = {0};
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         final Scriptable error =
                 newBuiltinObject(
                         cx,
@@ -6031,7 +6032,7 @@ public class ScriptRuntime {
     public static JavaScriptException throwCustomError(
             Context cx, Scriptable scope, String constructorName, String message) {
         int[] linep = {0};
-        String filename = Context.getSourcePositionFromStack(linep);
+        String filename = ContextImpl.getSourcePositionFromStack(linep);
         final Scriptable error =
                 cx.newObject(
                         scope,
