@@ -361,20 +361,58 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_difference(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
-
-        // Validate both keys and has are callable per Test262
-        getKeysMethod(cx, scope, otherObj);
-        Object hasMethod = getHas(cx, scope, otherObj);
+        Object sizeVal = getSize(cx, scope, otherObj);
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
         result.instanceOfSet = true;
 
-        // Add elements from this that are not in other
-        for (Hashtable.Entry entry : entries) {
-            Object key = entry.key;
-            Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
-            if (!ScriptRuntime.toBoolean(inOther)) {
-                result.js_add(key);
+        int otherSize = ScriptRuntime.toInt32(sizeVal);
+        int thisSize = entries.size();
+
+        // According to the spec and test converts-negative-zero.js:
+        // When this.size > other.size, we should iterate through other.keys()
+        // and remove matching elements, NOT call other.has()
+        if (thisSize > otherSize) {
+            // Only validate keys when we'll use it
+            Callable keysMethod = getKeysMethod(cx, scope, otherObj);
+            
+            // First, add all elements from this set
+            for (Hashtable.Entry entry : entries) {
+                result.js_add(entry.key);
+            }
+
+            // Then iterate through other and remove matching elements
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(
+                                    cx,
+                                    scope,
+                                    ScriptableObject.ensureScriptable(otherObj),
+                                    ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object key : it) {
+                    // Convert -0 to +0 as the spec requires
+                    if (key instanceof Number
+                            && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+                        key = ScriptRuntime.zeroObj;
+                    }
+                    result.js_delete(key);
+                }
+            }
+        } else {
+            // When this.size <= other.size, iterate through this and check with has()
+            // Validate both keys and has are callable per Test262
+            getKeysMethod(cx, scope, otherObj);  // Still validate keys for consistency
+            Object hasMethod = getHas(cx, scope, otherObj);
+            
+            for (Hashtable.Entry entry : entries) {
+                Object key = entry.key;
+                Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                if (!ScriptRuntime.toBoolean(inOther)) {
+                    result.js_add(key);
+                }
             }
         }
 
