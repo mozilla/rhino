@@ -31,9 +31,13 @@ public class NativeJavaMap extends NativeJavaObject {
         NativeJavaMapIterator.init(scope, sealed);
     }
 
-    @SuppressWarnings("unchecked")
     public NativeJavaMap(Scriptable scope, Object map) {
-        super(scope, map, map.getClass());
+        this(scope, map, map.getClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    public NativeJavaMap(Scriptable scope, Object map, Class<?> staticType) {
+        super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
     }
