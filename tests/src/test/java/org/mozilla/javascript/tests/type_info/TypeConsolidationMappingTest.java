@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -33,15 +34,9 @@ public class TypeConsolidationMappingTest {
         assertMappingMatch(TwoGenericInterfaces.class, "V -> A", "E -> B", "K -> C");
 
         // E from ArrayList & List & Collection & ..., T from Iterable
-        assertMappingMatch(
-                TestListA.class,
-                "E -> N",
-                "E -> N",
-                "E -> N",
-                "E -> N",
-                "E -> N",
-                "E -> N",
-                "T -> N");
+        // due to different class inheritance in Java11/17/21, we can't use 'equals' to match
+        // mapping
+        assertMappingInclude(TestListA.class, "E -> N", "T -> N");
     }
 
     @Test
@@ -63,17 +58,10 @@ public class TypeConsolidationMappingTest {
 
         // E from ArrayList and List and Collection and ..., T from Iterable
         // M and N from TestListA
-        assertMappingMatch(
-                TestListB.class,
-                "E -> String",
-                "E -> String",
-                "E -> String",
-                "E -> String",
-                "E -> String",
-                "E -> String",
-                "M -> Integer",
-                "N -> String",
-                "T -> String");
+        // due to different class inheritance in Java11/17/21, we can't use 'equals' to match
+        // mapping
+        assertMappingInclude(
+                TestListB.class, "E -> String", "M -> Integer", "N -> String", "T -> String");
     }
 
     @ParameterizedTest
@@ -95,6 +83,25 @@ public class TypeConsolidationMappingTest {
     }
 
     private static void assertMappingMatch(Class<?> clazz, String... expected) {
+        var formatted = getAndFormatMapping(clazz);
+
+        formatted.sort(null);
+        Arrays.sort(expected);
+
+        Assertions.assertEquals(Arrays.asList(expected), formatted);
+    }
+
+    private static void assertMappingInclude(Class<?> clazz, String... expected) {
+        var formatted = getAndFormatMapping(clazz);
+        Assertions.assertTrue(
+                Set.copyOf(formatted).containsAll(Arrays.asList(expected)),
+                () ->
+                        String.format(
+                                "Found mapping '%s' does not include all elements in '%s'",
+                                Set.copyOf(formatted), Arrays.asList(expected)));
+    }
+
+    private static ArrayList<String> getAndFormatMapping(Class<?> clazz) {
         var mapping = TypeInfoFactory.GLOBAL.getConsolidationMapping(clazz);
 
         var formatted = new ArrayList<String>();
@@ -108,11 +115,7 @@ public class TypeConsolidationMappingTest {
 
                     formatted.add(builder.toString());
                 });
-
-        formatted.sort(null);
-        Arrays.sort(expected);
-
-        Assertions.assertEquals(Arrays.asList(expected), formatted);
+        return formatted;
     }
 
     static class A<Ta> {}
