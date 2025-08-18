@@ -31,6 +31,17 @@ public class TypeConsolidationMappingTest {
 
         // TwoGenericInterfaces<A, B, C> implements Iterator<E -> B>, Map<K -> C, V -> A>
         assertMappingMatch(TwoGenericInterfaces.class, "V -> A", "E -> B", "K -> C");
+
+        // E from ArrayList & List & Collection & ..., T from Iterable
+        assertMappingMatch(
+                TestListA.class,
+                "E -> N",
+                "E -> N",
+                "E -> N",
+                "E -> N",
+                "E -> N",
+                "E -> N",
+                "T -> N");
     }
 
     @Test
@@ -49,6 +60,20 @@ public class TypeConsolidationMappingTest {
 
         // TwoInterfaces implements Iterator<E -> Integer>, Map<K -> String, V -> Double>
         assertMappingMatch(TwoInterfaces.class, "V -> Double", "K -> String", "E -> Integer");
+
+        // E from ArrayList and List and Collection and ..., T from Iterable
+        // M and N from TestListA
+        assertMappingMatch(
+                TestListB.class,
+                "E -> String",
+                "E -> String",
+                "E -> String",
+                "E -> String",
+                "E -> String",
+                "E -> String",
+                "M -> Integer",
+                "N -> String",
+                "T -> String");
     }
 
     @ParameterizedTest
@@ -107,4 +132,8 @@ public class TypeConsolidationMappingTest {
     abstract static class TwoInterfaces implements Iterator<Integer>, Map<String, Double> {}
 
     abstract static class TwoGenericInterfaces<A, B, C> implements Iterator<B>, Map<C, A> {}
+
+    abstract static class TestListA<M, N> extends ArrayList<N> {}
+
+    abstract static class TestListB extends TestListA<Integer, String> {}
 }
