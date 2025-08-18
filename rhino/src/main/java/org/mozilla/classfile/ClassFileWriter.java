@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.mozilla.javascript.Kit;
 
 /**
  * ClassFileWriter
@@ -1456,7 +1455,15 @@ public class ClassFileWriter {
             if (startIdx < itsSuperBlockStartsTop) {
                 SuperBlock sb = superBlocks[startIdx];
                 // check, if it is really the matching one
-                if (offset < sb.getStart() || offset >= sb.getEnd()) Kit.codeBug();
+                if (offset < sb.getStart() || offset >= sb.getEnd()) {
+                    throw new IndexOutOfBoundsException(
+                            "Index: "
+                                    + offset
+                                    + ", From: "
+                                    + sb.getStart()
+                                    + ", To: "
+                                    + sb.getEnd());
+                }
                 return sb;
             }
             throw new IllegalArgumentException("bad offset: " + offset);
