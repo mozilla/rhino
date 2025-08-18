@@ -23,6 +23,7 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
@@ -1276,7 +1277,7 @@ public class ScriptRuntime {
         }
 
         // Extension: Wrap as a LiveConnect object.
-        Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
+        Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, TypeInfo.NONE);
         if (wrapped instanceof Scriptable) return (Scriptable) wrapped;
         throw errorWithClassName("msg.invalid.type", val);
     }
@@ -5095,7 +5096,7 @@ public class ScriptRuntime {
             }
 
             if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, TypeInfo.NONE);
                 ScriptableObject.defineProperty(
                         errorObject,
                         "javaException",
@@ -5105,7 +5106,7 @@ public class ScriptRuntime {
                                 | ScriptableObject.DONTENUM);
             }
             if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, TypeInfo.NONE);
                 ScriptableObject.defineProperty(
                         errorObject,
                         "rhinoException",
@@ -5194,7 +5195,7 @@ public class ScriptRuntime {
         }
 
         if (javaException != null && isVisible(cx, javaException)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, TypeInfo.NONE);
             ScriptableObject.defineProperty(
                     errorObject,
                     "javaException",
@@ -5204,7 +5205,7 @@ public class ScriptRuntime {
                             | ScriptableObject.DONTENUM);
         }
         if (isVisible(cx, re)) {
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, TypeInfo.NONE);
             ScriptableObject.defineProperty(
                     errorObject,
                     "rhinoException",

@@ -1836,7 +1836,7 @@ public class Context implements Closeable {
             if (cx == null) {
                 cx = Context.getContext();
             }
-            return cx.getWrapFactory().wrap(cx, scope, value, null);
+            return cx.getWrapFactory().wrap(cx, scope, value, TypeInfo.NONE);
         }
     }
 

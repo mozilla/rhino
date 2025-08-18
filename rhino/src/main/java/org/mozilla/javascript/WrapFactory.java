@@ -8,6 +8,9 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -45,24 +48,31 @@ public class WrapFactory {
      * @return the wrapped value.
      */
     public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+        return wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType));
+    }
+
+    public Object wrap(Context cx, Scriptable scope, Object obj, TypeInfo staticType) {
         if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
             return obj;
         }
-        if (staticType != null && staticType.isPrimitive()) {
-            if (staticType == Void.TYPE) return Undefined.instance;
-            if (staticType == Character.TYPE) return Integer.valueOf(((Character) obj).charValue());
+        if (staticType.isPrimitive()) {
+            if (staticType == TypeInfo.PRIMITIVE_VOID) {
+                return Undefined.instance;
+            } else if (staticType == TypeInfo.PRIMITIVE_CHARACTER) {
+                return (int) (Character) obj;
+            }
             return obj;
         }
         if (!isJavaPrimitiveWrap()) {
             if (obj instanceof String
-                    || obj instanceof Boolean
-                    || obj instanceof Integer
-                    || obj instanceof Byte
-                    || obj instanceof Short
-                    || obj instanceof Long
-                    || obj instanceof Float
-                    || obj instanceof Double
-                    || obj instanceof BigInteger) {
+                || obj instanceof Boolean
+                || obj instanceof Integer
+                || obj instanceof Byte
+                || obj instanceof Short
+                || obj instanceof Long
+                || obj instanceof Float
+                || obj instanceof Double
+                || obj instanceof BigInteger) {
                 return obj;
             } else if (obj instanceof Character) {
                 return String.valueOf(((Character) obj).charValue());
@@ -91,7 +101,7 @@ public class WrapFactory {
         if (cls.isArray()) {
             return NativeJavaArray.wrap(scope, obj);
         }
-        return wrapAsJavaObject(cx, scope, obj, null);
+        return wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
     }
 
     /**
@@ -113,10 +123,14 @@ public class WrapFactory {
      */
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
-        if (List.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaList(scope, javaObject);
-        } else if (Map.class.isAssignableFrom(javaObject.getClass())) {
-            return new NativeJavaMap(scope, javaObject);
+        return wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
+    }
+
+    public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
+        if (List.class.isAssignableFrom(staticType.asClass())) {
+            return new NativeJavaList(scope, javaObject, staticType);
+        } else if (Map.class.isAssignableFrom(staticType.asClass())) {
+            return new NativeJavaMap(scope, javaObject, staticType);
         }
         return new NativeJavaObject(scope, javaObject, staticType);
     }
