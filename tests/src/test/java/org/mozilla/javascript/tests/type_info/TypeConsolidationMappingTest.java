@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests.type_info;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -23,65 +23,56 @@ public class TypeConsolidationMappingTest {
 
     @Test
     public void testGeneric() {
-        Assertions.assertEquals(
-                Set.of("Ta -> Te", "Tb -> Te", "Tc -> String", "Td -> String"),
-                getAndFormatMapping(E.class));
-        Assertions.assertEquals(Set.of("T -> E"), getAndFormatMapping(Collection.class));
-        Assertions.assertEquals(
-                // T from BaseStream -> T from Stream
-                Set.of("S -> Stream<T>", "T -> T"), getAndFormatMapping(Stream.class));
-        Assertions.assertEquals(
-                // TwoGenericInterfaces<A, B, C> implements Iterator<E -> B>, Map<K -> C, V -> A>
-                Set.of("V -> A", "E -> B", "K -> C"),
-                getAndFormatMapping(TwoGenericInterfaces.class));
+        assertMappingMatch(E.class, "Ta -> Te", "Tb -> Te", "Tc -> String", "Td -> String");
+        assertMappingMatch(Collection.class, "T -> E");
+
+        // T from BaseStream -> T from Stream
+        assertMappingMatch(Stream.class, "S -> Stream<T>", "T -> T");
+
+        // TwoGenericInterfaces<A, B, C> implements Iterator<E -> B>, Map<K -> C, V -> A>
+        assertMappingMatch(TwoGenericInterfaces.class, "V -> A", "E -> B", "K -> C");
     }
 
     @Test
     public void testGenericParent() {
-        Assertions.assertEquals(
-                Set.of(
-                        "Ta -> Integer",
-                        "Tb -> Integer",
-                        "Tc -> String",
-                        "Td -> String",
-                        "Te -> Integer"),
-                getAndFormatMapping(GenericSuperClass.class));
-        Assertions.assertEquals(
-                Set.of("Tc -> Number", "Td -> Number"),
-                getAndFormatMapping(GenericSuperInterface.class));
+        assertMappingMatch(
+                GenericSuperClass.class,
+                "Ta -> Integer",
+                "Tb -> Integer",
+                "Tc -> String",
+                "Td -> String",
+                "Te -> Integer");
+        assertMappingMatch(GenericSuperInterface.class, "Tc -> Number", "Td -> Number");
 
-        Assertions.assertEquals(
-                // E from Enum, T from Comparable
-                Set.of("T -> NoTypeInfo", "E -> NoTypeInfo"),
-                getAndFormatMapping(NoTypeInfo.class));
-        Assertions.assertEquals(
-                // TwoInterfaces implements Iterator<E -> Integer>, Map<K -> String, V -> Double>
-                Set.of("V -> Double", "K -> String", "E -> Integer"),
-                getAndFormatMapping(TwoInterfaces.class));
+        // E from Enum, T from Comparable
+        assertMappingMatch(NoTypeInfo.class, "T -> NoTypeInfo", "E -> NoTypeInfo");
+
+        // TwoInterfaces implements Iterator<E -> Integer>, Map<K -> String, V -> Double>
+        assertMappingMatch(TwoInterfaces.class, "V -> Double", "K -> String", "E -> Integer");
     }
 
     @ParameterizedTest
     @ValueSource(classes = {int.class, boolean.class, float.class, void.class})
     public void testPrimitive(Class<?> type) {
-        Assertions.assertEquals(Set.of(), getAndFormatMapping(type));
+        assertMappingMatch(type /* empty mapping */);
     }
 
     @ParameterizedTest
     @ValueSource(classes = {Number.class, Object.class, TypeInfo.class})
     public void testNonGeneric(Class<?> type) {
-        Assertions.assertEquals(Set.of(), getAndFormatMapping(type));
+        assertMappingMatch(type /* empty mapping */);
     }
 
     @ParameterizedTest
     @ValueSource(classes = {Iterable.class, Iterator.class, BaseStream.class, Map.class})
     public void testGenericWithNoGenericParent(Class<?> type) {
-        Assertions.assertEquals(Set.of(), getAndFormatMapping(type));
+        assertMappingMatch(type /* empty mapping */);
     }
 
-    private static Set<String> getAndFormatMapping(Class<?> clazz) {
+    private static void assertMappingMatch(Class<?> clazz, String... expected) {
         var mapping = TypeInfoFactory.GLOBAL.getConsolidationMapping(clazz);
 
-        var formatted = new HashSet<String>();
+        var formatted = new ArrayList<String>();
         mapping.forEach(
                 (k, v) -> {
                     var builder = new StringBuilder();
@@ -92,7 +83,11 @@ public class TypeConsolidationMappingTest {
 
                     formatted.add(builder.toString());
                 });
-        return formatted;
+
+        formatted.sort(null);
+        Arrays.sort(expected);
+
+        Assertions.assertEquals(Arrays.asList(expected), formatted);
     }
 
     static class A<Ta> {}
