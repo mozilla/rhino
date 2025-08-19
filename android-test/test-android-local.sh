@@ -1,11 +1,12 @@
 #!/bin/bash
-# Local Android testing script for Rhino template literal fix
-# This script sets up a Docker-based Android emulator to test the JIT compilation issue
+# Local testing script for Rhino template literal fix
+# This script simulates Android conditions (optimization level -1) to verify the fix
+# Note: This is a simulation to reproduce the issue, not an actual Android emulator
 
 set -e
 
 echo "============================================"
-echo "Rhino Android Template Literal Testing Script"
+echo "Rhino Template Literal Test (Android Simulation)"
 echo "============================================"
 
 # Check if Docker is installed
@@ -14,13 +15,19 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Build Rhino JAR if not already built
-if [ ! -f "../rhino/build/libs/rhino-1.7.16-SNAPSHOT.jar" ]; then
+# Find Rhino JAR dynamically
+RHINO_JAR=$(find ../rhino/build/libs -name "rhino-*.jar" -type f 2>/dev/null | head -1)
+
+# Build if JAR doesn't exist
+if [ -z "$RHINO_JAR" ]; then
     echo "Building Rhino JAR..."
     cd ..
     ./gradlew :rhino:jar
     cd android-test
+    RHINO_JAR=$(find ../rhino/build/libs -name "rhino-*.jar" -type f | head -1)
 fi
+
+echo "Using Rhino JAR: $(basename "$RHINO_JAR")"
 
 # Create Dockerfile for Android testing environment
 cat > Dockerfile << 'EOF'
