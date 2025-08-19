@@ -60,16 +60,12 @@ RUN sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 # Create app directory
 WORKDIR /app
 
-# Copy test files
+# Copy Rhino JAR
 COPY ../rhino/build/libs/rhino-*.jar ./rhino.jar
-COPY template-literal-benchmark.js ./
-COPY verify-issue-1365.js ./
-COPY JitVerificationHelper.java ./
+COPY verify-android-fix.js ./
 
-# Compile JIT verification helper
-RUN javac JitVerificationHelper.java
-
-CMD ["java", "-cp", ".:rhino.jar", "JitVerificationHelper"]
+# Run the test with optimization level -1 (Android default)
+CMD ["java", "-cp", "rhino.jar", "org.mozilla.javascript.tools.shell.Main", "-opt", "-1", "verify-android-fix.js"]
 EOF
 
 # Create verification test script
