@@ -29,42 +29,18 @@ fi
 
 echo "Using Rhino JAR: $(basename "$RHINO_JAR")"
 
-# Create Dockerfile for Android testing environment
+# Create Dockerfile for testing with Android-like conditions
 cat > Dockerfile << 'EOF'
 FROM openjdk:11-jdk-slim
 
-# Install necessary packages
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Android SDK
-ENV ANDROID_SDK_ROOT /opt/android-sdk
-ENV PATH ${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools
-
-RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
-    cd ${ANDROID_SDK_ROOT}/cmdline-tools && \
-    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
-    unzip -q commandlinetools-linux-9477386_latest.zip && \
-    mv cmdline-tools latest && \
-    rm commandlinetools-linux-9477386_latest.zip
-
-# Accept licenses
-RUN yes | sdkmanager --licenses || true
-
-# Install Android SDK components
-RUN sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-
-# Create app directory
 WORKDIR /app
 
-# Copy Rhino JAR
+# Copy Rhino JAR and test script
 COPY ../rhino/build/libs/rhino-*.jar ./rhino.jar
 COPY verify-android-fix.js ./
 
-# Run the test with optimization level -1 (Android default)
+# Run with optimization level -1 (same as Android's default)
+# This reproduces the JIT inlining issue without needing an actual emulator
 CMD ["java", "-cp", "rhino.jar", "org.mozilla.javascript.tools.shell.Main", "-opt", "-1", "verify-android-fix.js"]
 EOF
 
