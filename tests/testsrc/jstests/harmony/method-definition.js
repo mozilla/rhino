@@ -12,7 +12,9 @@ obj = {
   }
 };
 assertEquals(123, obj.a());
-// assertEquals("a", obj.a.name);
+assertEquals("a", obj.a.name);
+assertEquals(undefined, obj.a.prototype);
+assertEquals(undefined, Object.getOwnPropertyDescriptor(obj.a, 'prototype'));
 
 assertEquals("abcefg", {
   abc() {
