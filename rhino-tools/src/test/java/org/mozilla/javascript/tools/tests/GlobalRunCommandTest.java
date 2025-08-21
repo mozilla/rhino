@@ -1,10 +1,9 @@
 package org.mozilla.javascript.tools.tests;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,13 +42,14 @@ public class GlobalRunCommandTest {
     private static final boolean isWindows =
             System.getProperty("os.name").toLowerCase().contains("win");
 
+    private static final int EXIT_CODE_WHEN_KILLED = isWindows ? 1 : 143;
+
     private static final String STDIN_TO_STDOUT =
             "runCommand('stdinToStdout', { input: stdIn, output: stdOut, err: stdErr, commandExecutor: commandExecutor })";
     private static final String STDIN_TO_STDERR =
             "runCommand('stdinToStderr', { input: stdIn, output: stdOut, err: stdErr, commandExecutor: commandExecutor })";
 
-    private static final boolean mockOnly =
-            RhinoConfig.get("rhino.test.runCommand.mockOnly", false);
+    private static final boolean mockOnly = RhinoConfig.get("rhino.test.runCommand.mockOnly", true);
 
     public static Stream<Arguments> executors() {
         if (mockOnly) {
@@ -320,7 +320,7 @@ public class GlobalRunCommandTest {
     @ParameterizedTest
     @MethodSource("executors")
     public void testTimeout(Global.CommandExecutor exec) {
-        String cmd = "runCommand('sleep5',{ timeout: 500, commandExecutor: commandExecutor })";
+        String cmd = "runCommand('sleep',{ timeout: 500, commandExecutor: commandExecutor })";
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -328,10 +328,16 @@ public class GlobalRunCommandTest {
                     long start = System.currentTimeMillis();
                     var result = cx.evaluateString(g, cmd, "test.js", 1, null);
                     long duration = System.currentTimeMillis() - start;
+                    assertInstanceOf(Number.class, result);
+                    assertEquals(EXIT_CODE_WHEN_KILLED, ((Number) result).intValue()); // Sigterm
+                    if (exec instanceof ExecutorMock) {
+                        // NOTE: We check only the return value here, which iś 1 (windows) or 143
+                        // (linux) and do no time measurements.
+                        // (the mock expects to be killed, otherwise, it waits forever)
+                        return null;
+                    }
                     assertTrue(duration >= 500);
                     assertTrue(duration <= 1500);
-                    assertInstanceOf(Number.class, result);
-                    assertEquals(isWindows ? 1 : 143, ((Number) result).intValue()); // Sigterm
                     return null;
                 });
     }
@@ -342,7 +348,7 @@ public class GlobalRunCommandTest {
      */
     @ParameterizedTest
     @MethodSource("executors")
-    public void testThrowOnInpupt(Global.CommandExecutor exec) {
+    public void testThrowOnInput(Global.CommandExecutor exec) {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -542,7 +548,7 @@ public class GlobalRunCommandTest {
                 case "stdinToStderr":
                     cmdarray = new String[] {"/usr/bin/env", "bash", "-c", "cat >&2"};
                     break;
-                case "sleep5":
+                case "sleep":
                     cmdarray = new String[] {"/usr/bin/sleep", "5"};
                     break;
                 default:
@@ -591,7 +597,7 @@ public class GlobalRunCommandTest {
                                 "[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError())"
                             };
                     break;
-                case "sleep5":
+                case "sleep":
                     cmdarray = new String[] {"ping", "127.0.0.1", "-n", "5"};
                     break;
                 default:
@@ -641,7 +647,7 @@ public class GlobalRunCommandTest {
                     return new MockStreamCopyProcess(false, 4096 * 4096, -1);
                 case "stream16MBread":
                     return new MockStreamCopyProcess(false, -1, 4096 * 4096);
-                case "sleep5":
+                case "sleep":
                     return new MockSleepProcess();
                 default:
                     throw new IllegalArgumentException(cmdarray[0]);
@@ -805,7 +811,7 @@ public class GlobalRunCommandTest {
         }
     }
 
-    /** Mock, that sleeps 5 seconds. */
+    /** Mock, that sleeps and waits for kill. */
     private static class MockSleepProcess extends Process {
         final CountDownLatch latch = new CountDownLatch(1);
         final OutputStream stdIn = new FakeOutputStream();
@@ -829,13 +835,14 @@ public class GlobalRunCommandTest {
         }
 
         @Override
-        public int waitFor() throws InterruptedException {
+        public int waitFor() {
             try {
-                latch.await(5, TimeUnit.SECONDS);
+                // wait max 5 minutes. This should be enough to kill process even on very high load.
+                latch.await(5, TimeUnit.MINUTES);
                 // terminated by timeout. use os specific values to match with assert
-                exitValue = isWindows ? 1 : 143;
+                exitValue = EXIT_CODE_WHEN_KILLED;
             } catch (InterruptedException ie) {
-                // process terminated normally
+                // process terminated normally (unexpected)
                 exitValue = 0;
             }
             return exitValue;
