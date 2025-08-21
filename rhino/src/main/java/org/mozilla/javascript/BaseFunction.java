@@ -332,7 +332,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Object js_hasInstance(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             return false;
         }
@@ -341,8 +341,8 @@ public class BaseFunction extends ScriptableObject implements Function {
             protoProp =
                     ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
                             .getPrototypeProperty();
-        else {
-            protoProp = ScriptableObject.getProperty(thisObj, PROTOTYPE_PROPERTY_NAME);
+        else if (thisObj instanceof Scriptable) {
+            protoProp = ScriptableObject.getProperty((Scriptable) thisObj, PROTOTYPE_PROPERTY_NAME);
         }
 
         if (ScriptRuntime.isObject(protoProp)) {
@@ -361,7 +361,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         : "unknown");
     }
 
-    private static Object js_bind(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_bind(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(thisObj);
         }
@@ -380,17 +380,15 @@ public class BaseFunction extends ScriptableObject implements Function {
         return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
     }
 
-    private static Object js_apply(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_apply(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return ScriptRuntime.applyOrCall(true, cx, scope, thisObj, args);
     }
 
-    private static Object js_call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return ScriptRuntime.applyOrCall(false, cx, scope, thisObj, args);
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toSource");
         int indent = 0;
         EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
@@ -405,15 +403,14 @@ public class BaseFunction extends ScriptableObject implements Function {
         return realf.decompile(indent, flags);
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toString");
         int indent = ScriptRuntime.toInt32(args, 0);
         return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
     }
 
     private static Scriptable js_gen_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return js_gen_constructor(cx, scope, args);
     }
 
@@ -436,7 +433,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable js_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return js_constructor(cx, scope, args);
     }
 
@@ -458,11 +455,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    private static BaseFunction realFunction(Scriptable thisObj, String functionName) {
-        if (thisObj == null) {
+    private static BaseFunction realFunction(Object thisObj, String functionName) {
+        if (thisObj == null || !(thisObj instanceof Scriptable)) {
             throw ScriptRuntime.notFunctionError(null);
         }
-        Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+        Object x = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof Delegator) {
             x = ((Delegator) x).getDelegee();
         }
@@ -489,7 +486,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Should be overridden. */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return Undefined.instance;
     }
 

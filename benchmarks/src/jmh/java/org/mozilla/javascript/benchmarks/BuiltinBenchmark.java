@@ -336,13 +336,12 @@ public class BuiltinBenchmark {
 
     private static class DumbLambdaClass extends ScriptableObject {
 
-        private static Object noop(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object noop(Context cx, Scriptable scope, Object thisObj, Object[] args) {
             return Undefined.instance;
         }
 
         private static Object setValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, Scriptable scope, Object thisObj, Object[] args) {
             if (args.length < 1) {
                 throw ScriptRuntime.throwError(cx, scope, "Not enough args");
             }
@@ -353,7 +352,7 @@ public class BuiltinBenchmark {
         }
 
         private static Object getValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, Scriptable scope, Object thisObj, Object[] args) {
             DumbLambdaClass self =
                     LambdaConstructor.convertThisObject(thisObj, DumbLambdaClass.class);
             return self.value;

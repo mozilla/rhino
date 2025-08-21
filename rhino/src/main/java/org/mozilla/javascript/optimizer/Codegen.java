@@ -441,7 +441,7 @@ public class Codegen implements Evaluator {
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;)Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -471,7 +471,7 @@ public class Codegen implements Evaluator {
                 "(Lorg/mozilla/javascript/Callable;"
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Z"
                         + ")Ljava/lang/Object;");
@@ -574,7 +574,7 @@ public class Codegen implements Evaluator {
                 "exec",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + ")Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -593,7 +593,7 @@ public class Codegen implements Evaluator {
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + ")Ljava/lang/Object;");
 
@@ -1296,7 +1296,7 @@ public class Codegen implements Evaluator {
         sb.append(
                 "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;");
+                        + "Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {

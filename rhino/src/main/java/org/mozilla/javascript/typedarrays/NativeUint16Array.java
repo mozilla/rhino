@@ -72,7 +72,7 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeUint16Array realThis(Scriptable thisObj) {
+    private static NativeUint16Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeUint16Array.class);
     }
 

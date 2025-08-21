@@ -61,7 +61,7 @@ public class LambdaFunctionTest {
                         root,
                         "foo",
                         0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                        (Context ctx, Scriptable scope, Object thisObj, Object[] args) -> {
                             return "Hello";
                         });
         ScriptableObject.putProperty(root, "foo", f);
@@ -210,7 +210,7 @@ public class LambdaFunctionTest {
                 new LambdaFunction(
                         root,
                         0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
+                        (Context ctx, Scriptable scope, Object thisObj, Object[] args) -> true);
         ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
         eval(
                 "let o = noNewFunc();\n"
@@ -255,14 +255,14 @@ public class LambdaFunctionTest {
                     scope,
                     "sayHello",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
+                    (Context cx, Scriptable s, Object thisObj, Object[] args) ->
                             TestClass.sayHello(args),
                     0);
             constructor.definePrototypeMethod(
                     scope,
                     "appendToValue",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                    (Context cx, Scriptable s, Object thisObj, Object[] args) -> {
                         TestClass self =
                                 LambdaConstructor.convertThisObject(thisObj, TestClass.class);
                         return self.appendToValue(args);
@@ -327,7 +327,7 @@ public class LambdaFunctionTest {
                             scope,
                             "SpecialConstructorClass",
                             1,
-                            (Context lcx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                            (Context lcx, Scriptable s, Object thisObj, Object[] args) -> {
                                 String arg = "";
                                 if (args.length > 0) {
                                     arg = ScriptRuntime.toString(args[0]);

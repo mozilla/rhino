@@ -73,7 +73,7 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeFloat32Array realThis(Scriptable thisObj) {
+    private static NativeFloat32Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeFloat32Array.class);
     }
 

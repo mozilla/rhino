@@ -68,7 +68,7 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
         return 1;
     }
 
-    private static NativeUint8ClampedArray realThis(Scriptable thisObj) {
+    private static NativeUint8ClampedArray realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeUint8ClampedArray.class);
     }
 

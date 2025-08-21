@@ -43,7 +43,7 @@ public class RegExpImpl implements RegExpProxy {
 
     @Override
     public Object action(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args, int actionType) {
         GlobData data = new GlobData();
         data.mode = actionType;
         data.str = ScriptRuntime.toString(thisObj);
@@ -204,7 +204,7 @@ public class RegExpImpl implements RegExpProxy {
     private static Object matchOrReplace(
             Context cx,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             RegExpImpl reImpl,
             GlobData data,

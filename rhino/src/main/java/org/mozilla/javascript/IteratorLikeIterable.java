@@ -33,7 +33,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
         // This will throw if "next" is not a function or undefined
         var nextCall = ScriptRuntime.getPropAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
         next = nextCall.getCallable();
-        iterator = nextCall.getThis();
+        iterator = (Scriptable) nextCall.getThis();
         Object retObj =
                 ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
         // We only care about "return" if it is not null or undefined

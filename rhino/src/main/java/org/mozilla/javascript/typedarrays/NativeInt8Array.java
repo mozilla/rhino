@@ -66,7 +66,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         return 1;
     }
 
-    private static NativeInt8Array realThis(Scriptable thisObj) {
+    private static NativeInt8Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeInt8Array.class);
     }
 
