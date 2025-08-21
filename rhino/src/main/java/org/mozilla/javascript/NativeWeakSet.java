@@ -39,7 +39,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "add",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "add").js_add(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -47,7 +47,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "delete",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -55,7 +55,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "has",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -117,7 +117,7 @@ public class NativeWeakSet extends ScriptableObject {
         return ScriptRuntime.isUnregisteredSymbol(v) || ScriptRuntime.isObject(v);
     }
 
-    private static NativeWeakSet realThis(Scriptable thisObj, String name) {
+    private static NativeWeakSet realThis(Object thisObj, String name) {
         NativeWeakSet ns = LambdaConstructor.convertThisObject(thisObj, NativeWeakSet.class);
         if (!ns.instanceOfWeakSet) {
             // Check for "Set internal data tag"

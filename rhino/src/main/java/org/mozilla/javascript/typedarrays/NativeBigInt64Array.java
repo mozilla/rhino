@@ -74,7 +74,7 @@ public class NativeBigInt64Array extends NativeBigIntArrayView {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeFloat64Array realThis(Scriptable thisObj) {
+    private static NativeFloat64Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeFloat64Array.class);
     }
 

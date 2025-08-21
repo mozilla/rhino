@@ -72,7 +72,7 @@ public class ScriptRuntime {
 
                         @Override
                         public Object call(
-                                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                                Context cx, Scriptable scope, Object thisObj, Object[] args) {
                             throw typeErrorById("msg.op.not.allowed");
                         }
 
@@ -107,7 +107,7 @@ public class ScriptRuntime {
          * @return the result of the call
          */
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
             Object[] nestedArgs = new Object[2];
 
             nestedArgs[0] = methodName;
@@ -1116,7 +1116,7 @@ public class ScriptRuntime {
     }
 
     static String defaultObjectToSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         boolean toplevel, iterating;
         if (cx.iterating == null) {
             toplevel = true;
@@ -1137,20 +1137,20 @@ public class ScriptRuntime {
         // so we don't leak memory
         try {
             if (!iterating) {
-                cx.iterating.add(thisObj); // stop recursion.
-                Object[] ids = thisObj.getIds();
+                cx.iterating.add((Scriptable) thisObj); // stop recursion.
+                Object[] ids = ((Scriptable) thisObj).getIds();
                 for (int i = 0; i < ids.length; i++) {
                     Object id = ids[i];
                     Object value;
                     if (id instanceof Integer) {
                         int intId = ((Integer) id).intValue();
-                        value = thisObj.get(intId, thisObj);
+                        value = ((Scriptable) thisObj).get(intId, (Scriptable) thisObj);
                         if (value == Scriptable.NOT_FOUND) continue; // a property has been removed
                         if (i > 0) result.append(", ");
                         result.append(intId);
                     } else {
                         String strId = (String) id;
-                        value = thisObj.get(strId, thisObj);
+                        value = ((Scriptable) thisObj).get(strId, (Scriptable) thisObj);
                         if (value == Scriptable.NOT_FOUND) continue; // a property has been removed
                         if (i > 0) result.append(", ");
                         if (ScriptRuntime.isValidIdentifierName(strId, cx, cx.isStrictMode())) {
@@ -3301,7 +3301,7 @@ public class ScriptRuntime {
      * times. The args array reference should not be stored in any object that can be GC-reachable
      * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
-    public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
+    public static Ref callRef(Callable function, Object thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable) function;
             Ref ref = rfunction.refCall(cx, thisObj, args);
@@ -3331,10 +3331,10 @@ public class ScriptRuntime {
     public static Object callSpecial(
             Context cx,
             Callable fun,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             Scriptable scope,
-            Scriptable callerThis,
+            Object callerThis,
             int callType,
             String filename,
             int lineNumber,
@@ -3344,7 +3344,9 @@ public class ScriptRuntime {
         }
 
         if (callType == Node.SPECIALCALL_EVAL) {
-            if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
+            if (thisObj instanceof Scriptable
+                    && ((Scriptable) thisObj).getParentScope() == null
+                    && NativeGlobal.isEvalFunction(fun)) {
                 return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
@@ -3381,7 +3383,7 @@ public class ScriptRuntime {
      * <p>See Ecma 15.3.4.[34]
      */
     public static Object applyOrCall(
-            boolean isApply, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, Scriptable scope, Object thisObj, Object[] args) {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
@@ -3464,14 +3466,14 @@ public class ScriptRuntime {
         }
     }
 
-    static Callable getCallable(Scriptable thisObj) {
+    static Callable getCallable(Object thisObj) {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable) thisObj;
-        } else if (thisObj == null) {
+        } else if (thisObj == null || !(thisObj instanceof Scriptable)) {
             throw ScriptRuntime.notFunctionError(null, null);
         } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+            Object value = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(value, thisObj);
             }
@@ -3545,7 +3547,7 @@ public class ScriptRuntime {
                         compilerEnvironsProcessor);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable) script;
-        Scriptable thisObject =
+        Object thisObject =
                 thisArg == Undefined.instance
                         ? Undefined.SCRIPTABLE_UNDEFINED
                         : (Scriptable) thisArg;
@@ -4749,7 +4751,7 @@ public class ScriptRuntime {
      */
     @Deprecated
     public static Object doTopCall(
-            Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
     }
 
@@ -4757,7 +4759,7 @@ public class ScriptRuntime {
             Callable callable,
             Context cx,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
@@ -4816,7 +4818,7 @@ public class ScriptRuntime {
 
     public static void initScript(
             NativeFunction funObj,
-            Scriptable thisObj,
+            Object thisObj,
             Context cx,
             Scriptable scope,
             boolean evalScript) {
@@ -6093,10 +6095,10 @@ public class ScriptRuntime {
         private static final long serialVersionUID = 8491017987326545970L;
 
         private final Object result;
-        private final Scriptable thisObj;
+        private final Object thisObj;
         private final Object name;
 
-        LookupResult(Object result, Scriptable thisObj, Object name) {
+        LookupResult(Object result, Object thisObj, Object name) {
             this.result = result;
             this.thisObj = thisObj;
             this.name = name;
@@ -6106,7 +6108,7 @@ public class ScriptRuntime {
             return result;
         }
 
-        public Scriptable getThis() {
+        public Object getThis() {
             return thisObj;
         }
 

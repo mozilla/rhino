@@ -27,7 +27,7 @@ public interface RegExpProxy {
     public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled);
 
     public Object action(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType);
+            Context cx, Scriptable scope, Object thisObj, Object[] args, int actionType);
 
     public int find_split(
             Context cx,

@@ -80,7 +80,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
      * @return the result of the function call.
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
@@ -88,7 +88,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
     }
 
     @Override
-    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
+    public Object exec(Context cx, Scriptable scope, Object thisObj) {
         if (!isScript()) {
             // Can only be applied to scripts
             throw new IllegalStateException();

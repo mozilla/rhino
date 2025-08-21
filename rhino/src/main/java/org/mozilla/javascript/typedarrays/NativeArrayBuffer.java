@@ -50,7 +50,7 @@ public class NativeArrayBuffer extends ScriptableObject {
                 scope,
                 "slice",
                 2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         js_slice(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -58,7 +58,7 @@ public class NativeArrayBuffer extends ScriptableObject {
                 scope,
                 "transfer",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         js_transfer(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -66,7 +66,7 @@ public class NativeArrayBuffer extends ScriptableObject {
                 scope,
                 "transferToFixedLength",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         js_transferToFixedLength(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -160,7 +160,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         return newBuf;
     }
 
-    private static NativeArrayBuffer getSelf(Scriptable thisObj) {
+    private static NativeArrayBuffer getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
@@ -169,15 +169,14 @@ public class NativeArrayBuffer extends ScriptableObject {
         return new NativeArrayBuffer(length);
     }
 
-    private static Boolean js_isView(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Boolean js_isView(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
     }
 
     private static NativeArrayBuffer js_slice(
             Context cx,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             LambdaConstructor defaultConstructor,
             Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
@@ -222,11 +221,11 @@ public class NativeArrayBuffer extends ScriptableObject {
         return buf;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(Object thisObj) {
         return getSelf(thisObj).getLength();
     }
 
-    private static Object js_detached(Scriptable thisObj) {
+    private static Object js_detached(Object thisObj) {
         return getSelf(thisObj).isDetached();
     }
 
@@ -234,7 +233,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static Scriptable js_transfer(
             Context cx,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             LambdaConstructor defaultConstructor,
             Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
@@ -280,7 +279,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static Scriptable js_transferToFixedLength(
             Context cx,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             LambdaConstructor defaultConstructor,
             Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);

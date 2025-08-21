@@ -39,7 +39,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return Interpreter.restartContinuation(this, cx, scope, args);
     }
 

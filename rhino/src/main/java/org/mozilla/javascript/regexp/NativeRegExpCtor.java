@@ -93,7 +93,7 @@ class NativeRegExpCtor {
     }
 
     private static Scriptable js_constructCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (args.length > 0
                 && args[0] instanceof NativeRegExp
                 && (args.length == 1 || args[1] == Undefined.instance)) {

@@ -47,7 +47,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
                 revocableProxy.targetObj = null;
@@ -1291,7 +1291,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Call]] (thisArgument, argumentsList)</a>
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         /*
          * 1. Let handler be O.[[ProxyHandler]].
          * 2. If handler is null, throw a TypeError exception.
@@ -1334,8 +1334,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     // Proxy.revocable
-    private static Object revocable(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object revocable(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }

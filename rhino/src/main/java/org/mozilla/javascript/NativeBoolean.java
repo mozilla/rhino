@@ -53,7 +53,7 @@ final class NativeBoolean extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static boolean toValue(Scriptable thisObj) {
+    private static boolean toValue(Object thisObj) {
         return LambdaConstructor.ensureType(thisObj, NativeBoolean.class, "Boolean").booleanValue;
     }
 
@@ -66,7 +66,7 @@ final class NativeBoolean extends ScriptableObject {
     }
 
     private static Object js_constructorFunc(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Scriptable scope, Object thisObj, Object[] args) {
         boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
         return ScriptRuntime.wrapBoolean(b);
     }
@@ -76,18 +76,15 @@ final class NativeBoolean extends ScriptableObject {
         return new NativeBoolean(b);
     }
 
-    private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toString(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return toValue(thisObj) ? "true" : "false";
     }
 
-    private static Object js_valueOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_valueOf(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return toValue(thisObj);
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return "(new Boolean(" + ScriptRuntime.toString(toValue(thisObj)) + "))";
     }
 }

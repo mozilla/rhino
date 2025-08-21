@@ -56,7 +56,7 @@ public class TypeOfTest {
                 new BaseFunction() {
                     @Override
                     public Object call(
-                            Context _cx, Scriptable _scope, Scriptable _thisObj, Object[] _args) {
+                            Context _cx, Scriptable _scope, Object _thisObj, Object[] _args) {
                         return _args[0].getClass().getName();
                     }
                 };

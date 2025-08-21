@@ -89,7 +89,7 @@ public class ArrayLikeAbstractOperations {
             String name,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
         return iterativeMethod(
@@ -102,7 +102,7 @@ public class ArrayLikeAbstractOperations {
             String name,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
             boolean skipCoercibleCheck) {
@@ -125,7 +125,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable o,
+            Object o,
             Object[] args,
             long length) {
         if (operation == IterativeOperation.MAP && length > Integer.MAX_VALUE) {
@@ -167,7 +167,7 @@ public class ArrayLikeAbstractOperations {
                         : +1;
         for (long i = start; i != end; i += increment) {
             Object[] innerArgs = new Object[3];
-            Object elem = getRawElem(o, i);
+            Object elem = getRawElem((Scriptable) o, i);
             if (elem == NOT_FOUND) {
                 if (operation == IterativeOperation.FIND
                         || operation == IterativeOperation.FIND_INDEX
@@ -225,9 +225,9 @@ public class ArrayLikeAbstractOperations {
         }
     }
 
-    static Scriptable arraySpeciesCreate(Context cx, Scriptable scope, Scriptable o, int length) {
+    static Scriptable arraySpeciesCreate(Context cx, Scriptable scope, Object o, int length) {
         if (o instanceof NativeArray) {
-            Object c = ScriptableObject.getProperty(o, "constructor");
+            Object c = ScriptableObject.getProperty((Scriptable) o, "constructor");
             if (c instanceof Scriptable) {
                 c = ScriptableObject.getProperty((Scriptable) c, SymbolKey.SPECIES);
                 if (c == null || c == NOT_FOUND) {
@@ -320,7 +320,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             ReduceOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
@@ -379,7 +379,7 @@ public class ArrayLikeAbstractOperations {
             Context cx, Scriptable scope, Object[] args) {
         var compareFunc = ScriptRuntime.getValueAndThis(args[0], cx);
         Callable compare = compareFunc.getCallable();
-        Scriptable compareThis = compareFunc.getThis();
+        Scriptable compareThis = (Scriptable) compareFunc.getThis();
         final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
         return new ElementComparator(
                 (x, y) -> {

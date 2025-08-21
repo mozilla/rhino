@@ -18,7 +18,7 @@ class NativeRegExpCallable extends NativeRegExp implements Function {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return execSub(cx, scope, args, MATCH);
     }
 

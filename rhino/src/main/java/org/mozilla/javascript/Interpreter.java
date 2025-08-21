@@ -71,7 +71,7 @@ public final class Interpreter extends Icode implements Evaluator {
         final boolean useActivation;
         boolean isContinuationsTopFrame;
 
-        final Scriptable thisObj;
+        final Object thisObj;
 
         // The values that change during interpretation
 
@@ -88,7 +88,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         CallFrame(
                 Context cx,
-                Scriptable thisObj,
+                Object thisObj,
                 InterpretedFunction fnOrScript,
                 CallFrame parentFrame,
                 CallFrame previousInterpreterFrame) {
@@ -1188,11 +1188,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     static Object interpret(
-            InterpretedFunction ifun,
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Object[] args) {
+            InterpretedFunction ifun, Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
         if (cx.interpreterSecurityDomain != ifun.securityDomain) {
@@ -3243,7 +3239,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Object funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode_CALL_ON_SUPER) {
@@ -4620,7 +4616,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static CallFrame initFrame(
             Context cx,
             Scriptable callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] argsDbl,
@@ -4680,7 +4676,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 }
             }
             if (isDebugged) {
-                frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
+                frame.debuggerFrame.onEnter(cx, scope, (Scriptable) frame.thisObj, args);
             }
             // Enter activation only when itsNeedsActivation true,
             // since debugger should not interfere with activation
