@@ -88,7 +88,8 @@ final class NativeBigInt extends ScriptableObject {
         return (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", CLASS_NAME);
     }
 

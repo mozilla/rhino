@@ -164,7 +164,8 @@ public class NativeArrayBuffer extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
-    private static NativeArrayBuffer js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeArrayBuffer js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
         return new NativeArrayBuffer(length);
     }
@@ -202,7 +203,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
         Constructable constructor =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
-        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {len});
+        Scriptable newBuf = constructor.construct(cx, scope, constructor, new Object[] {len});
         if (!(newBuf instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
         }
@@ -254,7 +255,8 @@ public class NativeArrayBuffer extends ScriptableObject {
         // 6. Let new be ? Construct(%ArrayBuffer%, « 𝔽(newByteLength) »)
         Constructable constructor =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
-        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {newByteLength});
+        Scriptable newBuf =
+                constructor.construct(cx, scope, constructor, new Object[] {newByteLength});
         if (!(newBuf instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
         }
@@ -305,7 +307,8 @@ public class NativeArrayBuffer extends ScriptableObject {
         // Note: This creates a fixed-length buffer (no maxByteLength parameter)
         Constructable constructor =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
-        Scriptable newBuf = constructor.construct(cx, scope, new Object[] {newByteLength});
+        Scriptable newBuf =
+                constructor.construct(cx, scope, constructor, new Object[] {newByteLength});
 
         // 9. NOTE: This method returns a fixed-length ArrayBuffer
         // 10. If new.[[ArrayBufferDetachKey]] is not undefined, throw a TypeError exception

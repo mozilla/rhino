@@ -364,7 +364,8 @@ public class BuiltinBenchmark {
                             scope,
                             "DumbLambdaClass",
                             0,
-                            (Context cx, Scriptable s, Object[] args) -> new DumbLambdaClass());
+                            (Context cx, Scriptable s, Object nt, Object[] args) ->
+                                    new DumbLambdaClass());
             cons.definePrototypeMethod(scope, "one", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "two", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "three", 0, DumbLambdaClass::noop);

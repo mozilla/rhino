@@ -219,7 +219,8 @@ final class NativeString extends ScriptableObject {
         };
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         CharSequence s;
         if (args.length == 0) {
             s = "";

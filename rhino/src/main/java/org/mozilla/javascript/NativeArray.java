@@ -537,7 +537,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /** See ECMA 15.4.1,2 */
-    static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable jsConstructor(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
         // Only use 1 arg as first element for version 1.2; for
@@ -672,7 +672,7 @@ public class NativeArray extends ScriptableObject implements List {
                         (lengthAlways || (length > 0))
                                 ? new Object[] {Long.valueOf(length)}
                                 : ScriptRuntime.emptyArgs;
-                result = ((Constructable) arg).construct(cx, scope, args);
+                result = ((Constructable) arg).construct(cx, scope, arg, args);
             } catch (EcmaError ee) {
                 if (!"TypeError".equals(ee.getName())) {
                     throw ee;

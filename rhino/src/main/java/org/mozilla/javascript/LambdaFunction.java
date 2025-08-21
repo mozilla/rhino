@@ -99,7 +99,7 @@ public class LambdaFunction extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
     }
 
