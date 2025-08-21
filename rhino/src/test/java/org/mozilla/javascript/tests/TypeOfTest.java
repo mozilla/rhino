@@ -56,7 +56,8 @@ public class TypeOfTest {
         final Function f =
                 new BaseFunction() {
                     @Override
-                    public Object call(Context _cx, JSScope _scope, Object _thisObj, Object[] _args) {
+                    public Object call(
+                            Context _cx, JSScope _scope, Object _thisObj, Object[] _args) {
                         return _args[0].getClass().getName();
                     }
                 };

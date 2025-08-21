@@ -3546,7 +3546,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
             Object[] outArgs =
                     getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
-            frame.stack[state.stackTop] = ctor.construct(cx, frame.scope, outArgs);
+            frame.stack[state.stackTop] = ctor.construct(cx, frame.scope, ctor, outArgs);
             return null;
         }
     }

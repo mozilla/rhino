@@ -53,7 +53,7 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById(
                 "msg.not.ctor", decompile(0, EnumSet.noneOf(DecompilerFlag.class)));
     }

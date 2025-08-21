@@ -42,8 +42,9 @@ public class NativeObject extends ScriptableObject implements Map {
                         NativeObject::js_constructorCall,
                         NativeObject::js_constructor) {
                     @Override
-                    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
-                        return js_constructor(cx, scope, args);
+                    public Scriptable construct(
+                            Context cx, JSScope scope, Object target, Object[] args) {
+                        return js_constructor(cx, scope, target, args);
                     }
                 };
 
@@ -146,7 +147,8 @@ public class NativeObject extends ScriptableObject implements Map {
         return ScriptRuntime.toObject(cx, scope, args[0]);
     }
 
-    private static Scriptable js_constructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
             return cx.newObject(scope);
         }
@@ -248,7 +250,8 @@ public class NativeObject extends ScriptableObject implements Map {
         return ScriptRuntime.wrapBoolean(result);
     }
 
-    private static Object js_isPrototypeOf(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_isPrototypeOf(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (cx.getLanguageVersion() >= Context.VERSION_1_8
                 && (thisObj == null || Undefined.isUndefined(thisObj))) {
             throw ScriptRuntime.typeErrorById(
@@ -306,11 +309,13 @@ public class NativeObject extends ScriptableObject implements Map {
         setPrototypeOf(o, (Scriptable) proto);
     }
 
-    private static Object js_defineGetter(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_defineGetter(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_defineGetterOrSetter(cx, scope, false, thisObj, args);
     }
 
-    private static Object js_defineSetter(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_defineSetter(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_defineGetterOrSetter(cx, scope, true, thisObj, args);
     }
 
@@ -336,11 +341,13 @@ public class NativeObject extends ScriptableObject implements Map {
         return Undefined.instance;
     }
 
-    private static Object js_lookupGetter(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_lookupGetter(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_lookupGetterOrSetter(cx, scope, false, thisObj, args);
     }
 
-    private static Object js_lookupSetter(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_lookupSetter(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_lookupGetterOrSetter(cx, scope, true, thisObj, args);
     }
 
@@ -603,7 +610,8 @@ public class NativeObject extends ScriptableObject implements Map {
         return obj;
     }
 
-    private static Object js_isExtensible(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_isExtensible(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
             return Boolean.FALSE;

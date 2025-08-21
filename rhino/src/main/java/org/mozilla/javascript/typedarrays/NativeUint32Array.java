@@ -7,8 +7,8 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.JSScope;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
@@ -45,7 +45,7 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, JSScope lscope, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object target, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,

@@ -132,7 +132,8 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
-    private static NativeSymbol js_constructor(Context cx, JSScope scope, Object[] args) {
+    private static NativeSymbol js_constructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         String desc = null;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);

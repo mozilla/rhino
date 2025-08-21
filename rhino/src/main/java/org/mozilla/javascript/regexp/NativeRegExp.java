@@ -19,10 +19,10 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
-import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
@@ -4048,7 +4048,7 @@ public class NativeRegExp extends IdScriptableObject {
 
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
 
-        Scriptable matcher = c.construct(cx, scope, new Object[] {thisObj, flags});
+        Scriptable matcher = c.construct(cx, scope, c, new Object[] {thisObj, flags});
 
         long lastIndex = getLastIndex(cx, thisObj);
         setLastIndex(matcher, lastIndex);
@@ -4198,7 +4198,7 @@ public class NativeRegExp extends IdScriptableObject {
         boolean unicodeMatching = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
         String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
 
-        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
+        Scriptable splitter = c.construct(cx, scope, c, new Object[] {rx, newFlags});
 
         NativeArray a = (NativeArray) cx.newArray(scope, 0);
         int lengthA = 0;

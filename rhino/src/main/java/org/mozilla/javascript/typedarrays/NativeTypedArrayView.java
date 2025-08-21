@@ -204,7 +204,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                             0,
                             proto,
                             null,
-                            (lcx, ls, largs) -> {
+                            (lcx, ls, lnewTarget, largs) -> {
                                 throw ScriptRuntime.typeError("Fuck");
                             });
             proto.defineProperty("constructor", ta, DONTENUM);
@@ -814,7 +814,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 lcx, ReduceOperation.REDUCE, scope, self, args, self.validateAndGetLength());
     }
 
-    private static Object js_reduceRight(Context lcx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_reduceRight(
+            Context lcx, JSScope scope, Object thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
         return ArrayLikeAbstractOperations.reduceMethodWithLength(
                 lcx, ReduceOperation.REDUCE_RIGHT, scope, self, args, self.validateAndGetLength());
@@ -1130,7 +1131,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Constructable constructable =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
 
-        Scriptable newArray = constructable.construct(cx, scope, args);
+        Scriptable newArray = constructable.construct(cx, scope, constructable, args);
         if (newArray instanceof NativeTypedArrayView) {
             long len = ((NativeTypedArrayView<?>) newArray).validateAndGetLength();
             if (args.length == 1 && args[0] instanceof Number) {
@@ -1276,7 +1277,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             size = (int) AbstractEcmaObjectOperations.lengthOfArrayLike(cx, items);
         }
 
-        Scriptable result = constructable.construct(cx, scope, new Object[] {size});
+        Scriptable result = constructable.construct(cx, scope, constructable, new Object[] {size});
         if (!(result instanceof NativeTypedArrayView)) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "from");
         }
@@ -1316,7 +1317,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
         Constructable constructable = (Constructable) thisObj;
 
-        Scriptable result = constructable.construct(cx, scope, new Object[] {args.length});
+        Scriptable result =
+                constructable.construct(cx, scope, constructable, new Object[] {args.length});
 
         if (!(result instanceof NativeTypedArrayView)) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.receiver.incompatible", "of");

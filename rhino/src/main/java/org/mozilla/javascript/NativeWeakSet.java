@@ -76,7 +76,8 @@ public class NativeWeakSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeWeakSet ns = new NativeWeakSet();
         ns.instanceOfWeakSet = true;
         if (args.length > 0) {

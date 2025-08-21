@@ -38,7 +38,8 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     public interface ConsolePrinter extends Serializable {
-        void print(Context cx, JSScope scope, Level level, Object[] args, ScriptStackElement[] stack);
+        void print(
+                Context cx, JSScope scope, Level level, Object[] args, ScriptStackElement[] stack);
     }
 
     public static void init(JSScope scope, boolean sealed, ConsolePrinter printer) {

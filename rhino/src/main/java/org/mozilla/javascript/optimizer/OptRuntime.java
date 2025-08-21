@@ -10,12 +10,12 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ES6Generator;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
 import org.mozilla.javascript.NewLiteralStorage;
-import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -39,7 +39,8 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /** Implement ....(arg) call shrinking optimizer code. */
-    public static Object call1(Callable fun, Object thisObj, Object arg0, Context cx, JSScope scope) {
+    public static Object call1(
+            Callable fun, Object thisObj, Object arg0, Context cx, JSScope scope) {
         return fun.call(cx, scope, thisObj, new Object[] {arg0});
     }
 

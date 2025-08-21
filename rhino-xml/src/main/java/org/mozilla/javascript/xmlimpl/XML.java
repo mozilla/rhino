@@ -183,7 +183,7 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+    protected Object jsConstructor(Context cx, boolean inNewExpr, Object newTarget, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             args = new Object[] {""};
         }

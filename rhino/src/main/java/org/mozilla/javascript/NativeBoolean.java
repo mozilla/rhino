@@ -71,7 +71,8 @@ final class NativeBoolean extends ScriptableObject {
         return ScriptRuntime.wrapBoolean(b);
     }
 
-    private static NativeBoolean js_constructor(Context cx, JSScope scope, Object[] args) {
+    private static NativeBoolean js_constructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
         return new NativeBoolean(b);
     }

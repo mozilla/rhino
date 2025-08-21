@@ -127,21 +127,21 @@ public class LambdaConstructor extends LambdaFunction {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
         if (target == null) {
-            return fireConstructor(cx, scope, args);
+            return fireConstructor(cx, scope, target, args);
         }
         return target.call(cx, scope, thisObj, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
-        return fireConstructor(cx, scope, args);
+        return fireConstructor(cx, scope, target, args);
     }
 
-    private Scriptable fireConstructor(Context cx, JSScope scope, Object[] args) {
-        Scriptable obj = targetConstructor.construct(cx, scope, args);
+    private Scriptable fireConstructor(Context cx, JSScope scope, Object target, Object[] args) {
+        Scriptable obj = targetConstructor.construct(cx, scope, target, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
         return obj;

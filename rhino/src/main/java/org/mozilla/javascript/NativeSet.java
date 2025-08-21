@@ -187,7 +187,8 @@ public class NativeSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeSet ns = new NativeSet();
         ns.instanceOfSet = true;
         if (args.length > 0) {

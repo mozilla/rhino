@@ -150,7 +150,7 @@ final class NativeReflect extends ScriptableObject {
 
         Constructable ctor = (Constructable) args[0];
         if (args.length < 2) {
-            return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
+            return ctor.construct(cx, scope, ctor, ScriptRuntime.emptyArgs);
         }
 
         if (args.length > 2 && !AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
@@ -194,7 +194,7 @@ final class NativeReflect extends ScriptableObject {
             }
         }
 
-        Scriptable newScriptable = ctor.construct(cx, scope, callArgs);
+        Scriptable newScriptable = ctor.construct(cx, scope, ctor, callArgs);
         if (newTargetPrototype != null) {
             newScriptable.setPrototype((Scriptable) newTargetPrototype);
         }

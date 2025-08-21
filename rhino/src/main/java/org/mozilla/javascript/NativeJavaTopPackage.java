@@ -39,11 +39,11 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
 
     @Override
     public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
-        return construct(cx, scope, args);
+        return construct(cx, scope, null, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
         ClassLoader loader = null;
         if (args.length != 0) {
             Object arg = args[0];

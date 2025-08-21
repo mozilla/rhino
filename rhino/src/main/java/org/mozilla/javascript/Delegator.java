@@ -270,7 +270,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see Constructable#construct(Context, Scriptable, Object[])
      */
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
         Scriptable myDelegee = getDelegee();
         if (myDelegee == null) {
             // this little trick allows us to declare prototype objects for Delegators
@@ -284,6 +284,6 @@ public class Delegator implements Function, SymbolScriptable {
             n.setDelegee(delegee);
             return n;
         }
-        return ((Constructable) myDelegee).construct(cx, scope, args);
+        return ((Constructable) myDelegee).construct(cx, scope, target, args);
     }
 }

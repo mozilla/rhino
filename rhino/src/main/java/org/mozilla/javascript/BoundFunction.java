@@ -56,10 +56,10 @@ public class BoundFunction extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] extraArgs) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] extraArgs) {
         if (targetFunction instanceof Constructable) {
             return ((Constructable) targetFunction)
-                    .construct(cx, scope, concat(boundArgs, extraArgs));
+                    .construct(cx, scope, target, concat(boundArgs, extraArgs));
         }
         throw ScriptRuntime.typeErrorById("msg.not.ctor");
     }

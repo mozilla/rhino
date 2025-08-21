@@ -181,7 +181,8 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context ctx, JSScope scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, JSScope scope, Object target, Object[] args) ->
+                                ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -197,7 +198,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context ctx, JSScope scope, Object[] args) -> ctx.newObject(scope));
+                        (ctx, scope, target, args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -209,7 +210,9 @@ public class LambdaFunctionTest {
     public void lambdaFunctionNoNew() {
         LambdaFunction func =
                 new LambdaFunction(
-                        root, 0, (Context ctx, JSScope scope, Object thisObj, Object[] args) -> true);
+                        root,
+                        0,
+                        (Context ctx, JSScope scope, Object thisObj, Object[] args) -> true);
         ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
         eval(
                 "let o = noNewFunc();\n"
@@ -243,7 +246,7 @@ public class LambdaFunctionTest {
                             scope,
                             "TestClass",
                             1,
-                            (Context cx, JSScope s, Object[] args) -> {
+                            (Context cx, JSScope s, Object target, Object[] args) -> {
                                 TestClass tc = new TestClass();
                                 if (args.length > 0) {
                                     tc.instanceVal = ScriptRuntime.toString(args[0]);
@@ -333,7 +336,7 @@ public class LambdaFunctionTest {
                                 }
                                 return "You passed " + arg;
                             },
-                            (Context lcx, JSScope s, Object[] args) -> {
+                            (Context lcx, JSScope s, Object target, Object[] args) -> {
                                 SpecialConstructorClass tc = new SpecialConstructorClass();
                                 if (args.length > 0) {
                                     tc.value = ScriptRuntime.toString(args[0]);

@@ -92,7 +92,7 @@ public class NativePromise extends ScriptableObject {
         return constructor;
     }
 
-    private static Scriptable constructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable constructor(Context cx, JSScope scope, Object target, Object[] args) {
         if (args.length < 1 || !(args[0] instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.function.expected");
         }
@@ -136,7 +136,8 @@ public class NativePromise extends ScriptableObject {
     }
 
     // PromiseResolve abstract operation
-    private static Object resolveInternal(Context cx, JSScope scope, Object constructor, Object arg) {
+    private static Object resolveInternal(
+            Context cx, JSScope scope, Object constructor, Object arg) {
         if (arg instanceof NativePromise) {
             Object argConstructor = ScriptRuntime.getObjectProp(arg, "constructor", cx, scope);
             if (argConstructor == constructor) {
@@ -472,7 +473,8 @@ public class NativePromise extends ScriptableObject {
     }
 
     // Abstract "Catch Finally Thrower"
-    private static Callable makeCatchFinally(JSScope scope, Object constructor, Callable onFinally) {
+    private static Callable makeCatchFinally(
+            JSScope scope, Object constructor, Callable onFinally) {
         return new LambdaFunction(
                 scope,
                 1,
@@ -632,7 +634,8 @@ public class NativePromise extends ScriptableObject {
             return promise.rejectPromise(cx, scope, reason);
         }
 
-        private Object resolve(Context cx, JSScope scope, NativePromise promise, Object resolution) {
+        private Object resolve(
+                Context cx, JSScope scope, NativePromise promise, Object resolution) {
             if (alreadyResolved) {
                 return Undefined.instance;
             }
@@ -732,7 +735,9 @@ public class NativePromise extends ScriptableObject {
                             (Context cx, JSScope scope, Object thisObj, Object[] args) ->
                                     executor(args));
 
-            promise = ((Constructable) pc).construct(topCx, topScope, new Object[] {executorFunc});
+            promise =
+                    ((Constructable) pc)
+                            .construct(topCx, topScope, pc, new Object[] {executorFunc});
 
             if (!(rawResolve instanceof Callable)) {
                 throw ScriptRuntime.typeErrorById("msg.function.expected");

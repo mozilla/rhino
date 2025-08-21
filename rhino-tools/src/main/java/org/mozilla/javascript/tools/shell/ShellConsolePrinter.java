@@ -7,8 +7,8 @@ package org.mozilla.javascript.tools.shell;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.JSScope;
+import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.ScriptStackElement;
 
 /** Provide a printer use in console API */

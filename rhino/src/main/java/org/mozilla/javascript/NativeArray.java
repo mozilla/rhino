@@ -537,7 +537,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /** See ECMA 15.4.1,2 */
-    static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
+    static Scriptable jsConstructor(Context cx, JSScope scope, Object target, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
         // Only use 1 arg as first element for version 1.2; for
@@ -668,7 +668,7 @@ public class NativeArray extends ScriptableObject implements List {
                         (lengthAlways || (length > 0))
                                 ? new Object[] {Long.valueOf(length)}
                                 : ScriptRuntime.emptyArgs;
-                result = ((Constructable) arg).construct(cx, scope, args);
+                result = ((Constructable) arg).construct(cx, scope, arg, args);
             } catch (EcmaError ee) {
                 if (!"TypeError".equals(ee.getName())) {
                     throw ee;
@@ -2080,7 +2080,8 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_findLastIndex(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_findLastIndex(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2117,7 +2118,8 @@ public class NativeArray extends ScriptableObject implements List {
         return new NativeArrayIterator(scope, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
     }
 
-    private static Object js_isArrayMethod(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_isArrayMethod(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
     }
 

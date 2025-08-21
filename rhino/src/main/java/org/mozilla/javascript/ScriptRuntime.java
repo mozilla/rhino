@@ -72,7 +72,8 @@ public class ScriptRuntime {
                         private static final long serialVersionUID = -5891740962154902286L;
 
                         @Override
-                        public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
+                        public Object call(
+                                Context cx, JSScope scope, Object thisObj, Object[] args) {
                             throw typeErrorById("msg.op.not.allowed");
                         }
 
@@ -1313,7 +1314,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (Scriptable) scope, args);
+        return ctor.construct(cx, scope, ctor, args);
     }
 
     public static Scriptable newBuiltinObject(
@@ -1323,7 +1324,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (Scriptable) scope, args);
+        return ctor.construct(cx, scope, ctor, args);
     }
 
     static Scriptable newNativeError(
@@ -1333,7 +1334,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (Scriptable) scope, args);
+        return ctor.construct(cx, scope, ctor, args);
     }
 
     /** See ECMA 9.4. */
@@ -3326,7 +3327,7 @@ public class ScriptRuntime {
         if (!(ctor instanceof Constructable)) {
             throw notFunctionError(ctor);
         }
-        return ((Constructable) ctor).construct(cx, (Scriptable) scope, args);
+        return ((Constructable) ctor).construct(cx, scope, ctor, args);
     }
 
     public static Object callSpecial(

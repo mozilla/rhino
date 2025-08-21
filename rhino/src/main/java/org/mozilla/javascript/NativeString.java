@@ -219,7 +219,8 @@ final class NativeString extends ScriptableObject {
         };
     }
 
-    private static Scriptable js_constructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         CharSequence s;
         if (args.length == 0) {
             s = "";
@@ -245,7 +246,8 @@ final class NativeString extends ScriptableObject {
         return s instanceof String ? s : s.toString();
     }
 
-    private static Object js_fromCharCode(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_fromCharCode(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -257,7 +259,8 @@ final class NativeString extends ScriptableObject {
         return new String(chars);
     }
 
-    private static Object js_fromCodePoint(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_fromCodePoint(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -704,7 +707,8 @@ final class NativeString extends ScriptableObject {
     /*
      * Non-ECMA methods.
      */
-    private static CharSequence js_substr(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static CharSequence js_substr(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "substr"));
@@ -1086,7 +1090,8 @@ final class NativeString extends ScriptableObject {
         return ((Callable) method).call(cx, scope, rx, new Object[] {s});
     }
 
-    private static Object js_localeCompare(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_localeCompare(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         // For now, create and configure a collator instance. I can't
         // actually imagine that this'd be slower than caching them
         // a la ClassCache, so we aren't trying to outsmart ourselves
@@ -1334,7 +1339,8 @@ final class NativeString extends ScriptableObject {
         return elements;
     }
 
-    private static Object js_isWellFormed(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_isWellFormed(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "isWellFormed"));
@@ -1359,7 +1365,8 @@ final class NativeString extends ScriptableObject {
         return !foundLeadingSurrogate;
     }
 
-    private static Object js_toWellFormed(Context cx, JSScope scope, Object thisObj, Object[] args) {
+    private static Object js_toWellFormed(
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toWellFormed"));

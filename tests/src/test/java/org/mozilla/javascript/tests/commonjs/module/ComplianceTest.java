@@ -95,7 +95,7 @@ public class ComplianceTest {
         }
 
         @Override
-        public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+        public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
             throw new AssertionFailedError("Shouldn't be invoked as constructor");
         }
 

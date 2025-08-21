@@ -723,7 +723,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+    protected Object jsConstructor(Context cx, boolean inNewExpr, Object newTarget, Object[] args) {
         if (args.length == 0) {
             return newXMLList();
         } else {
@@ -785,7 +785,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
 }

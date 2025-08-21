@@ -9,8 +9,8 @@ package org.mozilla.javascript.regexp;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.JSScope;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -100,10 +100,11 @@ class NativeRegExpCtor {
                 && (args.length == 1 || args[1] == Undefined.instance)) {
             return (Scriptable) args[0];
         }
-        return js_construct(cx, scope, args);
+        return js_construct(cx, scope, null, args);
     }
 
-    private static Scriptable js_construct(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable js_construct(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, scope, args);
         ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);

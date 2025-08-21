@@ -147,7 +147,8 @@ public class NativeMap extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeMap nm = new NativeMap();
         nm.instanceOfMap = true;
         if (args.length > 0) {

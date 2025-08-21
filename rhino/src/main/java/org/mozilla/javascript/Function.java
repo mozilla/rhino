@@ -44,5 +44,5 @@ public interface Function extends Scriptable, Callable, Constructable {
      * @return the allocated object
      */
     @Override
-    Scriptable construct(Context cx, JSScope scope, Object[] args);
+    Scriptable construct(Context cx, JSScope scope, Object target, Object[] args);
 }

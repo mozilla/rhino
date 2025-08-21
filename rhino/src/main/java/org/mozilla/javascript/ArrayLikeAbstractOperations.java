@@ -238,8 +238,7 @@ public class ArrayLikeAbstractOperations {
             if (!Undefined.isUndefined(c)) {
                 if (c instanceof Constructable) {
                     return ((Constructable) c)
-                            .construct(
-                                    cx, (Scriptable) scope, new Object[] {Double.valueOf(length)});
+                            .construct(cx, scope, c, new Object[] {Double.valueOf(length)});
                 } else {
                     throw ScriptRuntime.typeErrorById("msg.ctor.not.found", o);
                 }
