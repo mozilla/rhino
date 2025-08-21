@@ -234,7 +234,8 @@ public class NativeDataView extends NativeArrayBufferView {
         return LambdaConstructor.convertThisObject(thisObj, NativeDataView.class);
     }
 
-    private static NativeDataView js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeDataView js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.constructError("TypeError", "Missing parameters");
         }

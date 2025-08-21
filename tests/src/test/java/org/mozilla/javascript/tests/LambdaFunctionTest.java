@@ -180,7 +180,8 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, Scriptable scope, Object newTarget, Object[] args) ->
+                                ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -196,7 +197,8 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, Scriptable scope, Object newTarget, Object[] args) ->
+                                ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -244,7 +246,7 @@ public class LambdaFunctionTest {
                             scope,
                             "TestClass",
                             1,
-                            (Context cx, Scriptable s, Object[] args) -> {
+                            (Context cx, Scriptable s, Object newTarget, Object[] args) -> {
                                 TestClass tc = new TestClass();
                                 if (args.length > 0) {
                                     tc.instanceVal = ScriptRuntime.toString(args[0]);
@@ -334,7 +336,7 @@ public class LambdaFunctionTest {
                                 }
                                 return "You passed " + arg;
                             },
-                            (Context lcx, Scriptable s, Object[] args) -> {
+                            (Context lcx, Scriptable s, Object newTarget, Object[] args) -> {
                                 SpecialConstructorClass tc = new SpecialConstructorClass();
                                 if (args.length > 0) {
                                     tc.value = ScriptRuntime.toString(args[0]);

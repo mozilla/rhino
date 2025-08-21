@@ -411,10 +411,11 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Scriptable js_gen_constructorCall(
             Context cx, Scriptable scope, Object thisObj, Object[] args) {
-        return js_gen_constructor(cx, scope, args);
+        return js_gen_constructor(cx, scope, null, args);
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -434,10 +435,11 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Scriptable js_constructorCall(
             Context cx, Scriptable scope, Object thisObj, Object[] args) {
-        return js_constructor(cx, scope, args);
+        return js_constructor(cx, scope, null, args);
     }
 
-    private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_gen_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -491,7 +493,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && this.getHomeObject() != null) {
             // Only methods have home objects associated with them
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());

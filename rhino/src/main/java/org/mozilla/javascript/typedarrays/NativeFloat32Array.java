@@ -46,7 +46,7 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object newTarget, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,

@@ -216,7 +216,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.throwError(cx, scope, "require() can not be invoked as a constructor");
     }
 
