@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
 import org.mozilla.javascript.ScriptStackElement;
@@ -545,10 +546,13 @@ public class NativeConsoleTest {
     }
 
     private static void assertFormat(Object[] args, String expected) {
-        try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
-            assertEquals(expected, NativeConsole.format(cx, scope, args));
-        }
+        ContextFactory.getGlobal()
+                .call(
+                        cx -> {
+                            Scriptable scope = cx.initStandardObjects();
+                            assertEquals(expected, NativeConsole.format(cx, scope, args));
+                            return Void.TYPE;
+                        });
     }
 
     private static void assertPrintCalls(String source, List<PrinterCall> expectedCalls) {

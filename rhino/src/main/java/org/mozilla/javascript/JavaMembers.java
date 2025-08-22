@@ -44,17 +44,22 @@ class JavaMembers {
     }
 
     JavaMembers(Scriptable scope, Class<?> cl, boolean includeProtected) {
-        try (Context cx = ContextFactory.getGlobal().enterContext()) {
-            ClassShutter shutter = cx.getClassShutter();
-            if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
-                throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
-            }
-            this.members = new HashMap<>();
-            this.staticMembers = new HashMap<>();
-            this.cl = cl;
-            boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
-            reflect(cx, scope, includeProtected, includePrivate);
-        }
+        ContextFactory.getGlobal()
+                .call(
+                        cx -> {
+                            ClassShutter shutter = cx.getClassShutter();
+                            if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
+                                throw Context.reportRuntimeErrorById(
+                                        "msg.access.prohibited", cl.getName());
+                            }
+                            this.members = new HashMap<>();
+                            this.staticMembers = new HashMap<>();
+                            this.cl = cl;
+                            boolean includePrivate =
+                                    cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
+                            reflect(cx, scope, includeProtected, includePrivate);
+                            return Undefined.instance;
+                        });
     }
 
     /**
