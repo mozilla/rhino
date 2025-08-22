@@ -5,6 +5,7 @@
 package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -62,6 +63,54 @@ public class Symbol3Test {
 
                     assertEquals("Symbol(Symbol.toStringTag) 1 symbol foo", result);
 
+                    return null;
+                });
+    }
+
+    // Tests that Symbol.for() returns the same symbol when called from different scopes
+    @Test
+    public void symbolForRuntimeWideUnique() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope1 = cx.initStandardObjects();
+                    ScriptableObject scope2 = cx.initStandardObjects();
+
+                    Object sym =
+                            cx.evaluateString(scope1, "Symbol.for('foo');", "myScript", 1, null);
+                    Object sym2 =
+                            cx.evaluateString(scope2, "Symbol.for('foo');", "myScript", 1, null);
+
+                    assertSame(sym, sym2);
+                    return null;
+                });
+    }
+
+    // Tests that Symbol.keyFor() returns the same string when called from different scopes
+    @Test
+    public void symbolKeyForGloballyUnique() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    ScriptableObject scope1 = cx.initStandardObjects();
+                    ScriptableObject scope2 = cx.initStandardObjects();
+
+                    Object str1 =
+                            cx.evaluateString(
+                                    scope1,
+                                    "Symbol.keyFor(Symbol.for('foo'));",
+                                    "myScript",
+                                    1,
+                                    null);
+                    Object str2 =
+                            cx.evaluateString(
+                                    scope2,
+                                    "Symbol.keyFor(Symbol.for('foo'))",
+                                    "myScript",
+                                    1,
+                                    null);
+
+                    assertSame(str1, str2);
                     return null;
                 });
     }
