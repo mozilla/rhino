@@ -22,7 +22,7 @@ public class NativeObjectTest {
 
     @Test
     public void assignPropertyGetter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = Object.defineProperty({}, 'propA', {\n"
                         + "                 enumerable: true,\n"
                         + "                 get: function () {\n"
@@ -40,20 +40,20 @@ public class NativeObjectTest {
 
     @Test
     public void assignOneParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = {};" + "res = Object.assign(obj);" + "res === obj;", Boolean.TRUE);
     }
 
     @Test
     public void assignMissingParameters() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.assign();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
     public void assignNumericPropertyGetter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = Object.defineProperty({}, 1, {\n"
                         + "                 enumerable: true,\n"
                         + "                 get: function () {\n"
@@ -71,12 +71,13 @@ public class NativeObjectTest {
 
     @Test
     public void assignUndefined() {
-        evaluateAndAssert("Object.keys(Object.assign({a:undefined}, {b:undefined})).join()", "a,b");
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "Object.keys(Object.assign({a:undefined}, {b:undefined})).join()", "a,b");
     }
 
     @Test
     public void assignInextensible() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = Object.freeze({});\n"
                         + "try {\n"
                         + "  Object.assign(obj, { a: 1 });\n"
@@ -85,7 +86,7 @@ public class NativeObjectTest {
                         + "  'error';\n"
                         + "}",
                 "error");
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = Object.freeze({});\n"
                         + "try {\n"
                         + "  Object.assign(obj, {});\n"
@@ -98,7 +99,7 @@ public class NativeObjectTest {
 
     @Test
     public void assignUnwritable() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var src = Object.defineProperty({}, 1, {\n"
                         + "  enumerable: true,\n"
                         + "  value: 'v'\n"
@@ -114,7 +115,7 @@ public class NativeObjectTest {
                         + "  'error';\n"
                         + "}",
                 "error");
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var src = Object.defineProperty({}, 1, {\n"
                         + "  enumerable: false,\n"
                         + "  value: 'v'\n"
@@ -130,7 +131,7 @@ public class NativeObjectTest {
                         + "  'error';\n"
                         + "}",
                 "success");
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var src = Object.defineProperty({}, 1, {\n"
                         + "  enumerable: true,\n"
                         + "  value: 'v'\n"
@@ -151,7 +152,7 @@ public class NativeObjectTest {
 
     @Test
     public void assignVariousKeyTypes() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var strKeys = Object.assign({}, {a: 1, b: 2});\n"
                         + "var arrayKeys = Object.assign({}, ['a', 'b']);\n"
                         + "var res = 'strKeys: ' + JSON.stringify(strKeys) + "
@@ -172,7 +173,7 @@ public class NativeObjectTest {
                         + "'  assigned: ' + JSON.stringify(assigned);\n"
                         + "res";
 
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 script,
                 "targetProto: {\"a\":1,\"b\":2}  target: {\"b\":4,\"c\":5}  assigned: {\"b\":4,\"c\":5}");
     }
@@ -189,7 +190,7 @@ public class NativeObjectTest {
                         + "'  assigned: ' + JSON.stringify(assigned);\n"
                         + "res";
 
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 script,
                 "targetProto: {\"0\":\"a\",\"1\":\"b\"}  target: {\"1\":\"c\",\"2\":\"d\"}  assigned: {\"1\":\"c\",\"2\":\"d\"}");
     }
@@ -214,14 +215,14 @@ public class NativeObjectTest {
                         + "'  assigned.c: ' + assigned.c;\n"
                         + "res";
 
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 script,
                 "targetProto: {\"_a\":1,\"a\":1,\"_b\":2,\"b\":2}  target: {\"_b\":26,\"_c\":5,\"c\":5}  assigned: {\"_b\":26,\"_c\":5,\"c\":5}  assigned.a: 1  assigned.b: 26  assigned.c: 5");
     }
 
     @Test
     public void getOwnPropertyDescriptorSetPropertyIsAlwaysDefined() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var obj = Object.defineProperty({}, 'prop', {\n"
                         + "                 get: function() {}\n"
                         + "          });\n"
@@ -235,7 +236,7 @@ public class NativeObjectTest {
 
     @Test
     public void setPrototypeOfNull() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { "
                         + "  Object.setPrototypeOf(null, new Object());"
                         + "} catch (e) { e.message }",
@@ -244,7 +245,7 @@ public class NativeObjectTest {
 
     @Test
     public void setPrototypeOfUndefined() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { "
                         + "  Object.setPrototypeOf(undefined, new Object());"
                         + "} catch (e) { e.message }",
@@ -253,91 +254,94 @@ public class NativeObjectTest {
 
     @Test
     public void setPrototypeOfMissingParameters() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.setPrototypeOf();" + "} catch (e) { e.message }",
                 "Object.setPrototypeOf: At least 2 arguments required, but only 0 passed");
 
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.setPrototypeOf({});" + "} catch (e) { e.message }",
                 "Object.setPrototypeOf: At least 2 arguments required, but only 1 passed");
     }
 
     @Test
     public void keysMissingParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.keys();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
     public void keysOnObjectParameter() {
-        evaluateAndAssert("Object.keys({'foo':'bar', 2: 'y', 1: 'x'}).join()", "1,2,foo");
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "Object.keys({'foo':'bar', 2: 'y', 1: 'x'}).join()", "1,2,foo");
     }
 
     @Test
     public void keysOnArray() {
-        evaluateAndAssert("Object.keys(['x','y','z']).join()", "0,1,2");
+        assertWithAllModes_StrictAndNonStrict_ES6("Object.keys(['x','y','z']).join()", "0,1,2");
     }
 
     @Test
     public void keysOnArrayWithProp() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var arr = ['x','y','z'];\n" + "arr['foo'] = 'bar';\n" + "Object.keys(arr).join()",
                 "0,1,2,foo");
     }
 
     @Test
     public void valuesMissingParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.values();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
     public void valuesOnObjectParameter() {
-        evaluateAndAssert("Object.values({'foo':'bar', 2: 'y', 1: 'x'}).join()", "x,y,bar");
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "Object.values({'foo':'bar', 2: 'y', 1: 'x'}).join()", "x,y,bar");
     }
 
     @Test
     public void valuesOnArray() {
-        evaluateAndAssert("Object.values(['x','y','z']).join()", "x,y,z");
+        assertWithAllModes_StrictAndNonStrict_ES6("Object.values(['x','y','z']).join()", "x,y,z");
     }
 
     @Test
     public void valuesOnArrayWithProp() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var arr = [3,4,5];\n" + "arr['foo'] = 'bar';\n" + "Object.values(arr).join();",
                 "3,4,5,bar");
     }
 
     @Test
     public void entriesMissingParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.entries();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
 
     @Test
     public void entriesOnObjectParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "Object.entries({'foo':'bar', 2: 'y', 1: 'x'}).join()", "1,x,2,y,foo,bar");
     }
 
     @Test
     public void entriesOnArray() {
-        evaluateAndAssert("Object.entries(['x','y','z']).join()", "0,x,1,y,2,z");
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "Object.entries(['x','y','z']).join()", "0,x,1,y,2,z");
     }
 
     @Test
     public void entriesOnArrayWithProp() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var arr = [3,4,5];\n" + "arr['foo'] = 'bar';\n" + "Object.entries(arr).join()",
                 "0,3,1,4,2,5,foo,bar");
     }
 
     @Test
     public void fromEntriesMissingParameter() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "try { " + "  Object.fromEntries();" + "} catch (e) { e.message }",
                 "Cannot convert undefined to an object.");
     }
@@ -348,12 +352,13 @@ public class NativeObjectTest {
         map.put("0", "x");
         map.put("1", "y");
         map.put("2", "z");
-        evaluateAndAssert("Object.fromEntries(Object.entries(['x','y','z']))", map);
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "Object.fromEntries(Object.entries(['x','y','z']))", map);
     }
 
     @Test
     public void issue943() {
-        evaluateAndAssert(
+        assertWithAllModes_StrictAndNonStrict_ES6(
                 "var foo = function e() {}\n"
                         + "var fooProto = foo.prototype;\n"
                         + "var descProp = Object.getOwnPropertyDescriptor(fooProto, 'constructor');"
@@ -383,7 +388,8 @@ public class NativeObjectTest {
         }
     }
 
-    private static void evaluateAndAssert(final String script, final Object expected) {
+    private static void assertWithAllModes_StrictAndNonStrict_ES6(
+            final String script, final Object expected) {
         String[] prefixes = {"", "'use strict;'\n"};
         for (final String prefix : prefixes) {
             Utils.assertWithAllModes_ES6(expected, prefix + script);
@@ -424,20 +430,20 @@ public class NativeObjectTest {
     @Test
     public void symbolInObjectLiteral() {
         final String script = "var s = Symbol('foo'); var o = {[s]: 'bar'}; o[s];";
-        evaluateAndAssert(script, "bar");
+        assertWithAllModes_StrictAndNonStrict_ES6(script, "bar");
     }
 
     @Test
     public void addSymbolProperty() {
         final String script = "var s = Symbol('foo'); var o = {}; o[s] = 'bar'; o[s];";
-        evaluateAndAssert(script, "bar");
+        assertWithAllModes_StrictAndNonStrict_ES6(script, "bar");
     }
 
     @Test
     public void objectWrapperForSymbolAsKey() {
         final String script =
                 "var s = Symbol('foo'); var o = Object(s); var obj = {[o]: 'bar'}; obj[s]";
-        evaluateAndAssert(script, "bar");
+        assertWithAllModes_StrictAndNonStrict_ES6(script, "bar");
     }
 
     @Test
@@ -449,6 +455,6 @@ public class NativeObjectTest {
                         + "var target = {};"
                         + "Object.assign(target, source);"
                         + "target[s1] + '-' + target[s2];";
-        evaluateAndAssert(script, "val1-val2");
+        assertWithAllModes_StrictAndNonStrict_ES6(script, "val1-val2");
     }
 }
