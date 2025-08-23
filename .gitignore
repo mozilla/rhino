@@ -29,3 +29,7 @@ rhino.iws
 
 .java-version
 .kotlin
+
+# android specific
+android-sdk/
+local.properties
