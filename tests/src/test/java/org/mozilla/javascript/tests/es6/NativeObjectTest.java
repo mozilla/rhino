@@ -420,4 +420,35 @@ public class NativeObjectTest {
                     return null;
                 });
     }
+
+    @Test
+    public void symbolInObjectLiteral() {
+        final String script = "var s = Symbol('foo'); var o = {[s]: 'bar'}; o[s];";
+        evaluateAndAssert(script, "bar");
+    }
+
+    @Test
+    public void addSymbolProperty() {
+        final String script = "var s = Symbol('foo'); var o = {}; o[s] = 'bar'; o[s];";
+        evaluateAndAssert(script, "bar");
+    }
+
+    @Test
+    public void objectWrapperForSymbolAsKey() {
+        final String script =
+                "var s = Symbol('foo'); var o = Object(s); var obj = {[o]: 'bar'}; obj[s]";
+        evaluateAndAssert(script, "bar");
+    }
+
+    @Test
+    public void objectAssignCopiesSymbols() {
+        final String script =
+                "var s1 = Symbol('foo');"
+                        + "var s2 = Symbol('bar');"
+                        + "var source = { [s1]: 'val1', [Object(s2)]: 'val2' };"
+                        + "var target = {};"
+                        + "Object.assign(target, source);"
+                        + "target[s1] + '-' + target[s2];";
+        evaluateAndAssert(script, "val1-val2");
+    }
 }
