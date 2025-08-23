@@ -2652,6 +2652,7 @@ public class Context implements Closeable {
     }
 
     private static Class<?> codegenClass =
+            "Dalvik".equals(System.getProperty("java.vm.name")) ? null :
             Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
     private static Class<?> interpreterClass =
             Kit.classOrNull("org.mozilla.javascript.Interpreter");
