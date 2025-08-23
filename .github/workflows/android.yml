@@ -1,0 +1,45 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [ 26, 28, 30, 33 ]
+    name: Rhino Android Tests
+    steps:
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+      # we do not checkout test262 submodule or setup java in this build
+    - name: Check out Rhino
+      uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
+    - name: Build and test for Android
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        arch: x86_64
+        script: |
+          adb logcat -c || true                                          # try to clear logs
+          mkdir -p it-android/build/reports                              # make dir
+          touch it-android/build/reports/emulator.log                    # create log file
+          chmod 777 it-android/build/reports/emulator.log                # allow writing to log file
+          adb logcat >> it-android/build/reports/emulator.log &          # pipe all logcat messages into log file as a background process
+          ./gradlew it-android:connectedCheck
+    - name: Upload results for Android
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: ${{ always() }}
+      with:
+        name: reports-android-sdk-${{ matrix.api-level }}
+        path: '*/build/reports'
