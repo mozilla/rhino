@@ -317,7 +317,7 @@ public class NativeSet extends ScriptableObject {
             // Set-like object path (Set, Map, etc.)
             return js_intersectionSetLike(cx, scope, otherObj, result, sizeVal, hasVal, keysVal);
         } else {
-            // Generic iterable path (Array, String, Symbol.iterator, etc.)
+            // Fallback to generic iterable (arrays, strings, etc.)
             return js_intersectionIterable(cx, scope, otherObj, result);
         }
     }
@@ -388,8 +388,7 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_intersectionIterable(
             Context cx, Scriptable scope, Object otherObj, NativeSet result) {
-        // For generic iterables, we need to iterate through all values
-        // and check if they exist in this set
+        // For generic iterables, iterate through all values and check if they exist in this set
         Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
 
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
@@ -422,8 +421,12 @@ public class NativeSet extends ScriptableObject {
 
         if (sizeVal != Scriptable.NOT_FOUND
                 && hasVal != Scriptable.NOT_FOUND
-                && keysVal != Scriptable.NOT_FOUND
-                && keysVal instanceof Callable) {
+                && keysVal != Scriptable.NOT_FOUND) {
+            // Validate keys is callable
+            if (!(keysVal instanceof Callable)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
+            }
             // Set-like object - use keys method
             Callable keysMethod = (Callable) keysVal;
             Object iterator =
@@ -575,10 +578,22 @@ public class NativeSet extends ScriptableObject {
         Object hasVal = ScriptableObject.getProperty(scriptable, "has");
         Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
 
-        if (hasVal != Scriptable.NOT_FOUND
-                && hasVal instanceof Callable
-                && keysVal != Scriptable.NOT_FOUND
-                && keysVal instanceof Callable) {
+        // Check if other is a Set-like object (must have all three: size, has, keys)
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND) {
+            // Validate has and keys are callable
+            if (!(hasVal instanceof Callable)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function", "has", ScriptRuntime.typeof(hasVal));
+            }
+            if (!(keysVal instanceof Callable)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
+            }
+            
             // Set-like object path
             Callable hasMethod = (Callable) hasVal;
             Callable keysMethod = (Callable) keysVal;
@@ -606,25 +621,8 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Generic iterable path
-            // First add all elements from this set
-            for (Hashtable.Entry entry : entries) {
-                result.js_add(entry.key);
-            }
-
-            // Then iterate through other
-            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
-            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                for (Object value : it) {
-                    if (js_has(value) == Boolean.TRUE) {
-                        // If in both sets, remove it (symmetric difference)
-                        result.js_delete(value);
-                    } else {
-                        // If only in other, add it
-                        result.js_add(value);
-                    }
-                }
-            }
+            // Per spec, reject non-Set-like objects
+            throw ScriptRuntime.typeError("Set methods require Set-like objects");
         }
 
         return result;
@@ -661,22 +659,8 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Generic iterable - need to convert to a Set for contains checks
-            NativeSet otherSet = new NativeSet();
-            otherSet.instanceOfSet = true;
-            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
-            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                for (Object value : it) {
-                    otherSet.js_add(value);
-                }
-            }
-
-            // Check if all elements of this are in otherSet
-            for (Hashtable.Entry entry : entries) {
-                if (otherSet.js_has(entry.key) != Boolean.TRUE) {
-                    return Boolean.FALSE;
-                }
-            }
+            // Per spec, reject non-Set-like objects
+            throw ScriptRuntime.typeError("Set methods require Set-like objects");
         }
 
         return Boolean.TRUE;
@@ -685,17 +669,39 @@ public class NativeSet extends ScriptableObject {
     private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
-        // Simply iterate through other and check if all elements are in this
-        Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
-        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-            for (Object value : it) {
-                if (js_has(value) != Boolean.TRUE) {
-                    return Boolean.FALSE;
+        // Check if other is a Set-like object
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND) {
+            // Validate keys is callable
+            if (!(keysVal instanceof Callable)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
+            }
+            
+            // Iterate through other.keys() and check if all elements are in this
+            Callable keysMethod = (Callable) keysVal;
+            Object iterator = ScriptRuntime.callIterator(
+                    keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                    cx,
+                    scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) != Boolean.TRUE) {
+                        return Boolean.FALSE;
+                    }
                 }
             }
+            return Boolean.TRUE;
+        } else {
+            // Per spec, reject non-Set-like objects
+            throw ScriptRuntime.typeError("Set methods require Set-like objects");
         }
-
-        return Boolean.TRUE;
     }
 
     private Object js_isDisjointFrom(Context cx, Scriptable scope, Object[] args) {
@@ -743,15 +749,8 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Generic iterable - iterate through other
-            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
-            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                for (Object value : it) {
-                    if (js_has(value) == Boolean.TRUE) {
-                        return Boolean.FALSE;
-                    }
-                }
-            }
+            // Per spec, reject non-Set-like objects
+            throw ScriptRuntime.typeError("Set methods require Set-like objects");
         }
 
         return Boolean.TRUE;
