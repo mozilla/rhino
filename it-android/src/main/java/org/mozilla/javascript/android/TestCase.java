@@ -1,12 +1,6 @@
 package org.mozilla.javascript.android;
 
 import android.content.res.AssetManager;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,6 +9,10 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 public class TestCase {
 
@@ -30,8 +28,8 @@ public class TestCase {
 
     public String run() {
         try (InputStream in = assetManager.open("tests/" + name);
-             Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-             Context cx = Context.enter()) {
+                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
+                Context cx = Context.enter()) {
             cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
             cx.setGeneratingDebug(true);
             Scriptable scope = cx.newObject(global);
@@ -54,8 +52,8 @@ public class TestCase {
         // define assert object
         ScriptableObject global;
         try (InputStream in = assetManager.open("assert.js");
-             Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-             Context cx = Context.enter()) {
+                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
+                Context cx = Context.enter()) {
             cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
             cx.setGeneratingDebug(true);
             global = cx.initStandardObjects();
@@ -71,6 +69,5 @@ public class TestCase {
             }
         }
         return tests;
-
     }
 }
