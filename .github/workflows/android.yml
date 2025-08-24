@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       # Some tests require more CPU, and all can use multiple CPUs
-      max-parallel: 1
+      max-parallel: 8
+      fail-fast: false
       matrix:
         api-level: [ 26, 28, 30, 33 ]
         arch: [ x86_64, arm64-v8a ]
@@ -38,10 +39,15 @@ jobs:
     - name: Build and test for Android
       uses: reactivecircus/android-emulator-runner@v2
       with:
-
         api-level: ${{ matrix.api-level }}
         arch: ${{ matrix.arch }}
-        script: ./gradlew it-android:connectedCheck
+        script: |
+          adb logcat -c                                                  # clear logs
+          mkdir -p it-android/build/reports                              # make dir
+          touch it-android/build/reports/emulator.log                    # create log file
+          chmod 777 it-android/build/reports/emulator.log                # allow writing to log file
+          adb logcat >> it-android/build/reports/emulator.log &          # pipe all logcat messages into log file as a background process
+          ./gradlew it-android:connectedCheck
     - name: Upload results for Android
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ always() }}
