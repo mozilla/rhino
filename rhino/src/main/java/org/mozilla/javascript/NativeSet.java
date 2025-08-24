@@ -580,7 +580,7 @@ public class NativeSet extends ScriptableObject {
 
         // Check if other is a Set-like object (must have all three: size, has, keys)
         Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
-        
+
         if (sizeVal != Scriptable.NOT_FOUND
                 && hasVal != Scriptable.NOT_FOUND
                 && keysVal != Scriptable.NOT_FOUND) {
@@ -593,7 +593,7 @@ public class NativeSet extends ScriptableObject {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
             }
-            
+
             // Set-like object path
             Callable hasMethod = (Callable) hasVal;
             Callable keysMethod = (Callable) keysVal;
@@ -714,13 +714,14 @@ public class NativeSet extends ScriptableObject {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
             }
-            
+
             // Iterate through other.keys() and check if all elements are in this
             Callable keysMethod = (Callable) keysVal;
-            Object iterator = ScriptRuntime.callIterator(
-                    keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
-                    cx,
-                    scope);
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
             try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                 for (Object value : it) {
                     if (js_has(value) != Boolean.TRUE) {
