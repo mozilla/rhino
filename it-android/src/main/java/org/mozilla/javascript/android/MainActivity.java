@@ -3,13 +3,8 @@ package org.mozilla.javascript.android;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
-
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 
 public class MainActivity extends Activity {
 
