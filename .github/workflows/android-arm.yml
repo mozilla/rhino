@@ -10,14 +10,14 @@ permissions: read-all
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       # Some tests require more CPU, and all can use multiple CPUs
       max-parallel: 8
       fail-fast: false
       matrix:
         api-level: [ 26, 28, 30, 33 ]
-    name: Rhino Android Tests
+    name: Rhino Android Tests (ARM)
     steps:
     - name: Check out Rhino
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
@@ -25,11 +25,11 @@ jobs:
     #  # We don't actually want all the history for this part
     #  run: git submodule update --init --single-branch
     #  # we need this for android enmulator
-    - name: Enable KVM
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
+    #- name: Enable KVM
+    #  run: |
+    #    echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+    #    sudo udevadm control --reload-rules
+    #    sudo udevadm trigger --name-match=kvm
     - name: Set up Java
       uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
       with:
@@ -39,7 +39,7 @@ jobs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: ${{ matrix.api-level }}
-        arch: x86_64
+        arch: arm64-v8a
         script: |
           # adb logcat -c                                                  # clear logs
           mkdir -p it-android/build/reports                              # make dir
