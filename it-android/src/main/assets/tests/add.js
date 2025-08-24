@@ -1,2 +1,3 @@
 // very simple addition
-3+5
+assertEquals(8, 3+5)
+"success"

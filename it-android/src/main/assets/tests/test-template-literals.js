@@ -13,11 +13,11 @@ for (var i = 0; i < iterations; i++) {
 
 ret = "";
 var duration = Date.now() - start;
-ret = "Time for " + iterations + " template literals: " + duration + "ms (avg: " + (duration/iterations).toFixed(3) + "ms";
+ret = "Time for " + iterations + " template literals: " + duration + "ms (avg: " + (duration/iterations).toFixed(3) + "ms) ";
 // Without the fix, this would be ~10x slower on Android
 if (duration > 5000) {
     ret += " FAIL";
 } else {
-    ret += " OK"
+    ret += " success"
 }
 ret
