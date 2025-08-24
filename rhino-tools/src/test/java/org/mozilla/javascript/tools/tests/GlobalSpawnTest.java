@@ -47,4 +47,37 @@ public class GlobalSpawnTest {
                     return null;
                 });
     }
+
+    @Test
+    public void testSubmitFunction() {
+        String cmd = "function g(f) { return a * f }; a = 5; var f = submit(g, [2]); f.get()";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.getWrapFactory().setJavaPrimitiveWrap(false);
+                    var g = new Global(cx);
+                    var result = cx.evaluateString(g, cmd, "test.js", 1, null);
+                    assertInstanceOf(Number.class, result);
+                    assertEquals(10, ((Number) result).intValue());
+                    return null;
+                });
+    }
+
+    @Test
+    public void testSubmitScript() {
+        String cmd = "a = 5; var f = submit(script); f.get()";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.getWrapFactory().setJavaPrimitiveWrap(false);
+                    var g = new Global(cx);
+                    var script = cx.compileString("a * 2", "script.js", 1, null);
+                    assertTrue(script instanceof Script);
+                    g.put("script", g, script);
+                    var result = cx.evaluateString(g, cmd, "test.js", 1, null);
+                    assertInstanceOf(Number.class, result);
+                    assertEquals(10, ((Number) result).intValue());
+                    return null;
+                });
+    }
 }
