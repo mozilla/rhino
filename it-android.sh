@@ -1,7 +1,8 @@
 #/usr/bin/env bash
 CONTAINER_NAME=android-container
-IMAGE=budtmo/docker-android:emulator_14.0
+IMAGE=budtmo/docker-android:emulator_13.0
 HTTP_PORT=6080
+ADB_PORT=5555
 APP=app/build/outputs/apk/debug/app-debug.apk
 
 
@@ -12,7 +13,7 @@ else
     echo "- Container is not running. Starting '$CONTAINER_NAME'"
     docker run -d \
       -p $HTTP_PORT:6080 \
-      -p 5555:5555 \
+      -p $ADB_PORT:5555 \
       -e EMULATOR_DEVICE="Samsung Galaxy S10" \
       -e WEB_VNC=true \
       -v $PWD:/home/androidusr/tmp \

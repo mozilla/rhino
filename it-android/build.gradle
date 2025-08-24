@@ -41,10 +41,10 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
     android {
         namespace = "org.mozilla.javascript.android"
 
-        compileSdkVersion 34
+        compileSdkVersion 31
         defaultConfig {
-            minSdk = 34
-            targetSdk = 34
+            minSdk = 31
+            targetSdk = 31
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         }
