@@ -4,7 +4,7 @@
 
 plugins {
     id 'java-library'
-    id 'com.diffplug.spotless'
+    id 'rhino.spotless-conventions'
 }
 
 int testJavaVersion = -1
@@ -56,15 +56,3 @@ test {
     useJUnitPlatform()
 }
 
-spotless {
-    // There is no version of googleJavaFormat that works for Java 11 and 17,
-    // and different versions format differently. We're using a version that
-    // requires at least Java 17.
-    if (JavaVersion.current() >= JavaVersion.VERSION_17) {
-        java {
-            googleJavaFormat('1.23.0').aosp()
-        }
-    } else {
-        System.out.println("Not running Spotless: Java language version is " + JavaVersion.current())
-    }
-}
