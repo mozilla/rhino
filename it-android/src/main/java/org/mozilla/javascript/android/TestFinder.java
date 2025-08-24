@@ -2,7 +2,6 @@ package org.mozilla.javascript.android;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +29,4 @@ public class TestFinder {
         }
         return Collections.emptyMap();
     }
-
-
 }
