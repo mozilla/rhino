@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mozilla.javascript.Context;
@@ -123,6 +125,7 @@ public class Global extends ImporterTopLevel {
             "seal",
             "serialize",
             "spawn",
+            "submit",
             "sync",
             "toint32",
             "version",
@@ -524,25 +527,44 @@ public class Global extends ImporterTopLevel {
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         Scriptable scope = funObj.getParentScope();
-        Runner runner;
+        ContextAction<?> action = getAsyncAction(cx, args, scope);
+        ContextFactory factory = cx.getFactory();
+        Thread thread = new Thread(() -> factory.call(action));
+        thread.start();
+        return cx.getWrapFactory().wrap(cx, scope, thread, Thread.class);
+    }
+
+    /**
+     * The submit function runs a given function or script in a ThreadPool.
+     *
+     * <p>js&gt; function g() { a = 7; } js&gt; a = 3; 3 js&gt; submit(g) Future js&gt; a 3
+     */
+    @SuppressWarnings("AndroidJdkLibsChecker")
+    public static Object submit(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        Scriptable scope = funObj.getParentScope();
+        ContextAction<Object> action = getAsyncAction(cx, args, scope);
+        ContextFactory factory = cx.getFactory();
+        Future<Object> future = ForkJoinPool.commonPool().submit(() -> factory.call(action));
+        return cx.getWrapFactory().wrap(cx, scope, future, Future.class);
+    }
+
+    private static ContextAction<Object> getAsyncAction(
+            Context cx, Object[] args, Scriptable scope) {
+        ContextAction<Object> action;
         if (args.length != 0 && args[0] instanceof Function) {
-            Object[] newArgs = null;
-            if (args.length > 1 && args[1] instanceof Scriptable) {
-                newArgs = cx.getElements((Scriptable) args[1]);
-            }
-            if (newArgs == null) {
-                newArgs = ScriptRuntime.emptyArgs;
-            }
-            runner = new Runner(scope, (Function) args[0], newArgs);
+            Function f = (Function) args[0];
+            Object[] newArgs =
+                    args.length > 1 && args[1] instanceof Scriptable
+                            ? cx.getElements((Scriptable) args[1])
+                            : ScriptRuntime.emptyArgs;
+            action = cx2 -> f.call(cx2, scope, scope, newArgs);
         } else if (args.length != 0 && args[0] instanceof Script) {
-            runner = new Runner(scope, (Script) args[0]);
+            Script s = (Script) args[0];
+            action = cx2 -> s.exec(cx2, scope, scope);
         } else {
             throw reportRuntimeError("msg.spawn.args");
         }
-        runner.factory = cx.getFactory();
-        Thread thread = new Thread(runner);
-        thread.start();
-        return thread;
+        return action;
     }
 
     /**
@@ -884,35 +906,4 @@ public class Global extends ImporterTopLevel {
     public interface CommandExecutor {
         Process exec(String[] cmdarray, String[] envp, File dir) throws IOException;
     }
-}
-
-class Runner implements Runnable, ContextAction<Object> {
-
-    Runner(Scriptable scope, Function func, Object[] args) {
-        this.scope = scope;
-        f = func;
-        this.args = args;
-    }
-
-    Runner(Scriptable scope, Script script) {
-        this.scope = scope;
-        s = script;
-    }
-
-    @Override
-    public void run() {
-        factory.call(this);
-    }
-
-    @Override
-    public Object run(Context cx) {
-        if (f != null) return f.call(cx, scope, scope, args);
-        else return s.exec(cx, scope, scope);
-    }
-
-    ContextFactory factory;
-    private Scriptable scope;
-    private Function f;
-    private Script s;
-    private Object[] args;
 }
