@@ -8,14 +8,29 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
 public class MainActivity extends Activity {
+
+    private int k() {
+        return Math.min(3,1);
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Map<String, String> tests = TestFinder.listFiles(this);
         StringBuilder sb = new StringBuilder();
+        System.out.println("Warmup");
+        long start = System.currentTimeMillis();
+        int j=0;
+        for (int i = 0; i < 1_000_000; i++) {
+            j+= k();
+        }
+
+        start = System.currentTimeMillis()-start;
+        sb.append(j + ": Took  " + start + " ms");
+        System.out.println(sb.toString());
         tests.forEach(
                 (name, js) -> {
+                    System.out.println("Executing " + name);
                     try (Context cx = Context.enter()) {
                         Scriptable scope = cx.initStandardObjects();
                         String jsCode = "3+5";
