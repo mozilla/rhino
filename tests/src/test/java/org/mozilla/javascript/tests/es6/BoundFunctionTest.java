@@ -41,1293 +41,666 @@ public class BoundFunctionTest {
 
     @Test
     public void fooArgs0_boundArgs0_invokeArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis []", code);
+        Utils.assertWithAllModes_ES6("boundThis []",
+                constructCode(0, 0, "(", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs0_invokeArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x]",
+                constructCode(0, 0, "(", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs0_invokeArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x,y]",
+                constructCode(0, 0, "(", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs1_invokeArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis [a]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a]",
+                constructCode(0, 1, "(", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs1_invokeArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x]",
+                constructCode(0, 1, "(", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs1_invokeArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x,y]",
+                constructCode(0, 1, "(", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs2_invokeArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b]",
+                constructCode(0, 2, "(", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs2_invokeArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x]",
+                constructCode(0, 2, "(", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs2_invokeArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]",
+                constructCode(0, 2, "(", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs0_invokeArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined []",
+                constructCode(1, 0, "(", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs0_invokeArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis x []", code);
+        Utils.assertWithAllModes_ES6("boundThis x []",
+                constructCode(1, 0, "(", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs0_invokeArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis x [y]",
+                constructCode(1, 0, "(", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs1_invokeArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis a []", code);
+        Utils.assertWithAllModes_ES6("boundThis a []",
+                constructCode(1, 1, "(", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs1_invokeArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x]",
+                constructCode(1, 1, "(", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs1_invokeArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x,y]",
+                constructCode(1, 1, "(", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs2_invokeArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b]",
+                constructCode(1, 2, "(", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs2_invokeArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x]",
+                constructCode(1, 2, "(", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs2_invokeArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]",
+                constructCode(1, 2, "(", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs0_invokeArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []",
+                constructCode(2, 0, "(", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs0_invokeArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis x,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,undefined []",
+                constructCode(2, 0, "(", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs0_invokeArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis x,y []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,y []",
+                constructCode(2, 0, "(", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs1_invokeArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis a,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,undefined []",
+                constructCode(2, 1, "(", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs1_invokeArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x []",
+                constructCode(2, 1, "(", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs1_invokeArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x [y]",
+                constructCode(2, 1, "(", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs2_invokeArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo();";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b []",
+                constructCode(2, 2, "(", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs2_invokeArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x]",
+                constructCode(2, 2, "(", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs2_invokeArgs2() {
-        String code =
-                "function foo(i,j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo('x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]",
+                constructCode(2, 2, "(", 2));
     }
 
 
     @Test
     public void fooArgs0_boundArgs0_callArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis []", code);
+        Utils.assertWithAllModes_ES6("boundThis []",
+                constructCode(0, 0, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs0_callArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x]",
+                constructCode(0, 0, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs0_callArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x,y]",
+                constructCode(0, 0, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs1_callArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a]",
+                constructCode(0, 1, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs1_callArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x]",
+                constructCode(0, 1, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs1_callArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x,y]",
+                constructCode(0, 1, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs2_callArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b]",
+                constructCode(0, 2, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs2_callArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x]",
+                constructCode(0, 2, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs2_callArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]",
+                constructCode(0, 2, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs0_callArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined []",
+                constructCode(1, 0, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs0_callArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis x []", code);
+        Utils.assertWithAllModes_ES6("boundThis x []",
+                constructCode(1, 0, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs0_callArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis x [y]",
+                constructCode(1, 0, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs1_callArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a []", code);
+        Utils.assertWithAllModes_ES6("boundThis a []",
+                constructCode(1, 1, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs1_callArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x]",
+                constructCode(1, 1, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs1_callArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x,y]",
+                constructCode(1, 1, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs2_callArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b]",
+                constructCode(1, 2, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs2_callArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x]",
+                constructCode(1, 2, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs2_callArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]",
+                constructCode(1, 2, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs0_callArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []",
+                constructCode(2, 0, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs0_callArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis x,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,undefined []",
+                constructCode(2, 0, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs0_callArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis x,y []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,y []",
+                constructCode(2, 0, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs1_callArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,undefined []",
+                constructCode(2, 1, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs1_callArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x []",
+                constructCode(2, 1, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs1_callArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x [y]",
+                constructCode(2, 1, ".call('callThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs2_callArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b []",
+                constructCode(2, 2, ".call('callThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs2_callArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x]",
+                constructCode(2, 2, ".call('callThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs2_callArgs2() {
-        String code =
-                "function foo(i,j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.call('callThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]",
+                constructCode(2, 2, ".call('callThis'", 2));
     }
 
 
     @Test
     public void fooArgs0_boundArgs0_applyArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis []", code);
+        Utils.assertWithAllModes_ES6("boundThis []",
+                constructCode(0, 0, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs0_applyArgsNull() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis []", code);
+        Utils.assertWithAllModes_ES6("boundThis []",
+                constructCode(0, 0, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs0_boundArgs0_applyArgsEmpty() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis []", code);
+        Utils.assertWithAllModes_ES6("boundThis []",
+                constructCode(0, 0, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs0_boundArgs0_applyArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x]",
+                constructCode(0, 0, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs0_applyArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [x,y]",
+                constructCode(0, 0, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs1_applyArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a]",
+                constructCode(0, 1, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs1_applyArgsNull() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a]",
+                constructCode(0, 1, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs0_boundArgs1_applyArgsEmpty() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a]",
+                constructCode(0, 1, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs0_boundArgs1_applyArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x]",
+                constructCode(0, 1, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs1_applyArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,x,y]",
+                constructCode(0, 1, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs0_boundArgs2_applyArgs0() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b]",
+                constructCode(0, 2, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs0_boundArgs2_applyArgsNull() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b]",
+                constructCode(0, 2, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs0_boundArgs2_applyArgsEmpty() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b]",
+                constructCode(0, 2, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs0_boundArgs2_applyArgs1() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x]",
+                constructCode(0, 2, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs0_boundArgs2_applyArgs2() {
-        String code =
-                "function foo() {\n"
-                        + "  var args = Array.prototype.slice.call(arguments);\n"
-                        + "  return this.toString() + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis [a,b,x,y]",
+                constructCode(0, 2, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs0_applyArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined []",
+                constructCode(1, 0, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs0_applyArgsNull() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined []",
+                constructCode(1, 0, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs1_boundArgs0_applyArgsEmpty() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined []",
+                constructCode(1, 0, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs1_boundArgs0_applyArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis x []", code);
+        Utils.assertWithAllModes_ES6("boundThis x []",
+                constructCode(1, 0, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs0_applyArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', 'x', 'y');";
-
-        Utils.assertWithAllModes_ES6("boundThis x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis x [y]",
+                constructCode(1, 0, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs1_boundArgs1_applyArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a []", code);
+        Utils.assertWithAllModes_ES6("boundThis a []",
+                constructCode(1, 1, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs1_applyArgsNull() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis a []", code);
+        Utils.assertWithAllModes_ES6("boundThis a []",
+                constructCode(1, 1, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs1_boundArgs1_applyArgsEmpty() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis a []", code);
+        Utils.assertWithAllModes_ES6("boundThis a []",
+                constructCode(1, 1, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs1_boundArgs1_applyArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x]",
+                constructCode(1, 1, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs1_applyArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [x,y]",
+                constructCode(1, 1, ".apply('applyThis'", 2));
     }
-
 
     @Test
     public void fooArgs1_boundArgs2_applyArgs0() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b]",
+                constructCode(1, 2, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs1_boundArgs2_applyArgsNull() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b]",
+                constructCode(1, 2, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs1_boundArgs2_applyArgsEmpty() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b]",
+                constructCode(1, 2, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs1_boundArgs2_applyArgs1() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x]",
+                constructCode(1, 2, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs1_boundArgs2_applyArgs2() {
-        String code =
-                "function foo(i) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 1);\n"
-                        + "  return this.toString() + ' ' + i + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a [b,x,y]",
+                constructCode(1, 2, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs0_applyArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []",
+                constructCode(2, 0, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs0_applyArgsNull() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []",
+                constructCode(2, 0, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs2_boundArgs0_applyArgsEmpty() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis undefined,undefined []",
+                constructCode(2, 0, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs2_boundArgs0_applyArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis x,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,undefined []",
+                constructCode(2, 0, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs0_applyArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis x,y []", code);
+        Utils.assertWithAllModes_ES6("boundThis x,y []",
+                constructCode(2, 0, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs1_applyArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,undefined []",
+                constructCode(2, 1, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs1_applyArgsNull() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,undefined []",
+                constructCode(2, 1, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs2_boundArgs1_applyArgsEmpty() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,undefined []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,undefined []",
+                constructCode(2, 1, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs2_boundArgs1_applyArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x []",
+                constructCode(2, 1, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs1_applyArgs2() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,x [y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,x [y]",
+                constructCode(2, 1, ".apply('applyThis'", 2));
     }
 
     @Test
     public void fooArgs2_boundArgs2_applyArgs0() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis');";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b []",
+                constructCode(2, 2, ".apply('applyThis'", 0));
     }
 
     @Test
     public void fooArgs2_boundArgs2_applyArgsNull() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', null);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b []",
+                constructCode(2, 2, ".apply('applyThis'", -1));
     }
 
     @Test
     public void fooArgs2_boundArgs2_applyArgsEmpty() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', []);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b []", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b []",
+                constructCode(2, 2, ".apply('applyThis'", -2));
     }
 
     @Test
     public void fooArgs2_boundArgs2_applyArgs1() {
-        String code =
-                "function foo(i, j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x]",
+                constructCode(2, 2, ".apply('applyThis'", 1));
     }
 
     @Test
     public void fooArgs2_boundArgs2_applyArgs2() {
-        String code =
-                "function foo(i,j) {\n"
-                        + "  var args = Array.prototype.slice.call(arguments, 2);\n"
-                        + "  return this.toString() + ' ' + i + ',' + j + ' [' + args.join(',') + ']';\n"
-                        + "};\n"
-                        + "var boundFoo = foo.bind('boundThis', 'a', 'b');\n"
-                        + "boundFoo.apply('applyThis', ['x', 'y']);";
-
-        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]", code);
+        Utils.assertWithAllModes_ES6("boundThis a,b [x,y]",
+                constructCode(2, 2, ".apply('applyThis'", 2));
     }
+
+    public String constructCode(int fooArgs, int boundArgs, String invokeFoo, int invokeArgs) {
+        StringBuilder code = new StringBuilder();
+        code.append("function foo(");
+        if (fooArgs == 1) {
+            code.append("i");
+        }
+        else if (fooArgs == 2) {
+            code.append("i,j");
+        }
+        code.append(") {\n");
+
+        code.append("  var args = Array.prototype.slice.call(arguments, ")
+                .append(Integer.toString(fooArgs))
+                .append(");\n")
+
+            .append("  return this.toString()");
+        if (fooArgs == 1) {
+            code.append(" + ' ' + i");
+        }
+        else if (fooArgs == 2) {
+            code.append(" + ' ' + i + ',' + j");
+        }
+        code.append(" + ' [' + args.join(',') + ']';\n")
+            .append("};\n");
+
+        code.append("var boundFoo = foo.bind('boundThis'");
+        if (boundArgs == 1) {
+            code.append(", 'a'");
+        }
+        else if (boundArgs == 2) {
+            code.append(", 'a', 'b'");
+        }
+        code.append(");\n");
+
+        code.append("boundFoo")
+                .append(invokeFoo).append("");
+        if (invokeFoo.length() > 1) {
+            code.append(", ");
+        }
+        if (invokeFoo.contains("apply(")) {
+            if (invokeArgs == 1) {
+                code.append("['x']");
+            }
+            else if (invokeArgs == 2) {
+                code.append("['x', 'y']");
+            }
+            else if (invokeArgs == -1) {
+                code.append("null");
+            }
+            else if (invokeArgs == -2) {
+                code.append("[]");
+            }
+        }
+        else {
+            if (invokeArgs == 1) {
+                code.append("'x'");
+            }
+            else if (invokeArgs == 2) {
+                code.append("'x', 'y'");
+            }
+        }
+        code.append(");");
+
+        return code.toString();
+    }
+
 
     @Test
     public void invokeBoundCallManyArgs() {
