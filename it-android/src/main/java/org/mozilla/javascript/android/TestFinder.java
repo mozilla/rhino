@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.TreeMap;
 
 public class TestFinder {
@@ -19,7 +20,10 @@ public class TestFinder {
             if (files != null) {
                 for (String file : files) {
                     try (InputStream in = assetManager.open("tests/" + file)) {
-                        tests.put(file, new String(in.readAllBytes(), StandardCharsets.UTF_8));
+                        Scanner scanner = new Scanner(in).useDelimiter("\\A");
+                        if (scanner.hasNext()) {
+                            tests.put(file, scanner.next());
+                        }
                     }
                 }
             }
