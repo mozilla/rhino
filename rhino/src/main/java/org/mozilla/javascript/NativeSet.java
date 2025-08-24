@@ -95,6 +95,65 @@ public class NativeSet extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
 
+        // ES2025 Set methods
+        constructor.definePrototypeMethod(
+                scope,
+                "intersection",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "intersection").js_intersection(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "union",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "union").js_union(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "difference",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "difference").js_difference(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "symmetricDifference",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "symmetricDifference")
+                                .js_symmetricDifference(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "isSubsetOf",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "isSubsetOf").js_isSubsetOf(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "isSupersetOf",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "isSupersetOf").js_isSupersetOf(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(
+                scope,
+                "isDisjointFrom",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        realThis(thisObj, "isDisjointFrom").js_isDisjointFrom(lcx, lscope, args),
+                DONTENUM,
+                DONTENUM | READONLY);
+
         // The spec requires very specific handling of the "size" prototype
         // property that's not like other things that we already do.
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
@@ -152,7 +211,12 @@ public class NativeSet extends ScriptableObject {
     }
 
     private Object js_has(Object arg) {
-        return entries.has(arg);
+        // Special handling of "negative zero" from the spec.
+        Object key = arg;
+        if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+            key = ScriptRuntime.zeroObj;
+        }
+        return entries.has(key);
     }
 
     private Object js_clear() {
@@ -231,5 +295,473 @@ public class NativeSet extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.incompat.call", name);
         }
         return ns;
+    }
+
+    // ES2025 Set Methods Implementation
+
+    private Object js_intersection(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
+        result.instanceOfSet = true;
+
+        // Check if other is a Set-like object with size, has, and keys
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND) {
+            // Set-like object path (Set, Map, etc.)
+            return js_intersectionSetLike(cx, scope, otherObj, result, sizeVal, hasVal, keysVal);
+        } else {
+            // Generic iterable path (Array, String, Symbol.iterator, etc.)
+            return js_intersectionIterable(cx, scope, otherObj, result);
+        }
+    }
+
+    private Object js_intersectionSetLike(
+            Context cx,
+            Scriptable scope,
+            Object otherObj,
+            NativeSet result,
+            Object sizeVal,
+            Object hasVal,
+            Object keysVal) {
+        // Validate has and keys are callable
+        if (!(hasVal instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function", "has", ScriptRuntime.typeof(hasVal));
+        }
+        if (!(keysVal instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
+        }
+
+        Callable hasMethod = (Callable) hasVal;
+        Callable keysMethod = (Callable) keysVal;
+
+        // ES2025: Compare sizes to determine iteration strategy
+        double otherSizeDouble = ScriptRuntime.toNumber(sizeVal);
+        if (Double.isNaN(otherSizeDouble)) {
+            throw ScriptRuntime.typeError("size is not a number");
+        }
+        int otherSize =
+                Double.isInfinite(otherSizeDouble)
+                        ? Integer.MAX_VALUE
+                        : (int) Math.floor(otherSizeDouble);
+        int thisSize = entries.size();
+
+        if (thisSize <= otherSize) {
+            // When this.size <= other.size: iterate through this, call other.has()
+            for (Hashtable.Entry entry : entries) {
+                Object key = entry.key;
+                Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                if (ScriptRuntime.toBoolean(inOther)) {
+                    result.js_add(key);
+                }
+            }
+        } else {
+            // When this.size > other.size: iterate through other.keys(), call this.has()
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(
+                                    cx,
+                                    scope,
+                                    ScriptableObject.ensureScriptable(otherObj),
+                                    ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object key : it) {
+                    if (js_has(key) == Boolean.TRUE) {
+                        result.js_add(key);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_intersectionIterable(
+            Context cx, Scriptable scope, Object otherObj, NativeSet result) {
+        // For generic iterables, we need to iterate through all values
+        // and check if they exist in this set
+        Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            for (Object value : it) {
+                if (js_has(value) == Boolean.TRUE) {
+                    result.js_add(value);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_union(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
+        result.instanceOfSet = true;
+
+        // Add all elements from this set
+        for (Hashtable.Entry entry : entries) {
+            result.js_add(entry.key);
+        }
+
+        // Check if other is a Set-like object (has size, has, AND keys)
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND
+                && keysVal instanceof Callable) {
+            // Set-like object - use keys method
+            Callable keysMethod = (Callable) keysVal;
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object key : it) {
+                    result.js_add(key);
+                }
+            }
+        } else {
+            // Generic iterable (including arrays) - use Symbol.iterator
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    result.js_add(value);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_difference(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
+        result.instanceOfSet = true;
+
+        // Check if other is a Set-like object with size, has, and keys
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND) {
+            // Set-like object path with size optimization
+            return js_differenceSetLike(cx, scope, otherObj, result, sizeVal, hasVal, keysVal);
+        } else {
+            // Generic iterable path - no size optimization possible
+            return js_differenceIterable(cx, scope, otherObj, result);
+        }
+    }
+
+    private Object js_differenceSetLike(
+            Context cx,
+            Scriptable scope,
+            Object otherObj,
+            NativeSet result,
+            Object sizeVal,
+            Object hasVal,
+            Object keysVal) {
+        // Validate has and keys are callable
+        if (!(hasVal instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function", "has", ScriptRuntime.typeof(hasVal));
+        }
+        if (!(keysVal instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function", "keys", ScriptRuntime.typeof(keysVal));
+        }
+
+        Callable hasMethod = (Callable) hasVal;
+        Callable keysMethod = (Callable) keysVal;
+
+        int otherSize = ScriptRuntime.toInt32(sizeVal);
+        int thisSize = entries.size();
+
+        // According to the spec and test converts-negative-zero.js:
+        // When this.size > other.size, we should iterate through other.keys()
+        // and remove matching elements, NOT call other.has()
+        if (thisSize > otherSize) {
+
+            // First, add all elements from this set
+            for (Hashtable.Entry entry : entries) {
+                result.js_add(entry.key);
+            }
+
+            // Then iterate through other and remove matching elements
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(
+                                    cx,
+                                    scope,
+                                    ScriptableObject.ensureScriptable(otherObj),
+                                    ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object key : it) {
+                    // Convert -0 to +0 as the spec requires
+                    if (key instanceof Number
+                            && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+                        key = ScriptRuntime.zeroObj;
+                    }
+                    result.js_delete(key);
+                }
+            }
+        } else {
+            // When this.size <= other.size, iterate through this and check with has()
+
+            for (Hashtable.Entry entry : entries) {
+                Object key = entry.key;
+                Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                if (!ScriptRuntime.toBoolean(inOther)) {
+                    result.js_add(key);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_differenceIterable(
+            Context cx, Scriptable scope, Object otherObj, NativeSet result) {
+        // First, add all elements from this set
+        for (Hashtable.Entry entry : entries) {
+            result.js_add(entry.key);
+        }
+
+        // Then iterate through other and remove matching elements
+        Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            for (Object value : it) {
+                // Convert -0 to +0 as the spec requires
+                if (value instanceof Number
+                        && ((Number) value).doubleValue() == ScriptRuntime.negativeZero) {
+                    value = ScriptRuntime.zeroObj;
+                }
+                result.js_delete(value);
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_symmetricDifference(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
+        result.instanceOfSet = true;
+
+        // Check if other is a Set-like object
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (hasVal != Scriptable.NOT_FOUND
+                && hasVal instanceof Callable
+                && keysVal != Scriptable.NOT_FOUND
+                && keysVal instanceof Callable) {
+            // Set-like object path
+            Callable hasMethod = (Callable) hasVal;
+            Callable keysMethod = (Callable) keysVal;
+
+            // Add elements from this that are not in other
+            for (Hashtable.Entry entry : entries) {
+                Object key = entry.key;
+                Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                if (!ScriptRuntime.toBoolean(inOther)) {
+                    result.js_add(key);
+                }
+            }
+
+            // Add elements from other that are not in this
+            Object iterator =
+                    ScriptRuntime.callIterator(
+                            keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                            cx,
+                            scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object key : it) {
+                    if (js_has(key) != Boolean.TRUE) {
+                        result.js_add(key);
+                    }
+                }
+            }
+        } else {
+            // Generic iterable path
+            // First add all elements from this set
+            for (Hashtable.Entry entry : entries) {
+                result.js_add(entry.key);
+            }
+
+            // Then iterate through other
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) == Boolean.TRUE) {
+                        // If in both sets, remove it (symmetric difference)
+                        result.js_delete(value);
+                    } else {
+                        // If only in other, add it
+                        result.js_add(value);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Object js_isSubsetOf(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        // Check if other is a Set-like object with has
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+
+        if (hasVal != Scriptable.NOT_FOUND && hasVal instanceof Callable) {
+            // Set-like object - use has method for efficiency
+            Callable hasMethod = (Callable) hasVal;
+
+            // Check size optimization if available
+            Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+            if (sizeVal != Scriptable.NOT_FOUND) {
+                int otherSize = ScriptRuntime.toInt32(sizeVal);
+                int thisSize = entries.size();
+                // If this set is larger than other, it cannot be a subset
+                if (thisSize > otherSize) {
+                    return Boolean.FALSE;
+                }
+            }
+
+            // Check if all elements of this are in other
+            for (Hashtable.Entry entry : entries) {
+                Object key = entry.key;
+                Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                if (!ScriptRuntime.toBoolean(inOther)) {
+                    return Boolean.FALSE;
+                }
+            }
+        } else {
+            // Generic iterable - need to convert to a Set for contains checks
+            NativeSet otherSet = new NativeSet();
+            otherSet.instanceOfSet = true;
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    otherSet.js_add(value);
+                }
+            }
+
+            // Check if all elements of this are in otherSet
+            for (Hashtable.Entry entry : entries) {
+                if (otherSet.js_has(entry.key) != Boolean.TRUE) {
+                    return Boolean.FALSE;
+                }
+            }
+        }
+
+        return Boolean.TRUE;
+    }
+
+    private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        // Simply iterate through other and check if all elements are in this
+        Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            for (Object value : it) {
+                if (js_has(value) != Boolean.TRUE) {
+                    return Boolean.FALSE;
+                }
+            }
+        }
+
+        return Boolean.TRUE;
+    }
+
+    private Object js_isDisjointFrom(Context cx, Scriptable scope, Object[] args) {
+        Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
+
+        // Check if other is a Set-like object
+        Scriptable scriptable = ScriptableObject.ensureScriptable(otherObj);
+        Object sizeVal = ScriptableObject.getProperty(scriptable, "size");
+        Object hasVal = ScriptableObject.getProperty(scriptable, "has");
+        Object keysVal = ScriptableObject.getProperty(scriptable, "keys");
+
+        if (sizeVal != Scriptable.NOT_FOUND
+                && hasVal != Scriptable.NOT_FOUND
+                && keysVal != Scriptable.NOT_FOUND
+                && hasVal instanceof Callable
+                && keysVal instanceof Callable) {
+            // Set-like object with size optimization
+            Callable hasMethod = (Callable) hasVal;
+            Callable keysMethod = (Callable) keysVal;
+            int otherSize = ScriptRuntime.toInt32(sizeVal);
+            int thisSize = entries.size();
+
+            if (thisSize <= otherSize) {
+                // Iterate through this set
+                for (Hashtable.Entry entry : entries) {
+                    Object key = entry.key;
+                    Object inOther = callHas(cx, scope, otherObj, hasMethod, key);
+                    if (ScriptRuntime.toBoolean(inOther)) {
+                        return Boolean.FALSE;
+                    }
+                }
+            } else {
+                // Iterate through other
+                Object iterator =
+                        ScriptRuntime.callIterator(
+                                keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                                cx,
+                                scope);
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                    for (Object key : it) {
+                        if (js_has(key) == Boolean.TRUE) {
+                            return Boolean.FALSE;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Generic iterable - iterate through other
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) == Boolean.TRUE) {
+                        return Boolean.FALSE;
+                    }
+                }
+            }
+        }
+
+        return Boolean.TRUE;
+    }
+
+    // Helper method for Set operations
+
+    private static Object callHas(
+            Context cx, Scriptable scope, Object obj, Object hasMethod, Object key) {
+        return ((Callable) hasMethod)
+                .call(cx, scope, ScriptableObject.ensureScriptable(obj), new Object[] {key});
     }
 }
