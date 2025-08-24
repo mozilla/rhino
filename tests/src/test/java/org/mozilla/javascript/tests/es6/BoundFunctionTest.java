@@ -830,7 +830,7 @@ public class BoundFunctionTest {
         }
         code.append(");\n");
 
-        code.append("boundFoo").append(invokeFoo).append("");
+        code.append("boundFoo").append(invokeFoo);
         if (invokeFoo.length() > 1) {
             code.append(", ");
         }
