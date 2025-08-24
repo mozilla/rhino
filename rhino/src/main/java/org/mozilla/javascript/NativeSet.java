@@ -621,8 +621,25 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Per spec, reject non-Set-like objects
-            throw ScriptRuntime.typeError("Set methods require Set-like objects");
+            // Generic iterable path
+            // First add all elements from this set
+            for (Hashtable.Entry entry : entries) {
+                result.js_add(entry.key);
+            }
+
+            // Then iterate through other
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) == Boolean.TRUE) {
+                        // If in both sets, remove it (symmetric difference)
+                        result.js_delete(value);
+                    } else {
+                        // If only in other, add it
+                        result.js_add(value);
+                    }
+                }
+            }
         }
 
         return result;
@@ -659,8 +676,22 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Per spec, reject non-Set-like objects
-            throw ScriptRuntime.typeError("Set methods require Set-like objects");
+            // Generic iterable - need to convert to a Set for contains checks
+            NativeSet otherSet = new NativeSet();
+            otherSet.instanceOfSet = true;
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    otherSet.js_add(value);
+                }
+            }
+
+            // Check if all elements of this are in otherSet
+            for (Hashtable.Entry entry : entries) {
+                if (otherSet.js_has(entry.key) != Boolean.TRUE) {
+                    return Boolean.FALSE;
+                }
+            }
         }
 
         return Boolean.TRUE;
@@ -699,8 +730,16 @@ public class NativeSet extends ScriptableObject {
             }
             return Boolean.TRUE;
         } else {
-            // Per spec, reject non-Set-like objects
-            throw ScriptRuntime.typeError("Set methods require Set-like objects");
+            // Generic iterable - iterate through other and check if all elements are in this
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) != Boolean.TRUE) {
+                        return Boolean.FALSE;
+                    }
+                }
+            }
+            return Boolean.TRUE;
         }
     }
 
@@ -749,8 +788,15 @@ public class NativeSet extends ScriptableObject {
                 }
             }
         } else {
-            // Per spec, reject non-Set-like objects
-            throw ScriptRuntime.typeError("Set methods require Set-like objects");
+            // Generic iterable - iterate through other
+            Object iterator = ScriptRuntime.callIterator(otherObj, cx, scope);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                for (Object value : it) {
+                    if (js_has(value) == Boolean.TRUE) {
+                        return Boolean.FALSE;
+                    }
+                }
+            }
         }
 
         return Boolean.TRUE;
