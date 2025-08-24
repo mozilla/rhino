@@ -21,6 +21,12 @@ jobs:
     - name: Check out test262
       # We don't actually want all the history for this part
       run: git submodule update --init --single-branch
+      # we need this for android enmulator
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
     - name: Set up Java
       uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
       # By putting JVMs in reverse order, the last one is the one that
@@ -31,6 +37,18 @@ jobs:
           17
           21
         distribution: 'adopt'
+    - name: Build and test for Android
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 31
+        arch: x86_64
+        script: ./gradlew it-android:connectedCheck
+    - name: Upload results for Android
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: ${{ always() }}
+      with:
+        name: reports-android
+        path: '*/build/reports'
     - name: Build and test Java 21
       run: >-
         ./gradlew check
