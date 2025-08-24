@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -20,6 +21,24 @@ public class TestCase {
     private final Scriptable global;
     private final AssetManager assetManager;
 
+    private static final ContextFactory factory =
+            new ContextFactory() {
+                @Override
+                protected boolean hasFeature(Context cx, int featureIndex) {
+                    if (featureIndex == Context.FEATURE_ENABLE_XML_SECURE_PARSING) return false;
+                    return super.hasFeature(cx, featureIndex);
+                }
+
+                @Override
+                protected Context makeContext() {
+                    Context cx = super.makeContext();
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    cx.setGeneratingDebug(true);
+                    cx.seal(null);
+                    return cx;
+                }
+            };
+
     public TestCase(String name, Scriptable global, AssetManager assetManager) {
         this.name = name;
         this.global = global;
@@ -29,12 +48,12 @@ public class TestCase {
     public String run() {
         try (InputStream in = assetManager.open("tests/" + name);
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-                Context cx = Context.enter()) {
-            cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
-            cx.setGeneratingDebug(true);
+                Context cx = factory.enterContext()) {
+
             Scriptable scope = cx.newObject(global);
+            scope.setPrototype(global);
             scope.setParentScope(null);
-            Object result = cx.evaluateReader(global, rdr, name, 1, null);
+            Object result = cx.evaluateReader(scope, rdr, name, 1, null);
             return ScriptRuntime.toString(result);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -53,12 +72,10 @@ public class TestCase {
         ScriptableObject global;
         try (InputStream in = assetManager.open("assert.js");
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-                Context cx = Context.enter()) {
-            cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
-            cx.setGeneratingDebug(true);
+                Context cx = factory.enterContext()) {
             global = cx.initStandardObjects();
             cx.evaluateReader(global, rdr, "assert.js", 1, null);
-            // TODO: Does not work yet on android: global.sealObject();
+            global.sealObject();
         }
 
         String[] files = assetManager.list("tests");
