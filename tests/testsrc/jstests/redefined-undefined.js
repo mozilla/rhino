@@ -51,7 +51,7 @@ load("testsrc/assert.js");
 
 (function undefinedViaDefinePropertyIsIgnored() {
     Object.defineProperty(this, "undefined", { value: 10 });
-    assertEquals(undefined, undefined);
+    assertEquals(undefined, void 0);
 })();
 
 (function everythingStillWorks() {
