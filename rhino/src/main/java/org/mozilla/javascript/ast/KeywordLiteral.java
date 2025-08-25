@@ -10,9 +10,9 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for keyword literals: currently, {@code this}, {@code super}, {@code null}, {@code
- * true}, {@code false}, and {@code debugger}. Node type is one of {@link Token#THIS}, {@link
- * Token#SUPER}, {@link Token#NULL}, {@link Token#TRUE}, {@link Token#FALSE}, or {@link
- * Token#DEBUGGER}.
+ * undefined}, {@code true}, {@code false}, and {@code debugger}. Node type is one of {@link
+ * Token#THIS}, {@link Token#SUPER}, {@link Token#NULL}, {@link Token#UNDEFINED}, {@link
+ * Token#TRUE}, {@link Token#FALSE}, or {@link Token#DEBUGGER}.
  */
 public class KeywordLiteral extends AstNode {
 
@@ -46,6 +46,7 @@ public class KeywordLiteral extends AstNode {
         if (!(nodeType == Token.THIS
                 || nodeType == Token.SUPER
                 || nodeType == Token.NULL
+                || nodeType == Token.UNDEFINED
                 || nodeType == Token.TRUE
                 || nodeType == Token.FALSE
                 || nodeType == Token.DEBUGGER))
@@ -72,6 +73,9 @@ public class KeywordLiteral extends AstNode {
                 break;
             case Token.NULL:
                 sb.append("null");
+                break;
+            case Token.UNDEFINED:
+                sb.append("undefined");
                 break;
             case Token.TRUE:
                 sb.append("true");

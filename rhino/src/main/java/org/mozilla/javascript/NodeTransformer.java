@@ -330,11 +330,9 @@ public class NodeTransformer {
                             if (child.getType() == Token.EQ || child.getType() == Token.NE) {
                                 Node first = child.getFirstChild();
                                 Node last = child.getLastChild();
-                                if (first.getType() == Token.NAME
-                                        && first.getString().equals("undefined")) {
+                                if (first.getType() == Token.UNDEFINED) {
                                     child = last;
-                                } else if (last.getType() == Token.NAME
-                                        && last.getString().equals("undefined")) {
+                                } else if (last.getType() == Token.UNDEFINED) {
                                     child = first;
                                 }
                             }

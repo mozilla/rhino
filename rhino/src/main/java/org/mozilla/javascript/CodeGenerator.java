@@ -725,7 +725,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addIcode(Icode_UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     addStringOp(
@@ -770,7 +770,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addIcode(Icode_UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     visitExpression(child, 0);
@@ -1008,6 +1008,11 @@ class CodeGenerator extends Icode {
                 stackChange(1);
                 break;
 
+            case Token.UNDEFINED:
+                addIcode(Icode_UNDEF);
+                stackChange(1);
+                break;
+
             case Token.ENUM_NEXT:
             case Token.ENUM_ID:
                 addIndexOp(type, getLocalBlockRef(node));
@@ -1054,7 +1059,7 @@ class CodeGenerator extends Icode {
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
                     addIcode(Icode_POP);
-                    addStringOp(Token.NAME, "undefined");
+                    addIcode(Icode_UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else {
                     addStringOp(type, (String) node.getProp(Node.NAME_PROP));
@@ -1265,7 +1270,7 @@ class CodeGenerator extends Icode {
 
         // Put undefined
         addIcode(Icode_POP);
-        addStringOp(Token.NAME, "undefined");
+        addIcode(Icode_UNDEF);
         int afterLabel = iCodeTop;
         addGotoOp(Token.GOTO);
 

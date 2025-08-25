@@ -86,7 +86,8 @@ public class Token {
             NUMBER = NAME + 1,
             STRING = NUMBER + 1,
             NULL = STRING + 1,
-            THIS = NULL + 1,
+            UNDEFINED = NULL + 1,
+            THIS = UNDEFINED + 1,
             FALSE = THIS + 1,
             TRUE = FALSE + 1,
             SHEQ = TRUE + 1, // shallow equality (===)
@@ -365,6 +366,8 @@ public class Token {
                 return "STRING";
             case NULL:
                 return "NULL";
+            case UNDEFINED:
+                return "UNDEFINED";
             case THIS:
                 return "THIS";
             case FALSE:
@@ -696,6 +699,8 @@ public class Token {
                 return "true";
             case Token.TYPEOF:
                 return "typeof";
+            case Token.UNDEFINED:
+                return "undefined";
             case Token.VAR:
                 return "var";
             case Token.VOID:
