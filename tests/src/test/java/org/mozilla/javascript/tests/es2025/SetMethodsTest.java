@@ -58,10 +58,14 @@ public class SetMethodsTest {
         final String script =
                 "var set = new Set([1, 2, 3]);"
                         + "var arr = [2, 3, 4, 3, 2];"
-                        + // duplicates in array
-                        "var result = set.intersection(arr);"
-                        + "Array.from(result).sort().join(',')";
-        Utils.assertWithAllModes_ES6("2,3", script);
+                        + "try {"
+                        + "  set.intersection(arr);"
+                        + "  'no error';"
+                        + "} catch(e) {"
+                        + "  e.toString();"
+                        + "}";
+        Utils.assertWithAllModes_ES6(
+                "TypeError: Set-like object must have a 'size' property", script);
     }
 
     @Test
@@ -89,9 +93,14 @@ public class SetMethodsTest {
         final String script =
                 "var set = new Set([1, 2, 3]);"
                         + "var arr = [3, 4, 5, 4, 3];"
-                        + "var result = set.union(arr);"
-                        + "Array.from(result).sort().join(',')";
-        Utils.assertWithAllModes_ES6("1,2,3,4,5", script);
+                        + "try {"
+                        + "  set.union(arr);"
+                        + "  'no error';"
+                        + "} catch(e) {"
+                        + "  e.toString();"
+                        + "}";
+        Utils.assertWithAllModes_ES6(
+                "TypeError: Set-like object must have a 'size' property", script);
     }
 
     @Test
@@ -213,9 +222,14 @@ public class SetMethodsTest {
                         + "    };"
                         + "  }"
                         + "};"
-                        + "var result = set.intersection(custom);"
-                        + "Array.from(result).join(',')";
-        Utils.assertWithAllModes_ES6("2", script);
+                        + "try {"
+                        + "  set.intersection(custom);"
+                        + "  'no error';"
+                        + "} catch(e) {"
+                        + "  e.toString();"
+                        + "}";
+        Utils.assertWithAllModes_ES6(
+                "TypeError: Set-like object must have a 'size' property", script);
     }
 
     @Test
@@ -260,9 +274,14 @@ public class SetMethodsTest {
                 "var set = new Set(['1', '2', '3']);"
                         + "var arr = [1, 2, 3];"
                         + // numbers, not strings
-                        "var result = set.intersection(arr);"
-                        + "result.size";
-        Utils.assertWithAllModes_ES6(0, script); // no overlap due to type difference
+                        "try {"
+                        + "  set.intersection(arr);"
+                        + "  'no error';"
+                        + "} catch(e) {"
+                        + "  e.toString();"
+                        + "}";
+        Utils.assertWithAllModes_ES6(
+                "TypeError: Set-like object must have a 'size' property", script);
     }
 
     @Test
@@ -280,7 +299,7 @@ public class SetMethodsTest {
     public void testNonCallableKeysError() {
         final String script =
                 "var set = new Set([1, 2, 3]);"
-                        + "var badIterable = { keys: 'not a function' };"
+                        + "var badIterable = { size: 2, has: function() { return true; }, keys: 'not a function' };"
                         + "try {"
                         + "  set.intersection(badIterable);"
                         + "  false;"
@@ -294,7 +313,7 @@ public class SetMethodsTest {
     public void testNonCallableHasError() {
         final String script =
                 "var set = new Set([1, 2, 3]);"
-                        + "var badIterable = { keys: function() { return [].values(); }, has: 'not a function' };"
+                        + "var badIterable = { size: 2, keys: function() { return [].values(); }, has: 'not a function' };"
                         + "try {"
                         + "  set.intersection(badIterable);"
                         + "  false;"
@@ -302,6 +321,20 @@ public class SetMethodsTest {
                         + "  e instanceof TypeError;"
                         + "}";
         Utils.assertWithAllModes_ES6(true, script);
+    }
+
+    @Test
+    public void testSetLikeObjectWithAllProperties() {
+        final String script =
+                "var set = new Set([1, 2, 3]);"
+                        + "var setLike = {"
+                        + "  size: 3,"
+                        + "  has: function(v) { return v === 2 || v === 3 || v === 4; },"
+                        + "  keys: function() { return [2, 3, 4].values(); }"
+                        + "};"
+                        + "var result = set.intersection(setLike);"
+                        + "Array.from(result).sort().join(',')";
+        Utils.assertWithAllModes_ES6("2,3", script);
     }
 
     @Test
