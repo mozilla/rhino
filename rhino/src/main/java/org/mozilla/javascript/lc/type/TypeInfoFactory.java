@@ -110,6 +110,23 @@ public interface TypeInfoFactory extends Serializable {
     }
 
     /**
+     * Get consolidation mapping from the input class.
+     *
+     * <p>Example (for factory implemented by Rhino):
+     *
+     * <pre>
+     * class {@code A<Ta>} {}
+     * class {@code B<Tb>} extends {@code A<Tb>} {}
+     *
+     * interface {@code C<Tc>} {}
+     * interface {@code D<Td>} extends {@code C<Td>} {}
+     *
+     * class {@code E<Te>} extends {@code B<Te>} implements {@code D<String>} {}
+     * </pre>
+     *
+     * and input class is {@code E.class}. The result mapping will then be: {@code Ta -> Te}, {@code
+     * Tb -> Te}, {@code Tc -> String}, {@code Td -> String}
+     *
      * @see TypeInfo#consolidate(Map)
      */
     default Map<VariableTypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {

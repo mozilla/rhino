@@ -33,4 +33,9 @@ public class WeakReferenceFactory extends WithCacheFactory {
     protected final <K, V> Map<K, V> createTypeCache() {
         return Collections.synchronizedMap(new WeakHashMap<>());
     }
+
+    @Override
+    protected <K, V> Map<K, V> createConsolidationMappingCache() {
+        return Collections.synchronizedMap(new WeakHashMap<>());
+    }
 }

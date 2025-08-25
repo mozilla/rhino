@@ -83,7 +83,7 @@ decycle {
     ignoring from: "org.mozilla.javascript.Native*", to: "org.mozilla.javascript.lc.type.TypeInfo*"
     // CHECKME: Can we move JavaMembers + MemberBox also to o.m.j.lc
     ignoring from: "org.mozilla.javascript.JavaMembers", to: "org.mozilla.javascript.lc.type.TypeInfo*"
-    ignoring from: "org.mozilla.javascript.MemberBox", to: "org.mozilla.javascript.lc.type.TypeInfo*"
+    ignoring from: "org.mozilla.javascript.MemberBox", to: "org.mozilla.javascript.lc.type.*"
     ignoring from: "org.mozilla.javascript.AccessorSlot\$MemberBoxSetter", to: "org.mozilla.javascript.lc.type.TypeInfo"
     // CHECKME: Can we remove dependency to typeinfo from these objects?
     ignoring from: "org.mozilla.javascript.ScriptableObject", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
