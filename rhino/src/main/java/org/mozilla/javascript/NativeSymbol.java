@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -47,7 +46,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                 scope,
                 "for",
                 1,
-                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
+                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(cx, lscope, args, ctor),
                 DONTENUM,
                 DONTENUM | READONLY);
         ctor.defineConstructorMethod(
@@ -159,13 +158,14 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(
+            Context cx, Scriptable scope, Object[] args, LambdaConstructor constructor) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
                         : ScriptRuntime.toString(Undefined.instance));
 
-        Map<String, NativeSymbol> table = getGlobalMap(scope);
+        Map<String, NativeSymbol> table = cx.getSymbolTable();
         return table.computeIfAbsent(name, (k) -> createRegisteredSymbol(scope, constructor, name));
     }
 
@@ -178,7 +178,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         }
         NativeSymbol sym = (NativeSymbol) s;
 
-        Map<String, NativeSymbol> table = getGlobalMap(scope);
+        Map<String, NativeSymbol> table = cx.getSymbolTable();
         for (Map.Entry<String, NativeSymbol> e : table.entrySet()) {
             if (e.getValue().key == sym.key) {
                 return e.getKey();
@@ -254,22 +254,5 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     SymbolKey getKey() {
         return key;
-    }
-
-    /**
-     * Return the Map that stores global symbols for the 'for' and 'keyFor' operations. It must work
-     * across "realms" in the same top-level Rhino scope, so we store it there as an associated
-     * property.
-     */
-    @SuppressWarnings("unchecked")
-    private static Map<String, NativeSymbol> getGlobalMap(Scriptable scope) {
-        ScriptableObject top = (ScriptableObject) getTopLevelScope(scope);
-        Map<String, NativeSymbol> map =
-                (Map<String, NativeSymbol>) top.getAssociatedValue(GLOBAL_TABLE_KEY);
-        if (map == null) {
-            map = new HashMap<>();
-            top.associateValue(GLOBAL_TABLE_KEY, map);
-        }
-        return map;
     }
 }
