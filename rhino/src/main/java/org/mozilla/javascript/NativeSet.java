@@ -198,11 +198,11 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_add(Object k) {
         // Special handling of "negative zero" from the spec.
-        Object key = k;
-        if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
-            key = ScriptRuntime.zeroObj;
+        if ((k instanceof Number) && ((Number) k).doubleValue() == ScriptRuntime.negativeZero) {
+            entries.put(ScriptRuntime.zeroObj, ScriptRuntime.zeroObj);
+            return this;
         }
-        entries.put(key, key);
+        entries.put(k, k);
         return this;
     }
 
@@ -212,11 +212,10 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_has(Object arg) {
         // Special handling of "negative zero" from the spec.
-        Object key = arg;
-        if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
-            key = ScriptRuntime.zeroObj;
+        if ((arg instanceof Number) && ((Number) arg).doubleValue() == ScriptRuntime.negativeZero) {
+            return entries.has(ScriptRuntime.zeroObj);
         }
-        return entries.has(key);
+        return entries.has(arg);
     }
 
     private Object js_clear() {
