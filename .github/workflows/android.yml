@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 26, 28, 30, 33 ]
+        api-level: [15, 21, 26, 28, 30, 33 ]
     name: Rhino Android Tests
     steps:
     - name: Enable KVM

@@ -21,24 +21,14 @@ public abstract class SlotMapOwner {
 
     static final SlotMap THREAD_SAFE_EMPTY_SLOT_MAP = new ThreadSafeEmptySlotMap();
 
-    @SuppressWarnings("AndroidJdkLibsChecker")
-    // https://developer.android.com/reference/java/lang/invoke/VarHandle added in API level 33
-    // Note: Due presence of this class, dexing of rhino will not be possible for APIs < 26
     static final class ThreadedAccess {
 
-        private static final VarHandle SLOT_MAP = getSlotMapHandle();
-
-        private static VarHandle getSlotMapHandle() {
-            try {
-                return MethodHandles.lookup()
-                        .findVarHandle(SlotMapOwner.class, "slotMap", SlotMap.class);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new Error(e);
-            }
-        }
-
         static SlotMap checkAndReplaceMap(SlotMapOwner owner, SlotMap oldMap, SlotMap newMap) {
-            return (SlotMap) SLOT_MAP.compareAndExchange(owner, oldMap, newMap);
+            synchronized (owner) {
+                assert owner.slotMap == oldMap;
+                owner.slotMap = newMap;
+            }
+            return newMap;
         }
     }
 
