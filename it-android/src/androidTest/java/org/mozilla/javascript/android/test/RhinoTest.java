@@ -14,6 +14,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.android.TestCase;
 
+/**
+ * Simple testcase runner, that runs all Testcases provided by estCase.getTestCases.
+ *
+ * @author Roland Praml
+ */
 @RunWith(Parameterized.class)
 public class RhinoTest {
 
