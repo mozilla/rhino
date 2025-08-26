@@ -40,7 +40,6 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
 
     android {
         namespace = "org.mozilla.javascript.android"
-
         compileSdkVersion 33
         defaultConfig {
             minSdk = 21
@@ -49,8 +48,9 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
 
         }
         compileOptions {
-            sourceCompatibility JavaVersion.VERSION_11
-            targetCompatibility JavaVersion.VERSION_11
+            coreLibraryDesugaringEnabled true
+            sourceCompatibility JavaVersion.VERSION_8
+            targetCompatibility JavaVersion.VERSION_8
         }
     }
 
@@ -60,6 +60,8 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
         implementation project(':rhino')
         implementation project(':rhino-tools')
         implementation project(':rhino-xml')
+
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.9'
 
         testImplementation 'junit:junit:4.13.2'
         androidTestImplementation 'androidx.test:runner:1.7.0'
