@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.NativeObject.PROTO_PROPERTY;
+
 import java.util.Arrays;
 
 /** Used to store the support structures for a literal object (or array) being built. */
@@ -28,7 +30,53 @@ public final class NewLiteralStorage {
     }
 
     public void pushValue(Object value) {
-        values[index++] = value;
+        values[index] = value;
+        attemptToInferFunctionName(value);
+        ++index;
+    }
+
+    private void attemptToInferFunctionName(Object value) {
+        // Try to infer the name if the value is a normal JS function
+        if (this.keys == null
+                || (!(value instanceof NativeFunction) && !(value instanceof ArrowFunction))) {
+            return;
+        }
+
+        BaseFunction fun = (BaseFunction) value;
+        if (!"".equals(fun.get("name", fun))) {
+            return;
+        }
+
+        String prefix = "";
+        if (getterSetters[index] == -1) {
+            prefix = "get ";
+        } else if (getterSetters[index] == +1) {
+            prefix = "set ";
+        }
+
+        Object propKey = this.keys[index];
+        if (propKey instanceof Symbol) {
+            // For symbol keys, valid names are: `[foo]`, `get [foo]`
+            // However `[]` or `get []` aren't, and become `` and `get `
+            String symbolName = ((Symbol) propKey).getName();
+            if (!symbolName.isEmpty()) {
+                fun.setFunctionName(prefix + "[" + symbolName + "]");
+            } else if (!prefix.isEmpty()) {
+                fun.setFunctionName(prefix);
+            }
+        } else {
+            // Key was already converted to a string
+            if (!propKey.equals(PROTO_PROPERTY)) {
+                fun.setFunctionName(prefix + propKey);
+            } else {
+                // `__proto__` is, as usual, weird and applies only to methods, meaning:
+                // - { __proto__(){} } infers the name
+                // - { __proto__: function(){} } does not!
+                if (fun instanceof NativeFunction && ((NativeFunction) fun).isShorthand()) {
+                    fun.setFunctionName(prefix + propKey);
+                }
+            }
+        }
     }
 
     public void pushGetter(Object value) {
@@ -42,7 +90,11 @@ public final class NewLiteralStorage {
     }
 
     public void pushKey(Object key) {
-        keys[index] = key;
+        if (key instanceof Symbol) {
+            keys[index] = key;
+        } else {
+            keys[index] = ScriptRuntime.toString(key);
+        }
     }
 
     public void spread(Context cx, Scriptable scope, Object source) {
