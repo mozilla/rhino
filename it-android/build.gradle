@@ -49,8 +49,8 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
         }
         compileOptions {
             coreLibraryDesugaringEnabled true
-            sourceCompatibility JavaVersion.VERSION_8
-            targetCompatibility JavaVersion.VERSION_8
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
         }
     }
 
