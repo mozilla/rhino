@@ -15,6 +15,13 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
+/**
+ * Utility class, that search for testcases in "assets/tests".
+ *
+ * <p>The tests are executed in a MoziallaTestSuite-manner. It includes the assert.js by default.
+ *
+ * @author Roland Praml
+ */
 public class TestCase {
 
     private final String name;
