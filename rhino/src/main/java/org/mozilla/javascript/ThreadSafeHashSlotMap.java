@@ -3,6 +3,8 @@ package org.mozilla.javascript;
 import java.util.concurrent.locks.StampedLock;
 
 @SuppressWarnings("AndroidJdkLibsChecker")
+// https://developer.android.com/reference/java/util/concurrent/locks/StampedLock added in API level
+// 24
 class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
 
     private final StampedLock lock;

@@ -24,6 +24,7 @@ import java.util.Locale;
  *     <a href="https://dxr.mozilla.org/mozilla-central/source/js/src/jsdate.cpp">jsdate.cpp</a>
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
+// there is no java.time.format API in android
 final class NativeDate extends IdScriptableObject {
     private static final long serialVersionUID = -8307438915861678966L;
 
