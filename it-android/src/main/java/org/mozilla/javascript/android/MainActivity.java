@@ -6,11 +6,12 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * MainActivity, that runs all testcases on AppStart and displays them in a very minimalistic UI.
+ *
+ * @author Roland Praml
+ */
 public class MainActivity extends Activity {
-
-    private int k() {
-        return Math.min(3, 1);
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
