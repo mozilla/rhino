@@ -214,4 +214,9 @@ class FunctionNameTest {
     void inferenceIsNotUsedInEs5() {
         Utils.assertWithAllModes_1_8("", "var f = function() {}; f.name");
     }
+
+    @Test
+    void inferenceIsNotUsedInEs5InObjectLiteral() {
+        Utils.assertWithAllModes_1_8("", "o = { f: function() {} }; o.f.name");
+    }
 }

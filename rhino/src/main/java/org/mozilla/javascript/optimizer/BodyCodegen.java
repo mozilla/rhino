@@ -2251,15 +2251,14 @@ class BodyCodegen {
 
     /** load two arrays with property ids and values */
     private void addLoadProperty(Node node, Node child, Object[] properties, int count) {
-        cfw.add(ByteCode.NEW, "org/mozilla/javascript/NewLiteralStorage");
-        cfw.add(ByteCode.DUP);
+        cfw.addALoad(contextLocal);
         cfw.addLoadConstant(count - node.getIntProp(Node.NUMBER_OF_SPREAD, 0));
         cfw.addLoadConstant(1);
         cfw.addInvoke(
-                ByteCode.INVOKESPECIAL,
+                ByteCode.INVOKESTATIC,
                 "org/mozilla/javascript/NewLiteralStorage",
-                "<init>",
-                "(IZ)V");
+                "create",
+                "(Lorg/mozilla/javascript/Context;IZ)Lorg/mozilla/javascript/NewLiteralStorage;");
 
         if (count == 0) {
             return;
