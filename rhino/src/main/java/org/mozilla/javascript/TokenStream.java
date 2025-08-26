@@ -577,11 +577,11 @@ class TokenStream implements Parser.CurrentPositionReporter {
         return id & 0xff;
     }
 
-    @SuppressWarnings("AndroidJdkLibsChecker")
     private static boolean isValidIdentifierName(String str) {
         int i = 0;
-        for (int c : str.codePoints().toArray()) {
-            if (i++ == 0) {
+        while (i < str.length()) {
+            int c = str.codePointAt(i);
+            if (i == 0) {
                 if (c != '$' && c != '_' && !Character.isUnicodeIdentifierStart(c)) {
                     return false;
                 }
@@ -593,6 +593,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     return false;
                 }
             }
+            i += Character.charCount(c);
         }
         return true;
     }

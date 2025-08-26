@@ -320,6 +320,8 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     @SuppressWarnings("AndroidJdkLibsChecker")
+    // https://developer.android.com/reference/java/lang/reflect/Method#isDefault() added in API
+    // level 24
     public static byte[] createAdapterCode(
             Map<String, Integer> functionNames,
             String adapterName,
