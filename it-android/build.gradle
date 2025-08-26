@@ -48,7 +48,7 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
 
         }
         compileOptions {
-            coreLibraryDesugaringEnabled true
+            coreLibraryDesugaringEnabled true  // to support classes like DateTimeFormatter on SDK < 26
             sourceCompatibility JavaVersion.VERSION_11
             targetCompatibility JavaVersion.VERSION_11
         }
