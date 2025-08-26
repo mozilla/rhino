@@ -228,7 +228,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Forces setting the function's name, bypassing all "readonly" checks. */
     void setFunctionName(String name) {
-        nameSetter(this, name, this, this, false);
+        nameValue = name;
     }
 
     protected void createPrototypeProperty() {
