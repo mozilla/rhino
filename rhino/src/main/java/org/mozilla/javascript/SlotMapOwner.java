@@ -1,7 +1,5 @@
 package org.mozilla.javascript;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
