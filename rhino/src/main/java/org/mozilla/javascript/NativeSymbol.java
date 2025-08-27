@@ -192,6 +192,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return key.toString();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return key.getName();
