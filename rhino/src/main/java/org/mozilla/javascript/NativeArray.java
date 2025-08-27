@@ -930,6 +930,7 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
+    /* This version explicitly checks whether the target is  sealed. The other implementation which does not take a compound op does not do so explicitly, but it does rely on the underlying `delete` implementation doing that check. */
     private static void deleteElem(
             CompoundOperationMap compoundOp, NativeArray target, long index) {
         int i = (int) index;
