@@ -6152,8 +6152,4 @@ public class ScriptRuntime {
 
     /** This value holds the current android API version (or -1) if not running on android */
     static final int androidApi = detectAndroidApi();
-
-    static {
-        System.out.println("Android API: " + androidApi);
-    }
 }
