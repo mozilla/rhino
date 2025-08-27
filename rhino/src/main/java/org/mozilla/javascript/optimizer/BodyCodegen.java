@@ -1161,6 +1161,10 @@ class BodyCodegen {
                 cfw.add(ByteCode.ACONST_NULL);
                 break;
 
+            case Token.UNDEFINED:
+                Codegen.pushUndefined(cfw);
+                break;
+
             case Token.TRUE:
                 cfw.add(ByteCode.GETSTATIC, "java/lang/Boolean", "TRUE", "Ljava/lang/Boolean;");
                 break;
@@ -1450,11 +1454,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.IFEQ, getElem);
 
                     cfw.add(ByteCode.POP);
-                    cfw.add(
-                            ByteCode.GETSTATIC,
-                            "org/mozilla/javascript/Undefined",
-                            "instance",
-                            "Ljava/lang/Object;");
+                    Codegen.pushUndefined(cfw);
                     cfw.add(ByteCode.GOTO, after);
 
                     cfw.markLabel(getElem);
@@ -1615,11 +1615,7 @@ class BodyCodegen {
                         cfw.add(ByteCode.IFEQ, getExpr);
 
                         cfw.add(ByteCode.POP);
-                        cfw.add(
-                                ByteCode.GETSTATIC,
-                                "org/mozilla/javascript/Undefined",
-                                "instance",
-                                "Ljava/lang/Object;");
+                        Codegen.pushUndefined(cfw);
                         cfw.add(ByteCode.GOTO, after);
 
                         cfw.markLabel(getExpr);
@@ -2554,11 +2550,7 @@ class BodyCodegen {
 
         // result is null, so push undefined and jump to end
         cfw.add(ByteCode.POP);
-        cfw.add(
-                ByteCode.GETSTATIC,
-                "org/mozilla/javascript/Undefined",
-                "instance",
-                "Ljava/lang/Object;");
+        Codegen.pushUndefined(cfw);
         cfw.add(ByteCode.GOTO, afterLabel);
 
         // Make the call
@@ -2614,11 +2606,7 @@ class BodyCodegen {
 
             // If result is null, so return undefined and do nothing else
             cfw.add(ByteCode.POP);
-            cfw.add(
-                    ByteCode.GETSTATIC,
-                    "org/mozilla/javascript/Undefined",
-                    "instance",
-                    "Ljava/lang/Object;");
+            Codegen.pushUndefined(cfw);
             cfw.add(ByteCode.GOTO, afterLabel);
 
             cfw.markLabel(doCallLabel);
@@ -4388,11 +4376,7 @@ class BodyCodegen {
             cfw.add(ByteCode.IFEQ, getExpr);
 
             cfw.add(ByteCode.POP);
-            cfw.add(
-                    ByteCode.GETSTATIC,
-                    "org/mozilla/javascript/Undefined",
-                    "instance",
-                    "Ljava/lang/Object;");
+            Codegen.pushUndefined(cfw);
             cfw.add(ByteCode.GOTO, after);
 
             cfw.markLabel(getExpr);

@@ -196,6 +196,7 @@ public final class IRFactory {
             case Token.FALSE:
             case Token.THIS:
             case Token.NULL:
+            case Token.UNDEFINED:
             case Token.DEBUGGER:
                 return transformLiteral(node);
             case Token.SUPER:
@@ -660,7 +661,7 @@ public final class IRFactory {
                                         createBinary(
                                                 Token.SHEQ,
                                                 parser.createName(name),
-                                                parser.createName("undefined")),
+                                                new KeywordLiteral().setType(Token.UNDEFINED)),
                                         new Node(
                                                 Token.EXPR_VOID,
                                                 createAssignment(
@@ -1953,6 +1954,10 @@ public final class IRFactory {
                         child.setType(Token.BINDNAME);
                         Node right = Node.newString(child.getString());
                         n = new Node(nodeType, child, right);
+                    } else if (childType == Token.UNDEFINED) {
+                        Node name = Node.newString(Token.BINDNAME, "undefined");
+                        Node right = Node.newString("undefined");
+                        n = new Node(nodeType, name, right);
                     } else if (childType == Token.GETPROP || childType == Token.GETELEM) {
                         Node left = child.getFirstChild();
                         Node right = child.getLastChild();
@@ -2426,6 +2431,7 @@ public final class IRFactory {
         int type = node.getType();
         switch (type) {
             case Token.NAME:
+            case Token.UNDEFINED:
             case Token.GETPROP:
             case Token.GETELEM:
             case Token.GET_REF:
@@ -2443,6 +2449,7 @@ public final class IRFactory {
         switch (node.getType()) {
             case Token.FALSE:
             case Token.NULL:
+            case Token.UNDEFINED:
                 return ALWAYS_FALSE_BOOLEAN;
             case Token.TRUE:
                 return ALWAYS_TRUE_BOOLEAN;

@@ -520,6 +520,7 @@ class Block {
                 return Optimizer.AnyType;
 
             case Token.NULL:
+            case Token.UNDEFINED:
             case Token.REGEXP:
             case Token.ARRAYCOMP:
             case Token.ARRAYLIT:
