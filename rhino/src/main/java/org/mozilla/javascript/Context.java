@@ -869,6 +869,13 @@ public class Context implements Closeable {
         return result;
     }
 
+    public final Map<String, NativeSymbol> getSymbolTable() {
+        if (symbolTable == null) {
+            symbolTable = new HashMap<>();
+        }
+        return symbolTable;
+    }
+
     /**
      * Register an object to receive notifications when a bound property has changed
      *
@@ -2834,4 +2841,7 @@ public class Context implements Closeable {
     boolean generateObserverCount = false;
 
     boolean isTopLevelStrict;
+
+    // Stores context-wide symbols that are returned by Symbol.for(). Lazily initialized.
+    private Map<String, NativeSymbol> symbolTable;
 }
