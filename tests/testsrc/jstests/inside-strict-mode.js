@@ -27,4 +27,9 @@ assertThrows(function() {
   delete Math.LN2;
 }, TypeError);
 
+assertThrows(function evalInStrict() {
+	'use strict';
+	eval("arguments = 10");
+}, SyntaxError);
+
 "success";
