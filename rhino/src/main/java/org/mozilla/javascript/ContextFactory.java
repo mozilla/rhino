@@ -10,6 +10,7 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.function.Consumer;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -438,6 +439,22 @@ public class ContextFactory {
     public final <T> T call(ContextAction<T> action) {
         return Context.call(this, action);
     }
+
+    /** Configure new context and seal. Reuse existing */
+    public final <T> T call(Consumer<Context> configuration, ContextAction<T> action) {
+        return Context.call(this, configuration, action);
+    }
+
+    /**
+     * @param action
+     * @return
+     * @param <T>
+     */
+    public final <T> T callExplicit(ContextAction<T> action) {
+        return Context.callExplicit(this, action);
+    }
+
+    public void callExplicit(Object action) {}
 
     /**
      * Get a context associated with the current thread, creating one if need be. The Context stores
