@@ -177,7 +177,7 @@ public class Codegen implements Evaluator {
     private void transform(ScriptNode tree) {
         initOptFunctions_r(tree);
 
-        if (!compilerEnv.isInterpretedMode()) {
+        if (compilerEnv.isInterpretedMode()) {
             Kit.codeBug("Codegen nust not run in interpreted Mode");
         }
         Map<String, OptFunctionNode> possibleDirectCalls = null;
