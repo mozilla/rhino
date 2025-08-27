@@ -2652,7 +2652,7 @@ public class Context implements Closeable {
     }
 
     private static Class<?> codegenClass =
-            "Dalvik".equals(System.getProperty("java.vm.name"))
+            ScriptRuntime.androidApi > 0
                     ? null
                     : Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
     private static Class<?> interpreterClass =
