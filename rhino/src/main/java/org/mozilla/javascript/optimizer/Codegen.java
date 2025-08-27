@@ -178,7 +178,7 @@ public class Codegen implements Evaluator {
         initOptFunctions_r(tree);
 
         if (compilerEnv.isInterpretedMode()) {
-            Kit.codeBug("Codegen nust not run in interpreted Mode");
+            Kit.codeBug("Codegen must not run in interpreted Mode");
         }
         Map<String, OptFunctionNode> possibleDirectCalls = null;
         /*
