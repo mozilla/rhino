@@ -26,7 +26,7 @@ public class NativeObjectTest {
                         + "Error.captureStackTrace(myError);\n"
                         + "Object.freeze(myError);\n"
                         + "myError.stack.trim();";
-        Utils.assertWithAllModesTopLevelScope_ES6("at test.js:1", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("at test.js:2", script);
     }
 
     /**
@@ -43,7 +43,7 @@ public class NativeObjectTest {
                         + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');\n"
                         + "var res = '' + desc.get + '-' + desc.set + '-' + desc.value;\n"
                         + "res = res.replace(/(\\n|\\r)/gm, '');";
-        Utils.assertWithAllModesTopLevelScope_ES6("undefined-undefined-\tat test.js:1", script);
+        Utils.assertWithAllModesTopLevelScope_ES6("undefined-undefined-\tat test.js:2", script);
     }
 
     /**
