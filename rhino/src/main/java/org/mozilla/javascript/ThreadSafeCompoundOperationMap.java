@@ -37,10 +37,11 @@ class ThreadSafeCompoundOperationMap extends CompoundOperationMap {
     @Override
     public <S extends Slot> S compute(
             SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+            CompoundOperationMap compoundOp,
             Object key,
             int index,
             SlotComputer<S> compute) {
+        assert (compoundOp == this);
         updateMap(true);
         S res = ((LockAwareSlotMap) map).computeWithLock(owner, this, key, index, compute);
         touched = true;
