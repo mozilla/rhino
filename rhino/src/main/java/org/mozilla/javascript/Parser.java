@@ -162,8 +162,6 @@ public class Parser {
     private int lastTokenLineno = -1;
     private int lastTokenColumn = -1;
 
-    private boolean defaultUseStrictDirective;
-
     // Exception to unwind
     public static class ParserException extends RuntimeException {
         private static final long serialVersionUID = 5882582646773765630L;
@@ -606,7 +604,7 @@ public class Parser {
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
 
-        inUseStrictDirective = defaultUseStrictDirective;
+        inUseStrictDirective = compilerEnv.isStrictMode();
         if (inUseStrictDirective) {
             root.setInStrictMode(true);
         }
@@ -4860,10 +4858,6 @@ public class Parser {
                         + ts.tokenBeg
                         + ", currentToken="
                         + currentToken);
-    }
-
-    public void setDefaultUseStrictDirective(boolean useStrict) {
-        defaultUseStrictDirective = useStrict;
     }
 
     public boolean inUseStrictDirective() {
