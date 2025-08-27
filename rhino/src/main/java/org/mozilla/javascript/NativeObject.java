@@ -734,7 +734,10 @@ public class NativeObject extends ScriptableObject implements Map {
             Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
             Object[] ids;
             if (sourceObj instanceof ScriptableObject) {
-                ids = ((ScriptableObject) sourceObj).getIds(false, true);
+                var scriptable = (ScriptableObject) sourceObj;
+                try (var map = scriptable.startCompoundOp(false)) {
+                    ids = scriptable.getIds(map, false, true);
+                }
             } else {
                 ids = sourceObj.getIds();
             }
