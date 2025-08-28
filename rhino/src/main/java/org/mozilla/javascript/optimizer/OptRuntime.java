@@ -131,6 +131,13 @@ public final class OptRuntime extends ScriptRuntime {
         return ScriptRuntime.add(val1, val2, cx);
     }
 
+    public static Object concat(Object lhs, Object rhs) {
+        String rhsString = ScriptRuntime.toString(rhs);
+        String lhsString = ScriptRuntime.toString(lhs);
+
+        return lhsString.concat(rhsString);
+    }
+
     /**
      * @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead
      */

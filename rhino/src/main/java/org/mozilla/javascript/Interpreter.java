@@ -1416,6 +1416,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.NOT] = new DoNot();
         instructionObjs[base + Token.BINDNAME] = new DoBindName();
         instructionObjs[base + Token.STRICT_SETNAME] = new DoSetName();
+        instructionObjs[base + Token.STRING_CONCAT] = new DoStringConcat();
         instructionObjs[base + Token.SETNAME] = new DoSetName();
         instructionObjs[base + Icode_SETCONST] = new DoSetConst();
         instructionObjs[base + Token.DELPROP] = new DoDelName();
@@ -2745,6 +2746,31 @@ public final class Interpreter extends Icode implements Evaluator {
                             ? ScriptRuntime.setName(lhs, rhs, cx, frame.scope, state.stringReg)
                             : ScriptRuntime.strictSetName(
                                     lhs, rhs, cx, frame.scope, state.stringReg);
+            --state.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoStringConcat extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.sDbl;
+
+            Object rhs = stack[state.stackTop];
+            Object lhs = stack[state.stackTop - 1];
+
+            if (rhs == DOUBLE_MARK) {
+                rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            }
+            if (lhs == DOUBLE_MARK) {
+                lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
+            }
+
+            String rhsString = ScriptRuntime.toString(rhs);
+            String lhsString = ScriptRuntime.toString(lhs);
+
+            stack[state.stackTop - 1] = lhsString.concat(rhsString);
             --state.stackTop;
             return null;
         }
