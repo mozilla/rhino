@@ -5082,9 +5082,6 @@ public class ScriptRuntime {
             // set exception in Error objects to enable non-ECMA "stack" property
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
-                if (cx.isInterpretedMode()) {
-                    ((NativeError) errorObject).getStackDelegated();
-                }
             }
 
             if (javaException != null && isVisible(cx, javaException)) {
