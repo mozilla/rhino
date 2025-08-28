@@ -3341,11 +3341,11 @@ public final class Interpreter extends Icode implements Evaluator {
                                     System.arraycopy(
                                             boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
                                     boundArgs = newBArgs;
-                                    blen--;
+                                    blen = newBArgs.length;
                                 } else {
                                     // Bound args is 1 long.
                                     boundArgs = new Object[0];
-                                    blen--;
+                                    blen = 0;
                                 }
                                 state.indexReg--;
                             }
@@ -3363,10 +3363,11 @@ public final class Interpreter extends Icode implements Evaluator {
                     BoundFunction bfun = (BoundFunction) fun;
                     fun = bfun.getTargetFunction();
                     funThisObj = bfun.getCallThis(cx, calleeScope);
+
                     Object[] bArgs = bfun.getBoundArgs();
                     boundArgs = addBoundArgs(boundArgs, bArgs);
                     blen = blen + bArgs.length;
-                    state.indexReg += blen;
+                    state.indexReg += bArgs.length;
                 } else if (fun instanceof NoSuchMethodShim) {
                     NoSuchMethodShim nsmfun = (NoSuchMethodShim) fun;
                     // Bug 447697 -- make best effort to keep
