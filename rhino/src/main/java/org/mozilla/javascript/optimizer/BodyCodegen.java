@@ -1,6 +1,7 @@
 package org.mozilla.javascript.optimizer;
 
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
 import java.util.ArrayDeque;
@@ -35,7 +36,7 @@ class BodyCodegen {
             // generator has a unique prefix followed by _gen
             String type =
                     "("
-                            + codegen.mainClassSignature
+                            + "Lorg/mozilla/javascript/NativeFunction;"
                             + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "Ljava/lang/Object;"
@@ -43,12 +44,12 @@ class BodyCodegen {
             cfw.startMethod(
                     codegen.getBodyMethodName(scriptOrFn) + "_gen",
                     type,
-                    (short) (ACC_STATIC | ACC_PRIVATE));
+                    (short) (ACC_STATIC | ACC_PUBLIC));
         } else {
             cfw.startMethod(
                     codegen.getBodyMethodName(scriptOrFn),
                     codegen.getBodyMethodSignature(scriptOrFn),
-                    (short) (ACC_STATIC | ACC_PRIVATE));
+                    (short) (ACC_STATIC | ACC_PUBLIC));
         }
 
         generatePrologue();
@@ -2145,12 +2146,13 @@ class BodyCodegen {
         localsMax = firstFreeLocal;
         cfw.startMethod(
                 methodName,
-                "(Lorg/mozilla/javascript/Context;"
+                "(Lorg/mozilla/javascript/NativeFunction;"
+                        + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "[Ljava/lang/Object;"
                         + ")Lorg/mozilla/javascript/Scriptable;",
-                ACC_PRIVATE);
+                (short) (ACC_STATIC | ACC_PRIVATE));
         visitArrayLiteral(node, node.getFirstChild(), true);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) (localsMax + 1));
@@ -2163,12 +2165,13 @@ class BodyCodegen {
         localsMax = firstFreeLocal;
         cfw.startMethod(
                 methodName,
-                "(Lorg/mozilla/javascript/Context;"
+                "(Lorg/mozilla/javascript/NativeFunction;"
+                        + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "[Ljava/lang/Object;"
                         + ")Lorg/mozilla/javascript/Scriptable;",
-                ACC_PRIVATE);
+                (short) (ACC_STATIC | ACC_PRIVATE));
         visitObjectLiteral(node, node.getFirstChild(), true);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) (localsMax + 1));
@@ -2195,10 +2198,11 @@ class BodyCodegen {
             cfw.addALoad(thisObjLocal);
             cfw.addALoad(argsLocal);
             cfw.addInvoke(
-                    ByteCode.INVOKEVIRTUAL,
+                    ByteCode.INVOKESTATIC,
                     codegen.mainClassName,
                     methodName,
-                    "(Lorg/mozilla/javascript/Context;"
+                    "(Lorg/mozilla/javascript/NativeFunction;"
+                            + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "[Ljava/lang/Object;"
@@ -2431,10 +2435,11 @@ class BodyCodegen {
             cfw.addALoad(thisObjLocal);
             cfw.addALoad(argsLocal);
             cfw.addInvoke(
-                    ByteCode.INVOKEVIRTUAL,
+                    ByteCode.INVOKESTATIC,
                     codegen.mainClassName,
                     methodName,
-                    "(Lorg/mozilla/javascript/Context;"
+                    "(Lorg/mozilla/javascript/NativeFunction;"
+                            + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "[Ljava/lang/Object;"
