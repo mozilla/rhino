@@ -412,7 +412,7 @@ public class Codegen implements Evaluator {
             if (isGenerator(n)) {
                 String type =
                         "("
-                                + mainClassSignature
+                                + "Lorg/mozilla/javascript/NativeFunction;"
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + "Ljava/lang/Object;"
@@ -1289,7 +1289,7 @@ public class Codegen implements Evaluator {
     String getBodyMethodSignature(ScriptNode n) {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
-        sb.append(mainClassSignature);
+        sb.append("Lorg/mozilla/javascript/NativeFunction;");
         sb.append(
                 "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
