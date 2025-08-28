@@ -831,7 +831,7 @@ public class BoundFunctionTest {
         code.append(");\n");
 
         code.append("boundFoo").append(invokeFoo);
-        if (invokeFoo.length() > 1) {
+        if (!invokeFoo.endsWith("(") && invokeArgs != 0) {
             code.append(", ");
         }
         if (invokeFoo.contains("apply(")) {
