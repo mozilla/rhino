@@ -37,11 +37,7 @@ public class ScriptRuntimeES6 {
                 speciesDescriptor,
                 "get",
                 new LambdaFunction(
-                        scope,
-                        "get [Symbol.species]",
-                        0,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                thisObj));
+                        scope, "get [Symbol.species]", 0, (lcx, lscope, thisObj, args) -> thisObj));
         constructor.defineOwnProperty(cx, SymbolKey.SPECIES, speciesDescriptor, false);
     }
 

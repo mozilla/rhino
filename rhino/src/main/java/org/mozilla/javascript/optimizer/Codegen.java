@@ -412,7 +412,7 @@ public class Codegen implements Evaluator {
             if (isGenerator(n)) {
                 String type =
                         "("
-                                + mainClassSignature
+                                + "Lorg/mozilla/javascript/NativeFunction;"
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + "Ljava/lang/Object;"
@@ -438,7 +438,7 @@ public class Codegen implements Evaluator {
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;)Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -468,7 +468,7 @@ public class Codegen implements Evaluator {
                 "(Lorg/mozilla/javascript/Callable;"
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Z"
                         + ")Ljava/lang/Object;");
@@ -571,7 +571,7 @@ public class Codegen implements Evaluator {
                 "exec",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + ")Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -590,7 +590,7 @@ public class Codegen implements Evaluator {
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + ")Ljava/lang/Object;");
 
@@ -1289,11 +1289,11 @@ public class Codegen implements Evaluator {
     String getBodyMethodSignature(ScriptNode n) {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
-        sb.append(mainClassSignature);
+        sb.append("Lorg/mozilla/javascript/NativeFunction;");
         sb.append(
                 "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;");
+                        + "Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {

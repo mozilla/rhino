@@ -198,7 +198,8 @@ abstract class XMLObjectImpl extends XMLObject {
 
     abstract Object valueOf();
 
-    protected abstract Object jsConstructor(Context cx, boolean inNewExpr, Object[] args);
+    protected abstract Object jsConstructor(
+            Context cx, boolean inNewExpr, Object newTarget, Object[] args);
 
     //
     //
@@ -869,7 +870,7 @@ abstract class XMLObjectImpl extends XMLObject {
         }
         int id = f.methodId();
         if (id == Id_constructor) {
-            return jsConstructor(cx, thisObj == null, args);
+            return jsConstructor(cx, thisObj == null, null, args);
         }
 
         // All (XML|XMLList).prototype methods require thisObj to be XML

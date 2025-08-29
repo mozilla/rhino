@@ -31,7 +31,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "add",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "add").js_add(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -39,7 +39,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "delete",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -47,7 +47,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "has",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -55,7 +55,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "clear",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "clear").js_clear(),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -63,7 +63,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "values",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "values")
                                 .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
                 DONTENUM,
@@ -75,7 +75,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "forEach",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "forEach")
                                 .js_forEach(
                                         lcx,
@@ -89,7 +89,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "entries",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "entries")
                                 .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
                 DONTENUM,
@@ -164,7 +164,7 @@ public class NativeSet extends ScriptableObject {
                         scope,
                         "get size",
                         0,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                                 realThis(thisObj, "size").js_getSize());
         sizeFunc.setPrototypeProperty(Undefined.instance);
         desc.put("get", desc, sizeFunc);
@@ -187,7 +187,8 @@ public class NativeSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         NativeSet ns = new NativeSet();
         ns.instanceOfSet = true;
         if (args.length > 0) {
@@ -287,7 +288,7 @@ public class NativeSet extends ScriptableObject {
         }
     }
 
-    private static NativeSet realThis(Scriptable thisObj, String name) {
+    private static NativeSet realThis(Object thisObj, String name) {
         NativeSet ns = LambdaConstructor.convertThisObject(thisObj, NativeSet.class);
         if (!ns.instanceOfSet) {
             // If we get here, then this object doesn't have the "Set internal data slot."

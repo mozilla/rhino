@@ -126,26 +126,27 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
         if (target == null) {
-            return fireConstructor(cx, scope, args);
+            return fireConstructor(cx, scope, target, args);
         }
         return target.call(cx, scope, thisObj, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
-        return fireConstructor(cx, scope, args);
+        return fireConstructor(cx, scope, newTarget, args);
     }
 
-    private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
-        Scriptable obj = targetConstructor.construct(cx, scope, args);
+    private Scriptable fireConstructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
+        Scriptable obj = targetConstructor.construct(cx, scope, newTarget, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
         return obj;
@@ -443,7 +444,7 @@ public class LambdaConstructor extends LambdaFunction {
      * in JavaScript doesn't necessarily map to an instance of the class.
      */
     @SuppressWarnings("unchecked")
-    public static <T> T convertThisObject(Scriptable thisObj, Class<T> targetClass) {
+    public static <T> T convertThisObject(Object thisObj, Class<T> targetClass) {
         if (!targetClass.isInstance(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.this.not.instance", targetClass.getSimpleName());
         }

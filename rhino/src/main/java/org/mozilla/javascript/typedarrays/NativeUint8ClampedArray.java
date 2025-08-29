@@ -46,7 +46,7 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (lcx, lscope, lNewTarget, args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx, lscope, args, NativeUint8ClampedArray::new, 1));
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
@@ -68,7 +68,7 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
         return 1;
     }
 
-    private static NativeUint8ClampedArray realThis(Scriptable thisObj) {
+    private static NativeUint8ClampedArray realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeUint8ClampedArray.class);
     }
 

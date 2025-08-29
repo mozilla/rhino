@@ -128,11 +128,12 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
-    private static NativeSymbol getSelf(Scriptable thisObj) {
+    private static NativeSymbol getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
-    private static NativeSymbol js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeSymbol js_constructor(
+            Context cx, Scriptable scope, Object newTarget, Object[] args) {
         String desc = null;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
@@ -145,13 +146,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return new NativeSymbol(new SymbolKey(desc), SymbolKind.REGULAR);
     }
 
-    private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toString(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).toString();
     }
 
-    private static Object js_valueOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_valueOf(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).symbolData;
     }
 
@@ -170,8 +169,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @SuppressWarnings("ReferenceEquality")
-    private static Object js_keyFor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_keyFor(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         Object s = (args.length > 0 ? args[0] : Undefined.instance);
         if (!(s instanceof NativeSymbol)) {
             throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");

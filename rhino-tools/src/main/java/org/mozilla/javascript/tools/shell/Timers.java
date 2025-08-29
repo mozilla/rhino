@@ -31,7 +31,7 @@ public class Timers {
                         scope,
                         "setTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                                 setTimeout(args));
         ScriptableObject.defineProperty(scope, "setTimeout", setTimeout, ScriptableObject.DONTENUM);
         LambdaFunction clearTimeout =
@@ -39,7 +39,7 @@ public class Timers {
                         scope,
                         "clearTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object thisObj, Object[] args) ->
                                 clearTimeout(args));
         ScriptableObject.defineProperty(
                 scope, "clearTimeout", clearTimeout, ScriptableObject.DONTENUM);

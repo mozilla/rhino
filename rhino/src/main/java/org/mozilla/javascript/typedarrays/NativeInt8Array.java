@@ -44,7 +44,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object newTarget, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx, lscope, args, NativeInt8Array::new, 1));
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
@@ -66,7 +66,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         return 1;
     }
 
-    private static NativeInt8Array realThis(Scriptable thisObj) {
+    private static NativeInt8Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeInt8Array.class);
     }
 

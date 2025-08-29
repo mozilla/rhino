@@ -94,12 +94,12 @@ public class LambdaFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return target.call(cx, scope, thisObj, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
     }
 

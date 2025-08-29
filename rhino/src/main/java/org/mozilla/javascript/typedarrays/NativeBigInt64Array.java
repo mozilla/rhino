@@ -47,7 +47,7 @@ public class NativeBigInt64Array extends NativeBigIntArrayView {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object newTarget, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,
@@ -74,7 +74,7 @@ public class NativeBigInt64Array extends NativeBigIntArrayView {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeFloat64Array realThis(Scriptable thisObj) {
+    private static NativeFloat64Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeFloat64Array.class);
     }
 

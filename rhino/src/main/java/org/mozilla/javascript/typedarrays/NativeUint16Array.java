@@ -45,7 +45,7 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, Scriptable lscope, Object newTarget, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,
@@ -72,7 +72,7 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeUint16Array realThis(Scriptable thisObj) {
+    private static NativeUint16Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeUint16Array.class);
     }
 
