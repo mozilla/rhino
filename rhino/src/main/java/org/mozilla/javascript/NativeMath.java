@@ -40,6 +40,8 @@ final class NativeMath extends ScriptableObject {
         math.defineProperty(scope, "cosh", 1, NativeMath::cosh, DONTENUM, DONTENUM | READONLY);
         math.defineProperty(scope, "exp", 1, NativeMath::exp, DONTENUM, DONTENUM | READONLY);
         math.defineProperty(scope, "expm1", 1, NativeMath::expm1, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(
+                scope, "f16round", 1, NativeMath::f16round, DONTENUM, DONTENUM | READONLY);
         math.defineProperty(scope, "floor", 1, NativeMath::floor, DONTENUM, DONTENUM | READONLY);
         math.defineProperty(scope, "fround", 1, NativeMath::fround, DONTENUM, DONTENUM | READONLY);
         math.defineProperty(scope, "hypot", 2, NativeMath::hypot, DONTENUM, DONTENUM | READONLY);
@@ -244,6 +246,75 @@ final class NativeMath extends ScriptableObject {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.floor(x);
         return ScriptRuntime.wrapNumber(x);
+    }
+
+    private static Object f16round(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        double x = ScriptRuntime.toNumber(args, 0);
+
+        // Handle special cases first
+        if (Double.isNaN(x)) return ScriptRuntime.NaNobj;
+        if (x == 0.0) return ScriptRuntime.wrapNumber(x); // Preserve sign of zero
+        if (Double.isInfinite(x)) return ScriptRuntime.wrapNumber(x);
+
+        // Convert to binary16 and back using proper IEEE 754 conversion
+        // This approach ensures correct rounding behavior
+
+        // Extract components from double precision
+        long bits = Double.doubleToLongBits(x);
+        int sign = (int) (bits >>> 63);
+        int exponent = (int) ((bits >>> 52) & 0x7FF);
+        long mantissa = bits & 0x000FFFFFFFFFFFFFL;
+
+        // Adjust from double bias (1023) to half bias (15)
+        exponent = exponent - 1023 + 15;
+
+        // Handle underflow
+        if (exponent <= 0) {
+            // Subnormal or underflow to zero
+            if (exponent < -10) {
+                // Underflow to zero
+                return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+            }
+            // Convert to subnormal
+            mantissa = (mantissa | (1L << 52)) >>> (1 - exponent);
+            exponent = 0;
+        }
+
+        // Handle overflow
+        if (exponent >= 31) {
+            return ScriptRuntime.wrapNumber(
+                    (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
+        }
+
+        // Round mantissa from 52 bits to 10 bits (42 bit shift)
+        // Add 0.5 ULP for rounding
+        mantissa += (1L << 41);
+        mantissa >>>= 42;
+
+        // Handle mantissa overflow
+        if (mantissa >= (1L << 10)) {
+            mantissa >>>= 1;
+            exponent++;
+            if (exponent >= 31) {
+                return ScriptRuntime.wrapNumber(
+                        (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
+            }
+        }
+
+        // Reconstruct as double precision
+        if (exponent == 0) {
+            // Subnormal
+            long resultBits = ((long) sign << 63) | (mantissa << 42);
+            return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
+        } else {
+            // Normal
+            long resultBits =
+                    ((long) sign << 63)
+                            | (((long) (exponent + 1023 - 15)) << 52)
+                            | (mantissa << 42);
+            return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
+        }
     }
 
     private static Object fround(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
