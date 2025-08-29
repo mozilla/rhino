@@ -78,7 +78,11 @@ public class AbstractEcmaObjectOperations {
 
         if (obj.isExtensible()) return false;
 
-        for (Object name : obj.getIds(true, true)) {
+        Object[] ids;
+        try (var map = obj.startCompoundOp(false)) {
+            ids = obj.getIds(map, true, true);
+        }
+        for (Object name : ids) {
             ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
             if (Boolean.TRUE.equals(desc.get("configurable"))) return false;
 
@@ -141,7 +145,11 @@ public class AbstractEcmaObjectOperations {
             return false;
         }
 
-        for (Object key : obj.getIds(true, true)) {
+        Object[] ids;
+        try (var map = obj.startCompoundOp(false)) {
+            ids = obj.getIds(map, true, true);
+        }
+        for (Object key : ids) {
             ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, key);
 
             if (level == INTEGRITY_LEVEL.SEALED) {

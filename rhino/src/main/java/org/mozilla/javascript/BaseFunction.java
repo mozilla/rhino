@@ -232,15 +232,31 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createPrototypeProperty() {
-        if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
-            ScriptableObject.defineBuiltInProperty(
-                    this,
-                    PROTOTYPE_PROPERTY_NAME,
-                    prototypePropertyAttributes,
-                    BaseFunction::prototypeGetter,
-                    BaseFunction::prototypeSetter,
-                    BaseFunction::prototypeAttrSetter);
+        try (var map = startCompoundOp(true)) {
+            createPrototypeProperty(map);
         }
+    }
+
+    protected void createPrototypeProperty(CompoundOperationMap compoundOp) {
+        compoundOp.compute(
+                this,
+                compoundOp,
+                PROTOTYPE_PROPERTY_NAME,
+                0,
+                (k, i, s, m, o) -> {
+                    if (s == null) {
+                        return new BuiltInSlot<BaseFunction>(
+                                PROTOTYPE_PROPERTY_NAME,
+                                0,
+                                prototypePropertyAttributes,
+                                this,
+                                BaseFunction::prototypeGetter,
+                                BaseFunction::prototypeSetter,
+                                BaseFunction::prototypeAttrSetter,
+                                BaseFunction::prototypeDescSetter);
+                    }
+                    return s;
+                });
     }
 
     private static Object prototypeGetter(BaseFunction function, Scriptable start) {
@@ -253,12 +269,39 @@ public class BaseFunction extends ScriptableObject implements Function {
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
-        function.setPrototypeProperty(value == null ? UniqueTag.NULL_VALUE : value);
+        function.prototypeProperty = value == null ? UniqueTag.NULL_VALUE : value;
         return true;
     }
 
     private static void prototypeAttrSetter(BaseFunction function, int attributes) {
         function.prototypePropertyAttributes = attributes;
+    }
+
+    protected static boolean prototypeDescSetter(
+            BaseFunction builtIn,
+            BuiltInSlot<BaseFunction> current,
+            Object id,
+            ScriptableObject.DescriptorInfo info,
+            boolean checkValid,
+            Object key,
+            int index) {
+        try (var map = builtIn.startCompoundOp(true)) {
+            return ScriptableObject.defineOrdinaryProperty(
+                    (o, i, k, e, m, s) -> {
+                        if (i.value != NOT_FOUND) {
+                            builtIn.prototypeProperty =
+                                    i.value == null ? UniqueTag.NULL_VALUE : i.value;
+                        }
+                        return s;
+                    },
+                    builtIn,
+                    map,
+                    id,
+                    info,
+                    checkValid,
+                    key,
+                    index);
+        }
     }
 
     protected final boolean defaultHas(String name) {
@@ -602,7 +645,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         this,
                         PROTOTYPE_PROPERTY_NAME,
                         0,
-                        (k, i, s) -> {
+                        (k, i, s, m, o) -> {
                             if (s != null) {
                                 s.setAttributes(attributes);
                             }

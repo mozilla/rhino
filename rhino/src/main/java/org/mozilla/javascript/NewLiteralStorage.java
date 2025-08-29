@@ -60,7 +60,10 @@ public abstract class NewLiteralStorage {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
             Object[] ids;
             if (src instanceof ScriptableObject) {
-                ids = ((ScriptableObject) src).getIds(false, true);
+                var scriptable = (ScriptableObject) src;
+                try (var map = scriptable.startCompoundOp(false)) {
+                    ids = scriptable.getIds(map, false, true);
+                }
             } else {
                 ids = src.getIds();
             }

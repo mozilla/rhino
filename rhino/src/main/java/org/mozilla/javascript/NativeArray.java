@@ -34,12 +34,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     /*
      * Optimization possibilities and open issues:
-     * - Long vs. double schizophrenia.  I suspect it might be better
+     * - Long vs. double schizophrenia. I suspect it might be better
      * to use double throughout.
      *
      * - Functions that need a new Array call "new Array" in the
      * current scope rather than using a hardwired constructor;
-     * "Array" could be redefined.  It turns out that js calls the
+     * "Array" could be redefined. It turns out that js calls the
      * equivalent of "new Array" in the current scope, except that it
      * always gets at least an object back, even when Array == null.
      */
@@ -261,16 +261,20 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public Object get(int index, Scriptable start) {
-        if (!denseOnly && isGetterOrSetter(null, index, false)) return super.get(index, start);
+        var slot = denseOnly ? null : getMap().query(null, index);
+        if (!denseOnly && slot != null && slot.isSetterSlot()) return slot.getValue(start);
         if (dense != null && 0 <= index && index < dense.length) return dense[index];
-        return super.get(index, start);
+        return slot == null ? NOT_FOUND : slot.getValue(start);
     }
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (!denseOnly && isGetterOrSetter(null, index, false)) return super.has(index, start);
+        var slot = denseOnly ? null : getMap().query(null, index);
+        if (slot != null) {
+            return true;
+        }
         if (dense != null && 0 <= index && index < dense.length) return dense[index] != NOT_FOUND;
-        return super.has(index, start);
+        return false;
     }
 
     private static long toArrayIndex(Object id) {
@@ -340,11 +344,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
+        var slot = denseOnly ? null : getMap().query(null, index);
         if (start == this
                 && !isSealed()
                 && dense != null
                 && 0 <= index
-                && (denseOnly || !isGetterOrSetter(null, index, true))) {
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             if (!isExtensible() && this.length <= index) {
                 return;
             } else if (index < dense.length) {
@@ -378,20 +383,38 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void delete(int index) {
+        var slot = denseOnly ? null : getMap().query(null, index);
         if (dense != null
                 && 0 <= index
                 && index < dense.length
                 && !isSealed()
-                && (denseOnly || !isGetterOrSetter(null, index, true))) {
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             dense[index] = NOT_FOUND;
         } else {
             super.delete(index);
         }
     }
 
+    public void deleteInternal(CompoundOperationMap compoundOp, String id) {
+        compoundOp.compute(this, id, 0, ScriptableObject::checkSlotRemoval);
+    }
+
+    public void deleteInternal(CompoundOperationMap compoundOp, int index) {
+        var slot = denseOnly ? null : compoundOp.query(null, index);
+        if (dense != null
+                && 0 <= index
+                && index < dense.length
+                && !isSealed()
+                && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
+            dense[index] = NOT_FOUND;
+        } else {
+            compoundOp.compute(this, null, index, ScriptableObject::checkSlotRemoval);
+        }
+    }
+
     @Override
-    public Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
-        Object[] superIds = super.getIds(nonEnumerable, getSymbols);
+    public Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+        Object[] superIds = super.getIds(map, nonEnumerable, getSymbols);
         if (dense == null) {
             return superIds;
         }
@@ -561,7 +584,10 @@ public class NativeArray extends ScriptableObject implements List {
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
-        builtIn.setLength(value);
+        double d = ScriptRuntime.toNumber(value);
+        try (var map = builtIn.startCompoundOp(true)) {
+            builtIn.setLength(map, d);
+        }
         return true;
     }
 
@@ -569,51 +595,69 @@ public class NativeArray extends ScriptableObject implements List {
         builtIn.lengthAttr = attrs;
     }
 
+    private static Slot lengthDescSetValue(
+            ScriptableObject owner,
+            DescriptorInfo info,
+            Object key,
+            Slot existing,
+            CompoundOperationMap map,
+            Slot slot) {
+        ((NativeArray) owner).setLength(map, (Double) info.value);
+        return slot;
+    }
+
     protected static boolean arraySetLength(
             NativeArray builtIn,
             BuiltInSlot<NativeArray> current,
             Object id,
-            ScriptableObject desc,
+            DescriptorInfo info,
             boolean checkValid,
             Object key,
             int index) {
+        PropDescValueSetter descSetter = NativeArray::lengthDescSetValue;
         // 10.2.4.2 Step 1.
-        Object value = getProperty(desc, "value");
+        Object value = info.value;
 
         if (value == NOT_FOUND) {
-            return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, desc, checkValid, key, index);
+            try (var map = builtIn.startCompoundOp(true)) {
+                return ScriptableObject.defineOrdinaryProperty(
+                        (o, i, k, e, m, s) -> s, builtIn, map, id, info, checkValid, key, index);
+            }
         }
 
         // 10.2.4.2 Steps 2 - 6
         long newLength = checkLength(value);
+        info.value = (double) newLength;
 
-        Object writable = getProperty(desc, "writable");
+        Object writable = info.writable;
         // 10.2.4.2 9 is true by definition
 
-        // 10.2.4.2 10-11
-        if (newLength >= builtIn.length) {
-            return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, desc, checkValid, key, index);
-        }
+        try (var map = builtIn.startCompoundOp(true)) {
+            // 10.2.4.2 10-11
+            if (newLength >= builtIn.length) {
+                return ScriptableObject.defineOrdinaryProperty(
+                        descSetter, builtIn, map, id, info, checkValid, key, index);
+            }
 
-        boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
-        if (!currentWritable) {
-            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
-        }
-        boolean newWritable = true;
-        if (writable != NOT_FOUND) {
-            newWritable = isTrue(writable);
-            putProperty(desc, "writable", true);
-        }
+            boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
+            if (!currentWritable) {
+                throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
+            }
+            boolean newWritable = true;
+            if (writable != NOT_FOUND) {
+                newWritable = isTrue(writable);
+                info.writable = true;
+            }
 
-        // The standard set path that will be done by this call will
-        // clear any elements as required.
-        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, desc, checkValid, key, index)) {
-            var currentAttrs = current.getAttributes();
-            var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
-            current.setAttributes(newAttrs);
-            return true;
+            // The standard set path that will be done by this call will
+            // clear any elements as required.
+            if (ScriptableObject.defineOrdinaryProperty(
+                    descSetter, builtIn, map, id, info, checkValid, key, index)) {
+                var currentAttrs = current.getAttributes();
+                var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
+                current.setAttributes(newAttrs);
+                return true;
+            }
         }
         return false;
     }
@@ -756,15 +800,14 @@ public class NativeArray extends ScriptableObject implements List {
         return denseOnly;
     }
 
-    private boolean setLength(Object val) {
+    private boolean setLength(CompoundOperationMap compoundOp, double d) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
          * 2. If Result(1) is false, return.
          * ?
          */
-        double d = ScriptRuntime.toNumber(val);
-        long longVal = ScriptRuntime.toUint32(val);
+        long longVal = ScriptRuntime.toUint32(d);
 
         if ((lengthAttr & READONLY) != 0) {
             return false;
@@ -796,22 +839,22 @@ public class NativeArray extends ScriptableObject implements List {
             // remove all properties between longVal and length
             if (length - longVal > 0x1000) {
                 // assume that the representation is sparse
-                Object[] e = getIds(); // will only find in object itself
+                Object[] e = getIds(compoundOp, false, false); // will only find in object itself
                 for (Object id : e) {
                     if (id instanceof String) {
                         // > MAXINT will appear as string
                         String strId = (String) id;
                         long index = toArrayIndex(strId);
-                        if (index >= longVal) delete(strId);
+                        if (index >= longVal) deleteInternal(compoundOp, strId);
                     } else {
                         int index = ((Integer) id).intValue();
-                        if (index >= longVal) delete(index);
+                        if (index >= longVal) deleteInternal(compoundOp, index);
                     }
                 }
             } else {
                 // assume a dense representation
                 for (long i = longVal; i < length; i++) {
-                    deleteElem(this, i);
+                    deleteElem(compoundOp, this, i);
                 }
             }
         }
@@ -884,6 +927,20 @@ public class NativeArray extends ScriptableObject implements List {
             target.delete(i);
         } else {
             target.delete(Long.toString(index));
+        }
+    }
+
+    /* This version explicitly checks whether the target is  sealed. The other implementation which does not take a compound op does not do so explicitly, but it does rely on the underlying `delete` implementation doing that check. */
+    private static void deleteElem(
+            CompoundOperationMap compoundOp, NativeArray target, long index) {
+        int i = (int) index;
+        if (i == index) {
+            checkNotSealed(target, null, i);
+            target.deleteInternal(compoundOp, i);
+        } else {
+            var strIndex = Long.toString(index);
+            checkNotSealed(target, strIndex, 0);
+            compoundOp.compute(target, strIndex, 0, ScriptableObject::checkSlotRemoval);
         }
     }
 
@@ -1387,7 +1444,9 @@ public class NativeArray extends ScriptableObject implements List {
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
                     nar.dense = copy;
-                    nar.setLength(intLen);
+                    try (var map = nar.startCompoundOp(true)) {
+                        nar.setLength(map, intLen);
+                    }
                 } else {
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);
