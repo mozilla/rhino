@@ -315,7 +315,7 @@ final class EqualObjectGraphs {
                             // As long as people bother to reasonably name their symbols,
                             // this will work. If there's clashes in symbol names (e.g.
                             // lots of unnamed symbols) it can lead to false inequalities.
-                            return getSymbolName((Symbol) a).compareTo(getSymbolName((Symbol) b));
+                            return ((Symbol) a).getName().compareTo(((Symbol) b).getName());
                         } else if (b instanceof Integer || b instanceof String) {
                             return 1; // symbols after ints and strings
                         }
@@ -324,17 +324,6 @@ final class EqualObjectGraphs {
                     throw new ClassCastException();
                 });
         return ids;
-    }
-
-    private static String getSymbolName(final Symbol s) {
-        if (s instanceof SymbolKey) {
-            return ((SymbolKey) s).getName();
-        } else if (s instanceof NativeSymbol) {
-            return ((NativeSymbol) s).getKey().getName();
-        } else {
-            // We can only handle native Rhino Symbol types
-            throw new ClassCastException();
-        }
     }
 
     private static Object[] getIds(final Scriptable s) {

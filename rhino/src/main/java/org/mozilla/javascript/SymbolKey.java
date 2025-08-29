@@ -33,10 +33,8 @@ public class SymbolKey implements Symbol, Serializable {
         this.name = name;
     }
 
-    /**
-     * Returns the symbol's name. Returns empty string for anonymous symbol (i.e. something created
-     * with <code>Symbol()</code>).
-     */
+    /** {@inheritDoc} */
+    @Override
     public String getName() {
         return name != null ? name : "";
     }

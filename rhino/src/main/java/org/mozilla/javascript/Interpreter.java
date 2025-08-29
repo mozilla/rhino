@@ -4176,12 +4176,14 @@ public final class Interpreter extends Icode implements Evaluator {
             // indexReg > 0: index of constant with the keys
             // indexReg < 0: we have a spread, so no keys array, but we know the length
             if (state.indexReg < 0) {
-                frame.stack[state.stackTop] = new NewLiteralStorage(-state.indexReg - 1, true);
+                frame.stack[state.stackTop] =
+                        NewLiteralStorage.create(cx, -state.indexReg - 1, true);
             } else {
                 Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
                 boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
                 frame.stack[state.stackTop] =
-                        new NewLiteralStorage(copyArray ? Arrays.copyOf(ids, ids.length) : ids);
+                        NewLiteralStorage.create(
+                                cx, copyArray ? Arrays.copyOf(ids, ids.length) : ids);
             }
 
             return null;
@@ -4192,7 +4194,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: number of values in the literal
-            frame.stack[++state.stackTop] = new NewLiteralStorage(state.indexReg, false);
+            frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
             return null;
         }
     }

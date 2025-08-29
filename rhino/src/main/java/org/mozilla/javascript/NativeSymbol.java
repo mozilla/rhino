@@ -192,6 +192,12 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return key.toString();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getName() {
+        return key.getName();
+    }
+
     // Symbol objects have a special property that one cannot add properties.
 
     private static boolean isStrictMode() {

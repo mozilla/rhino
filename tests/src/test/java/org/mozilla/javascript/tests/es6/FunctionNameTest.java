@@ -106,9 +106,23 @@ class FunctionNameTest {
 
     @Test
     void methodComputedProperty() {
-        // TODO: this is not working at the moment, because it cannot be done statically
-        //  but needs to be done at runtime
-        Utils.assertWithAllModes_ES6("", "o = { [1 + 2]() {} }; o['3'].name");
+        Utils.assertWithAllModes_ES6("3", "o = { [1 + 2]() {} }; o['3'].name");
+    }
+
+    @Test
+    void methodComputedPropertyNamedSymbol() {
+        Utils.assertWithAllModes_ES6("[foo]", "s = Symbol('foo'); o = { [s]() {} }; o[s].name");
+    }
+
+    @Test
+    void methodComputedPropertyAnonymousSymbol() {
+        Utils.assertWithAllModes_ES6("", "s = Symbol(); o = { [s]() {} }; o[s].name");
+    }
+
+    @Test
+    void methodComputedPropertyBuiltInSymbol() {
+        Utils.assertWithAllModes_ES6(
+                "[Symbol.iterator]", "s = Symbol.iterator; o = { [s]() {} }; o[s].name");
     }
 
     @Test
@@ -124,6 +138,20 @@ class FunctionNameTest {
     }
 
     @Test
+    void getterComputedName() {
+        Utils.assertWithAllModes_ES6(
+                "get [foo]",
+                "var s = Symbol('foo'); var o = { get [s](){} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.get.name");
+    }
+
+    @Test
+    void getterComputedNameAnonymousSymbol() {
+        Utils.assertWithAllModes_ES6(
+                "get ",
+                "var s = Symbol(); var o = { get [s](){} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.get.name");
+    }
+
+    @Test
     void setter() {
         Utils.assertWithAllModes_ES6(
                 "set x",
@@ -131,12 +159,64 @@ class FunctionNameTest {
     }
 
     @Test
-    void protoIsASpecialName() {
-        Utils.assertWithAllModes_ES6("", "var o = { __proto__() {} }; o.__proto__.name");
+    void setterComputedName() {
+        Utils.assertWithAllModes_ES6(
+                "set [foo]",
+                "var s = Symbol('foo'); var o = { set [s](v){} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.set.name");
+    }
+
+    @Test
+    void setterComputedNameAnonymousSymbol() {
+        Utils.assertWithAllModes_ES6(
+                "set ",
+                "var s = Symbol(); var o = { set [s](v){} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.set.name");
+    }
+
+    @Test
+    void arrowInObject() {
+        Utils.assertWithAllModes_ES6(
+                "id",
+                "var o = { id: () => {} }; var desc = Object.getOwnPropertyDescriptor(o, 'id'); desc.value.name");
+    }
+
+    @Test
+    void computedNameArrow() {
+        Utils.assertWithAllModes_ES6(
+                "Id",
+                "var id = 'Id'; var o = { [id]: () => {} }; var desc = Object.getOwnPropertyDescriptor(o, 'Id'); desc.value.name");
+    }
+
+    @Test
+    void computedNameArrowSymbol() {
+        Utils.assertWithAllModes_ES6(
+                "[foo]",
+                "var s = Symbol('foo'); var o = { [s]: () => {} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.value.name");
+    }
+
+    @Test
+    void computedNameArrowAnonymousSymbol() {
+        Utils.assertWithAllModes_ES6(
+                "",
+                "var s = Symbol(); var o = { [s]: () => {} }; var desc = Object.getOwnPropertyDescriptor(o, s); desc.value.name");
+    }
+
+    @Test
+    void protoIsNotASpecialNameForMethods() {
+        Utils.assertWithAllModes_ES6("__proto__", "var o = { __proto__() {} }; o.__proto__.name");
+    }
+
+    @Test
+    void protoIsASpecialNameForNormalPropFunctionValue() {
+        Utils.assertWithAllModes_ES6("", "var o = { __proto__: function() {} }; o.__proto__.name");
     }
 
     @Test
     void inferenceIsNotUsedInEs5() {
         Utils.assertWithAllModes_1_8("", "var f = function() {}; f.name");
+    }
+
+    @Test
+    void inferenceIsNotUsedInEs5InObjectLiteral() {
+        Utils.assertWithAllModes_1_8("", "o = { f: function() {} }; o.f.name");
     }
 }

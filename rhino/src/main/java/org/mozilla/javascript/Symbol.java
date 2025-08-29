@@ -12,4 +12,10 @@ package org.mozilla.javascript;
  *
  * @since 1.7.8
  */
-public interface Symbol {}
+public interface Symbol {
+    /**
+     * Returns the symbol's name. Returns empty string for anonymous symbol (i.e. something created
+     * with <code>Symbol()</code>).
+     */
+    String getName();
+}

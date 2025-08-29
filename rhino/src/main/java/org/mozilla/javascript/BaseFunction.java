@@ -226,6 +226,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         return true;
     }
 
+    /** Forces setting the function's name, bypassing all "readonly" checks. */
+    void setFunctionName(String name) {
+        nameValue = name;
+    }
+
     protected void createPrototypeProperty() {
         if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             ScriptableObject.defineBuiltInProperty(
