@@ -26,11 +26,11 @@ public class ErrorIsErrorTest {
     @Test
     public void testAggregateError() {
         final String script =
-            "if (typeof AggregateError !== 'undefined') {"
-            + " Error.isError(new AggregateError([]));"
-            + "} else {"
-            + " true;"
-            + "}";
+                "if (typeof AggregateError !== 'undefined') {"
+                        + " Error.isError(new AggregateError([]));"
+                        + "} else {"
+                        + " true;"
+                        + "}";
         Utils.assertWithAllModes_ES6(true, script);
     }
 
