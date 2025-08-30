@@ -288,9 +288,15 @@ final class NativeMath extends ScriptableObject {
         }
 
         // Round mantissa from 52 bits to 10 bits (42 bit shift)
-        // Add 0.5 ULP for rounding
-        mantissa += (1L << 41);
+        // Implement ties-to-even (banker's rounding)
+        long roundBit = (mantissa >> 41) & 1;
+        long stickyBits = mantissa & ((1L << 41) - 1);
         mantissa >>>= 42;
+
+        // Round up if > 0.5, or if exactly 0.5 and result would be odd
+        if (roundBit == 1 && (stickyBits != 0 || (mantissa & 1) == 1)) {
+            mantissa++;
+        }
 
         // Handle mantissa overflow
         if (mantissa >= (1L << 10)) {
@@ -305,6 +311,11 @@ final class NativeMath extends ScriptableObject {
         // Reconstruct as double precision
         if (exponent == 0) {
             // Subnormal float16: value = 2^-14 * (mantissa / 1024)
+            // Check for underflow: if mantissa rounds to smallest value but original ≤ 2^-25, round
+            // to 0
+            if (mantissa == 0 || (mantissa == 1 && Math.abs(x) <= 2.9802322387695312e-8)) {
+                return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+            }
             double value = Math.scalb((double) mantissa / 1024.0, -14);
             return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
         } else {
