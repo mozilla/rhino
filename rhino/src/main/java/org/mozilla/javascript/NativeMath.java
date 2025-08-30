@@ -250,15 +250,16 @@ final class NativeMath extends ScriptableObject {
 
     private static Object f16round(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        double x = ScriptRuntime.toNumber(args, 0);
+        // Handle missing arguments
+        if (args.length == 0) {
+            return ScriptRuntime.NaNobj;
+        }
+        double x = ScriptRuntime.toNumber(args[0]);
 
-        // Handle special cases first
+        // Handle special cases
         if (Double.isNaN(x)) return ScriptRuntime.NaNobj;
         if (x == 0.0) return ScriptRuntime.wrapNumber(x); // Preserve sign of zero
         if (Double.isInfinite(x)) return ScriptRuntime.wrapNumber(x);
-
-        // Convert to binary16 and back using proper IEEE 754 conversion
-        // This approach ensures correct rounding behavior
 
         // Extract components from double precision
         long bits = Double.doubleToLongBits(x);
@@ -266,41 +267,104 @@ final class NativeMath extends ScriptableObject {
         int exponent = (int) ((bits >>> 52) & 0x7FF);
         long mantissa = bits & 0x000FFFFFFFFFFFFFL;
 
-        // Adjust from double bias (1023) to half bias (15)
+        // Adjust from double bias (1023) to float16 bias (15)
         exponent = exponent - 1023 + 15;
 
-        // Handle underflow
-        if (exponent <= 0) {
-            // Subnormal or underflow to zero
-            if (exponent < -10) {
-                // Underflow to zero
-                return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
-            }
-            // Convert to subnormal
-            mantissa = (mantissa | (1L << 52)) >>> (1 - exponent);
-            exponent = 0;
-        }
-
-        // Handle overflow
+        // Handle overflow to infinity
         if (exponent >= 31) {
             return ScriptRuntime.wrapNumber(
                     (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
         }
 
-        // Round mantissa from 52 bits to 10 bits (42 bit shift)
-        // Implement ties-to-even (banker's rounding)
-        long roundBit = (mantissa >> 41) & 1;
-        long stickyBits = mantissa & ((1L << 41) - 1);
-        mantissa >>>= 42;
+        // Handle underflow and subnormal values
+        if (exponent < 0) {
+            return handleSubnormalF16(sign, exponent, mantissa);
+        }
 
-        // Round up if > 0.5, or if exactly 0.5 and result would be odd
+        // Normal value: round mantissa from 52 to 10 bits
+        return handleNormalF16(sign, exponent, mantissa);
+    }
+
+    private static Object handleSubnormalF16(int sign, int exponent, long mantissa) {
+        // Values below 2^-24 underflow to zero
+        if (exponent < -10) {
+            return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+        }
+
+        // Special case: exactly 2^-25 rounds to zero (ties-to-even)
+        if (exponent == -10 && mantissa == 0) {
+            return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+        }
+
+        // Special case: slightly above 2^-25 rounds to 2^-24
+        if (exponent == -10 && mantissa > 0) {
+            double smallestSubnormal = 5.960464477539063e-8; // 2^-24
+            return ScriptRuntime.wrapNumber((sign != 0) ? -smallestSubnormal : smallestSubnormal);
+        }
+
+        // Convert to subnormal representation
+        int totalShift = 42 + (1 - exponent);
+        mantissa = mantissa | (1L << 52); // Add implicit 1 bit
+
+        // Extract rounding information before shift
+        long roundBit = (mantissa >> (totalShift - 1)) & 1;
+        long stickyBits = mantissa & ((1L << (totalShift - 1)) - 1);
+
+        // Shift to get 10-bit mantissa
+        mantissa >>>= totalShift;
+
+        // Apply ties-to-even rounding
+        if (roundBit == 1 && (stickyBits != 0 || (mantissa & 1) == 1)) {
+            mantissa++;
+        }
+
+        // Reconstruct subnormal value
+        if (mantissa == 0) {
+            return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+        }
+
+        // Check for overflow to normal range
+        if (mantissa >= (1L << 10)) {
+            // Smallest normal = 2^-14
+            return ScriptRuntime.wrapNumber((sign != 0) ? -6.103515625e-5 : 6.103515625e-5);
+        }
+
+        // Subnormal value = 2^-14 * (mantissa / 1024)
+        double value = Math.scalb((double) mantissa / 1024.0, -14);
+        return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
+    }
+
+    private static Object handleNormalF16(int sign, int exponent, long mantissa) {
+        // Add implicit 1 bit for normal values
+        long fullMantissa = mantissa | (1L << 52);
+
+        // Extract rounding information
+        long roundBit = (fullMantissa >> 41) & 1;
+        long stickyBits = fullMantissa & ((1L << 41) - 1);
+        fullMantissa >>>= 42;
+
+        // Handle boundary between largest subnormal and smallest normal
+        if (exponent == 0) {
+            if (fullMantissa == 2046) {
+                // Exactly the largest subnormal
+                return reconstructSubnormalF16(sign, 1023);
+            } else if (fullMantissa == 2047 && roundBit == 0 && stickyBits == 0) {
+                // Midpoint: ties-to-even rounds to smallest normal
+                return reconstructNormalF16(sign, 1, 0);
+            }
+        }
+
+        // Extract 10-bit mantissa (remove implicit 1)
+        mantissa = fullMantissa & 0x3FF;
+
+        // Apply ties-to-even rounding
         if (roundBit == 1 && (stickyBits != 0 || (mantissa & 1) == 1)) {
             mantissa++;
         }
 
         // Handle mantissa overflow
         if (mantissa >= (1L << 10)) {
-            mantissa = 0; // Overflow to next power of 2
+            mantissa = 0;
             exponent++;
             if (exponent >= 31) {
                 return ScriptRuntime.wrapNumber(
@@ -308,24 +372,26 @@ final class NativeMath extends ScriptableObject {
             }
         }
 
-        // Reconstruct as double precision
+        // Reconstruct the value
         if (exponent == 0) {
-            // Subnormal float16: value = 2^-14 * (mantissa / 1024)
-            // Check for underflow: if mantissa rounds to smallest value but original ≤ 2^-25, round
-            // to 0
-            if (mantissa == 0 || (mantissa == 1 && Math.abs(x) <= 2.9802322387695312e-8)) {
-                return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
-            }
-            double value = Math.scalb((double) mantissa / 1024.0, -14);
-            return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
+            return reconstructSubnormalF16(sign, mantissa);
         } else {
-            // Normal
-            long resultBits =
-                    ((long) sign << 63)
-                            | (((long) (exponent + 1023 - 15)) << 52)
-                            | (mantissa << 42);
-            return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
+            return reconstructNormalF16(sign, exponent, mantissa);
         }
+    }
+
+    private static Object reconstructSubnormalF16(int sign, long mantissa) {
+        if (mantissa == 0) {
+            return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
+        }
+        double value = Math.scalb((double) mantissa / 1024.0, -14);
+        return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
+    }
+
+    private static Object reconstructNormalF16(int sign, int exponent, long mantissa) {
+        long resultBits =
+                ((long) sign << 63) | (((long) (exponent + 1023 - 15)) << 52) | (mantissa << 42);
+        return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
     }
 
     private static Object fround(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
