@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
@@ -37,23 +38,52 @@ public class ErrorHandlingTest {
     @Test
     public void throwError() {
         testIt(
-                "throw new Error('foo')",
+                "\n" // 1
+                        + "throw new Error('foo')", // 2
                 e -> {
                     Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("Error: foo (myScript.js#1)", e.getMessage());
+                    Assert.assertEquals("Error: foo (myScript.js#2)", e.getMessage());
                 });
         testIt(
-                "throw new EvalError('foo')",
+                "\n" // 1
+                        + "throw new EvalError('foo')",
                 e -> {
                     Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("EvalError: foo (myScript.js#1)", e.getMessage());
+                    Assert.assertEquals("EvalError: foo (myScript.js#2)", e.getMessage());
                 });
         testIt(
-                "try { throw new Error('foo') } catch (e) { throw e }",
+                "try {\n" // 1
+                        + " throw new Error('foo')\n" // 2
+                        + "} catch (e) {\n" // 3
+                        + " throw e\n" // 4
+                        + "}", // 5
                 e -> {
                     Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("Error: foo (myScript.js#1)", e.getMessage());
+                    Assert.assertEquals("Error: foo (myScript.js#4)", e.getMessage());
                 });
+        testIt(
+                "\n" // 1
+                        + "null.toString()", // 2
+                e -> {
+                    Assert.assertEquals(EcmaError.class, e.getClass());
+                    Assert.assertEquals(
+                            "TypeError: Cannot call method \"toString\" of null (myScript.js#2)",
+                            e.getMessage());
+                });
+    }
+
+    @Test
+    public void throwErrorOnProp() {
+        Utils.assertWithAllModes(
+                "TypeError: Cannot call method \"toString\" of null\tat test.js:3"
+                        + System.lineSeparator(),
+                "var ret\n" // 1
+                        + "try {\n" // 2
+                        + "    null.toString()\n" // 3
+                        + "} catch (e) {\n" // 4
+                        + "    ret = e + e.stack\n" // 5
+                        + "}\n" // 6
+                        + "ret"); // 7
     }
 
     @Test
@@ -110,9 +140,9 @@ public class ErrorHandlingTest {
     public void stackProvider() {
         String nl = System.lineSeparator();
         Utils.assertWithAllModes(Undefined.instance, "Error.stack");
-        Utils.assertWithAllModes("\tat test.js:0" + nl, "new Error().stack");
+        Utils.assertWithAllModes("\tat test.js:1" + nl, "new Error().stack");
         Utils.assertWithAllModes(Undefined.instance, "EvalError.stack");
-        Utils.assertWithAllModes("\tat test.js:0" + nl, "new EvalError('foo').stack");
+        Utils.assertWithAllModes("\tat test.js:1" + nl, "new EvalError('foo').stack");
     }
 
     private void testIt(final String script, final Consumer<Throwable> exception) {
