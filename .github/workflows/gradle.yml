@@ -62,3 +62,24 @@ jobs:
       with:
         name: reports-java-11
         path: '*/build/reports'
+    - name: Check current state of test262.properties
+      id: hashBefore
+      run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
+    - name: Run test262 tests
+      env:
+        RHINO_TEST_JAVA_VERSION: "11"
+      run: >-
+        ./gradlew :tests:test --tests Test262SuiteTest -DupdateTest262properties
+    - name: Check updated state of test262.properties
+      id: hashAfter
+      run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
+    - name: Compare test262 results
+      run: |
+        if [ "${{ steps.hashBefore.outputs.hash }}" != "${{ steps.hashAfter.outputs.hash }}" ]; then
+          echo "The test262.properties file was not updated properly."
+          echo "Please follow the instructions in tests/README.md to update it."
+          git --no-pager diff ./tests/testsrc/test262.properties
+          exit 1
+        else
+          echo "The test262.properties file is up to date."
+        fi
