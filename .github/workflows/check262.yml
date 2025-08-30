@@ -27,7 +27,7 @@ jobs:
       run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
     - name: Run test262 tests
       run: >-
-        ./gadlew :tests:test --tests Test262SuiteTest -DupdateTest262properties
+        ./gradlew :tests:test --tests Test262SuiteTest -DupdateTest262properties
     - name: Check updated state of properties file
       id: hashAfter
       run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
