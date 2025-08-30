@@ -294,7 +294,7 @@ final class NativeMath extends ScriptableObject {
 
         // Handle mantissa overflow
         if (mantissa >= (1L << 10)) {
-            mantissa >>>= 1;
+            mantissa = 0; // Overflow to next power of 2
             exponent++;
             if (exponent >= 31) {
                 return ScriptRuntime.wrapNumber(
