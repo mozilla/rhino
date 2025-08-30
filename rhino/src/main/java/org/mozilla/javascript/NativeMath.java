@@ -304,9 +304,9 @@ final class NativeMath extends ScriptableObject {
 
         // Reconstruct as double precision
         if (exponent == 0) {
-            // Subnormal
-            long resultBits = ((long) sign << 63) | (mantissa << 42);
-            return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
+            // Subnormal float16: value = 2^-14 * (mantissa / 1024)
+            double value = Math.scalb((double) mantissa / 1024.0, -14);
+            return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
         } else {
             // Normal
             long resultBits =
