@@ -219,7 +219,7 @@ final class NativeError extends IdScriptableObject {
             case ConstructorId_captureStackTrace:
                 js_captureStackTrace(cx, scope, thisObj, args);
                 return Undefined.instance;
-                
+
             case ConstructorId_isError:
                 return js_isError(args);
         }
