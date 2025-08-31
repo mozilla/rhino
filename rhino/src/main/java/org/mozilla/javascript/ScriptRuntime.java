@@ -58,6 +58,9 @@ public class ScriptRuntime {
      * @return a {@link BaseFunction}
      * @deprecated {@link #typeErrorThrower(Context)}
      */
+    public static TemplateLiteralProxy templateLiteralProxy =
+            ScriptRuntime::getTemplateLiteralCallSiteImpl;
+
     @Deprecated
     public static BaseFunction typeErrorThrower() {
         return typeErrorThrower(Context.getCurrentContext());
@@ -5839,6 +5842,11 @@ public class ScriptRuntime {
     }
 
     public static Scriptable getTemplateLiteralCallSite(
+            Context cx, Scriptable scope, Object[] strings, int index) {
+        return templateLiteralProxy.getCallSite(cx, scope, strings, index);
+    }
+
+    private static Scriptable getTemplateLiteralCallSiteImpl(
             Context cx, Scriptable scope, Object[] strings, int index) {
         Object callsite = strings[index];
 
