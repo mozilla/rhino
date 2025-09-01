@@ -555,11 +555,11 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+    protected Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            Object[] sids = super.getIds(map, nonEnumerable, getSymbols);
+            Object[] sids = super.getIds(nonEnumerable, getSymbols);
             Object[] a = new Object[sids.length + string.length()];
             int i;
             for (i = 0; i < string.length(); i++) {
@@ -568,7 +568,7 @@ final class NativeString extends ScriptableObject {
             System.arraycopy(sids, 0, a, i, sids.length);
             return a;
         }
-        return super.getIds(map, nonEnumerable, getSymbols);
+        return super.getIds(nonEnumerable, getSymbols);
     }
 
     @Override

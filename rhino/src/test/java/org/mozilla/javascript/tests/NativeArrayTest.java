@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -18,8 +17,6 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.TopLevel;
-import org.mozilla.javascript.testutils.Utils;
 
 public class NativeArrayTest {
     private NativeArray array;
@@ -139,31 +136,6 @@ public class NativeArrayTest {
             Scriptable scope = cx.initStandardObjects();
             String result = cx.evaluateString(scope, source, "source", 1, null).toString();
             Assert.assertEquals("0,1,0,1", result);
-        }
-    }
-
-    @Test
-    public void shouldNotDeadlockWhenDefiningPropertyLength() {
-        final String script =
-                ""
-                        + "var arr = [0, 1, 2];\n"
-                        + "\n"
-                        + "Object.defineProperty(arr, \"1\", {\n"
-                        + "  configurable: false\n"
-                        + "});\n"
-                        + "\n"
-                        + "Object.defineProperties(arr, {\n"
-                        + "  length: {\n"
-                        + "    value: 1\n"
-                        + "  }\n"
-                        + "});\n";
-
-        var contextFactory = Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
-        try (Context cx = contextFactory.enterContext()) {
-            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
-            Scriptable scope = cx.initSafeStandardObjects(new TopLevel());
-
-            assertNotNull(cx.evaluateString(scope, script, "test", 1, null));
         }
     }
 }

@@ -535,10 +535,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable s = getCompatibleObject(cx, scope, arg);
         ScriptableObject obj = ensureScriptableObject(s);
-        Object[] ids;
-        try (var map = obj.startCompoundOp(false)) {
-            ids = obj.getIds(map, true, false);
-        }
+        Object[] ids = obj.getIds(true, false);
         for (int i = 0; i < ids.length; i++) {
             ids[i] = ScriptRuntime.toString(ids[i]);
         }
@@ -550,10 +547,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable s = getCompatibleObject(cx, scope, arg);
         ScriptableObject obj = ensureScriptableObject(s);
-        Object[] ids;
-        try (var map = obj.startCompoundOp(false)) {
-            ids = obj.getIds(map, true, true);
-        }
+        Object[] ids = obj.getIds(true, true);
         ArrayList<Object> syms = new ArrayList<>();
         for (Object o : ids) {
             if (o instanceof Symbol) {
@@ -583,11 +577,7 @@ public class NativeObject extends ScriptableObject implements Map {
         ScriptableObject obj = ensureScriptableObject(s);
 
         ScriptableObject descs = (ScriptableObject) cx.newObject(scope);
-        Object[] ids;
-        try (var map = obj.startCompoundOp(false)) {
-            ids = obj.getIds(map, true, true);
-        }
-        for (Object key : ids) {
+        for (Object key : obj.getIds(true, true)) {
             Scriptable desc = obj.getOwnPropertyDescriptor(cx, key);
             if (desc == null) {
                 continue;
@@ -734,10 +724,7 @@ public class NativeObject extends ScriptableObject implements Map {
             Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
             Object[] ids;
             if (sourceObj instanceof ScriptableObject) {
-                var scriptable = (ScriptableObject) sourceObj;
-                try (var map = scriptable.startCompoundOp(false)) {
-                    ids = scriptable.getIds(map, false, true);
-                }
+                ids = ((ScriptableObject) sourceObj).getIds(false, true);
             } else {
                 ids = sourceObj.getIds();
             }

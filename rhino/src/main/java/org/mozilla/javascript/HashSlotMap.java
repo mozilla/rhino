@@ -67,15 +67,9 @@ public class HashSlotMap implements SlotMap {
     @SuppressWarnings("unchecked")
     @Override
     public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
-            Object key,
-            int index,
-            SlotComputer<S> c) {
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         Object name = makeKey(key, index);
-        Slot ret =
-                map.compute(
-                        name, (n, existing) -> c.compute(key, index, existing, compoundOp, owner));
+        Slot ret = map.compute(name, (n, existing) -> c.compute(key, index, existing));
         return (S) ret;
     }
 

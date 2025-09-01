@@ -288,8 +288,8 @@ final class Arguments extends IdScriptableObject {
     }
 
     @Override
-    Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
-        Object[] ids = super.getIds(map, getNonEnumerable, getSymbols);
+    Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
+        Object[] ids = super.getIds(getNonEnumerable, getSymbols);
         if (args.length != 0) {
             boolean[] present = new boolean[args.length];
             int extraCount = args.length;

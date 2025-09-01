@@ -286,7 +286,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[OwnPropertyKeys]] ()</a>
      */
     @Override
-    Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
+    Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
         /*
         * 1. Let handler be O.[[ProxyHandler]].
         * 2. If handler is null, throw a TypeError exception.
@@ -349,10 +349,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
             boolean extensibleTarget = target.isExtensible();
             // don't use the provided values here we have to check all
-            Object[] targetKeys;
-            try (var targetMap = target.startCompoundOp(false)) {
-                targetKeys = target.getIds(targetMap, true, true);
-            }
+            Object[] targetKeys = target.getIds(true, true);
 
             HashSet<Object> uncheckedResultKeys = new HashSet<Object>(trapResult);
             if (uncheckedResultKeys.size() != trapResult.size()) {
@@ -400,9 +397,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             // target is not extensible, fall back to the target call
         }
 
-        try (var targetMap = target.startCompoundOp(false)) {
-            return target.getIds(targetMap, getNonEnumerable, getSymbols);
-        }
+        return target.getIds(getNonEnumerable, getSymbols);
     }
 
     /**

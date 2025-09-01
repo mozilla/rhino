@@ -82,21 +82,11 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner,
-                CompoundOperationMap compoundOp,
-                Object key,
-                int index,
-                SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null, compoundOp, owner);
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            var newSlot = c.compute(key, index, null);
             if (newSlot != null) {
-                if (!compoundOp.isTouched()) {
-                    var map = new SingleEntrySlotMap(newSlot);
-                    owner.setMap(map);
-                } else {
-                    // The map has been touched so delegate the add (can't do
-                    // a compute because that might be recursive).
-                    compoundOp.add(owner, newSlot);
-                }
+                var map = new SingleEntrySlotMap(newSlot);
+                owner.setMap(map);
             }
             return newSlot;
         }
@@ -127,12 +117,8 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner,
-                CompoundOperationMap compoundOp,
-                Object key,
-                int index,
-                SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null, compoundOp, owner);
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            var newSlot = c.compute(key, index, null);
             if (newSlot != null) {
                 var currentMap = replaceMapAndAddSlot(owner, newSlot);
                 if (currentMap != this) {
@@ -145,13 +131,6 @@ public abstract class SlotMapOwner {
         private SlotMap replaceMapAndAddSlot(SlotMapOwner owner, Slot newSlot) {
             var map = new ThreadSafeSingleEntrySlotMap(newSlot);
             return ThreadedAccess.checkAndReplaceMap(owner, this, map);
-        }
-
-        @Override
-        public CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
-            var map = new ThreadSafeEmbeddedSlotMap();
-            return ThreadedAccess.checkAndReplaceMap(owner, this, map)
-                    .startCompoundOp(owner, forWriting);
         }
     }
 
@@ -238,15 +217,11 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner,
-                CompoundOperationMap compoundOp,
-                Object key,
-                int index,
-                SlotComputer<S> c) {
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
             var newMap = new EmbeddedSlotMap();
             owner.setMap(newMap);
             newMap.add(owner, slot);
-            return newMap.compute(owner, compoundOp, key, index, c);
+            return newMap.compute(owner, key, index, c);
         }
     }
 
@@ -274,25 +249,15 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner,
-                CompoundOperationMap compoundOp,
-                Object key,
-                int index,
-                SlotComputer<S> c) {
-            var currentMap = checkAndReplaceMap(owner);
-            return currentMap.compute(owner, compoundOp, key, index, c);
-        }
-
-        @Override
-        public CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
-            return checkAndReplaceMap(owner).startCompoundOp(owner, forWriting);
-        }
-
-        private SlotMap checkAndReplaceMap(SlotMapOwner owner) {
+                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
             var newMap = new ThreadSafeEmbeddedSlotMap(2);
             newMap.add(null, slot);
             var currentMap = ThreadedAccess.checkAndReplaceMap(owner, this, newMap);
-            return currentMap;
+            if (currentMap == this) {
+                return newMap.compute(owner, key, index, c);
+            } else {
+                return currentMap.compute(owner, key, index, c);
+            }
         }
     }
 
@@ -339,38 +304,5 @@ public abstract class SlotMapOwner {
 
     final void setMap(SlotMap newMap) {
         slotMap = newMap;
-    }
-
-    /**
-     * Returns an {@link AutoCloseable} map which can be used for compound operations. If the
-     * underlying map is thread safe then this will perform any locking required to ensure that no
-     * other operation will mutate the map during this. It is vital to either close the returned
-     * {@link CompoundOperationMap} manually or to claim this in a try-with-resources block which
-     * will do that for you. For example:
-     *
-     * <blockquote>
-     *
-     * <pre>
-     *     try (var op = obj.startCompoundOp(true)) {
-     *         var slot = op.compute(obj, "myKey", 0, this::complexOperation);
-     *     }
-     * </pre>
-     *
-     * </blockquote>
-     *
-     * <p>While the compound operation is in progress other threads will not be able to manipulate
-     * the map and will block until the compound operation has been closed. It is important to note
-     * that this compound operation only covers the map being manipulated, great care must be taken
-     * if any other maps are being accessed as it is extremely easy to end up in a deadlock
-     * situation.
-     *
-     * @param forWriting Indicates whether this compound operation should retrieve a read lock or a
-     *     write lock. This needs to be claimed at the start of the operation because there is no
-     *     good way for one thread to upgrade a lock from read to write without the possibility of
-     *     deadlocks or other semantic issues.
-     * @return the {@link CompoundOperationMap} which can be used for the operation.
-     */
-    final CompoundOperationMap startCompoundOp(boolean forWriting) {
-        return slotMap.startCompoundOp(this, forWriting);
     }
 }

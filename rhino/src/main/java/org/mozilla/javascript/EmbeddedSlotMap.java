@@ -150,11 +150,7 @@ public class EmbeddedSlotMap implements SlotMap {
 
     @Override
     public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
-            Object key,
-            int index,
-            SlotComputer<S> c) {
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
 
         if (slots != null) {
@@ -168,74 +164,54 @@ public class EmbeddedSlotMap implements SlotMap {
                 prev = slot;
             }
             if (slot != null) {
-                return computeExisting(owner, compoundOp, key, index, c, slot, prev, slotIndex);
+                return computeExisting(key, index, c, slot, prev, slotIndex);
             }
         }
-        return computeNew(owner, compoundOp, key, index, c);
+        return computeNew(owner, key, index, c);
     }
 
     private <S extends Slot> S computeNew(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
-            Object key,
-            int index,
-            SlotComputer<S> c) {
-        S newSlot = c.compute(key, index, null, compoundOp, owner);
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+        S newSlot = c.compute(key, index, null);
         if (newSlot != null) {
-            if (!compoundOp.touched) {
-                createNewSlot(owner, newSlot);
-            } else {
-                owner.getMap().add(owner, newSlot);
-            }
+            createNewSlot(owner, newSlot);
         }
         return newSlot;
     }
 
     private <S extends Slot> S computeExisting(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
-            Object key,
-            int index,
-            SlotComputer<S> c,
-            Slot slot,
-            Slot prev,
-            int slotIndex) {
+            Object key, int index, SlotComputer<S> c, Slot slot, Slot prev, int slotIndex) {
         // Modify or remove existing slot
-        S newSlot = c.compute(key, index, slot, compoundOp, owner);
-        if (!compoundOp.touched) {
-            if (newSlot == null) {
-                // Need to delete this slot actually
-                removeSlot(slot, prev, slotIndex, key);
-            } else if (!Objects.equals(slot, newSlot)) {
-                // Replace slot in hash table
-                if (prev == slot) {
-                    slots[slotIndex] = newSlot;
-                } else {
-                    prev.next = newSlot;
+        S newSlot = c.compute(key, index, slot);
+        if (newSlot == null) {
+            // Need to delete this slot actually
+            removeSlot(slot, prev, slotIndex, key);
+        } else if (!Objects.equals(slot, newSlot)) {
+            // Replace slot in hash table
+            if (prev == slot) {
+                slots[slotIndex] = newSlot;
+            } else {
+                prev.next = newSlot;
+            }
+            newSlot.next = slot.next;
+            // Replace new slot in linked list, keeping same order
+            if (slot == firstAdded) {
+                firstAdded = newSlot;
+            } else {
+                Slot ps = firstAdded;
+                while ((ps != null) && (ps.orderedNext != slot)) {
+                    ps = ps.orderedNext;
                 }
-                newSlot.next = slot.next;
-                // Replace new slot in linked list, keeping same order
-                if (slot == firstAdded) {
-                    firstAdded = newSlot;
-                } else {
-                    Slot ps = firstAdded;
-                    while ((ps != null) && (ps.orderedNext != slot)) {
-                        ps = ps.orderedNext;
-                    }
-                    if (ps != null) {
-                        ps.orderedNext = newSlot;
-                    }
-                }
-                newSlot.orderedNext = slot.orderedNext;
-                if (slot == lastAdded) {
-                    lastAdded = newSlot;
+                if (ps != null) {
+                    ps.orderedNext = newSlot;
                 }
             }
-            return newSlot;
-        } else {
-            return compoundOp.compute(
-                    owner, compoundOp, key, slotIndex, (k, i, s, m, o) -> newSlot);
+            newSlot.orderedNext = slot.orderedNext;
+            if (slot == lastAdded) {
+                lastAdded = newSlot;
+            }
         }
+        return newSlot;
     }
 
     @Override
