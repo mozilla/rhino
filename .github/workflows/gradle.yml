@@ -64,10 +64,8 @@ jobs:
         path: '*/build/reports'
     - name: Build and test Java 21 - Multithread
       timeout-minutes: 30
-      env:
-        "rhino.useThreadSafeObjectsByDefault": true
       run: >-
-        ./gradlew check
+        ./gradlew check -Drhino.useThreadSafeObjectsByDefault=true
     - name: Upload results Java 21 - Multithread
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ always() }}
