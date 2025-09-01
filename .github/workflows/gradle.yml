@@ -62,6 +62,18 @@ jobs:
       with:
         name: reports-java-11
         path: '*/build/reports'
+    - name: Build and test Java 21 - Multithread
+      timeout-minutes: 30
+      env:
+        "rhino.useThreadSafeObjectsByDefault": true
+      run: >-
+        ./gradlew check
+    - name: Upload results Java 21 - Multithread
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: ${{ always() }}
+      with:
+        name: reports-java-21-multithread
+        path: '*/build/reports'
     - name: Check current state of test262.properties
       id: hashBefore
       run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
