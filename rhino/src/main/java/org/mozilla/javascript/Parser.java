@@ -4051,7 +4051,7 @@ public class Parser {
         // for |var {x: x, y: y} = o|, as implemented in spidermonkey JS 1.8.
         int tt = peekToken();
         if ((tt == Token.COMMA || tt == Token.RC)
-                && ptt == Token.NAME
+                && (ptt == Token.NAME || (isAllowedInNonStrict(ptt) && !inUseStrictDirective))
                 && compilerEnv.getLanguageVersion() >= Context.VERSION_1_8) {
             if (!inDestructuringAssignment
                     && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
@@ -4074,6 +4074,10 @@ public class Parser {
         ObjectProperty pn = new ObjectProperty();
         pn.setKeyAndValue(property, assignExpr());
         return pn;
+    }
+
+    private boolean isAllowedInNonStrict(int ptt) {
+        return (ptt == Token.LET || (ptt == Token.YIELD && !getIsGenerator()));
     }
 
     private ObjectProperty methodDefinition(
@@ -4280,6 +4284,13 @@ public class Parser {
         if (insideFunctionBody()) {
             ((FunctionNode) currentScriptOrFn).setIsGenerator();
         }
+    }
+
+    protected boolean getIsGenerator() {
+        if (insideFunctionBody()) {
+            return ((FunctionNode) currentScriptOrFn).isGenerator();
+        }
+        return false;
     }
 
     private void setRequiresArgumentObject() {
