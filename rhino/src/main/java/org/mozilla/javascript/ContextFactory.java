@@ -10,6 +10,7 @@ package org.mozilla.javascript;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
@@ -105,6 +106,9 @@ import java.security.PrivilegedAction;
  * </pre>
  */
 public class ContextFactory {
+    private static final boolean useThreadSafeObjectsByDefault =
+            RhinoConfig.get("rhino.useThreadSafeObjectsByDefault", false);
+
     private static volatile boolean hasCustomGlobal;
     private static ContextFactory global = new ContextFactory();
 
@@ -274,7 +278,7 @@ public class ContextFactory {
                 return cx.getLanguageVersion() >= Context.VERSION_ES6;
 
             case Context.FEATURE_THREAD_SAFE_OBJECTS:
-                return false;
+                return useThreadSafeObjectsByDefault;
 
             case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE:
                 return false;
