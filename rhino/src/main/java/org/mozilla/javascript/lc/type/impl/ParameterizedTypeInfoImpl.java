@@ -43,6 +43,11 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
     public int hashCode() {
         if (hashCode == 0) {
             hashCode = rawType.hashCode() * 31 + params.hashCode();
+
+            // make sure computed hashcode is never 0 to prevent computing again
+            if (hashCode == 0) {
+                hashCode = -1;
+            }
         }
 
         return hashCode;
