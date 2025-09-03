@@ -255,6 +255,8 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
+            // ES2021
+            new LazilyLoadedCtor(scope, "WeakRef", sealed, true, NativeWeakRef::init);
         }
 
         if (scope instanceof TopLevel) {
