@@ -8,7 +8,6 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.lc.type.TypeInfo;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
@@ -191,7 +190,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     static Object constructInternal(Object[] args, MemberBox ctor) {
-        args = ctor.wrapArgsInternal(args);
+        args = ctor.wrapArgsInternal(args, Map.of());
 
         return ctor.newInstance(args);
     }
