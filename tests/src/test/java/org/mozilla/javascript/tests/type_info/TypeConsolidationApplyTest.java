@@ -12,9 +12,7 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class TypeConsolidationApplyTest {
 
-    /**
-     * Test for {@code SomeClass<SomeParamHere>}
-     */
+    /** Test for {@code SomeClass<SomeParamHere>} */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testGeneric(boolean interpretMode) {
@@ -42,9 +40,7 @@ public class TypeConsolidationApplyTest {
         }
     }
 
-    /**
-     * Test for {@code SomeClassImpl extends SomeClass<SomeParamHere>}
-     */
+    /** Test for {@code SomeClassImpl extends SomeClass<SomeParamHere>} */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testGenericParent(boolean interpretMode) {

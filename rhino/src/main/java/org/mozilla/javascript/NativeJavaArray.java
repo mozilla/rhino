@@ -6,10 +6,9 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.type.TypeInfo;
-
 import java.lang.reflect.Array;
 import java.util.Objects;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * This class reflects Java arrays into the JavaScript environment.

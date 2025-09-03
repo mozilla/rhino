@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -146,7 +145,9 @@ public class NativeJavaMethod extends BaseFunction {
         if (thisObj instanceof NativeJavaObject) {
             var staticType = ((NativeJavaObject) thisObj).staticType;
             if (staticType instanceof ParameterizedTypeInfo) {
-                mapping = ((ParameterizedTypeInfo) staticType).extractConsolidationMapping(TypeInfoFactory.get(scope));
+                mapping =
+                        ((ParameterizedTypeInfo) staticType)
+                                .extractConsolidationMapping(TypeInfoFactory.get(scope));
             }
         }
         args = meth.wrapArgsInternal(args, mapping);
