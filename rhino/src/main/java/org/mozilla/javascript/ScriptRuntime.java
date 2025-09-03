@@ -255,10 +255,7 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
-        }
-
-        // ES2021 features
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            // ES2021
             new LazilyLoadedCtor(scope, "WeakRef", sealed, true, NativeWeakRef::init);
         }
 
