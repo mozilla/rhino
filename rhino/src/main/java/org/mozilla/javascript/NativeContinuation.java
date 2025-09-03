@@ -34,12 +34,12 @@ public final class NativeContinuation extends IdScriptableObject implements Func
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, Scriptable scope, Object newTarget, Object[] args) {
         throw Context.reportRuntimeError("Direct call is not supported");
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
         return Interpreter.restartContinuation(this, cx, scope, args);
     }
 

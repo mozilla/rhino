@@ -177,7 +177,7 @@ final class MemberBox implements Serializable {
                         public Object call(
                                 Context cx,
                                 Scriptable callScope,
-                                Scriptable thisObj,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
                             Object getterThis;
@@ -213,7 +213,7 @@ final class MemberBox implements Serializable {
                         public Object call(
                                 Context cx,
                                 Scriptable callScope,
-                                Scriptable thisObj,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
                             Object setterThis;
@@ -222,7 +222,7 @@ final class MemberBox implements Serializable {
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
                                                     cx,
-                                                    thisObj,
+                                                    (Scriptable) thisObj,
                                                     originalArgs[0],
                                                     nativeSetter.getArgTypes().get(0).getTypeTag(),
                                                     nativeSetter.getArgNullability().isNullable(0))

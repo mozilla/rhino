@@ -79,8 +79,8 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return idcall.execIdCall(this, cx, scope, thisObj, args);
+    public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
+        return idcall.execIdCall(this, cx, scope, (Scriptable) thisObj, args);
     }
 
     @Override

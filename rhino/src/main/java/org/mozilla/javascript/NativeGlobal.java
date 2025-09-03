@@ -134,7 +134,10 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx,
+                                    Scriptable callScope,
+                                    Object newTarget,
+                                    Object[] args) {
                                 return NativeError.makeAggregate(
                                         callCx, callScope, lateBoundCtor, args);
                             }
@@ -157,7 +160,10 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx,
+                                    Scriptable callScope,
+                                    Object newTarget,
+                                    Object[] args) {
                                 return NativeError.make(callCx, callScope, lateBoundCtor, args);
                             }
                         };
