@@ -65,7 +65,7 @@ final class MemberBox implements Serializable {
         this.returnTypeInfo = factory.create(method.getGenericReturnType());
 
         var mapping = factory.getConsolidationMapping(parent);
-        this.argTypeInfos = factory.consolidateAll(this.argTypeInfos, mapping);
+        this.argTypeInfos = TypeInfoFactory.consolidateAll(this.argTypeInfos, mapping);
         this.returnTypeInfo = returnTypeInfo.consolidate(mapping);
     }
 
