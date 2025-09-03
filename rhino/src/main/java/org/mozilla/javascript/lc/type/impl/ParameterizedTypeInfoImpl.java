@@ -1,16 +1,17 @@
 package org.mozilla.javascript.lc.type.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
-import org.mozilla.javascript.lc.type.TypeFormatContext;
-import org.mozilla.javascript.lc.type.TypeInfo;
+
+import org.mozilla.javascript.lc.type.*;
 
 public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements ParameterizedTypeInfo {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;
+    private Map<VariableTypeInfo, TypeInfo> cachedMapping;
 
     public ParameterizedTypeInfoImpl(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
@@ -37,6 +38,14 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
         }
         var got = params.get(index);
         return got == TypeInfo.OBJECT ? TypeInfo.NONE : got;
+    }
+
+    @Override
+    public Map<VariableTypeInfo, TypeInfo> extractConsolidationMapping(TypeInfoFactory factory) {
+        if (cachedMapping == null) {
+            cachedMapping = ParameterizedTypeInfo.super.extractConsolidationMapping(factory);
+        }
+        return cachedMapping;
     }
 
     @Override
