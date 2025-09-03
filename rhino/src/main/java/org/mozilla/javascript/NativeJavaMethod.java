@@ -178,9 +178,8 @@ public class NativeJavaMethod extends BaseFunction {
             printDebug("Calling ", meth, args);
         }
 
-        Object returnValue = meth.invoke(javaObject, args);
-        // TODO: use TypeInfo directly when WrapFactory supports it
-        Class<?> returnType = meth.getReturnType().asClass();
+        var returnValue = meth.invoke(javaObject, args);
+        var returnType = meth.getReturnType();
 
         if (debug) {
             Class<?> actualType = (returnValue == null) ? null : returnValue.getClass();
@@ -190,10 +189,10 @@ public class NativeJavaMethod extends BaseFunction {
                             + " actual = "
                             + actualType
                             + " expect = "
-                            + returnType);
+                            + returnType.asClass());
         }
 
-        if (returnType == Void.TYPE) {
+        if (returnType == TypeInfo.PRIMITIVE_VOID) {
             // skip result wrapping if we don't need result at all
             return Undefined.instance;
         }
