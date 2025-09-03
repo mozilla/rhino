@@ -6,10 +6,9 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.type.TypeInfo;
-
 import java.lang.reflect.Modifier;
 import java.util.Map;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * This class reflects Java classes into the JavaScript environment, mainly for constructors and

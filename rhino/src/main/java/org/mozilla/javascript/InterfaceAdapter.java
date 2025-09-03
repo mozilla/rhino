@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.type.TypeInfo;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -15,6 +13,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.HashSet;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with single method or multiple

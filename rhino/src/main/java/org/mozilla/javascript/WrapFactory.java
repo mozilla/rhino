@@ -8,12 +8,11 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.type.TypeInfo;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
@@ -65,14 +64,14 @@ public class WrapFactory {
         }
         if (!isJavaPrimitiveWrap()) {
             if (obj instanceof String
-                || obj instanceof Boolean
-                || obj instanceof Integer
-                || obj instanceof Byte
-                || obj instanceof Short
-                || obj instanceof Long
-                || obj instanceof Float
-                || obj instanceof Double
-                || obj instanceof BigInteger) {
+                    || obj instanceof Boolean
+                    || obj instanceof Integer
+                    || obj instanceof Byte
+                    || obj instanceof Short
+                    || obj instanceof Long
+                    || obj instanceof Float
+                    || obj instanceof Double
+                    || obj instanceof BigInteger) {
                 return obj;
             } else if (obj instanceof Character) {
                 return String.valueOf(((Character) obj).charValue());
@@ -126,7 +125,8 @@ public class WrapFactory {
         return wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
-    public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
+    public Scriptable wrapAsJavaObject(
+            Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
         if (List.class.isAssignableFrom(staticType.asClass())) {
             return new NativeJavaList(scope, javaObject, staticType);
         } else if (Map.class.isAssignableFrom(staticType.asClass())) {

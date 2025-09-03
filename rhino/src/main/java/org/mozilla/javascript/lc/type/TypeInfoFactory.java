@@ -138,12 +138,14 @@ public interface TypeInfoFactory extends Serializable {
     /// helpers
 
     /**
-     * Transform provided {@code types} by applying {@link TypeInfo#consolidate(Map)} on its elements
-     * <p>
-     * Example: types is {@code [int, E]}, mapping is {@code E -> String}, return value will then be {@code [int, String]}
+     * Transform provided {@code types} by applying {@link TypeInfo#consolidate(Map)} on its
+     * elements
+     *
+     * <p>Example: types is {@code [int, E]}, mapping is {@code E -> String}, return value will then
+     * be {@code [int, String]}
      */
     static List<TypeInfo> consolidateAll(
-        List<TypeInfo> types, Map<VariableTypeInfo, TypeInfo> mapping) {
+            List<TypeInfo> types, Map<VariableTypeInfo, TypeInfo> mapping) {
         if (mapping.isEmpty()) { // implicit null check
             return types;
         }
@@ -169,11 +171,12 @@ public interface TypeInfoFactory extends Serializable {
 
     /**
      * Transform a mapping by applying {@link TypeInfo#consolidate(Map)} on its values.
-     * <p>
-     * Example: mapping is {@code K -> V}, transformer is {@code V -> String}, return value will then be {@code K -> String}
+     *
+     * <p>Example: mapping is {@code K -> V}, transformer is {@code V -> String}, return value will
+     * then be {@code K -> String}
      */
     static Map<VariableTypeInfo, TypeInfo> transformMapping(
-        Map<VariableTypeInfo, TypeInfo> mapping, Map<VariableTypeInfo, TypeInfo> transformer) {
+            Map<VariableTypeInfo, TypeInfo> mapping, Map<VariableTypeInfo, TypeInfo> transformer) {
         if (mapping.isEmpty()) {
             return Map.of();
         } else if (mapping.size() == 1) {
