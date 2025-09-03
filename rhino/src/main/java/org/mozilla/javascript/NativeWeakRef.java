@@ -25,7 +25,6 @@ public class NativeWeakRef extends ScriptableObject {
     private static final String CLASS_NAME = "WeakRef";
     private static final String DEREF_METHOD = "deref";
 
-    // Constants
     private static final String MSG_NO_TARGET = "msg.weakref.no.target";
     private static final String MSG_TARGET_NOT_OBJECT = "msg.weakref.target.not.object";
     private static final int CONSTRUCTOR_ARITY = 1;
@@ -126,16 +125,13 @@ public class NativeWeakRef extends ScriptableObject {
 
     /**
      * Checks if a value is a valid WeakRef target. According to the spec, only objects (excluding
-     * null, undefined, and symbols) can be weakly referenced.
+     * symbols) can be weakly referenced.
      *
      * @param target the value to check
      * @return true if the target is a valid object reference
      */
     private static boolean isValidTarget(Object target) {
-        return target instanceof Scriptable
-                && target != Undefined.instance
-                && target != null
-                && !(target instanceof Symbol);
+        return target instanceof Scriptable && !(target instanceof Symbol);
     }
 
     /**

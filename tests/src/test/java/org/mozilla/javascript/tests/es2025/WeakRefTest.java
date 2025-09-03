@@ -23,9 +23,12 @@ public class WeakRefTest {
 
     @Test
     public void weakRefDeref() {
-        Utils.assertWithAllModes_ES6(
-                "var obj = { value: 42 }; var ref = new WeakRef(obj); var derefed = ref.deref(); derefed === obj && derefed.value === 42",
-                true);
+        String script =
+                "var obj = { value: 42 }; "
+                        + "var ref = new WeakRef(obj); "
+                        + "var derefed = ref.deref(); "
+                        + "derefed === obj && derefed.value === 42";
+        Utils.assertWithAllModes_ES6(script, true);
     }
 
     @Test
@@ -74,17 +77,20 @@ public class WeakRefTest {
 
     @Test
     public void weakRefWithArray() {
-        Utils.assertWithAllModes_ES6("var arr = [1,2,3]; var ref = new WeakRef(arr); ref.deref() === arr", true);
+        Utils.assertWithAllModes_ES6(
+                "var arr = [1,2,3]; var ref = new WeakRef(arr); ref.deref() === arr", true);
     }
 
     @Test
     public void weakRefWithFunction() {
-        Utils.assertWithAllModes_ES6("var fn = function(){}; var ref = new WeakRef(fn); ref.deref() === fn", true);
+        Utils.assertWithAllModes_ES6(
+                "var fn = function(){}; var ref = new WeakRef(fn); ref.deref() === fn", true);
     }
 
     @Test
     public void weakRefWithRegExp() {
-        Utils.assertWithAllModes_ES6("var rx = /test/; var ref = new WeakRef(rx); ref.deref() === rx", true);
+        Utils.assertWithAllModes_ES6(
+                "var rx = /test/; var ref = new WeakRef(rx); ref.deref() === rx", true);
     }
 
     @Test
