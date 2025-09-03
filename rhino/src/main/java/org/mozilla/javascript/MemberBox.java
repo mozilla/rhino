@@ -18,8 +18,11 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Map;
+
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -335,25 +338,27 @@ final class MemberBox implements Serializable {
         }
     }
 
-    Object[] wrapArgsInternal(Object[] args) {
+    Object[] wrapArgsInternal(Object[] args, Map<VariableTypeInfo, TypeInfo> mapping) {
         var argTypes = getArgTypes();
         var argTypesLen = argTypes.size();
         var argLen = args.length;
+        final var shouldConsolidate = !mapping.isEmpty();
 
         if (!this.vararg) {
-            // fast path for common cases
+            // fast path for getter
             if (argLen == 0) {
                 return args;
-            } else if (argLen == 1) {
-                var arg = args[0];
-                var wrapped = Context.jsToJava(args[0], argTypes.get(0));
-                return wrapped == arg ? args : new Object[] {wrapped};
             }
 
             var wrappedArgs = args;
             for (int i = 0; i < argLen; i++) {
                 var arg = args[i];
-                var coerced = Context.jsToJava(arg, argTypes.get(i));
+                var argType = argTypes.get(i);
+                if (shouldConsolidate) {
+                    argType = argType.consolidate(mapping);
+                }
+
+                var coerced = Context.jsToJava(arg, argType);
                 if (coerced != arg) {
                     if (wrappedArgs == args) {
                         wrappedArgs = args.clone();
@@ -367,32 +372,38 @@ final class MemberBox implements Serializable {
         // marshall the explicit parameters
         var wrappedArgs = new Object[argTypesLen];
         for (int i = 0; i < argTypesLen - 1; i++) {
-            wrappedArgs[i] = Context.jsToJava(args[i], argTypes.get(i));
+            var argType = argTypes.get(i);
+            if (shouldConsolidate) {
+                argType = argType.consolidate(mapping);
+            }
+            wrappedArgs[i] = Context.jsToJava(args[i], argType);
         }
 
         // Handle special situation where a single variable parameter
         // is given, and it is a Java or ECMA array or is null.
         if (argLen == argTypesLen) {
             var lastArg = args[argLen - 1];
+            var lastArgType = argTypes.get(argTypesLen - 1);
+            if (shouldConsolidate) {
+                lastArgType = lastArgType.consolidate(mapping);
+            }
             if (lastArg == null
                     || lastArg instanceof NativeArray
                     || lastArg instanceof NativeJavaArray) {
                 // convert the ECMA array into a native array
-                wrappedArgs[argLen - 1] = Context.jsToJava(lastArg, argTypes.get(argTypesLen - 1));
+                wrappedArgs[argLen - 1] = Context.jsToJava(lastArg, lastArgType);
                 return wrappedArgs;
             }
         }
 
         // marshall the variable parameters
-        var varArgs =
-                argTypes.get(argTypesLen - 1).getComponentType().newArray(argLen - argTypesLen + 1);
+        var lastArgType = argTypes.get(argTypesLen - 1).getComponentType();
+        if (shouldConsolidate) {
+            lastArgType = lastArgType.consolidate(mapping);
+        }
+        var varArgs = lastArgType.newArray(argLen - argTypesLen + 1);
         for (int i = 0, arrayLen = Array.getLength(varArgs); i < arrayLen; i++) {
-            Array.set(
-                    varArgs,
-                    i,
-                    Context.jsToJava(
-                            args[argTypesLen - 1 + i],
-                            argTypes.get(argTypesLen - 1).getComponentType()));
+            Array.set(varArgs, i, Context.jsToJava(args[argTypesLen - 1 + i], lastArgType));
         }
         wrappedArgs[argTypesLen - 1] = varArgs;
 
