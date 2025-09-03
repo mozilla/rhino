@@ -353,6 +353,12 @@ public class Context implements Closeable {
     public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
 
     /**
+     * Let and Yield are new keywords introduced in ES6. We need to allow legacy scripts to continue
+     * to use them as identifiers, while treating them as keywords in new scripts
+     */
+    public static final int FEATURE_TREAT_LET_AND_YIELD_AS_IDENTIFIERS = 30;
+
+    /**
      * Configure whether the entries in a Java Map can be accessed by properties.
      *
      * <p>Not enabled:

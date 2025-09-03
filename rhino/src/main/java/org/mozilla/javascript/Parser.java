@@ -402,9 +402,79 @@ public class Parser {
             }
         }
 
+        if ((tt == Token.RESERVED || tt == Token.LET || tt == Token.YIELD)
+                && shouldTreatAsName(tt)
+                && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) tt = Token.NAME;
+
         currentToken = tt;
         currentFlaggedToken = tt | (sawEOL ? TI_AFTER_EOL : 0);
         return currentToken; // return unflagged token
+    }
+
+    private boolean shouldTreatAsName(int token) {
+
+        if (token == Token.LET || token == Token.YIELD) {
+            if (Context.getContext().hasFeature(Context.FEATURE_TREAT_LET_AND_YIELD_AS_IDENTIFIERS)
+                    || (compilerEnv.isES5OrLatestMode() && !inUseStrictDirective)) {
+
+                return true;
+            }
+        }
+
+        if (token == Token.RESERVED && reservedNameIsAllowed(ts.getString())) return true;
+
+        return false;
+    }
+
+    private static final List<String> fECMAScript_5_StrictModeReservedWords =
+            List.of(
+                    "implements",
+                    "interface",
+                    "let",
+                    "package",
+                    "private",
+                    "protected",
+                    "public",
+                    "static",
+                    "yield");
+
+    private static final List<String> fECMAScript_5_NoLongerReservedWords =
+            List.of(
+                    "abstract",
+                    "boolean",
+                    "byte",
+                    "char",
+                    "double",
+                    "final",
+                    "float",
+                    "goto",
+                    "int",
+                    "long",
+                    "native",
+                    "short",
+                    "synchronized",
+                    "throws",
+                    "transient",
+                    "volatile");
+
+    // this method is expensive but is only called when a reserved word is scanned
+    private boolean reservedNameIsAllowed(String resName) {
+        // if we are in ECMAScript 5 mode then the feature FEATURE_RESERVED_KEYWORD_AS_PROPERTY
+        // will be true. Checking this instead of feature set because we don't want the complexity
+        // of setting up the right feature set for all the unit tests.
+
+        if (isES5OrLatest()) {
+            if (!inUseStrictDirective && fECMAScript_5_StrictModeReservedWords.contains(resName))
+                return true;
+
+            if (fECMAScript_5_NoLongerReservedWords.contains(resName)) return true;
+        } else if (compilerEnv.isReservedKeywordAsIdentifier()) return true;
+
+        return false;
+    }
+
+    public boolean isES5OrLatest() {
+        return compilerEnv.isES5OrLatestMode();
     }
 
     private int lineNumber() {
@@ -2338,8 +2408,19 @@ public class Parser {
                 markDestructuring(destructuring);
             } else {
                 // Simple variable name
-                if (tt == Token.UNDEFINED) {
-                    consumeToken();
+	            int token = peekToken();
+                if (token == Token.RESERVED || token == Token.LET || token == Token.YIELD ||tt == Token.UNDEFINED) {
+                    if (tt == Token.UNDEFINED)
+						consumeToken();
+					else if (shouldTreatAsName(token))
+						consumeToken();
+					else if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+	                    String errMsg =
+			                    (inUseStrictDirective
+					                    ? "msg.reserved.id.strict"
+					                    : "msg.reserved.id");
+	                    reportError(errMsg, ts.getString(), ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+                    }
                 } else {
                     mustMatchToken(Token.NAME, "msg.bad.var", true);
                 }

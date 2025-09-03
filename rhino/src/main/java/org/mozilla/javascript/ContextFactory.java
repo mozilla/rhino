@@ -290,6 +290,9 @@ public class ContextFactory {
 
             case Context.FEATURE_INTL_402:
                 return false;
+
+	        case Context.FEATURE_TREAT_LET_AND_YIELD_AS_IDENTIFIERS:
+		        return true;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));

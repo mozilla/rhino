@@ -247,6 +247,10 @@ public class CompilerEnvirons {
         return allowSuper;
     }
 
+    public final boolean isES5OrLatestMode() {
+        return ES5Mode || ESLatestMode;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -275,6 +279,8 @@ public class CompilerEnvirons {
     private boolean interpretedMode;
     private boolean generatingSource;
     private boolean strictMode;
+    private boolean ES5Mode;
+    private boolean ESLatestMode;
     private boolean warningAsError;
     private boolean generateObserverCount;
     private boolean recordingComments;
