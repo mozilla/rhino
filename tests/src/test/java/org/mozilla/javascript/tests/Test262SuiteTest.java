@@ -90,9 +90,9 @@ public class Test262SuiteTest {
     static final Set<String> UNSUPPORTED_FEATURES =
             new HashSet<>(
                     Arrays.asList(
+                            "AggregateError",
                             "Atomics",
                             "IsHTMLDDA",
-                            "SharedArrayBuffer",
                             "async-functions",
                             "async-iteration",
                             "class",
@@ -104,7 +104,10 @@ public class Test262SuiteTest {
                             "regexp-dotall",
                             "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
+                            "SharedArrayBuffer",
                             "tail-call-optimization",
+                            "Temporal",
+                            "upsert",
                             "u180e"));
 
     static {
