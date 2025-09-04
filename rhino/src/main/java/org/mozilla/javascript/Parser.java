@@ -402,9 +402,9 @@ public class Parser {
             }
         }
 
-        if ((tt == Token.RESERVED || tt == Token.LET || tt == Token.YIELD)
-                && shouldTreatAsName(tt)
-                && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) tt = Token.NAME;
+//        if ((tt == Token.RESERVED || tt == Token.LET || tt == Token.YIELD)
+//                && shouldTreatAsName(tt)
+//                && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) tt = Token.NAME;
 
         currentToken = tt;
         currentFlaggedToken = tt | (sawEOL ? TI_AFTER_EOL : 0);
@@ -2408,18 +2408,20 @@ public class Parser {
                 markDestructuring(destructuring);
             } else {
                 // Simple variable name
-	            int token = peekToken();
-                if (token == Token.RESERVED || token == Token.LET || token == Token.YIELD ||tt == Token.UNDEFINED) {
+                int token = peekToken();
+                if (token == Token.LET || token == Token.YIELD ||tt == Token.UNDEFINED) {
                     if (tt == Token.UNDEFINED)
-						consumeToken();
-					else if (shouldTreatAsName(token))
-						consumeToken();
-					else if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
-	                    String errMsg =
-			                    (inUseStrictDirective
-					                    ? "msg.reserved.id.strict"
-					                    : "msg.reserved.id");
-	                    reportError(errMsg, ts.getString(), ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+                        consumeToken();
+                    else {
+                        if (shouldTreatAsName(token))
+                            consumeToken();
+                        else if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+                            String errMsg =
+                                    (inUseStrictDirective
+                                            ? "msg.reserved.id.strict"
+                                            : "msg.reserved.id");
+                            reportError(errMsg, ts.getString(), ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+                        }
                     }
                 } else {
                     mustMatchToken(Token.NAME, "msg.bad.var", true);
