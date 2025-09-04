@@ -240,7 +240,7 @@ public class Utils {
                         cx.setLanguageVersion(languageVersion);
                     }
                     final Scriptable scope = cx.initStandardObjects();
-                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+                    final Object res = cx.evaluateString(scope, script, "test.js", 1, null);
 
                     if (expected instanceof Integer && res instanceof Double) {
                         assertEquals(
@@ -277,7 +277,7 @@ public class Utils {
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     Scriptable scope = cx.initStandardObjects(new TopLevel());
-                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+                    final Object res = cx.evaluateString(scope, script, "test.js", 1, null);
 
                     assertEquals(expected, res);
                     return null;
