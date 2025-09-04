@@ -13,8 +13,9 @@ import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.NodeVisitor;
 import org.mozilla.javascript.ast.ReturnStatement;
+import org.mozilla.javascript.testutils.Utils;
 
-public class ArrowFnPositionBugTest {
+public class ArrowFunctionTest {
     /** Util class that sifts through nodes for first arrow function, then stores it and stops */
     private static class ArrowFnExtractor implements NodeVisitor {
         private FunctionNode functionNode;
@@ -69,5 +70,11 @@ public class ArrowFnPositionBugTest {
         assertEquals(0, returnStatement.getPosition());
         assertEquals(13, returnStatement.getAbsolutePosition());
         assertEquals(8, returnStatement.getLength());
+    }
+
+    @Test
+    public void arrowFnEvalToString() {
+        String source = "eval(\"()=>this\").toString()";
+        Utils.assertWithAllModes("()=>this", source);
     }
 }
