@@ -810,6 +810,14 @@ class CodeGenerator extends Icode {
                 stackChange(-1);
                 break;
 
+            case Token.STRING_CONCAT:
+                visitExpression(child, 0);
+                child = child.getNext();
+                visitExpression(child, 0);
+                addToken(type);
+                stackChange(-1);
+                break;
+
             case Token.POS:
             case Token.NEG:
             case Token.NOT:

@@ -1050,13 +1050,13 @@ public final class IRFactory {
         Node pn = Node.newString("");
         for (AstNode elem : elems) {
             if (elem.getType() != Token.TEMPLATE_CHARS) {
-                pn = createBinary(Token.ADD, pn, transform(elem));
+                pn = createBinary(Token.STRING_CONCAT, pn, transform(elem));
             } else {
                 TemplateCharacters chars = (TemplateCharacters) elem;
                 // skip empty parts, e.g. `xx${expr}xx` where xx denotes the empty string
                 String value = chars.getValue();
                 if (value.length() > 0) {
-                    pn = createBinary(Token.ADD, pn, Node.newString(value));
+                    pn = createBinary(Token.STRING_CONCAT, pn, Node.newString(value));
                 }
             }
         }
@@ -1104,6 +1104,7 @@ public final class IRFactory {
             body.addChildToBack(transform((AstNode) kid));
         }
         node.removeChildren();
+
         Node children = body.getFirstChild();
         if (children != null) {
             node.addChildrenToBack(children);
