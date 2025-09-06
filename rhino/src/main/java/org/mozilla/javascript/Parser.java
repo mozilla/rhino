@@ -405,6 +405,19 @@ public class Parser {
         return currentToken; // return unflagged token
     }
 
+    private boolean shouldTreatAsName(int token) {
+
+        if (token == Token.LET || token == Token.YIELD) {
+            if (Context.getContext().hasFeature(Context.FEATURE_TREAT_LET_AND_YIELD_AS_IDENTIFIERS)
+                    || (compilerEnv.isES5OrLatestMode() && !inUseStrictDirective)) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private int lineNumber() {
         return lastTokenLineno;
     }
@@ -2336,8 +2349,21 @@ public class Parser {
                 markDestructuring(destructuring);
             } else {
                 // Simple variable name
-                if (tt == Token.UNDEFINED) {
-                    consumeToken();
+                int token = peekToken();
+                if (token == Token.LET || token == Token.YIELD ||tt == Token.UNDEFINED) {
+                    if (tt == Token.UNDEFINED)
+                        consumeToken();
+                    else {
+                        if (shouldTreatAsName(token))
+                            consumeToken();
+                        else if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+                            String errMsg =
+                                    (inUseStrictDirective
+                                            ? "msg.reserved.id.strict"
+                                            : "msg.reserved.id");
+                            reportError(errMsg, ts.getString(), ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+                        }
+                    }
                 } else {
                     mustMatchToken(Token.NAME, "msg.bad.var", true);
                 }
@@ -4049,7 +4075,7 @@ public class Parser {
         // for |var {x: x, y: y} = o|, as implemented in spidermonkey JS 1.8.
         int tt = peekToken();
         if ((tt == Token.COMMA || tt == Token.RC)
-                && ptt == Token.NAME
+                && (ptt == Token.NAME || (isAllowedInNonStrict(ptt) && !inUseStrictDirective))
                 && compilerEnv.getLanguageVersion() >= Context.VERSION_1_8) {
             if (!inDestructuringAssignment
                     && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
@@ -4072,6 +4098,10 @@ public class Parser {
         ObjectProperty pn = new ObjectProperty();
         pn.setKeyAndValue(property, assignExpr());
         return pn;
+    }
+
+    private boolean isAllowedInNonStrict(int ptt) {
+        return (ptt == Token.LET || (ptt == Token.YIELD && !getIsGenerator()));
     }
 
     private ObjectProperty methodDefinition(
@@ -4278,6 +4308,13 @@ public class Parser {
         if (insideFunctionBody()) {
             ((FunctionNode) currentScriptOrFn).setIsGenerator();
         }
+    }
+
+    protected boolean getIsGenerator() {
+        if (insideFunctionBody()) {
+            return ((FunctionNode) currentScriptOrFn).isGenerator();
+        }
+        return false;
     }
 
     private void setRequiresArgumentObject() {
