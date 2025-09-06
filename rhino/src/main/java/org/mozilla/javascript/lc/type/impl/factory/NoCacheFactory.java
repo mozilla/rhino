@@ -1,8 +1,10 @@
 package org.mozilla.javascript.lc.type.impl.factory;
 
 import java.lang.reflect.TypeVariable;
+import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
 import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
@@ -43,5 +45,13 @@ public enum NoCacheFactory implements FactoryBase {
     @Override
     public TypeInfo create(TypeVariable<?> typeVariable) {
         return new VariableTypeInfoImpl(typeVariable, this);
+    }
+
+    @Override
+    public Map<VariableTypeInfo, TypeInfo> getConsolidationMapping(Class<?> from) {
+        if (from == null || from == Object.class || from.isPrimitive()) {
+            return Map.of();
+        }
+        return computeConsolidationMapping(from);
     }
 }
