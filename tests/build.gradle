@@ -16,7 +16,7 @@ dependencies {
         exclude group: 'junit'
     }
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
-    testImplementation "org.yaml:snakeyaml:2.4"
+    testImplementation "org.yaml:snakeyaml:2.5"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     testImplementation "javax.activation:javax.activation-api:1.2.0"
 }
