@@ -138,6 +138,23 @@ public interface TypeInfoFactory extends Serializable {
     /// helpers
 
     /**
+     * consolidate a type using the mapping extracted from {@code consolidateHint}
+     * <p>
+     * Example: {@code type} is {@code E in List<E>}, {@code consolidateHint} is {@code ArrayList<SomeRandomType>}, result (for factories that support Java Generic) should then be {@code SomeRandomType}
+     *
+     * @see TypeInfo#consolidate(Map)
+     * @see #getConsolidationMapping(Class)
+     * @see ParameterizedTypeInfo#extractConsolidationMapping(TypeInfoFactory)
+     */
+    default TypeInfo consolidateType(TypeInfo type, TypeInfo consolidateHint) {
+        type = type.consolidate(getConsolidationMapping(consolidateHint.asClass()));
+        if (consolidateHint instanceof ParameterizedTypeInfo) {
+            type.consolidate(((ParameterizedTypeInfo) consolidateHint).extractConsolidationMapping(this));
+        }
+        return type;
+    }
+
+    /**
      * Transform provided {@code types} by applying {@link TypeInfo#consolidate(Map)} on its
      * elements
      *

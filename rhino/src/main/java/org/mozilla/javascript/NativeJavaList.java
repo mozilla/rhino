@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
@@ -62,11 +61,7 @@ public class NativeJavaList extends NativeJavaObject {
         this.list = (List<Object>) list;
 
         var typeFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
-        var elementType = ListTypeVariables.E.consolidate(typeFactory.getConsolidationMapping(staticType.asClass()));
-        if (staticType instanceof ParameterizedTypeInfo) {
-            elementType = elementType.consolidate(((ParameterizedTypeInfo) staticType).extractConsolidationMapping(typeFactory));
-        }
-        this.elementType = elementType;
+        this.elementType = typeFactory.consolidateType(ListTypeVariables.E, staticType);
     }
 
     @Override
