@@ -60,4 +60,14 @@ public final class VariableTypeInfoImpl extends TypeInfoBase implements Variable
     public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
         return mapping.getOrDefault(this, this);
     }
+
+    @Override
+    public int hashCode() {
+        return raw.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof VariableTypeInfoImpl && this.raw.equals(((VariableTypeInfoImpl) obj).raw);
+    }
 }
