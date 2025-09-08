@@ -5,7 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,13 +52,21 @@ public class NativeJavaList extends NativeJavaObject {
 
     private static final long serialVersionUID = 660285467829047519L;
 
-    private List<Object> list;
+    private final List<Object> list;
+    private final TypeInfo elementType;
 
     @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list, TypeInfo staticType) {
         super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
+
+        var typeFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
+        var elementType = ListTypeVariables.E.consolidate(typeFactory.getConsolidationMapping(staticType.asClass()));
+        if (staticType instanceof ParameterizedTypeInfo) {
+            elementType = elementType.consolidate(((ParameterizedTypeInfo) staticType).extractConsolidationMapping(typeFactory));
+        }
+        this.elementType = elementType;
     }
 
     @Override
@@ -108,7 +119,7 @@ public class NativeJavaList extends NativeJavaObject {
             Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
             if (cx != null) {
-                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+                return cx.getWrapFactory().wrap(cx, this, obj, elementType);
             }
             return obj;
         }
@@ -126,7 +137,7 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (index >= 0) {
-            Object javaValue = Context.jsToJava(value, Object.class);
+            Object javaValue = Context.jsToJava(value, elementType);
             if (index == list.size()) {
                 list.add(javaValue); // use "add" at the end of list.
             } else {
@@ -195,5 +206,10 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public int hashCode() {
         return super.hashCode();
+    }
+
+    /// lazy and persistent init via {@code <clinit>}
+    interface ListTypeVariables {
+        VariableTypeInfo E = (VariableTypeInfo) TypeInfoFactory.GLOBAL.create(List.class.getTypeParameters()[0]);
     }
 }
