@@ -23,7 +23,43 @@ package org.mozilla.javascript;
  * @author Nick Thompson
  * @author Brendan Eich
  */
-public interface Scriptable {
+public interface Scriptable extends JSScope {
+
+    @Override
+    default Object get(String name, JSScope start) {
+        return get(name, (Scriptable) start);
+    }
+
+    @Override
+    default Object get(int index, JSScope start) {
+        return get(index, (Scriptable) start);
+    }
+
+    @Override
+    default boolean has(String name, JSScope start) {
+        return has(name, (Scriptable) start);
+    }
+
+    @Override
+    default boolean has(int index, JSScope start) {
+        return has(index, (Scriptable) start);
+    }
+
+    @Override
+    default void put(String name, JSScope start, Object value) {
+        put(name, (Scriptable) start, value);
+    }
+
+    @Override
+    default void put(int index, JSScope start, Object value) {
+        put(index, (Scriptable) start, value);
+    }
+
+    @Override
+    default void setParentScope(JSScope parent) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setParentScope'");
+    }
 
     /**
      * Get the name of the set of objects implemented by this Java class. This corresponds to the
