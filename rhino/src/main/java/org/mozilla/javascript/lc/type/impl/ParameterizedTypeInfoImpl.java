@@ -100,4 +100,11 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
             param.collectComponentClass(collector);
         }
     }
+
+    @Override
+    public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
+        var params = this.params;
+        var consolidated = TypeInfoFactory.consolidateAll(params, mapping);
+        return params == consolidated ? this : new ParameterizedTypeInfoImpl(rawType, consolidated);
+    }
 }
