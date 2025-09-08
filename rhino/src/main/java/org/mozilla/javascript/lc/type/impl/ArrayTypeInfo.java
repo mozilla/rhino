@@ -37,7 +37,8 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 
     @Override
     public int hashCode() {
-        return component.hashCode();
+        // prevent hash collision with component type
+        return component.hashCode() + 1;
     }
 
     @Override
