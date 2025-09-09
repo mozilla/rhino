@@ -66,7 +66,8 @@ public class NativeJavaMap extends NativeJavaObject {
     public boolean has(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            if (map.containsKey(Integer.valueOf(index))) {
+            var key = Integer.valueOf(index);
+            if (map.containsKey(key)) {
                 return true;
             }
         }
@@ -86,8 +87,7 @@ public class NativeJavaMap extends NativeJavaObject {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
-                Object obj = map.get(name);
-                return cx.getWrapFactory().wrap(cx, this, obj, valueType);
+                return cx.getWrapFactory().wrap(cx, this, map.get(name), valueType);
             }
         }
         return super.get(name, start);
@@ -97,9 +97,9 @@ public class NativeJavaMap extends NativeJavaObject {
     public Object get(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            if (map.containsKey(Integer.valueOf(index))) {
-                Object obj = map.get(Integer.valueOf(index));
-                return cx.getWrapFactory().wrap(cx, this, obj, valueType);
+            var key = Integer.valueOf(index);
+            if (map.containsKey(key)) {
+                return cx.getWrapFactory().wrap(cx, this, map.get(key), valueType);
             }
         }
         return super.get(index, start);
@@ -117,7 +117,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(String name, Scriptable start, Object value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            map.put(name, Context.jsToJava(value, valueType));
+            map.put(Context.jsToJava(name, keyType), Context.jsToJava(value, valueType));
         } else {
             super.put(name, start, value);
         }
@@ -127,7 +127,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(int index, Scriptable start, Object value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            map.put(Integer.valueOf(index), Context.jsToJava(value, valueType));
+            map.put(Context.jsToJava(index, keyType), Context.jsToJava(value, valueType));
         } else {
             super.put(index, start, value);
         }
