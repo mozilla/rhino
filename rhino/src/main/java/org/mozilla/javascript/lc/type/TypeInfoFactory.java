@@ -149,7 +149,7 @@ public interface TypeInfoFactory extends Serializable {
     default TypeInfo consolidateType(TypeInfo type, TypeInfo consolidateHint) {
         type = type.consolidate(getConsolidationMapping(consolidateHint.asClass()));
         if (consolidateHint instanceof ParameterizedTypeInfo) {
-            type.consolidate(((ParameterizedTypeInfo) consolidateHint).extractConsolidationMapping(this));
+            type = type.consolidate(((ParameterizedTypeInfo) consolidateHint).extractConsolidationMapping(this));
         }
         return type;
     }
@@ -176,7 +176,7 @@ public interface TypeInfoFactory extends Serializable {
         if (size == 1) {
             var type = types.get(0);
             var consolidated = type.consolidate(mapping);
-            return types == consolidated ? types : List.of(consolidated);
+            return type == consolidated ? types : List.of(consolidated);
         }
 
         var consolidatedTypes = new ArrayList<TypeInfo>(types.size());
