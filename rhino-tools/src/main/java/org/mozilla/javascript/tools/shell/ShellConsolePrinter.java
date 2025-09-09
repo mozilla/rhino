@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeConsole;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptStackElement;
-import org.mozilla.javascript.Scriptable;
 
 /** Provide a printer use in console API */
 class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
@@ -18,7 +18,7 @@ class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
     @Override
     public void print(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             NativeConsole.Level level,
             Object[] args,
             ScriptStackElement[] stack) {

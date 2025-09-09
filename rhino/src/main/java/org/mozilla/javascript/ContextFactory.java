@@ -347,7 +347,7 @@ public class ContextFactory {
      * perform the real call. In this way execution of any script happens inside this function.
      */
     protected Object doTopCall(
-            Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object result = callable.call(cx, scope, thisObj, args);
         return result instanceof ConsString ? result.toString() : result;
     }

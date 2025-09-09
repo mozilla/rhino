@@ -18,7 +18,7 @@ final class NativeMath extends ScriptableObject {
     private static final double LOG2E = 1.4426950408889634;
     private static final Double Double32 = Double.valueOf(32d);
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, JSScope scope, boolean sealed) {
         NativeMath math = new NativeMath();
         math.setPrototype(getObjectPrototype(scope));
         math.setParentScope(scope);
@@ -86,7 +86,7 @@ final class NativeMath extends ScriptableObject {
         return "Math";
     }
 
-    private static Object abs(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object abs(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         // abs(-0.0) should be 0.0, but -0.0 < 0.0 == false
         x = (x == 0.0) ? 0.0 : (x < 0.0) ? -x : x;
@@ -94,7 +94,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object acos(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object acos(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
             x = Math.acos(x);
@@ -104,7 +104,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object acosh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object acosh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x)) {
             return Double.valueOf(Math.log(x + Math.sqrt(x * x - 1.0)));
@@ -112,7 +112,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.NaNobj;
     }
 
-    private static Object asin(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object asin(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
             x = Math.asin(x);
@@ -122,7 +122,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object asinh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object asinh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (Double.isInfinite(x)) {
             return Double.valueOf(x);
@@ -139,13 +139,13 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.NaNobj;
     }
 
-    private static Object atan(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object atan(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.atan(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object atanh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object atanh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
             if (x == 0) {
@@ -159,25 +159,25 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.NaNobj;
     }
 
-    private static Object atan2(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object atan2(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.atan2(x, ScriptRuntime.toNumber(args, 1));
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object cbrt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object cbrt(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.cbrt(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object ceil(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object ceil(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.ceil(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object clz32(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object clz32(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) {
             return Double32;
@@ -215,19 +215,19 @@ final class NativeMath extends ScriptableObject {
         return Double.valueOf(32 - place);
     }
 
-    private static Object cos(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object cos(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Double.isInfinite(x) ? Double.NaN : Math.cos(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object cosh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object cosh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.cosh(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object exp(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object exp(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x =
                 (x == Double.POSITIVE_INFINITY)
@@ -236,20 +236,19 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object expm1(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object expm1(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.expm1(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object floor(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object floor(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.floor(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object f16round(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object f16round(Context cx, JSScope scope, Object thisOb, Object[] args) {
         // Handle missing arguments
         if (args.length == 0) {
             return ScriptRuntime.NaNobj;
@@ -394,7 +393,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(Double.longBitsToDouble(resultBits));
     }
 
-    private static Object fround(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object fround(Context cx, JSScope scope, Object thisOb, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         // Rely on Java to truncate down to a "float" here"
         float fx = (float) x;
@@ -403,7 +402,7 @@ final class NativeMath extends ScriptableObject {
 
     // Based on code from
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
-    private static Object hypot(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object hypot(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (args == null) {
             return 0.0;
         }
@@ -433,7 +432,7 @@ final class NativeMath extends ScriptableObject {
         return Math.sqrt(y);
     }
 
-    private static Object imul(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object imul(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (args == null) {
             return 0;
         }
@@ -444,33 +443,33 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x * y);
     }
 
-    private static Object log(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object log(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         // Java's log(<0) = -Infinity; we need NaN
         x = (x < 0) ? Double.NaN : Math.log(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object log1p(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object log1p(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.log1p(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object log10(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object log10(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.log10(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object log2(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object log2(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         // Java's log(<0) = -Infinity; we need NaN
         x = (x < 0) ? Double.NaN : Math.log(x) * LOG2E;
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object max(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object max(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = Double.NEGATIVE_INFINITY;
         for (int i = 0; i != args.length; ++i) {
             double d = ScriptRuntime.toNumber(args[i]);
@@ -480,7 +479,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object min(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object min(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = Double.POSITIVE_INFINITY;
         for (int i = 0; i != args.length; ++i) {
             double d = ScriptRuntime.toNumber(args[i]);
@@ -491,7 +490,7 @@ final class NativeMath extends ScriptableObject {
     }
 
     // See Ecma 15.8.2.13
-    private static Object pow(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object pow(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         double y = ScriptRuntime.toNumber(args, 1);
         double result;
@@ -547,11 +546,11 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(result);
     }
 
-    private static Object random(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object random(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ScriptRuntime.wrapNumber(Math.random());
     }
 
-    private static Object round(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object round(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x) && !Double.isInfinite(x)) {
             // Round only finite x
@@ -570,7 +569,7 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object sign(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object sign(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         if (!Double.isNaN(x)) {
             if (x == 0) {
@@ -584,37 +583,37 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.NaNobj;
     }
 
-    private static Object sin(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object sin(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Double.isInfinite(x) ? Double.NaN : Math.sin(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object sinh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object sinh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.sinh(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object sqrt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object sqrt(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.sqrt(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object tan(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object tan(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.tan(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object tanh(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object tanh(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.tanh(x);
         return ScriptRuntime.wrapNumber(x);
     }
 
-    private static Object trunc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object trunc(Context cx, JSScope scope, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
         x = ((x < 0.0) ? Math.ceil(x) : Math.floor(x));
         return ScriptRuntime.wrapNumber(x);

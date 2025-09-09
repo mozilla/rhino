@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -65,11 +66,7 @@ public class ObserveInstructionCountTest {
 
         @Override
         protected Object doTopCall(
-                Callable callable,
-                Context cx,
-                Scriptable scope,
-                Scriptable thisObj,
-                Object[] args) {
+                Callable callable, Context cx, JSScope scope, Object thisObj, Object[] args) {
             MyContext mcx = (MyContext) cx;
             mcx.quota = 2000;
             return super.doTopCall(callable, cx, scope, thisObj, args);

@@ -18,7 +18,7 @@ class XML extends XMLObjectImpl {
 
     private XmlNode node;
 
-    XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
+    XML(XMLLibImpl lib, JSScope scope, XMLObject prototype, XmlNode node) {
         super(lib, scope, prototype);
         initialize(node);
     }

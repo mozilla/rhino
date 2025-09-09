@@ -593,8 +593,8 @@ public class Context implements Closeable {
     public static Object call(
             ContextFactory factory,
             final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
+            final JSScope scope,
+            final Object thisObj,
             final Object[] args) {
         if (factory == null) {
             factory = ContextFactory.getGlobal();
@@ -1250,7 +1250,7 @@ public class Context implements Closeable {
      * @see org.mozilla.javascript.SecurityController
      */
     public final Object evaluateString(
-            Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
+            JSScope scope, String source, String sourceName, int lineno, Object securityDomain) {
         Script script = compileString(source, sourceName, lineno, securityDomain);
         if (script != null) {
             return script.exec(this, scope, scope);
@@ -1755,7 +1755,7 @@ public class Context implements Closeable {
      * @param scope global scope containing constructors for Number, Boolean, and String
      * @return new JavaScript object
      */
-    public static Scriptable toObject(Object value, Scriptable scope) {
+    public static Scriptable toObject(Object value, JSScope scope) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -1764,7 +1764,7 @@ public class Context implements Closeable {
      * @see #toObject(Object, Scriptable)
      */
     @Deprecated
-    public static Scriptable toObject(Object value, Scriptable scope, Class<?> staticType) {
+    public static Scriptable toObject(Object value, JSScope scope, Class<?> staticType) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -2773,7 +2773,7 @@ public class Context implements Closeable {
     private boolean sealed;
     private Object sealKey;
 
-    Scriptable topCallScope;
+    JSScope topCallScope;
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;

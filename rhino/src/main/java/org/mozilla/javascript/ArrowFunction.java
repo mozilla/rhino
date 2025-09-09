@@ -14,14 +14,14 @@ public class ArrowFunction extends BaseFunction {
     private static final long serialVersionUID = -7377989503697220633L;
 
     private final Callable targetFunction;
-    private final Scriptable boundThis;
+    private final Object boundThis;
     private final Scriptable boundHomeObject;
 
     public ArrowFunction(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Callable targetFunction,
-            Scriptable boundThis,
+            Object boundThis,
             Scriptable boundHomeObject) {
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
@@ -48,12 +48,12 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return targetFunction.call(cx, scope, getCallThis(cx), args);
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById(
                 "msg.not.ctor", decompile(0, EnumSet.noneOf(DecompilerFlag.class)));
     }
@@ -95,8 +95,8 @@ public class ArrowFunction extends BaseFunction {
         return super.decompile(indent, flags);
     }
 
-    Scriptable getCallThis(Context cx) {
-        return boundThis != null ? boundThis : (Scriptable) ScriptRuntime.getTopCallScope(cx);
+    Object getCallThis(Context cx) {
+        return boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
     }
 
     Scriptable getBoundHomeObject() {

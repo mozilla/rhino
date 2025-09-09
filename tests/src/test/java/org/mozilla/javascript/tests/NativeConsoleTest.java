@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SecurityUtilities;
@@ -78,11 +79,7 @@ public class NativeConsoleTest {
 
         @Override
         public void print(
-                Context cx,
-                Scriptable scope,
-                Level level,
-                Object[] args,
-                ScriptStackElement[] stack) {
+                Context cx, JSScope scope, Level level, Object[] args, ScriptStackElement[] stack) {
             calls.add(new PrinterCall(level, args, stack));
 
             msg = NativeConsole.format(cx, scope, args);

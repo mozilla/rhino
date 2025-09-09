@@ -458,7 +458,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, value);
                 } else {
-                    ensureSymbolScriptable(start).put(key, start, value);
+                    start.put(key, start, value);
                 }
             }
             return;
@@ -713,12 +713,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
      */
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         throw f.unknown();
     }
 
-    public final IdFunctionObject exportAsJSClass(
-            int maxPrototypeId, Scriptable scope, boolean sealed) {
+    public final IdFunctionObject exportAsJSClass(int maxPrototypeId, JSScope scope, boolean sealed) {
         // Set scope and prototype unless this is top level scope itself
         if (scope != this && scope != null) {
             setParentScope(scope);

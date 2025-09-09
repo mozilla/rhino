@@ -8,8 +8,8 @@ package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntimeES6;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
@@ -38,14 +38,14 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,
@@ -72,7 +72,7 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeUint32Array realThis(Scriptable thisObj) {
+    private static NativeUint32Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeUint32Array.class);
     }
 

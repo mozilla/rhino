@@ -13,7 +13,6 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.xml.XMLLib;
@@ -39,7 +38,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         XMLLibImpl lib = new XMLLibImpl(scope);
         XMLLib bound = lib.bindToScope(scope);
         if (bound == lib) {
@@ -97,7 +96,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         return options.getPrettyIndent();
     }
 
-    private Scriptable globalScope;
+    private JSScope globalScope;
 
     private XML xmlPrototype;
     private XMLList xmlListPrototype;
@@ -106,7 +105,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 
     private XmlProcessor options = new XmlProcessor();
 
-    private XMLLibImpl(Scriptable globalScope) {
+    private XMLLibImpl(JSScope globalScope) {
         this.globalScope = globalScope;
     }
 
@@ -122,7 +121,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
      * @deprecated
      */
     @Deprecated
-    Scriptable globalScope() {
+    JSScope globalScope() {
         return globalScope;
     }
 

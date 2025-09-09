@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.testutils.Utils;
@@ -55,8 +56,7 @@ public class TypeOfTest {
         final Function f =
                 new BaseFunction() {
                     @Override
-                    public Object call(
-                            Context _cx, Scriptable _scope, Scriptable _thisObj, Object[] _args) {
+                    public Object call(Context _cx, JSScope _scope, Object _thisObj, Object[] _args) {
                         return _args[0].getClass().getName();
                     }
                 };

@@ -176,8 +176,8 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                JSScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
                             Object getterThis;
@@ -212,8 +212,8 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                JSScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
                             Object setterThis;

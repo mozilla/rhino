@@ -68,7 +68,7 @@ public final class JavaAdapter implements IdFunctionCall {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         JavaAdapter obj = new JavaAdapter();
         IdFunctionObject ctor =
                 new IdFunctionObject(obj, FTAG, Id_JavaAdapter, "JavaAdapter", 1, scope);
@@ -81,7 +81,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_JavaAdapter) {
                 return js_createAdapter(cx, scope, args);
@@ -112,7 +112,7 @@ public final class JavaAdapter implements IdFunctionCall {
         return self.get(adapter);
     }
 
-    static Object js_createAdapter(Context cx, Scriptable scope, Object[] args) {
+    static Object js_createAdapter(Context cx, JSScope scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
@@ -299,7 +299,7 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     private static Class<?> getAdapterClass(
-            Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
+            JSScope scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
@@ -543,7 +543,7 @@ public final class JavaAdapter implements IdFunctionCall {
             factory = ContextFactory.getGlobal();
         }
 
-        final Scriptable scope = (Scriptable) f.getParentScope();
+        final JSScope scope = f.getParentScope();
         if (argsToWrap == 0) {
             return Context.call(factory, f, scope, thisObj, args);
         }
@@ -556,12 +556,7 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     private static Object doCall(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            Function f,
-            Object[] args,
-            long argsToWrap) {
+            Context cx, JSScope scope, Object thisObj, Function f, Object[] args, long argsToWrap) {
         // Wrap the rest of objects
         for (int i = 0; i != args.length; ++i) {
             if (0 != (argsToWrap & (1 << i))) {

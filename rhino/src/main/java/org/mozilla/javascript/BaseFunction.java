@@ -28,7 +28,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String CALL_TAG = "CALL_TAG";
     private static final String PROTOTYPE_PROPERTY_NAME = "prototype";
 
-    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
+    static LambdaConstructor init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
@@ -79,7 +79,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -90,7 +90,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static void defKnownBuiltInOnProto(
             LambdaConstructor constructor,
             Object tag,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -100,7 +100,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            JSScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -113,7 +113,7 @@ public class BaseFunction extends ScriptableObject implements Function {
      * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
      */
     @Deprecated
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);
     }
 
@@ -367,8 +367,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         return tag == APPLY_TAG || tag == CALL_TAG;
     }
 
-    private static Object js_hasInstance(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_hasInstance(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             return false;
         }
@@ -377,8 +376,8 @@ public class BaseFunction extends ScriptableObject implements Function {
             protoProp =
                     ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
                             .getPrototypeProperty();
-        else {
-            protoProp = ScriptableObject.getProperty(thisObj, PROTOTYPE_PROPERTY_NAME);
+        else if (thisObj instanceof Scriptable) {
+            protoProp = ScriptableObject.getProperty((Scriptable) thisObj, PROTOTYPE_PROPERTY_NAME);
         }
 
         if (ScriptRuntime.isObject(protoProp)) {
@@ -397,7 +396,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         : "unknown");
     }
 
-    private static Object js_bind(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_bind(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(thisObj);
         }
@@ -416,17 +415,15 @@ public class BaseFunction extends ScriptableObject implements Function {
         return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
     }
 
-    private static Object js_apply(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_apply(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ScriptRuntime.applyOrCall(true, cx, scope, thisObj, args);
     }
 
-    private static Object js_call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ScriptRuntime.applyOrCall(false, cx, scope, thisObj, args);
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, JSScope scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toSource");
         int indent = 0;
         EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
@@ -441,19 +438,18 @@ public class BaseFunction extends ScriptableObject implements Function {
         return realf.decompile(indent, flags);
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, JSScope scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toString");
         int indent = ScriptRuntime.toInt32(args, 0);
         return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
     }
 
     private static Scriptable js_gen_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_gen_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, JSScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -472,11 +468,11 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable js_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return js_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_gen_constructor(Context cx, JSScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -494,11 +490,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    private static BaseFunction realFunction(Scriptable thisObj, String functionName) {
-        if (thisObj == null) {
+    private static BaseFunction realFunction(Object thisObj, String functionName) {
+        if (thisObj == null || !(thisObj instanceof Scriptable)) {
             throw ScriptRuntime.notFunctionError(null);
         }
-        Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+        Object x = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof Delegator) {
             x = ((Delegator) x).getDelegee();
         }
@@ -525,12 +521,12 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Should be overridden. */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return Undefined.instance;
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && this.getHomeObject() != null) {
             // Only methods have home objects associated with them
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());
@@ -577,7 +573,7 @@ public class BaseFunction extends ScriptableObject implements Function {
      * object itself. In this case {@link #construct} will set scope and prototype on the result
      * {@link #call} unless they are already set.
      */
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, JSScope scope) {
         Scriptable newInstance = new NativeObject();
         newInstance.setPrototype(getClassPrototype());
         newInstance.setParentScope(getParentScope());
@@ -665,7 +661,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    protected synchronized Object setupDefaultPrototype(Scriptable scope) {
+    protected synchronized Object setupDefaultPrototype(JSScope scope) {
         if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             createPrototypeProperty();
         }
@@ -704,7 +700,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable jsConstructor(
-            Context cx, Scriptable scope, Object[] args, boolean isGeneratorFunction) {
+            Context cx, JSScope scope, Object[] args, boolean isGeneratorFunction) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 

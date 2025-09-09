@@ -54,7 +54,7 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    public void spread(Context cx, Scriptable scope, Object source) {
+    public void spread(Context cx, JSScope scope, Object source) {
         // See ECMAScript 13.2.5.5
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);

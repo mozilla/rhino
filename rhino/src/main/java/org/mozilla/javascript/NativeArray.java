@@ -68,7 +68,7 @@ public class NativeArray extends ScriptableObject implements List {
         "values"
     };
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static void init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(scope, CLASS_NAME, 1, NativeArray::jsConstructor);
 
@@ -166,7 +166,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static void defineMethodOnConstructor(
             LambdaConstructor constructor,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -176,7 +176,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static void defineMethodOnPrototype(
             LambdaConstructor constructor,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -186,7 +186,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static void exposeMethodOnConstructor(
             LambdaConstructor constructor,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -246,7 +246,7 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
-    private static Object makeUnscopables(Context cx, Scriptable scope) {
+    private static Object makeUnscopables(Context cx, JSScope scope) {
         NativeObject obj;
 
         obj = (NativeObject) cx.newObject(scope);
@@ -537,7 +537,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /** See ECMA 15.4.1,2 */
-    static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
         // Only use 1 arg as first element for version 1.2; for
@@ -659,7 +659,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     private static Scriptable callConstructorOrCreateArray(
-            Context cx, Scriptable scope, Scriptable arg, long length, boolean lengthAlways) {
+            Context cx, JSScope scope, Object arg, long length, boolean lengthAlways) {
         Scriptable result = null;
 
         if (arg instanceof Constructable) {
@@ -686,11 +686,11 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_from(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_from(Context cx, JSScope scope, Object thisObj, Object[] args) {
         final Scriptable items =
                 ScriptRuntime.toObject(scope, (args.length >= 1) ? args[0] : Undefined.instance);
         Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
-        Scriptable thisArg = null;
+        Object thisArg = null;
         final boolean mapping = !Undefined.isUndefined(mapArg);
         Function mapFn = null;
 
@@ -746,7 +746,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_of(Context cx, JSScope scope, Object thisObj, Object[] args) {
         final Scriptable result =
                 callConstructorOrCreateArray(cx, scope, thisObj, args.length, true);
 
@@ -971,24 +971,22 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
-    private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toString(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return toStringHelper(
                 cx, scope, thisObj, cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
     }
 
     private static String js_toLocaleString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         return toStringHelper(cx, scope, thisObj, false, true);
     }
 
-    private static String js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toSource(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return toStringHelper(cx, scope, thisObj, true, false);
     }
 
     private static String toStringHelper(
-            Context cx, Scriptable scope, Scriptable thisObj, boolean toSource, boolean toLocale) {
+            Context cx, JSScope scope, Object thisObj, boolean toSource, boolean toLocale) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         /* It's probably redundant to handle long lengths in this
@@ -1077,7 +1075,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /** See ECMA 15.4.4.3 */
-    private static String js_join(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_join(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long llength = getLengthProperty(cx, o);
@@ -1140,8 +1138,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /** See ECMA 15.4.4.4 */
-    private static Scriptable js_reverse(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable js_reverse(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         if (o instanceof NativeArray) {
@@ -1170,10 +1167,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     /** See ECMA 15.4.4.5 */
     private static Scriptable js_sort(
-            final Context cx,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            final Context cx, final JSScope scope, final Object thisObj, final Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         Comparator<Object> comparator =
                 ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
@@ -1212,7 +1206,7 @@ public class NativeArray extends ScriptableObject implements List {
         return o;
     }
 
-    private static Object js_push(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_push(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         if (o instanceof NativeArray) {
@@ -1244,7 +1238,7 @@ public class NativeArray extends ScriptableObject implements List {
         return lengthObj;
     }
 
-    private static Object js_pop(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_pop(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         Object result;
@@ -1278,8 +1272,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_shift(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_shift(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         if (o instanceof NativeArray) {
@@ -1322,8 +1315,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_unshift(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_unshift(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         if (o instanceof NativeArray) {
@@ -1362,8 +1354,7 @@ public class NativeArray extends ScriptableObject implements List {
         return setLengthProperty(cx, o, length);
     }
 
-    private static Object js_splice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_splice(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         NativeArray na = null;
@@ -1509,7 +1500,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static boolean isConcatSpreadable(Context cx, Scriptable scope, Object val) {
+    private static boolean isConcatSpreadable(Context cx, JSScope scope, Object val) {
         // First, look for the new @@isConcatSpreadable test as per ECMAScript 6 and up
         if (val instanceof Scriptable) {
             final Object spreadable =
@@ -1576,7 +1567,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     private static long doConcat(
-            Context cx, Scriptable scope, Scriptable result, Object arg, long offset) {
+            Context cx, JSScope scope, Scriptable result, Object arg, long offset) {
         if (isConcatSpreadable(cx, scope, arg)) {
             return concatSpreadArg(cx, result, (Scriptable) arg, offset);
         }
@@ -1587,8 +1578,7 @@ public class NativeArray extends ScriptableObject implements List {
     /*
      * See Ecma 262v3 15.4.4.4
      */
-    private static Scriptable js_concat(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable js_concat(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         // create an empty Array to return.
@@ -1604,8 +1594,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Scriptable js_slice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Scriptable js_slice(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long len = getLengthProperty(cx, o);
@@ -1642,8 +1631,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_indexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_indexOf(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -1695,8 +1683,7 @@ public class NativeArray extends ScriptableObject implements List {
         return NEGATIVE_ONE;
     }
 
-    private static Object js_lastIndexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_lastIndexOf(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -1750,8 +1737,7 @@ public class NativeArray extends ScriptableObject implements List {
     /*
        See ECMA-262 22.1.3.13
     */
-    private static Boolean js_includes(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Boolean js_includes(Context cx, JSScope scope, Object thisObj, Object[] args) {
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, o);
@@ -1801,7 +1787,7 @@ public class NativeArray extends ScriptableObject implements List {
         return Boolean.FALSE;
     }
 
-    private static Object js_fill(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_fill(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, o);
 
@@ -1829,14 +1815,13 @@ public class NativeArray extends ScriptableObject implements List {
 
         Object value = args.length > 0 ? args[0] : Undefined.instance;
         for (long i = k; i < fin; i++) {
-            setRawElem(cx, thisObj, i, value);
+            setRawElem(cx, o, i, value);
         }
 
-        return thisObj;
+        return o;
     }
 
-    private static Object js_copyWithin(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_copyWithin(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, o);
 
@@ -1907,7 +1892,7 @@ public class NativeArray extends ScriptableObject implements List {
         return thisObj;
     }
 
-    private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_at(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, o);
 
@@ -1919,10 +1904,10 @@ public class NativeArray extends ScriptableObject implements List {
         if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
-        return getElem(cx, thisObj, k);
+        return getElem(cx, o, k);
     }
 
-    private static Object js_flat(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_flat(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         double depth;
         if (args.length < 1 || Undefined.isUndefined(args[0])) {
@@ -1934,7 +1919,7 @@ public class NativeArray extends ScriptableObject implements List {
         return flat(cx, scope, o, depth);
     }
 
-    private static Scriptable flat(Context cx, Scriptable scope, Scriptable source, double depth) {
+    private static Scriptable flat(Context cx, JSScope scope, Scriptable source, double depth) {
         long length = getLengthProperty(cx, source);
 
         Scriptable result;
@@ -1960,8 +1945,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_flatMap(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_flatMap(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
 
@@ -2000,8 +1984,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_every(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_every(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2013,8 +1996,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_filter(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_filter(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2026,8 +2008,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_forEach(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_forEach(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2039,7 +2020,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_map(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_map(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2051,7 +2032,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_some(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_some(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2063,7 +2044,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_find(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_find(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2075,8 +2056,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_findIndex(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_findIndex(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2088,8 +2068,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_findLast(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_findLast(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2101,8 +2080,7 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_findLastIndex(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_findLastIndex(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.iterativeMethod(
                 cx,
                 ARRAY_TAG,
@@ -2114,40 +2092,32 @@ public class NativeArray extends ScriptableObject implements List {
                 NativeArray::getLengthProperty);
     }
 
-    private static Object js_reduce(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_reduce(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.reduceMethod(
                 cx, ReduceOperation.REDUCE, scope, thisObj, args);
     }
 
-    private static Object js_reduceRight(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_reduceRight(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ArrayLikeAbstractOperations.reduceMethod(
                 cx, ReduceOperation.REDUCE_RIGHT, scope, thisObj, args);
     }
 
-    private static Object js_keys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-        return new NativeArrayIterator(
-                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
+    private static Object js_keys(Context cx, JSScope scope, Object thisObj, Object[] args) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(scope, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
     }
 
-    private static Object js_entries(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-        return new NativeArrayIterator(
-                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
+    private static Object js_entries(Context cx, JSScope scope, Object thisObj, Object[] args) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(scope, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
     }
 
-    private static Object js_values(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-        return new NativeArrayIterator(
-                scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+    private static Object js_values(Context cx, JSScope scope, Object thisObj, Object[] args) {
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        return new NativeArrayIterator(scope, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
     }
 
-    private static Object js_isArrayMethod(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_isArrayMethod(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
     }
 
@@ -2161,8 +2131,7 @@ public class NativeArray extends ScriptableObject implements List {
         return "Array".equals(((Scriptable) o).getClassName());
     }
 
-    private static Object js_toSorted(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSorted(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Comparator<Object> comparator =
                 ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
 
@@ -2184,8 +2153,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_toReversed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toReversed(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, source);
 
@@ -2204,8 +2172,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_toSpliced(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSpliced(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, source);
 
@@ -2262,7 +2229,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static Object js_with(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_with(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long len = getLengthProperty(cx, source);

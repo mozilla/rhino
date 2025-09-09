@@ -62,7 +62,7 @@ public class LambdaFunctionTest {
                         root,
                         "foo",
                         0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                        (Context ctx, JSScope scope, Object thisObj, Object[] args) -> {
                             return "Hello";
                         });
         ScriptableObject.putProperty(root, "foo", f);
@@ -181,7 +181,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, JSScope scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -197,7 +197,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, JSScope scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -209,9 +209,7 @@ public class LambdaFunctionTest {
     public void lambdaFunctionNoNew() {
         LambdaFunction func =
                 new LambdaFunction(
-                        root,
-                        0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
+                        root, 0, (Context ctx, JSScope scope, Object thisObj, Object[] args) -> true);
         ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
         eval(
                 "let o = noNewFunc();\n"
@@ -245,7 +243,7 @@ public class LambdaFunctionTest {
                             scope,
                             "TestClass",
                             1,
-                            (Context cx, Scriptable s, Object[] args) -> {
+                            (Context cx, JSScope s, Object[] args) -> {
                                 TestClass tc = new TestClass();
                                 if (args.length > 0) {
                                     tc.instanceVal = ScriptRuntime.toString(args[0]);
@@ -256,14 +254,14 @@ public class LambdaFunctionTest {
                     scope,
                     "sayHello",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
+                    (Context cx, JSScope s, Object thisObj, Object[] args) ->
                             TestClass.sayHello(args),
                     0);
             constructor.definePrototypeMethod(
                     scope,
                     "appendToValue",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                    (Context cx, JSScope s, Object thisObj, Object[] args) -> {
                         TestClass self =
                                 LambdaConstructor.convertThisObject(thisObj, TestClass.class);
                         return self.appendToValue(args);
@@ -322,20 +320,20 @@ public class LambdaFunctionTest {
     private static class SpecialConstructorClass extends ScriptableObject {
         private String value;
 
-        public static void init(Context cx, Scriptable scope) {
+        public static void init(Context cx, JSScope scope) {
             LambdaConstructor constructor =
                     new LambdaConstructor(
                             scope,
                             "SpecialConstructorClass",
                             1,
-                            (Context lcx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                            (Context lcx, JSScope s, Object thisObj, Object[] args) -> {
                                 String arg = "";
                                 if (args.length > 0) {
                                     arg = ScriptRuntime.toString(args[0]);
                                 }
                                 return "You passed " + arg;
                             },
-                            (Context lcx, Scriptable s, Object[] args) -> {
+                            (Context lcx, JSScope s, Object[] args) -> {
                                 SpecialConstructorClass tc = new SpecialConstructorClass();
                                 if (args.length > 0) {
                                     tc.value = ScriptRuntime.toString(args[0]);

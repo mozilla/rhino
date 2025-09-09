@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
     private static final long serialVersionUID = 1L;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeWith obj = new NativeWith();
 
         obj.setParentScope(scope);
@@ -31,7 +31,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     private NativeWith() {}
 
-    protected NativeWith(JSScope parent, Scriptable prototype) {
+    protected NativeWith(JSScope parent, JSScope prototype) {
         this.parent = parent;
         this.prototype = prototype;
     }
@@ -127,7 +127,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     @Override
     public Scriptable getPrototype() {
-        return prototype;
+        return (Scriptable) prototype;
     }
 
     @Override
@@ -147,17 +147,17 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     @Override
     public Object[] getIds() {
-        return prototype.getIds();
+        return ((Scriptable) prototype).getIds();
     }
 
     @Override
     public Object getDefaultValue(Class<?> typeHint) {
-        return prototype.getDefaultValue(typeHint);
+        return ((Scriptable) prototype).getDefaultValue(typeHint);
     }
 
     @Override
     public boolean hasInstance(Scriptable value) {
-        return prototype.hasInstance(value);
+        return ((Scriptable) prototype).hasInstance(value);
     }
 
     /** Must return null to continue looping or the final collection result. */
@@ -168,7 +168,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_constructor) {
                 throw Context.reportRuntimeErrorById("msg.cant.call.indirect", "With");
@@ -185,7 +185,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
         return false;
     }
 
-    static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
+    static Object newWithSpecial(Context cx, JSScope scope, Object[] args) {
         ScriptRuntime.checkDeprecated(cx, "With");
         scope = ScriptableObject.getTopLevelScope(scope);
         NativeWith thisObj = new NativeWith();
@@ -201,6 +201,6 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     private static final int Id_constructor = 1;
 
-    protected Scriptable prototype;
+    protected JSScope prototype;
     protected JSScope parent;
 }

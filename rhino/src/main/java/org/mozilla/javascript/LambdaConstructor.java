@@ -49,7 +49,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope, String name, int length, SerializableConstructable target) {
+            JSScope scope, String name, int length, SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = CONSTRUCTOR_DEFAULT;
@@ -70,11 +70,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope,
-            String name,
-            int length,
-            int flags,
-            SerializableConstructable target) {
+            JSScope scope, String name, int length, int flags, SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = flags;
@@ -96,7 +92,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -107,7 +103,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     public LambdaConstructor(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             Object prototype,
@@ -126,7 +122,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
@@ -137,14 +133,14 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
         return fireConstructor(cx, scope, args);
     }
 
-    private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable fireConstructor(Context cx, JSScope scope, Object[] args) {
         Scriptable obj = targetConstructor.construct(cx, scope, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
@@ -156,7 +152,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope, String name, int length, SerializableCallable target) {
+            JSScope scope, String name, int length, SerializableCallable target) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, 0);
@@ -167,7 +163,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -181,7 +177,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers and control the prototype of the new function
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -199,7 +195,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            JSScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -216,7 +212,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             Object prototype,
@@ -235,7 +231,7 @@ public class LambdaConstructor extends LambdaFunction {
      */
     public void defineKnownBuiltInPrototypeMethod(
             Object tag,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             Object prototype,
@@ -254,7 +250,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            JSScope scope,
             SymbolKey name,
             int length,
             Object prototype,
@@ -356,11 +352,7 @@ public class LambdaConstructor extends LambdaFunction {
      * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target,
-            int attributes) {
+            JSScope scope, String name, int length, SerializableCallable target, int attributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         defineProperty(name, f, attributes);
     }
@@ -376,7 +368,7 @@ public class LambdaConstructor extends LambdaFunction {
      * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
-            Scriptable scope,
+            JSScope scope,
             Symbol key,
             String name,
             int length,
@@ -392,7 +384,7 @@ public class LambdaConstructor extends LambdaFunction {
      * properties.
      */
     public void defineConstructorMethod(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -409,7 +401,7 @@ public class LambdaConstructor extends LambdaFunction {
      * "protoyupe" properties.
      */
     public void defineConstructorMethod(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             Object prototype,

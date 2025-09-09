@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
@@ -145,7 +146,7 @@ public class BuiltinBenchmark {
 
         private static final String TAG = "IdClass";
 
-        public static void init(Scriptable scope) {
+        public static void init(JSScope scope) {
             IdClass idc = new IdClass();
             idc.exportAsJSClass(MAX_ID, scope, false);
         }
@@ -219,8 +220,8 @@ public class BuiltinBenchmark {
         public Object execIdCall(
                 IdFunctionObject f,
                 Context cx,
-                Scriptable scope,
-                Scriptable thisObj,
+                JSScope scope,
+                Object thisObj,
                 Object[] args) {
             if (!f.hasTag(TAG)) {
                 return super.execIdCall(f, cx, scope, thisObj, args);
@@ -336,13 +337,11 @@ public class BuiltinBenchmark {
 
     private static class DumbLambdaClass extends ScriptableObject {
 
-        private static Object noop(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object noop(Context cx, JSScope scope, Object thisObj, Object[] args) {
             return Undefined.instance;
         }
 
-        private static Object setValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object setValue(Context cx, JSScope scope, Object thisObj, Object[] args) {
             if (args.length < 1) {
                 throw ScriptRuntime.throwError(cx, scope, "Not enough args");
             }
@@ -352,8 +351,7 @@ public class BuiltinBenchmark {
             return Undefined.instance;
         }
 
-        private static Object getValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object getValue(Context cx, JSScope scope, Object thisObj, Object[] args) {
             DumbLambdaClass self =
                     LambdaConstructor.convertThisObject(thisObj, DumbLambdaClass.class);
             return self.value;
@@ -365,7 +363,8 @@ public class BuiltinBenchmark {
                             scope,
                             "DumbLambdaClass",
                             0,
-                            (Context cx, Scriptable s, Object[] args) -> new DumbLambdaClass());
+                            (Context cx, JSScope s, Object[] args) ->
+                                    new DumbLambdaClass());
             cons.definePrototypeMethod(scope, "one", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "two", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "three", 0, DumbLambdaClass::noop);

@@ -184,7 +184,7 @@ public class AbstractEcmaObjectOperations {
      * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
      */
     public static Constructable speciesConstructor(
-            Context cx, JSScope s, Constructable defaultConstructor) {
+            Context cx, Object s, Constructable defaultConstructor) {
         /*
         The abstract operation SpeciesConstructor takes arguments O (an Object) and
         defaultConstructor (a constructor). It is used to retrieve the constructor that should
@@ -201,7 +201,12 @@ public class AbstractEcmaObjectOperations {
         7. If IsConstructor(S) is true, return S.
         8. Throw a TypeError exception.
          */
-        Object constructor = ScriptableObject.getProperty(s, "constructor");
+        Object constructor;
+        if (s instanceof Scriptable) {
+            constructor = ScriptableObject.getProperty((Scriptable) s, "constructor");
+        } else {
+            constructor = Scriptable.NOT_FOUND;
+        }
         if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
             return defaultConstructor;
         }
@@ -270,9 +275,9 @@ public class AbstractEcmaObjectOperations {
         if (base instanceof ScriptableObject) {
             if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
 
-            ScriptableObject.ensureSymbolScriptable(o).put(p, o, v);
+            o.put(p, o, v);
         } else {
-            ScriptableObject.ensureSymbolScriptable(base).put(p, o, v);
+            base.put(p, o, v);
         }
     }
 

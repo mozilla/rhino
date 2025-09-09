@@ -35,7 +35,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     private static final long serialVersionUID = -6948590651130498591L;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
     }
 
@@ -190,7 +190,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
      */
     @Deprecated
-    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
+    public static Object wrap(JSScope scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
@@ -913,7 +913,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (Context cx, JSScope scope, Object thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaObject)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -928,7 +928,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
+        static void init(JSScope scope, boolean sealed) {
             ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
         }
 
@@ -937,7 +937,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             super();
         }
 
-        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+        JavaIterableIterator(JSScope scope, Iterable iterable) {
             super(scope, ITERATOR_TAG);
             this.iterator = iterable.iterator();
         }
@@ -948,12 +948,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, JSScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, JSScope scope) {
             if (!iterator.hasNext()) {
                 return Undefined.instance;
             }

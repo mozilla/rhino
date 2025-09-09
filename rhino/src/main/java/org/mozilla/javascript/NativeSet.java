@@ -17,7 +17,7 @@ public class NativeSet extends ScriptableObject {
 
     private boolean instanceOfSet = false;
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -31,7 +31,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "add",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "add").js_add(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -39,7 +39,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "delete",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -47,7 +47,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "has",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -55,7 +55,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "clear",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "clear").js_clear(),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -63,7 +63,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "values",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "values")
                                 .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
                 DONTENUM,
@@ -75,7 +75,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "forEach",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "forEach")
                                 .js_forEach(
                                         lcx,
@@ -89,7 +89,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "entries",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "entries")
                                 .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
                 DONTENUM,
@@ -100,7 +100,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "intersection",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "intersection").js_intersection(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -108,7 +108,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "union",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "union").js_union(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -116,7 +116,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "difference",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "difference").js_difference(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -124,7 +124,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "symmetricDifference",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "symmetricDifference")
                                 .js_symmetricDifference(lcx, lscope, args),
                 DONTENUM,
@@ -133,7 +133,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isSubsetOf",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "isSubsetOf").js_isSubsetOf(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -141,7 +141,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isSupersetOf",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "isSupersetOf").js_isSupersetOf(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -149,7 +149,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isDisjointFrom",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "isDisjointFrom").js_isDisjointFrom(lcx, lscope, args),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -164,7 +164,7 @@ public class NativeSet extends ScriptableObject {
                         scope,
                         "get size",
                         0,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                                 realThis(thisObj, "size").js_getSize());
         sizeFunc.setPrototypeProperty(Undefined.instance);
         desc.put("get", desc, sizeFunc);
@@ -187,7 +187,7 @@ public class NativeSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, JSScope scope, Object[] args) {
         NativeSet ns = new NativeSet();
         ns.instanceOfSet = true;
         if (args.length > 0) {
@@ -227,11 +227,11 @@ public class NativeSet extends ScriptableObject {
         return entries.size();
     }
 
-    private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
+    private Object js_iterator(JSScope scope, NativeCollectionIterator.Type type) {
         return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
     }
 
-    private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
+    private Object js_forEach(Context cx, JSScope scope, Object arg1, Object arg2) {
         if (!(arg1 instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(arg1);
         }
@@ -243,7 +243,7 @@ public class NativeSet extends ScriptableObject {
             Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
             if (thisObj == null && !isStrict) {
-                thisObj = scope;
+                thisObj = (Scriptable) scope;
             }
             if (thisObj == null) {
                 thisObj = Undefined.SCRIPTABLE_UNDEFINED;
@@ -259,7 +259,7 @@ public class NativeSet extends ScriptableObject {
      * If an "iterable" object was passed to the constructor, there are many many things to do. This
      * is common code with NativeWeakSet.
      */
-    static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1) {
+    static void loadFromIterable(Context cx, JSScope scope, ScriptableObject set, Object arg1) {
         if ((arg1 == null) || Undefined.instance.equals(arg1)) {
             return;
         }
@@ -287,7 +287,7 @@ public class NativeSet extends ScriptableObject {
         }
     }
 
-    private static NativeSet realThis(Scriptable thisObj, String name) {
+    private static NativeSet realThis(Object thisObj, String name) {
         NativeSet ns = LambdaConstructor.convertThisObject(thisObj, NativeSet.class);
         if (!ns.instanceOfSet) {
             // If we get here, then this object doesn't have the "Set internal data slot."
@@ -298,7 +298,7 @@ public class NativeSet extends ScriptableObject {
 
     // ES2025 Set Methods Implementation
 
-    private Object js_intersection(Context cx, Scriptable scope, Object[] args) {
+    private Object js_intersection(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -318,7 +318,7 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_intersectionSetLike(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Object otherObj,
             NativeSet result,
             Object sizeVal,
@@ -380,7 +380,7 @@ public class NativeSet extends ScriptableObject {
         return result;
     }
 
-    private Object js_union(Context cx, Scriptable scope, Object[] args) {
+    private Object js_union(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -431,7 +431,7 @@ public class NativeSet extends ScriptableObject {
         return result;
     }
 
-    private Object js_difference(Context cx, Scriptable scope, Object[] args) {
+    private Object js_difference(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -451,7 +451,7 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_differenceSetLike(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Object otherObj,
             NativeSet result,
             Object sizeVal,
@@ -525,7 +525,7 @@ public class NativeSet extends ScriptableObject {
         return result;
     }
 
-    private Object js_symmetricDifference(Context cx, Scriptable scope, Object[] args) {
+    private Object js_symmetricDifference(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -584,7 +584,7 @@ public class NativeSet extends ScriptableObject {
         return result;
     }
 
-    private Object js_isSubsetOf(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isSubsetOf(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties
@@ -637,7 +637,7 @@ public class NativeSet extends ScriptableObject {
         return Boolean.TRUE;
     }
 
-    private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isSupersetOf(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties
@@ -681,7 +681,7 @@ public class NativeSet extends ScriptableObject {
         return Boolean.TRUE;
     }
 
-    private Object js_isDisjointFrom(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isDisjointFrom(Context cx, JSScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties
@@ -748,7 +748,7 @@ public class NativeSet extends ScriptableObject {
     // Helper methods for Set operations
 
     private static Object callHas(
-            Context cx, Scriptable scope, Object obj, Object hasMethod, Object key) {
+            Context cx, JSScope scope, Object obj, Object hasMethod, Object key) {
         return ((Callable) hasMethod)
                 .call(cx, scope, ScriptableObject.ensureScriptable(obj), new Object[] {key});
     }

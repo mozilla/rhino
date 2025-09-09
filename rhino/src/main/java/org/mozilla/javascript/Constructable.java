@@ -15,5 +15,5 @@ public interface Constructable {
      * @param args the array of arguments
      * @return the allocated object
      */
-    Scriptable construct(Context cx, Scriptable scope, Object[] args);
+    Scriptable construct(Context cx, JSScope scope, Object[] args);
 }

@@ -253,7 +253,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Function#call
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ((Function) getDelegee()).call(cx, scope, thisObj, args);
     }
 
@@ -270,7 +270,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see Constructable#construct(Context, Scriptable, Object[])
      */
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
         Scriptable myDelegee = getDelegee();
         if (myDelegee == null) {
             // this little trick allows us to declare prototype objects for Delegators

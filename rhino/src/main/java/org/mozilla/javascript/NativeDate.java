@@ -31,7 +31,7 @@ final class NativeDate extends IdScriptableObject {
     private static final Object DATE_TAG = "Date";
     private static final String js_NaN_date_str = "Invalid Date";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeDate obj = new NativeDate();
         // Set the value of the prototype Date to NaN ('invalid date');
         obj.date = ScriptRuntime.NaN;
@@ -268,7 +268,7 @@ final class NativeDate extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(DATE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

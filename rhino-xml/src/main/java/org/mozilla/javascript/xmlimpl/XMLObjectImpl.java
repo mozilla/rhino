@@ -31,11 +31,11 @@ abstract class XMLObjectImpl extends XMLObject {
     private XMLLibImpl lib;
     private boolean prototypeFlag;
 
-    protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    protected XMLObjectImpl(XMLLibImpl lib, JSScope scope, XMLObject prototype) {
         initialize(lib, scope, prototype);
     }
 
-    final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    final void initialize(XMLLibImpl lib, JSScope scope, XMLObject prototype) {
         setParentScope(scope);
         setPrototype(prototype);
         prototypeFlag = (prototype == null);
@@ -864,7 +864,7 @@ abstract class XMLObjectImpl extends XMLObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(XMLOBJECT_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

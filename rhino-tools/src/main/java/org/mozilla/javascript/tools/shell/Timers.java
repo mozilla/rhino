@@ -5,6 +5,7 @@ import java.util.PriorityQueue;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.LambdaFunction;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -31,7 +32,7 @@ public class Timers {
                         scope,
                         "setTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                                 setTimeout(args));
         ScriptableObject.defineProperty(scope, "setTimeout", setTimeout, ScriptableObject.DONTENUM);
         LambdaFunction clearTimeout =
@@ -39,7 +40,7 @@ public class Timers {
                         scope,
                         "clearTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                                 clearTimeout(args));
         ScriptableObject.defineProperty(
                 scope, "clearTimeout", clearTimeout, ScriptableObject.DONTENUM);

@@ -15,12 +15,12 @@ public class NativeCallSite extends IdScriptableObject {
     private static final String CALLSITE_TAG = "CallSite";
     private ScriptStackElement element;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeCallSite cs = new NativeCallSite();
         cs.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    static NativeCallSite make(Scriptable scope, Scriptable ctorObj) {
+    static NativeCallSite make(JSScope scope, Scriptable ctorObj) {
         NativeCallSite cs = new NativeCallSite();
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
         cs.setParentScope(scope);
@@ -112,7 +112,7 @@ public class NativeCallSite extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(CALLSITE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -154,9 +154,9 @@ public class NativeCallSite extends IdScriptableObject {
         return element.toString();
     }
 
-    private static Object js_toString(Scriptable obj) {
+    private static Object js_toString(Object obj) {
         while (obj != null && !(obj instanceof NativeCallSite)) {
-            obj = obj.getPrototype();
+            obj = ((Scriptable) obj).getPrototype();
         }
         if (obj == null) {
             return NOT_FOUND;
@@ -167,9 +167,9 @@ public class NativeCallSite extends IdScriptableObject {
         return sb.toString();
     }
 
-    private static Object getFunctionName(Scriptable obj) {
+    private static Object getFunctionName(Object obj) {
         while (obj != null && !(obj instanceof NativeCallSite)) {
-            obj = obj.getPrototype();
+            obj = ((Scriptable) obj).getPrototype();
         }
         if (obj == null) {
             return NOT_FOUND;
@@ -178,9 +178,9 @@ public class NativeCallSite extends IdScriptableObject {
         return (cs.element == null ? null : cs.element.functionName);
     }
 
-    private static Object getFileName(Scriptable obj) {
+    private static Object getFileName(Object obj) {
         while (obj != null && !(obj instanceof NativeCallSite)) {
-            obj = obj.getPrototype();
+            obj = ((Scriptable) obj).getPrototype();
         }
         if (obj == null) {
             return NOT_FOUND;
@@ -189,9 +189,9 @@ public class NativeCallSite extends IdScriptableObject {
         return (cs.element == null ? null : cs.element.fileName);
     }
 
-    private static Object getLineNumber(Scriptable obj) {
+    private static Object getLineNumber(Object obj) {
         while (obj != null && !(obj instanceof NativeCallSite)) {
-            obj = obj.getPrototype();
+            obj = ((Scriptable) obj).getPrototype();
         }
         if (obj == null) {
             return NOT_FOUND;

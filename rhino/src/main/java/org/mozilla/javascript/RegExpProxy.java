@@ -18,20 +18,19 @@ public interface RegExpProxy {
     public static final int RA_REPLACE_ALL = 3;
     public static final int RA_SEARCH = 4;
 
-    public void register(ScriptableObject scope, boolean sealed);
+    public void register(JSScope scope, boolean sealed);
 
     public boolean isRegExp(Scriptable obj);
 
     public Object compileRegExp(Context cx, String source, String flags);
 
-    public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled);
+    public Scriptable wrapRegExp(Context cx, JSScope scope, Object compiled);
 
-    public Object action(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType);
+    public Object action(Context cx, JSScope scope, Object thisObj, Object[] args, int actionType);
 
     public int find_split(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             String target,
             String separator,
             Scriptable re,
@@ -40,5 +39,5 @@ public interface RegExpProxy {
             boolean[] matched,
             String[][] parensp);
 
-    public Object js_split(Context _cx, Scriptable _scope, String thisString, Object[] _args);
+    public Object js_split(Context _cx, JSScope _scope, String thisString, Object[] _args);
 }

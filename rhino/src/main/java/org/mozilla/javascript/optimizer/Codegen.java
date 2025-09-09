@@ -324,7 +324,7 @@ public class Codegen implements Evaluator {
                 "org/mozilla/javascript/BaseFunction",
                 "createObject",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(firstLocal);
 
@@ -386,7 +386,7 @@ public class Codegen implements Evaluator {
         cfw.startMethod(
                 "resumeGenerator",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
                         + "ILjava/lang/Object;"
                         + "Ljava/lang/Object;)Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
@@ -437,8 +437,8 @@ public class Codegen implements Evaluator {
         cfw.startMethod(
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;)Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -570,8 +570,8 @@ public class Codegen implements Evaluator {
         cfw.startMethod(
                 "exec",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
+                        + "Ljava/lang/Object;"
                         + ")Ljava/lang/Object;",
                 (short) (ACC_PUBLIC | ACC_FINAL));
 
@@ -589,8 +589,8 @@ public class Codegen implements Evaluator {
                 cfw.getClassName(),
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + ")Ljava/lang/Object;");
 
@@ -1293,7 +1293,7 @@ public class Codegen implements Evaluator {
         sb.append(
                 "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;");
+                        + "Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {

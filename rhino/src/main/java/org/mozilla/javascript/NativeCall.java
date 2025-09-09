@@ -19,7 +19,7 @@ public final class NativeCall extends IdScriptableObject {
 
     private static final Object CALL_TAG = "Call";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeCall obj = new NativeCall();
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
@@ -126,7 +126,7 @@ public final class NativeCall extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(CALL_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

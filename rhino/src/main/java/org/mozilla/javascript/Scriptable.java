@@ -254,6 +254,14 @@ public interface Scriptable extends JSScope {
     public JSScope getParentScope();
 
     /**
+     * Set the parent scope of the object.
+     *
+     * @param parent the parent scope to set
+     */
+    @Override
+    public void setParentScope(JSScope parent);
+
+    /**
      * Get an array of property ids.
      *
      * <p>Not all property ids need be returned. Those properties whose ids are not returned are

@@ -32,7 +32,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     private final SymbolKind kind;
     private final NativeSymbol symbolData;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
@@ -113,7 +113,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     private static NativeSymbol createRegisteredSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name) {
+            JSScope scope, LambdaConstructor ctor, String name) {
         NativeSymbol sym = new NativeSymbol(new SymbolKey(name), SymbolKind.REGISTERED);
         sym.setPrototype(ctor.getClassPrototype());
         sym.setParentScope(scope);
@@ -121,7 +121,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     private static void createStandardSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+            JSScope scope, LambdaConstructor ctor, String name, SymbolKey key) {
         NativeSymbol sym = new NativeSymbol(key, SymbolKind.BUILT_IN);
         sym.setPrototype(ctor.getClassPrototype());
         sym.setParentScope(scope);
@@ -132,7 +132,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
-    private static NativeSymbol js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeSymbol js_constructor(Context cx, JSScope scope, Object[] args) {
         String desc = null;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
@@ -145,13 +145,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return new NativeSymbol(new SymbolKey(desc), SymbolKind.REGULAR);
     }
 
-    private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toString(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).toString();
     }
 
-    private static Object js_valueOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_valueOf(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).symbolData;
     }
 
@@ -159,7 +157,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(JSScope scope, Object[] args, LambdaConstructor constructor) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
@@ -170,8 +168,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @SuppressWarnings("ReferenceEquality")
-    private static Object js_keyFor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_keyFor(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object s = (args.length > 0 ? args[0] : Undefined.instance);
         if (!(s instanceof NativeSymbol)) {
             throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
@@ -268,7 +265,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
      * property.
      */
     @SuppressWarnings("unchecked")
-    private static Map<String, NativeSymbol> getGlobalMap(Scriptable scope) {
+    private static Map<String, NativeSymbol> getGlobalMap(JSScope scope) {
         ScriptableObject top = (ScriptableObject) getTopLevelScope(scope);
         Map<String, NativeSymbol> map =
                 (Map<String, NativeSymbol>) top.getAssociatedValue(GLOBAL_TABLE_KEY);

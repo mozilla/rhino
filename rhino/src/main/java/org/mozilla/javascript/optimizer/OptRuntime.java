@@ -15,6 +15,7 @@ import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
 import org.mozilla.javascript.NewLiteralStorage;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -26,12 +27,11 @@ public final class OptRuntime extends ScriptRuntime {
     public static final Integer minusOneObj = Integer.valueOf(-1);
 
     /** Implement ....() call shrinking optimizer code. */
-    public static Object call0(Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+    public static Object call0(Callable fun, Object thisObj, Context cx, JSScope scope) {
         return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    public static Object call0Optional(
-            Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+    public static Object call0Optional(Callable fun, Object thisObj, Context cx, JSScope scope) {
         if (fun == null) {
             return Undefined.instance;
         }
@@ -39,25 +39,19 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /** Implement ....(arg) call shrinking optimizer code. */
-    public static Object call1(
-            Callable fun, Scriptable thisObj, Object arg0, Context cx, Scriptable scope) {
+    public static Object call1(Callable fun, Object thisObj, Object arg0, Context cx, JSScope scope) {
         return fun.call(cx, scope, thisObj, new Object[] {arg0});
     }
 
     /** Implement ....(arg0, arg1) call shrinking optimizer code. */
     public static Object call2(
-            Callable fun,
-            Scriptable thisObj,
-            Object arg0,
-            Object arg1,
-            Context cx,
-            Scriptable scope) {
+            Callable fun, Object thisObj, Object arg0, Object arg1, Context cx, JSScope scope) {
         return fun.call(cx, scope, thisObj, new Object[] {arg0, arg1});
     }
 
     /** Implement ....(arg0, arg1, ...) call shrinking optimizer code. */
     public static Object callN(
-            Callable fun, Scriptable thisObj, Object[] args, Context cx, Scriptable scope) {
+            Callable fun, Object thisObj, Object[] args, Context cx, JSScope scope) {
         return fun.call(cx, scope, thisObj, args);
     }
 
@@ -67,7 +61,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callName(Object[] args, String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Object thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, (Scriptable) thisObj, args);
+        return f.call(cx, scope, thisObj, args);
     }
 
     /** Implement name() call shrinking optimizer code. */
@@ -76,7 +70,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callName0(String name, Context cx, Scriptable scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Object thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, (Scriptable) thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -87,7 +81,7 @@ public final class OptRuntime extends ScriptRuntime {
             return Undefined.instance;
         }
         Object thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, (Scriptable) thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -96,7 +90,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Object thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, (Scriptable) thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -108,7 +102,7 @@ public final class OptRuntime extends ScriptRuntime {
             return Undefined.instance;
         }
         Object thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, (Scriptable) thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     public static Object add(Object val1, double val2, Context cx) {

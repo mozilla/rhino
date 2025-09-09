@@ -79,7 +79,7 @@ public class FunctionObject extends BaseFunction {
      * @param scope enclosing scope of function
      * @see org.mozilla.javascript.Scriptable
      */
-    public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+    public FunctionObject(String name, Member methodOrConstructor, JSScope scope) {
         // fallback to global factory for compatibility with old behaviour, where the `scope` can be
         // an object not yet initialized via `initStandardObject(...)`
         var typeInfoFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
@@ -168,7 +168,7 @@ public class FunctionObject extends BaseFunction {
         return JAVA_UNSUPPORTED_TYPE;
     }
 
-    public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
+    public static Object convertArg(Context cx, JSScope scope, Object arg, int typeTag) {
         return convertArg(cx, scope, arg, typeTag, false);
     }
 
@@ -327,7 +327,7 @@ public class FunctionObject extends BaseFunction {
         defineProperty(scope, prototype.getClassName(), this, ScriptableObject.DONTENUM);
     }
 
-    void initAsConstructor(Scriptable scope, Scriptable prototype, int attributes) {
+    void initAsConstructor(JSScope scope, Scriptable prototype, int attributes) {
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setImmunePrototypeProperty(prototype);
 
@@ -359,7 +359,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Function#call( Context, Scriptable, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;
@@ -478,7 +478,7 @@ public class FunctionObject extends BaseFunction {
      * new objects.
      */
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, JSScope scope) {
         if (member.isCtor() || parmsLength == VARARGS_CTOR) {
             return null;
         }

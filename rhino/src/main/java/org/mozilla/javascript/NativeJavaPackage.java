@@ -83,7 +83,7 @@ public class NativeJavaPackage extends ScriptableObject {
 
     // set up a name which is known to be a package so we don't
     // need to look for a class by that name
-    NativeJavaPackage forcePackage(String name, Scriptable scope) {
+    NativeJavaPackage forcePackage(String name, JSScope scope) {
         Object cached = super.get(name, this);
         if (cached != null && cached instanceof NativeJavaPackage) {
             return (NativeJavaPackage) cached;

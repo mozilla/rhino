@@ -38,15 +38,10 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     public interface ConsolePrinter extends Serializable {
-        void print(
-                Context cx,
-                Scriptable scope,
-                Level level,
-                Object[] args,
-                ScriptStackElement[] stack);
+        void print(Context cx, JSScope scope, Level level, Object[] args, ScriptStackElement[] stack);
     }
 
-    public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
+    public static void init(JSScope scope, boolean sealed, ConsolePrinter printer) {
         NativeConsole obj = new NativeConsole(printer);
         obj.activatePrototypeMap(MAX_ID);
         obj.setPrototype(getObjectPrototype(scope));
@@ -135,7 +130,7 @@ public class NativeConsole extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(CONSOLE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -201,11 +196,11 @@ public class NativeConsole extends IdScriptableObject {
         return Undefined.instance;
     }
 
-    private void print(Context cx, Scriptable scope, Level level, String msg) {
+    private void print(Context cx, JSScope scope, Level level, String msg) {
         printer.print(cx, scope, level, new String[] {msg}, null);
     }
 
-    public static String format(Context cx, Scriptable scope, Object[] args) {
+    public static String format(Context cx, JSScope scope, Object[] args) {
         if (args == null || args.length == 0) {
             return "";
         }
@@ -318,7 +313,7 @@ public class NativeConsole extends IdScriptableObject {
         return ScriptRuntime.numberToString(ScriptRuntime.toNumber(val), 10);
     }
 
-    private static String formatObj(Context cx, Scriptable scope, Object arg) {
+    private static String formatObj(Context cx, JSScope scope, Object arg) {
         if (arg == null) {
             return "null";
         }
@@ -343,8 +338,8 @@ public class NativeConsole extends IdScriptableObject {
                         @Override
                         public Object call(
                                 Context callCx,
-                                Scriptable callScope,
-                                Scriptable callThisObj,
+                                JSScope callScope,
+                                Object callThisObj,
                                 Object[] callArgs) {
                             Object value = callArgs[1];
                             while (value instanceof Delegator) {
@@ -378,7 +373,7 @@ public class NativeConsole extends IdScriptableObject {
         }
     }
 
-    private void jsAssert(Context cx, Scriptable scope, Object[] args) {
+    private void jsAssert(Context cx, JSScope scope, Object[] args) {
         if (args != null && args.length > 0 && ScriptRuntime.toBoolean(args[0])) {
             return;
         }
@@ -406,13 +401,13 @@ public class NativeConsole extends IdScriptableObject {
         printer.print(cx, scope, Level.ERROR, args, null);
     }
 
-    private void count(Context cx, Scriptable scope, Object[] args) {
+    private void count(Context cx, JSScope scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
         print(cx, scope, Level.INFO, label + ": " + count);
     }
 
-    private void countReset(Context cx, Scriptable scope, Object[] args) {
+    private void countReset(Context cx, JSScope scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
@@ -420,7 +415,7 @@ public class NativeConsole extends IdScriptableObject {
         }
     }
 
-    private void time(Context cx, Scriptable scope, Object[] args) {
+    private void time(Context cx, JSScope scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
@@ -430,7 +425,7 @@ public class NativeConsole extends IdScriptableObject {
         timers.put(label, System.nanoTime());
     }
 
-    private void timeEnd(Context cx, Scriptable scope, Object[] args) {
+    private void timeEnd(Context cx, JSScope scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
@@ -440,7 +435,7 @@ public class NativeConsole extends IdScriptableObject {
         print(cx, scope, Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
     }
 
-    private void timeLog(Context cx, Scriptable scope, Object[] args) {
+    private void timeLog(Context cx, JSScope scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {

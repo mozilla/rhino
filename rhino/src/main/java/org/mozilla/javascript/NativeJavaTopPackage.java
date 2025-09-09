@@ -38,12 +38,12 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return construct(cx, scope, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object[] args) {
         ClassLoader loader = null;
         if (args.length != 0) {
             Object arg = args[0];
@@ -63,7 +63,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         return pkg;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         ClassLoader loader = cx.getApplicationClassLoader();
         final NativeJavaTopPackage top = new NativeJavaTopPackage(loader);
         top.setPrototype(getObjectPrototype(scope));
@@ -105,7 +105,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_getClass) {
                 return js_getClass(cx, scope, args);
@@ -114,7 +114,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         throw f.unknown();
     }
 
-    private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable js_getClass(Context cx, JSScope scope, Object[] args) {
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();

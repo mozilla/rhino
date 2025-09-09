@@ -1067,7 +1067,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
                     && parmTypes[0] == ScriptRuntime.ContextClass
-                    && parmTypes[1] == ScriptRuntime.ScriptableClass
+                    && parmTypes[1] == ScriptRuntime.JSScopeClass
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
                 Object[] args = {
