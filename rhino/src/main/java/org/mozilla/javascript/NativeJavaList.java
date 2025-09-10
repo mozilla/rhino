@@ -5,12 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <code>NativeJavaList</code> is a wrapper for java objects implementing <code>java.util.List
@@ -205,6 +204,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     /// lazy and persistent init via {@code <clinit>}
     interface ListTypeVariables {
-        VariableTypeInfo E = (VariableTypeInfo) TypeInfoFactory.GLOBAL.create(List.class.getTypeParameters()[0]);
+        VariableTypeInfo E =
+                (VariableTypeInfo) TypeInfoFactory.GLOBAL.create(List.class.getTypeParameters()[0]);
     }
 }

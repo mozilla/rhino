@@ -1,6 +1,12 @@
 package org.mozilla.javascript.tests.type_info;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
