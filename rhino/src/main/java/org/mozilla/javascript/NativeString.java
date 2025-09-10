@@ -519,7 +519,7 @@ final class NativeString extends ScriptableObject {
      * XXX is this ECMA?  A version check is probably needed. In js too.
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         if (0 <= index && index < string.length()) {
             return String.valueOf(string.charAt(index));
         }
@@ -527,7 +527,7 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (0 <= index && index < string.length()) {
             return;
         }
@@ -535,7 +535,7 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         if (0 <= index && index < string.length()) {
             return true;
         }

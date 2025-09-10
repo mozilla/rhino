@@ -3244,7 +3244,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Scriptable funThisObj = (Scriptable) result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode_CALL_ON_SUPER) {
@@ -3955,7 +3955,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoLeaveWith extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.scope = ScriptRuntime.leaveWith(frame.scope);
+            frame.scope = (Scriptable) ScriptRuntime.leaveWith(frame.scope);
             return null;
         }
     }
@@ -4307,7 +4307,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Object x = ScriptRuntime.updateDotQuery(valBln, frame.scope);
             if (x != null) {
                 frame.stack[state.stackTop] = x;
-                frame.scope = ScriptRuntime.leaveDotQuery(frame.scope);
+                frame.scope = (Scriptable) ScriptRuntime.leaveDotQuery(frame.scope);
                 frame.pc += 2;
                 return null;
             }
@@ -4664,7 +4664,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // to expose the exception variable).
                 for (; ; ) {
                     if (scope instanceof NativeWith) {
-                        scope = scope.getParentScope();
+                        scope = (Scriptable) scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null
                                         && frame.parentFrame.scope == scope)) {

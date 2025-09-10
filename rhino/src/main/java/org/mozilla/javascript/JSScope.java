@@ -14,17 +14,25 @@ package org.mozilla.javascript;
  */
 public interface JSScope {
 
+    public Object get(Symbol key, JSScope start);
+
     public Object get(String name, JSScope start);
 
     public Object get(int index, JSScope start);
+
+    public boolean has(Symbol name, JSScope start);
 
     public boolean has(String name, JSScope start);
 
     public boolean has(int index, JSScope start);
 
+    public void put(Symbol name, JSScope start, Object value);
+
     public void put(String name, JSScope start, Object value);
 
     public void put(int index, JSScope start, Object value);
+
+    public void delete(Symbol name);
 
     public void delete(String name);
 

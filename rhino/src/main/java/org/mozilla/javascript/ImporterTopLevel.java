@@ -88,21 +88,21 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return super.has(name, start) || getPackageProperty(name, start) != NOT_FOUND;
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Object result = super.get(name, start);
         if (result != NOT_FOUND) return result;
         result = getPackageProperty(name, start);
         return result;
     }
 
-    private Object getPackageProperty(String name, Scriptable start) {
+    private Object getPackageProperty(String name, JSScope start) {
         Object result = NOT_FOUND;
-        Scriptable scope = start;
+        JSScope scope = start;
         if (topScopeFlag) {
             scope = ScriptableObject.getTopLevelScope(scope);
         }
@@ -126,7 +126,7 @@ public class ImporterTopLevel extends TopLevel {
         return result;
     }
 
-    private static Object[] getNativeJavaPackages(Scriptable scope) {
+    private static Object[] getNativeJavaPackages(JSScope scope) {
         // retrivee the native java packages stored in top scope.
         synchronized (scope) {
             if (scope instanceof ScriptableObject) {

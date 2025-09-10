@@ -7,6 +7,7 @@
 package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -71,10 +72,10 @@ public abstract class XMLLib {
 
     public abstract boolean isXMLName(Context cx, Object name);
 
-    public abstract Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags);
+    public abstract Ref nameRef(Context cx, Object name, JSScope scope, int memberTypeFlags);
 
     public abstract Ref nameRef(
-            Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags);
+            Context cx, Object namespace, Object name, JSScope scope, int memberTypeFlags);
 
     /**
      * Escapes the reserved characters in a value of an attribute.

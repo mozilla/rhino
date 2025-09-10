@@ -272,7 +272,7 @@ public class NativeObject extends ScriptableObject implements Map {
         return ScriptRuntime.wrapBoolean(result);
     }
 
-    private static Object js_protoGetter(Scriptable thisObj) {
+    private static Object js_protoGetter(JSScope thisObj) {
         /*
         Let O be ? ToObject(this value).
         2. Return ? O.[[GetPrototypeOf]]().
@@ -281,7 +281,7 @@ public class NativeObject extends ScriptableObject implements Map {
         return o.getPrototype();
     }
 
-    public static void js_protoSetter(Scriptable thisObj, Object proto) {
+    public static void js_protoSetter(JSScope thisObj, Object proto) {
         /*
         Let O be ? RequireObjectCoercible(this value).
         2. If proto is not an Object and proto is not null, return undefined.
@@ -480,7 +480,7 @@ public class NativeObject extends ScriptableObject implements Map {
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         arg = getCompatibleObject(cx, scope, arg);
-        Scriptable obj = cx.newObject(scope);
+        JSScope obj = cx.newObject(scope);
         ScriptRuntime.loadFromIterable(
                 cx,
                 scope,
@@ -582,7 +582,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Scriptable s = getCompatibleObject(cx, scope, arg);
         ScriptableObject obj = ensureScriptableObject(s);
 
-        ScriptableObject descs = (ScriptableObject) cx.newObject(scope);
+        JSScope descs = (ScriptableObject) cx.newObject(scope);
         Object[] ids;
         try (var map = obj.startCompoundOp(false)) {
             ids = obj.getIds(map, true, true);

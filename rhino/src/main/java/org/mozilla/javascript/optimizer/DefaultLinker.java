@@ -10,8 +10,8 @@ import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -138,14 +138,12 @@ class DefaultLinker implements GuardingDynamicLinker {
         // Like above for properties, the name to handle is not on the Java stack,
         // but is something that we parsed from the name of the invokedynamic operation.
         if (op.isOperation(RhinoOperation.BIND)) {
-            tt =
-                    MethodType.methodType(
-                            Scriptable.class, Context.class, Scriptable.class, String.class);
+            tt = MethodType.methodType(JSScope.class, Context.class, JSScope.class, String.class);
             mh = lookup.findStatic(ScriptRuntime.class, "bind", tt);
             mh = MethodHandles.insertArguments(mh, 2, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (op.isOperation(StandardOperation.GET)) {
-            tt = MethodType.methodType(Object.class, Context.class, Scriptable.class, String.class);
+            tt = MethodType.methodType(Object.class, Context.class, JSScope.class, String.class);
             mh = lookup.findStatic(ScriptRuntime.class, "name", tt);
             mh = MethodHandles.insertArguments(mh, 2, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
@@ -155,7 +153,7 @@ class DefaultLinker implements GuardingDynamicLinker {
                             ScriptRuntime.LookupResult.class,
                             String.class,
                             Context.class,
-                            Scriptable.class);
+                            JSScope.class);
             mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThis", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
@@ -165,7 +163,7 @@ class DefaultLinker implements GuardingDynamicLinker {
                             ScriptRuntime.LookupResult.class,
                             String.class,
                             Context.class,
-                            Scriptable.class);
+                            JSScope.class);
             mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThisOptional", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);

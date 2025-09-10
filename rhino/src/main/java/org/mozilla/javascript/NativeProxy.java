@@ -144,7 +144,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -198,7 +198,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -251,7 +251,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
@@ -411,7 +411,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -471,7 +471,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -532,7 +532,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -593,7 +593,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -655,7 +655,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -720,7 +720,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].

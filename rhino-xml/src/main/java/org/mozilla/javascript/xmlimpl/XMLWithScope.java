@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.xml.XMLObject;
@@ -18,7 +19,7 @@ final class XMLWithScope extends NativeWith {
     private XMLList _xmlList;
     private XMLObject _dqPrototype;
 
-    XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype) {
+    XMLWithScope(XMLLibImpl lib, JSScope parent, XMLObject prototype) {
         super(parent, prototype);
         this.lib = lib;
     }

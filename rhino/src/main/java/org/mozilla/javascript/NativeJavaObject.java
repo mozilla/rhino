@@ -41,12 +41,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     public NativeJavaObject() {}
 
-    public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType) {
+    public NativeJavaObject(JSScope scope, Object javaObject, Class<?> staticType) {
         this(scope, javaObject, staticType, false);
     }
 
     public NativeJavaObject(
-            Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
+            JSScope scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
@@ -66,17 +66,17 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return members.has(name, false);
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return false;
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
             return true;
         }
@@ -84,7 +84,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
             if (result != null) {
@@ -97,7 +97,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
             return symbol_iterator;
         }
@@ -106,12 +106,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
@@ -121,7 +121,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
+    public void put(Symbol symbol, JSScope start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
@@ -134,7 +134,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
@@ -170,13 +170,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Returns the parent (enclosing) scope of the object. */
     @Override
-    public Scriptable getParentScope() {
+    public JSScope getParentScope() {
         return parent;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
+    public void setParentScope(JSScope m) {
         parent = m;
     }
 
@@ -234,7 +234,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 value =
                         f.call(
                                 Context.getContext(),
-                                f.getParentScope(),
+                                (Scriptable) f.getParentScope(),
                                 this,
                                 ScriptRuntime.emptyArgs);
             } else {
@@ -973,7 +973,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected Scriptable prototype;
 
     /** The parent scope of this object. */
-    protected Scriptable parent;
+    protected JSScope parent;
 
     protected transient Object javaObject;
 

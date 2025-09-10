@@ -50,12 +50,12 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return members.has(name, true) || javaClassPropertyName.equals(name);
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         // When used as a constructor, ScriptRuntime.newObject() asks
         // for our prototype to create an object of the correct type.
         // We don't really care what the object is, since we're returning
@@ -92,7 +92,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         members.put(this, name, javaObject, value, true);
     }
 

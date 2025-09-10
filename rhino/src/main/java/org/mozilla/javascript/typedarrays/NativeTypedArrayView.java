@@ -26,6 +26,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IteratorLikeIterable;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
@@ -66,12 +67,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     // silently ignored (and always valued as "undefined") when they are out of bounds.
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         return js_get(index);
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
         if (num.isPresent()) {
             // Now we had a valid number, so no matter what we try to return an array element
@@ -84,12 +85,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return !checkIndex(index);
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
         if (num.isPresent()) {
             int ix = toIndex(num.get());
@@ -101,12 +102,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
-    public void put(int index, Scriptable start, Object val) {
+    public void put(int index, JSScope start, Object val) {
         js_set(index, val);
     }
 
     @Override
-    public void put(String name, Scriptable start, Object val) {
+    public void put(String name, JSScope start, Object val) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
         if (num.isPresent()) {
             int ix = toIndex(num.get());
@@ -548,22 +549,22 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return length;
     }
 
-    private static NativeTypedArrayView realThis(Scriptable thisObj) {
+    private static NativeTypedArrayView realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeTypedArrayView.class);
     }
 
-    private static Object js_buffer(Scriptable thisObj) {
+    private static Object js_buffer(JSScope thisObj) {
         return realThis(thisObj).arrayBuffer;
     }
 
-    private static Object js_toStringTag(Scriptable thisObj) {
+    private static Object js_toStringTag(JSScope thisObj) {
         if (NativeTypedArrayView.class.isInstance(thisObj)) {
-            return thisObj.getClassName();
+            return ((NativeTypedArrayView) thisObj).getClassName();
         }
         return Undefined.instance;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(JSScope thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
@@ -571,7 +572,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return o.byteLength;
     }
 
-    private static Object js_byteOffset(Scriptable thisObj) {
+    private static Object js_byteOffset(JSScope thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
@@ -579,7 +580,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return o.offset;
     }
 
-    private static Object js_length(Scriptable thisObj) {
+    private static Object js_length(JSScope thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;

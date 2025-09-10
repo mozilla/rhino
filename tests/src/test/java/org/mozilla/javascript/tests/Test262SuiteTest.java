@@ -42,6 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
@@ -464,7 +465,7 @@ public class Test262SuiteTest {
             return cx.evaluateString(scope, source, "<evalScript>", 1, null);
         }
 
-        public static Object getGlobal(Scriptable scriptable) {
+        public static Object getGlobal(JSScope scriptable) {
             return scriptable.getParentScope();
         }
 
@@ -483,7 +484,7 @@ public class Test262SuiteTest {
             return Undefined.instance;
         }
 
-        public static Object getAgent(Scriptable scriptable) {
+        public static Object getAgent(JSScope scriptable) {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
 

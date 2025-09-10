@@ -6,6 +6,7 @@ import static org.mozilla.javascript.tests.LambdaAccessorSlotTest.StatusHolder.s
 
 import org.junit.Test;
 import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -558,7 +559,7 @@ public class LambdaAccessorSlotTest {
             return constructor;
         }
 
-        static StatusHolder self(Scriptable thisObj) {
+        static StatusHolder self(JSScope thisObj) {
             return LambdaConstructor.convertThisObject(thisObj, StatusHolder.class);
         }
 

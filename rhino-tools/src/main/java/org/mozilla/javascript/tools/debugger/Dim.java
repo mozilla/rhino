@@ -22,6 +22,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeCall;
 import org.mozilla.javascript.NativeObject;
@@ -578,7 +579,7 @@ public class Dim {
         }
 
         Scriptable proto = scriptable.getPrototype();
-        Scriptable parent = scriptable.getParentScope();
+        JSScope parent = scriptable.getParentScope();
         int extra = 0;
         if (proto != null) {
             ++extra;

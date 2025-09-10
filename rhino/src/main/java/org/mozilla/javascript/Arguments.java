@@ -95,7 +95,7 @@ final class Arguments extends IdScriptableObject {
     // end helpers
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         if (arg(index) != NOT_FOUND) {
             return true;
         }
@@ -103,7 +103,7 @@ final class Arguments extends IdScriptableObject {
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         final Object value = arg(index);
         if (value == NOT_FOUND) {
             return super.get(index, start);
@@ -144,7 +144,7 @@ final class Arguments extends IdScriptableObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (arg(index) == NOT_FOUND) {
             super.put(index, start, value);
         } else {
@@ -153,7 +153,7 @@ final class Arguments extends IdScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         super.put(name, start, value);
     }
 

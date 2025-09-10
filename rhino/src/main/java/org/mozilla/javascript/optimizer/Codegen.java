@@ -467,8 +467,8 @@ public class Codegen implements Evaluator {
                 "doTopCall",
                 "(Lorg/mozilla/javascript/Callable;"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSScope;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Z"
                         + ")Ljava/lang/Object;");

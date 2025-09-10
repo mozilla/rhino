@@ -36,6 +36,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.RhinoException;
@@ -523,7 +524,7 @@ public class Global extends ImporterTopLevel {
      * js&gt; a 3
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Scriptable scope = funObj.getParentScope();
+        JSScope scope = funObj.getParentScope();
         Runner runner;
         if (args.length != 0 && args[0] instanceof Function) {
             Object[] newArgs = null;
@@ -738,7 +739,7 @@ public class Global extends ImporterTopLevel {
     }
 
     private static Global getInstance(Function function) {
-        Scriptable scope = function.getParentScope();
+        JSScope scope = function.getParentScope();
         if (!(scope instanceof Global))
             throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
         return (Global) scope;
@@ -888,13 +889,13 @@ public class Global extends ImporterTopLevel {
 
 class Runner implements Runnable, ContextAction<Object> {
 
-    Runner(Scriptable scope, Function func, Object[] args) {
+    Runner(JSScope scope, Function func, Object[] args) {
         this.scope = scope;
         f = func;
         this.args = args;
     }
 
-    Runner(Scriptable scope, Script script) {
+    Runner(JSScope scope, Script script) {
         this.scope = scope;
         s = script;
     }
@@ -906,12 +907,12 @@ class Runner implements Runnable, ContextAction<Object> {
 
     @Override
     public Object run(Context cx) {
-        if (f != null) return f.call(cx, scope, scope, args);
-        else return s.exec(cx, scope, scope);
+        if (f != null) return f.call(cx, (Scriptable) scope, (Scriptable) scope, args);
+        else return s.exec(cx, (Scriptable) scope, (Scriptable) scope);
     }
 
     ContextFactory factory;
-    private Scriptable scope;
+    private JSScope scope;
     private Function f;
     private Script s;
     private Object[] args;

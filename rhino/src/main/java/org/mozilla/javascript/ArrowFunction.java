@@ -96,7 +96,7 @@ public class ArrowFunction extends BaseFunction {
     }
 
     Scriptable getCallThis(Context cx) {
-        return boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
+        return boundThis != null ? boundThis : (Scriptable) ScriptRuntime.getTopCallScope(cx);
     }
 
     Scriptable getBoundHomeObject() {

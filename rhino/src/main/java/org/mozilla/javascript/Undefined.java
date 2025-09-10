@@ -60,30 +60,30 @@ public class Undefined implements Serializable {
                 }
 
                 @Override
-                public Object get(String name, Scriptable start) {
+                public Object get(String name, JSScope start) {
                     return NOT_FOUND;
                 }
 
                 @Override
-                public Object get(int index, Scriptable start) {
+                public Object get(int index, JSScope start) {
                     return NOT_FOUND;
                 }
 
                 @Override
-                public boolean has(String name, Scriptable start) {
+                public boolean has(String name, JSScope start) {
                     return false;
                 }
 
                 @Override
-                public boolean has(int index, Scriptable start) {
+                public boolean has(int index, JSScope start) {
                     return false;
                 }
 
                 @Override
-                public void put(String name, Scriptable start, Object value) {}
+                public void put(String name, JSScope start, Object value) {}
 
                 @Override
-                public void put(int index, Scriptable start, Object value) {}
+                public void put(int index, JSScope start, Object value) {}
 
                 @Override
                 public void delete(String name) {}
@@ -105,7 +105,7 @@ public class Undefined implements Serializable {
                 }
 
                 @Override
-                public void setParentScope(Scriptable parent) {}
+                public void setParentScope(JSScope parent) {}
 
                 @Override
                 public Object[] getIds() {

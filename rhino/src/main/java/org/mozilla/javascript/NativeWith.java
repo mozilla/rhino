@@ -31,7 +31,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     private NativeWith() {}
 
-    protected NativeWith(Scriptable parent, Scriptable prototype) {
+    protected NativeWith(JSScope parent, Scriptable prototype) {
         this.parent = parent;
         this.prototype = prototype;
     }
@@ -42,12 +42,12 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public boolean has(String id, Scriptable start) {
+    public boolean has(String id, JSScope start) {
         return prototype.has(id, prototype);
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         if (prototype instanceof SymbolScriptable) {
             return ((SymbolScriptable) prototype).has(key, prototype);
         }
@@ -55,12 +55,12 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return prototype.has(index, prototype);
     }
 
     @Override
-    public Object get(String id, Scriptable start) {
+    public Object get(String id, JSScope start) {
         if (start == this) {
             start = prototype;
         }
@@ -68,7 +68,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         if (start == this) {
             start = prototype;
         }
@@ -79,7 +79,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         if (start == this) {
             start = prototype;
         }
@@ -87,13 +87,13 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public void put(String id, JSScope start, Object value) {
         if (start == this) start = prototype;
         prototype.put(id, start, value);
     }
 
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
+    public void put(Symbol symbol, JSScope start, Object value) {
         if (start == this) {
             start = prototype;
         }
@@ -103,7 +103,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (start == this) start = prototype;
         prototype.put(index, start, value);
     }
@@ -136,12 +136,12 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public Scriptable getParentScope() {
+    public JSScope getParentScope() {
         return parent;
     }
 
     @Override
-    public void setParentScope(Scriptable parent) {
+    public void setParentScope(JSScope parent) {
         this.parent = parent;
     }
 
@@ -202,5 +202,5 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     private static final int Id_constructor = 1;
 
     protected Scriptable prototype;
-    protected Scriptable parent;
+    protected JSScope parent;
 }

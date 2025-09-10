@@ -7,6 +7,7 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -51,12 +52,12 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeProperty(
                 cx,
                 "buffer",
-                (Scriptable thisObj) -> realThis(thisObj).arrayBuffer,
+                (JSScope thisObj) -> realThis(thisObj).arrayBuffer,
                 DONTENUM | READONLY);
         constructor.definePrototypeProperty(
                 cx,
                 "byteLength",
-                (Scriptable thisObj) -> {
+                (JSScope thisObj) -> {
                     NativeDataView self = realThis(thisObj);
                     if (self.isDataViewOutOfBounds()) {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
@@ -67,7 +68,7 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeProperty(
                 cx,
                 "byteOffset",
-                (Scriptable thisObj) -> {
+                (JSScope thisObj) -> {
                     NativeDataView self = realThis(thisObj);
                     if (self.isDataViewOutOfBounds()) {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
@@ -230,7 +231,7 @@ public class NativeDataView extends NativeArrayBufferView {
         return constructor;
     }
 
-    private static NativeDataView realThis(Scriptable thisObj) {
+    private static NativeDataView realThis(JSScope thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeDataView.class);
     }
 

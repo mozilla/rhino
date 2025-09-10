@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -92,7 +93,7 @@ class XMLList extends XMLObjectImpl implements Function {
     //
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         // Log("get index: " + index);
 
         if (index >= 0 && index < length()) {
@@ -109,7 +110,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return 0 <= index && index < length();
     }
 
@@ -181,7 +182,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         Object parent = Undefined.instance;
         // Convert text into XML if needed.
         XMLObject xmlValue;

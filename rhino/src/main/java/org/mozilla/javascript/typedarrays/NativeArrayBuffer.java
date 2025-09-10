@@ -9,6 +9,7 @@ package org.mozilla.javascript.typedarrays;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -160,7 +161,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         return newBuf;
     }
 
-    private static NativeArrayBuffer getSelf(Scriptable thisObj) {
+    private static NativeArrayBuffer getSelf(JSScope thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
@@ -222,11 +223,11 @@ public class NativeArrayBuffer extends ScriptableObject {
         return buf;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(JSScope thisObj) {
         return getSelf(thisObj).getLength();
     }
 
-    private static Object js_detached(Scriptable thisObj) {
+    private static Object js_detached(JSScope thisObj) {
         return getSelf(thisObj).isDetached();
     }
 

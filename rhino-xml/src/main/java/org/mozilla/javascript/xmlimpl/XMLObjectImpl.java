@@ -9,6 +9,7 @@ package org.mozilla.javascript.xmlimpl;
 import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Node;
@@ -105,7 +106,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public final void setParentScope(Scriptable parent) {
+    public final void setParentScope(JSScope parent) {
         super.setParentScope(parent);
     }
 
@@ -237,7 +238,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         return hasXMLProperty(lib.toXMLNameFromString(cx, name));
     }
@@ -260,7 +261,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         return getXMLProperty(lib.toXMLNameFromString(cx, name));
     }
@@ -280,7 +281,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         Context cx = Context.getCurrentContext();
         putXMLProperty(lib.toXMLNameFromString(cx, name), value);
     }
@@ -360,12 +361,12 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public NativeWith enterWith(Scriptable scope) {
+    public NativeWith enterWith(JSScope scope) {
         return new XMLWithScope(lib, scope, this);
     }
 
     @Override
-    public NativeWith enterDotQuery(Scriptable scope) {
+    public NativeWith enterDotQuery(JSScope scope) {
         XMLWithScope xws = new XMLWithScope(lib, scope, this);
         xws.initAsDotQuery();
         return xws;

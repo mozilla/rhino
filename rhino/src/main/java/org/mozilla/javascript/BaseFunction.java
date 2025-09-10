@@ -159,7 +159,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         this.isGeneratorFunction = isGenerator;
     }
 
-    public BaseFunction(Scriptable scope, Scriptable prototype) {
+    public BaseFunction(JSScope scope, Scriptable prototype) {
         super(scope, prototype);
         createProperties();
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.Function);
@@ -190,38 +190,30 @@ public class BaseFunction extends ScriptableObject implements Function {
         return !Context.isCurrentContextStrict();
     }
 
-    private static Object lengthGetter(BaseFunction function, Scriptable start) {
+    private static Object lengthGetter(BaseFunction function, JSScope start) {
         return function.getLength();
     }
 
-    private static Object arityGetter(BaseFunction function, Scriptable start) {
+    private static Object arityGetter(BaseFunction function, JSScope start) {
         return function.getArity();
     }
 
-    private static Object argumentsGetter(BaseFunction function, Scriptable start) {
+    private static Object argumentsGetter(BaseFunction function, JSScope start) {
         return function.getArguments();
     }
 
     private static boolean argumentsSetter(
-            BaseFunction function,
-            Object value,
-            Scriptable owner,
-            Scriptable start,
-            boolean isThrow) {
+            BaseFunction function, Object value, JSScope owner, JSScope start, boolean isThrow) {
         function.argumentsObj = value;
         return true;
     }
 
-    private static Object nameGetter(BaseFunction function, Scriptable start) {
+    private static Object nameGetter(BaseFunction function, JSScope start) {
         return function.nameValue != null ? function.nameValue : function.getFunctionName();
     }
 
     private static boolean nameSetter(
-            BaseFunction function,
-            Object value,
-            Scriptable owner,
-            Scriptable start,
-            boolean isThrow) {
+            BaseFunction function, Object value, JSScope owner, JSScope start, boolean isThrow) {
         function.nameValue = value;
         return true;
     }
@@ -259,16 +251,12 @@ public class BaseFunction extends ScriptableObject implements Function {
                 });
     }
 
-    private static Object prototypeGetter(BaseFunction function, Scriptable start) {
+    private static Object prototypeGetter(BaseFunction function, JSScope start) {
         return function.getPrototypeProperty();
     }
 
     private static boolean prototypeSetter(
-            BaseFunction function,
-            Object value,
-            Scriptable owner,
-            Scriptable start,
-            boolean isThrow) {
+            BaseFunction function, Object value, JSScope owner, JSScope start, boolean isThrow) {
         function.prototypeProperty = value == null ? UniqueTag.NULL_VALUE : value;
         return true;
     }

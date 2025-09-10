@@ -128,7 +128,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
-    private static NativeSymbol getSelf(Scriptable thisObj) {
+    private static NativeSymbol getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
@@ -155,7 +155,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).symbolData;
     }
 
-    private static Object js_description(Scriptable thisObj) {
+    private static Object js_description(JSScope thisObj) {
         return getSelf(thisObj).getKey().getDescription();
     }
 
@@ -206,7 +206,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         if (!isSymbol()) {
             super.put(name, start, value);
         } else if (isStrictMode()) {
@@ -215,7 +215,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (!isSymbol()) {
             super.put(index, start, value);
         } else if (isStrictMode()) {
@@ -224,7 +224,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, JSScope start, Object value) {
         if (!isSymbol()) {
             super.put(key, start, value);
         } else if (isStrictMode()) {

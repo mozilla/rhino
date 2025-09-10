@@ -168,7 +168,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             return value;
         }
 
-        final void set(int id, Scriptable start, Object value) {
+        final void set(int id, JSScope start, Object value) {
             if (value == NOT_FOUND) throw new IllegalArgumentException("value == NOT_FOUND");
             ensureId(id);
             int attr = attributeArray[id - 1];
@@ -329,7 +329,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int attr = (info >>> 16);
@@ -349,7 +349,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         int info = findInstanceIdInfo(key);
         if (info != 0) {
             int attr = (info >>> 16);
@@ -369,7 +369,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         // Check for slot first for performance. This is a very hot code
         // path that should be further optimized.
         Object value = super.get(name, start);
@@ -393,7 +393,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         Object value = super.get(key, start);
         if (value != NOT_FOUND) {
             return value;
@@ -415,7 +415,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             if (start == this && isSealed()) {
@@ -446,7 +446,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, JSScope start, Object value) {
         int info = findInstanceIdInfo(key);
         if (info != 0) {
             if (start == this && isSealed()) {

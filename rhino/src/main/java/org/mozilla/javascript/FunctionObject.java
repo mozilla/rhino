@@ -173,7 +173,7 @@ public class FunctionObject extends BaseFunction {
     }
 
     public static Object convertArg(
-            Context cx, Scriptable scope, Object arg, int typeTag, boolean isNullable) {
+            Context cx, JSScope scope, Object arg, int typeTag, boolean isNullable) {
         switch (typeTag) {
             case JAVA_STRING_TYPE:
                 if (arg instanceof String) return arg;

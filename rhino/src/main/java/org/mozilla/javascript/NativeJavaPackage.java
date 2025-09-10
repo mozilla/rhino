@@ -52,32 +52,32 @@ public class NativeJavaPackage extends ScriptableObject {
     }
 
     @Override
-    public boolean has(String id, Scriptable start) {
+    public boolean has(String id, JSScope start) {
         return true;
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return false;
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public void put(String id, JSScope start, Object value) {
         // Can't add properties to Java packages.  Sorry.
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         throw Context.reportRuntimeErrorById("msg.pkg.int");
     }
 
     @Override
-    public Object get(String id, Scriptable start) {
+    public Object get(String id, JSScope start) {
         return getPkgProperty(id, start, true);
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         return NOT_FOUND;
     }
 
@@ -95,7 +95,7 @@ public class NativeJavaPackage extends ScriptableObject {
         return pkg;
     }
 
-    synchronized Object getPkgProperty(String name, Scriptable start, boolean createPkg) {
+    synchronized Object getPkgProperty(String name, JSScope start, boolean createPkg) {
         Object cached = super.get(name, start);
         if (cached != NOT_FOUND) return cached;
         if (negativeCache != null && negativeCache.contains(name)) {

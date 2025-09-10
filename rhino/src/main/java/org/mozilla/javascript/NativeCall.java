@@ -29,7 +29,7 @@ public final class NativeCall extends IdScriptableObject {
     NativeCall(
             NativeFunction function,
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Object[] args,
             boolean isArrow,
             boolean isStrict,

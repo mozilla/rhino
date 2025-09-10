@@ -166,7 +166,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupGetter__ */
-    Function asGetterFunction(final String name, final Scriptable scope) {
+    Function asGetterFunction(final String name, final JSScope scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
@@ -202,7 +202,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupSetter__ */
-    Function asSetterFunction(final String name, final Scriptable scope) {
+    Function asSetterFunction(final String name, final JSScope scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
@@ -222,7 +222,7 @@ final class MemberBox implements Serializable {
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
                                                     cx,
-                                                    thisObj,
+                                                    (Scriptable) thisObj,
                                                     originalArgs[0],
                                                     nativeSetter.getArgTypes().get(0).getTypeTag(),
                                                     nativeSetter.getArgNullability().isNullable(0))

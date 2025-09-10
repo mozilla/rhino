@@ -47,10 +47,10 @@ public class AbstractEcmaObjectOperations {
      * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty"></a>
      */
     static boolean hasOwnProperty(Context cx, Object o, Object property) {
-        Scriptable obj = ScriptableObject.ensureScriptable(o);
+        JSScope obj = ScriptableObject.ensureScriptable(o);
         boolean result;
         if (property instanceof Symbol) {
-            result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
+            result = obj.has((Symbol) property, obj);
         } else {
             ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);
             if (s.stringId == null) {
@@ -184,7 +184,7 @@ public class AbstractEcmaObjectOperations {
      * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
      */
     public static Constructable speciesConstructor(
-            Context cx, Scriptable s, Constructable defaultConstructor) {
+            Context cx, JSScope s, Constructable defaultConstructor) {
         /*
         The abstract operation SpeciesConstructor takes arguments O (an Object) and
         defaultConstructor (a constructor). It is used to retrieve the constructor that should
@@ -226,7 +226,7 @@ public class AbstractEcmaObjectOperations {
      * Throw)</a>
      */
     static void put(Context cx, Scriptable o, String p, Object v, boolean isThrow) {
-        Scriptable base = ScriptableObject.getBase(o, p);
+        JSScope base = ScriptableObject.getBase(o, p);
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
@@ -245,7 +245,7 @@ public class AbstractEcmaObjectOperations {
      * Throw)</a>
      */
     static void put(Context cx, Scriptable o, int p, Object v, boolean isThrow) {
-        Scriptable base = ScriptableObject.getBase(o, p);
+        JSScope base = ScriptableObject.getBase(o, p);
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
@@ -264,7 +264,7 @@ public class AbstractEcmaObjectOperations {
      * Throw)</a>
      */
     static void put(Context cx, Scriptable o, Symbol p, Object v, boolean isThrow) {
-        Scriptable base = ScriptableObject.getBase(o, p);
+        JSScope base = ScriptableObject.getBase(o, p);
         if (base == null) base = o;
 
         if (base instanceof ScriptableObject) {
@@ -298,7 +298,7 @@ public class AbstractEcmaObjectOperations {
 
     static Map<Object, List<Object>> groupBy(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Object classTag,
             String functionName,
             Object items,
@@ -325,7 +325,8 @@ public class AbstractEcmaObjectOperations {
 
                 Object[] args = {o, i};
                 Object key =
-                        ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                        ((Callable) callback)
+                                .call(cx, (Scriptable) scope, Undefined.SCRIPTABLE_UNDEFINED, args);
                 if (keyCoercion == KEY_COERCION.PROPERTY) {
                     if (!ScriptRuntime.isSymbol(key)) {
                         key = ScriptRuntime.toString(key);
@@ -548,7 +549,7 @@ public class AbstractEcmaObjectOperations {
      * <p><a href="https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isregexp">7.2.6
      * IsRegExp (argument)</a>
      */
-    static boolean isRegExp(Context cx, Scriptable scope, Object argument) {
+    static boolean isRegExp(Context cx, JSScope scope, Object argument) {
         if (!ScriptRuntime.isObject(argument)) {
             return false;
         }
