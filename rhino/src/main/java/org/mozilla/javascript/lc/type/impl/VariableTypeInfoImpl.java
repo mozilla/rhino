@@ -68,6 +68,7 @@ public final class VariableTypeInfoImpl extends TypeInfoBase implements Variable
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof VariableTypeInfoImpl && this.raw.equals(((VariableTypeInfoImpl) obj).raw);
+        return obj instanceof VariableTypeInfoImpl
+                && this.raw.equals(((VariableTypeInfoImpl) obj).raw);
     }
 }

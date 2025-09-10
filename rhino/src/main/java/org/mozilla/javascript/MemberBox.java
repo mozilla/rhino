@@ -81,10 +81,6 @@ final class MemberBox implements Serializable {
         this.returnTypeInfo = TypeInfo.NONE;
 
         // Type consolidation not required for constructor.
-        // For type consolidation stage-1 (https://github.com/mozilla/rhino/pull/2023), the class
-        // should have generic parent classes to actually needs type consolidation. But for
-        // constructor, the parameter types will be already replaced with exact type, otherwise it
-        // won't compile.
         //
         // consider this example:
         // class A<T> {
@@ -94,7 +90,7 @@ final class MemberBox implements Serializable {
         //     B(String value) { super(value); }
         // }
         // for class B, the constructor must have "String" instead of "T" as parameter type,
-        // otherwise it won't compile. So type consolidation stage-1 is not required for constructor
+        // otherwise it won't compile. So param types are already concrete types.
     }
 
     Method method() {

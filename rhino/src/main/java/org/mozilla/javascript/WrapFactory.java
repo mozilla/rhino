@@ -128,7 +128,9 @@ public class WrapFactory {
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
         if (staticType == TypeInfo.NONE && javaObject != null) {
-            staticType = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL).create(javaObject.getClass());
+            staticType =
+                    TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL)
+                            .create(javaObject.getClass());
         }
         if (List.class.isAssignableFrom(staticType.asClass())) {
             return new NativeJavaList(scope, javaObject, staticType);
