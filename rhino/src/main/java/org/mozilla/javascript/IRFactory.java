@@ -436,7 +436,13 @@ public final class IRFactory {
         List<Integer> skipIndexes = null;
         for (int i = 0; i < elems.size(); ++i) {
             AstNode elem = elems.get(i);
-            if (elem.getType() != Token.EMPTY) {
+            if (elem.getType() == Token.DOTDOTDOT) {
+                Spread spread = (Spread) elem;
+                Node transformedSpreadNode = transform(spread);
+                array.addChildToBack(transformedSpreadNode);
+                array.putIntProp(
+                        Node.NUMBER_OF_SPREAD, array.getIntProp(Node.NUMBER_OF_SPREAD, 0) + 1);
+            } else if (elem.getType() != Token.EMPTY) {
                 array.addChildToBack(transform(elem));
             } else {
                 if (skipIndexes == null) {

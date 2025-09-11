@@ -2110,6 +2110,12 @@ class BodyCodegen {
     }
 
     private void visitArrayLiteral(Node node, Node child, boolean topLevel) {
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        if (numberOfSpread > 0) {
+            visitArrayLiteralWithSpread(node, child, topLevel, numberOfSpread);
+            return;
+        }
+
         int count = countArguments(child);
 
         // If code budget is tight swap out literals into separate method
@@ -2178,6 +2184,71 @@ class BodyCodegen {
             cfw.addPush(OptRuntime.encodeIntArray(skipIndexes));
             cfw.addPush(skipIndexes.length);
         }
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        addOptRuntimeInvoke(
+                "newArrayLiteral",
+                "([Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "I"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
+    }
+
+    private void visitArrayLiteralWithSpread(
+            Node node, Node child, boolean topLevel, int numberOfSpread) {
+        int count = countArguments(child);
+
+        // Create NewLiteralStorage for the array
+        cfw.addALoad(contextLocal);
+        cfw.addLoadConstant(count - numberOfSpread);
+        cfw.addLoadConstant(0); // createKeys = false for arrays
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/NewLiteralStorage",
+                "create",
+                "(Lorg/mozilla/javascript/Context;IZ)Lorg/mozilla/javascript/NewLiteralStorage;");
+
+        // Process each element
+        while (child != null) {
+            if (child.getType() == Token.DOTDOTDOT) {
+                // Handle spread element: push the expression and call spread
+                cfw.add(ByteCode.DUP); // Duplicate the NewLiteralStorage
+                generateExpression(child.getFirstChild(), node);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addInvoke(
+                        ByteCode.INVOKEVIRTUAL,
+                        "org/mozilla/javascript/NewLiteralStorage",
+                        "spread",
+                        "(Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + "Ljava/lang/Object;"
+                                + ")V");
+            } else {
+                // Handle regular element: push the value
+                cfw.add(ByteCode.DUP); // Duplicate the NewLiteralStorage
+                generateExpression(child, node);
+                cfw.addInvoke(
+                        ByteCode.INVOKEVIRTUAL,
+                        "org/mozilla/javascript/NewLiteralStorage",
+                        "pushValue",
+                        "(Ljava/lang/Object;)V");
+            }
+            child = child.getNext();
+        }
+
+        // Convert NewLiteralStorage to array
+        cfw.addInvoke(
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/NewLiteralStorage",
+                "getValues",
+                "()[Ljava/lang/Object;");
+
+        // Create the final array
+        cfw.add(ByteCode.ACONST_NULL); // skipIndexes
+        cfw.add(ByteCode.ICONST_0); // skipCount
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         addOptRuntimeInvoke(
