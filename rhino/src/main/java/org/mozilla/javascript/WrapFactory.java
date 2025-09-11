@@ -77,10 +77,6 @@ public class WrapFactory {
                 return String.valueOf(((Character) obj).charValue());
             }
         }
-        Class<?> cls = obj.getClass();
-        if (cls.isArray()) {
-            return NativeJavaArray.wrap(scope, obj);
-        }
         return wrapAsJavaObject(cx, scope, obj, staticType);
     }
 
@@ -95,10 +91,6 @@ public class WrapFactory {
     public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
-        }
-        Class<?> cls = obj.getClass();
-        if (cls.isArray()) {
-            return NativeJavaArray.wrap(scope, obj);
         }
         return wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
     }
@@ -136,6 +128,8 @@ public class WrapFactory {
             return new NativeJavaList(scope, javaObject, staticType);
         } else if (Map.class.isAssignableFrom(staticType.asClass())) {
             return new NativeJavaMap(scope, javaObject, staticType);
+        } else if (staticType.isArray()) {
+            return new NativeJavaArray(scope, javaObject, staticType);
         }
         return new NativeJavaObject(scope, javaObject, staticType);
     }
