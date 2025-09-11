@@ -55,7 +55,68 @@ public abstract class NewLiteralStorage {
     }
 
     public void spread(Context cx, Scriptable scope, Object source) {
-        // See ECMAScript 13.2.5.5
+        if (keys == null) {
+            // This is an array literal - use array spread logic
+            spreadArray(cx, scope, source);
+        } else {
+            // This is an object literal - use object spread logic
+            spreadObject(cx, scope, source);
+        }
+    }
+
+    private void spreadArray(Context cx, Scriptable scope, Object source) {
+        // See ECMAScript 13.2.5.5 (Array Spread)
+        if (source != null && !Undefined.isUndefined(source)) {
+            Scriptable src = ScriptRuntime.toObject(cx, scope, source);
+
+            // For arrays, we want to iterate over the array elements in order
+            if (src instanceof NativeArray) {
+                NativeArray arr = (NativeArray) src;
+                long length = arr.getLength();
+
+                // Resize the values array
+                int newLen = values.length + (int) length;
+                getterSetters = Arrays.copyOf(getterSetters, newLen);
+                values = Arrays.copyOf(values, newLen);
+
+                // Copy array elements in order
+                for (int i = 0; i < length; i++) {
+                    Object value = arr.get(i, arr);
+                    if (value != Scriptable.NOT_FOUND) {
+                        pushValue(value);
+                    } else {
+                        pushValue(Undefined.instance);
+                    }
+                }
+            } else {
+                // For other iterable objects, use the standard iteration protocol
+                Object[] ids = src.getIds();
+
+                // Resize the values array
+                int newLen = values.length + ids.length;
+                getterSetters = Arrays.copyOf(getterSetters, newLen);
+                values = Arrays.copyOf(values, newLen);
+
+                // For array literals, we only care about the values, not the keys
+                for (Object id : ids) {
+                    Object value;
+                    if (id instanceof String) {
+                        value = ScriptableObject.getProperty(src, (String) id);
+                    } else if (id instanceof Integer) {
+                        value = ScriptableObject.getProperty(src, (int) id);
+                    } else if (ScriptRuntime.isSymbol(id)) {
+                        value = ScriptableObject.getProperty(src, (Symbol) id);
+                    } else {
+                        throw Kit.codeBug();
+                    }
+                    pushValue(value);
+                }
+            }
+        }
+    }
+
+    private void spreadObject(Context cx, Scriptable scope, Object source) {
+        // See ECMAScript 13.2.5.5 (Object Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
             Object[] ids;

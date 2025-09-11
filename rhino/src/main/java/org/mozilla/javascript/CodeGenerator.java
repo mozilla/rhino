@@ -1494,6 +1494,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     }
 
     private void visitArrayLiteral(Node node, Node child) {
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        if (numberOfSpread > 0) {
+            visitArrayLiteralWithSpread(node, child, numberOfSpread);
+            return;
+        }
+
         int count = 0;
         for (Node n = child; n != null; n = n.getNext()) {
             ++count;
@@ -1512,6 +1518,32 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             literalIds.add(skipIndexes);
             addIndexOp(Icode_SPARE_ARRAYLIT, index);
         }
+    }
+
+    private void visitArrayLiteralWithSpread(Node node, Node child, int numberOfSpread) {
+        int count = 0;
+        for (Node n = child; n != null; n = n.getNext()) {
+            ++count;
+        }
+
+        addIcode(Icode_REG_IND4);
+        addInt(-(count - numberOfSpread) - 1);
+        addIcode(Icode_LITERAL_NEW_ARRAY);
+        stackChange(+2);
+
+        while (child != null) {
+            if (child.getType() == Token.DOTDOTDOT) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_SPREAD);
+                stackChange(-1);
+            } else {
+                visitLiteralValue(child);
+            }
+            child = child.getNext();
+        }
+
+        addToken(Token.ARRAYLIT);
+        stackChange(-1);
     }
 
     private void visitLiteralValue(Node child) {
