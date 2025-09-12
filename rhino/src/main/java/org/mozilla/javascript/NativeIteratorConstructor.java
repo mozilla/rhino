@@ -75,6 +75,28 @@ public final class NativeIteratorConstructor extends BaseFunction {
                 Integer.valueOf(0),
                 ScriptableObject.DONTENUM | ScriptableObject.READONLY);
 
+        // Define Iterator.from static method
+        BaseFunction fromMethod =
+                new BaseFunction() {
+                    @Override
+                    public Object call(
+                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                        return iteratorFrom(
+                                cx, scope, args.length > 0 ? args[0] : Undefined.instance);
+                    }
+
+                    @Override
+                    public String getFunctionName() {
+                        return "from";
+                    }
+
+                    @Override
+                    public int getLength() {
+                        return 1;
+                    }
+                };
+        constructor.defineProperty("from", fromMethod, ScriptableObject.DONTENUM);
+
         if (sealed) {
             constructor.sealObject();
             prototype.sealObject();
@@ -130,5 +152,75 @@ public final class NativeIteratorConstructor extends BaseFunction {
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         Object proto = ScriptableObject.getTopScopeValue(top, ITERATOR_PROTOTYPE_TAG);
         return proto instanceof Scriptable ? (Scriptable) proto : null;
+    }
+
+    /**
+     * Implementation of Iterator.from(item) as defined in ES2025.
+     *
+     * @param cx the context
+     * @param scope the scope
+     * @param item the item to convert to an iterator
+     * @return an iterator wrapping the item
+     */
+    private static Object iteratorFrom(Context cx, Scriptable scope, Object item) {
+        // 1. If item is undefined or null, throw TypeError
+        if (item == null || item == Undefined.instance) {
+            throw ScriptRuntime.typeErrorById("msg.no.properties", ScriptRuntime.toString(item));
+        }
+
+        // 2. Get the @@iterator method
+        Object itemObj = ScriptRuntime.toObject(cx, scope, item);
+        Object iteratorMethod =
+                ScriptableObject.getProperty((Scriptable) itemObj, SymbolKey.ITERATOR);
+
+        // 3. If iterator method exists
+        if (iteratorMethod != Scriptable.NOT_FOUND
+                && iteratorMethod != null
+                && !Undefined.isUndefined(iteratorMethod)) {
+            // Check if it's callable
+            if (!(iteratorMethod instanceof Callable)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function",
+                        SymbolKey.ITERATOR.toString(),
+                        ScriptRuntime.typeof(iteratorMethod));
+            }
+
+            // 4. Call the iterator method
+            Callable func = (Callable) iteratorMethod;
+            Object iterator = func.call(cx, scope, (Scriptable) itemObj, ScriptRuntime.emptyArgs);
+
+            // 5. Check if result is an object
+            if (!(iterator instanceof Scriptable)) {
+                throw ScriptRuntime.typeErrorById("msg.iterator.primitive");
+            }
+
+            Scriptable iteratorObj = (Scriptable) iterator;
+
+            // 6. Check if the iterator's prototype chain includes Iterator.prototype
+            Scriptable iteratorPrototype = getIteratorPrototype(scope);
+            if (iteratorPrototype != null) {
+                Scriptable proto = iteratorObj.getPrototype();
+                while (proto != null) {
+                    if (proto == iteratorPrototype) {
+                        // Already inherits from Iterator.prototype, return as-is
+                        return iterator;
+                    }
+                    proto = proto.getPrototype();
+                }
+            }
+
+            // 7. Wrap the iterator to inherit from Iterator.prototype
+            return new IteratorWrapper(iteratorObj, scope);
+        }
+
+        // 8. If no iterator method, check if it's already an iterator-like object with next method
+        Object nextMethod = ScriptableObject.getProperty((Scriptable) itemObj, "next");
+        if (nextMethod instanceof Callable) {
+            // Has a next method, wrap it
+            return new IteratorWrapper((Scriptable) itemObj, scope);
+        }
+
+        // 9. Otherwise, throw TypeError
+        throw ScriptRuntime.typeErrorById("msg.not.iterable", ScriptRuntime.toString(item));
     }
 }
