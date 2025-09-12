@@ -1346,7 +1346,7 @@ class BodyCodegen {
             case Token.STRING_CONCAT:
                 generateExpression(child, node);
                 generateExpression(child.getNext(), node);
-                addOptRuntimeInvoke(
+                addScriptRuntimeInvoke(
                         "concat", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
                 break;
 

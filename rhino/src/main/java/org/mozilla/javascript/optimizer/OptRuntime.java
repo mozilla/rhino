@@ -6,7 +6,6 @@ package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.ArrowFunction;
 import org.mozilla.javascript.Callable;
-import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ES6Generator;
@@ -130,13 +129,6 @@ public final class OptRuntime extends ScriptRuntime {
             return val1 + ((Integer) val2);
         }
         return ScriptRuntime.add(val1, val2, cx);
-    }
-
-    public static Object concat(Object lhs, Object rhs) {
-        String rhsString = ScriptRuntime.toString(rhs);
-        String lhsString = ScriptRuntime.toString(lhs);
-
-        return new ConsString(lhsString, rhsString);
     }
 
     /**

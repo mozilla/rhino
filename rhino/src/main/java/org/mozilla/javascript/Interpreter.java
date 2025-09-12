@@ -2764,10 +2764,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop - 1]);
             }
 
-            String rhsString = ScriptRuntime.toString(rhs);
-            String lhsString = ScriptRuntime.toString(lhs);
-
-            frame.stack[state.stackTop - 1] = new ConsString(lhsString, rhsString);
+            frame.stack[state.stackTop - 1] = ScriptRuntime.concat(lhs, rhs);
             --state.stackTop;
             return null;
         }
