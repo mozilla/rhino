@@ -174,7 +174,7 @@ public final class NativeIteratorConstructor extends BaseFunction {
                 Object iterator =
                         func.call(cx, scope, (Scriptable) stringObj, ScriptRuntime.emptyArgs);
                 if (iterator instanceof Scriptable) {
-                    return new IteratorWrapper((Scriptable) iterator, scope);
+                    return new IteratorWrapper(scope, (Scriptable) iterator);
                 }
             }
         }
@@ -193,12 +193,12 @@ public final class NativeIteratorConstructor extends BaseFunction {
         // 4. Handle the iterator method
         if (iteratorMethod == Scriptable.NOT_FOUND) {
             // No Symbol.iterator property at all - treat as iterator-like
-            return new IteratorWrapper(itemObj, scope);
+            return new IteratorWrapper(scope, itemObj);
         }
 
         if (iteratorMethod == null || Undefined.isUndefined(iteratorMethod)) {
             // Symbol.iterator is explicitly null or undefined - treat as iterator-like
-            return new IteratorWrapper(itemObj, scope);
+            return new IteratorWrapper(scope, itemObj);
         }
 
         // Symbol.iterator exists and is not null/undefined
@@ -234,6 +234,6 @@ public final class NativeIteratorConstructor extends BaseFunction {
         }
 
         // 8. Wrap the iterator to inherit from Iterator.prototype
-        return new IteratorWrapper(iteratorObj, scope);
+        return new IteratorWrapper(scope, iteratorObj);
     }
 }
