@@ -256,6 +256,8 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
+            // ES2025 Iterator - must be initialized after Symbol for Symbol properties to work
+            NativeIteratorConstructor.init(scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
