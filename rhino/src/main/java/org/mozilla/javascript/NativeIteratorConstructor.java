@@ -80,9 +80,11 @@ public final class NativeIteratorConstructor extends BaseFunction {
             prototype.sealObject();
         }
 
-        // Define Iterator as a global property
-        ScriptableObject.defineProperty(
-                scope, ITERATOR_NAME, constructor, ScriptableObject.DONTENUM);
+        // TODO: Currently we don't define Iterator as a global property because it conflicts
+        // with the legacy Iterator() function used for Java interop (NativeIterator).
+        // Once we have a migration path, we should enable this:
+        // ScriptableObject.defineProperty(
+        //         scope, ITERATOR_NAME, constructor, ScriptableObject.DONTENUM);
 
         // Store prototype for later use by iterator helpers and ES6Iterator
         scope.associateValue(ITERATOR_PROTOTYPE_TAG, prototype);
