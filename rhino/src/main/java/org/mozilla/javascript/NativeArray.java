@@ -77,6 +77,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         defineMethodOnConstructor(ctor, scope, "of", 0, NativeArray::js_of);
         defineMethodOnConstructor(ctor, scope, "from", 1, NativeArray::js_from);
+        defineMethodOnConstructor(ctor, scope, "fromAsync", 1, NativeArray::js_fromAsync);
         defineMethodOnConstructor(ctor, scope, "isArray", 1, NativeArray::js_isArrayMethod);
 
         // The following need to appear on the constructor for
@@ -731,6 +732,232 @@ public class NativeArray extends ScriptableObject implements List {
 
         setLengthProperty(cx, result, length);
         return result;
+    }
+
+    private static Object js_fromAsync(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // Get the Promise constructor
+        Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
+        if (!(promiseCtor instanceof Function)) {
+            throw ScriptRuntime.typeErrorById("msg.no.promise");
+        }
+        Function promiseFunc = (Function) promiseCtor;
+
+        // Create executor for the Promise
+        AsyncFromExecutor executor = new AsyncFromExecutor(thisObj, args);
+        return promiseFunc.construct(cx, scope, new Object[] {executor});
+    }
+
+    // Helper class to handle Promise executor logic
+    private static class AsyncFromExecutor extends BaseFunction {
+        private final Scriptable constructorThis;
+        private final Object[] fromAsyncArgs;
+
+        AsyncFromExecutor(Scriptable constructorThis, Object[] fromAsyncArgs) {
+            this.constructorThis = constructorThis;
+            this.fromAsyncArgs = fromAsyncArgs;
+        }
+
+        @Override
+        public Object call(
+                Context cx, Scriptable scope, Scriptable thisObj, Object[] executorArgs) {
+            if (executorArgs.length < 2) {
+                return Undefined.instance;
+            }
+            Function resolve = (Function) executorArgs[0];
+            Function reject = (Function) executorArgs[1];
+
+            try {
+                // Extract arguments
+                Object items = (fromAsyncArgs.length >= 1) ? fromAsyncArgs[0] : Undefined.instance;
+                Object mapArg = (fromAsyncArgs.length >= 2) ? fromAsyncArgs[1] : Undefined.instance;
+                Object mapperThisArg =
+                        (fromAsyncArgs.length >= 3)
+                                ? fromAsyncArgs[2]
+                                : Undefined.SCRIPTABLE_UNDEFINED;
+
+                // Validate and prepare mapper
+                Function mapFn = null;
+                Scriptable mapThisArg = null;
+                if (!Undefined.isUndefined(mapArg)) {
+                    if (!(mapArg instanceof Function)) {
+                        throw ScriptRuntime.typeErrorById("msg.map.function.not");
+                    }
+                    mapFn = (Function) mapArg;
+                    mapThisArg =
+                            ScriptRuntime.getApplyOrCallThis(cx, scope, mapperThisArg, 1, mapFn);
+                }
+
+                // Process the async iteration
+                processAsyncIteration(
+                        cx, scope, constructorThis, items, mapFn, mapThisArg, resolve, reject);
+
+            } catch (RhinoException e) {
+                reject.call(cx, scope, null, new Object[] {e});
+            }
+
+            return Undefined.instance;
+        }
+
+        @Override
+        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", "AsyncFromExecutor");
+        }
+    }
+
+    private static void processAsyncIteration(
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            Object items,
+            Function mapFn,
+            Scriptable thisArg,
+            Function resolve,
+            Function reject) {
+
+        try {
+            Scriptable itemsObj = ScriptRuntime.toObject(scope, items);
+
+            // Check for Symbol.iterator
+            Object iteratorProp = ScriptableObject.getProperty(itemsObj, SymbolKey.ITERATOR);
+
+            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
+                // Handle iterable case
+                Object iterator = ScriptRuntime.callIterator(itemsObj, cx, scope);
+                if (!Undefined.isUndefined(iterator)) {
+                    Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, 0, false);
+
+                    // Collect all values into promises
+                    List<Object> promises = new ArrayList<>();
+
+                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                        for (Object value : it) {
+                            // Convert each value to a promise
+                            Object promiseValue = promiseResolve(cx, scope, value);
+                            promises.add(promiseValue);
+                        }
+                    }
+
+                    // Use Promise.all to await all values
+                    awaitAllAndFinish(cx, scope, result, promises, mapFn, thisArg, resolve);
+                    return;
+                }
+            }
+
+            // Handle array-like case
+            long length = getLengthProperty(cx, itemsObj);
+            Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, length, true);
+
+            List<Object> promises = new ArrayList<>();
+            for (long k = 0; k < length; k++) {
+                Object value = getElem(cx, itemsObj, k);
+                Object promiseValue = promiseResolve(cx, scope, value);
+                promises.add(promiseValue);
+            }
+
+            // Use Promise.all to await all values
+            awaitAllAndFinish(cx, scope, result, promises, mapFn, thisArg, resolve);
+
+        } catch (RhinoException e) {
+            reject.call(cx, scope, null, new Object[] {e});
+        }
+    }
+
+    private static Object promiseResolve(Context cx, Scriptable scope, Object value) {
+        Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
+        if (promiseCtor instanceof Function) {
+            Function promise = (Function) promiseCtor;
+            Object resolveMethod =
+                    ScriptableObject.getProperty((Scriptable) promiseCtor, "resolve");
+            if (resolveMethod instanceof Function) {
+                return ((Function) resolveMethod)
+                        .call(cx, scope, (Scriptable) promiseCtor, new Object[] {value});
+            }
+        }
+        return value;
+    }
+
+    private static void awaitAllAndFinish(
+            Context cx,
+            Scriptable scope,
+            Scriptable result,
+            List<Object> promises,
+            Function mapFn,
+            Scriptable thisArg,
+            Function resolve) {
+
+        Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
+        if (!(promiseCtor instanceof Function)) {
+            return;
+        }
+
+        Object allMethod = ScriptableObject.getProperty((Scriptable) promiseCtor, "all");
+        if (!(allMethod instanceof Function)) {
+            return;
+        }
+
+        // Create array from promises
+        Scriptable promiseArray = cx.newArray(scope, promises.toArray());
+
+        // Call Promise.all
+        Object allPromise =
+                ((Function) allMethod)
+                        .call(cx, scope, (Scriptable) promiseCtor, new Object[] {promiseArray});
+
+        // Chain with then to process results
+        if (!(allPromise instanceof Scriptable)) {
+            return;
+        }
+
+        Object thenMethod = ScriptableObject.getProperty((Scriptable) allPromise, "then");
+        if (!(thenMethod instanceof Function)) {
+            return;
+        }
+
+        // Create handler for Promise.all resolution
+        AsyncFromHandler handler = new AsyncFromHandler(result, mapFn, thisArg, resolve);
+        ((Function) thenMethod).call(cx, scope, (Scriptable) allPromise, new Object[] {handler});
+    }
+
+    // Helper class to handle Promise.all resolution
+    private static class AsyncFromHandler extends BaseFunction {
+        private final Scriptable result;
+        private final Function mapFn;
+        private final Scriptable thisArg;
+        private final Function resolve;
+
+        AsyncFromHandler(Scriptable result, Function mapFn, Scriptable thisArg, Function resolve) {
+            this.result = result;
+            this.mapFn = mapFn;
+            this.thisArg = thisArg;
+            this.resolve = resolve;
+        }
+
+        @Override
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            if (args.length > 0 && args[0] instanceof Scriptable) {
+                Scriptable values = (Scriptable) args[0];
+                long len = getLengthProperty(cx, values);
+
+                for (long k = 0; k < len; k++) {
+                    Object value = getElem(cx, values, k);
+                    if (mapFn != null) {
+                        value =
+                                mapFn.call(
+                                        cx, scope, thisArg, new Object[] {value, Long.valueOf(k)});
+                    }
+                    ArrayLikeAbstractOperations.defineElem(cx, result, k, value);
+                }
+                setLengthProperty(cx, result, len);
+            }
+            resolve.call(cx, scope, null, new Object[] {result});
+            return Undefined.instance;
+        }
+
+        @Override
+        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", "AsyncFromHandler");
+        }
     }
 
     private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
