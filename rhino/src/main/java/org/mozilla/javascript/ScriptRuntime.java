@@ -2711,6 +2711,66 @@ public class ScriptRuntime {
         return Boolean.TRUE;
     }
 
+    /**
+     * Close an iterator when a for-of loop exits abnormally (break, throw, return). Implements the
+     * IteratorClose abstract operation from ES2015 spec section 7.4.6.
+     *
+     * <p>This method should be called when: - A break statement exits a for-of loop - An exception
+     * is thrown within a for-of loop - A return statement exits a for-of loop
+     *
+     * <p>It should NOT be called when: - The loop completes normally (iterator returns done: true)
+     * - The loop is a for-in loop (not using the iterator protocol)
+     *
+     * @param enumObj The enumeration object containing the iterator
+     * @param cx The current context
+     */
+    public static void iteratorClose(Object enumObj, Context cx) {
+        if (!(enumObj instanceof IdEnumeration)) {
+            return;
+        }
+
+        IdEnumeration x = (IdEnumeration) enumObj;
+
+        // Only applies to for-of loops (ES2015 iteration protocol)
+        if (x.enumType != ENUMERATE_VALUES_IN_ORDER || x.iterator == null) {
+            return;
+        }
+
+        // Perform the actual iterator close operation
+        performIteratorClose(x.iterator, cx);
+    }
+
+    /**
+     * Performs the actual IteratorClose operation on an iterator object. This is separated out to
+     * allow for future reuse and cleaner testing.
+     *
+     * @param iterator The iterator to close
+     * @param cx The current context
+     */
+    private static void performIteratorClose(Scriptable iterator, Context cx) {
+        // Step 1: Get the return method from the iterator
+        Object returnMethod = ScriptableObject.getProperty(iterator, ES6Iterator.RETURN_METHOD);
+
+        // Step 2: If return is undefined or null, return
+        if (returnMethod == Scriptable.NOT_FOUND
+                || returnMethod == null
+                || Undefined.isUndefined(returnMethod)) {
+            return;
+        }
+
+        // Step 3: If return exists, it must be callable
+        if (!(returnMethod instanceof Callable)) {
+            throw typeErrorById("msg.not.function", ES6Iterator.RETURN_METHOD);
+        }
+
+        // Step 4: Call iterator.return()
+        Callable returnFunc = (Callable) returnMethod;
+        Scriptable scope = iterator.getParentScope();
+
+        // Note: We ignore the result of the return() call per spec
+        returnFunc.call(cx, scope, iterator, emptyArgs);
+    }
+
     public static Object enumId(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration) enumObj;
         if (x.iterator != null) {
