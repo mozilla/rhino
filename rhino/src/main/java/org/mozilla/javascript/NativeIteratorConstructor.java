@@ -163,64 +163,77 @@ public final class NativeIteratorConstructor extends BaseFunction {
      * @return an iterator wrapping the item
      */
     private static Object iteratorFrom(Context cx, Scriptable scope, Object item) {
-        // 1. If item is undefined or null, throw TypeError
-        if (item == null || item == Undefined.instance) {
-            throw ScriptRuntime.typeErrorById("msg.no.properties", ScriptRuntime.toString(item));
-        }
-
-        // 2. Get the @@iterator method
-        Object itemObj = ScriptRuntime.toObject(cx, scope, item);
-        Object iteratorMethod =
-                ScriptableObject.getProperty((Scriptable) itemObj, SymbolKey.ITERATOR);
-
-        // 3. If iterator method exists
-        if (iteratorMethod != Scriptable.NOT_FOUND
-                && iteratorMethod != null
-                && !Undefined.isUndefined(iteratorMethod)) {
-            // Check if it's callable
-            if (!(iteratorMethod instanceof Callable)) {
-                throw ScriptRuntime.typeErrorById(
-                        "msg.isnt.function",
-                        SymbolKey.ITERATOR.toString(),
-                        ScriptRuntime.typeof(iteratorMethod));
-            }
-
-            // 4. Call the iterator method
-            Callable func = (Callable) iteratorMethod;
-            Object iterator = func.call(cx, scope, (Scriptable) itemObj, ScriptRuntime.emptyArgs);
-
-            // 5. Check if result is an object
-            if (!(iterator instanceof Scriptable)) {
-                throw ScriptRuntime.typeErrorById("msg.iterator.primitive");
-            }
-
-            Scriptable iteratorObj = (Scriptable) iterator;
-
-            // 6. Check if the iterator's prototype chain includes Iterator.prototype
-            Scriptable iteratorPrototype = getIteratorPrototype(scope);
-            if (iteratorPrototype != null) {
-                Scriptable proto = iteratorObj.getPrototype();
-                while (proto != null) {
-                    if (proto == iteratorPrototype) {
-                        // Already inherits from Iterator.prototype, return as-is
-                        return iterator;
-                    }
-                    proto = proto.getPrototype();
+        // 1. If item is a string primitive, handle it specially (strings are iterable)
+        if (item instanceof CharSequence) {
+            // Convert string to object to get its iterator
+            Object stringObj = ScriptRuntime.toObject(cx, scope, item);
+            Object iteratorMethod =
+                    ScriptableObject.getProperty((Scriptable) stringObj, SymbolKey.ITERATOR);
+            if (iteratorMethod instanceof Callable) {
+                Callable func = (Callable) iteratorMethod;
+                Object iterator =
+                        func.call(cx, scope, (Scriptable) stringObj, ScriptRuntime.emptyArgs);
+                if (iterator instanceof Scriptable) {
+                    return new IteratorWrapper((Scriptable) iterator, scope);
                 }
             }
-
-            // 7. Wrap the iterator to inherit from Iterator.prototype
-            return new IteratorWrapper(iteratorObj, scope);
         }
 
-        // 8. If no iterator method, check if it's already an iterator-like object with next method
-        Object nextMethod = ScriptableObject.getProperty((Scriptable) itemObj, "next");
-        if (nextMethod instanceof Callable) {
-            // Has a next method, wrap it
-            return new IteratorWrapper((Scriptable) itemObj, scope);
+        // 2. If item is any other primitive (including null/undefined), throw TypeError
+        if (!(item instanceof Scriptable)) {
+            // This handles null, undefined, numbers, booleans, symbols, bigints
+            throw ScriptRuntime.typeErrorById("msg.not.iterable", ScriptRuntime.toString(item));
         }
 
-        // 9. Otherwise, throw TypeError
-        throw ScriptRuntime.typeErrorById("msg.not.iterable", ScriptRuntime.toString(item));
+        Scriptable itemObj = (Scriptable) item;
+
+        // 3. Get the @@iterator method
+        Object iteratorMethod = ScriptableObject.getProperty(itemObj, SymbolKey.ITERATOR);
+
+        // 4. Handle the iterator method
+        if (iteratorMethod == Scriptable.NOT_FOUND) {
+            // No Symbol.iterator property at all - treat as iterator-like
+            return new IteratorWrapper(itemObj, scope);
+        }
+
+        if (iteratorMethod == null || Undefined.isUndefined(iteratorMethod)) {
+            // Symbol.iterator is explicitly null or undefined - treat as iterator-like
+            return new IteratorWrapper(itemObj, scope);
+        }
+
+        // Symbol.iterator exists and is not null/undefined
+        if (!(iteratorMethod instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function",
+                    SymbolKey.ITERATOR.toString(),
+                    ScriptRuntime.typeof(iteratorMethod));
+        }
+
+        // 5. Call the iterator method
+        Callable func = (Callable) iteratorMethod;
+        Object iterator = func.call(cx, scope, itemObj, ScriptRuntime.emptyArgs);
+
+        // 6. Check if result is an object
+        if (!(iterator instanceof Scriptable)) {
+            throw ScriptRuntime.typeErrorById("msg.iterator.primitive");
+        }
+
+        Scriptable iteratorObj = (Scriptable) iterator;
+
+        // 7. Check if the iterator already inherits from Iterator.prototype
+        Scriptable iteratorPrototype = getIteratorPrototype(scope);
+        if (iteratorPrototype != null) {
+            Scriptable proto = iteratorObj.getPrototype();
+            while (proto != null) {
+                if (proto == iteratorPrototype) {
+                    // Already inherits from Iterator.prototype, return as-is
+                    return iterator;
+                }
+                proto = proto.getPrototype();
+            }
+        }
+
+        // 8. Wrap the iterator to inherit from Iterator.prototype
+        return new IteratorWrapper(iteratorObj, scope);
     }
 }

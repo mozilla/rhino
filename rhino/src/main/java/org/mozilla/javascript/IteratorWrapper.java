@@ -135,17 +135,16 @@ public class IteratorWrapper extends ScriptableObject {
 
     /** Implements the return() method by delegating to the wrapped iterator if it has one. */
     public Object doReturn(Context cx, Scriptable scope, Object value) {
-        if (exhausted) {
-            return makeIteratorResult(cx, scope, true, value);
-        }
-
         // Check if wrapped iterator has return method
         Object returnMethod = ScriptableObject.getProperty(wrappedIterator, "return");
+
+        // Mark as exhausted first
+        exhausted = true;
+
         if (returnMethod == Scriptable.NOT_FOUND
                 || returnMethod == null
                 || Undefined.isUndefined(returnMethod)) {
-            // No return method - just mark as exhausted and return
-            exhausted = true;
+            // No return method - return completion
             return makeIteratorResult(cx, scope, true, value);
         }
 
@@ -154,9 +153,15 @@ public class IteratorWrapper extends ScriptableObject {
                     "msg.isnt.function", "return", ScriptRuntime.typeof(returnMethod));
         }
 
-        exhausted = true;
         Callable returnFunc = (Callable) returnMethod;
-        return returnFunc.call(cx, scope, wrappedIterator, new Object[] {value});
+        Object result = returnFunc.call(cx, scope, wrappedIterator, new Object[] {value});
+
+        // Validate the result is an object
+        if (!(result instanceof Scriptable)) {
+            throw ScriptRuntime.typeErrorById("msg.iterator.primitive");
+        }
+
+        return result;
     }
 
     /** Implements the throw() method by delegating to the wrapped iterator if it has one. */
