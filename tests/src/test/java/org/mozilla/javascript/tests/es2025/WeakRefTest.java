@@ -43,22 +43,19 @@ public class WeakRefTest {
     @Test
     public void weakRefRequiresNew() {
         Utils.assertWithAllModes_ES6(
-                true,
-                "try { WeakRef({}); false; } catch(e) { e instanceof TypeError; }");
+                true, "try { WeakRef({}); false; } catch(e) { e instanceof TypeError; }");
     }
 
     @Test
     public void weakRefRequiresObject() {
         Utils.assertWithAllModes_ES6(
-                true,
-                "try { new WeakRef(42); false; } catch(e) { e instanceof TypeError; }");
+                true, "try { new WeakRef(42); false; } catch(e) { e instanceof TypeError; }");
     }
 
     @Test
     public void weakRefNullTarget() {
         Utils.assertWithAllModes_ES6(
-                true,
-                "try { new WeakRef(null); false; } catch(e) { e instanceof TypeError; }");
+                true, "try { new WeakRef(null); false; } catch(e) { e instanceof TypeError; }");
     }
 
     @Test
@@ -71,15 +68,13 @@ public class WeakRefTest {
     @Test
     public void weakRefNoArguments() {
         Utils.assertWithAllModes_ES6(
-                true,
-                "try { new WeakRef(); false; } catch(e) { e instanceof TypeError; }");
+                true, "try { new WeakRef(); false; } catch(e) { e instanceof TypeError; }");
     }
 
     @Test
     public void weakRefAcceptsUnregisteredSymbol() {
         Utils.assertWithAllModes_ES6(
-                true,
-                "var s = Symbol('test'); var w = new WeakRef(s); w.deref() === s");
+                true, "var s = Symbol('test'); var w = new WeakRef(s); w.deref() === s");
     }
 
     @Test
