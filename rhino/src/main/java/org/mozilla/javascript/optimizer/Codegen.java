@@ -242,6 +242,76 @@ public class Codegen implements Evaluator {
         }
     }
 
+    static byte[] generateOptJSCode(
+            String mainClass,
+            String methodName,
+            String methodType,
+            String resumeName,
+            String resumeType,
+            boolean isFunction,
+            int index) {
+        String sourceFile = "";
+        ClassFileWriter cfw =
+                new ClassFileWriter(
+                        mainClass + "ojsc" + Integer.toString(index),
+                        isFunction
+                                ? "org.mozilla.javascript.optimizer.OptJSFunctionCode"
+                                : "org.mozilla.javascript.optimizer.OptJSScriptCode",
+                        sourceFile);
+        generateOptJSCodeCtor(cfw, isFunction);
+        generateOptJSCodeExecute(cfw, mainClass, methodName, methodType);
+        generateOptJSCodeResume(cfw, mainClass, resumeName, GENERATOR_METHOD_SIGNATURE);
+        return cfw.toByteArray();
+    }
+
+    private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
+        cfw.startMethod("<init>", "()V", ACC_PUBLIC);
+        cfw.addALoad(0);
+        cfw.addInvoke(
+                ByteCode.INVOKESPECIAL,
+                isFunction
+                        ? "org.mozilla.javascript.optimizer.OptJSFunctionCode"
+                        : "org.mozilla.javascript.optimizer.OptJSScriptCode",
+                "<init>",
+                "()V");
+        cfw.add(ByteCode.RETURN);
+        cfw.stopMethod(1);
+    }
+
+    private static void generateOptJSCodeExecute(
+            ClassFileWriter cfw, String mainClass, String methodName, String methodType) {
+        cfw.startMethod("execute", methodType, (short) (ACC_PUBLIC | ACC_FINAL));
+        cfw.addALoad(1);
+        cfw.addALoad(2);
+        cfw.addALoad(3);
+        cfw.addALoad(4);
+        cfw.addALoad(5);
+        cfw.addALoad(6);
+        cfw.addInvoke(ByteCode.INVOKESTATIC, mainClass, methodName, methodType);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 7);
+        // 5: this, cx, js function, new.target, scope, js this, args[]
+    }
+
+    private static void generateOptJSCodeResume(
+            ClassFileWriter cfw, String mainClass, String methodName, String methodType) {
+        cfw.startMethod("resume", methodType, (short) (ACC_PUBLIC | ACC_FINAL));
+        if (methodName == null) {
+            cfw.add(ByteCode.ACONST_NULL);
+        } else {
+            cfw.addALoad(1);
+            cfw.addALoad(2);
+            cfw.addALoad(3);
+            cfw.addALoad(4);
+            cfw.addILoad(5);
+            cfw.addALoad(6);
+            cfw.addInvoke(ByteCode.INVOKESTATIC, mainClass, methodName, methodType);
+        }
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 7);
+        // 5: this, cx, js function, new.target, scope, js this, args[]
+    }
+
     private byte[] generateCode(String rawSource) {
         boolean hasScript = (scriptOrFnNodes[0].getType() == Token.SCRIPT);
         boolean hasFunctions = (scriptOrFnNodes.length > 1 || !hasScript);
@@ -1344,6 +1414,15 @@ public class Codegen implements Evaluator {
 
     static final String FUNCTION_CONSTRUCTOR_SIGNATURE =
             "(Lorg/mozilla/javascript/Scriptable;" + "Lorg/mozilla/javascript/Context;I)V";
+
+    static final String GENERATOR_METHOD_SIGNATURE =
+            "("
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/JSFunction;"
+                    + "Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "I"
+                    + "Ljava/lang/Object;)Ljava/lang/Object;";
 
     private static final Object globalLock = new Object();
     private static int globalSerialClassCounter;

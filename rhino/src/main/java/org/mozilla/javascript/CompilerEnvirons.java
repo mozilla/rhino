@@ -247,6 +247,22 @@ public class CompilerEnvirons {
         return allowSuper;
     }
 
+    public void setInEval(boolean inEval) {
+        this.inEval = inEval;
+    }
+
+    public boolean isInEval() {
+        return inEval;
+    }
+
+    public void setHomeObject(Scriptable homeObject) {
+        this.homeObjecgt = homeObject;
+    }
+
+    public Scriptable homeObject() {
+        return homeObjecgt;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -285,4 +301,6 @@ public class CompilerEnvirons {
     private boolean allowSharpComments;
     private boolean allowSuper;
     Set<String> activationNames;
+    private boolean inEval;
+    private Scriptable homeObjecgt;
 }
