@@ -141,6 +141,7 @@ public class Test262SuiteTest {
     @BeforeAll
     public static void setUpClass() {
         CTX_FACTORY.setLanguageVersion(Context.VERSION_ES6);
+        CTX_FACTORY.setEs2025Iterator(true);
         TestUtils.setGlobalContextFactory(CTX_FACTORY);
     }
 

@@ -17,6 +17,7 @@ public class ShellContextFactory extends ContextFactory {
     private boolean interpretedMode;
     private boolean generatingDebug;
     private boolean allowReservedKeywords = true;
+    private boolean es2025Iterator = false;
     private ErrorReporter errorReporter;
     private String characterEncoding;
 
@@ -36,6 +37,9 @@ public class ShellContextFactory extends ContextFactory {
 
             case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
                 return generatingDebug;
+
+            case Context.FEATURE_ES2025_ITERATOR:
+                return es2025Iterator;
         }
         return super.hasFeature(cx, featureIndex);
     }
@@ -91,5 +95,9 @@ public class ShellContextFactory extends ContextFactory {
 
     public void setAllowReservedKeywords(boolean allowReservedKeywords) {
         this.allowReservedKeywords = allowReservedKeywords;
+    }
+
+    public void setEs2025Iterator(boolean es2025Iterator) {
+        this.es2025Iterator = es2025Iterator;
     }
 }

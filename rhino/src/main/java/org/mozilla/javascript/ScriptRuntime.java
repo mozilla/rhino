@@ -207,7 +207,21 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(cx, scope, sealed);
 
-        NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
+        // Initialize Iterator and generators based on feature flag
+        if (cx.hasFeature(Context.FEATURE_ES2025_ITERATOR)) {
+            // ES2025 Iterator mode - initialize generators and StopIteration separately
+            if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                ES6Generator.init(scope, sealed);
+            } else {
+                NativeGenerator.init(scope, sealed);
+            }
+            // Initialize StopIteration for generator compatibility
+            NativeIterator.initStopIteration(scope, sealed);
+        } else {
+            // Default: Use legacy Iterator for Java interop
+            // This also initializes generators and StopIteration
+            NativeIterator.init(cx, scope, sealed);
+        }
 
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
@@ -256,6 +270,14 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
+
+            // ES2025 Iterator - initialize if feature is enabled
+            if (cx.hasFeature(Context.FEATURE_ES2025_ITERATOR)) {
+                NativeIteratorConstructor.init(scope, sealed);
+            } else {
+                // Still initialize Iterator.prototype for future use, but don't expose globally
+                NativeIteratorConstructor.initPrototypeOnly(scope, sealed);
+            }
         }
 
         if (scope instanceof TopLevel) {

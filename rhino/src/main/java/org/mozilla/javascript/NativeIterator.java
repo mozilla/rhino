@@ -31,6 +31,14 @@ public final class NativeIterator extends IdScriptableObject {
         }
 
         // StopIteration
+        initStopIteration(scope, sealed);
+    }
+
+    /**
+     * Initialize only StopIteration object. This is used when ES2025 Iterator is enabled but we
+     * still need StopIteration for generator compatibility.
+     */
+    static void initStopIteration(ScriptableObject scope, boolean sealed) {
         NativeObject obj = new StopIteration();
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);

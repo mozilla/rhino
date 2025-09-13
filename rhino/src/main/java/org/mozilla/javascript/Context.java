@@ -385,6 +385,15 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_INTL_402 = 22;
 
+    /**
+     * Control which Iterator implementation to use - legacy or ES2025. When enabled, the ES2025
+     * Iterator constructor is used (not callable/constructable, with static methods like
+     * Iterator.from()). When disabled (default), the legacy Iterator for Java interop is used.
+     *
+     * @since 1.7.16
+     */
+    public static final int FEATURE_ES2025_ITERATOR = 25;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
