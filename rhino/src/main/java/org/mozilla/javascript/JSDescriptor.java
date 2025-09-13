@@ -235,7 +235,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
 
     @Override
     public int[] getLineNumbers() {
-        return null;
+        return Interpreter.getLineNumbers(this);
     }
 
     public boolean requiresActivationFrame() {

@@ -403,7 +403,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     }
                 } else if (to.isInterface()) {
 
-                    if (fromObj instanceof NativeFunction) {
+                    if (fromObj instanceof JSFunction) {
                         // See comments in createInterfaceAdapter
                         return 1;
                     }

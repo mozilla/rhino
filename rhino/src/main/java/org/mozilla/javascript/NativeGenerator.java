@@ -46,7 +46,7 @@ public final class NativeGenerator extends IdScriptableObject {
     /** Only for constructing the prototype object. */
     private NativeGenerator() {}
 
-    public NativeGenerator(Scriptable scope, NativeFunction function, Object savedState) {
+    public NativeGenerator(Scriptable scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
@@ -209,7 +209,7 @@ public final class NativeGenerator extends IdScriptableObject {
             Id___iterator__ = 5,
             MAX_PROTOTYPE_ID = 5;
 
-    private NativeFunction function;
+    private JSFunction function;
     private Object savedState;
     private String lineSource;
     private int lineNumber;

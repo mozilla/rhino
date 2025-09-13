@@ -29,7 +29,7 @@ final class Arguments extends IdScriptableObject {
         args = activation.originalArgs;
         lengthObj = Integer.valueOf(args.length);
 
-        NativeFunction f = activation.function;
+        JSFunction f = activation.function;
         calleeObj = f;
 
         int version = f.getLanguageVersion();
@@ -119,7 +119,7 @@ final class Arguments extends IdScriptableObject {
         if (cx.isStrictMode()) {
             return false;
         }
-        NativeFunction f = activation.function;
+        JSFunction f = activation.function;
 
         // Check if default arguments are present
         if (f == null || f.hasDefaultParameters()) {

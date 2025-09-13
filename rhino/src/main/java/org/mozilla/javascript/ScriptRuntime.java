@@ -3437,7 +3437,7 @@ public class ScriptRuntime {
             boolean missingCallThis =
                     callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
             boolean isFunctionStrict =
-                    !(target instanceof NativeFunction) || ((NativeFunction) target).isStrict();
+                    !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
             if (missingCallThis && !isFunctionStrict) {
                 callThis = getTopCallScope(cx);
             }
@@ -4903,49 +4903,6 @@ public class ScriptRuntime {
         }
     }
 
-    public static void initScript(
-            NativeFunction funObj,
-            Scriptable thisObj,
-            Context cx,
-            Scriptable scope,
-            boolean evalScript) {
-        if (cx.topCallScope == null) throw new IllegalStateException();
-
-        int varCount = funObj.getParamAndVarCount();
-        if (varCount != 0) {
-
-            Scriptable varScope = scope;
-            // Never define any variables from var statements inside with
-            // object. See bug 38590.
-            while (varScope instanceof NativeWith) {
-                varScope = varScope.getParentScope();
-            }
-
-            for (int i = varCount; i-- != 0; ) {
-                String name = funObj.getParamOrVarName(i);
-                boolean isConst = funObj.getParamOrVarConst(i);
-                // Don't overwrite existing def if already defined in object
-                // or prototypes of object.
-                if (!ScriptableObject.hasProperty(scope, name)) {
-                    if (isConst) {
-                        ScriptableObject.defineConstProperty(varScope, name);
-                    } else if (!evalScript) {
-                        if (!(funObj instanceof JSFunction)
-                                || ((JSFunction) funObj).hasFunctionNamed(name)) {
-                            // Global var definitions are supposed to be DONTDELETE
-                            ScriptableObject.defineProperty(
-                                    varScope, name, Undefined.instance, ScriptableObject.PERMANENT);
-                        }
-                    } else {
-                        varScope.put(name, varScope, Undefined.instance);
-                    }
-                } else {
-                    ScriptableObject.redefineProperty(scope, name, isConst);
-                }
-            }
-        }
-    }
-
     /**
      * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
      *     boolean, boolean)} instead
@@ -5356,7 +5313,7 @@ public class ScriptRuntime {
     }
 
     public static void initFunction(
-            Context cx, Scriptable scope, NativeFunction function, int type, boolean fromEvalCode) {
+            Context cx, Scriptable scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
             String name = function.getFunctionName();
             if (name != null && name.length() != 0) {
@@ -5502,8 +5459,8 @@ public class ScriptRuntime {
                                 && NativeObject.PROTO_PROPERTY.equals(stringId)) {
                             if (value == null) {
                                 object.setPrototype(null);
-                            } else if (value instanceof NativeFunction) {
-                                if (((NativeFunction) value).isShorthand()) {
+                            } else if (value instanceof JSFunction) {
+                                if (((JSFunction) value).isShorthand()) {
                                     object.put(stringId, object, value);
                                 } else {
                                     NativeObject.js_protoSetter(object, value);
@@ -5832,7 +5789,7 @@ public class ScriptRuntime {
     public static RuntimeException notFunctionError(Object obj, Object value, String propertyName) {
         // Use obj and value for better error reporting
         String objString = toString(obj);
-        if (obj instanceof NativeFunction) {
+        if (obj instanceof JSFunction) {
             // Omit function body in string representations of functions
             int paren = objString.indexOf(')');
             int curly = objString.indexOf('{', paren);
