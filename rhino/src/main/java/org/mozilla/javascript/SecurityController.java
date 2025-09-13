@@ -149,6 +149,16 @@ public abstract class SecurityController {
                 securityDomain);
     }
 
+    public Object callWithDomain(
+            Object securityDomain,
+            Context cx,
+            final Script script,
+            Scriptable scope,
+            final Scriptable thisObj,
+            final Object[] args) {
+        return execWithDomain(cx, scope, script, securityDomain);
+    }
+
     /**
      * @deprecated The application should not override this method and instead override {@link
      *     #callWithDomain(Object securityDomain, Context cx, Callable callable, Scriptable scope,

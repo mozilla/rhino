@@ -3526,6 +3526,8 @@ public class ScriptRuntime {
             throw new JavaScriptException("Interpreter not present", filename, lineNumber);
         }
 
+        var homeObject = scope instanceof NativeCall ? ((NativeCall) scope).getHomeObject() : null;
+
         // Compile with explicit interpreter instance to force interpreter
         // mode.
         Consumer<CompilerEnvirons> compilerEnvironsProcessor =
@@ -3540,7 +3542,10 @@ public class ScriptRuntime {
                             scope instanceof NativeCall
                                     && ((NativeCall) scope).getHomeObject() != null;
                     compilerEnvs.setAllowSuper(isInsideMethod);
+                    compilerEnvs.setInEval(true);
+                    compilerEnvs.setHomeObject(homeObject);
                 };
+
         Script script =
                 cx.compileString(
                         x.toString(),
@@ -3550,13 +3555,11 @@ public class ScriptRuntime {
                         1,
                         null,
                         compilerEnvironsProcessor);
-        evaluator.setEvalScriptFlag(script);
-        Callable c = (Callable) script;
         Scriptable thisObject =
                 thisArg == Undefined.instance
                         ? Undefined.SCRIPTABLE_UNDEFINED
                         : (Scriptable) thisArg;
-        return c.call(cx, scope, thisObject, ScriptRuntime.emptyArgs);
+        return script.exec(cx, scope, thisObject);
     }
 
     /** The typeof operator */
@@ -4857,6 +4860,50 @@ public class ScriptRuntime {
     }
 
     public static void initScript(
+            ScriptOrFn execObj,
+            Scriptable thisObj,
+            Context cx,
+            Scriptable scope,
+            boolean evalScript) {
+        if (cx.topCallScope == null) throw new IllegalStateException();
+
+        var desc = execObj.getDescriptor();
+
+        int varCount = desc.getParamAndVarCount();
+        if (varCount != 0) {
+
+            Scriptable varScope = scope;
+            // Never define any variables from var statements inside with
+            // object. See bug 38590.
+            while (varScope instanceof NativeWith) {
+                varScope = varScope.getParentScope();
+            }
+
+            for (int i = varCount; i-- != 0; ) {
+                String name = desc.getParamOrVarName(i);
+                boolean isConst = desc.getParamOrVarConst(i);
+                // Don't overwrite existing def if already defined in object
+                // or prototypes of object.
+                if (!ScriptableObject.hasProperty(scope, name)) {
+                    if (isConst) {
+                        ScriptableObject.defineConstProperty(varScope, name);
+                    } else if (!evalScript) {
+                        if (desc.hasFunctionNamed(name)) {
+                            // Global var definitions are supposed to be DONTDELETE
+                            ScriptableObject.defineProperty(
+                                    varScope, name, Undefined.instance, ScriptableObject.PERMANENT);
+                        }
+                    } else {
+                        varScope.put(name, varScope, Undefined.instance);
+                    }
+                } else {
+                    ScriptableObject.redefineProperty(scope, name, isConst);
+                }
+            }
+        }
+    }
+
+    public static void initScript(
             NativeFunction funObj,
             Scriptable thisObj,
             Context cx,
@@ -4883,8 +4930,8 @@ public class ScriptRuntime {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(varScope, name);
                     } else if (!evalScript) {
-                        if (!(funObj instanceof InterpretedFunction)
-                                || ((InterpretedFunction) funObj).hasFunctionNamed(name)) {
+                        if (!(funObj instanceof JSFunction)
+                                || ((JSFunction) funObj).hasFunctionNamed(name)) {
                             // Global var definitions are supposed to be DONTDELETE
                             ScriptableObject.defineProperty(
                                     varScope, name, Undefined.instance, ScriptableObject.PERMANENT);

@@ -145,6 +145,9 @@ final class EqualObjectGraphs {
         } else if (o1 instanceof NativeJavaTopPackage) {
             // stateless objects, must check before Scriptable
             return o2 instanceof NativeJavaTopPackage;
+        } else if (o1 instanceof ScriptOrFn) {
+            return o2 instanceof ScriptOrFn
+                    && equalJSFunctions((ScriptOrFn<?>) o1, (ScriptOrFn<?>) o2);
         } else if (o1 instanceof Scriptable) {
             return o2 instanceof Scriptable && equalScriptables((Scriptable) o1, (Scriptable) o2);
         } else if (o1 instanceof SymbolKey) {
@@ -199,10 +202,6 @@ final class EqualObjectGraphs {
             return s2 instanceof IdFunctionObject
                     && IdFunctionObject.equalObjectGraphs(
                             (IdFunctionObject) s1, (IdFunctionObject) s2, this);
-        } else if (s1 instanceof InterpretedFunction) {
-            return s2 instanceof InterpretedFunction
-                    && equalInterpretedFunctions(
-                            (InterpretedFunction) s1, (InterpretedFunction) s2);
         } else if (s1 instanceof ArrowFunction) {
             return s2 instanceof ArrowFunction
                     && ArrowFunction.equalObjectGraphs(
@@ -285,9 +284,8 @@ final class EqualObjectGraphs {
         return a;
     }
 
-    private static boolean equalInterpretedFunctions(
-            final InterpretedFunction f1, final InterpretedFunction f2) {
-        return Objects.equals(f1.getRawSource(), f2.getRawSource());
+    private static boolean equalJSFunctions(final ScriptOrFn<?> f1, final ScriptOrFn<?> f2) {
+        return Objects.equals(f1.getDescriptor().getRawSource(), f2.getDescriptor().getRawSource());
     }
 
     // Sort IDs deterministically

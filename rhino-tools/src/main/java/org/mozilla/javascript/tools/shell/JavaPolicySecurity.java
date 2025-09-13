@@ -22,6 +22,7 @@ import java.util.Enumeration;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
 public class JavaPolicySecurity extends SecurityProxy {
@@ -205,6 +206,21 @@ public class JavaPolicySecurity extends SecurityProxy {
             final Scriptable scope,
             final Scriptable thisObj,
             final Object[] args) {
+        return doAction(securityDomain, () -> callable.call(cx, scope, thisObj, args));
+    }
+
+    @Override
+    public Object callWithDomain(
+            Object securityDomain,
+            final Context cx,
+            final Script script,
+            final Scriptable scope,
+            final Scriptable thisObj,
+            final Object[] args) {
+        return doAction(securityDomain, () -> script.exec(cx, scope, thisObj));
+    }
+
+    private Object doAction(Object securityDomain, PrivilegedAction<Object> action) {
         ProtectionDomain staticDomain = (ProtectionDomain) securityDomain;
         // There is no direct way in Java to intersect permissions according
         // stack context with additional domain.
@@ -224,14 +240,6 @@ public class JavaPolicySecurity extends SecurityProxy {
         ProtectionDomain dynamicDomain = getDynamicDomain(staticDomain);
         ProtectionDomain[] tmp = {dynamicDomain};
         AccessControlContext restricted = new AccessControlContext(tmp);
-
-        PrivilegedAction<Object> action =
-                new PrivilegedAction<Object>() {
-                    @Override
-                    public Object run() {
-                        return callable.call(cx, scope, thisObj, args);
-                    }
-                };
 
         return AccessController.doPrivileged(action, restricted);
     }
