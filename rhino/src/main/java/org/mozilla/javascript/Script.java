@@ -43,4 +43,8 @@ public interface Script {
      * @see org.mozilla.javascript.Context#initStandardObjects()
      */
     Object exec(Context cx, Scriptable scope, Scriptable thisObj);
+
+    default JSDescriptor<JSScript> getDescriptor() {
+        return null;
+    }
 }
