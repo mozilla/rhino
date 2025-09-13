@@ -27,7 +27,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final JSCode<T> code;
     private final JSCode<T> constructor;
     private final JSDescriptor<?> parent;
-    private List<JSDescriptor<JSFunction>> nestedFunctions;
+    public List<JSDescriptor<JSFunction>> nestedFunctions;
     private final String[] paramAndVarNames;
     private final boolean[] paramIsConst;
     private final int flags;
@@ -302,6 +302,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public Builder() {}
 
         private Builder(Builder<?> parent) {
+            this.parent = parent;
             this.languageVersion = parent.languageVersion;
             this.rawSource = parent.rawSource;
             this.sourceFile = parent.sourceFile;
