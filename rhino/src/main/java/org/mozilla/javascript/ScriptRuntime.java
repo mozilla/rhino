@@ -4947,128 +4947,90 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args) {
+            JSFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false, null);
+                funObj, Context.getCurrentContext(), scope, args, false, false);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
+            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj,
-                Context.getCurrentContext(),
-                scope,
-                args,
-                false,
-                isStrict,
-                false,
-                true,
-                null);
+                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, true);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest,
-            Scriptable homeObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, false, isStrict, argsHasRest, true, homeObject);
+            boolean argsHasRest) {
+        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
     }
 
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject,
-            Scriptable homeObject) {
+            boolean requiresArgumentObject) {
         return new NativeCall(
-                funObj,
-                cx,
-                scope,
-                args,
-                false,
-                isStrict,
-                argsHasRest,
-                requiresArgumentObject,
-                homeObject);
+                funObj, cx, scope, args, false, isStrict, argsHasRest, requiresArgumentObject);
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
+            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj,
-                Context.getCurrentContext(),
-                scope,
-                args,
-                true,
-                isStrict,
-                false,
-                true,
-                null);
+                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, true);
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest,
-            Scriptable homeObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, true, homeObject);
+            boolean argsHasRest) {
+        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
     }
 
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject,
-            Scriptable homeObject) {
+            boolean requiresArgumentObject) {
         return new NativeCall(
-                funObj,
-                cx,
-                scope,
-                args,
-                true,
-                isStrict,
-                argsHasRest,
-                requiresArgumentObject,
-                homeObject);
+                funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {

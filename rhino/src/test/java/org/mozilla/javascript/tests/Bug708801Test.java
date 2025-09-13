@@ -22,6 +22,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.IRFactory;
+import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ast.AstRoot;
@@ -29,6 +30,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.optimizer.Codegen;
 import org.mozilla.javascript.optimizer.OptFunctionNode;
+import org.mozilla.javascript.optimizer.OptJSCode;
 
 /**
  * @author André Bargull
@@ -68,9 +70,17 @@ public class Bug708801Test {
             ScriptNode tree = irf.transformTree(ast);
 
             Codegen codegen = new Codegen();
+            JSDescriptor.Builder builder = new JSDescriptor.Builder();
+            OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(scriptClassName);
             codegen.setMainMethodClass(mainMethodClassName);
             codegen.compileToClassFile(
-                    compilerEnv, scriptClassName, tree, tree.getRawSource(), false);
+                    compilerEnv,
+                    builder,
+                    builderEnv,
+                    scriptClassName,
+                    tree,
+                    tree.getRawSource(),
+                    false);
 
             return tree;
         }

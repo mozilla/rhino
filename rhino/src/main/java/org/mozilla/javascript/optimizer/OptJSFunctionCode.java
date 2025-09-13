@@ -40,16 +40,9 @@ public abstract class OptJSFunctionCode extends OptJSCode<JSFunction> {
                 return built;
             }
             try {
-                var subClassName = env.compiledClass.getName() + "ojsc" + Integer.toString(index);
-                var subClassBytes =
-                        Codegen.generateOptJSCode(
-                                env.compiledClass.getName(),
-                                methodName,
-                                methodType,
-                                resumeName,
-                                resumeType,
-                                true,
-                                index);
+                var subClassName = getClassName();
+                var subClassBytes = getClassBytes();
+
                 var loader = (GeneratedClassLoader) env.compiledClass.getClassLoader();
                 Class<?> subClass = loader.defineClass(subClassName, subClassBytes);
                 loader.linkClass(subClass);
@@ -60,6 +53,23 @@ public abstract class OptJSFunctionCode extends OptJSCode<JSFunction> {
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        String getClassName() {
+            return env.className + "ojsc" + Integer.toString(index);
+        }
+
+        @Override
+        byte[] getClassBytes() {
+            return Codegen.generateOptJSCode(
+                    env.className,
+                    methodName,
+                    methodType,
+                    resumeName,
+                    resumeType,
+                    true,
+                    index); // TODO Auto-generated method stub
         }
     }
 }

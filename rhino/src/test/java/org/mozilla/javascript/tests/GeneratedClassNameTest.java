@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.Script;
 
 /**
@@ -37,7 +38,7 @@ public class GeneratedClassNameTest {
                         .call(cx -> cx.compileString("var f = 1", scriptName, 1, null));
 
         // remove serial number
-        String name = script.getClass().getSimpleName();
+        String name = ((JSScript) script).getDescriptor().getCode().getClass().getSimpleName();
         assertEquals(expectedName, name.substring(0, name.lastIndexOf('_')));
     }
 }
