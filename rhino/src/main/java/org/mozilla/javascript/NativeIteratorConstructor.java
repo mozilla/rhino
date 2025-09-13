@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The global Iterator constructor object as defined in ES2025.
  *
@@ -25,12 +28,29 @@ public final class NativeIteratorConstructor extends BaseFunction {
     }
 
     /**
-     * Initialize the Iterator constructor in the given scope.
+     * Initialize the Iterator constructor in the given scope and expose it globally.
      *
      * @param scope the scope to initialize in
      * @param sealed whether to seal the objects
      */
     public static void init(ScriptableObject scope, boolean sealed) {
+        initInternal(scope, sealed, true);
+    }
+
+    /**
+     * Initialize only the Iterator.prototype without exposing Iterator globally. This is used when
+     * the legacy Iterator is active but we still want Iterator.prototype available for iterator
+     * helpers.
+     *
+     * @param scope the scope to initialize in
+     * @param sealed whether to seal the objects
+     */
+    public static void initPrototypeOnly(ScriptableObject scope, boolean sealed) {
+        initInternal(scope, sealed, false);
+    }
+
+    private static void initInternal(
+            ScriptableObject scope, boolean sealed, boolean exposeGlobally) {
         Context cx = Context.getContext();
         NativeIteratorConstructor constructor = new NativeIteratorConstructor();
         constructor.setParentScope(scope);
@@ -64,6 +84,68 @@ public final class NativeIteratorConstructor extends BaseFunction {
                 };
         prototype.defineProperty(SymbolKey.ITERATOR, iteratorMethod, ScriptableObject.DONTENUM);
 
+        // Define Iterator.prototype.toArray method
+        BaseFunction toArrayMethod =
+                new BaseFunction() {
+                    @Override
+                    public Object call(
+                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                        // 1. Let O be the this value
+                        // 2. Throw a TypeError if O is not an Object
+                        if (thisObj == null) {
+                            throw ScriptRuntime.typeErrorById(
+                                    "msg.object.required", ScriptRuntime.typeof(thisObj));
+                        }
+
+                        // 3. Get the iterator using GetIteratorDirect(O)
+                        // For ES2025, we expect thisObj to already be an iterator
+                        Scriptable iterator = (Scriptable) thisObj;
+
+                        // 4. Create an empty list called items
+                        List<Object> items = new ArrayList<>();
+
+                        // 5. Repeat
+                        Object nextMethod = ScriptableObject.getProperty(iterator, "next");
+                        if (!(nextMethod instanceof Callable)) {
+                            throw ScriptRuntime.typeErrorById("msg.not.iterable", thisObj);
+                        }
+
+                        while (true) {
+                            // Get the next value using IteratorStepValue()
+                            Object iterResult =
+                                    ((Callable) nextMethod)
+                                            .call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+
+                            if (!(iterResult instanceof Scriptable)) {
+                                throw ScriptRuntime.typeErrorById("msg.not.object", iterResult);
+                            }
+
+                            Object done =
+                                    ScriptableObject.getProperty((Scriptable) iterResult, "done");
+                            if (ScriptRuntime.toBoolean(done)) {
+                                // If value is "done", return a new array created from items
+                                return cx.newArray(scope, items.toArray());
+                            }
+
+                            Object value =
+                                    ScriptableObject.getProperty((Scriptable) iterResult, "value");
+                            // Append the value to items
+                            items.add(value);
+                        }
+                    }
+
+                    @Override
+                    public String getFunctionName() {
+                        return "toArray";
+                    }
+
+                    @Override
+                    public int getLength() {
+                        return 0;
+                    }
+                };
+        prototype.defineProperty("toArray", toArrayMethod, ScriptableObject.DONTENUM);
+
         // Set up constructor properties per ES2025 spec
         int attrs =
                 ScriptableObject.DONTENUM | ScriptableObject.READONLY | ScriptableObject.PERMANENT;
@@ -75,18 +157,40 @@ public final class NativeIteratorConstructor extends BaseFunction {
                 Integer.valueOf(0),
                 ScriptableObject.DONTENUM | ScriptableObject.READONLY);
 
+        // Define Iterator.from static method
+        BaseFunction fromMethod =
+                new BaseFunction() {
+                    @Override
+                    public Object call(
+                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                        return iteratorFrom(
+                                cx, scope, args.length > 0 ? args[0] : Undefined.instance);
+                    }
+
+                    @Override
+                    public String getFunctionName() {
+                        return "from";
+                    }
+
+                    @Override
+                    public int getLength() {
+                        return 1;
+                    }
+                };
+        constructor.defineProperty("from", fromMethod, ScriptableObject.DONTENUM);
+
         if (sealed) {
             constructor.sealObject();
             prototype.sealObject();
         }
 
-        // TODO: Currently we don't define Iterator as a global property because it conflicts
-        // with the legacy Iterator() function used for Java interop (NativeIterator).
-        // Once we have a migration path, we should enable this:
-        // ScriptableObject.defineProperty(
-        //         scope, ITERATOR_NAME, constructor, ScriptableObject.DONTENUM);
+        // Conditionally expose Iterator globally based on parameter
+        if (exposeGlobally) {
+            ScriptableObject.defineProperty(
+                    scope, ITERATOR_NAME, constructor, ScriptableObject.DONTENUM);
+        }
 
-        // Store prototype for later use by iterator helpers and ES6Iterator
+        // Always store prototype for later use by iterator helpers and ES6Iterator
         scope.associateValue(ITERATOR_PROTOTYPE_TAG, prototype);
     }
 
@@ -130,5 +234,94 @@ public final class NativeIteratorConstructor extends BaseFunction {
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         Object proto = ScriptableObject.getTopScopeValue(top, ITERATOR_PROTOTYPE_TAG);
         return proto instanceof Scriptable ? (Scriptable) proto : null;
+    }
+
+    /**
+     * Implementation of Iterator.from(item) as defined in ES2025.
+     *
+     * @param cx the context
+     * @param scope the scope
+     * @param item the item to convert to an iterator
+     * @return an iterator wrapping the item
+     */
+    private static Object iteratorFrom(Context cx, Scriptable scope, Object item) {
+        // Handle string primitives specially (they are iterable)
+        if (item instanceof CharSequence) {
+            return wrapStringIterator(cx, scope, item);
+        }
+
+        // Reject other primitives (null, undefined, numbers, booleans, symbols, bigints)
+        if (!(item instanceof Scriptable)) {
+            throw ScriptRuntime.typeErrorById("msg.not.iterable", ScriptRuntime.toString(item));
+        }
+
+        Scriptable itemObj = (Scriptable) item;
+        Object iteratorMethod = ScriptableObject.getProperty(itemObj, SymbolKey.ITERATOR);
+
+        // If no Symbol.iterator or it's null/undefined, treat as iterator-like object
+        if (iteratorMethod == Scriptable.NOT_FOUND
+                || iteratorMethod == null
+                || Undefined.isUndefined(iteratorMethod)) {
+            return new IteratorWrapper(itemObj, scope);
+        }
+
+        // Symbol.iterator exists - must be callable
+        if (!(iteratorMethod instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.isnt.function",
+                    SymbolKey.ITERATOR.toString(),
+                    ScriptRuntime.typeof(iteratorMethod));
+        }
+
+        // Call the iterator method
+        Object iterator =
+                ((Callable) iteratorMethod).call(cx, scope, itemObj, ScriptRuntime.emptyArgs);
+
+        // Result must be an object
+        if (!(iterator instanceof Scriptable)) {
+            throw ScriptRuntime.typeErrorById("msg.iterator.primitive");
+        }
+
+        // Check if already inherits from Iterator.prototype
+        if (isIteratorPrototypeInstance((Scriptable) iterator, scope)) {
+            return iterator;
+        }
+
+        // Wrap the iterator to inherit from Iterator.prototype
+        return new IteratorWrapper((Scriptable) iterator, scope);
+    }
+
+    /** Wraps a string primitive's iterator. */
+    private static Object wrapStringIterator(Context cx, Scriptable scope, Object string) {
+        Object stringObj = ScriptRuntime.toObject(cx, scope, string);
+        Object iteratorMethod =
+                ScriptableObject.getProperty((Scriptable) stringObj, SymbolKey.ITERATOR);
+
+        if (iteratorMethod instanceof Callable) {
+            Object iterator =
+                    ((Callable) iteratorMethod)
+                            .call(cx, scope, (Scriptable) stringObj, ScriptRuntime.emptyArgs);
+            if (iterator instanceof Scriptable) {
+                return new IteratorWrapper((Scriptable) iterator, scope);
+            }
+        }
+        return Undefined.instance;
+    }
+
+    /** Checks if an object inherits from Iterator.prototype. */
+    private static boolean isIteratorPrototypeInstance(Scriptable obj, Scriptable scope) {
+        Scriptable iteratorPrototype = getIteratorPrototype(scope);
+        if (iteratorPrototype == null) {
+            return false;
+        }
+
+        Scriptable proto = obj.getPrototype();
+        while (proto != null) {
+            if (proto == iteratorPrototype) {
+                return true;
+            }
+            proto = proto.getPrototype();
+        }
+        return false;
     }
 }
