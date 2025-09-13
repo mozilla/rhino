@@ -4760,6 +4760,12 @@ public class ScriptRuntime {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
     }
 
+    @Deprecated
+    public static Object doTopCall(
+            Script script, Context cx, Scriptable scope, Scriptable thisObj) {
+        return doTopCall(script, cx, scope, thisObj, cx.isTopLevelStrict);
+    }
+
     public static Object doTopCall(
             Callable callable,
             Context cx,
@@ -4778,6 +4784,35 @@ public class ScriptRuntime {
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
+        } finally {
+            cx.topCallScope = null;
+            // Cleanup cached references
+            cx.cachedXMLLib = null;
+            cx.isTopLevelStrict = previousTopLevelStrict;
+            // Function should always call exitActivationFunction
+            // if it creates activation record
+            assert (cx.currentActivationCall == null);
+        }
+        return result;
+    }
+
+    public static Object doTopCall(
+            Script script,
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            boolean isTopLevelStrict) {
+        if (scope == null) throw new IllegalArgumentException();
+        if (cx.topCallScope != null) throw new IllegalStateException();
+
+        Object result;
+        cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
+        cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
+        boolean previousTopLevelStrict = cx.isTopLevelStrict;
+        cx.isTopLevelStrict = isTopLevelStrict;
+        ContextFactory f = cx.getFactory();
+        try {
+            result = f.doTopCall(script, cx, scope, thisObj);
         } finally {
             cx.topCallScope = null;
             // Cleanup cached references

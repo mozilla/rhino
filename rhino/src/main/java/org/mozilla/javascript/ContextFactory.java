@@ -353,6 +353,16 @@ public class ContextFactory {
     }
 
     /**
+     * Execute top call to script. When the runtime is about to execute a script or function that
+     * will create the first stack frame with scriptable code, it calls this method to perform the
+     * real call. In this way execution of any script happens inside this function.
+     */
+    protected Object doTopCall(Script script, Context cx, Scriptable scope, Scriptable thisObj) {
+        Object result = script.exec(cx, scope, thisObj);
+        return result instanceof ConsString ? result.toString() : result;
+    }
+
+    /**
      * Implementation of {@link Context#observeInstructionCount(int instructionCount)}. This can be
      * used to customize {@link Context} without introducing additional subclasses.
      */
