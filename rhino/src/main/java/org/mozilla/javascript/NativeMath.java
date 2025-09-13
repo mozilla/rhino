@@ -25,42 +25,45 @@ final class NativeMath extends ScriptableObject {
 
         math.defineProperty("toSource", "Math", DONTENUM | READONLY | PERMANENT);
 
-        math.defineBuiltinProperty(scope, "abs", 1, NativeMath::abs);
-        math.defineBuiltinProperty(scope, "acos", 1, NativeMath::acos);
-        math.defineBuiltinProperty(scope, "acosh", 1, NativeMath::acosh);
-        math.defineBuiltinProperty(scope, "asin", 1, NativeMath::asin);
-        math.defineBuiltinProperty(scope, "asinh", 1, NativeMath::asinh);
-        math.defineBuiltinProperty(scope, "atan", 1, NativeMath::atan);
-        math.defineBuiltinProperty(scope, "atanh", 1, NativeMath::atanh);
-        math.defineBuiltinProperty(scope, "atan2", 2, NativeMath::atan2);
-        math.defineBuiltinProperty(scope, "cbrt", 1, NativeMath::cbrt);
-        math.defineBuiltinProperty(scope, "ceil", 1, NativeMath::ceil);
-        math.defineBuiltinProperty(scope, "clz32", 1, NativeMath::clz32);
-        math.defineBuiltinProperty(scope, "cos", 1, NativeMath::cos);
-        math.defineBuiltinProperty(scope, "cosh", 1, NativeMath::cosh);
-        math.defineBuiltinProperty(scope, "exp", 1, NativeMath::exp);
-        math.defineBuiltinProperty(scope, "expm1", 1, NativeMath::expm1);
-        math.defineBuiltinProperty(scope, "f16round", 1, NativeMath::f16round);
-        math.defineBuiltinProperty(scope, "floor", 1, NativeMath::floor);
-        math.defineBuiltinProperty(scope, "fround", 1, NativeMath::fround);
-        math.defineBuiltinProperty(scope, "hypot", 2, NativeMath::hypot);
-        math.defineBuiltinProperty(scope, "imul", 2, NativeMath::imul);
-        math.defineBuiltinProperty(scope, "log", 1, NativeMath::log);
-        math.defineBuiltinProperty(scope, "log1p", 1, NativeMath::log1p);
-        math.defineBuiltinProperty(scope, "log10", 1, NativeMath::log10);
-        math.defineBuiltinProperty(scope, "log2", 1, NativeMath::log2);
-        math.defineBuiltinProperty(scope, "max", 2, NativeMath::max);
-        math.defineBuiltinProperty(scope, "min", 2, NativeMath::min);
-        math.defineBuiltinProperty(scope, "pow", 2, NativeMath::pow);
-        math.defineBuiltinProperty(scope, "random", 0, NativeMath::random);
-        math.defineBuiltinProperty(scope, "round", 1, NativeMath::round);
-        math.defineBuiltinProperty(scope, "sign", 1, NativeMath::sign);
-        math.defineBuiltinProperty(scope, "sin", 1, NativeMath::sin);
-        math.defineBuiltinProperty(scope, "sinh", 1, NativeMath::sinh);
-        math.defineBuiltinProperty(scope, "sqrt", 1, NativeMath::sqrt);
-        math.defineBuiltinProperty(scope, "tan", 1, NativeMath::tan);
-        math.defineBuiltinProperty(scope, "tanh", 1, NativeMath::tanh);
-        math.defineBuiltinProperty(scope, "trunc", 1, NativeMath::trunc);
+        math.defineProperty(scope, "abs", 1, NativeMath::abs, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "acos", 1, NativeMath::acos, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "acosh", 1, NativeMath::acosh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "asin", 1, NativeMath::asin, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "asinh", 1, NativeMath::asinh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atan", 1, NativeMath::atan, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atanh", 1, NativeMath::atanh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atan2", 2, NativeMath::atan2, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cbrt", 1, NativeMath::cbrt, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "ceil", 1, NativeMath::ceil, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "clz32", 1, NativeMath::clz32, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cos", 1, NativeMath::cos, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cosh", 1, NativeMath::cosh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "exp", 1, NativeMath::exp, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "expm1", 1, NativeMath::expm1, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(
+                scope, "f16round", 1, NativeMath::f16round, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "floor", 1, NativeMath::floor, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "fround", 1, NativeMath::fround, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "hypot", 2, NativeMath::hypot, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "imul", 2, NativeMath::imul, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log", 1, NativeMath::log, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log1p", 1, NativeMath::log1p, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log10", 1, NativeMath::log10, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log2", 1, NativeMath::log2, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "max", 2, NativeMath::max, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "min", 2, NativeMath::min, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "pow", 2, NativeMath::pow, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "random", 0, NativeMath::random, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "round", 1, NativeMath::round, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sign", 1, NativeMath::sign, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sin", 1, NativeMath::sin, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sinh", 1, NativeMath::sinh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sqrt", 1, NativeMath::sqrt, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(
+                scope, "sumPrecise", 1, NativeMath::sumPrecise, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "tan", 1, NativeMath::tan, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "tanh", 1, NativeMath::tanh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "trunc", 1, NativeMath::trunc, DONTENUM, DONTENUM | READONLY);
 
         math.defineProperty("E", Math.E, DONTENUM | READONLY | PERMANENT);
         math.defineProperty("PI", Math.PI, DONTENUM | READONLY | PERMANENT);
@@ -617,5 +620,177 @@ final class NativeMath extends ScriptableObject {
         double x = ScriptRuntime.toNumber(args, 0);
         x = ((x < 0.0) ? Math.ceil(x) : Math.floor(x));
         return ScriptRuntime.wrapNumber(x);
+    }
+
+    private static Object sumPrecise(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length == 0) {
+            throw ScriptRuntime.typeError(
+                    ScriptRuntime.getMessageById("msg.no.arg", "Math.sumPrecise"));
+        }
+
+        Object arg = args[0];
+        Scriptable iterable = ScriptRuntime.toObject(cx, scope, arg);
+
+        // Collect values from iterable or array-like
+        double[] partials = new double[32]; // Initial capacity
+        int partialsSize = 0;
+
+        boolean hasPositiveInf = false;
+        boolean hasNegativeInf = false;
+        boolean allZeros = true;
+        boolean hasNegativeZero = false;
+
+        // Check if array-like or iterable
+        boolean isArrayLike = iterable.has("length", iterable);
+        boolean isIterable =
+                ScriptableObject.hasProperty(iterable, SymbolKey.ITERATOR)
+                        && !Undefined.isUndefined(
+                                ScriptableObject.getProperty(iterable, SymbolKey.ITERATOR));
+
+        if (!isArrayLike && !isIterable) {
+            throw ScriptRuntime.typeError("Math.sumPrecise called on non-iterable");
+        }
+
+        if (isArrayLike) {
+            int length = ScriptRuntime.toInt32(iterable.get("length", iterable));
+            for (int i = 0; i < length; i++) {
+                if (iterable.has(i, iterable)) {
+                    Object element = iterable.get(i, iterable);
+                    String type = ScriptRuntime.typeof(element);
+                    if (!"number".equals(type)) {
+                        throw ScriptRuntime.typeError(
+                                "Math.sumPrecise requires all elements to be numbers, got " + type);
+                    }
+                    double x = ScriptRuntime.toNumber(element);
+
+                    // Handle special values
+                    if (Double.isNaN(x)) {
+                        return ScriptRuntime.wrapNumber(Double.NaN);
+                    }
+                    if (x == Double.POSITIVE_INFINITY) {
+                        hasPositiveInf = true;
+                    } else if (x == Double.NEGATIVE_INFINITY) {
+                        hasNegativeInf = true;
+                    } else if (x != 0.0) {
+                        allZeros = false;
+                    } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
+                        hasNegativeZero = true;
+                    }
+
+                    // Shewchuk's algorithm inline
+                    if (!Double.isInfinite(x)) {
+                        int writeIdx = 0;
+                        for (int j = 0; j < partialsSize; j++) {
+                            double y = partials[j];
+                            if (Math.abs(x) < Math.abs(y)) {
+                                double temp = x;
+                                x = y;
+                                y = temp;
+                            }
+                            double hi = x + y;
+                            double lo = y - (hi - x);
+                            if (lo != 0.0) {
+                                partials[writeIdx++] = lo;
+                            }
+                            x = hi;
+                        }
+                        partialsSize = writeIdx;
+                        if (x != 0.0) {
+                            if (partialsSize >= partials.length) {
+                                double[] newPartials = new double[partials.length * 2];
+                                System.arraycopy(partials, 0, newPartials, 0, partialsSize);
+                                partials = newPartials;
+                            }
+                            partials[partialsSize++] = x;
+                        }
+                    }
+                }
+            }
+        } else {
+            final Object iterator = ScriptRuntime.callIterator(iterable, cx, scope);
+            if (!Undefined.isUndefined(iterator)) {
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                    for (Object value : it) {
+                        String type = ScriptRuntime.typeof(value);
+                        if (!"number".equals(type)) {
+                            throw ScriptRuntime.typeError(
+                                    "Math.sumPrecise requires all elements to be numbers, got "
+                                            + type);
+                        }
+                        double x = ScriptRuntime.toNumber(value);
+
+                        // Handle special values
+                        if (Double.isNaN(x)) {
+                            return ScriptRuntime.wrapNumber(Double.NaN);
+                        }
+                        if (x == Double.POSITIVE_INFINITY) {
+                            hasPositiveInf = true;
+                        } else if (x == Double.NEGATIVE_INFINITY) {
+                            hasNegativeInf = true;
+                        } else if (x != 0.0) {
+                            allZeros = false;
+                        } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
+                            hasNegativeZero = true;
+                        }
+
+                        // Shewchuk's algorithm inline
+                        if (!Double.isInfinite(x)) {
+                            int writeIdx = 0;
+                            for (int j = 0; j < partialsSize; j++) {
+                                double y = partials[j];
+                                if (Math.abs(x) < Math.abs(y)) {
+                                    double temp = x;
+                                    x = y;
+                                    y = temp;
+                                }
+                                double hi = x + y;
+                                double lo = y - (hi - x);
+                                if (lo != 0.0) {
+                                    partials[writeIdx++] = lo;
+                                }
+                                x = hi;
+                            }
+                            partialsSize = writeIdx;
+                            if (x != 0.0) {
+                                if (partialsSize >= partials.length) {
+                                    double[] newPartials = new double[partials.length * 2];
+                                    System.arraycopy(partials, 0, newPartials, 0, partialsSize);
+                                    partials = newPartials;
+                                }
+                                partials[partialsSize++] = x;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    throw ScriptRuntime.typeError("Iterator error: " + e.getMessage());
+                }
+            }
+        }
+
+        // Handle infinities
+        if (hasPositiveInf && hasNegativeInf) {
+            return ScriptRuntime.wrapNumber(Double.NaN);
+        }
+        if (hasPositiveInf) {
+            return ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY);
+        }
+        if (hasNegativeInf) {
+            return ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY);
+        }
+
+        // Handle all zeros (including empty input)
+        if (allZeros) {
+            // Empty input or all zeros - return -0 for empty, appropriate zero for actual zeros
+            return ScriptRuntime.wrapNumber(partialsSize == 0 || hasNegativeZero ? -0.0 : 0.0);
+        }
+
+        // Sum partials
+        double sum = 0.0;
+        for (int i = 0; i < partialsSize; i++) {
+            sum += partials[i];
+        }
+
+        return ScriptRuntime.wrapNumber(sum);
     }
 }
