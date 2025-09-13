@@ -42,6 +42,7 @@ public class CompilerEnvirons {
 
         // Observer code generation in compiled code :
         generateObserverCount = cx.isGenerateObserverCount();
+        securityController = cx.getSecurityController();
     }
 
     public final ErrorReporter getErrorReporter() {
@@ -263,6 +264,18 @@ public class CompilerEnvirons {
         return homeObjecgt;
     }
 
+    public void setSecurityDomain(Object domain) {
+        this.securityDomain = domain;
+    }
+
+    public SecurityController securityController() {
+        return securityController;
+    }
+
+    public Object securityDomain() {
+        return securityDomain;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -303,4 +316,6 @@ public class CompilerEnvirons {
     Set<String> activationNames;
     private boolean inEval;
     private Scriptable homeObjecgt;
+    private SecurityController securityController;
+    private Object securityDomain;
 }

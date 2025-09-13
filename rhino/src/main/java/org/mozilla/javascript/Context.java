@@ -2543,6 +2543,7 @@ public class Context implements Closeable {
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
+        compilerEnv.setSecurityDomain(securityDomain);
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
