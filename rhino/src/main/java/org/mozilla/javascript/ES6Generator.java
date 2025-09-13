@@ -11,7 +11,7 @@ import java.util.Objects;
 public final class ES6Generator extends IdScriptableObject {
     private static final long serialVersionUID = 1645892441041347273L;
 
-    private static final Object GENERATOR_TAG = "Generator";
+    static final Object GENERATOR_TAG = "Generator";
 
     static ES6Generator init(ScriptableObject scope, boolean sealed) {
 
@@ -39,7 +39,7 @@ public final class ES6Generator extends IdScriptableObject {
     /** Only for constructing the prototype object. */
     private ES6Generator() {}
 
-    public ES6Generator(Scriptable scope, NativeFunction function, Object savedState) {
+    public ES6Generator(Scriptable scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
@@ -430,7 +430,7 @@ public final class ES6Generator extends IdScriptableObject {
             SymbolId_iterator = 4,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
 
-    private NativeFunction function;
+    private JSFunction function;
     private Object savedState;
     private String lineSource;
     private int lineNumber;

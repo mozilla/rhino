@@ -1334,7 +1334,7 @@ public class Context implements Closeable {
     public Object callFunctionWithContinuations(Script script, Scriptable scope)
             throws ContinuationPending {
         if (!(script instanceof JSScript)
-                || !(((JSScript) script).getDescriptor().getCode() instanceof InterpreterData)) {
+                || !(script.getDescriptor().getCode() instanceof InterpreterData)) {
             // Can only be applied to scripts
             throw new IllegalArgumentException(
                     "Function argument was not" + " created by interpreted mode ");
@@ -1367,7 +1367,8 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(callable, this, scope, scope, args, isTopLevelStrict);
+        return ScriptRuntime.doTopCall(
+                (JSFunction) callable, this, scope, scope, args, isTopLevelStrict);
     }
 
     /**
@@ -1591,12 +1592,7 @@ public class Context implements Closeable {
      * @return a string representing the script source
      */
     public final String decompileScript(Script script, int indent) {
-        if (script instanceof JSScript) {
-            return ((JSScript) script).getDescriptor().getRawSource();
-        } else {
-            return ((NativeFunction) script)
-                    .decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
-        }
+        return ((JSScript) script).getDescriptor().getRawSource();
     }
 
     /**
@@ -2321,9 +2317,9 @@ public class Context implements Closeable {
      * Return DebuggableScript instance if any associated with the script. If callable supports
      * DebuggableScript implementation, the method returns it. Otherwise null is returned.
      */
-    public static DebuggableScript getDebuggableView(Script script) {
-        if (script instanceof NativeFunction) {
-            return ((NativeFunction) script).getDebuggableView();
+    public static DebuggableScript getDebuggableView(ScriptOrFn<?> script) {
+        if (script instanceof JSFunction) {
+            return ((JSFunction) script).getDebuggableView();
         }
         return null;
     }

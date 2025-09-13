@@ -202,10 +202,6 @@ final class EqualObjectGraphs {
             return s2 instanceof IdFunctionObject
                     && IdFunctionObject.equalObjectGraphs(
                             (IdFunctionObject) s1, (IdFunctionObject) s2, this);
-        } else if (s1 instanceof ArrowFunction) {
-            return s2 instanceof ArrowFunction
-                    && ArrowFunction.equalObjectGraphs(
-                            (ArrowFunction) s1, (ArrowFunction) s2, this);
         } else if (s1 instanceof BoundFunction) {
             return s2 instanceof BoundFunction
                     && BoundFunction.equalObjectGraphs(

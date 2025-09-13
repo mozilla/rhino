@@ -3,7 +3,7 @@ package org.mozilla.javascript;
 import java.util.EnumSet;
 import org.mozilla.javascript.debug.DebuggableScript;
 
-public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction> {
+public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     private final JSDescriptor<JSFunction> descriptor;
     private final Scriptable lexicalThis;
     private final Scriptable homeObject;
@@ -33,12 +33,10 @@ public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction>
         return descriptor.getRawSource();
     }
 
-    @Override
     public boolean isShorthand() {
         return descriptor.isShorthand();
     }
 
-    @Override
     public boolean isStrict() {
         return descriptor.isStrict();
     }
@@ -48,12 +46,10 @@ public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction>
         return getParamCount();
     }
 
-    @Override
     public DebuggableScript getDebuggableView() {
         return null;
     }
 
-    @Override
     protected int getLanguageVersion() {
         return descriptor.getLanguageVersion();
     }
@@ -72,12 +68,10 @@ public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction>
         return activation.originalArgs.length;
     }
 
-    @Override
     protected int getParamAndVarCount() {
         return descriptor.getParamAndVarCount();
     }
 
-    @Override
     protected int getParamCount() {
         int count = descriptor.getParamCount();
         if (descriptor.hasRestArg()) {
@@ -86,17 +80,14 @@ public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction>
         return count;
     }
 
-    @Override
     protected boolean getParamOrVarConst(int index) {
         return descriptor.getParamOrVarConst(index);
     }
 
-    @Override
     protected String getParamOrVarName(int index) {
         return descriptor.getParamOrVarName(index);
     }
 
-    @Override
     public String getRawSource() {
         return descriptor.getRawSource();
     }
@@ -158,7 +149,6 @@ public class JSFunction extends NativeFunction implements ScriptOrFn<JSFunction>
         return descriptor.getName();
     }
 
-    @Override
     public Object resumeGenerator(
             Context cx, Scriptable scope, int operation, Object state, Object value) {
         return descriptor.getCode().resume(cx, this, state, scope, operation, value);

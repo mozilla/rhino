@@ -20,10 +20,6 @@ public abstract class NativeFunction extends BaseFunction {
 
     private boolean isShorthand;
 
-    public final void initScriptFunction(Context cx, Scriptable scope) {
-        initScriptFunction(cx, scope, isGeneratorFunction(), isShorthand());
-    }
-
     public final void initScriptFunction(
             Context cx, Scriptable scope, boolean es6GeneratorFunction, boolean isShorthand) {
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, es6GeneratorFunction);
