@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Update Feature Documentation
-# This script updates the feature documentation based on test262 results
+# This script combines test262 and compat-table data for comprehensive documentation
 
 set -e
 
@@ -10,23 +10,29 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "📊 Updating Rhino Feature Documentation"
 echo "========================================"
+echo ""
+echo "This enhanced version combines:"
+echo "  • test262 specification compliance (3,025+ test suites)"
+echo "  • compat-table practical testing (~200 features)"
+echo ""
 
-# Check if Python 3 is available
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Error: Python 3 is required but not installed"
+# Check if Node.js is available (replaces Python requirement)
+if ! command -v node &> /dev/null; then
+    echo "❌ Error: Node.js is required but not installed"
     exit 1
 fi
 
 # Check if test262.properties exists
-if [ ! -f "$PROJECT_ROOT/tests/testsrc/test262.properties" ]; then
+if [ ! -f "$PROJECT_ROOT/tests/testsrc/test262.properties" ] && [ ! -f "$PROJECT_ROOT/testsrc/test262.properties" ]; then
     echo "❌ Error: test262.properties not found"
     echo "  Run './gradlew test' first to generate test results"
     exit 1
 fi
 
-# Run the feature tracker
+# Run the JavaScript feature tracker (replaces Python version)
 echo "🔍 Analyzing test262 results..."
-python3 "$PROJECT_ROOT/tools/feature_tracker.py" --update-docs
+echo "🌐 Setting up compat-table tests..."
+node "$PROJECT_ROOT/tools/feature_tracker.js"
 
 # Check if files were created
 if [ -f "$PROJECT_ROOT/FEATURES.md" ] && [ -f "$PROJECT_ROOT/rhino-features.json" ] && [ -f "$PROJECT_ROOT/rhino-features.html" ]; then

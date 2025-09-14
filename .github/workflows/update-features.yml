@@ -18,10 +18,20 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.x'
+          node-version: '18.x'
+      
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      
+      - name: Build Rhino JAR
+        run: |
+          ./gradlew jar
       
       - name: Update feature documentation
         run: |
@@ -48,12 +58,19 @@ jobs:
           body: |
             ## Automated Feature Documentation Update
             
-            This PR updates the feature documentation based on the latest test262 results in main branch.
+            This PR updates the feature documentation combining TWO data sources:
+            - **test262**: Official ECMAScript specification compliance (3,025+ test suites)
+            - **compat-table**: Practical JavaScript compatibility tests (~200 features)
             
             ### Changes
-            - Updated `FEATURES.md` with current ECMAScript feature support
-            - Updated `rhino-features.json` with machine-readable feature data  
-            - Updated `rhino-features.html` with web-ready interactive page
+            - Updated `FEATURES.md` with comprehensive feature documentation
+            - Updated `rhino-features.json` with machine-readable data from both sources
+            - Updated `rhino-features.html` with interactive dashboard showing both perspectives
+            
+            ### What's New
+            - Cross-validation between test262 and compat-table results
+            - Unified JavaScript toolchain (replaced Python with Node.js)
+            - Enhanced documentation showing both spec compliance AND practical compatibility
             
             This is an automated PR created by the feature documentation workflow.
           branch: update-feature-docs
