@@ -1,0 +1,105 @@
+# ECMAScript Feature Mapping
+# Format: ES_VERSION|Feature Name|test262_path
+# Lines starting with # are comments
+
+ES2015|Arrow Functions|language/expressions/arrow-function
+ES2015|Classes|language/statements/class
+ES2015|Template Literals|language/expressions/template-literal
+ES2015|Destructuring|language/expressions/assignment/destructuring
+ES2015|Default Parameters|language/expressions/function/default-parameters
+ES2015|Rest Parameters|language/expressions/function/rest-parameters
+ES2015|Spread Operator|language/expressions/spread
+ES2015|for...of Loop|language/statements/for-of
+ES2015|Symbols|built-ins/Symbol
+ES2015|Generators|built-ins/GeneratorFunction
+ES2015|Promises|built-ins/Promise
+ES2015|Map|built-ins/Map
+ES2015|Set|built-ins/Set
+ES2015|WeakMap|built-ins/WeakMap
+ES2015|WeakSet|built-ins/WeakSet
+ES2015|Proxy|built-ins/Proxy
+ES2015|Reflect|built-ins/Reflect
+ES2015|Array.from|built-ins/Array/from
+ES2015|Array.of|built-ins/Array/of
+ES2015|Object.assign|built-ins/Object/assign
+
+ES2016|Exponentiation Operator|language/expressions/exponentiation
+ES2016|Array.includes|built-ins/Array/prototype/includes
+
+ES2017|async/await|language/expressions/async-function
+ES2017|Object.values|built-ins/Object/values
+ES2017|Object.entries|built-ins/Object/entries
+ES2017|Object.getOwnPropertyDescriptors|built-ins/Object/getOwnPropertyDescriptors
+ES2017|String.padStart|built-ins/String/prototype/padStart
+ES2017|String.padEnd|built-ins/String/prototype/padEnd
+ES2017|Trailing Commas|language/expressions/trailing-comma
+
+ES2018|Async Iterators|built-ins/AsyncIteratorPrototype
+ES2018|Promise.finally|built-ins/Promise/prototype/finally
+ES2018|Rest/Spread Properties|language/expressions/object/rest-spread
+ES2018|RegExp Named Groups|built-ins/RegExp/named-groups
+ES2018|RegExp Lookbehind|built-ins/RegExp/lookbehind
+ES2018|RegExp s flag|built-ins/RegExp/dotAll
+
+ES2019|Array.flat|built-ins/Array/prototype/flat
+ES2019|Array.flatMap|built-ins/Array/prototype/flatMap
+ES2019|Object.fromEntries|built-ins/Object/fromEntries
+ES2019|String.trimStart|built-ins/String/prototype/trimStart
+ES2019|String.trimEnd|built-ins/String/prototype/trimEnd
+ES2019|Symbol.description|built-ins/Symbol/prototype/description
+ES2019|JSON.stringify|built-ins/JSON/stringify
+
+ES2020|BigInt|built-ins/BigInt
+ES2020|BigInt64Array|built-ins/BigInt64Array
+ES2020|BigUint64Array|built-ins/BigUint64Array
+ES2020|Promise.allSettled|built-ins/Promise/allSettled
+ES2020|globalThis|built-ins/global
+ES2020|Optional Chaining|language/expressions/optional-chaining
+ES2020|Nullish Coalescing|language/expressions/coalesce
+ES2020|String.matchAll|built-ins/String/prototype/matchAll
+ES2020|Dynamic Import|language/expressions/dynamic-import
+ES2020|import.meta|language/expressions/import.meta
+
+ES2021|String.replaceAll|built-ins/String/prototype/replaceAll
+ES2021|Promise.any|built-ins/Promise/any
+ES2021|WeakRef|built-ins/WeakRef
+ES2021|FinalizationRegistry|built-ins/FinalizationRegistry
+ES2021|Logical Assignment|language/expressions/logical-assignment
+ES2021|Numeric Separators|language/expressions/numeric-separator
+
+ES2022|Class Fields|language/statements/class/fields
+ES2022|Private Methods|language/statements/class/private-methods
+ES2022|Static Class Fields|language/statements/class/static
+ES2022|Top-level await|language/module-code/top-level-await
+ES2022|Error.cause|built-ins/Error/cause
+ES2022|Array.at|built-ins/Array/prototype/at
+ES2022|String.at|built-ins/String/prototype/at
+ES2022|Object.hasOwn|built-ins/Object/hasOwn
+ES2022|RegExp d flag|built-ins/RegExp/match-indices
+
+ES2023|Array.findLast|built-ins/Array/prototype/findLast
+ES2023|Array.findLastIndex|built-ins/Array/prototype/findLastIndex
+ES2023|Array.toReversed|built-ins/Array/prototype/toReversed
+ES2023|Array.toSorted|built-ins/Array/prototype/toSorted
+ES2023|Array.toSpliced|built-ins/Array/prototype/toSpliced
+ES2023|Array.with|built-ins/Array/prototype/with
+ES2023|Hashbang Grammar|language/comments/hashbang
+
+ES2024|Array.fromAsync|built-ins/Array/fromAsync
+ES2024|Promise.withResolvers|built-ins/Promise/withResolvers
+ES2024|Object.groupBy|built-ins/Object/groupBy
+ES2024|Map.groupBy|built-ins/Map/groupBy
+ES2024|String.isWellFormed|built-ins/String/prototype/isWellFormed
+ES2024|String.toWellFormed|built-ins/String/prototype/toWellFormed
+ES2024|ArrayBuffer.transfer|built-ins/ArrayBuffer/prototype/transfer
+ES2024|ArrayBuffer.resize|built-ins/ArrayBuffer/prototype/resize
+ES2024|RegExp v flag|built-ins/RegExp/unicode-sets
+
+ES2025|Iterator Helpers|built-ins/Iterator
+ES2025|Set Methods|built-ins/Set/prototype
+ES2025|Promise.try|built-ins/Promise/try
+ES2025|Math.sumPrecise|built-ins/Math/sumPrecise
+ES2025|Math.f16round|built-ins/Math/f16round
+ES2025|Error.isError|built-ins/Error/isError
+ES2025|RegExp.escape|built-ins/RegExp/escape
+ES2025|Temporal|built-ins/Temporal

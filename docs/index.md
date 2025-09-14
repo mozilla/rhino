@@ -10,6 +10,8 @@ Rhino is an implementation of JavaScript in Java.
 
 [Release Notes](https://github.com/mozilla/rhino/blob/master/RELEASE-NOTES.md)
 
+[Feature Support](https://github.com/mozilla/rhino/blob/master/FEATURES.md)
+
 [Compatibility Table](./compat/engines.html)
 
 [JavaDoc](https://javadoc.io/doc/org.mozilla/rhino)

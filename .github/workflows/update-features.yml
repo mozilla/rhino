@@ -1,0 +1,74 @@
+name: Update Feature Documentation
+
+on:
+  # Run on pushes to master that modify test262.properties
+  push:
+    branches: [master]
+    paths:
+      - 'tests/testsrc/test262.properties'
+  
+  # Run weekly to catch any changes
+  schedule:
+    - cron: '0 0 * * 0'  # Sunday at midnight
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-features:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Update feature documentation
+        run: |
+          ./tools/update-feature-docs.sh
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet FEATURES.md rhino-features.json rhino-features.html; then
+            echo "No changes to feature documentation"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Feature documentation has changed"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'docs: Update feature documentation from test262 results'
+          title: 'docs: Update feature documentation'
+          body: |
+            ## Automated Feature Documentation Update
+            
+            This PR updates the feature documentation based on the latest test262 results.
+            
+            ### Changes
+            - Updated `FEATURES.md` with current ECMAScript feature support
+            - Updated `rhino-features.json` with machine-readable feature data
+            - Updated `rhino-features.html` with web-ready interactive page
+            
+            ### Files Changed
+            - `FEATURES.md` - Human-readable feature documentation
+            - `rhino-features.json` - Machine-readable feature data
+            - `rhino-features.html` - Web-ready interactive page
+            
+            This is an automated PR created by the feature documentation workflow.
+          branch: update-feature-docs
+          delete-branch: true
+          labels: |
+            documentation
+            automated

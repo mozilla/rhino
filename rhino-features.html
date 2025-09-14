@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhino JavaScript Engine - ECMAScript Feature Support</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .feature-card { border: 1px solid #e1e5e9; border-radius: 8px; padding: 16px; }
+        .status-full { background: #d4edda; }
+        .status-mostly { background: #d1ecf1; }
+        .status-partial { background: #fff3cd; }
+        .status-limited { background: #f8d7da; }
+        .status-none { background: #f8d7da; }
+        .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.3s ease; }
+        .progress-full { background: #28a745; }
+        .progress-mostly { background: #17a2b8; }
+        .progress-partial { background: #ffc107; }
+        .progress-limited { background: #dc3545; }
+        .progress-none { background: #dc3545; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rhino JavaScript Engine - ECMAScript Feature Support</h1>
+        <p><em>Generated on 2025-09-14 at 13:48:50 UTC</em></p>
+        
+        <div class="summary">
+            <h2>Summary</h2>
+            <p><strong>Total Features:</strong> 91</p>
+            <p><strong>Fully Supported:</strong> 21 (23.1%)</p>
+            <p><strong>Partially Supported:</strong> 53 (58.2%)</p>
+            <p><strong>Not Supported:</strong> 17 (18.7%)</p>
+        </div>
+        
+        <div id="feature-data" style="display: none;">
+            <script type="application/json">
+{
+  "generated": "2025-09-14T13:48:50.104949",
+  "rhino_version": "1.8.1-SNAPSHOT",
+  "features": {
+    "ES2015": {
+      "Arrow Functions": {
+        "path": "language/expressions/arrow-function",
+        "passed": 192,
+        "total": 343,
+        "pass_rate": 55.98,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Classes": {
+        "path": "language/statements/class",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Template Literals": {
+        "path": "language/expressions/template-literal",
+        "passed": 55,
+        "total": 57,
+        "pass_rate": 96.49,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Destructuring": {
+        "path": "language/expressions/assignment/destructuring",
+        "passed": 301,
+        "total": 485,
+        "pass_rate": 62.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Default Parameters": {
+        "path": "language/expressions/function/default-parameters",
+        "passed": 115,
+        "total": 264,
+        "pass_rate": 43.56,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Rest Parameters": {
+        "path": "language/expressions/function/rest-parameters",
+        "passed": 115,
+        "total": 264,
+        "pass_rate": 43.56,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Spread Operator": {
+        "path": "language/expressions/spread",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      },
+      "for...of Loop": {
+        "path": "language/statements/for-of",
+        "passed": 313,
+        "total": 751,
+        "pass_rate": 41.68,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Symbols": {
+        "path": "built-ins/Symbol",
+        "passed": 75,
+        "total": 94,
+        "pass_rate": 79.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Generators": {
+        "path": "built-ins/GeneratorFunction",
+        "passed": 15,
+        "total": 23,
+        "pass_rate": 65.22,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Promises": {
+        "path": "built-ins/Promise",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Map": {
+        "path": "built-ins/Map",
+        "passed": 169,
+        "total": 204,
+        "pass_rate": 82.84,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Set": {
+        "path": "built-ins/Set",
+        "passed": 294,
+        "total": 381,
+        "pass_rate": 77.17,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "WeakMap": {
+        "path": "built-ins/WeakMap",
+        "passed": 101,
+        "total": 141,
+        "pass_rate": 71.63,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "WeakSet": {
+        "path": "built-ins/WeakSet",
+        "passed": 84,
+        "total": 85,
+        "pass_rate": 98.82,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Proxy": {
+        "path": "built-ins/Proxy",
+        "passed": 242,
+        "total": 311,
+        "pass_rate": 77.81,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Reflect": {
+        "path": "built-ins/Reflect",
+        "passed": 141,
+        "total": 153,
+        "pass_rate": 92.16,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.from": {
+        "path": "built-ins/Array/from",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.of": {
+        "path": "built-ins/Array/of",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Object.assign": {
+        "path": "built-ins/Object/assign",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      }
+    },
+    "ES2016": {
+      "Exponentiation Operator": {
+        "path": "language/expressions/exponentiation",
+        "passed": 43,
+        "total": 44,
+        "pass_rate": 97.73,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Array.includes": {
+        "path": "built-ins/Array/prototype/includes",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      }
+    },
+    "ES2017": {
+      "async/await": {
+        "path": "language/expressions/async-function",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Object.values": {
+        "path": "built-ins/Object/values",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.entries": {
+        "path": "built-ins/Object/entries",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.getOwnPropertyDescriptors": {
+        "path": "built-ins/Object/getOwnPropertyDescriptors",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.padStart": {
+        "path": "built-ins/String/prototype/padStart",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.padEnd": {
+        "path": "built-ins/String/prototype/padEnd",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Trailing Commas": {
+        "path": "language/expressions/trailing-comma",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      }
+    },
+    "ES2018": {
+      "Async Iterators": {
+        "path": "built-ins/AsyncIteratorPrototype",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Promise.finally": {
+        "path": "built-ins/Promise/prototype/finally",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Rest/Spread Properties": {
+        "path": "language/expressions/object/rest-spread",
+        "passed": 472,
+        "total": 1170,
+        "pass_rate": 40.34,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp Named Groups": {
+        "path": "built-ins/RegExp/named-groups",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp Lookbehind": {
+        "path": "built-ins/RegExp/lookbehind",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp s flag": {
+        "path": "built-ins/RegExp/dotAll",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2019": {
+      "Array.flat": {
+        "path": "built-ins/Array/prototype/flat",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.flatMap": {
+        "path": "built-ins/Array/prototype/flatMap",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Object.fromEntries": {
+        "path": "built-ins/Object/fromEntries",
+        "passed": 0,
+        "total": 19,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      },
+      "String.trimStart": {
+        "path": "built-ins/String/prototype/trimStart",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.trimEnd": {
+        "path": "built-ins/String/prototype/trimEnd",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Symbol.description": {
+        "path": "built-ins/Symbol/prototype/description",
+        "passed": 75,
+        "total": 94,
+        "pass_rate": 79.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "JSON.stringify": {
+        "path": "built-ins/JSON/stringify",
+        "passed": 120,
+        "total": 165,
+        "pass_rate": 72.73,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2020": {
+      "BigInt": {
+        "path": "built-ins/BigInt",
+        "passed": 68,
+        "total": 75,
+        "pass_rate": 90.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "BigInt64Array": {
+        "path": "built-ins/BigInt64Array",
+        "passed": 68,
+        "total": 75,
+        "pass_rate": 90.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "BigUint64Array": {
+        "path": "built-ins/BigUint64Array",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      },
+      "Promise.allSettled": {
+        "path": "built-ins/Promise/allSettled",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "globalThis": {
+        "path": "built-ins/global",
+        "passed": 29,
+        "total": 29,
+        "pass_rate": 100.0,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Optional Chaining": {
+        "path": "language/expressions/optional-chaining",
+        "passed": 20,
+        "total": 38,
+        "pass_rate": 52.63,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Nullish Coalescing": {
+        "path": "language/expressions/coalesce",
+        "passed": 22,
+        "total": 24,
+        "pass_rate": 91.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.matchAll": {
+        "path": "built-ins/String/prototype/matchAll",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Dynamic Import": {
+        "path": "language/expressions/dynamic-import",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "import.meta": {
+        "path": "language/expressions/import.meta",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      }
+    },
+    "ES2021": {
+      "String.replaceAll": {
+        "path": "built-ins/String/prototype/replaceAll",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Promise.any": {
+        "path": "built-ins/Promise/any",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "WeakRef": {
+        "path": "built-ins/WeakRef",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "FinalizationRegistry": {
+        "path": "built-ins/FinalizationRegistry",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Logical Assignment": {
+        "path": "language/expressions/logical-assignment",
+        "passed": 38,
+        "total": 78,
+        "pass_rate": 48.72,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Numeric Separators": {
+        "path": "language/expressions/numeric-separator",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      }
+    },
+    "ES2022": {
+      "Class Fields": {
+        "path": "language/statements/class/fields",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Private Methods": {
+        "path": "language/statements/class/private-methods",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Static Class Fields": {
+        "path": "language/statements/class/static",
+        "passed": 0,
+        "total": 14,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      },
+      "Top-level await": {
+        "path": "language/module-code/top-level-await",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Error.cause": {
+        "path": "built-ins/Error/cause",
+        "passed": 46,
+        "total": 53,
+        "pass_rate": 86.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.at": {
+        "path": "built-ins/Array/prototype/at",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.at": {
+        "path": "built-ins/String/prototype/at",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.hasOwn": {
+        "path": "built-ins/Object/hasOwn",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "RegExp d flag": {
+        "path": "built-ins/RegExp/match-indices",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2023": {
+      "Array.findLast": {
+        "path": "built-ins/Array/prototype/findLast",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.findLastIndex": {
+        "path": "built-ins/Array/prototype/findLastIndex",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toReversed": {
+        "path": "built-ins/Array/prototype/toReversed",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toSorted": {
+        "path": "built-ins/Array/prototype/toSorted",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toSpliced": {
+        "path": "built-ins/Array/prototype/toSpliced",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.with": {
+        "path": "built-ins/Array/prototype/with",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Hashbang Grammar": {
+        "path": "language/comments/hashbang",
+        "passed": 43,
+        "total": 52,
+        "pass_rate": 82.69,
+        "disabled": false,
+        "status": "Mostly"
+      }
+    },
+    "ES2024": {
+      "Array.fromAsync": {
+        "path": "built-ins/Array/fromAsync",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Promise.withResolvers": {
+        "path": "built-ins/Promise/withResolvers",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Object.groupBy": {
+        "path": "built-ins/Object/groupBy",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Map.groupBy": {
+        "path": "built-ins/Map/groupBy",
+        "passed": 169,
+        "total": 204,
+        "pass_rate": 82.84,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.isWellFormed": {
+        "path": "built-ins/String/prototype/isWellFormed",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.toWellFormed": {
+        "path": "built-ins/String/prototype/toWellFormed",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "ArrayBuffer.transfer": {
+        "path": "built-ins/ArrayBuffer/prototype/transfer",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "ArrayBuffer.resize": {
+        "path": "built-ins/ArrayBuffer/prototype/resize",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "RegExp v flag": {
+        "path": "built-ins/RegExp/unicode-sets",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2025": {
+      "Iterator Helpers": {
+        "path": "built-ins/Iterator",
+        "passed": 40,
+        "total": 432,
+        "pass_rate": 9.260000000000005,
+        "disabled": false,
+        "status": "Limited"
+      },
+      "Set Methods": {
+        "path": "built-ins/Set/prototype",
+        "passed": 294,
+        "total": 381,
+        "pass_rate": 77.17,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Promise.try": {
+        "path": "built-ins/Promise/try",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Math.sumPrecise": {
+        "path": "built-ins/Math/sumPrecise",
+        "passed": 316,
+        "total": 327,
+        "pass_rate": 96.64,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Math.f16round": {
+        "path": "built-ins/Math/f16round",
+        "passed": 316,
+        "total": 327,
+        "pass_rate": 96.64,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Error.isError": {
+        "path": "built-ins/Error/isError",
+        "passed": 46,
+        "total": 53,
+        "pass_rate": 86.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "RegExp.escape": {
+        "path": "built-ins/RegExp/escape",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Temporal": {
+        "path": "built-ins/Temporal",
+        "passed": 0,
+        "total": 4255,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      }
+    }
+  },
+  "summary": {
+    "total_features": 91,
+    "fully_supported": 21,
+    "partially_supported": 53,
+    "not_supported": 17,
+    "by_version": {
+      "ES2015": {
+        "total": 20,
+        "supported": 3,
+        "partial": 15,
+        "none": 2,
+        "avg_pass_rate": 65.41600000000001
+      },
+      "ES2016": {
+        "total": 2,
+        "supported": 1,
+        "partial": 1,
+        "none": 0,
+        "avg_pass_rate": 94.625
+      },
+      "ES2017": {
+        "total": 7,
+        "supported": 5,
+        "partial": 0,
+        "none": 2,
+        "avg_pass_rate": 68.53857142857143
+      },
+      "ES2018": {
+        "total": 6,
+        "supported": 0,
+        "partial": 5,
+        "none": 1,
+        "avg_pass_rate": 37.305
+      },
+      "ES2019": {
+        "total": 7,
+        "supported": 2,
+        "partial": 4,
+        "none": 1,
+        "avg_pass_rate": 75.14
+      },
+      "ES2020": {
+        "total": 10,
+        "supported": 2,
+        "partial": 5,
+        "none": 3,
+        "avg_pass_rate": 56.090999999999994
+      },
+      "ES2021": {
+        "total": 6,
+        "supported": 1,
+        "partial": 2,
+        "none": 3,
+        "avg_pass_rate": 30.664999999999996
+      },
+      "ES2022": {
+        "total": 9,
+        "supported": 2,
+        "partial": 3,
+        "none": 4,
+        "avg_pass_rate": 46.419999999999995
+      },
+      "ES2023": {
+        "total": 7,
+        "supported": 0,
+        "partial": 7,
+        "none": 0,
+        "avg_pass_rate": 90.25857142857141
+      },
+      "ES2024": {
+        "total": 9,
+        "supported": 3,
+        "partial": 6,
+        "none": 0,
+        "avg_pass_rate": 81.34888888888888
+      },
+      "ES2025": {
+        "total": 8,
+        "supported": 2,
+        "partial": 5,
+        "none": 1,
+        "avg_pass_rate": 56.79624999999999
+      }
+    }
+  }
+}
+            </script>
+        </div>
+        
+        <p><strong>Raw JSON Data:</strong> <button onclick="document.getElementById('raw-json').style.display = document.getElementById('raw-json').style.display === 'none' ? 'block' : 'none'">Toggle</button></p>
+        <pre id="raw-json" style="display: none;">{
+  "generated": "2025-09-14T13:48:50.104949",
+  "rhino_version": "1.8.1-SNAPSHOT",
+  "features": {
+    "ES2015": {
+      "Arrow Functions": {
+        "path": "language/expressions/arrow-function",
+        "passed": 192,
+        "total": 343,
+        "pass_rate": 55.98,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Classes": {
+        "path": "language/statements/class",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Template Literals": {
+        "path": "language/expressions/template-literal",
+        "passed": 55,
+        "total": 57,
+        "pass_rate": 96.49,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Destructuring": {
+        "path": "language/expressions/assignment/destructuring",
+        "passed": 301,
+        "total": 485,
+        "pass_rate": 62.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Default Parameters": {
+        "path": "language/expressions/function/default-parameters",
+        "passed": 115,
+        "total": 264,
+        "pass_rate": 43.56,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Rest Parameters": {
+        "path": "language/expressions/function/rest-parameters",
+        "passed": 115,
+        "total": 264,
+        "pass_rate": 43.56,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Spread Operator": {
+        "path": "language/expressions/spread",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      },
+      "for...of Loop": {
+        "path": "language/statements/for-of",
+        "passed": 313,
+        "total": 751,
+        "pass_rate": 41.68,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Symbols": {
+        "path": "built-ins/Symbol",
+        "passed": 75,
+        "total": 94,
+        "pass_rate": 79.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Generators": {
+        "path": "built-ins/GeneratorFunction",
+        "passed": 15,
+        "total": 23,
+        "pass_rate": 65.22,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Promises": {
+        "path": "built-ins/Promise",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Map": {
+        "path": "built-ins/Map",
+        "passed": 169,
+        "total": 204,
+        "pass_rate": 82.84,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Set": {
+        "path": "built-ins/Set",
+        "passed": 294,
+        "total": 381,
+        "pass_rate": 77.17,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "WeakMap": {
+        "path": "built-ins/WeakMap",
+        "passed": 101,
+        "total": 141,
+        "pass_rate": 71.63,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "WeakSet": {
+        "path": "built-ins/WeakSet",
+        "passed": 84,
+        "total": 85,
+        "pass_rate": 98.82,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Proxy": {
+        "path": "built-ins/Proxy",
+        "passed": 242,
+        "total": 311,
+        "pass_rate": 77.81,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Reflect": {
+        "path": "built-ins/Reflect",
+        "passed": 141,
+        "total": 153,
+        "pass_rate": 92.16,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.from": {
+        "path": "built-ins/Array/from",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.of": {
+        "path": "built-ins/Array/of",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Object.assign": {
+        "path": "built-ins/Object/assign",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      }
+    },
+    "ES2016": {
+      "Exponentiation Operator": {
+        "path": "language/expressions/exponentiation",
+        "passed": 43,
+        "total": 44,
+        "pass_rate": 97.73,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Array.includes": {
+        "path": "built-ins/Array/prototype/includes",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      }
+    },
+    "ES2017": {
+      "async/await": {
+        "path": "language/expressions/async-function",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Object.values": {
+        "path": "built-ins/Object/values",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.entries": {
+        "path": "built-ins/Object/entries",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.getOwnPropertyDescriptors": {
+        "path": "built-ins/Object/getOwnPropertyDescriptors",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.padStart": {
+        "path": "built-ins/String/prototype/padStart",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.padEnd": {
+        "path": "built-ins/String/prototype/padEnd",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Trailing Commas": {
+        "path": "language/expressions/trailing-comma",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      }
+    },
+    "ES2018": {
+      "Async Iterators": {
+        "path": "built-ins/AsyncIteratorPrototype",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Promise.finally": {
+        "path": "built-ins/Promise/prototype/finally",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Rest/Spread Properties": {
+        "path": "language/expressions/object/rest-spread",
+        "passed": 472,
+        "total": 1170,
+        "pass_rate": 40.34,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp Named Groups": {
+        "path": "built-ins/RegExp/named-groups",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp Lookbehind": {
+        "path": "built-ins/RegExp/lookbehind",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "RegExp s flag": {
+        "path": "built-ins/RegExp/dotAll",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2019": {
+      "Array.flat": {
+        "path": "built-ins/Array/prototype/flat",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.flatMap": {
+        "path": "built-ins/Array/prototype/flatMap",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Object.fromEntries": {
+        "path": "built-ins/Object/fromEntries",
+        "passed": 0,
+        "total": 19,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      },
+      "String.trimStart": {
+        "path": "built-ins/String/prototype/trimStart",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.trimEnd": {
+        "path": "built-ins/String/prototype/trimEnd",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Symbol.description": {
+        "path": "built-ins/Symbol/prototype/description",
+        "passed": 75,
+        "total": 94,
+        "pass_rate": 79.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "JSON.stringify": {
+        "path": "built-ins/JSON/stringify",
+        "passed": 120,
+        "total": 165,
+        "pass_rate": 72.73,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2020": {
+      "BigInt": {
+        "path": "built-ins/BigInt",
+        "passed": 68,
+        "total": 75,
+        "pass_rate": 90.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "BigInt64Array": {
+        "path": "built-ins/BigInt64Array",
+        "passed": 68,
+        "total": 75,
+        "pass_rate": 90.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "BigUint64Array": {
+        "path": "built-ins/BigUint64Array",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      },
+      "Promise.allSettled": {
+        "path": "built-ins/Promise/allSettled",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "globalThis": {
+        "path": "built-ins/global",
+        "passed": 29,
+        "total": 29,
+        "pass_rate": 100.0,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Optional Chaining": {
+        "path": "language/expressions/optional-chaining",
+        "passed": 20,
+        "total": 38,
+        "pass_rate": 52.63,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Nullish Coalescing": {
+        "path": "language/expressions/coalesce",
+        "passed": 22,
+        "total": 24,
+        "pass_rate": 91.67,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.matchAll": {
+        "path": "built-ins/String/prototype/matchAll",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Dynamic Import": {
+        "path": "language/expressions/dynamic-import",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "import.meta": {
+        "path": "language/expressions/import.meta",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      }
+    },
+    "ES2021": {
+      "String.replaceAll": {
+        "path": "built-ins/String/prototype/replaceAll",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Promise.any": {
+        "path": "built-ins/Promise/any",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "WeakRef": {
+        "path": "built-ins/WeakRef",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "FinalizationRegistry": {
+        "path": "built-ins/FinalizationRegistry",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Logical Assignment": {
+        "path": "language/expressions/logical-assignment",
+        "passed": 38,
+        "total": 78,
+        "pass_rate": 48.72,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Numeric Separators": {
+        "path": "language/expressions/numeric-separator",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": false,
+        "not_found": true,
+        "status": "None"
+      }
+    },
+    "ES2022": {
+      "Class Fields": {
+        "path": "language/statements/class/fields",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Private Methods": {
+        "path": "language/statements/class/private-methods",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Static Class Fields": {
+        "path": "language/statements/class/static",
+        "passed": 0,
+        "total": 14,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      },
+      "Top-level await": {
+        "path": "language/module-code/top-level-await",
+        "passed": 0,
+        "total": 0,
+        "pass_rate": 0,
+        "disabled": true,
+        "status": "None"
+      },
+      "Error.cause": {
+        "path": "built-ins/Error/cause",
+        "passed": 46,
+        "total": 53,
+        "pass_rate": 86.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.at": {
+        "path": "built-ins/Array/prototype/at",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.at": {
+        "path": "built-ins/String/prototype/at",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Object.hasOwn": {
+        "path": "built-ins/Object/hasOwn",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "RegExp d flag": {
+        "path": "built-ins/RegExp/match-indices",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2023": {
+      "Array.findLast": {
+        "path": "built-ins/Array/prototype/findLast",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.findLastIndex": {
+        "path": "built-ins/Array/prototype/findLastIndex",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toReversed": {
+        "path": "built-ins/Array/prototype/toReversed",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toSorted": {
+        "path": "built-ins/Array/prototype/toSorted",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.toSpliced": {
+        "path": "built-ins/Array/prototype/toSpliced",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Array.with": {
+        "path": "built-ins/Array/prototype/with",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Hashbang Grammar": {
+        "path": "language/comments/hashbang",
+        "passed": 43,
+        "total": 52,
+        "pass_rate": 82.69,
+        "disabled": false,
+        "status": "Mostly"
+      }
+    },
+    "ES2024": {
+      "Array.fromAsync": {
+        "path": "built-ins/Array/fromAsync",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Promise.withResolvers": {
+        "path": "built-ins/Promise/withResolvers",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Object.groupBy": {
+        "path": "built-ins/Object/groupBy",
+        "passed": 3289,
+        "total": 3410,
+        "pass_rate": 96.45,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Map.groupBy": {
+        "path": "built-ins/Map/groupBy",
+        "passed": 169,
+        "total": 204,
+        "pass_rate": 82.84,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "String.isWellFormed": {
+        "path": "built-ins/String/prototype/isWellFormed",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "String.toWellFormed": {
+        "path": "built-ins/String/prototype/toWellFormed",
+        "passed": 1154,
+        "total": 1212,
+        "pass_rate": 95.21,
+        "disabled": false,
+        "status": "Full"
+      },
+      "ArrayBuffer.transfer": {
+        "path": "built-ins/ArrayBuffer/prototype/transfer",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "ArrayBuffer.resize": {
+        "path": "built-ins/ArrayBuffer/prototype/resize",
+        "passed": 2816,
+        "total": 3077,
+        "pass_rate": 91.52,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "RegExp v flag": {
+        "path": "built-ins/RegExp/unicode-sets",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      }
+    },
+    "ES2025": {
+      "Iterator Helpers": {
+        "path": "built-ins/Iterator",
+        "passed": 40,
+        "total": 432,
+        "pass_rate": 9.260000000000005,
+        "disabled": false,
+        "status": "Limited"
+      },
+      "Set Methods": {
+        "path": "built-ins/Set/prototype",
+        "passed": 294,
+        "total": 381,
+        "pass_rate": 77.17,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "Promise.try": {
+        "path": "built-ins/Promise/try",
+        "passed": 256,
+        "total": 639,
+        "pass_rate": 40.06,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Math.sumPrecise": {
+        "path": "built-ins/Math/sumPrecise",
+        "passed": 316,
+        "total": 327,
+        "pass_rate": 96.64,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Math.f16round": {
+        "path": "built-ins/Math/f16round",
+        "passed": 316,
+        "total": 327,
+        "pass_rate": 96.64,
+        "disabled": false,
+        "status": "Full"
+      },
+      "Error.isError": {
+        "path": "built-ins/Error/isError",
+        "passed": 46,
+        "total": 53,
+        "pass_rate": 86.78999999999999,
+        "disabled": false,
+        "status": "Mostly"
+      },
+      "RegExp.escape": {
+        "path": "built-ins/RegExp/escape",
+        "passed": 893,
+        "total": 1868,
+        "pass_rate": 47.81,
+        "disabled": false,
+        "status": "Partial"
+      },
+      "Temporal": {
+        "path": "built-ins/Temporal",
+        "passed": 0,
+        "total": 4255,
+        "pass_rate": 0.0,
+        "disabled": false,
+        "status": "None"
+      }
+    }
+  },
+  "summary": {
+    "total_features": 91,
+    "fully_supported": 21,
+    "partially_supported": 53,
+    "not_supported": 17,
+    "by_version": {
+      "ES2015": {
+        "total": 20,
+        "supported": 3,
+        "partial": 15,
+        "none": 2,
+        "avg_pass_rate": 65.41600000000001
+      },
+      "ES2016": {
+        "total": 2,
+        "supported": 1,
+        "partial": 1,
+        "none": 0,
+        "avg_pass_rate": 94.625
+      },
+      "ES2017": {
+        "total": 7,
+        "supported": 5,
+        "partial": 0,
+        "none": 2,
+        "avg_pass_rate": 68.53857142857143
+      },
+      "ES2018": {
+        "total": 6,
+        "supported": 0,
+        "partial": 5,
+        "none": 1,
+        "avg_pass_rate": 37.305
+      },
+      "ES2019": {
+        "total": 7,
+        "supported": 2,
+        "partial": 4,
+        "none": 1,
+        "avg_pass_rate": 75.14
+      },
+      "ES2020": {
+        "total": 10,
+        "supported": 2,
+        "partial": 5,
+        "none": 3,
+        "avg_pass_rate": 56.090999999999994
+      },
+      "ES2021": {
+        "total": 6,
+        "supported": 1,
+        "partial": 2,
+        "none": 3,
+        "avg_pass_rate": 30.664999999999996
+      },
+      "ES2022": {
+        "total": 9,
+        "supported": 2,
+        "partial": 3,
+        "none": 4,
+        "avg_pass_rate": 46.419999999999995
+      },
+      "ES2023": {
+        "total": 7,
+        "supported": 0,
+        "partial": 7,
+        "none": 0,
+        "avg_pass_rate": 90.25857142857141
+      },
+      "ES2024": {
+        "total": 9,
+        "supported": 3,
+        "partial": 6,
+        "none": 0,
+        "avg_pass_rate": 81.34888888888888
+      },
+      "ES2025": {
+        "total": 8,
+        "supported": 2,
+        "partial": 5,
+        "none": 1,
+        "avg_pass_rate": 56.79624999999999
+      }
+    }
+  }
+}</pre>
+        
+        <script>
+            // Feature data is available in the script tag above
+            const featureData = JSON.parse(document.querySelector('#feature-data script').textContent);
+            console.log('Rhino Feature Data:', featureData);
+            
+            // Add interactive features here
+            window.rhinoFeatureData = featureData;
+        </script>
+    </div>
+</body>
+</html>
