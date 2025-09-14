@@ -44,13 +44,20 @@ if [ -f "$PROJECT_ROOT/FEATURES.md" ] && [ -f "$PROJECT_ROOT/rhino-features.json
 import json
 with open('$PROJECT_ROOT/rhino-features.json', 'r') as f:
     data = json.load(f)
-    summary = data['summary']
-    total = summary['total_features']
-    if total > 0:
-        print(f'   Total Features: {total}')
-        print(f'   Fully Supported: {summary[\"fully_supported\"]} ({summary[\"fully_supported\"]/total*100:.1f}%)')
-        print(f'   Partially Supported: {summary[\"partially_supported\"]} ({summary[\"partially_supported\"]/total*100:.1f}%)')
-        print(f'   Not Supported: {summary[\"not_supported\"]} ({summary[\"not_supported\"]/total*100:.1f}%)')
+    total_features = 0
+    total_tests = 0
+    total_passed = 0
+    for cat_data in data['categories'].values():
+        total_features += cat_data['statistics']['total_features']
+        total_tests += cat_data['statistics']['total_tests']
+        total_passed += cat_data['statistics']['passed_tests']
+    if total_tests > 0:
+        pass_rate = (total_passed / total_tests * 100)
+        print(f'   Total Categories: {len(data[\"categories\"])}')
+        print(f'   Total Test Suites: {total_features:,}')
+        print(f'   Total Tests: {total_tests:,}')
+        print(f'   Tests Passed: {total_passed:,}')
+        print(f'   Overall Pass Rate: {pass_rate:.1f}%')
 "
 else
     echo "❌ Error: Failed to generate documentation files"

@@ -1,275 +1,341 @@
-# Rhino ECMAScript Feature Support
-*Auto-generated from test262 results on 2025-09-14*
+# Rhino Feature Documentation
+*Auto-generated from test262.properties on 2025-09-14*
 
 ## Overview
 
-This document provides a comprehensive list of ECMAScript features and their support status in Rhino.
-It is automatically generated from test262 test suite results.
+This document provides comprehensive documentation of ALL features tested in Rhino.
+Data is extracted directly from test262.properties, showing actual test pass rates.
 
-## Feature Support Legend
+## Summary Statistics
 
-- **Full Support** (95-100% tests passing)
-- **Mostly Supported** (75-94% tests passing)
-- **Partial Support** (25-74% tests passing)
-- **Limited Support** (1-24% tests passing)
-- **Not Supported** (0% tests passing)
+- **Total Test Suites**: 3025
+- **Total Tests**: 35,407
+- **Tests Passed**: 21,621
+- **Overall Pass Rate**: 61.1%
 
-## Summary by ECMAScript Version
+## Annex B (Legacy)
 
-| Version | Full | Mostly | Partial | Limited | None | Overall |
-|---------|------|--------|---------|---------|------|---------|
-| ES2015 | 3 | 7 | 8 | 0 | 2 | 65.4% |
-| ES2016 | 1 | 1 | 0 | 0 | 0 | 94.6% |
-| ES2017 | 5 | 0 | 0 | 0 | 2 | 68.5% |
-| ES2018 | 0 | 0 | 5 | 0 | 1 | 37.3% |
-| ES2019 | 2 | 3 | 1 | 0 | 1 | 75.1% |
-| ES2020 | 2 | 3 | 2 | 0 | 3 | 56.1% |
-| ES2021 | 1 | 0 | 2 | 0 | 3 | 30.7% |
-| ES2022 | 2 | 2 | 1 | 0 | 4 | 46.4% |
-| ES2023 | 0 | 7 | 0 | 0 | 0 | 90.3% |
-| ES2024 | 3 | 4 | 2 | 0 | 0 | 81.3% |
-| ES2025 | 1 | 2 | 2 | 1 | 1 | 51.1% |
+**Category Pass Rate**: 59.1% (642/1,086 tests)
 
-## ES2015 Features
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| built-ins | 75.9% | 183/241 | 🟢 Mostly |
+| language | 54.3% | 459/845 | 🟡 Partial |
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| WeakSet | Full | 98.8% | 84/85 |
-| Template Literals | Full | 96.5% | 55/57 |
-| Object.assign | Full | 96.5% | 3289/3410 |
-| Reflect | Mostly | 92.2% | 141/153 |
-| Array.from | Mostly | 91.5% | 2816/3077 |
-| Array.of | Mostly | 91.5% | 2816/3077 |
-| Map | Mostly | 82.8% | 169/204 |
-| Symbols | Mostly | 79.8% | 75/94 |
-| Proxy | Mostly | 77.8% | 242/311 |
-| Set | Mostly | 77.2% | 294/381 |
-| WeakMap | Partial | 71.6% | 101/141 |
-| Generators | Partial | 65.2% | 15/23 |
-| Destructuring | Partial | 62.1% | 301/485 |
-| Arrow Functions | Partial | 56.0% | 192/343 |
-| Default Parameters | Partial | 43.6% | 115/264 |
-| Rest Parameters | Partial | 43.6% | 115/264 |
-| for...of Loop | Partial | 41.7% | 313/751 |
-| Promises | Partial | 40.1% | 256/639 |
-| Classes | None | 0.0% | N/A |
-| Spread Operator | None | 0.0% | N/A |
+## Built-in Objects
 
-## ES2016 Features
+**Category Pass Rate**: 62.2% (1,838/2,954 tests)
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Exponentiation Operator | Full | 97.7% | 43/44 |
-| Array.includes | Mostly | 91.5% | 2816/3077 |
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Math | 96.6% | 316/327 | ✅ Full |
+| Date | 85.7% | 509/594 | 🟢 Mostly |
+| JSON | 72.7% | 120/165 | 🟡 Partial |
+| RegExp | 47.8% | 893/1868 | 🟡 Partial |
 
-## ES2017 Features
+## Collections
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Object.values | Full | 96.5% | 3289/3410 |
-| Object.entries | Full | 96.5% | 3289/3410 |
-| Object.getOwnPropertyDescriptors | Full | 96.5% | 3289/3410 |
-| String.padStart | Full | 95.2% | 1154/1212 |
-| String.padEnd | Full | 95.2% | 1154/1212 |
-| async/await | None | 0.0% | N/A |
-| Trailing Commas | None | 0.0% | N/A |
+**Category Pass Rate**: 79.9% (648/811 tests)
 
-## ES2018 Features
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| WeakSet | 98.8% | 84/85 | ✅ Full |
+| Map | 82.8% | 169/204 | 🟢 Mostly |
+| Set | 77.2% | 294/381 | 🟢 Mostly |
+| WeakMap | 71.6% | 101/141 | 🟡 Partial |
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| RegExp Named Groups | Partial | 47.8% | 893/1868 |
-| RegExp Lookbehind | Partial | 47.8% | 893/1868 |
-| RegExp s flag | Partial | 47.8% | 893/1868 |
-| Rest/Spread Properties | Partial | 40.3% | 472/1170 |
-| Promise.finally | Partial | 40.1% | 256/639 |
-| Async Iterators | None | 0.0% | N/A |
+## Core Objects - Array
 
-## ES2019 Features
+**Category Pass Rate**: 91.5% (2,816/3,077 tests)
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| String.trimStart | Full | 95.2% | 1154/1212 |
-| String.trimEnd | Full | 95.2% | 1154/1212 |
-| Array.flat | Mostly | 91.5% | 2816/3077 |
-| Array.flatMap | Mostly | 91.5% | 2816/3077 |
-| Symbol.description | Mostly | 79.8% | 75/94 |
-| JSON.stringify | Partial | 72.7% | 120/165 |
-| Object.fromEntries | None | 0.0% | 0/19 |
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Array | 91.5% | 2816/3077 | 🟢 Mostly |
 
-## ES2020 Features
+## Core Objects - Boolean
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| globalThis | Full | 100.0% | 29/29 |
-| String.matchAll | Full | 95.2% | 1154/1212 |
-| Nullish Coalescing | Mostly | 91.7% | 22/24 |
-| BigInt | Mostly | 90.7% | 68/75 |
-| BigInt64Array | Mostly | 90.7% | 68/75 |
-| Optional Chaining | Partial | 52.6% | 20/38 |
-| Promise.allSettled | Partial | 40.1% | 256/639 |
-| BigUint64Array | None | 0.0% | N/A |
-| Dynamic Import | None | 0.0% | N/A |
-| import.meta | None | 0.0% | N/A |
+**Category Pass Rate**: 98.0% (50/51 tests)
 
-## ES2021 Features
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Boolean | 98.0% | 50/51 | ✅ Full |
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| String.replaceAll | Full | 95.2% | 1154/1212 |
-| Logical Assignment | Partial | 48.7% | 38/78 |
-| Promise.any | Partial | 40.1% | 256/639 |
-| WeakRef | None | 0.0% | N/A |
-| FinalizationRegistry | None | 0.0% | N/A |
-| Numeric Separators | None | 0.0% | N/A |
+## Core Objects - Number
 
-## ES2022 Features
+**Category Pass Rate**: 97.6% (327/335 tests)
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Object.hasOwn | Full | 96.5% | 3289/3410 |
-| String.at | Full | 95.2% | 1154/1212 |
-| Array.at | Mostly | 91.5% | 2816/3077 |
-| Error.cause | Mostly | 86.8% | 46/53 |
-| RegExp d flag | Partial | 47.8% | 893/1868 |
-| Class Fields | None | 0.0% | N/A |
-| Private Methods | None | 0.0% | N/A |
-| Static Class Fields | None | 0.0% | 0/14 |
-| Top-level await | None | 0.0% | N/A |
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Number | 97.6% | 327/335 | ✅ Full |
 
-## ES2023 Features
+## Core Objects - Object
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Array.findLast | Mostly | 91.5% | 2816/3077 |
-| Array.findLastIndex | Mostly | 91.5% | 2816/3077 |
-| Array.toReversed | Mostly | 91.5% | 2816/3077 |
-| Array.toSorted | Mostly | 91.5% | 2816/3077 |
-| Array.toSpliced | Mostly | 91.5% | 2816/3077 |
-| Array.with | Mostly | 91.5% | 2816/3077 |
-| Hashbang Grammar | Mostly | 82.7% | 43/52 |
+**Category Pass Rate**: 96.5% (3,289/3,410 tests)
 
-## ES2024 Features
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Object | 96.5% | 3289/3410 | ✅ Full |
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Object.groupBy | Full | 96.5% | 3289/3410 |
-| String.isWellFormed | Full | 95.2% | 1154/1212 |
-| String.toWellFormed | Full | 95.2% | 1154/1212 |
-| Array.fromAsync | Mostly | 91.5% | 2816/3077 |
-| ArrayBuffer.transfer | Mostly | 91.5% | 2816/3077 |
-| ArrayBuffer.resize | Mostly | 91.5% | 2816/3077 |
-| Map.groupBy | Mostly | 82.8% | 169/204 |
-| RegExp v flag | Partial | 47.8% | 893/1868 |
-| Promise.withResolvers | Partial | 40.1% | 256/639 |
+## Core Objects - String
 
-## ES2025 Features
+**Category Pass Rate**: 95.2% (1,154/1,212 tests)
 
-| Feature | Status | Pass Rate | Tests |
-|---------|--------|-----------|-------|
-| Math.f16round | Full | 96.6% | 316/327 |
-| Error.isError | Mostly | 86.8% | 46/53 |
-| Set Methods | Mostly | 77.2% | 294/381 |
-| RegExp.escape | Partial | 47.8% | 893/1868 |
-| Promise.try | Partial | 40.1% | 256/639 |
-| Iterator Helpers | Limited | 9.3% | 40/432 |
-| Temporal | None | 0.0% | 0/4255 |
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| String | 95.2% | 1154/1212 | ✅ Full |
 
-## Fully Working Modern Features
+## ES6+ Objects
 
-These ES2017+ features have >95% test262 pass rate:
+**Category Pass Rate**: 59.6% (714/1,197 tests)
 
-### ES2017
-- Object.values
-- Object.entries
-- Object.getOwnPropertyDescriptors
-- String.padStart
-- String.padEnd
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| Reflect | 92.2% | 141/153 | 🟢 Mostly |
+| Symbol | 79.8% | 75/94 | 🟢 Mostly |
+| Proxy | 77.8% | 242/311 | 🟢 Mostly |
+| Promise | 40.1% | 256/639 | 🟡 Partial |
 
-### ES2019
-- String.trimStart
-- String.trimEnd
+## Language - Expressions
 
-### ES2020
-- globalThis
-- String.matchAll
+**Category Pass Rate**: 64.6% (3,398/5,263 tests)
 
-### ES2021
-- String.replaceAll
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| bitwise-not | 100.0% | 16/16 | ✅ Full |
+| concatenation | 100.0% | 5/5 | ✅ Full |
+| does-not-equals | 100.0% | 38/38 | ✅ Full |
+| equals | 100.0% | 47/47 | ✅ Full |
+| greater-than | 100.0% | 49/49 | ✅ Full |
+| greater-than-or-equal | 100.0% | 43/43 | ✅ Full |
+| grouping | 100.0% | 9/9 | ✅ Full |
+| less-than | 100.0% | 45/45 | ✅ Full |
+| less-than-or-equal | 100.0% | 47/47 | ✅ Full |
+| logical-not | 100.0% | 19/19 | ✅ Full |
+| property-accessors | 100.0% | 21/21 | ✅ Full |
+| relational | 100.0% | 1/1 | ✅ Full |
+| strict-does-not-equals | 100.0% | 30/30 | ✅ Full |
+| strict-equals | 100.0% | 30/30 | ✅ Full |
+| this | 100.0% | 6/6 | ✅ Full |
+| typeof | 100.0% | 16/16 | ✅ Full |
+| unary-minus | 100.0% | 14/14 | ✅ Full |
+| unary-plus | 100.0% | 17/17 | ✅ Full |
+| void | 100.0% | 9/9 | ✅ Full |
+| division | 97.8% | 44/45 | ✅ Full |
+| left-shift | 97.8% | 44/45 | ✅ Full |
+| exponentiation | 97.7% | 43/44 | ✅ Full |
+| modulus | 97.5% | 39/40 | ✅ Full |
+| multiplication | 97.5% | 39/40 | ✅ Full |
+| subtraction | 97.4% | 37/38 | ✅ Full |
+| right-shift | 97.3% | 36/37 | ✅ Full |
+| bitwise-and | 96.7% | 29/30 | ✅ Full |
+| bitwise-or | 96.7% | 29/30 | ✅ Full |
+| bitwise-xor | 96.7% | 29/30 | ✅ Full |
+| template-literal | 96.5% | 55/57 | ✅ Full |
+| addition | 95.8% | 46/48 | ✅ Full |
+| unsigned-right-shift | 95.6% | 43/45 | ✅ Full |
+| logical-and | 94.4% | 17/18 | 🟢 Mostly |
+| logical-or | 94.4% | 17/18 | 🟢 Mostly |
+| yield | 93.7% | 59/63 | 🟢 Mostly |
+| assignmenttargettype | 92.3% | 299/324 | 🟢 Mostly |
+| coalesce | 91.7% | 22/24 | 🟢 Mostly |
+| delete | 91.3% | 63/69 | 🟢 Mostly |
+| conditional | 90.9% | 20/22 | 🟢 Mostly |
+| tagged-template | 88.9% | 24/27 | 🟢 Mostly |
+| instanceof | 88.4% | 38/43 | 🟢 Mostly |
+| comma | 83.3% | 5/6 | 🟢 Mostly |
+| postfix-decrement | 75.7% | 28/37 | 🟢 Mostly |
+| postfix-increment | 73.7% | 28/38 | 🟡 Partial |
+| prefix-increment | 72.7% | 24/33 | 🟡 Partial |
+| compound-assignment | 72.5% | 329/454 | 🟡 Partial |
+| prefix-decrement | 70.6% | 24/34 | 🟡 Partial |
+| call | 63.0% | 58/92 | 🟡 Partial |
+| new | 62.7% | 37/59 | 🟡 Partial |
+| assignment | 62.1% | 301/485 | 🟡 Partial |
+| ... and 18 more | | | |
 
-### ES2022
-- String.at
-- Object.hasOwn
+## Language - Statements
 
-### ES2024
-- Object.groupBy
-- String.isWellFormed
-- String.toWellFormed
+**Category Pass Rate**: 51.1% (1,631/3,190 tests)
 
-### ES2025
-- Math.f16round
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| break | 100.0% | 20/20 | ✅ Full |
+| continue | 100.0% | 24/24 | ✅ Full |
+| debugger | 100.0% | 2/2 | ✅ Full |
+| empty | 100.0% | 2/2 | ✅ Full |
+| expression | 100.0% | 3/3 | ✅ Full |
+| throw | 100.0% | 14/14 | ✅ Full |
+| return | 93.8% | 15/16 | 🟢 Mostly |
+| with | 84.5% | 153/181 | 🟢 Mostly |
+| do-while | 72.2% | 26/36 | 🟡 Partial |
+| block | 66.7% | 14/21 | 🟡 Partial |
+| while | 65.8% | 25/38 | 🟡 Partial |
+| for-in | 65.2% | 75/115 | 🟡 Partial |
+| variable | 65.2% | 116/178 | 🟡 Partial |
+| function | 64.1% | 289/451 | 🟡 Partial |
+| let | 44.8% | 65/145 | 🟡 Partial |
+| switch | 44.1% | 49/111 | 🟡 Partial |
+| try | 43.8% | 88/201 | 🟡 Partial |
+| for-of | 41.7% | 313/751 | 🟡 Partial |
+| for | 40.3% | 155/385 | 🟡 Partial |
+| if | 39.1% | 27/69 | 🟡 Partial |
+| labeled | 37.5% | 9/24 | 🟡 Partial |
+| generators | 36.8% | 98/266 | 🟡 Partial |
+| const | 36.0% | 49/136 | 🟡 Partial |
+| async-function | 0.0% | 0/0 | ❌ None |
+| async-generator | 0.0% | 0/0 | ❌ None |
+| await-using | 0.0% | 0/0 | ❌ None |
+| class | 0.0% | 0/0 | ❌ None |
+| for-await-of | 0.0% | 0/0 | ❌ None |
+| using | 0.0% | 0/1 | ❌ None |
 
+## Language - Types
 
-## Not Supported Features
+**Category Pass Rate**: 92.0% (104/113 tests)
 
-These features have 0% test262 pass rate or are disabled:
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| types | 92.0% | 104/113 | 🟢 Mostly |
 
-### ES2015
-- Classes
-- Spread Operator
+## Language Features
 
-### ES2017
-- async/await
-- Trailing Commas
+**Category Pass Rate**: 65.2% (1,579/2,423 tests)
 
-### ES2018
-- Async Iterators
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| asi | 100.0% | 102/102 | ✅ Full |
+| identifier-resolution | 100.0% | 14/14 | ✅ Full |
+| keywords | 100.0% | 25/25 | ✅ Full |
+| line-terminators | 100.0% | 41/41 | ✅ Full |
+| punctuators | 100.0% | 11/11 | ✅ Full |
+| source-text | 100.0% | 1/1 | ✅ Full |
+| white-space | 97.0% | 65/67 | ✅ Full |
+| directive-prologue | 96.8% | 60/62 | ✅ Full |
+| reserved-words | 92.6% | 25/27 | 🟢 Mostly |
+| literals | 92.0% | 491/534 | 🟢 Mostly |
+| future-reserved-words | 87.3% | 48/55 | 🟢 Mostly |
+| comments | 82.7% | 43/52 | 🟢 Mostly |
+| statementList | 73.8% | 59/80 | 🟡 Partial |
+| identifiers | 62.3% | 162/260 | 🟡 Partial |
+| function-code | 55.8% | 121/217 | 🟡 Partial |
+| rest-parameters | 54.5% | 6/11 | 🟡 Partial |
+| block-scope | 53.1% | 77/145 | 🟡 Partial |
+| destructuring | 52.6% | 10/19 | 🟡 Partial |
+| global-code | 38.1% | 16/42 | 🟡 Partial |
+| computed-property-names | 35.4% | 17/48 | 🟡 Partial |
+| eval-code | 30.5% | 106/347 | 🟡 Partial |
+| arguments-object | 30.0% | 79/263 | 🟡 Partial |
+| export | 0.0% | 0/0 | ❌ None |
+| import | 0.0% | 0/0 | ❌ None |
+| module-code | 0.0% | 0/0 | ❌ None |
 
-### ES2019
-- Object.fromEntries
+## Other
 
-### ES2020
-- BigUint64Array
-- Dynamic Import
-- import.meta
+**Category Pass Rate**: 7.2% (93/1,287 tests)
 
-### ES2021
-- WeakRef
-- FinalizationRegistry
-- Numeric Separators
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| not-a-constructor.js | 100.0% | 0/0 | ✅ Full |
+| not-a-constructor.js | 100.0% | 0/0 | ✅ Full |
+| year-number-relative.js | 100.0% | 0/0 | ✅ Full |
+| not-a-constructor.js | 100.0% | 0/0 | ✅ Full |
+| createdynfn-html-close-comment-params.js | 100.0% | 0/0 | ✅ Full |
+| createdynfn-html-open-comment-params.js | 100.0% | 0/0 | ✅ Full |
+| createdynfn-no-line-terminator-html-close-comment-body.js | 100.0% | 0/0 | ✅ Full |
+| pattern-regexp-flags-defined.js | 100.0% | 0/0 | ✅ Full |
+| this-cross-realm-instance.js | 100.0% | 0/0 | ✅ Full |
+| Symbol.match-getter-recompiles-source.js | 100.0% | 0/0 | ✅ Full |
+| incomplete_hex_unicode_escape.js | 100.0% | 0/0 | ✅ Full |
+| RegExp-leading-escape-BMP.js | 100.0% | 0/0 | ✅ Full |
+| RegExp-trailing-escape-BMP.js | 100.0% | 0/0 | ✅ Full |
+| length.js | 100.0% | 0/0 | ✅ Full |
+| length.js | 100.0% | 0/0 | ✅ Full |
+| length.js | 100.0% | 0/0 | ✅ Full |
+| length.js | 100.0% | 0/0 | ✅ Full |
+| start-and-length-as-numbers.js | 100.0% | 0/0 | ✅ Full |
+| name.js | 100.0% | 0/0 | ✅ Full |
+| reference-trimStart.js | 100.0% | 0/0 | ✅ Full |
+| name.js | 100.0% | 0/0 | ✅ Full |
+| reference-trimEnd.js | 100.0% | 0/0 | ✅ Full |
+| multi-line-html-close.js | 100.0% | 0/0 | ✅ Full |
+| single-line-html-close.js | 100.0% | 0/0 | ✅ Full |
+| class-escape.js | 100.0% | 0/0 | ✅ Full |
+| identity-escape.js | 100.0% | 0/0 | ✅ Full |
+| legacy-octal-escape.js | 100.0% | 0/0 | ✅ Full |
+| let-initializer.js | 100.0% | 0/0 | ✅ Full |
+| compare-array-arguments.js | 100.0% | 0/0 | ✅ Full |
+| isConstructor.js | 100.0% | 0/0 | ✅ Full |
+| nativeFunctionMatcher.js | 100.0% | 0/0 | ✅ Full |
+| proto-from-ctor-realm.js | 100.0% | 0/0 | ✅ Full |
+| define-own-prop-length-coercion-order-set.js | 100.0% | 0/0 | ✅ Full |
+| proto-from-ctor-realm.js | 100.0% | 0/0 | ✅ Full |
+| Array.prototype.concat_non-array.js | 100.0% | 0/0 | ✅ Full |
+| create-proto-from-ctor-realm-array.js | 100.0% | 0/0 | ✅ Full |
+| create-proxy.js | 100.0% | 0/0 | ✅ Full |
+| is-concat-spreadable-is-array-proxy-revoked.js | 100.0% | 0/0 | ✅ Full |
+| coerced-values-start-change-start.js | 100.0% | 0/0 | ✅ Full |
+| coerced-values-start-change-target.js | 100.0% | 0/0 | ✅ Full |
+| create-proto-from-ctor-realm-array.js | 100.0% | 0/0 | ✅ Full |
+| create-proxy.js | 100.0% | 0/0 | ✅ Full |
+| proxy-access-count.js | 100.0% | 0/0 | ✅ Full |
+| this-value-ctor-non-object.js | 100.0% | 0/0 | ✅ Full |
+| this-value-ctor-object-species-custom-ctor.js | 100.0% | 0/0 | ✅ Full |
+| this-value-ctor-object-species-custom-ctor-poisoned-throws.js | 100.0% | 0/0 | ✅ Full |
+| proxy-access-count.js | 100.0% | 0/0 | ✅ Full |
+| calls-only-has-on-prototype-after-length-zeroed.js | 100.0% | 0/0 | ✅ Full |
+| length-zero-returns-minus-one.js | 100.0% | 0/0 | ✅ Full |
+| calls-only-has-on-prototype-after-length-zeroed.js | 100.0% | 0/0 | ✅ Full |
+| ... and 2787 more | | | |
 
-### ES2022
-- Class Fields
-- Private Methods
-- Static Class Fields
-- Top-level await
+## Other Built-ins
 
-### ES2025
-- Temporal
+**Category Pass Rate**: 37.1% (3,338/8,998 tests)
 
-
-## Maintenance
-
-This document is automatically generated by `tools/feature_tracker.py`.
-To update:
-
-```bash
-# Update test262 results
-./gradlew test -DupdateTest262properties=all
-
-# Regenerate this document
-python3 tools/feature_tracker.py --update-docs
-```
-
-## Contributing
-
-To add support for a new feature:
-1. Implement the feature in Rhino
-2. Run test262 tests
-3. Update test262.properties
-4. Regenerate this document
-
-## See Also
-
-- [test262.properties](tests/testsrc/test262.properties) - Raw test results
-- [rhino-features.json](rhino-features.json) - Machine-readable feature data
+| Feature | Pass Rate | Tests Passed | Status |
+|---------|-----------|--------------|--------|
+| ArrayIteratorPrototype | 100.0% | 27/27 | ✅ Full |
+| Infinity | 100.0% | 6/6 | ✅ Full |
+| MapIteratorPrototype | 100.0% | 11/11 | ✅ Full |
+| NaN | 100.0% | 6/6 | ✅ Full |
+| RegExpStringIteratorPrototype | 100.0% | 17/17 | ✅ Full |
+| SetIteratorPrototype | 100.0% | 11/11 | ✅ Full |
+| StringIteratorPrototype | 100.0% | 7/7 | ✅ Full |
+| encodeURI | 100.0% | 31/31 | ✅ Full |
+| encodeURIComponent | 100.0% | 31/31 | ✅ Full |
+| global | 100.0% | 29/29 | ✅ Full |
+| isFinite | 100.0% | 15/15 | ✅ Full |
+| isNaN | 100.0% | 15/15 | ✅ Full |
+| undefined | 100.0% | 8/8 | ✅ Full |
+| decodeURIComponent | 98.2% | 55/56 | ✅ Full |
+| decodeURI | 98.2% | 54/55 | ✅ Full |
+| parseInt | 98.2% | 54/55 | ✅ Full |
+| parseFloat | 98.2% | 53/54 | ✅ Full |
+| BigInt | 90.7% | 68/75 | 🟢 Mostly |
+| eval | 90.0% | 9/10 | 🟢 Mostly |
+| NativeErrors | 87.0% | 80/92 | 🟢 Mostly |
+| Error | 86.8% | 46/53 | 🟢 Mostly |
+| TypedArray | 82.2% | 1178/1434 | 🟢 Mostly |
+| Function | 74.8% | 381/509 | 🟡 Partial |
+| TypedArrayConstructors | 73.1% | 538/736 | 🟡 Partial |
+| DataView | 71.3% | 400/561 | 🟡 Partial |
+| GeneratorFunction | 65.2% | 15/23 | 🟡 Partial |
+| ArrayBuffer | 55.6% | 109/196 | 🟡 Partial |
+| GeneratorPrototype | 49.2% | 30/61 | 🟡 Partial |
+| ThrowTypeError | 42.9% | 6/14 | 🟡 Partial |
+| Uint8Array | 12.1% | 8/66 | 🟠 Limited |
+| Iterator | 9.3% | 40/432 | 🟠 Limited |
+| AggregateError | 0.0% | 0/25 | ❌ None |
+| AsyncDisposableStack | 0.0% | 0/0 | ❌ None |
+| AsyncFromSyncIteratorPrototype | 0.0% | 0/0 | ❌ None |
+| AsyncFunction | 0.0% | 0/0 | ❌ None |
+| AsyncGeneratorFunction | 0.0% | 0/0 | ❌ None |
+| AsyncGeneratorPrototype | 0.0% | 0/0 | ❌ None |
+| AsyncIteratorPrototype | 0.0% | 0/0 | ❌ None |
+| Atomics | 0.0% | 0/0 | ❌ None |
+| DisposableStack | 0.0% | 0/0 | ❌ None |
+| FinalizationRegistry | 0.0% | 0/0 | ❌ None |
+| ShadowRealm | 0.0% | 0/0 | ❌ None |
+| SharedArrayBuffer | 0.0% | 0/0 | ❌ None |
+| SuppressedError | 0.0% | 0/22 | ❌ None |
+| Temporal | 0.0% | 0/4255 | ❌ None |
+| WeakRef | 0.0% | 0/0 | ❌ None |

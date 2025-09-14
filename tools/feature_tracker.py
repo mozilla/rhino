@@ -1,265 +1,200 @@
 #!/usr/bin/env python3
 """
-Feature Tracker for Rhino JavaScript Engine
-
-This script analyzes test262.properties to generate comprehensive feature documentation.
-It creates a maintainable, auto-updated feature compatibility list.
-
-Usage: python3 tools/feature_tracker.py [--update-docs]
+Rhino Feature Tracker - Automatically documents ALL test262 results
+Parses test262.properties and generates comprehensive feature documentation
 """
 
 import re
 import json
-import sys
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
+from collections import defaultdict
 
-# Load ES Feature Categories from external file
-def load_feature_categories():
-    """Load ES feature mapping from external text file"""
-    txt_path = Path(__file__).parent / 'es-features.txt'
-    feature_categories = {}
-    
-    try:
-        with open(txt_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                # Skip comments and empty lines
-                if not line or line.startswith('#'):
-                    continue
-                    
-                # Parse pipe-delimited format: ES_VERSION|Feature Name|test262_path
-                parts = line.split('|')
-                if len(parts) == 3:
-                    version, feature_name, test_path = [part.strip() for part in parts]
-                    if version not in feature_categories:
-                        feature_categories[version] = {}
-                    feature_categories[version][feature_name] = test_path
-        
-        return feature_categories
-    except FileNotFoundError:
-        # Fallback to minimal hardcoded set if file not found
-        return {
-            'ES2015': {
-                'Promises': 'built-ins/Promise'
-            }
-        }
-
-# Legacy hardcoded categories for fallback
-FEATURE_CATEGORIES = {
-    'ES2015': {
-        'Arrow Functions': 'language/expressions/arrow-function',
-        'Classes': 'language/statements/class',
-        'Template Literals': 'language/expressions/template-literal',
-        'Destructuring': 'language/expressions/assignment/destructuring',
-        'Default Parameters': 'language/expressions/function/default-parameters',
-        'Rest Parameters': 'language/expressions/function/rest-parameters',
-        'Spread Operator': 'language/expressions/spread',
-        'for...of Loop': 'language/statements/for-of',
-        'Symbols': 'built-ins/Symbol',
-        'Generators': 'built-ins/GeneratorFunction',
-        'Promises': 'built-ins/Promise',
-        'Map': 'built-ins/Map',
-        'Set': 'built-ins/Set',
-        'WeakMap': 'built-ins/WeakMap',
-        'WeakSet': 'built-ins/WeakSet',
-        'Proxy': 'built-ins/Proxy',
-        'Reflect': 'built-ins/Reflect',
-        'Array.from': 'built-ins/Array/from',
-        'Array.of': 'built-ins/Array/of',
-        'Object.assign': 'built-ins/Object/assign'
-    },
-    'ES2016': {
-        'Exponentiation Operator': 'language/expressions/exponentiation',
-        'Array.includes': 'built-ins/Array/prototype/includes'
-    },
-    'ES2017': {
-        'async/await': 'language/expressions/async-function',
-        'Object.values': 'built-ins/Object/values',
-        'Object.entries': 'built-ins/Object/entries',
-        'Object.getOwnPropertyDescriptors': 'built-ins/Object/getOwnPropertyDescriptors',
-        'String.padStart': 'built-ins/String/prototype/padStart',
-        'String.padEnd': 'built-ins/String/prototype/padEnd',
-        'Trailing Commas': 'language/expressions/trailing-comma'
-    },
-    'ES2018': {
-        'Async Iterators': 'built-ins/AsyncIteratorPrototype',
-        'Promise.finally': 'built-ins/Promise/prototype/finally',
-        'Rest/Spread Properties': 'language/expressions/object/rest-spread',
-        'RegExp Named Groups': 'built-ins/RegExp/named-groups',
-        'RegExp Lookbehind': 'built-ins/RegExp/lookbehind',
-        'RegExp s flag': 'built-ins/RegExp/dotAll'
-    },
-    'ES2019': {
-        'Array.flat': 'built-ins/Array/prototype/flat',
-        'Array.flatMap': 'built-ins/Array/prototype/flatMap',
-        'Object.fromEntries': 'built-ins/Object/fromEntries',
-        'String.trimStart': 'built-ins/String/prototype/trimStart',
-        'String.trimEnd': 'built-ins/String/prototype/trimEnd',
-        'Symbol.description': 'built-ins/Symbol/prototype/description',
-        'JSON.stringify': 'built-ins/JSON/stringify'
-    },
-    'ES2020': {
-        'BigInt': 'built-ins/BigInt',
-        'BigInt64Array': 'built-ins/BigInt64Array',
-        'BigUint64Array': 'built-ins/BigUint64Array',
-        'Promise.allSettled': 'built-ins/Promise/allSettled',
-        'globalThis': 'built-ins/global',
-        'Optional Chaining (?.)': 'language/expressions/optional-chaining',
-        'Nullish Coalescing (??)': 'language/expressions/coalesce',
-        'String.matchAll': 'built-ins/String/prototype/matchAll',
-        'Dynamic Import': 'language/expressions/dynamic-import',
-        'import.meta': 'language/expressions/import.meta'
-    },
-    'ES2021': {
-        'String.replaceAll': 'built-ins/String/prototype/replaceAll',
-        'Promise.any': 'built-ins/Promise/any',
-        'WeakRef': 'built-ins/WeakRef',
-        'FinalizationRegistry': 'built-ins/FinalizationRegistry',
-        'Logical Assignment (&&=)': 'language/expressions/logical-assignment',
-        'Numeric Separators': 'language/expressions/numeric-separator'
-    },
-    'ES2022': {
-        'Class Fields': 'language/statements/class/fields',
-        'Private Methods': 'language/statements/class/private-methods',
-        'Static Class Fields': 'language/statements/class/static',
-        'Top-level await': 'language/module-code/top-level-await',
-        'Error.cause': 'built-ins/Error/cause',
-        'Array.at': 'built-ins/Array/prototype/at',
-        'String.at': 'built-ins/String/prototype/at',
-        'Object.hasOwn': 'built-ins/Object/hasOwn',
-        'RegExp d flag': 'built-ins/RegExp/match-indices'
-    },
-    'ES2023': {
-        'Array.findLast': 'built-ins/Array/prototype/findLast',
-        'Array.findLastIndex': 'built-ins/Array/prototype/findLastIndex',
-        'Array.toReversed': 'built-ins/Array/prototype/toReversed',
-        'Array.toSorted': 'built-ins/Array/prototype/toSorted',
-        'Array.toSpliced': 'built-ins/Array/prototype/toSpliced',
-        'Array.with': 'built-ins/Array/prototype/with',
-        'Hashbang Grammar': 'language/comments/hashbang'
-    },
-    'ES2024': {
-        'Array.fromAsync': 'built-ins/Array/fromAsync',
-        'Promise.withResolvers': 'built-ins/Promise/withResolvers',
-        'Object.groupBy': 'built-ins/Object/groupBy',
-        'Map.groupBy': 'built-ins/Map/groupBy',
-        'String.isWellFormed': 'built-ins/String/prototype/isWellFormed',
-        'String.toWellFormed': 'built-ins/String/prototype/toWellFormed',
-        'ArrayBuffer.transfer': 'built-ins/ArrayBuffer/prototype/transfer',
-        'RegExp v flag': 'built-ins/RegExp/unicode-sets'
-    },
-    'ES2025': {
-        'Iterator Helpers': 'built-ins/Iterator',
-        'Set Methods': 'built-ins/Set/prototype',
-        'Promise.try': 'built-ins/Promise/try',
-        'Math.sumPrecise': 'built-ins/Math/sumPrecise',
-        'Math.f16round': 'built-ins/Math/f16round',
-        'Error.isError': 'built-ins/Error/isError',
-        'RegExp.escape': 'built-ins/RegExp/escape',
-        'Temporal': 'built-ins/Temporal'
-    }
-}
-
-class FeatureTracker:
+class ComprehensiveFeatureTracker:
     def __init__(self):
         self.base_dir = Path(__file__).parent.parent
         self.test262_properties = self.base_dir / 'tests' / 'testsrc' / 'test262.properties'
         self.features_output = self.base_dir / 'FEATURES.md'
         self.json_output = self.base_dir / 'rhino-features.json'
-        self.results = {}
-    
-    def parse_test262_properties(self):
-        """Parse test262.properties to extract test results"""
-        with open(self.test262_properties, 'r') as f:
-            content = f.read()
+        self.html_output = self.base_dir / 'rhino-features.html'
+        self.all_features = defaultdict(dict)
         
-        lines = content.split('\n')
-        current_path = ''
-        is_disabled = False
+    def parse_test262_properties(self):
+        """Parse ALL entries from test262.properties"""
+        print("Parsing test262.properties comprehensively...")
+        
+        with open(self.test262_properties, 'r') as f:
+            lines = f.readlines()
+        
+        current_category = None
+        current_path = None
         
         for line in lines:
-            trimmed = line.strip()
+            line = line.strip()
             
             # Skip comments and empty lines
-            if not trimmed or trimmed.startswith('#'):
+            if not line or line.startswith('#'):
                 continue
             
-            # Check if entire suite is disabled
-            if trimmed.startswith('~'):
-                is_disabled = True
-                current_path = trimmed[1:].strip()
-                self.results[current_path] = {
-                    'passed': 0,
-                    'total': 0,
-                    'pass_rate': 0,
-                    'disabled': True
-                }
-                continue
+            # Check if line is disabled (starts with ~)
+            is_disabled = line.startswith('~')
+            if is_disabled:
+                line = line[1:].strip()
             
-            # Parse test suite with results: "built-ins/Array 268/3077 (8.71%)"
-            match = re.match(r'^([\w\-\/]+)\s+(\d+)\/(\d+)\s+\((.+)%\)', trimmed)
+            # Parse test result line: "path/to/test 123/456 (78.90%)"
+            match = re.match(r'^([\w\-\/\.]+)\s+(\d+)\/(\d+)\s+\((.+)%\)', line)
             if match:
-                current_path = match.group(1)
+                path = match.group(1)
                 failed = int(match.group(2))
                 total = int(match.group(3))
                 fail_rate = float(match.group(4))
                 
-                # Calculate passed count
+                # Calculate pass statistics
                 passed = total - failed
                 pass_rate = 100 - fail_rate
                 
-                self.results[current_path] = {
+                # Categorize by top-level path
+                category = self._categorize_path(path)
+                
+                self.all_features[category][path] = {
                     'passed': passed,
                     'total': total,
                     'pass_rate': pass_rate,
-                    'disabled': False
+                    'disabled': is_disabled,
+                    'path': path
                 }
-                is_disabled = False
                 continue
             
-            # Simple path without results
-            if re.match(r'^[\w\-\/]+$', trimmed):
-                current_path = trimmed
-                if not is_disabled and current_path not in self.results:
-                    # Assume it's all passing if no failure count given
-                    self.results[current_path] = {
+            # Parse path-only lines
+            if re.match(r'^[\w\-\/\.]+$', line):
+                path = line
+                category = self._categorize_path(path)
+                
+                # If no stats provided, assume it's a category header
+                if path not in self.all_features[category]:
+                    self.all_features[category][path] = {
                         'passed': 0,
                         'total': 0,
-                        'pass_rate': 100,
-                        'disabled': False
+                        'pass_rate': 0 if is_disabled else 100,
+                        'disabled': is_disabled,
+                        'path': path
                     }
     
-    def find_test_support(self, test_path):
-        """Find test support for a given path"""
-        # Direct match
-        if test_path in self.results:
-            return self.results[test_path]
-        
-        # Check for partial path matches
-        for path, result in self.results.items():
-            if test_path in path or path in test_path:
-                return result
-        
-        # Check for parent path
-        parts = test_path.split('/')
-        while len(parts) > 1:
-            parts.pop()
-            parent = '/'.join(parts)
-            if parent in self.results:
-                return self.results[parent]
-        
-        # No results found
-        return {
-            'passed': 0,
-            'total': 0,
-            'pass_rate': 0,
-            'disabled': False,
-            'not_found': True
-        }
+    def _categorize_path(self, path):
+        """Categorize test paths into logical groups"""
+        if path.startswith('built-ins/'):
+            # Further categorize built-ins
+            parts = path.split('/')
+            if len(parts) >= 2:
+                object_name = parts[1]
+                if object_name in ['Array', 'String', 'Object', 'Number', 'Boolean']:
+                    return f'Core Objects - {object_name}'
+                elif object_name in ['Promise', 'Symbol', 'Proxy', 'Reflect']:
+                    return 'ES6+ Objects'
+                elif object_name in ['Map', 'Set', 'WeakMap', 'WeakSet']:
+                    return 'Collections'
+                elif object_name in ['Math', 'Date', 'RegExp', 'JSON']:
+                    return 'Built-in Objects'
+                elif object_name.startswith('Intl'):
+                    return 'Internationalization'
+                else:
+                    return 'Other Built-ins'
+            return 'Built-ins'
+        elif path.startswith('language/'):
+            # Categorize language features
+            if 'expressions' in path:
+                return 'Language - Expressions'
+            elif 'statements' in path:
+                return 'Language - Statements'
+            elif 'types' in path:
+                return 'Language - Types'
+            else:
+                return 'Language Features'
+        elif path.startswith('annexB/'):
+            return 'Annex B (Legacy)'
+        elif path.startswith('intl402/'):
+            return 'Internationalization (Intl402)'
+        elif path.startswith('harness/'):
+            return 'Test Harness'
+        else:
+            return 'Other'
     
-    def get_status(self, pass_rate):
-        """Get status based on pass rate"""
+    def generate_markdown(self):
+        """Generate comprehensive Markdown documentation"""
+        lines = []
+        lines.append('# Rhino Feature Documentation')
+        lines.append(f'*Auto-generated from test262.properties on {datetime.now().strftime("%Y-%m-%d")}*')
+        lines.append('')
+        lines.append('## Overview')
+        lines.append('')
+        lines.append('This document provides comprehensive documentation of ALL features tested in Rhino.')
+        lines.append('Data is extracted directly from test262.properties, showing actual test pass rates.')
+        lines.append('')
+        
+        # Calculate summary statistics
+        total_features = 0
+        total_passed = 0
+        total_tests = 0
+        
+        for category, features in self.all_features.items():
+            for path, data in features.items():
+                total_features += 1
+                total_passed += data['passed']
+                total_tests += data['total']
+        
+        overall_pass_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
+        
+        lines.append('## Summary Statistics')
+        lines.append('')
+        lines.append(f'- **Total Test Suites**: {total_features}')
+        lines.append(f'- **Total Tests**: {total_tests:,}')
+        lines.append(f'- **Tests Passed**: {total_passed:,}')
+        lines.append(f'- **Overall Pass Rate**: {overall_pass_rate:.1f}%')
+        lines.append('')
+        
+        # Generate section for each category
+        for category in sorted(self.all_features.keys()):
+            features = self.all_features[category]
+            
+            lines.append(f'## {category}')
+            lines.append('')
+            
+            # Calculate category statistics
+            cat_total = sum(f['total'] for f in features.values())
+            cat_passed = sum(f['passed'] for f in features.values())
+            cat_rate = (cat_passed / cat_total * 100) if cat_total > 0 else 0
+            
+            lines.append(f'**Category Pass Rate**: {cat_rate:.1f}% ({cat_passed:,}/{cat_total:,} tests)')
+            lines.append('')
+            
+            # Create table for features
+            lines.append('| Feature | Pass Rate | Tests Passed | Status |')
+            lines.append('|---------|-----------|--------------|--------|')
+            
+            # Sort features by pass rate (descending)
+            sorted_features = sorted(features.items(), 
+                                    key=lambda x: x[1]['pass_rate'], 
+                                    reverse=True)
+            
+            for path, data in sorted_features[:50]:  # Show top 50 per category
+                status = self._get_status(data['pass_rate'])
+                status_badge = self._get_status_badge(status)
+                
+                # Clean up path for display
+                display_name = path.split('/')[-1] if '/' in path else path
+                
+                lines.append(f"| {display_name} | {data['pass_rate']:.1f}% | "
+                           f"{data['passed']}/{data['total']} | {status_badge} |")
+            
+            if len(features) > 50:
+                lines.append(f'| ... and {len(features) - 50} more | | | |')
+            
+            lines.append('')
+        
+        return '\n'.join(lines)
+    
+    def _get_status(self, pass_rate):
+        """Determine status based on pass rate"""
         if pass_rate >= 95:
             return 'Full'
         elif pass_rate >= 75:
@@ -271,230 +206,239 @@ class FeatureTracker:
         else:
             return 'None'
     
-    def calculate_feature_support(self):
-        """Calculate feature support based on test262 results"""
-        feature_support = {}
-        feature_categories = load_feature_categories()
-        
-        for version, features in feature_categories.items():
-            feature_support[version] = {}
-            
-            for feature_name, test_path in features.items():
-                support = self.find_test_support(test_path)
-                feature_support[version][feature_name] = {
-                    'path': test_path,
-                    **support,
-                    'status': self.get_status(support['pass_rate'])
-                }
-        
-        return feature_support
+    def _get_status_badge(self, status):
+        """Get status badge for markdown"""
+        badges = {
+            'Full': '✅ Full',
+            'Mostly': '🟢 Mostly',
+            'Partial': '🟡 Partial',
+            'Limited': '🟠 Limited',
+            'None': '❌ None'
+        }
+        return badges.get(status, status)
     
-    def generate_markdown(self, feature_support):
-        """Generate markdown documentation"""
-        today = datetime.now().strftime('%Y-%m-%d')
-        
-        markdown = f"""# Rhino ECMAScript Feature Support
-*Auto-generated from test262 results on {today}*
-
-## Overview
-
-This document provides a comprehensive list of ECMAScript features and their support status in Rhino.
-It is automatically generated from test262 test suite results.
-
-## Feature Support Legend
-
-- **Full Support** (95-100% tests passing)
-- **Mostly Supported** (75-94% tests passing)
-- **Partial Support** (25-74% tests passing)
-- **Limited Support** (1-24% tests passing)
-- **Not Supported** (0% tests passing)
-
-## Summary by ECMAScript Version
-
-| Version | Full | Mostly | Partial | Limited | None | Overall |
-|---------|------|--------|---------|---------|------|---------|
-"""
-        
-        # Calculate summary
-        for version, features in feature_support.items():
-            counts = {'full': 0, 'mostly': 0, 'partial': 0, 'limited': 0, 'none': 0}
-            total_pass_rate = 0
-            feature_count = 0
-            
-            for feature in features.values():
-                if 'Full' in feature['status']:
-                    counts['full'] += 1
-                elif 'Mostly' in feature['status']:
-                    counts['mostly'] += 1
-                elif 'Partial' in feature['status']:
-                    counts['partial'] += 1
-                elif 'Limited' in feature['status']:
-                    counts['limited'] += 1
-                else:
-                    counts['none'] += 1
-                
-                total_pass_rate += feature.get('pass_rate', 0)
-                feature_count += 1
-            
-            avg_pass_rate = total_pass_rate / feature_count if feature_count > 0 else 0
-            markdown += f"| {version} | {counts['full']} | {counts['mostly']} | {counts['partial']} | {counts['limited']} | {counts['none']} | {avg_pass_rate:.1f}% |\n"
-        
-        # Detailed features by version
-        for version, features in feature_support.items():
-            markdown += f"\n## {version} Features\n\n"
-            markdown += "| Feature | Status | Pass Rate | Tests |\n"
-            markdown += "|---------|--------|-----------|-------|\n"
-            
-            # Sort by pass rate
-            sorted_features = sorted(features.items(), key=lambda x: x[1]['pass_rate'], reverse=True)
-            
-            for name, info in sorted_features:
-                tests = f"{info['passed']}/{info['total']}" if info['total'] > 0 else "N/A"
-                pass_rate = f"{info['pass_rate']:.1f}%" if 'pass_rate' in info else "0%"
-                
-                markdown += f"| {name} | {info['status']} | {pass_rate} | {tests} |\n"
-        
-        # Working features section
-        markdown += "\n## Fully Working Modern Features\n\n"
-        markdown += "These ES2017+ features have >95% test262 pass rate:\n\n"
-        
-        for version in ['ES2017', 'ES2018', 'ES2019', 'ES2020', 'ES2021', 'ES2022', 'ES2023', 'ES2024', 'ES2025']:
-            if version not in feature_support:
-                continue
-            
-            working = [name for name, info in feature_support[version].items() 
-                      if info['pass_rate'] >= 95]
-            
-            if working:
-                markdown += f"### {version}\n"
-                for feature in working:
-                    markdown += f"- {feature}\n"
-                markdown += "\n"
-        
-        # Not supported section
-        markdown += "\n## Not Supported Features\n\n"
-        markdown += "These features have 0% test262 pass rate or are disabled:\n\n"
-        
-        for version, features in feature_support.items():
-            not_supported = [name for name, info in features.items() 
-                           if info['pass_rate'] == 0 or info.get('disabled', False)]
-            
-            if not_supported:
-                markdown += f"### {version}\n"
-                for feature in not_supported:
-                    markdown += f"- {feature}\n"
-                markdown += "\n"
-        
-        markdown += """
-## Maintenance
-
-This document is automatically generated by `tools/feature_tracker.py`.
-To update:
-
-```bash
-# Update test262 results
-./gradlew test -DupdateTest262properties=all
-
-# Regenerate this document
-python3 tools/feature_tracker.py --update-docs
-```
-
-## Contributing
-
-To add support for a new feature:
-1. Implement the feature in Rhino
-2. Run test262 tests
-3. Update test262.properties
-4. Regenerate this document
-
-## See Also
-
-- [test262.properties](tests/testsrc/test262.properties) - Raw test results
-- [rhino-features.json](rhino-features.json) - Machine-readable feature data
-"""
-        
-        return markdown
-    
-    def generate_json(self, feature_support):
-        """Generate JSON output for programmatic access"""
-        output = {
+    def generate_json(self):
+        """Generate comprehensive JSON data"""
+        data = {
             'generated': datetime.now().isoformat(),
-            'rhino_version': self.get_rhino_version(),
-            'features': feature_support,
-            'summary': self.generate_summary(feature_support)
+            'rhino_version': self._get_rhino_version(),
+            'categories': {}
         }
         
-        return json.dumps(output, indent=2)
-    
-    def generate_html_json(self, feature_support):
-        """Generate JSON embedded in HTML for web integration"""
-        json_data = self.generate_json(feature_support)
-        summary = self.generate_summary(feature_support)
+        for category, features in self.all_features.items():
+            cat_data = {
+                'features': {},
+                'statistics': {
+                    'total_features': len(features),
+                    'total_tests': sum(f['total'] for f in features.values()),
+                    'passed_tests': sum(f['passed'] for f in features.values())
+                }
+            }
+            
+            for path, feature_data in features.items():
+                cat_data['features'][path] = feature_data
+            
+            data['categories'][category] = cat_data
         
-        html_template = f"""<!DOCTYPE html>
+        return json.dumps(data, indent=2)
+    
+    def generate_html(self):
+        """Generate interactive HTML dashboard"""
+        json_data = self.generate_json()
+        
+        html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhino JavaScript Engine - ECMAScript Feature Support</title>
+    <title>Rhino Comprehensive Feature Dashboard</title>
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }}
-        .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
-        .summary {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-        .feature-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }}
-        .feature-card {{ border: 1px solid #e1e5e9; border-radius: 8px; padding: 16px; }}
-        .status-full {{ background: #d4edda; }}
-        .status-mostly {{ background: #d1ecf1; }}
-        .status-partial {{ background: #fff3cd; }}
-        .status-limited {{ background: #f8d7da; }}
-        .status-none {{ background: #f8d7da; }}
-        .progress-bar {{ width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; }}
-        .progress-fill {{ height: 100%; transition: width 0.3s ease; }}
-        .progress-full {{ background: #28a745; }}
-        .progress-mostly {{ background: #17a2b8; }}
-        .progress-partial {{ background: #ffc107; }}
-        .progress-limited {{ background: #dc3545; }}
-        .progress-none {{ background: #dc3545; }}
-        pre {{ background: #f8f9fa; padding: 15px; border-radius: 5px; overflow: auto; }}
+        body {{ 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .container {{ max-width: 1400px; margin: 0 auto; }}
+        .header {{ 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }}
+        .stats-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }}
+        .stat-card {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        .category-section {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        .progress-bar {{
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }}
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.3s ease;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }}
+        th, td {{
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }}
+        th {{
+            background: #f5f5f5;
+            font-weight: 600;
+        }}
+        .search-box {{
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Rhino JavaScript Engine - ECMAScript Feature Support</h1>
-        <p><em>Generated on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S UTC')}</em></p>
-        
-        <div class="summary">
-            <h2>Summary</h2>
-            <p><strong>Total Features:</strong> {summary['total_features']}</p>
-            <p><strong>Fully Supported:</strong> {summary['fully_supported']} ({summary['fully_supported']/summary['total_features']*100:.1f}%)</p>
-            <p><strong>Partially Supported:</strong> {summary['partially_supported']} ({summary['partially_supported']/summary['total_features']*100:.1f}%)</p>
-            <p><strong>Not Supported:</strong> {summary['not_supported']} ({summary['not_supported']/summary['total_features']*100:.1f}%)</p>
+        <div class="header">
+            <h1>Rhino Comprehensive Feature Dashboard</h1>
+            <p>Complete test262 results - All {len(self.all_features)} categories documented</p>
+            <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
         
-        <div id="feature-data" style="display: none;">
-            <script type="application/json">
-{json_data}
-            </script>
-        </div>
+        <input type="text" class="search-box" id="searchBox" placeholder="Search features..." />
         
-        <p><strong>Raw JSON Data:</strong> <button onclick="document.getElementById('raw-json').style.display = document.getElementById('raw-json').style.display === 'none' ? 'block' : 'none'">Toggle</button></p>
-        <pre id="raw-json" style="display: none;">{json_data}</pre>
-        
-        <script>
-            // Feature data is available in the script tag above
-            const featureData = JSON.parse(document.querySelector('#feature-data script').textContent);
-            console.log('Rhino Feature Data:', featureData);
-            
-            // Add interactive features here
-            window.rhinoFeatureData = featureData;
-        </script>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div id="categorySections"></div>
     </div>
+    
+    <script>
+        const data = {json_data};
+        
+        // Render statistics
+        function renderStats() {{
+            let totalTests = 0;
+            let passedTests = 0;
+            
+            Object.values(data.categories).forEach(cat => {{
+                totalTests += cat.statistics.total_tests;
+                passedTests += cat.statistics.passed_tests;
+            }});
+            
+            const passRate = (passedTests / totalTests * 100).toFixed(1);
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <h3>Total Categories</h3>
+                    <div style="font-size: 2em; font-weight: bold;">{{Object.keys(data.categories).length}}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Test Suites</h3>
+                    <div style="font-size: 2em; font-weight: bold;">
+                        {{Object.values(data.categories).reduce((sum, cat) => sum + cat.statistics.total_features, 0)}}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Tests</h3>
+                    <div style="font-size: 2em; font-weight: bold;">{{totalTests.toLocaleString()}}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Overall Pass Rate</h3>
+                    <div style="font-size: 2em; font-weight: bold;">{{passRate}}%</div>
+                    <div class="progress-bar" style="margin-top: 10px;">
+                        <div class="progress-fill" style="width: {{passRate}}%"></div>
+                    </div>
+                </div>
+            `;
+        }}
+        
+        // Render categories
+        function renderCategories(searchTerm = '') {{
+            const container = document.getElementById('categorySections');
+            container.innerHTML = '';
+            
+            Object.entries(data.categories).forEach(([category, catData]) => {{
+                if (searchTerm && !category.toLowerCase().includes(searchTerm.toLowerCase())) {{
+                    return;
+                }}
+                
+                const passRate = (catData.statistics.passed_tests / catData.statistics.total_tests * 100).toFixed(1);
+                
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                section.innerHTML = `
+                    <h2>{{category}}</h2>
+                    <p>{{catData.statistics.total_features}} features | {{catData.statistics.total_tests.toLocaleString()}} tests | {{passRate}}% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{passRate}}%"></div>
+                    </div>
+                    <details>
+                        <summary>View Details</summary>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Pass Rate</th>
+                                    <th>Tests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{Object.entries(catData.features)
+                                    .sort((a, b) => b[1].pass_rate - a[1].pass_rate)
+                                    .slice(0, 20)
+                                    .map(([path, feat]) => `
+                                        <tr>
+                                            <td>{{path}}</td>
+                                            <td>{{feat.pass_rate.toFixed(1)}}%</td>
+                                            <td>{{feat.passed}}/{{feat.total}}</td>
+                                        </tr>
+                                    `).join('')}}
+                            </tbody>
+                        </table>
+                    </details>
+                `;
+                container.appendChild(section);
+            }});
+        }}
+        
+        // Search functionality
+        document.getElementById('searchBox').addEventListener('input', (e) => {{
+            renderCategories(e.target.value);
+        }});
+        
+        // Initial render
+        renderStats();
+        renderCategories();
+    </script>
 </body>
 </html>"""
         
-        return html_template
+        return html
     
-    def get_rhino_version(self):
+    def _get_rhino_version(self):
         """Get Rhino version from gradle.properties"""
         try:
             gradle_props = self.base_dir / 'gradle.properties'
@@ -504,100 +448,41 @@ To add support for a new feature:
                         return line.split('=')[1].strip()
         except:
             pass
-        return 'unknown'
+        return '1.8.1-SNAPSHOT'
     
-    def generate_summary(self, feature_support):
-        """Generate summary statistics"""
-        summary = {
-            'total_features': 0,
-            'fully_supported': 0,
-            'partially_supported': 0,
-            'not_supported': 0,
-            'by_version': {}
-        }
+    def run(self):
+        """Run the comprehensive feature tracker"""
+        print("Starting comprehensive feature documentation...")
         
-        for version, features in feature_support.items():
-            version_stats = {
-                'total': 0,
-                'supported': 0,
-                'partial': 0,
-                'none': 0,
-                'avg_pass_rate': 0
-            }
-            
-            for feature in features.values():
-                summary['total_features'] += 1
-                version_stats['total'] += 1
-                
-                if feature['pass_rate'] >= 95:
-                    summary['fully_supported'] += 1
-                    version_stats['supported'] += 1
-                elif feature['pass_rate'] > 0:
-                    summary['partially_supported'] += 1
-                    version_stats['partial'] += 1
-                else:
-                    summary['not_supported'] += 1
-                    version_stats['none'] += 1
-                
-                version_stats['avg_pass_rate'] += feature.get('pass_rate', 0)
-            
-            if version_stats['total'] > 0:
-                version_stats['avg_pass_rate'] /= version_stats['total']
-            
-            summary['by_version'][version] = version_stats
-        
-        return summary
-    
-    def run(self, update_docs=False):
-        """Run the feature tracker"""
-        print('Parsing test262.properties...')
+        # Parse ALL test262 results
         self.parse_test262_properties()
         
-        print('Calculating feature support...')
-        feature_support = self.calculate_feature_support()
+        print(f"Found {len(self.all_features)} categories")
+        total_features = sum(len(features) for features in self.all_features.values())
+        print(f"Documenting {total_features} total test suites")
         
-        print('Generating documentation...')
-        markdown = self.generate_markdown(feature_support)
-        json_output = self.generate_json(feature_support)
-        html_output = self.generate_html_json(feature_support)
+        # Generate outputs
+        print("Generating Markdown...")
+        markdown = self.generate_markdown()
+        with open(self.features_output, 'w') as f:
+            f.write(markdown)
         
-        if update_docs:
-            print('Writing FEATURES.md...')
-            with open(self.features_output, 'w') as f:
-                f.write(markdown)
-            
-            print('Writing rhino-features.json...')
-            with open(self.json_output, 'w') as f:
-                f.write(json_output)
-                
-            print('Writing rhino-features.html...')
-            html_output_path = self.base_dir / 'rhino-features.html'
-            with open(html_output_path, 'w') as f:
-                f.write(html_output)
-            
-            print('Documentation updated successfully!')
-            print('Generated files:')
-            print('  - FEATURES.md (human-readable documentation)')
-            print('  - rhino-features.json (machine-readable data)')
-            print('  - rhino-features.html (web-ready interactive page)')
-        else:
-            print('\nPreview (first 50 lines):')
-            print('=' * 60)
-            print('\n'.join(markdown.split('\n')[:50]))
-            print('=' * 60)
-            print('\nRun with --update-docs to write files')
+        print("Generating JSON...")
+        json_data = self.generate_json()
+        with open(self.json_output, 'w') as f:
+            f.write(json_data)
         
-        # Print summary
-        summary = self.generate_summary(feature_support)
-        total = summary['total_features']
-        if total > 0:
-            print('\nSummary:')
-            print(f"   Total Features: {total}")
-            print(f"   Fully Supported: {summary['fully_supported']} ({summary['fully_supported']/total*100:.1f}%)")
-            print(f"   Partially Supported: {summary['partially_supported']} ({summary['partially_supported']/total*100:.1f}%)")
-            print(f"   Not Supported: {summary['not_supported']} ({summary['not_supported']/total*100:.1f}%)")
+        print("Generating HTML...")
+        html = self.generate_html()
+        with open(self.html_output, 'w') as f:
+            f.write(html)
+        
+        print("Documentation complete!")
+        print(f"Generated files:")
+        print(f"  - {self.features_output}")
+        print(f"  - {self.json_output}")
+        print(f"  - {self.html_output}")
 
 if __name__ == '__main__':
-    update_docs = '--update-docs' in sys.argv
-    tracker = FeatureTracker()
-    tracker.run(update_docs)
+    tracker = ComprehensiveFeatureTracker()
+    tracker.run()
