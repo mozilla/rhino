@@ -367,13 +367,11 @@
     <header class="header">
         <h1>Rhino JavaScript Engine</h1>
         <p class="subtitle">
-            The most comprehensive JavaScript feature documentation, combining official 
-            ECMAScript specification compliance with real-world compatibility testing
+            Comprehensive JavaScript Feature Compatibility Documentation
         </p>
         <div class="attribution">
-            <strong>Built with contributions from:</strong><br>
-            Test infrastructure based on <a href="https://github.com/p-bakker" target="_blank">@p-bakker</a>'s 
-            work on <a href="https://github.com/compat-table/compat-table/pull/1881" target="_blank">compat-table PR #1881</a>
+            <strong>Version 1.8.1-SNAPSHOT</strong> | 
+            Combining test262 specification compliance with compat-table practical testing
         </div>
     </header>
 
@@ -633,36 +631,32 @@
             </p>
             
             <div class="credits">
-                <h4>Credits & Acknowledgments</h4>
+                <h4>Data Sources</h4>
                 <ul>
                     <li>
-                        <strong>compat-table integration:</strong> Based on 
-                        <a href="https://github.com/p-bakker" target="_blank">Paul Bakker (@p-bakker)</a>'s 
-                        excellent work on separating tests from results in 
-                        <a href="https://github.com/compat-table/compat-table/pull/1881" target="_blank">compat-table PR #1881</a>
+                        <strong>test262:</strong> The official 
+                        <a href="https://github.com/tc39/test262" target="_blank">ECMAScript conformance test suite</a> 
+                        maintained by TC39, testing specification compliance
                     </li>
                     <li>
-                        <strong>test262 data:</strong> From the official 
-                        <a href="https://github.com/tc39/test262" target="_blank">ECMAScript test suite</a> 
-                        maintained by TC39
-                    </li>
-                    <li>
-                        <strong>Rhino development:</strong> The 
-                        <a href="https://github.com/mozilla/rhino" target="_blank">Mozilla Rhino</a> 
-                        team and contributors
-                    </li>
-                    <li>
-                        <strong>Documentation system:</strong> Created by 
-                        <a href="https://github.com/anivar" target="_blank">Anivar Aravind</a> 
-                        combining multiple data sources for comprehensive coverage
+                        <strong>compat-table:</strong> Community-maintained 
+                        <a href="https://github.com/compat-table/compat-table" target="_blank">compatibility tests</a> 
+                        used by Babel and other build tools for practical feature detection
                     </li>
                 </ul>
             </div>
             
+            <p>
+                <strong>How to interpret the results:</strong> When test262 and compat-table agree on a feature's 
+                status, you can be confident in the assessment. Discrepancies may indicate partial implementations, 
+                edge cases, or differences between specification compliance and practical usage.
+            </p>
+            
             <p style="text-align: center; color: #999; margin-top: 30px;">
                 Last updated: ${new Date().toISOString().split('T')[0]} | 
                 Rhino version: 1.8.1-SNAPSHOT | 
-                <a href="https://github.com/mozilla/rhino" style="color: #667eea;">View on GitHub</a>
+                <a href="https://github.com/mozilla/rhino" style="color: #667eea;">View on GitHub</a> | 
+                <a href="https://github.com/mozilla/rhino/issues" style="color: #667eea;">Report Issues</a>
             </p>
         </footer>
     </main>

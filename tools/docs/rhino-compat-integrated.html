@@ -1,0 +1,2741 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rhino JavaScript Engine - Feature Compatibility</title>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .summary h1 { margin: 0 0 10px 0; }
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .feature { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .feature:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .supported { background: #d4edda; border-color: #28a745; }
+        .unsupported { background: #f8d7da; border-color: #dc3545; }
+        .partial { background: #fff3cd; border-color: #ffc107; }
+        .compat-table { 
+            background: #e7f3ff; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 3px; 
+        }
+        .test262 { 
+            background: #f0e7ff; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 3px; 
+        }
+        h1 { color: #333; }
+        h2 { 
+            color: #666; 
+            font-size: 1.2em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+        .badge { 
+            display: inline-block; 
+            padding: 3px 8px; 
+            border-radius: 3px; 
+            font-size: 0.85em; 
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .badge.es5 { background: #6c757d; color: white; }
+        .badge.es6 { background: #28a745; color: white; }
+        .badge.es2016plus { background: #17a2b8; color: white; }
+        .badge.esnext { background: #fd7e14; color: white; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0; 
+        }
+        th, td { 
+            padding: 8px; 
+            text-align: left; 
+            border: 1px solid #ddd; 
+        }
+        th { background: #f5f5f5; }
+        .icon-yes { color: #28a745; }
+        .icon-no { color: #dc3545; }
+        .filter-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="summary">
+        <h1>Rhino JavaScript Engine - Comprehensive Feature Support</h1>
+        <p>Automated compatibility testing powered by compat-table and test262</p>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="total-features">0</div>
+                <div>Total Features Tested</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="supported-features">0</div>
+                <div>Supported Features</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="support-percentage">0%</div>
+                <div>Support Rate</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterFeatures('all')">All Features</button>
+        <button class="filter-btn" onclick="filterFeatures('supported')">✅ Supported</button>
+        <button class="filter-btn" onclick="filterFeatures('unsupported')">❌ Not Supported</button>
+        <button class="filter-btn" onclick="filterFeatures('partial')">⚠️ Partial Support</button>
+    </div>
+    
+    <div id="features-container">
+<h2><span class="badge es2016plus">ES2016PLUS</span> Features</h2>
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ exponentiation (**) operator (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>✅</td></tr>
+            <tr><td>assignment</td><td>✅</td></tr>
+            <tr><td>early syntax error for unary negation without parens</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array.prototype.includes (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.includes</td><td>✅</td></tr>
+            <tr><td>Array.prototype.includes handles sparse arrays</td><td>✅</td></tr>
+            <tr><td>Array.prototype.includes is generic</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.includes</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ generator functions can't be used with "new"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ generator throw() caught by inner generator</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ strict fn w/ non-strict non-simple params is error</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ nested rest destructuring, declarations</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ nested rest destructuring, parameters</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Proxy, "enumerate" handler removed</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Proxy internal calls, Array.prototype.includes</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object static methods (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.values</td><td>✅</td></tr>
+            <tr><td>Object.entries</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyDescriptors</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyDescriptors doesn't provide undefined descriptors</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String padding (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>String.prototype.padStart</td><td>✅</td></tr>
+            <tr><td>String.prototype.padEnd</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ trailing commas in function syntax (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>in parameter lists</td><td>✅</td></tr>
+            <tr><td>in argument lists</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ async functions (0/16 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>return</td><td>❌</td></tr>
+            <tr><td>throw</td><td>❌</td></tr>
+            <tr><td>no line break between async and function</td><td>❌</td></tr>
+            <tr><td>no "prototype" property</td><td>❌</td></tr>
+            <tr><td>await</td><td>❌</td></tr>
+            <tr><td>await, rejection</td><td>❌</td></tr>
+            <tr><td>must await a value</td><td>❌</td></tr>
+            <tr><td>can await non-Promise values</td><td>❌</td></tr>
+            <tr><td>cannot await in parameters</td><td>❌</td></tr>
+            <tr><td>async methods, object literals</td><td>❌</td></tr>
+            <tr><td>async methods, classes</td><td>❌</td></tr>
+            <tr><td>async arrow functions in methods, classes</td><td>❌</td></tr>
+            <tr><td>async arrow functions</td><td>❌</td></tr>
+            <tr><td>correct prototype chain</td><td>❌</td></tr>
+            <tr><td>async function prototype, Symbol.toStringTag</td><td>❌</td></tr>
+            <tr><td>async function constructor</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ shared memory and atomics (0/17 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>SharedArrayBuffer</td><td>❌</td></tr>
+            <tr><td>SharedArrayBuffer[Symbol.species]</td><td>❌</td></tr>
+            <tr><td>SharedArrayBuffer.prototype.byteLength</td><td>❌</td></tr>
+            <tr><td>SharedArrayBuffer.prototype.slice</td><td>❌</td></tr>
+            <tr><td>SharedArrayBuffer.prototype[Symbol.toStringTag]</td><td>❌</td></tr>
+            <tr><td>Atomics.add</td><td>❌</td></tr>
+            <tr><td>Atomics.and</td><td>❌</td></tr>
+            <tr><td>Atomics.compareExchange</td><td>❌</td></tr>
+            <tr><td>Atomics.exchange</td><td>❌</td></tr>
+            <tr><td>Atomics.wait</td><td>❌</td></tr>
+            <tr><td>Atomics.notify</td><td>❌</td></tr>
+            <tr><td>Atomics.isLockFree</td><td>❌</td></tr>
+            <tr><td>Atomics.load</td><td>❌</td></tr>
+            <tr><td>Atomics.or</td><td>❌</td></tr>
+            <tr><td>Atomics.store</td><td>❌</td></tr>
+            <tr><td>Atomics.sub</td><td>❌</td></tr>
+            <tr><td>Atomics.xor</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ RegExp "u" flag, case folding</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ arguments.caller removed</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Object.prototype getter/setter methods (10/16 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>__defineGetter__</td><td>✅</td></tr>
+            <tr><td>__defineGetter__, symbols</td><td>❌</td></tr>
+            <tr><td>__defineGetter__, ToObject(this)</td><td>✅</td></tr>
+            <tr><td>__defineSetter__</td><td>✅</td></tr>
+            <tr><td>__defineSetter__, symbols</td><td>❌</td></tr>
+            <tr><td>__defineSetter__, ToObject(this)</td><td>✅</td></tr>
+            <tr><td>__lookupGetter__</td><td>✅</td></tr>
+            <tr><td>__lookupGetter__, prototype chain</td><td>✅</td></tr>
+            <tr><td>__lookupGetter__, symbols</td><td>❌</td></tr>
+            <tr><td>__lookupGetter__, ToObject(this)</td><td>❌</td></tr>
+            <tr><td>__lookupGetter__, data properties can shadow accessors</td><td>✅</td></tr>
+            <tr><td>__lookupSetter__</td><td>✅</td></tr>
+            <tr><td>__lookupSetter__, prototype chain</td><td>✅</td></tr>
+            <tr><td>__lookupSetter__, symbols</td><td>❌</td></tr>
+            <tr><td>__lookupSetter__, ToObject(this)</td><td>❌</td></tr>
+            <tr><td>__lookupSetter__, data properties can shadow accessors</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Proxy internal calls, getter/setter methods (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>__defineGetter__</td><td>❌</td></tr>
+            <tr><td>__defineSetter__</td><td>❌</td></tr>
+            <tr><td>__lookupGetter__</td><td>❌</td></tr>
+            <tr><td>__lookupSetter__</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ assignments allowed in for-in head in non-strict mode</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ object rest/spread properties (1/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>object rest properties</td><td>❌</td></tr>
+            <tr><td>object spread properties</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Promise.prototype.finally (2/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>❌</td></tr>
+            <tr><td>don't change resolution value</td><td>✅</td></tr>
+            <tr><td>change rejection value</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ s (dotAll) flag for regular expressions</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ RegExp named capture groups</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+
+        <div class="test262">
+            <strong>Test262 path:</strong> built-ins/RegExp/named-groups
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ RegExp Lookbehind Assertions</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+
+        <div class="test262">
+            <strong>Test262 path:</strong> built-ins/RegExp/lookbehind
+        </div>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ RegExp Unicode Property Escapes (2/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic</td><td>✅</td></tr>
+            <tr><td>Unicode 11</td><td>❌</td></tr>
+            <tr><td>Unicode 12</td><td>❌</td></tr>
+            <tr><td>Unicode 12.1</td><td>✅</td></tr>
+            <tr><td>Unicode 13</td><td>❌</td></tr>
+            <tr><td>Unicode 14</td><td>❌</td></tr>
+            <tr><td>Unicode 15</td><td>❌</td></tr>
+            <tr><td>Unicode 15.1</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Asynchronous Iterators (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>async generators</td><td>❌</td></tr>
+            <tr><td>for-await-of loops</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Proxy "ownKeys" handler, duplicate keys for non-extensible targets</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ template literal revision</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.14)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Symbol.prototype.description (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic</td><td>✅</td></tr>
+            <tr><td>empty description</td><td>✅</td></tr>
+            <tr><td>undefined description</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Object.fromEntries</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.14)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ string trimming (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>String.prototype.trimLeft</td><td>✅</td></tr>
+            <tr><td>String.prototype.trimRight</td><td>✅</td></tr>
+            <tr><td>String.prototype.trimStart</td><td>✅</td></tr>
+            <tr><td>String.prototype.trimEnd</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array.prototype.{flat, flatMap} (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.flat</td><td>✅</td></tr>
+            <tr><td>Array.prototype.flatMap</td><td>✅</td></tr>
+            <tr><td>flat and flatMap in Array.prototype[@@unscopables]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ optional catch binding (2/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic</td><td>✅</td></tr>
+            <tr><td>await</td><td>❌</td></tr>
+            <tr><td>yield</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Function.prototype.toString revision (3/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>functions created with the Function constructor</td><td>❌</td></tr>
+            <tr><td>arrows</td><td>✅</td></tr>
+            <tr><td>[native code]</td><td>✅</td></tr>
+            <tr><td>class expression with implicit constructor</td><td>❌</td></tr>
+            <tr><td>class expression with explicit constructor</td><td>❌</td></tr>
+            <tr><td>unicode escape sequences in identifiers</td><td>✅</td></tr>
+            <tr><td>methods and computed property names</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ JSON superset (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>LINE SEPARATOR can appear in string literals</td><td>✅</td></tr>
+            <tr><td>PARAGRAPH SEPARATOR can appear in string literals</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Well-formed JSON.stringify</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String.prototype.matchAll (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>throws on non-global regex</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ BigInt (6/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor</td><td>✅</td></tr>
+            <tr><td>BigInt.asUintN</td><td>✅</td></tr>
+            <tr><td>BigInt.asIntN</td><td>✅</td></tr>
+            <tr><td>BigInt64Array</td><td>✅</td></tr>
+            <tr><td>BigUint64Array</td><td>✅</td></tr>
+            <tr><td>DataView.prototype.getBigInt64</td><td>❌</td></tr>
+            <tr><td>DataView.prototype.getBigUint64</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Promise.allSettled</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ globalThis (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>"globalThis" global property is global object</td><td>✅</td></tr>
+            <tr><td>"globalThis" global property has correct property descriptor</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ optional chaining operator (?.) (4/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>optional property access</td><td>✅</td></tr>
+            <tr><td>optional bracket access</td><td>✅</td></tr>
+            <tr><td>optional method call</td><td>✅</td></tr>
+            <tr><td>optional function call</td><td>✅</td></tr>
+            <tr><td>spread parameters after optional chaining</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ nullish coalescing operator (??)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ String.prototype.replaceAll</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Promise.any (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>fulfillment</td><td>✅</td></tr>
+            <tr><td>AggregateError</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ WeakReferences (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>WeakRef minimal support</td><td>❌</td></tr>
+            <tr><td>FinalizationRegistry minimal support</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Logical Assignment (6/9 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>||= basic support</td><td>✅</td></tr>
+            <tr><td>||= short-circuiting behaviour</td><td>✅</td></tr>
+            <tr><td>||= setter not unecessarily invoked</td><td>❌</td></tr>
+            <tr><td>&&= basic support</td><td>✅</td></tr>
+            <tr><td>&&= short-circuiting behaviour</td><td>✅</td></tr>
+            <tr><td>&&= setter not unecessarily invoked</td><td>❌</td></tr>
+            <tr><td>??= basic support</td><td>✅</td></tr>
+            <tr><td>??= short-circuiting behaviour</td><td>✅</td></tr>
+            <tr><td>??= setter not unecessarily invoked</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ numeric separators</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.14)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ instance class fields (0/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>public instance class fields</td><td>❌</td></tr>
+            <tr><td>private instance class fields basic support</td><td>❌</td></tr>
+            <tr><td>private instance class fields initializers</td><td>❌</td></tr>
+            <tr><td>optional private instance class fields access</td><td>❌</td></tr>
+            <tr><td>optional deep private instance class fields access</td><td>❌</td></tr>
+            <tr><td>computed instance class fields</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ static class fields (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>public static class fields</td><td>❌</td></tr>
+            <tr><td>static class fields use [[Define]]</td><td>❌</td></tr>
+            <tr><td>private static class fields</td><td>❌</td></tr>
+            <tr><td>computed static class fields</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ private class methods (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>private instance methods</td><td>❌</td></tr>
+            <tr><td>private static methods</td><td>❌</td></tr>
+            <tr><td>private accessor properties</td><td>❌</td></tr>
+            <tr><td>private static accessor properties</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Ergonomic brand checks for private fields</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ .at() method on the built-in indexables (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.at()</td><td>✅</td></tr>
+            <tr><td>String.prototype.at()</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.at()</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object.hasOwn (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Basic functionality</td><td>✅</td></tr>
+            <tr><td>ToObject called before ToPropertyKey</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Class static initialization blocks</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Error.cause property (16/16 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Error has cause</td><td>✅</td></tr>
+            <tr><td>Error.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>EvalError has cause</td><td>✅</td></tr>
+            <tr><td>EvalError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>RangeError has cause</td><td>✅</td></tr>
+            <tr><td>RangeError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>ReferenceError has cause</td><td>✅</td></tr>
+            <tr><td>ReferenceError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>SyntaxError has cause</td><td>✅</td></tr>
+            <tr><td>SyntaxError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>TypeError has cause</td><td>✅</td></tr>
+            <tr><td>TypeError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>URIError has cause</td><td>✅</td></tr>
+            <tr><td>URIError.prototype lacks cause</td><td>✅</td></tr>
+            <tr><td>AggregateError has cause</td><td>✅</td></tr>
+            <tr><td>AggregateError.prototype lacks cause</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ RegExp Match Indices (`hasIndices` / `d` flag) (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>constructor supports it</td><td>❌</td></tr>
+            <tr><td>shows up in flags</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array find from last (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.findLast</td><td>✅</td></tr>
+            <tr><td>Array.prototype.findLastIndex</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Hashbang Grammar</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ RegExp `v` flag (0/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>set notations</td><td>❌</td></tr>
+            <tr><td>properties of Strings</td><td>❌</td></tr>
+            <tr><td>constructor supports it</td><td>❌</td></tr>
+            <tr><td>shows up in flags</td><td>❌</td></tr>
+            <tr><td>Unicode 15.1</td><td>❌</td></tr>
+        </table>
+    </div>
+<h2><span class="badge es5">ES5</span> Features</h2>
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object/array literal extensions (5/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Getter accessors</td><td>✅</td></tr>
+            <tr><td>Setter accessors</td><td>✅</td></tr>
+            <tr><td>Trailing commas in object literals</td><td>✅</td></tr>
+            <tr><td>Trailing commas in array literals</td><td>✅</td></tr>
+            <tr><td>Reserved words as property names</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object static methods (13/13 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.create</td><td>✅</td></tr>
+            <tr><td>Object.defineProperty</td><td>✅</td></tr>
+            <tr><td>Object.defineProperties</td><td>✅</td></tr>
+            <tr><td>Object.getPrototypeOf</td><td>✅</td></tr>
+            <tr><td>Object.keys</td><td>✅</td></tr>
+            <tr><td>Object.seal</td><td>✅</td></tr>
+            <tr><td>Object.freeze</td><td>✅</td></tr>
+            <tr><td>Object.preventExtensions</td><td>✅</td></tr>
+            <tr><td>Object.isSealed</td><td>✅</td></tr>
+            <tr><td>Object.isFrozen</td><td>✅</td></tr>
+            <tr><td>Object.isExtensible</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyDescriptor</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyNames</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array methods (13/13 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.isArray</td><td>✅</td></tr>
+            <tr><td>Array.prototype.indexOf</td><td>✅</td></tr>
+            <tr><td>Array.prototype.lastIndexOf</td><td>✅</td></tr>
+            <tr><td>Array.prototype.every</td><td>✅</td></tr>
+            <tr><td>Array.prototype.some</td><td>✅</td></tr>
+            <tr><td>Array.prototype.forEach</td><td>✅</td></tr>
+            <tr><td>Array.prototype.map</td><td>✅</td></tr>
+            <tr><td>Array.prototype.filter</td><td>✅</td></tr>
+            <tr><td>Array.prototype.reduce</td><td>✅</td></tr>
+            <tr><td>Array.prototype.reduceRight</td><td>✅</td></tr>
+            <tr><td>Array.prototype.sort: compareFn must be function or undefined</td><td>✅</td></tr>
+            <tr><td>Array.prototype.sort: compareFn may be explicit undefined</td><td>✅</td></tr>
+            <tr><td>Array.prototype.unshift: [].unshift(0) returns the unshifted count</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String properties and methods (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Property access on strings</td><td>✅</td></tr>
+            <tr><td>String.prototype.split</td><td>✅</td></tr>
+            <tr><td>String.prototype.substr</td><td>✅</td></tr>
+            <tr><td>String.prototype.trim</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Date methods (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Date.prototype.toISOString</td><td>✅</td></tr>
+            <tr><td>Date.now</td><td>✅</td></tr>
+            <tr><td>Date.prototype.toJSON</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Function.prototype.bind</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ JSON</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Immutable globals (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>undefined</td><td>✅</td></tr>
+            <tr><td>NaN</td><td>✅</td></tr>
+            <tr><td>Infinity</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Number methods (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Number.prototype.toExponential rounds properly</td><td>✅</td></tr>
+            <tr><td>Number.prototype.toExponential throws on ±Infinity fractionDigits</td><td>✅</td></tr>
+            <tr><td>Number.prototype.toExponential does not throw on edge cases</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Miscellaneous (7/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Function.prototype.apply permits array-likes</td><td>✅</td></tr>
+            <tr><td>parseInt ignores leading zeros</td><td>✅</td></tr>
+            <tr><td>Function "prototype" property is non-enumerable</td><td>✅</td></tr>
+            <tr><td>Arguments toStringTag is "Arguments"</td><td>✅</td></tr>
+            <tr><td>Zero-width chars in identifiers</td><td>✅</td></tr>
+            <tr><td>Unreserved words</td><td>✅</td></tr>
+            <tr><td>Enumerable properties can be shadowed by non-enumerables</td><td>❌</td></tr>
+            <tr><td>Thrown functions have proper "this" values</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Strict mode (10/19 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>reserved words</td><td>✅</td></tr>
+            <tr><td>"this" is undefined in functions</td><td>❌</td></tr>
+            <tr><td>"this" is not coerced to object in primitive methods</td><td>❌</td></tr>
+            <tr><td>"this" is not coerced to object in primitive accessors</td><td>❌</td></tr>
+            <tr><td>legacy octal is a SyntaxError</td><td>❌</td></tr>
+            <tr><td>assignment to unresolvable identifiers is a ReferenceError</td><td>✅</td></tr>
+            <tr><td>assignment to eval or arguments is a SyntaxError</td><td>❌</td></tr>
+            <tr><td>assignment to non-writable properties is a TypeError</td><td>❌</td></tr>
+            <tr><td>eval or arguments bindings is a SyntaxError</td><td>✅</td></tr>
+            <tr><td>arguments.caller removed or is a TypeError</td><td>✅</td></tr>
+            <tr><td>arguments.callee is a TypeError</td><td>✅</td></tr>
+            <tr><td>(function(){}).caller and (function(){}).arguments is a TypeError</td><td>❌</td></tr>
+            <tr><td>arguments is unmapped</td><td>✅</td></tr>
+            <tr><td>eval() can't create bindings</td><td>❌</td></tr>
+            <tr><td>deleting bindings is a SyntaxError</td><td>❌</td></tr>
+            <tr><td>deleting non-configurable properties is a TypeError</td><td>✅</td></tr>
+            <tr><td>"with" is a SyntaxError</td><td>✅</td></tr>
+            <tr><td>repeated parameter names is a SyntaxError</td><td>✅</td></tr>
+            <tr><td>function expressions with matching name and argument are valid</td><td>✅</td></tr>
+        </table>
+    </div>
+<h2><span class="badge es6">ES6</span> Features</h2>
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ proper tail calls (tail call optimisation) (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>direct recursion</td><td>❌</td></tr>
+            <tr><td>mutual recursion</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ default function parameters (5/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>explicit undefined defers to the default</td><td>✅</td></tr>
+            <tr><td>defaults can refer to previous params</td><td>✅</td></tr>
+            <tr><td>arguments object interaction</td><td>✅</td></tr>
+            <tr><td>temporal dead zone</td><td>❌</td></tr>
+            <tr><td>separate scope</td><td>❌</td></tr>
+            <tr><td>new Function() support</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ rest parameters (3/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>function 'length' property</td><td>✅</td></tr>
+            <tr><td>arguments object interaction</td><td>❌</td></tr>
+            <tr><td>can't be used in setters</td><td>❌</td></tr>
+            <tr><td>new Function() support</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ spread syntax for iterable objects (0/15 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>with arrays, in function calls</td><td>❌</td></tr>
+            <tr><td>with arrays, in array literals</td><td>❌</td></tr>
+            <tr><td>with sparse arrays, in function calls</td><td>❌</td></tr>
+            <tr><td>with sparse arrays, in array literals</td><td>❌</td></tr>
+            <tr><td>with strings, in function calls</td><td>❌</td></tr>
+            <tr><td>with strings, in array literals</td><td>❌</td></tr>
+            <tr><td>with astral plane strings, in function calls</td><td>❌</td></tr>
+            <tr><td>with astral plane strings, in array literals</td><td>❌</td></tr>
+            <tr><td>with generator instances, in calls</td><td>❌</td></tr>
+            <tr><td>with generator instances, in arrays</td><td>❌</td></tr>
+            <tr><td>with generic iterables, in calls</td><td>❌</td></tr>
+            <tr><td>with generic iterables, in arrays</td><td>❌</td></tr>
+            <tr><td>with instances of iterables, in calls</td><td>❌</td></tr>
+            <tr><td>with instances of iterables, in arrays</td><td>❌</td></tr>
+            <tr><td>spreading non-iterables is a runtime error</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ object literal extensions (6/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>computed properties</td><td>✅</td></tr>
+            <tr><td>shorthand properties</td><td>✅</td></tr>
+            <tr><td>shorthand methods</td><td>✅</td></tr>
+            <tr><td>string-keyed shorthand methods</td><td>✅</td></tr>
+            <tr><td>computed shorthand methods</td><td>✅</td></tr>
+            <tr><td>computed accessors</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ for..of loops (7/9 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>with arrays</td><td>✅</td></tr>
+            <tr><td>with sparse arrays</td><td>✅</td></tr>
+            <tr><td>with strings</td><td>✅</td></tr>
+            <tr><td>with astral plane strings</td><td>✅</td></tr>
+            <tr><td>with generator instances</td><td>✅</td></tr>
+            <tr><td>with generic iterables</td><td>✅</td></tr>
+            <tr><td>with instances of generic iterables</td><td>✅</td></tr>
+            <tr><td>iterator closing, break</td><td>❌</td></tr>
+            <tr><td>iterator closing, throw</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ octal and binary literals (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>octal literals</td><td>✅</td></tr>
+            <tr><td>binary literals</td><td>✅</td></tr>
+            <tr><td>octal supported by Number()</td><td>✅</td></tr>
+            <tr><td>binary supported by Number()</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ template literals (6/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>toString conversion</td><td>❌</td></tr>
+            <tr><td>tagged template literals</td><td>✅</td></tr>
+            <tr><td>passed array is frozen</td><td>✅</td></tr>
+            <tr><td>line break normalisation</td><td>✅</td></tr>
+            <tr><td>TemplateStrings call site caching</td><td>✅</td></tr>
+            <tr><td>TemplateStrings permanent caching</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ RegExp "y" and "u" flags (5/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>"y" flag</td><td>✅</td></tr>
+            <tr><td>"y" flag, lastIndex</td><td>✅</td></tr>
+            <tr><td>"u" flag</td><td>✅</td></tr>
+            <tr><td>"u" flag, non-BMP Unicode characters</td><td>✅</td></tr>
+            <tr><td>"u" flag, Unicode code point escapes</td><td>✅</td></tr>
+            <tr><td>"u" flag, case folding</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ destructuring, declarations (12/22 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>with arrays</td><td>✅</td></tr>
+            <tr><td>with sparse arrays</td><td>✅</td></tr>
+            <tr><td>with strings</td><td>✅</td></tr>
+            <tr><td>with astral plane strings</td><td>❌</td></tr>
+            <tr><td>with generator instances</td><td>❌</td></tr>
+            <tr><td>with generic iterables</td><td>❌</td></tr>
+            <tr><td>with instances of generic iterables</td><td>❌</td></tr>
+            <tr><td>iterator closing</td><td>❌</td></tr>
+            <tr><td>trailing commas in iterable patterns</td><td>✅</td></tr>
+            <tr><td>with objects</td><td>✅</td></tr>
+            <tr><td>object destructuring with primitives</td><td>✅</td></tr>
+            <tr><td>trailing commas in object patterns</td><td>✅</td></tr>
+            <tr><td>throws on null and undefined</td><td>✅</td></tr>
+            <tr><td>computed properties</td><td>❌</td></tr>
+            <tr><td>multiples in a single var statement</td><td>✅</td></tr>
+            <tr><td>nested</td><td>✅</td></tr>
+            <tr><td>in for-in loop heads</td><td>❌</td></tr>
+            <tr><td>in for-of loop heads</td><td>✅</td></tr>
+            <tr><td>in catch heads</td><td>❌</td></tr>
+            <tr><td>rest</td><td>❌</td></tr>
+            <tr><td>defaults</td><td>✅</td></tr>
+            <tr><td>defaults, let temporal dead zone</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ destructuring, assignment (15/24 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>with arrays</td><td>✅</td></tr>
+            <tr><td>with sparse arrays</td><td>✅</td></tr>
+            <tr><td>with strings</td><td>✅</td></tr>
+            <tr><td>with astral plane strings</td><td>❌</td></tr>
+            <tr><td>with generator instances</td><td>❌</td></tr>
+            <tr><td>with generic iterables</td><td>❌</td></tr>
+            <tr><td>with instances of generic iterables</td><td>❌</td></tr>
+            <tr><td>iterator closing</td><td>❌</td></tr>
+            <tr><td>iterable destructuring expression</td><td>✅</td></tr>
+            <tr><td>chained iterable destructuring</td><td>✅</td></tr>
+            <tr><td>trailing commas in iterable patterns</td><td>✅</td></tr>
+            <tr><td>with objects</td><td>✅</td></tr>
+            <tr><td>object destructuring with primitives</td><td>✅</td></tr>
+            <tr><td>trailing commas in object patterns</td><td>✅</td></tr>
+            <tr><td>object destructuring expression</td><td>✅</td></tr>
+            <tr><td>parenthesised left-hand-side is a syntax error</td><td>❌</td></tr>
+            <tr><td>chained object destructuring</td><td>✅</td></tr>
+            <tr><td>throws on null and undefined</td><td>✅</td></tr>
+            <tr><td>computed properties</td><td>❌</td></tr>
+            <tr><td>nested</td><td>✅</td></tr>
+            <tr><td>rest</td><td>❌</td></tr>
+            <tr><td>nested rest</td><td>❌</td></tr>
+            <tr><td>empty patterns</td><td>✅</td></tr>
+            <tr><td>defaults</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ destructuring, parameters (16/26 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>with arrays</td><td>✅</td></tr>
+            <tr><td>with sparse arrays</td><td>✅</td></tr>
+            <tr><td>with strings</td><td>✅</td></tr>
+            <tr><td>with astral plane strings</td><td>❌</td></tr>
+            <tr><td>with generator instances</td><td>❌</td></tr>
+            <tr><td>with generic iterables</td><td>❌</td></tr>
+            <tr><td>with instances of generic iterables</td><td>❌</td></tr>
+            <tr><td>iterator closing</td><td>❌</td></tr>
+            <tr><td>trailing commas in iterable patterns</td><td>✅</td></tr>
+            <tr><td>with objects</td><td>✅</td></tr>
+            <tr><td>object destructuring with primitives</td><td>✅</td></tr>
+            <tr><td>trailing commas in object patterns</td><td>✅</td></tr>
+            <tr><td>throws on null and undefined</td><td>✅</td></tr>
+            <tr><td>computed properties</td><td>❌</td></tr>
+            <tr><td>nested</td><td>✅</td></tr>
+            <tr><td>'arguments' interaction</td><td>✅</td></tr>
+            <tr><td>new Function() support</td><td>✅</td></tr>
+            <tr><td>in parameters, function 'length' property</td><td>✅</td></tr>
+            <tr><td>rest</td><td>❌</td></tr>
+            <tr><td>empty patterns</td><td>✅</td></tr>
+            <tr><td>defaults</td><td>✅</td></tr>
+            <tr><td>defaults, separate scope</td><td>❌</td></tr>
+            <tr><td>defaults, new Function() support</td><td>✅</td></tr>
+            <tr><td>aliased defaults, arrow function</td><td>✅</td></tr>
+            <tr><td>shorthand defaults, arrow function</td><td>❌</td></tr>
+            <tr><td>duplicate identifier</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Unicode code point escapes (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>in strings</td><td>✅</td></tr>
+            <tr><td>in identifiers</td><td>✅</td></tr>
+            <tr><td>in property key definitions</td><td>✅</td></tr>
+            <tr><td>in property key accesses</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ new.target (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>in constructors</td><td>❌</td></tr>
+            <tr><td>assignment is an early error</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ const (3/18 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>✅</td></tr>
+            <tr><td>is block-scoped</td><td>❌</td></tr>
+            <tr><td>scope shadow resolution</td><td>❌</td></tr>
+            <tr><td>cannot be in statements</td><td>❌</td></tr>
+            <tr><td>redefining a const is an error</td><td>❌</td></tr>
+            <tr><td>for loop statement scope</td><td>❌</td></tr>
+            <tr><td>for-in loop iteration scope</td><td>❌</td></tr>
+            <tr><td>for-of loop iteration scope</td><td>❌</td></tr>
+            <tr><td>temporal dead zone</td><td>❌</td></tr>
+            <tr><td>basic support (strict mode)</td><td>✅</td></tr>
+            <tr><td>is block-scoped (strict mode)</td><td>❌</td></tr>
+            <tr><td>scope shadow resolution (strict mode)</td><td>❌</td></tr>
+            <tr><td>cannot be in statements (strict mode)</td><td>❌</td></tr>
+            <tr><td>redefining a const (strict mode)</td><td>✅</td></tr>
+            <tr><td>for loop statement scope (strict mode)</td><td>❌</td></tr>
+            <tr><td>for-in loop iteration scope (strict mode)</td><td>❌</td></tr>
+            <tr><td>for-of loop iteration scope (strict mode)</td><td>❌</td></tr>
+            <tr><td>temporal dead zone (strict mode)</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ let (10/16 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>✅</td></tr>
+            <tr><td>is block-scoped</td><td>✅</td></tr>
+            <tr><td>scope shadow resolution</td><td>✅</td></tr>
+            <tr><td>cannot be in statements</td><td>❌</td></tr>
+            <tr><td>for loop statement scope</td><td>✅</td></tr>
+            <tr><td>temporal dead zone</td><td>❌</td></tr>
+            <tr><td>for/for-in loop iteration scope</td><td>❌</td></tr>
+            <tr><td>for-in loop binding shadowing parameter</td><td>✅</td></tr>
+            <tr><td>basic support (strict mode)</td><td>✅</td></tr>
+            <tr><td>is block-scoped (strict mode)</td><td>✅</td></tr>
+            <tr><td>scope shadow resolution (strict mode)</td><td>✅</td></tr>
+            <tr><td>cannot be in statements (strict mode)</td><td>❌</td></tr>
+            <tr><td>for loop statement scope (strict mode)</td><td>✅</td></tr>
+            <tr><td>temporal dead zone (strict mode)</td><td>❌</td></tr>
+            <tr><td>for/for-in loop iteration scope (strict mode)</td><td>❌</td></tr>
+            <tr><td>for-in loop binding shadowing parameter (strict mode)</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ block-level function declaration</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ arrow functions (10/13 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>0 parameters</td><td>✅</td></tr>
+            <tr><td>1 parameter, no brackets</td><td>✅</td></tr>
+            <tr><td>multiple parameters</td><td>✅</td></tr>
+            <tr><td>lexical "this" binding</td><td>✅</td></tr>
+            <tr><td>"this" unchanged by call or apply</td><td>✅</td></tr>
+            <tr><td>can't be bound, can be curried</td><td>✅</td></tr>
+            <tr><td>lexical "arguments" binding</td><td>✅</td></tr>
+            <tr><td>no line break between params and <code>=></code></td><td>✅</td></tr>
+            <tr><td>correct precedence</td><td>✅</td></tr>
+            <tr><td>no "prototype" property</td><td>✅</td></tr>
+            <tr><td>lexical "super" binding in constructors</td><td>❌</td></tr>
+            <tr><td>lexical "super" binding in methods</td><td>❌</td></tr>
+            <tr><td>lexical "new.target" binding</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ class (0/24 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>class statement</td><td>❌</td></tr>
+            <tr><td>is block-scoped</td><td>❌</td></tr>
+            <tr><td>class expression</td><td>❌</td></tr>
+            <tr><td>anonymous class</td><td>❌</td></tr>
+            <tr><td>constructor</td><td>❌</td></tr>
+            <tr><td>prototype methods</td><td>❌</td></tr>
+            <tr><td>string-keyed methods</td><td>❌</td></tr>
+            <tr><td>computed prototype methods</td><td>❌</td></tr>
+            <tr><td>optional semicolons</td><td>❌</td></tr>
+            <tr><td>static methods</td><td>❌</td></tr>
+            <tr><td>computed static methods</td><td>❌</td></tr>
+            <tr><td>accessor properties</td><td>❌</td></tr>
+            <tr><td>computed accessor properties</td><td>❌</td></tr>
+            <tr><td>static accessor properties</td><td>❌</td></tr>
+            <tr><td>computed static accessor properties</td><td>❌</td></tr>
+            <tr><td>class name is lexically scoped</td><td>❌</td></tr>
+            <tr><td>computed names, temporal dead zone</td><td>❌</td></tr>
+            <tr><td>methods aren't enumerable</td><td>❌</td></tr>
+            <tr><td>implicit strict mode</td><td>❌</td></tr>
+            <tr><td>constructor requires new</td><td>❌</td></tr>
+            <tr><td>extends</td><td>❌</td></tr>
+            <tr><td>extends expressions</td><td>❌</td></tr>
+            <tr><td>extends null</td><td>❌</td></tr>
+            <tr><td>new.target</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ super (0/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>statement in constructors</td><td>❌</td></tr>
+            <tr><td>expression in constructors</td><td>❌</td></tr>
+            <tr><td>in methods, property access</td><td>❌</td></tr>
+            <tr><td>in methods, method calls</td><td>❌</td></tr>
+            <tr><td>method calls use correct "this" binding</td><td>❌</td></tr>
+            <tr><td>constructor calls use correct "new.target" binding</td><td>❌</td></tr>
+            <tr><td>is statically bound</td><td>❌</td></tr>
+            <tr><td>super() invokes the correct constructor</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ generators (19/27 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>generator function expressions</td><td>✅</td></tr>
+            <tr><td>correct "this" binding</td><td>✅</td></tr>
+            <tr><td>can't use "this" with new</td><td>❌</td></tr>
+            <tr><td>sending</td><td>❌</td></tr>
+            <tr><td>%GeneratorPrototype%</td><td>❌</td></tr>
+            <tr><td>%GeneratorPrototype% prototype chain</td><td>❌</td></tr>
+            <tr><td>%GeneratorPrototype%.constructor</td><td>✅</td></tr>
+            <tr><td>%GeneratorPrototype%.throw</td><td>✅</td></tr>
+            <tr><td>%GeneratorPrototype%.return</td><td>❌</td></tr>
+            <tr><td>yield operator precedence</td><td>✅</td></tr>
+            <tr><td>yield *, arrays</td><td>✅</td></tr>
+            <tr><td>yield *, sparse arrays</td><td>✅</td></tr>
+            <tr><td>yield *, strings</td><td>✅</td></tr>
+            <tr><td>yield *, astral plane strings</td><td>✅</td></tr>
+            <tr><td>yield *, generator instances</td><td>✅</td></tr>
+            <tr><td>yield *, generic iterables</td><td>✅</td></tr>
+            <tr><td>yield *, instances of iterables</td><td>✅</td></tr>
+            <tr><td>yield * on non-iterables is a runtime error</td><td>✅</td></tr>
+            <tr><td>yield *, iterator closing</td><td>✅</td></tr>
+            <tr><td>yield *, iterator closing via throw()</td><td>✅</td></tr>
+            <tr><td>shorthand generator methods</td><td>✅</td></tr>
+            <tr><td>string-keyed shorthand generator methods</td><td>✅</td></tr>
+            <tr><td>computed shorthand generators</td><td>✅</td></tr>
+            <tr><td>shorthand generator methods, classes</td><td>❌</td></tr>
+            <tr><td>computed shorthand generators, classes</td><td>❌</td></tr>
+            <tr><td>shorthand generators can't be constructors</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ typed arrays (42/46 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Int8Array</td><td>✅</td></tr>
+            <tr><td>Uint8Array</td><td>✅</td></tr>
+            <tr><td>Uint8ClampedArray</td><td>✅</td></tr>
+            <tr><td>Int16Array</td><td>✅</td></tr>
+            <tr><td>Uint16Array</td><td>✅</td></tr>
+            <tr><td>Int32Array</td><td>✅</td></tr>
+            <tr><td>Uint32Array</td><td>✅</td></tr>
+            <tr><td>Float32Array</td><td>✅</td></tr>
+            <tr><td>Float64Array</td><td>✅</td></tr>
+            <tr><td>DataView (Int8)</td><td>✅</td></tr>
+            <tr><td>DataView (Uint8)</td><td>✅</td></tr>
+            <tr><td>DataView (Int16)</td><td>✅</td></tr>
+            <tr><td>DataView (Uint16)</td><td>✅</td></tr>
+            <tr><td>DataView (Int32)</td><td>✅</td></tr>
+            <tr><td>DataView (Uint32)</td><td>✅</td></tr>
+            <tr><td>DataView (Float32)</td><td>✅</td></tr>
+            <tr><td>DataView (Float64)</td><td>✅</td></tr>
+            <tr><td>ArrayBuffer[Symbol.species]</td><td>❌</td></tr>
+            <tr><td>constructors require new</td><td>❌</td></tr>
+            <tr><td>constructors accept generic iterables</td><td>❌</td></tr>
+            <tr><td>correct prototype chains</td><td>❌</td></tr>
+            <tr><td>%TypedArray%.from</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.of</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.subarray</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.join</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.indexOf</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.lastIndexOf</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.slice</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.every</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.filter</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.forEach</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.map</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.reduce</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.reduceRight</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.reverse</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.some</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.sort</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.copyWithin</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.find</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.findIndex</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.fill</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.keys</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.values</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype.entries</td><td>✅</td></tr>
+            <tr><td>%TypedArray%.prototype[Symbol.iterator]</td><td>✅</td></tr>
+            <tr><td>%TypedArray%[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Map (18/19 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor arguments</td><td>✅</td></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>constructor accepts null</td><td>✅</td></tr>
+            <tr><td>constructor invokes set</td><td>✅</td></tr>
+            <tr><td>iterator closing</td><td>✅</td></tr>
+            <tr><td>Map.prototype.set returns this</td><td>✅</td></tr>
+            <tr><td>-0 key converts to +0</td><td>✅</td></tr>
+            <tr><td>Map.prototype.size</td><td>✅</td></tr>
+            <tr><td>Map.prototype.delete</td><td>✅</td></tr>
+            <tr><td>Map.prototype.clear</td><td>✅</td></tr>
+            <tr><td>Map.prototype.forEach</td><td>✅</td></tr>
+            <tr><td>Map.prototype.keys</td><td>✅</td></tr>
+            <tr><td>Map.prototype.values</td><td>✅</td></tr>
+            <tr><td>Map.prototype.entries</td><td>✅</td></tr>
+            <tr><td>Map.prototype[Symbol.iterator]</td><td>✅</td></tr>
+            <tr><td>Map.prototype isn't an instance</td><td>✅</td></tr>
+            <tr><td>Map iterator prototype chain</td><td>❌</td></tr>
+            <tr><td>Map[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Set (18/19 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor arguments</td><td>✅</td></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>constructor accepts null</td><td>✅</td></tr>
+            <tr><td>constructor invokes add</td><td>✅</td></tr>
+            <tr><td>iterator closing</td><td>✅</td></tr>
+            <tr><td>Set.prototype.add returns this</td><td>✅</td></tr>
+            <tr><td>-0 key converts to +0</td><td>✅</td></tr>
+            <tr><td>Set.prototype.size</td><td>✅</td></tr>
+            <tr><td>Set.prototype.delete</td><td>✅</td></tr>
+            <tr><td>Set.prototype.clear</td><td>✅</td></tr>
+            <tr><td>Set.prototype.forEach</td><td>✅</td></tr>
+            <tr><td>Set.prototype.keys</td><td>✅</td></tr>
+            <tr><td>Set.prototype.values</td><td>✅</td></tr>
+            <tr><td>Set.prototype.entries</td><td>✅</td></tr>
+            <tr><td>Set.prototype[Symbol.iterator]</td><td>✅</td></tr>
+            <tr><td>Set.prototype isn't an instance</td><td>✅</td></tr>
+            <tr><td>Set iterator prototype chain</td><td>❌</td></tr>
+            <tr><td>Set[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ WeakMap (12/12 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor arguments</td><td>✅</td></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>constructor accepts null</td><td>✅</td></tr>
+            <tr><td>constructor invokes set</td><td>✅</td></tr>
+            <tr><td>frozen objects as keys</td><td>✅</td></tr>
+            <tr><td>iterator closing</td><td>✅</td></tr>
+            <tr><td>WeakMap.prototype.set returns this</td><td>✅</td></tr>
+            <tr><td>WeakMap.prototype.delete</td><td>✅</td></tr>
+            <tr><td>no WeakMap.prototype.clear method</td><td>✅</td></tr>
+            <tr><td>.has, .get and .delete methods accept primitives</td><td>✅</td></tr>
+            <tr><td>WeakMap.prototype isn't an instance</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ WeakSet (11/11 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor arguments</td><td>✅</td></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>constructor accepts null</td><td>✅</td></tr>
+            <tr><td>constructor invokes add</td><td>✅</td></tr>
+            <tr><td>iterator closing</td><td>✅</td></tr>
+            <tr><td>WeakSet.prototype.add returns this</td><td>✅</td></tr>
+            <tr><td>WeakSet.prototype.delete</td><td>✅</td></tr>
+            <tr><td>no WeakSet.prototype.clear method</td><td>✅</td></tr>
+            <tr><td>.has and .delete methods accept primitives</td><td>✅</td></tr>
+            <tr><td>WeakSet.prototype isn't an instance</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Proxy (23/34 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>no "prototype" property</td><td>✅</td></tr>
+            <tr><td>"get" handler</td><td>✅</td></tr>
+            <tr><td>"get" handler, instances of proxies</td><td>❌</td></tr>
+            <tr><td>"get" handler invariants</td><td>❌</td></tr>
+            <tr><td>"set" handler</td><td>❌</td></tr>
+            <tr><td>"set" handler, instances of proxies</td><td>❌</td></tr>
+            <tr><td>"set" handler invariants</td><td>❌</td></tr>
+            <tr><td>"has" handler</td><td>✅</td></tr>
+            <tr><td>"has" handler, instances of proxies</td><td>✅</td></tr>
+            <tr><td>"has" handler invariants</td><td>✅</td></tr>
+            <tr><td>"deleteProperty" handler</td><td>✅</td></tr>
+            <tr><td>"deleteProperty" handler invariant</td><td>✅</td></tr>
+            <tr><td>"getOwnPropertyDescriptor" handler</td><td>✅</td></tr>
+            <tr><td>"getOwnPropertyDescriptor" handler invariants</td><td>❌</td></tr>
+            <tr><td>"defineProperty" handler</td><td>✅</td></tr>
+            <tr><td>"defineProperty" handler invariants</td><td>✅</td></tr>
+            <tr><td>"getPrototypeOf" handler</td><td>✅</td></tr>
+            <tr><td>"getPrototypeOf" handler invariant</td><td>✅</td></tr>
+            <tr><td>"setPrototypeOf" handler</td><td>✅</td></tr>
+            <tr><td>"setPrototypeOf" handler invariant</td><td>❌</td></tr>
+            <tr><td>"isExtensible" handler</td><td>✅</td></tr>
+            <tr><td>"isExtensible" handler invariant</td><td>✅</td></tr>
+            <tr><td>"preventExtensions" handler</td><td>✅</td></tr>
+            <tr><td>"preventExtensions" handler invariant</td><td>✅</td></tr>
+            <tr><td>"ownKeys" handler</td><td>✅</td></tr>
+            <tr><td>"ownKeys" handler invariant</td><td>✅</td></tr>
+            <tr><td>"apply" handler</td><td>✅</td></tr>
+            <tr><td>"apply" handler invariant</td><td>❌</td></tr>
+            <tr><td>"construct" handler</td><td>❌</td></tr>
+            <tr><td>"construct" handler invariants</td><td>❌</td></tr>
+            <tr><td>Proxy.revocable</td><td>✅</td></tr>
+            <tr><td>Array.isArray support</td><td>✅</td></tr>
+            <tr><td>JSON.stringify support</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Reflect (15/20 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Reflect.get</td><td>✅</td></tr>
+            <tr><td>Reflect.set</td><td>✅</td></tr>
+            <tr><td>Reflect.has</td><td>✅</td></tr>
+            <tr><td>Reflect.deleteProperty</td><td>✅</td></tr>
+            <tr><td>Reflect.getOwnPropertyDescriptor</td><td>✅</td></tr>
+            <tr><td>Reflect.defineProperty</td><td>✅</td></tr>
+            <tr><td>Reflect.getPrototypeOf</td><td>✅</td></tr>
+            <tr><td>Reflect.setPrototypeOf</td><td>✅</td></tr>
+            <tr><td>Reflect.isExtensible</td><td>✅</td></tr>
+            <tr><td>Reflect.preventExtensions</td><td>✅</td></tr>
+            <tr><td>Reflect.ownKeys, string keys</td><td>✅</td></tr>
+            <tr><td>Reflect.ownKeys, symbol keys</td><td>✅</td></tr>
+            <tr><td>Reflect.apply</td><td>✅</td></tr>
+            <tr><td>Reflect.construct</td><td>✅</td></tr>
+            <tr><td>Reflect.construct sets new.target meta-property</td><td>❌</td></tr>
+            <tr><td>Reflect.construct creates instances from third argument</td><td>✅</td></tr>
+            <tr><td>Reflect.construct, Array subclassing</td><td>❌</td></tr>
+            <tr><td>Reflect.construct, RegExp subclassing</td><td>❌</td></tr>
+            <tr><td>Reflect.construct, Function subclassing</td><td>❌</td></tr>
+            <tr><td>Reflect.construct, Promise subclassing</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Promise (8/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>constructor requires new</td><td>✅</td></tr>
+            <tr><td>Promise.prototype isn't an instance</td><td>✅</td></tr>
+            <tr><td>Promise.all</td><td>✅</td></tr>
+            <tr><td>Promise.all, generic iterables</td><td>✅</td></tr>
+            <tr><td>Promise.race</td><td>✅</td></tr>
+            <tr><td>Promise.race, generic iterables</td><td>✅</td></tr>
+            <tr><td>Promise[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Symbol (12/12 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>typeof support</td><td>✅</td></tr>
+            <tr><td>symbol keys are hidden to pre-ES6 code</td><td>✅</td></tr>
+            <tr><td>Object.defineProperty support</td><td>✅</td></tr>
+            <tr><td>symbols inherit from Symbol.prototype</td><td>✅</td></tr>
+            <tr><td>cannot coerce to string or number</td><td>✅</td></tr>
+            <tr><td>can convert with String()</td><td>✅</td></tr>
+            <tr><td>new Symbol() throws</td><td>✅</td></tr>
+            <tr><td>Object(symbol)</td><td>✅</td></tr>
+            <tr><td>JSON.stringify ignores symbol primitives</td><td>✅</td></tr>
+            <tr><td>JSON.stringify ignores symbol objects</td><td>✅</td></tr>
+            <tr><td>global symbol registry</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ well-known symbols (23/27 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Symbol.hasInstance</td><td>❌</td></tr>
+            <tr><td>Symbol.isConcatSpreadable, non-spreadable array</td><td>✅</td></tr>
+            <tr><td>Symbol.isConcatSpreadable, spreadable object with poisoned getter</td><td>✅</td></tr>
+            <tr><td>Symbol.iterator, existence</td><td>✅</td></tr>
+            <tr><td>Symbol.iterator, arguments object</td><td>✅</td></tr>
+            <tr><td>Symbol.species, existence</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Array.prototype.concat</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Array.prototype.filter</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Array.prototype.map</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Array.prototype.slice</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Array.prototype.splice</td><td>✅</td></tr>
+            <tr><td>Symbol.species, RegExp.prototype[Symbol.split]</td><td>✅</td></tr>
+            <tr><td>Symbol.species, Promise.prototype.then</td><td>✅</td></tr>
+            <tr><td>Symbol.replace</td><td>✅</td></tr>
+            <tr><td>Symbol.search</td><td>✅</td></tr>
+            <tr><td>Symbol.split</td><td>✅</td></tr>
+            <tr><td>Symbol.match</td><td>✅</td></tr>
+            <tr><td>Symbol.match, RegExp constructor</td><td>❌</td></tr>
+            <tr><td>Symbol.match, String.prototype.startsWith</td><td>✅</td></tr>
+            <tr><td>Symbol.match, String.prototype.endsWith</td><td>✅</td></tr>
+            <tr><td>Symbol.match, String.prototype.includes</td><td>✅</td></tr>
+            <tr><td>Symbol.toPrimitive</td><td>✅</td></tr>
+            <tr><td>Symbol.toStringTag</td><td>✅</td></tr>
+            <tr><td>Symbol.toStringTag affects existing built-ins</td><td>✅</td></tr>
+            <tr><td>Symbol.toStringTag, new built-ins</td><td>❌</td></tr>
+            <tr><td>Symbol.toStringTag, misc. built-ins</td><td>✅</td></tr>
+            <tr><td>Symbol.unscopables</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object static methods (4/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.assign</td><td>✅</td></tr>
+            <tr><td>Object.is</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertySymbols</td><td>✅</td></tr>
+            <tr><td>Object.setPrototypeOf</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ function "name" property (11/17 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>function statements</td><td>✅</td></tr>
+            <tr><td>function expressions</td><td>✅</td></tr>
+            <tr><td>new Function</td><td>✅</td></tr>
+            <tr><td>bound functions</td><td>✅</td></tr>
+            <tr><td>variables (function)</td><td>✅</td></tr>
+            <tr><td>object methods (function)</td><td>✅</td></tr>
+            <tr><td>accessor properties</td><td>✅</td></tr>
+            <tr><td>shorthand methods</td><td>✅</td></tr>
+            <tr><td>shorthand methods (no lexical binding)</td><td>✅</td></tr>
+            <tr><td>symbol-keyed methods</td><td>✅</td></tr>
+            <tr><td>class statements</td><td>❌</td></tr>
+            <tr><td>class expressions</td><td>❌</td></tr>
+            <tr><td>variables (class)</td><td>❌</td></tr>
+            <tr><td>object methods (class)</td><td>❌</td></tr>
+            <tr><td>class prototype methods</td><td>❌</td></tr>
+            <tr><td>class static methods</td><td>❌</td></tr>
+            <tr><td>isn't writable, is configurable</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String static methods (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>String.raw</td><td>✅</td></tr>
+            <tr><td>String.fromCodePoint</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ String.prototype methods (9/10 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>String.prototype.codePointAt</td><td>✅</td></tr>
+            <tr><td>String.prototype.normalize</td><td>✅</td></tr>
+            <tr><td>String.prototype.repeat</td><td>✅</td></tr>
+            <tr><td>String.prototype.startsWith</td><td>✅</td></tr>
+            <tr><td>String.prototype.startsWith throws on RegExp</td><td>✅</td></tr>
+            <tr><td>String.prototype.endsWith</td><td>✅</td></tr>
+            <tr><td>String.prototype.endsWith throws on RegExp</td><td>✅</td></tr>
+            <tr><td>String.prototype.includes</td><td>✅</td></tr>
+            <tr><td>String.prototype[Symbol.iterator]</td><td>✅</td></tr>
+            <tr><td>String iterator prototype chain</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ RegExp.prototype properties (6/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>RegExp.prototype.flags</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype[Symbol.match]</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype[Symbol.replace]</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype[Symbol.split]</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype[Symbol.search]</td><td>✅</td></tr>
+            <tr><td>RegExp[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array static methods (11/11 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.from, array-like objects</td><td>✅</td></tr>
+            <tr><td>Array.from, generator instances</td><td>✅</td></tr>
+            <tr><td>Array.from, generic iterables</td><td>✅</td></tr>
+            <tr><td>Array.from, instances of generic iterables</td><td>✅</td></tr>
+            <tr><td>Array.from map function, array-like objects</td><td>✅</td></tr>
+            <tr><td>Array.from map function, generator instances</td><td>✅</td></tr>
+            <tr><td>Array.from map function, generic iterables</td><td>✅</td></tr>
+            <tr><td>Array.from map function, instances of iterables</td><td>✅</td></tr>
+            <tr><td>Array.from, iterator closing</td><td>✅</td></tr>
+            <tr><td>Array.of</td><td>✅</td></tr>
+            <tr><td>Array[Symbol.species]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Array.prototype methods (10/11 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.copyWithin</td><td>✅</td></tr>
+            <tr><td>Array.prototype.find</td><td>✅</td></tr>
+            <tr><td>Array.prototype.findIndex</td><td>✅</td></tr>
+            <tr><td>Array.prototype.fill</td><td>✅</td></tr>
+            <tr><td>Array.prototype.keys</td><td>✅</td></tr>
+            <tr><td>Array.prototype.values</td><td>✅</td></tr>
+            <tr><td>Array.prototype.entries</td><td>✅</td></tr>
+            <tr><td>Array.prototype.splice</td><td>✅</td></tr>
+            <tr><td>Array.prototype[Symbol.iterator]</td><td>✅</td></tr>
+            <tr><td>Array iterator prototype chain</td><td>❌</td></tr>
+            <tr><td>Array.prototype[Symbol.unscopables]</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Number properties (9/9 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Number.isFinite</td><td>✅</td></tr>
+            <tr><td>Number.isInteger</td><td>✅</td></tr>
+            <tr><td>Number.isSafeInteger</td><td>✅</td></tr>
+            <tr><td>Number.isNaN</td><td>✅</td></tr>
+            <tr><td>Number.parseFloat</td><td>✅</td></tr>
+            <tr><td>Number.parseInt</td><td>✅</td></tr>
+            <tr><td>Number.EPSILON</td><td>✅</td></tr>
+            <tr><td>Number.MIN_SAFE_INTEGER</td><td>✅</td></tr>
+            <tr><td>Number.MAX_SAFE_INTEGER</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Math methods (17/17 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Math.clz32</td><td>✅</td></tr>
+            <tr><td>Math.imul</td><td>✅</td></tr>
+            <tr><td>Math.sign</td><td>✅</td></tr>
+            <tr><td>Math.log10</td><td>✅</td></tr>
+            <tr><td>Math.log2</td><td>✅</td></tr>
+            <tr><td>Math.log1p</td><td>✅</td></tr>
+            <tr><td>Math.expm1</td><td>✅</td></tr>
+            <tr><td>Math.cosh</td><td>✅</td></tr>
+            <tr><td>Math.sinh</td><td>✅</td></tr>
+            <tr><td>Math.tanh</td><td>✅</td></tr>
+            <tr><td>Math.acosh</td><td>✅</td></tr>
+            <tr><td>Math.asinh</td><td>✅</td></tr>
+            <tr><td>Math.atanh</td><td>✅</td></tr>
+            <tr><td>Math.trunc</td><td>✅</td></tr>
+            <tr><td>Math.fround</td><td>✅</td></tr>
+            <tr><td>Math.cbrt</td><td>✅</td></tr>
+            <tr><td>Math.hypot</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Date.prototype[Symbol.toPrimitive]</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Array is subclassable (0/11 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>length property (accessing)</td><td>❌</td></tr>
+            <tr><td>length property (setting)</td><td>❌</td></tr>
+            <tr><td>correct prototype chain</td><td>❌</td></tr>
+            <tr><td>Array.isArray support</td><td>❌</td></tr>
+            <tr><td>Array.prototype.concat</td><td>❌</td></tr>
+            <tr><td>Array.prototype.filter</td><td>❌</td></tr>
+            <tr><td>Array.prototype.map</td><td>❌</td></tr>
+            <tr><td>Array.prototype.slice</td><td>❌</td></tr>
+            <tr><td>Array.prototype.splice</td><td>❌</td></tr>
+            <tr><td>Array.from</td><td>❌</td></tr>
+            <tr><td>Array.of</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ RegExp is subclassable (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>❌</td></tr>
+            <tr><td>correct prototype chain</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype.exec</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype.test</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Function is subclassable (0/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>can be called</td><td>❌</td></tr>
+            <tr><td>correct prototype chain</td><td>❌</td></tr>
+            <tr><td>can be used with "new"</td><td>❌</td></tr>
+            <tr><td>Function.prototype.call</td><td>❌</td></tr>
+            <tr><td>Function.prototype.apply</td><td>❌</td></tr>
+            <tr><td>Function.prototype.bind</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Promise is subclassable (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>❌</td></tr>
+            <tr><td>correct prototype chain</td><td>❌</td></tr>
+            <tr><td>Promise.all</td><td>❌</td></tr>
+            <tr><td>Promise.race</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ miscellaneous subclassables (0/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Boolean is subclassable</td><td>❌</td></tr>
+            <tr><td>Number is subclassable</td><td>❌</td></tr>
+            <tr><td>String is subclassable</td><td>❌</td></tr>
+            <tr><td>Error is subclassable</td><td>❌</td></tr>
+            <tr><td>Map is subclassable</td><td>❌</td></tr>
+            <tr><td>Set is subclassable</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ prototype of bound functions (0/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functions</td><td>❌</td></tr>
+            <tr><td>generator functions</td><td>❌</td></tr>
+            <tr><td>arrow functions</td><td>❌</td></tr>
+            <tr><td>classes</td><td>❌</td></tr>
+            <tr><td>subclasses</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Proxy, internal 'get' calls (11/36 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>ToPrimitive</td><td>❌</td></tr>
+            <tr><td>CreateListFromArrayLike</td><td>✅</td></tr>
+            <tr><td>instanceof operator</td><td>❌</td></tr>
+            <tr><td>HasBinding</td><td>❌</td></tr>
+            <tr><td>CreateDynamicFunction</td><td>❌</td></tr>
+            <tr><td>ClassDefinitionEvaluation</td><td>❌</td></tr>
+            <tr><td>IteratorComplete, IteratorValue</td><td>✅</td></tr>
+            <tr><td>ToPropertyDescriptor</td><td>❌</td></tr>
+            <tr><td>Object.assign</td><td>✅</td></tr>
+            <tr><td>Object.defineProperties</td><td>✅</td></tr>
+            <tr><td>Function.prototype.bind</td><td>❌</td></tr>
+            <tr><td>Error.prototype.toString</td><td>❌</td></tr>
+            <tr><td>String.raw</td><td>✅</td></tr>
+            <tr><td>RegExp constructor</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype.flags</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype.test</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype.toString</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype[Symbol.match]</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype[Symbol.replace]</td><td>❌</td></tr>
+            <tr><td>RegExp.prototype[Symbol.search]</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype[Symbol.split]</td><td>✅</td></tr>
+            <tr><td>Array.from</td><td>❌</td></tr>
+            <tr><td>Array.prototype.concat</td><td>❌</td></tr>
+            <tr><td>Array.prototype iteration methods</td><td>✅</td></tr>
+            <tr><td>Array.prototype.pop</td><td>✅</td></tr>
+            <tr><td>Array.prototype.reverse</td><td>❌</td></tr>
+            <tr><td>Array.prototype.shift</td><td>✅</td></tr>
+            <tr><td>Array.prototype.splice</td><td>❌</td></tr>
+            <tr><td>Array.prototype.toString</td><td>❌</td></tr>
+            <tr><td>JSON.stringify</td><td>❌</td></tr>
+            <tr><td>Promise resolve functions</td><td>✅</td></tr>
+            <tr><td>String.prototype.match</td><td>❌</td></tr>
+            <tr><td>String.prototype.replace</td><td>❌</td></tr>
+            <tr><td>String.prototype.search</td><td>❌</td></tr>
+            <tr><td>String.prototype.split</td><td>❌</td></tr>
+            <tr><td>Date.prototype.toJSON</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Proxy, internal 'set' calls (10/11 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.assign</td><td>❌</td></tr>
+            <tr><td>Array.from</td><td>✅</td></tr>
+            <tr><td>Array.of</td><td>✅</td></tr>
+            <tr><td>Array.prototype.copyWithin</td><td>✅</td></tr>
+            <tr><td>Array.prototype.fill</td><td>✅</td></tr>
+            <tr><td>Array.prototype.pop</td><td>✅</td></tr>
+            <tr><td>Array.prototype.push</td><td>✅</td></tr>
+            <tr><td>Array.prototype.reverse</td><td>✅</td></tr>
+            <tr><td>Array.prototype.shift</td><td>✅</td></tr>
+            <tr><td>Array.prototype.splice</td><td>✅</td></tr>
+            <tr><td>Array.prototype.unshift</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Proxy, internal 'defineProperty' calls (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>[[Set]]</td><td>❌</td></tr>
+            <tr><td>SetIntegrityLevel</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Proxy, internal 'deleteProperty' calls (6/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Array.prototype.copyWithin</td><td>✅</td></tr>
+            <tr><td>Array.prototype.pop</td><td>✅</td></tr>
+            <tr><td>Array.prototype.reverse</td><td>✅</td></tr>
+            <tr><td>Array.prototype.shift</td><td>✅</td></tr>
+            <tr><td>Array.prototype.splice</td><td>✅</td></tr>
+            <tr><td>Array.prototype.unshift</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Proxy, internal 'getOwnPropertyDescriptor' calls (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>[[Set]]</td><td>❌</td></tr>
+            <tr><td>Object.assign</td><td>❌</td></tr>
+            <tr><td>Object.prototype.hasOwnProperty</td><td>❌</td></tr>
+            <tr><td>Function.prototype.bind</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Proxy, internal 'ownKeys' calls (2/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>SetIntegrityLevel</td><td>✅</td></tr>
+            <tr><td>TestIntegrityLevel</td><td>✅</td></tr>
+            <tr><td>SerializeJSONObject</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object static methods accept primitives (10/10 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.getPrototypeOf</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyDescriptor</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyNames</td><td>✅</td></tr>
+            <tr><td>Object.seal</td><td>✅</td></tr>
+            <tr><td>Object.freeze</td><td>✅</td></tr>
+            <tr><td>Object.preventExtensions</td><td>✅</td></tr>
+            <tr><td>Object.isSealed</td><td>✅</td></tr>
+            <tr><td>Object.isFrozen</td><td>✅</td></tr>
+            <tr><td>Object.isExtensible</td><td>✅</td></tr>
+            <tr><td>Object.keys</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ own property order (7/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Object.keys</td><td>✅</td></tr>
+            <tr><td>Object.getOwnPropertyNames</td><td>✅</td></tr>
+            <tr><td>Object.assign</td><td>✅</td></tr>
+            <tr><td>JSON.stringify</td><td>✅</td></tr>
+            <tr><td>JSON.parse</td><td>✅</td></tr>
+            <tr><td>Reflect.ownKeys, string key order</td><td>✅</td></tr>
+            <tr><td>Reflect.ownKeys, symbol key order</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Updated identifier syntax (2/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>var ⸯ;</td><td>❌</td></tr>
+            <tr><td>var 𐋀;</td><td>✅</td></tr>
+            <tr><td>no escaped reserved words as identifiers</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ miscellaneous (5/9 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>duplicate property names in strict mode</td><td>❌</td></tr>
+            <tr><td>no semicolon needed after do-while</td><td>✅</td></tr>
+            <tr><td>no assignments allowed in for-in head in strict mode</td><td>❌</td></tr>
+            <tr><td>accessors aren't constructors</td><td>✅</td></tr>
+            <tr><td>Invalid Date</td><td>✅</td></tr>
+            <tr><td>RegExp constructor can alter flags</td><td>✅</td></tr>
+            <tr><td>RegExp.prototype.toString generic and uses "flags" property</td><td>✅</td></tr>
+            <tr><td>built-in prototypes are not instances</td><td>❌</td></tr>
+            <tr><td>function 'length' is configurable</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ non-strict function semantics (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>hoisted block-level function declaration</td><td>✅</td></tr>
+            <tr><td>labeled function statements</td><td>✅</td></tr>
+            <tr><td>function statements in if-statement clauses</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ __proto__ in object literals (2/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>✅</td></tr>
+            <tr><td>multiple __proto__ is an error</td><td>❌</td></tr>
+            <tr><td>not a computed property</td><td>❌</td></tr>
+            <tr><td>not a shorthand property</td><td>❌</td></tr>
+            <tr><td>not a shorthand method</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object.prototype.__proto__ (6/6 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>get prototype</td><td>✅</td></tr>
+            <tr><td>set prototype</td><td>✅</td></tr>
+            <tr><td>absent from Object.create(null)</td><td>✅</td></tr>
+            <tr><td>present in hasOwnProperty()</td><td>✅</td></tr>
+            <tr><td>correct property descriptor</td><td>✅</td></tr>
+            <tr><td>present in Object.getOwnPropertyNames()</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String.prototype HTML methods (3/3 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>existence</td><td>✅</td></tr>
+            <tr><td>tags' names are lowercase</td><td>✅</td></tr>
+            <tr><td>quotes in arguments are escaped</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ RegExp.prototype.compile (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic functionality</td><td>✅</td></tr>
+            <tr><td>returns this</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ RegExp syntax extensions (6/8 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>hyphens in character sets</td><td>✅</td></tr>
+            <tr><td>invalid character escapes</td><td>✅</td></tr>
+            <tr><td>invalid control-character escapes</td><td>✅</td></tr>
+            <tr><td>invalid Unicode escapes</td><td>❌</td></tr>
+            <tr><td>invalid hexadecimal escapes</td><td>❌</td></tr>
+            <tr><td>incomplete patterns and quantifiers</td><td>✅</td></tr>
+            <tr><td>octal escape sequences</td><td>✅</td></tr>
+            <tr><td>invalid backreferences become octal escapes</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ HTML-style comments</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+<h2><span class="badge esintl">ESINTL</span> Features</h2>
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Intl object (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on global</td><td>❌</td></tr>
+            <tr><td>has prototype of Object</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Intl.Collator (0/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on intl object</td><td>❌</td></tr>
+            <tr><td>creates new Collator instances</td><td>❌</td></tr>
+            <tr><td>constructor called without new creates instances</td><td>❌</td></tr>
+            <tr><td>accepts valid language tags</td><td>❌</td></tr>
+            <tr><td>rejects invalid language tags</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Intl.Collator.prototype.compare (0/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Collator prototype</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Intl.Collator.prototype.resolvedOptions (0/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Collator prototype</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ NumberFormat (0/5 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on intl object</td><td>❌</td></tr>
+            <tr><td>creates new NumberFormat instances</td><td>❌</td></tr>
+            <tr><td>constructor called without new creates instances</td><td>❌</td></tr>
+            <tr><td>accepts valid language tags</td><td>❌</td></tr>
+            <tr><td>rejects invalid language tags</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ DateTimeFormat (0/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on intl object</td><td>❌</td></tr>
+            <tr><td>creates new DateTimeFormat instances</td><td>❌</td></tr>
+            <tr><td>constructor called without new creates instances</td><td>❌</td></tr>
+            <tr><td>accepts valid language tags</td><td>❌</td></tr>
+            <tr><td>rejects invalid language tags</td><td>❌</td></tr>
+            <tr><td>resolvedOptions().timeZone defaults to the host environment</td><td>❌</td></tr>
+            <tr><td>accepts IANA timezone names</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ String.prototype.localeCompare (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on String prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Number.prototype.toLocaleString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Number prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Array.prototype.toLocaleString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Array prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Object.prototype.toLocaleString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Object prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Date.prototype.toLocaleString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Date prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Date.prototype.toLocaleDateString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Date prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Date.prototype.toLocaleTimeString (1/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>exists on Date prototype</td><td>✅</td></tr>
+        </table>
+    </div>
+<h2><span class="badge esnext">ESNEXT</span> Features</h2>
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ ShadowRealm</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>⚠️ Legacy RegExp features in JavaScript (2/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>RegExp "lastMatch"</td><td>✅</td></tr>
+            <tr><td>RegExp.$1-$9</td><td>✅</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Generator function.sent Meta Property</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Class and Property Decorators (0/1 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>class decorators</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ throw expressions (0/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>logical</td><td>❌</td></tr>
+            <tr><td>parameter initializers</td><td>❌</td></tr>
+            <tr><td>arrow function bodies</td><td>❌</td></tr>
+            <tr><td>conditionals</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ Set methods (4/7 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Set.prototype.intersection</td><td>✅</td></tr>
+            <tr><td>Set.prototype.union</td><td>✅</td></tr>
+            <tr><td>Set.prototype.difference</td><td>✅</td></tr>
+            <tr><td>Set.prototype.symmetricDifference</td><td>✅</td></tr>
+            <tr><td>Set.prototype.isDisjointFrom</td><td>❌</td></tr>
+            <tr><td>Set.prototype.isSubsetOf</td><td>❌</td></tr>
+            <tr><td>Set.prototype.isSupersetOf</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ ArrayBuffer.prototype.transfer (1/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>ArrayBuffer.prototype.transfer()</td><td>✅</td></tr>
+            <tr><td>ArrayBuffer.prototype.realloc()</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Map.prototype.upsert (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>Map.prototype.upsert</td><td>❌</td></tr>
+            <tr><td>WeakMap.prototype.upsert</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Array.isTemplateObject</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ Iterator Helpers (0/35 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>instanceof Iterator</td><td>❌</td></tr>
+            <tr><td>extends Iterator</td><td>❌</td></tr>
+            <tr><td>Iterator.from, iterable</td><td>❌</td></tr>
+            <tr><td>Iterator.from, iterator</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.asIndexedPairs</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.drop</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.every</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.filter</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.find</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.flatMap</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.forEach</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.map</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.reduce</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.some</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.take</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype.toArray</td><td>❌</td></tr>
+            <tr><td>Iterator.prototype[@@toStringTag]</td><td>❌</td></tr>
+            <tr><td>instanceof AsyncIterator</td><td>❌</td></tr>
+            <tr><td>extends AsyncIterator</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.from, async iterable</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.from, iterable</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.from, iterator</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.asIndexedPairs</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.drop</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.every</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.filter</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.find</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.flatMap</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.forEach</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.map</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.reduce</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.some</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.take</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype.toArray</td><td>❌</td></tr>
+            <tr><td>AsyncIterator.prototype[@@toStringTag]</td><td>❌</td></tr>
+        </table>
+    </div>
+<h2><span class="badge non-standard">NON-STANDARD</span> Features</h2>
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ SIMD (Single Instruction, Multiple Data) (0/57 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>basic support</td><td>❌</td></tr>
+            <tr><td>Float32x4</td><td>❌</td></tr>
+            <tr><td>Int32x4</td><td>❌</td></tr>
+            <tr><td>Int16x8</td><td>❌</td></tr>
+            <tr><td>Int8x16</td><td>❌</td></tr>
+            <tr><td>Uint32x4</td><td>❌</td></tr>
+            <tr><td>Uint16x8</td><td>❌</td></tr>
+            <tr><td>Uint8x16</td><td>❌</td></tr>
+            <tr><td>Bool32x4</td><td>❌</td></tr>
+            <tr><td>Bool16x8</td><td>❌</td></tr>
+            <tr><td>Bool8x16</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.abs</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.add</td><td>❌</td></tr>
+            <tr><td>SIMD.%integerType%.addSaturate</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.and</td><td>❌</td></tr>
+            <tr><td>SIMD.%booleanType%.anyTrue</td><td>❌</td></tr>
+            <tr><td>SIMD.%booleanType%.allTrue</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.check</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.equal</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.extractLane</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.greaterThan</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.greaterThanOrEqual</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.lessThan</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.lessThanOrEqual</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.mul</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.div</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.load</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.load1</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.load2</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.load3</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.max</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.maxNum</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.min</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.minNum</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.neg</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.not</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.notEqual</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.or</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.reciprocalApproximation</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.reciprocalSqrtApproximation</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.replaceLane</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.select</td><td>❌</td></tr>
+            <tr><td>SIMD.%integerType%.shiftLeftByScalar</td><td>❌</td></tr>
+            <tr><td>SIMD.%integerType%.shiftRightByScalar</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.shuffle</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.splat</td><td>❌</td></tr>
+            <tr><td>SIMD.%floatType%.sqrt</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.store</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.store1</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.store2</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.store3</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.sub</td><td>❌</td></tr>
+            <tr><td>SIMD.%integerType%.subSaturate</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.swizzle</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.xor</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.fromTIMDBits</td><td>❌</td></tr>
+            <tr><td>SIMD.%type%.fromTIMD</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature partial" data-status="partial">
+        <h3>⚠️ decompilation (3/4 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>uneval, existence</td><td>✅</td></tr>
+            <tr><td>built-in "toSource" methods</td><td>✅</td></tr>
+            <tr><td>"toSource" method as hook for uneval</td><td>✅</td></tr>
+            <tr><td>eval(uneval(value)) is functionally equivalent to value</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ optional "scope" argument of "eval"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ function "caller" property</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ function "arity" property</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ function "arguments" property</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Function.prototype.isGenerator</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ class extends null</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ __count__</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ __parent__</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ __noSuchMethod__</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Array generics</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ String generics</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Array comprehensions (JS 1.8 style)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Array comprehensions (ES draft style)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Expression closures</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ ECMAScript for XML (E4X)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ "for each..in" loops</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Sharp variables</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Iterator</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ __iterator__</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Generators (JS 1.8)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.8.1)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Generator comprehensions (JS 1.8 style)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Generator comprehensions (ES draft style)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ RegExp "x" flag</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Callable RegExp</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ RegExp named groups</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ String.prototype.quote</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ String.prototype.replace flags</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Date.prototype.toLocaleFormat</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ Date.parse produces NaN for invalid dates</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Object.prototype.watch</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Object.prototype.unwatch</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Object.prototype.eval</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Object.observe</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ error "stack"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.14)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ error "lineNumber"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ error "columnNumber"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature supported" data-status="supported">
+        <h3>✅ error "fileName"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ error "description"</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>⚠️ global (0/2 subtests)</h3>
+        <table>
+            <tr><th>Subtest</th><th>Support</th></tr>
+            <tr><td>"global" global property is global object</td><td>❌</td></tr>
+            <tr><td>"global" global property has correct property descriptor</td><td>❌</td></tr>
+        </table>
+    </div>
+
+    <div class="feature unsupported" data-status="unsupported">
+        <h3>❌ Proxy "ownKeys" handler, duplicate keys for non-extensible targets (ES 2017 semantics)</h3>
+        <div class="compat-table">
+            <strong>Compat-table result:</strong> Not supported
+            (tested with Rhino 1.7.13)
+        </div>
+    </div>
+
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+        <h2>Data Sources</h2>
+        <p><strong>compat-table:</strong> Practical JavaScript feature testing used by Babel and build tools</p>
+        <p><strong>test262:</strong> Official ECMAScript test suite for specification compliance</p>
+        <p>By combining both, we get a complete picture of Rhino's capabilities.</p>
+        <p style="margin-top: 20px; color: #666;">
+            Generated: 2025-09-14T11:21:24.274Z<br>
+            Rhino version: 1.8.1-SNAPSHOT
+        </p>
+    </div>
+    
+    <script>
+        // Update statistics
+        document.getElementById('total-features').textContent = '199';
+        document.getElementById('supported-features').textContent = '85';
+        document.getElementById('support-percentage').textContent = '43%';
+        
+        // Filter functionality
+        function filterFeatures(status) {
+            const features = document.querySelectorAll('.feature');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            features.forEach(feature => {
+                if (status === 'all') {
+                    feature.style.display = 'block';
+                } else {
+                    feature.style.display = feature.dataset.status === status ? 'block' : 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

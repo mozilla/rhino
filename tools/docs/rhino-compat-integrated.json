@@ -1,0 +1,4906 @@
+{
+  "es2016plus": {
+    "exponentiation (**) operator": {
+      "basic support": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "assignment": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "early syntax error for unary negation without parens": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "Array.prototype.includes": {
+      "Array.prototype.includes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.includes handles sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.includes is generic": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "%TypedArray%.prototype.includes": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "generator functions can't be used with \"new\"": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "generator throw() caught by inner generator": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "strict fn w/ non-strict non-simple params is error": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "nested rest destructuring, declarations": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "nested rest destructuring, parameters": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Proxy, \"enumerate\" handler removed": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "Proxy internal calls, Array.prototype.includes": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "Object static methods": {
+      "Object.values": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Object.entries": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Object.getOwnPropertyDescriptors": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Object.getOwnPropertyDescriptors doesn't provide undefined descriptors": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "String padding": {
+      "String.prototype.padStart": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.padEnd": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "trailing commas in function syntax": {
+      "in parameter lists": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "in argument lists": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "async functions": {
+      "return": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "throw": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "no line break between async and function": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "no \"prototype\" property": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "await": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "await, rejection": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "must await a value": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "can await non-Promise values": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "cannot await in parameters": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async methods, object literals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async methods, classes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async arrow functions in methods, classes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async arrow functions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async function prototype, Symbol.toStringTag": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "async function constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "shared memory and atomics": {
+      "SharedArrayBuffer": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SharedArrayBuffer[Symbol.species]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SharedArrayBuffer.prototype.byteLength": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SharedArrayBuffer.prototype.slice": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SharedArrayBuffer.prototype[Symbol.toStringTag]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.add": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.and": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.compareExchange": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.exchange": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.wait": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.notify": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.isLockFree": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.load": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.or": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.store": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.sub": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Atomics.xor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "RegExp \"u\" flag, case folding": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "arguments.caller removed": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Object.prototype getter/setter methods": {
+      "__defineGetter__": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__defineGetter__, symbols": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__defineGetter__, ToObject(this)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__defineSetter__": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__defineSetter__, symbols": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__defineSetter__, ToObject(this)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupGetter__": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupGetter__, prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupGetter__, symbols": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupGetter__, ToObject(this)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupGetter__, data properties can shadow accessors": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupSetter__": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupSetter__, prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "__lookupSetter__, symbols": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupSetter__, ToObject(this)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupSetter__, data properties can shadow accessors": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Proxy internal calls, getter/setter methods": {
+      "__defineGetter__": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__defineSetter__": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupGetter__": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "__lookupSetter__": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "assignments allowed in for-in head in non-strict mode": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "object rest/spread properties": {
+      "object rest properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "object spread properties": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Promise.prototype.finally": {
+      "basic support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "don't change resolution value": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "change rejection value": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "s (dotAll) flag for regular expressions": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "RegExp named capture groups": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "RegExp Lookbehind Assertions": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "RegExp Unicode Property Escapes": {
+      "basic": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Unicode 11": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Unicode 12": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Unicode 12.1": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Unicode 13": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Unicode 14": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Unicode 15": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Unicode 15.1": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Asynchronous Iterators": {
+      "async generators": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-await-of loops": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy \"ownKeys\" handler, duplicate keys for non-extensible targets": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "template literal revision": {
+      "version": "rhino1_7_14",
+      "supported": true
+    },
+    "Symbol.prototype.description": {
+      "basic": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "empty description": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "undefined description": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Object.fromEntries": {
+      "version": "rhino1_7_14",
+      "supported": true
+    },
+    "string trimming": {
+      "String.prototype.trimLeft": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.trimRight": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.trimStart": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.trimEnd": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Array.prototype.{flat, flatMap}": {
+      "Array.prototype.flat": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.flatMap": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "flat and flatMap in Array.prototype[@@unscopables]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "optional catch binding": {
+      "basic": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "await": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "yield": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Function.prototype.toString revision": {
+      "functions created with the Function constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "arrows": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "[native code]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "class expression with implicit constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class expression with explicit constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "unicode escape sequences in identifiers": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "methods and computed property names": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "JSON superset": {
+      "LINE SEPARATOR can appear in string literals": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "PARAGRAPH SEPARATOR can appear in string literals": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "Well-formed JSON.stringify": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "String.prototype.matchAll": {
+      "basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "throws on non-global regex": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "BigInt": {
+      "basic functionality": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "constructor": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "BigInt.asUintN": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "BigInt.asIntN": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "BigInt64Array": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "BigUint64Array": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "DataView.prototype.getBigInt64": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "DataView.prototype.getBigUint64": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Promise.allSettled": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "globalThis": {
+      "\"globalThis\" global property is global object": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "\"globalThis\" global property has correct property descriptor": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "optional chaining operator (?.)": {
+      "optional property access": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "optional bracket access": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "optional method call": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "optional function call": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "spread parameters after optional chaining": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "nullish coalescing operator (??)": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "String.prototype.replaceAll": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "Promise.any": {
+      "fulfillment": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "AggregateError": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "WeakReferences": {
+      "WeakRef minimal support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "FinalizationRegistry minimal support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Logical Assignment": {
+      "||= basic support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "||= short-circuiting behaviour": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "||= setter not unecessarily invoked": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "&&= basic support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "&&= short-circuiting behaviour": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "&&= setter not unecessarily invoked": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "??= basic support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "??= short-circuiting behaviour": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "??= setter not unecessarily invoked": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "numeric separators": {
+      "version": "rhino1_7_14",
+      "supported": true
+    },
+    "instance class fields": {
+      "public instance class fields": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "private instance class fields basic support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "private instance class fields initializers": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "optional private instance class fields access": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "optional deep private instance class fields access": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed instance class fields": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "static class fields": {
+      "public static class fields": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "static class fields use [[Define]]": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "private static class fields": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed static class fields": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "private class methods": {
+      "private instance methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "private static methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "private accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "private static accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Ergonomic brand checks for private fields": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    ".at() method on the built-in indexables": {
+      "Array.prototype.at()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "String.prototype.at()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.at()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Object.hasOwn": {
+      "Basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "ToObject called before ToPropertyKey": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Class static initialization blocks": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Error.cause property": {
+      "Error has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Error.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "EvalError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "EvalError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "RangeError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RangeError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "ReferenceError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "ReferenceError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "SyntaxError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "SyntaxError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "TypeError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "TypeError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "URIError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "URIError.prototype lacks cause": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "AggregateError has cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "AggregateError.prototype lacks cause": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "RegExp Match Indices (`hasIndices` / `d` flag)": {
+      "constructor supports it": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "shows up in flags": {
+        "version": "rhino1_8_1",
+        "supported": false
+      }
+    },
+    "Array find from last": {
+      "Array.prototype.findLast": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.findLastIndex": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Hashbang Grammar": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "RegExp `v` flag": {
+      "set notations": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "properties of Strings": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "constructor supports it": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "shows up in flags": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "Unicode 15.1": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    }
+  },
+  "es5": {
+    "Object/array literal extensions": {
+      "Getter accessors": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Setter accessors": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Trailing commas in object literals": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Trailing commas in array literals": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Reserved words as property names": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Object static methods": {
+      "Object.create": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.defineProperty": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.defineProperties": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getPrototypeOf": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.seal": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.freeze": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.preventExtensions": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isSealed": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isFrozen": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isExtensible": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertyDescriptor": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertyNames": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Array methods": {
+      "Array.isArray": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.indexOf": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.lastIndexOf": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.every": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.some": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.forEach": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.map": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.filter": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.reduce": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.reduceRight": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.sort: compareFn must be function or undefined": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.sort: compareFn may be explicit undefined": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.unshift: [].unshift(0) returns the unshifted count": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "String properties and methods": {
+      "Property access on strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.split": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "String.prototype.substr": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "String.prototype.trim": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Date methods": {
+      "Date.prototype.toISOString": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Date.now": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Date.prototype.toJSON": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Function.prototype.bind": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "JSON": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Immutable globals": {
+      "undefined": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "NaN": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Infinity": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Number methods": {
+      "Number.prototype.toExponential rounds properly": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Number.prototype.toExponential throws on ±Infinity fractionDigits": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Number.prototype.toExponential does not throw on edge cases": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "Miscellaneous": {
+      "Function.prototype.apply permits array-likes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "parseInt ignores leading zeros": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Function \"prototype\" property is non-enumerable": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Arguments toStringTag is \"Arguments\"": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Zero-width chars in identifiers": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Unreserved words": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Enumerable properties can be shadowed by non-enumerables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Thrown functions have proper \"this\" values": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Strict mode": {
+      "reserved words": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "\"this\" is undefined in functions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"this\" is not coerced to object in primitive methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"this\" is not coerced to object in primitive accessors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "legacy octal is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "assignment to unresolvable identifiers is a ReferenceError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "assignment to eval or arguments is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "assignment to non-writable properties is a TypeError": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "eval or arguments bindings is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "arguments.caller removed or is a TypeError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "arguments.callee is a TypeError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "(function(){}).caller and (function(){}).arguments is a TypeError": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "arguments is unmapped": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "eval() can't create bindings": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "deleting bindings is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "deleting non-configurable properties is a TypeError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "\"with\" is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "repeated parameter names is a SyntaxError": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "function expressions with matching name and argument are valid": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    }
+  },
+  "es6": {
+    "proper tail calls (tail call optimisation)": {
+      "direct recursion": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "mutual recursion": {
+        "version": "rhino1_8_1",
+        "supported": false
+      }
+    },
+    "default function parameters": {
+      "basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "explicit undefined defers to the default": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "defaults can refer to previous params": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "arguments object interaction": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "temporal dead zone": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "separate scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "new Function() support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "rest parameters": {
+      "basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "function 'length' property": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "arguments object interaction": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "can't be used in setters": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "new Function() support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "spread syntax for iterable objects": {
+      "with arrays, in function calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with arrays, in array literals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with sparse arrays, in function calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with sparse arrays, in array literals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with strings, in function calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with strings, in array literals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with astral plane strings, in function calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with astral plane strings, in array literals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generator instances, in calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generator instances, in arrays": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generic iterables, in calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generic iterables, in arrays": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with instances of iterables, in calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with instances of iterables, in arrays": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "spreading non-iterables is a runtime error": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "object literal extensions": {
+      "computed properties": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand properties": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "shorthand methods": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "string-keyed shorthand methods": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "computed shorthand methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "computed accessors": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "for..of loops": {
+      "with arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with astral plane strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with generator instances": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "with instances of generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "iterator closing, break": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "iterator closing, throw": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "octal and binary literals": {
+      "octal literals": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "binary literals": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "octal supported by Number()": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "binary supported by Number()": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "template literals": {
+      "basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "toString conversion": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "tagged template literals": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "passed array is frozen": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "line break normalisation": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "TemplateStrings call site caching": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "TemplateStrings permanent caching": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "RegExp \"y\" and \"u\" flags": {
+      "\"y\" flag": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"y\" flag, lastIndex": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"u\" flag": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"u\" flag, non-BMP Unicode characters": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"u\" flag, Unicode code point escapes": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"u\" flag, case folding": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "destructuring, declarations": {
+      "with arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with astral plane strings": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generator instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with instances of generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "iterator closing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "trailing commas in iterable patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with objects": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "object destructuring with primitives": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "trailing commas in object patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "throws on null and undefined": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "computed properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "multiples in a single var statement": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "nested": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "in for-in loop heads": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "in for-of loop heads": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "in catch heads": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "rest": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "defaults": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "defaults, let temporal dead zone": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "destructuring, assignment": {
+      "with arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with astral plane strings": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generator instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with instances of generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "iterator closing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "iterable destructuring expression": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "chained iterable destructuring": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "trailing commas in iterable patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with objects": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "object destructuring with primitives": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "trailing commas in object patterns": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "object destructuring expression": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "parenthesised left-hand-side is a syntax error": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "chained object destructuring": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "throws on null and undefined": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "computed properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "nested": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "rest": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "nested rest": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "empty patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "defaults": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "destructuring, parameters": {
+      "with arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with astral plane strings": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generator instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "with instances of generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "iterator closing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "trailing commas in iterable patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "with objects": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "object destructuring with primitives": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "trailing commas in object patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "throws on null and undefined": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "computed properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "nested": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "'arguments' interaction": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "new Function() support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "in parameters, function 'length' property": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "rest": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "empty patterns": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "defaults": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "defaults, separate scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "defaults, new Function() support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "aliased defaults, arrow function": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand defaults, arrow function": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "duplicate identifier": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Unicode code point escapes": {
+      "in strings": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "in identifiers": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "in property key definitions": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "in property key accesses": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "new.target": {
+      "in constructors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "assignment is an early error": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "const": {
+      "basic support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "is block-scoped": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "scope shadow resolution": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "cannot be in statements": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "redefining a const is an error": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for loop statement scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-in loop iteration scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-of loop iteration scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "temporal dead zone": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "basic support (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "is block-scoped (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "scope shadow resolution (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "cannot be in statements (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "redefining a const (strict mode)": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "for loop statement scope (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-in loop iteration scope (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-of loop iteration scope (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "temporal dead zone (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "let": {
+      "basic support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "is block-scoped": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "scope shadow resolution": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "cannot be in statements": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for loop statement scope": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "temporal dead zone": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for/for-in loop iteration scope": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-in loop binding shadowing parameter": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "basic support (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "is block-scoped (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "scope shadow resolution (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "cannot be in statements (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for loop statement scope (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "temporal dead zone (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for/for-in loop iteration scope (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "for-in loop binding shadowing parameter (strict mode)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "block-level function declaration": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "arrow functions": {
+      "0 parameters": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "1 parameter, no brackets": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "multiple parameters": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "lexical \"this\" binding": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "\"this\" unchanged by call or apply": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "can't be bound, can be curried": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "lexical \"arguments\" binding": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "no line break between params and <code>=></code>": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "correct precedence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "no \"prototype\" property": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "lexical \"super\" binding in constructors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "lexical \"super\" binding in methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "lexical \"new.target\" binding": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "class": {
+      "class statement": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "is block-scoped": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class expression": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "anonymous class": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "prototype methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "string-keyed methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed prototype methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "optional semicolons": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "static methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed static methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "static accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed static accessor properties": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class name is lexically scoped": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed names, temporal dead zone": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "methods aren't enumerable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "implicit strict mode": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "extends": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "extends expressions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "extends null": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "new.target": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "super": {
+      "statement in constructors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "expression in constructors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "in methods, property access": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "in methods, method calls": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "method calls use correct \"this\" binding": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor calls use correct \"new.target\" binding": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "is statically bound": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "super() invokes the correct constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "generators": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "generator function expressions": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "correct \"this\" binding": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "can't use \"this\" with new": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "sending": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "%GeneratorPrototype%": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "%GeneratorPrototype% prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "%GeneratorPrototype%.constructor": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "%GeneratorPrototype%.throw": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "%GeneratorPrototype%.return": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "yield operator precedence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, sparse arrays": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, astral plane strings": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, generator instances": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "yield *, instances of iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "yield * on non-iterables is a runtime error": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "yield *, iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "yield *, iterator closing via throw()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand generator methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "string-keyed shorthand generator methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "computed shorthand generators": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand generator methods, classes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "computed shorthand generators, classes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "shorthand generators can't be constructors": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "typed arrays": {
+      "Int8Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Uint8Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Uint8ClampedArray": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Int16Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Uint16Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Int32Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Uint32Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Float32Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Float64Array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Int8)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Uint8)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Int16)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Uint16)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Int32)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Uint32)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Float32)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "DataView (Float64)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "ArrayBuffer[Symbol.species]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructors require new": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructors accept generic iterables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chains": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "%TypedArray%.from": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.of": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.subarray": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "%TypedArray%.prototype.join": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.indexOf": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.lastIndexOf": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.slice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.every": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.filter": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.forEach": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.map": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.reduce": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.reduceRight": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.reverse": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.some": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.sort": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.copyWithin": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.find": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.findIndex": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.fill": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.keys": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.values": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype.entries": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "%TypedArray%.prototype[Symbol.iterator]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "%TypedArray%[Symbol.species]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Map": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor arguments": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor accepts null": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor invokes set": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Map.prototype.set returns this": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "-0 key converts to +0": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.size": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.delete": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.clear": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.forEach": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.values": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype.entries": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype[Symbol.iterator]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map.prototype isn't an instance": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Map iterator prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Map[Symbol.species]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Set": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor arguments": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor accepts null": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor invokes add": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Set.prototype.add returns this": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "-0 key converts to +0": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.size": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.delete": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.clear": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.forEach": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.values": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype.entries": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype[Symbol.iterator]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set.prototype isn't an instance": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Set iterator prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Set[Symbol.species]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "WeakMap": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor arguments": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor accepts null": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor invokes set": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "frozen objects as keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "WeakMap.prototype.set returns this": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "WeakMap.prototype.delete": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "no WeakMap.prototype.clear method": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      ".has, .get and .delete methods accept primitives": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "WeakMap.prototype isn't an instance": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "WeakSet": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor arguments": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor accepts null": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "constructor invokes add": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "WeakSet.prototype.add returns this": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "WeakSet.prototype.delete": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "no WeakSet.prototype.clear method": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      ".has and .delete methods accept primitives": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "WeakSet.prototype isn't an instance": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Proxy": {
+      "constructor requires new": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "no \"prototype\" property": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"get\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"get\" handler, instances of proxies": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"get\" handler invariants": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"set\" handler": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"set\" handler, instances of proxies": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"set\" handler invariants": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"has\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"has\" handler, instances of proxies": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"has\" handler invariants": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"deleteProperty\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"deleteProperty\" handler invariant": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"getOwnPropertyDescriptor\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"getOwnPropertyDescriptor\" handler invariants": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"defineProperty\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"defineProperty\" handler invariants": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"getPrototypeOf\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"getPrototypeOf\" handler invariant": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"setPrototypeOf\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"setPrototypeOf\" handler invariant": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"isExtensible\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"isExtensible\" handler invariant": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"preventExtensions\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"preventExtensions\" handler invariant": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"ownKeys\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"ownKeys\" handler invariant": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"apply\" handler": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "\"apply\" handler invariant": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"construct\" handler": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"construct\" handler invariants": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Proxy.revocable": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.isArray support": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "JSON.stringify support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Reflect": {
+      "Reflect.get": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.set": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.has": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.deleteProperty": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.getOwnPropertyDescriptor": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.defineProperty": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.getPrototypeOf": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.setPrototypeOf": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.isExtensible": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.preventExtensions": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.ownKeys, string keys": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.ownKeys, symbol keys": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.apply": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.construct": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.construct sets new.target meta-property": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Reflect.construct creates instances from third argument": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.construct, Array subclassing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Reflect.construct, RegExp subclassing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Reflect.construct, Function subclassing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Reflect.construct, Promise subclassing": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Promise": {
+      "basic functionality": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "constructor requires new": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Promise.prototype isn't an instance": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Promise.all": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Promise.all, generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Promise.race": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Promise.race, generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Promise[Symbol.species]": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "Symbol": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "typeof support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "symbol keys are hidden to pre-ES6 code": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.defineProperty support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "symbols inherit from Symbol.prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "cannot coerce to string or number": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "can convert with String()": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "new Symbol() throws": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object(symbol)": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "JSON.stringify ignores symbol primitives": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "JSON.stringify ignores symbol objects": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "global symbol registry": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "well-known symbols": {
+      "Symbol.hasInstance": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Symbol.isConcatSpreadable, non-spreadable array": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Symbol.isConcatSpreadable, spreadable object with poisoned getter": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.iterator, existence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Symbol.iterator, arguments object": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Symbol.species, existence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Symbol.species, Array.prototype.concat": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, Array.prototype.filter": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, Array.prototype.map": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, Array.prototype.slice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, Array.prototype.splice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, RegExp.prototype[Symbol.split]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.species, Promise.prototype.then": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Symbol.replace": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.search": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.split": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.match": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.match, RegExp constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Symbol.match, String.prototype.startsWith": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.match, String.prototype.endsWith": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.match, String.prototype.includes": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.toPrimitive": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.toStringTag": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.toStringTag affects existing built-ins": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.toStringTag, new built-ins": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Symbol.toStringTag, misc. built-ins": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Symbol.unscopables": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Object static methods": {
+      "Object.assign": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.is": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertySymbols": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.setPrototypeOf": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "function \"name\" property": {
+      "function statements": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "function expressions": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "new Function": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "bound functions": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "variables (function)": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "object methods (function)": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "accessor properties": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "shorthand methods (no lexical binding)": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "symbol-keyed methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "class statements": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class expressions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "variables (class)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "object methods (class)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class prototype methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "class static methods": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "isn't writable, is configurable": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "String static methods": {
+      "String.raw": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "String.fromCodePoint": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "String.prototype methods": {
+      "String.prototype.codePointAt": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.normalize": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.repeat": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.startsWith": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.startsWith throws on RegExp": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.endsWith": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.endsWith throws on RegExp": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype.includes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String.prototype[Symbol.iterator]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "String iterator prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "RegExp.prototype properties": {
+      "RegExp.prototype.flags": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp.prototype[Symbol.match]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "RegExp.prototype[Symbol.replace]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp.prototype[Symbol.split]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp.prototype[Symbol.search]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "RegExp[Symbol.species]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Array static methods": {
+      "Array.from, array-like objects": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.from, generator instances": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.from, generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.from, instances of generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.from map function, array-like objects": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.from map function, generator instances": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.from map function, generic iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.from map function, instances of iterables": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.from, iterator closing": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.of": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array[Symbol.species]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Array.prototype methods": {
+      "Array.prototype.copyWithin": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.find": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.findIndex": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.fill": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.values": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.entries": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array.prototype.splice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype[Symbol.iterator]": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Array iterator prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype[Symbol.unscopables]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Number properties": {
+      "Number.isFinite": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Number.isInteger": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Number.isSafeInteger": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Number.isNaN": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Number.parseFloat": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Number.parseInt": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Number.EPSILON": {
+        "version": "rhino1_7_14",
+        "supported": true
+      },
+      "Number.MIN_SAFE_INTEGER": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Number.MAX_SAFE_INTEGER": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Math methods": {
+      "Math.clz32": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.imul": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.sign": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.log10": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.log2": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.log1p": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.expm1": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.cosh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.sinh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.tanh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.acosh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.asinh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.atanh": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.trunc": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.fround": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.cbrt": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Math.hypot": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Date.prototype[Symbol.toPrimitive]": {
+      "version": "rhino1_8_1",
+      "supported": true
+    },
+    "Array is subclassable": {
+      "length property (accessing)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "length property (setting)": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.isArray support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.concat": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.filter": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.map": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.slice": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.splice": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.from": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.of": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "RegExp is subclassable": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype.exec": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype.test": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Function is subclassable": {
+      "can be called": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "can be used with \"new\"": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Function.prototype.call": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Function.prototype.apply": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Function.prototype.bind": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Promise is subclassable": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "correct prototype chain": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Promise.all": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Promise.race": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "miscellaneous subclassables": {
+      "Boolean is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Number is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "String is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Error is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Map is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Set is subclassable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "prototype of bound functions": {
+      "basic functions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "generator functions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "arrow functions": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "classes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "subclasses": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy, internal 'get' calls": {
+      "ToPrimitive": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "CreateListFromArrayLike": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "instanceof operator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "HasBinding": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "CreateDynamicFunction": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "ClassDefinitionEvaluation": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "IteratorComplete, IteratorValue": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "ToPropertyDescriptor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Object.assign": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Object.defineProperties": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Function.prototype.bind": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Error.prototype.toString": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "String.raw": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp constructor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype.flags": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype.test": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype.toString": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype[Symbol.match]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype[Symbol.replace]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "RegExp.prototype[Symbol.search]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp.prototype[Symbol.split]": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.from": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.concat": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype iteration methods": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.pop": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.reverse": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.shift": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.splice": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.prototype.toString": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "JSON.stringify": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Promise resolve functions": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "String.prototype.match": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "String.prototype.replace": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "String.prototype.search": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "String.prototype.split": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Date.prototype.toJSON": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy, internal 'set' calls": {
+      "Object.assign": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Array.from": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.of": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.copyWithin": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.fill": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.pop": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.push": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.reverse": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.shift": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.splice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.unshift": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Proxy, internal 'defineProperty' calls": {
+      "[[Set]]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SetIntegrityLevel": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy, internal 'deleteProperty' calls": {
+      "Array.prototype.copyWithin": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.pop": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.reverse": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.shift": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.splice": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Array.prototype.unshift": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Proxy, internal 'getOwnPropertyDescriptor' calls": {
+      "[[Set]]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Object.assign": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Object.prototype.hasOwnProperty": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Function.prototype.bind": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy, internal 'ownKeys' calls": {
+      "SetIntegrityLevel": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "TestIntegrityLevel": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "SerializeJSONObject": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Object static methods accept primitives": {
+      "Object.getPrototypeOf": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertyDescriptor": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertyNames": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.seal": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.freeze": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.preventExtensions": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isSealed": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isFrozen": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.isExtensible": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "own property order": {
+      "Object.keys": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "Object.getOwnPropertyNames": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Object.assign": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "JSON.stringify": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "JSON.parse": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.ownKeys, string key order": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Reflect.ownKeys, symbol key order": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "Updated identifier syntax": {
+      "var ⸯ;": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "var 𐋀;": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "no escaped reserved words as identifiers": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "miscellaneous": {
+      "duplicate property names in strict mode": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "no semicolon needed after do-while": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "no assignments allowed in for-in head in strict mode": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accessors aren't constructors": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Invalid Date": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "RegExp constructor can alter flags": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "RegExp.prototype.toString generic and uses \"flags\" property": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "built-in prototypes are not instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "function 'length' is configurable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "non-strict function semantics": {
+      "hoisted block-level function declaration": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "labeled function statements": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "function statements in if-statement clauses": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "__proto__ in object literals": {
+      "basic support": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "multiple __proto__ is an error": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "not a computed property": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "not a shorthand property": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "not a shorthand method": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Object.prototype.__proto__": {
+      "get prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "set prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "absent from Object.create(null)": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "present in hasOwnProperty()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "correct property descriptor": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "present in Object.getOwnPropertyNames()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      }
+    },
+    "String.prototype HTML methods": {
+      "existence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "tags' names are lowercase": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "quotes in arguments are escaped": {
+        "version": "rhino1_7_14",
+        "supported": true
+      }
+    },
+    "RegExp.prototype.compile": {
+      "basic functionality": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "returns this": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "RegExp syntax extensions": {
+      "hyphens in character sets": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "invalid character escapes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "invalid control-character escapes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "invalid Unicode escapes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "invalid hexadecimal escapes": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "incomplete patterns and quantifiers": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "octal escape sequences": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "invalid backreferences become octal escapes": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "HTML-style comments": {
+      "version": "rhino1_7_13",
+      "supported": true
+    }
+  },
+  "esintl": {
+    "Intl object": {
+      "exists on global": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "has prototype of Object": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Intl.Collator": {
+      "exists on intl object": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "creates new Collator instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor called without new creates instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accepts valid language tags": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "rejects invalid language tags": {
+        "version": "rhino1_8_1",
+        "supported": false
+      }
+    },
+    "Intl.Collator.prototype.compare": {
+      "exists on Collator prototype": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Intl.Collator.prototype.resolvedOptions": {
+      "exists on Collator prototype": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "NumberFormat": {
+      "exists on intl object": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "creates new NumberFormat instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor called without new creates instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accepts valid language tags": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "rejects invalid language tags": {
+        "version": "rhino1_8_1",
+        "supported": false
+      }
+    },
+    "DateTimeFormat": {
+      "exists on intl object": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "creates new DateTimeFormat instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "constructor called without new creates instances": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accepts valid language tags": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "rejects invalid language tags": {
+        "version": "rhino1_8_1",
+        "supported": false
+      },
+      "resolvedOptions().timeZone defaults to the host environment": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "accepts IANA timezone names": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "String.prototype.localeCompare": {
+      "exists on String prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Number.prototype.toLocaleString": {
+      "exists on Number prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Array.prototype.toLocaleString": {
+      "exists on Array prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Object.prototype.toLocaleString": {
+      "exists on Object prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Date.prototype.toLocaleString": {
+      "exists on Date prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Date.prototype.toLocaleDateString": {
+      "exists on Date prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Date.prototype.toLocaleTimeString": {
+      "exists on Date prototype": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    }
+  },
+  "esnext": {
+    "ShadowRealm": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Legacy RegExp features in JavaScript": {
+      "RegExp \"lastMatch\"": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "RegExp.$1-$9": {
+        "version": "rhino1_7_13",
+        "supported": true
+      }
+    },
+    "Generator function.sent Meta Property": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Class and Property Decorators": {
+      "class decorators": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "throw expressions": {
+      "logical": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "parameter initializers": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "arrow function bodies": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "conditionals": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Set methods": {
+      "Set.prototype.intersection": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Set.prototype.union": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Set.prototype.difference": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Set.prototype.symmetricDifference": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "Set.prototype.isDisjointFrom": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Set.prototype.isSubsetOf": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Set.prototype.isSupersetOf": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "ArrayBuffer.prototype.transfer": {
+      "ArrayBuffer.prototype.transfer()": {
+        "version": "rhino1_8_1",
+        "supported": true
+      },
+      "ArrayBuffer.prototype.realloc()": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Map.prototype.upsert": {
+      "Map.prototype.upsert": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "WeakMap.prototype.upsert": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Array.isTemplateObject": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Iterator Helpers": {
+      "instanceof Iterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "extends Iterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.from, iterable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.from, iterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.asIndexedPairs": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.drop": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.every": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.filter": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.find": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.flatMap": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.forEach": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.map": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.reduce": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.some": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.take": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype.toArray": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Iterator.prototype[@@toStringTag]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "instanceof AsyncIterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "extends AsyncIterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.from, async iterable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.from, iterable": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.from, iterator": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.asIndexedPairs": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.drop": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.every": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.filter": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.find": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.flatMap": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.forEach": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.map": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.reduce": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.some": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.take": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype.toArray": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "AsyncIterator.prototype[@@toStringTag]": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    }
+  },
+  "non-standard": {
+    "SIMD (Single Instruction, Multiple Data)": {
+      "basic support": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Float32x4": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Int32x4": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Int16x8": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Int8x16": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Uint32x4": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Uint16x8": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Uint8x16": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Bool32x4": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Bool16x8": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "Bool8x16": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.abs": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.add": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%integerType%.addSaturate": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.and": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%booleanType%.anyTrue": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%booleanType%.allTrue": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.check": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.equal": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.extractLane": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.greaterThan": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.greaterThanOrEqual": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.lessThan": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.lessThanOrEqual": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.mul": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.div": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.load": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.load1": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.load2": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.load3": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.max": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.maxNum": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.min": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.minNum": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.neg": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.not": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.notEqual": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.or": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.reciprocalApproximation": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.reciprocalSqrtApproximation": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.replaceLane": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.select": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%integerType%.shiftLeftByScalar": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%integerType%.shiftRightByScalar": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.shuffle": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.splat": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%floatType%.sqrt": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.store": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.store1": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.store2": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.store3": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.sub": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%integerType%.subSaturate": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.swizzle": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.xor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.fromTIMDBits": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "SIMD.%type%.fromTIMD": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "decompilation": {
+      "uneval, existence": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "built-in \"toSource\" methods": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "\"toSource\" method as hook for uneval": {
+        "version": "rhino1_7_13",
+        "supported": true
+      },
+      "eval(uneval(value)) is functionally equivalent to value": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "optional \"scope\" argument of \"eval\"": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "function \"caller\" property": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "function \"arity\" property": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "function \"arguments\" property": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Function.prototype.isGenerator": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "class extends null": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "__count__": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "__parent__": {
+      "version": "rhino1_8_1",
+      "supported": false
+    },
+    "__noSuchMethod__": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Array generics": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "String generics": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Array comprehensions (JS 1.8 style)": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Array comprehensions (ES draft style)": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Expression closures": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "ECMAScript for XML (E4X)": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "\"for each..in\" loops": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Sharp variables": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Iterator": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "__iterator__": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Generators (JS 1.8)": {
+      "version": "rhino1_8_1",
+      "supported": false
+    },
+    "Generator comprehensions (JS 1.8 style)": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Generator comprehensions (ES draft style)": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "RegExp \"x\" flag": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Callable RegExp": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "RegExp named groups": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "String.prototype.quote": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "String.prototype.replace flags": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Date.prototype.toLocaleFormat": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Date.parse produces NaN for invalid dates": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "Object.prototype.watch": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Object.prototype.unwatch": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Object.prototype.eval": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "Object.observe": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "error \"stack\"": {
+      "version": "rhino1_7_14",
+      "supported": true
+    },
+    "error \"lineNumber\"": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "error \"columnNumber\"": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "error \"fileName\"": {
+      "version": "rhino1_7_13",
+      "supported": true
+    },
+    "error \"description\"": {
+      "version": "rhino1_7_13",
+      "supported": false
+    },
+    "global": {
+      "\"global\" global property is global object": {
+        "version": "rhino1_7_13",
+        "supported": false
+      },
+      "\"global\" global property has correct property descriptor": {
+        "version": "rhino1_7_13",
+        "supported": false
+      }
+    },
+    "Proxy \"ownKeys\" handler, duplicate keys for non-extensible targets (ES 2017 semantics)": {
+      "version": "rhino1_7_13",
+      "supported": false
+    }
+  }
+}

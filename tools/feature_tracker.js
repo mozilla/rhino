@@ -7,6 +7,10 @@
  * 1. test262.properties parsing (3,025+ test suites)
  * 2. compat-table integration (200+ practical features)
  * 
+ * The compat-table integration is based on Paul Bakker's work in
+ * https://github.com/compat-table/compat-table/pull/1881
+ * which separated test definitions from results, enabling automated updates.
+ * 
  * This provides the most comprehensive documentation possible.
  */
 
