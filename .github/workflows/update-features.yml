@@ -1,15 +1,9 @@
 name: Update Feature Documentation
 
 on:
-  # Run on pushes to master that modify test262.properties
+  # Run on every merge to master
   push:
     branches: [master]
-    paths:
-      - 'tests/testsrc/test262.properties'
-  
-  # Run weekly to catch any changes
-  schedule:
-    - cron: '0 0 * * 0'  # Sunday at midnight
   
   # Allow manual trigger
   workflow_dispatch:
@@ -54,17 +48,12 @@ jobs:
           body: |
             ## Automated Feature Documentation Update
             
-            This PR updates the feature documentation based on the latest test262 results.
+            This PR updates the feature documentation based on the latest test262 results in main branch.
             
             ### Changes
             - Updated `FEATURES.md` with current ECMAScript feature support
-            - Updated `rhino-features.json` with machine-readable feature data
+            - Updated `rhino-features.json` with machine-readable feature data  
             - Updated `rhino-features.html` with web-ready interactive page
-            
-            ### Files Changed
-            - `FEATURES.md` - Human-readable feature documentation
-            - `rhino-features.json` - Machine-readable feature data
-            - `rhino-features.html` - Web-ready interactive page
             
             This is an automated PR created by the feature documentation workflow.
           branch: update-feature-docs
