@@ -243,8 +243,92 @@ class ComprehensiveFeatureTracker:
         return json.dumps(data, indent=2)
     
     def generate_html(self):
-        """Generate interactive HTML dashboard"""
-        json_data = self.generate_json()
+        """Generate fully static HTML dashboard with pre-rendered content"""
+        # Calculate statistics
+        total_features = 0
+        total_passed = 0
+        total_tests = 0
+        
+        for category, features in self.all_features.items():
+            for path, data in features.items():
+                total_features += 1
+                total_passed += data['passed']
+                total_tests += data['total']
+        
+        overall_pass_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
+        
+        # Generate stats cards HTML
+        stats_html = f"""
+        <div class="stat-card">
+            <h3>Total Categories</h3>
+            <div style="font-size: 2em; font-weight: bold;">{len(self.all_features)}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Test Suites</h3>
+            <div style="font-size: 2em; font-weight: bold;">{total_features:,}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Tests</h3>
+            <div style="font-size: 2em; font-weight: bold;">{total_tests:,}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Overall Pass Rate</h3>
+            <div style="font-size: 2em; font-weight: bold;">{overall_pass_rate:.1f}%</div>
+            <div class="progress-bar" style="margin-top: 10px;">
+                <div class="progress-fill" style="width: {overall_pass_rate:.1f}%"></div>
+            </div>
+        </div>
+        """
+        
+        # Generate category sections HTML
+        categories_html = ""
+        for category in sorted(self.all_features.keys()):
+            features = self.all_features[category]
+            
+            # Calculate category statistics
+            cat_total = sum(f['total'] for f in features.values())
+            cat_passed = sum(f['passed'] for f in features.values())
+            cat_rate = (cat_passed / cat_total * 100) if cat_total > 0 else 0
+            
+            # Generate table rows for ALL features
+            sorted_features = sorted(features.items(), 
+                                    key=lambda x: x[1]['pass_rate'], 
+                                    reverse=True)
+            
+            table_rows = ""
+            for path, feat in sorted_features:
+                table_rows += f"""
+                    <tr>
+                        <td>{path}</td>
+                        <td>{feat['pass_rate']:.1f}%</td>
+                        <td>{feat['passed']}/{feat['total']}</td>
+                    </tr>
+                """
+            
+            categories_html += f"""
+            <div class="category-section" data-category="{category.lower()}">
+                <h2>{category}</h2>
+                <p>{len(features)} features | {cat_total:,} tests | {cat_rate:.1f}% pass rate</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {cat_rate:.1f}%"></div>
+                </div>
+                <details>
+                    <summary>View Details</summary>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Pass Rate</th>
+                                <th>Tests</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {table_rows}
+                        </tbody>
+                    </table>
+                </details>
+            </div>
+            """
         
         html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -279,6 +363,10 @@ class ComprehensiveFeatureTracker:
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }}
+        .stat-card h3 {{
+            margin: 0 0 10px 0;
+            color: #666;
+        }}
         .category-section {{
             background: white;
             padding: 20px;
@@ -292,11 +380,11 @@ class ComprehensiveFeatureTracker:
             background: #e0e0e0;
             border-radius: 10px;
             overflow: hidden;
+            margin-top: 10px;
         }}
         .progress-fill {{
             height: 100%;
             background: linear-gradient(90deg, #4caf50, #8bc34a);
-            transition: width 0.3s ease;
         }}
         table {{
             width: 100%;
@@ -318,6 +406,20 @@ class ComprehensiveFeatureTracker:
             border: 1px solid #ddd;
             border-radius: 5px;
             margin-bottom: 20px;
+            box-sizing: border-box;
+        }}
+        details {{
+            margin-top: 15px;
+        }}
+        summary {{
+            cursor: pointer;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }}
+        summary:hover {{
+            background: #e8e8e8;
         }}
     </style>
 </head>
@@ -331,107 +433,30 @@ class ComprehensiveFeatureTracker:
         
         <input type="text" class="search-box" id="searchBox" placeholder="Search features..." />
         
-        <div class="stats-grid" id="statsGrid"></div>
-        <div id="categorySections"></div>
+        <div class="stats-grid" id="statsGrid">
+            {stats_html}
+        </div>
+        
+        <div id="categorySections">
+            {categories_html}
+        </div>
     </div>
     
     <script>
-        const data = {json_data};
-        
-        // Render statistics
-        function renderStats() {{
-            let totalTests = 0;
-            let passedTests = 0;
+        // Simple search functionality
+        document.getElementById('searchBox').addEventListener('input', function(e) {{
+            const searchTerm = e.target.value.toLowerCase();
+            const sections = document.querySelectorAll('.category-section');
             
-            Object.values(data.categories).forEach(cat => {{
-                totalTests += cat.statistics.total_tests;
-                passedTests += cat.statistics.passed_tests;
-            }});
-            
-            const passRate = (passedTests / totalTests * 100).toFixed(1);
-            
-            document.getElementById('statsGrid').innerHTML = `
-                <div class="stat-card">
-                    <h3>Total Categories</h3>
-                    <div style="font-size: 2em; font-weight: bold;">{{Object.keys(data.categories).length}}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Test Suites</h3>
-                    <div style="font-size: 2em; font-weight: bold;">
-                        {{Object.values(data.categories).reduce((sum, cat) => sum + cat.statistics.total_features, 0)}}
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Tests</h3>
-                    <div style="font-size: 2em; font-weight: bold;">{{totalTests.toLocaleString()}}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Overall Pass Rate</h3>
-                    <div style="font-size: 2em; font-weight: bold;">{{passRate}}%</div>
-                    <div class="progress-bar" style="margin-top: 10px;">
-                        <div class="progress-fill" style="width: {{passRate}}%"></div>
-                    </div>
-                </div>
-            `;
-        }}
-        
-        // Render categories
-        function renderCategories(searchTerm = '') {{
-            const container = document.getElementById('categorySections');
-            container.innerHTML = '';
-            
-            Object.entries(data.categories).forEach(([category, catData]) => {{
-                if (searchTerm && !category.toLowerCase().includes(searchTerm.toLowerCase())) {{
-                    return;
+            sections.forEach(section => {{
+                const category = section.getAttribute('data-category');
+                if (searchTerm === '' || category.includes(searchTerm)) {{
+                    section.style.display = 'block';
+                }} else {{
+                    section.style.display = 'none';
                 }}
-                
-                const passRate = (catData.statistics.passed_tests / catData.statistics.total_tests * 100).toFixed(1);
-                
-                const section = document.createElement('div');
-                section.className = 'category-section';
-                section.innerHTML = `
-                    <h2>{{category}}</h2>
-                    <p>{{catData.statistics.total_features}} features | {{catData.statistics.total_tests.toLocaleString()}} tests | {{passRate}}% pass rate</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{passRate}}%"></div>
-                    </div>
-                    <details>
-                        <summary>View Details</summary>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Feature</th>
-                                    <th>Pass Rate</th>
-                                    <th>Tests</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{Object.entries(catData.features)
-                                    .sort((a, b) => b[1].pass_rate - a[1].pass_rate)
-                                    .slice(0, 20)
-                                    .map(([path, feat]) => `
-                                        <tr>
-                                            <td>{{path}}</td>
-                                            <td>{{feat.pass_rate.toFixed(1)}}%</td>
-                                            <td>{{feat.passed}}/{{feat.total}}</td>
-                                        </tr>
-                                    `).join('')}}
-                            </tbody>
-                        </table>
-                    </details>
-                `;
-                container.appendChild(section);
             }});
-        }}
-        
-        // Search functionality
-        document.getElementById('searchBox').addEventListener('input', (e) => {{
-            renderCategories(e.target.value);
         }});
-        
-        // Initial render
-        renderStats();
-        renderCategories();
     </script>
 </body>
 </html>"""
