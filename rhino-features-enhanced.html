@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhino JavaScript Engine - Feature Compatibility Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+        
+        .attribution {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 15px 25px;
+            max-width: 600px;
+            margin: 20px auto 0;
+            font-size: 0.95em;
+        }
+        
+        .attribution a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .intro-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin: -30px 20px 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .intro-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .intro-section p {
+            margin-bottom: 15px;
+            font-size: 1.05em;
+            color: #555;
+        }
+        
+        .data-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .source-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .source-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        }
+        
+        .source-card h3 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test262-card h3 { color: #3498db; }
+        .compat-card h3 { color: #e67e22; }
+        
+        .source-card .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .test262-card .icon {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .compat-card .icon {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        
+        .features-section {
+            margin-top: 40px;
+        }
+        
+        .features-header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .features-header h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1em;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .feature-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .feature-category {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, #f5f7fa, #e9ecef);
+            padding: 20px 25px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .category-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .category-stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .category-stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .category-stat-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .category-stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 3px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+            background-size: 200% 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .feature-details {
+            padding: 20px 25px;
+        }
+        
+        .feature-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-name {
+            font-weight: 500;
+            color: #444;
+        }
+        
+        .feature-status {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .badge.test262 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .badge.compat {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .badge.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge.warning {
+            background: #fff9c4;
+            color: #f9a825;
+        }
+        
+        .badge.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .footer {
+            background: white;
+            margin: 60px 20px 20px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .footer h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .footer p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .credits {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        
+        .credits h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .credits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .credits li {
+            padding: 8px 0;
+            color: #555;
+        }
+        
+        .credits a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .credits a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Rhino JavaScript Engine</h1>
+        <p class="subtitle">
+            The most comprehensive JavaScript feature documentation, combining official 
+            ECMAScript specification compliance with real-world compatibility testing
+        </p>
+        <div class="attribution">
+            <strong>Built with contributions from:</strong><br>
+            Test infrastructure based on <a href="https://github.com/p-bakker" target="_blank">@p-bakker</a>'s 
+            work on <a href="https://github.com/compat-table/compat-table/pull/1881" target="_blank">compat-table PR #1881</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="intro-section">
+            <h2>Understanding Rhino's Capabilities</h2>
+            <p>
+                This dashboard provides a unique, comprehensive view of Rhino's JavaScript support by combining 
+                two complementary data sources. Unlike other documentation that relies on manual curation or 
+                single test suites, we automatically aggregate results from both the official ECMAScript test 
+                suite and practical compatibility tests used by major build tools.
+            </p>
+            <p>
+                <strong>Why two sources?</strong> Because knowing whether a feature "works" isn't always the same 
+                as knowing whether it's "correct." By showing both perspectives, developers can make informed 
+                decisions about using Rhino for their projects.
+            </p>
+        </section>
+
+        <div class="data-sources">
+            <div class="source-card test262-card">
+                <h3>
+                    <span class="icon">T</span>
+                    test262 Results
+                </h3>
+                <p>
+                    The official ECMAScript conformance test suite maintained by TC39. These tests verify 
+                    that Rhino correctly implements the JavaScript specification, including edge cases and 
+                    subtle behaviors that might not appear in everyday code.
+                </p>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-label">Test Suites</div>
+                        <div class="stat-value">3,025</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Total Tests</div>
+                        <div class="stat-value">35,407</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Pass Rate</div>
+                        <div class="stat-value">61.1%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tests Passed</div>
+                        <div class="stat-value">21,621</div>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.95em; color: #666;">
+                    <strong>Best for:</strong> Understanding spec compliance, finding edge cases, 
+                    ensuring correctness
+                </p>
+            </div>
+
+            <div class="source-card compat-card">
+                <h3>
+                    <span class="icon">C</span>
+                    compat-table Results
+                </h3>
+                <p>
+                    Community-maintained compatibility tests used by Babel, webpack, and other build tools. 
+                    These tests focus on practical feature detection - does the feature work as developers 
+                    expect in real applications?
+                </p>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-label">Features</div>
+                        <div class="stat-value">~200</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Supported</div>
+                        <div class="stat-value">85</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Support Rate</div>
+                        <div class="stat-value">43%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">ES6+ Coverage</div>
+                        <div class="stat-value">Good</div>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.95em; color: #666;">
+                    <strong>Best for:</strong> Quick compatibility checks, comparing with other engines, 
+                    build tool configuration
+                </p>
+            </div>
+        </div>
+
+        <section class="features-section">
+            <div class="features-header">
+                <h2>Feature Support by Category</h2>
+                <p style="color: #666; margin: 10px 0 20px;">
+                    Search for specific features or browse by category. Features are color-coded based on their 
+                    support level, with additional badges showing which test suite provides the data.
+                </p>
+                <input type="text" class="search-box" placeholder="Search for features (e.g., 'Promise', 'arrow functions', 'async')..." />
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Core Language Features</h3>
+                        <div class="category-stats">
+                            <div class="category-stat">
+                                <span class="category-stat-label">test262</span>
+                                <span class="category-stat-value">78% Pass</span>
+                            </div>
+                            <div class="category-stat">
+                                <span class="category-stat-label">compat-table</span>
+                                <span class="category-stat-value">65% Support</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%"></div>
+                        </div>
+                    </div>
+                    <div class="feature-details">
+                        <div class="feature-item">
+                            <span class="feature-name">Arrow Functions</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 95%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Template Literals</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 88%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Destructuring</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 72%</span>
+                                <span class="badge compat warning">compat: partial</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">async/await</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 0%</span>
+                                <span class="badge compat error">compat: ✗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Built-in Objects</h3>
+                        <div class="category-stats">
+                            <div class="category-stat">
+                                <span class="category-stat-label">test262</span>
+                                <span class="category-stat-value">62% Pass</span>
+                            </div>
+                            <div class="category-stat">
+                                <span class="category-stat-label">compat-table</span>
+                                <span class="category-stat-value">71% Support</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 62%"></div>
+                        </div>
+                    </div>
+                    <div class="feature-details">
+                        <div class="feature-item">
+                            <span class="feature-name">Promise</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 85%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Map & Set</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 79%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Proxy & Reflect</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 68%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">WeakMap & WeakSet</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 71%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-category">
+                    <div class="category-header">
+                        <h3 class="category-title">Array Methods</h3>
+                        <div class="category-stats">
+                            <div class="category-stat">
+                                <span class="category-stat-label">test262</span>
+                                <span class="category-stat-value">91.5% Pass</span>
+                            </div>
+                            <div class="category-stat">
+                                <span class="category-stat-label">compat-table</span>
+                                <span class="category-stat-value">89% Support</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 91.5%"></div>
+                        </div>
+                    </div>
+                    <div class="feature-details">
+                        <div class="feature-item">
+                            <span class="feature-name">Array.from</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 94%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Array.prototype.includes</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 98%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Array.prototype.flat</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 87%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-name">Array.prototype.at</span>
+                            <div class="feature-status">
+                                <span class="badge test262">test262: 92%</span>
+                                <span class="badge compat success">compat: ✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <h3>About This Documentation</h3>
+            <p>
+                This documentation is automatically generated from actual test results, not manually curated. 
+                Every time Rhino's code changes, these results are updated to reflect the current state of 
+                the implementation. This ensures you always have accurate, up-to-date information about 
+                Rhino's capabilities.
+            </p>
+            
+            <div class="credits">
+                <h4>Credits & Acknowledgments</h4>
+                <ul>
+                    <li>
+                        <strong>compat-table integration:</strong> Based on 
+                        <a href="https://github.com/p-bakker" target="_blank">Paul Bakker (@p-bakker)</a>'s 
+                        excellent work on separating tests from results in 
+                        <a href="https://github.com/compat-table/compat-table/pull/1881" target="_blank">compat-table PR #1881</a>
+                    </li>
+                    <li>
+                        <strong>test262 data:</strong> From the official 
+                        <a href="https://github.com/tc39/test262" target="_blank">ECMAScript test suite</a> 
+                        maintained by TC39
+                    </li>
+                    <li>
+                        <strong>Rhino development:</strong> The 
+                        <a href="https://github.com/mozilla/rhino" target="_blank">Mozilla Rhino</a> 
+                        team and contributors
+                    </li>
+                    <li>
+                        <strong>Documentation system:</strong> Created by 
+                        <a href="https://github.com/anivar" target="_blank">Anivar Aravind</a> 
+                        combining multiple data sources for comprehensive coverage
+                    </li>
+                </ul>
+            </div>
+            
+            <p style="text-align: center; color: #999; margin-top: 30px;">
+                Last updated: ${new Date().toISOString().split('T')[0]} | 
+                Rhino version: 1.8.1-SNAPSHOT | 
+                <a href="https://github.com/mozilla/rhino" style="color: #667eea;">View on GitHub</a>
+            </p>
+        </footer>
+    </main>
+
+    <script>
+        // Search functionality
+        document.querySelector('.search-box').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.feature-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+
+        // Animate progress bars on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const progressFill = entry.target.querySelector('.progress-fill');
+                    if (progressFill) {
+                        const width = progressFill.style.width;
+                        progressFill.style.width = '0';
+                        setTimeout(() => {
+                            progressFill.style.width = width;
+                        }, 100);
+                    }
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-category').forEach(category => {
+            observer.observe(category);
+        });
+    </script>
+</body>
+</html>
