@@ -28,7 +28,7 @@ It is automatically generated from test262 test suite results.
 | ES2022 | 2 | 2 | 1 | 0 | 4 | 46.4% |
 | ES2023 | 0 | 7 | 0 | 0 | 0 | 90.3% |
 | ES2024 | 3 | 4 | 2 | 0 | 0 | 81.3% |
-| ES2025 | 2 | 2 | 2 | 1 | 1 | 56.8% |
+| ES2025 | 1 | 2 | 2 | 1 | 1 | 51.1% |
 
 ## ES2015 Features
 
@@ -167,7 +167,6 @@ It is automatically generated from test262 test suite results.
 
 | Feature | Status | Pass Rate | Tests |
 |---------|--------|-----------|-------|
-| Math.sumPrecise | Full | 96.6% | 316/327 |
 | Math.f16round | Full | 96.6% | 316/327 |
 | Error.isError | Mostly | 86.8% | 46/53 |
 | Set Methods | Mostly | 77.2% | 294/381 |
@@ -208,7 +207,6 @@ These ES2017+ features have >95% test262 pass rate:
 - String.toWellFormed
 
 ### ES2025
-- Math.sumPrecise
 - Math.f16round
 
 

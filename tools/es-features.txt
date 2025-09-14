@@ -98,7 +98,6 @@ ES2024|RegExp v flag|built-ins/RegExp/unicode-sets
 ES2025|Iterator Helpers|built-ins/Iterator
 ES2025|Set Methods|built-ins/Set/prototype
 ES2025|Promise.try|built-ins/Promise/try
-ES2025|Math.sumPrecise|built-ins/Math/sumPrecise
 ES2025|Math.f16round|built-ins/Math/f16round
 ES2025|Error.isError|built-ins/Error/isError
 ES2025|RegExp.escape|built-ins/RegExp/escape
