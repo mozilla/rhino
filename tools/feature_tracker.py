@@ -243,7 +243,7 @@ class ComprehensiveFeatureTracker:
         return json.dumps(data, indent=2)
     
     def generate_html(self):
-        """Generate fully static HTML dashboard with pre-rendered content"""
+        """Generate fully static HTML dashboard with tabbed interface"""
         # Calculate statistics
         total_features = 0
         total_passed = 0
@@ -280,15 +280,29 @@ class ComprehensiveFeatureTracker:
         </div>
         """
         
-        # Generate category sections HTML
-        categories_html = ""
-        for category in sorted(self.all_features.keys()):
+        # Generate tab buttons and content
+        tab_buttons = ""
+        tab_contents = ""
+        
+        for idx, category in enumerate(sorted(self.all_features.keys())):
             features = self.all_features[category]
             
             # Calculate category statistics
             cat_total = sum(f['total'] for f in features.values())
             cat_passed = sum(f['passed'] for f in features.values())
             cat_rate = (cat_passed / cat_total * 100) if cat_total > 0 else 0
+            
+            # Clean category name for use as ID
+            cat_id = category.lower().replace(' ', '-').replace('/', '-')
+            
+            # Create tab button
+            active_class = "active" if idx == 0 else ""
+            tab_buttons += f"""
+                <button class="tab-button {active_class}" onclick="openTab(event, '{cat_id}')">
+                    {category}
+                    <span class="tab-badge">{cat_rate:.0f}%</span>
+                </button>
+            """
             
             # Generate table rows for ALL features
             sorted_features = sorted(features.items(), 
@@ -305,15 +319,18 @@ class ComprehensiveFeatureTracker:
                     </tr>
                 """
             
-            categories_html += f"""
-            <div class="category-section" data-category="{category.lower()}">
-                <h2>{category}</h2>
-                <p>{len(features)} features | {cat_total:,} tests | {cat_rate:.1f}% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {cat_rate:.1f}%"></div>
+            # Create tab content
+            display_style = "block" if idx == 0 else "none"
+            tab_contents += f"""
+            <div id="{cat_id}" class="tab-content" style="display: {display_style};">
+                <div class="category-header">
+                    <h2>{category}</h2>
+                    <p>{len(features)} features | {cat_total:,} tests | {cat_rate:.1f}% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {cat_rate:.1f}%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -326,7 +343,7 @@ class ComprehensiveFeatureTracker:
                             {table_rows}
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             """
         
@@ -367,12 +384,60 @@ class ComprehensiveFeatureTracker:
             margin: 0 0 10px 0;
             color: #666;
         }}
-        .category-section {{
+        .tabs {{
             background: white;
-            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }}
+        .tab-buttons {{
+            display: flex;
+            flex-wrap: wrap;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }}
+        .tab-button {{
+            background: transparent;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            position: relative;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }}
+        .tab-button:hover {{
+            background: #e8e8e8;
+            color: #333;
+        }}
+        .tab-button.active {{
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }}
+        .tab-badge {{
+            margin-left: 5px;
+            padding: 2px 6px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            font-size: 12px;
+        }}
+        .tab-button.active .tab-badge {{
+            background: #667eea;
+            color: white;
+        }}
+        .tab-content {{
+            padding: 20px;
+        }}
+        .category-header {{
+            margin-bottom: 20px;
+        }}
+        .table-container {{
+            max-height: 600px;
+            overflow-y: auto;
         }}
         .progress-bar {{
             width: 100%;
@@ -389,7 +454,7 @@ class ComprehensiveFeatureTracker:
         table {{
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            table-layout: fixed;
         }}
         th, td {{
             padding: 10px;
@@ -399,6 +464,21 @@ class ComprehensiveFeatureTracker:
         th {{
             background: #f5f5f5;
             font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }}
+        td:first-child {{
+            width: 60%;
+            word-break: break-word;
+        }}
+        td:nth-child(2) {{
+            width: 20%;
+            text-align: center;
+        }}
+        td:nth-child(3) {{
+            width: 20%;
+            text-align: center;
         }}
         .search-box {{
             padding: 10px;
@@ -407,19 +487,6 @@ class ComprehensiveFeatureTracker:
             border-radius: 5px;
             margin-bottom: 20px;
             box-sizing: border-box;
-        }}
-        details {{
-            margin-top: 15px;
-        }}
-        summary {{
-            cursor: pointer;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }}
-        summary:hover {{
-            background: #e8e8e8;
         }}
     </style>
 </head>
@@ -431,32 +498,62 @@ class ComprehensiveFeatureTracker:
             <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
         
-        <input type="text" class="search-box" id="searchBox" placeholder="Search features..." />
+        <input type="text" class="search-box" id="searchBox" placeholder="Search features..." onkeyup="filterTable()" />
         
         <div class="stats-grid" id="statsGrid">
             {stats_html}
         </div>
         
-        <div id="categorySections">
-            {categories_html}
+        <div class="tabs">
+            <div class="tab-buttons">
+                {tab_buttons}
+            </div>
+            {tab_contents}
         </div>
     </div>
     
     <script>
-        // Simple search functionality
-        document.getElementById('searchBox').addEventListener('input', function(e) {{
-            const searchTerm = e.target.value.toLowerCase();
-            const sections = document.querySelectorAll('.category-section');
+        function openTab(evt, categoryId) {{
+            // Hide all tab contents
+            var tabContents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabContents.length; i++) {{
+                tabContents[i].style.display = 'none';
+            }}
             
-            sections.forEach(section => {{
-                const category = section.getAttribute('data-category');
-                if (searchTerm === '' || category.includes(searchTerm)) {{
-                    section.style.display = 'block';
-                }} else {{
-                    section.style.display = 'none';
+            // Remove active class from all buttons
+            var tabButtons = document.getElementsByClassName('tab-button');
+            for (var i = 0; i < tabButtons.length; i++) {{
+                tabButtons[i].className = tabButtons[i].className.replace(' active', '');
+            }}
+            
+            // Show selected tab and mark button as active
+            document.getElementById(categoryId).style.display = 'block';
+            evt.currentTarget.className += ' active';
+        }}
+        
+        function filterTable() {{
+            var input = document.getElementById('searchBox');
+            var filter = input.value.toLowerCase();
+            var tables = document.getElementsByTagName('table');
+            
+            for (var i = 0; i < tables.length; i++) {{
+                var tbody = tables[i].getElementsByTagName('tbody')[0];
+                if (tbody) {{
+                    var rows = tbody.getElementsByTagName('tr');
+                    for (var j = 0; j < rows.length; j++) {{
+                        var firstCell = rows[j].getElementsByTagName('td')[0];
+                        if (firstCell) {{
+                            var textValue = firstCell.textContent || firstCell.innerText;
+                            if (textValue.toLowerCase().indexOf(filter) > -1) {{
+                                rows[j].style.display = '';
+                            }} else {{
+                                rows[j].style.display = 'none';
+                            }}
+                        }}
+                    }}
                 }}
-            }});
-        }});
+            }}
+        }}
     </script>
 </body>
 </html>"""

@@ -35,12 +35,60 @@
             margin: 0 0 10px 0;
             color: #666;
         }
-        .category-section {
+        .tabs {
             background: white;
-            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            position: relative;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab-button:hover {
+            background: #e8e8e8;
+            color: #333;
+        }
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-badge {
+            margin-left: 5px;
+            padding: 2px 6px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .tab-button.active .tab-badge {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            padding: 20px;
+        }
+        .category-header {
+            margin-bottom: 20px;
+        }
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
         }
         .progress-bar {
             width: 100%;
@@ -57,7 +105,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            table-layout: fixed;
         }
         th, td {
             padding: 10px;
@@ -67,6 +115,21 @@
         th {
             background: #f5f5f5;
             font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td:first-child {
+            width: 60%;
+            word-break: break-word;
+        }
+        td:nth-child(2) {
+            width: 20%;
+            text-align: center;
+        }
+        td:nth-child(3) {
+            width: 20%;
+            text-align: center;
         }
         .search-box {
             padding: 10px;
@@ -76,19 +139,6 @@
             margin-bottom: 20px;
             box-sizing: border-box;
         }
-        details {
-            margin-top: 15px;
-        }
-        summary {
-            cursor: pointer;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        summary:hover {
-            background: #e8e8e8;
-        }
     </style>
 </head>
 <body>
@@ -96,10 +146,10 @@
         <div class="header">
             <h1>Rhino Comprehensive Feature Dashboard</h1>
             <p>Complete test262 results - All 15 categories documented</p>
-            <p>Generated: 2025-09-14 15:40:31</p>
+            <p>Generated: 2025-09-14 15:46:00</p>
         </div>
         
-        <input type="text" class="search-box" id="searchBox" placeholder="Search features..." />
+        <input type="text" class="search-box" id="searchBox" placeholder="Search features..." onkeyup="filterTable()" />
         
         <div class="stats-grid" id="statsGrid">
             
@@ -125,16 +175,95 @@
         
         </div>
         
-        <div id="categorySections">
+        <div class="tabs">
+            <div class="tab-buttons">
+                
+                <button class="tab-button active" onclick="openTab(event, 'annex-b-(legacy)')">
+                    Annex B (Legacy)
+                    <span class="tab-badge">59%</span>
+                </button>
             
-            <div class="category-section" data-category="annex b (legacy)">
-                <h2>Annex B (Legacy)</h2>
-                <p>2 features | 1,086 tests | 59.1% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 59.1%"></div>
+                <button class="tab-button " onclick="openTab(event, 'built-in-objects')">
+                    Built-in Objects
+                    <span class="tab-badge">62%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'collections')">
+                    Collections
+                    <span class="tab-badge">80%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'core-objects---array')">
+                    Core Objects - Array
+                    <span class="tab-badge">92%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'core-objects---boolean')">
+                    Core Objects - Boolean
+                    <span class="tab-badge">98%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'core-objects---number')">
+                    Core Objects - Number
+                    <span class="tab-badge">98%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'core-objects---object')">
+                    Core Objects - Object
+                    <span class="tab-badge">96%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'core-objects---string')">
+                    Core Objects - String
+                    <span class="tab-badge">95%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'es6+-objects')">
+                    ES6+ Objects
+                    <span class="tab-badge">60%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'language---expressions')">
+                    Language - Expressions
+                    <span class="tab-badge">65%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'language---statements')">
+                    Language - Statements
+                    <span class="tab-badge">51%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'language---types')">
+                    Language - Types
+                    <span class="tab-badge">92%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'language-features')">
+                    Language Features
+                    <span class="tab-badge">65%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'other')">
+                    Other
+                    <span class="tab-badge">7%</span>
+                </button>
+            
+                <button class="tab-button " onclick="openTab(event, 'other-built-ins')">
+                    Other Built-ins
+                    <span class="tab-badge">37%</span>
+                </button>
+            
+            </div>
+            
+            <div id="annex-b-(legacy)" class="tab-content" style="display: block;">
+                <div class="category-header">
+                    <h2>Annex B (Legacy)</h2>
+                    <p>2 features | 1,086 tests | 59.1% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 59.1%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -159,17 +288,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="built-in objects">
-                <h2>Built-in Objects</h2>
-                <p>4 features | 2,954 tests | 62.2% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 62.2%"></div>
+            <div id="built-in-objects" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Built-in Objects</h2>
+                    <p>4 features | 2,954 tests | 62.2% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 62.2%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -206,17 +336,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="collections">
-                <h2>Collections</h2>
-                <p>4 features | 811 tests | 79.9% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 79.9%"></div>
+            <div id="collections" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Collections</h2>
+                    <p>4 features | 811 tests | 79.9% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 79.9%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -253,17 +384,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="core objects - array">
-                <h2>Core Objects - Array</h2>
-                <p>1 features | 3,077 tests | 91.5% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 91.5%"></div>
+            <div id="core-objects---array" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Core Objects - Array</h2>
+                    <p>1 features | 3,077 tests | 91.5% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 91.5%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -282,17 +414,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="core objects - boolean">
-                <h2>Core Objects - Boolean</h2>
-                <p>1 features | 51 tests | 98.0% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 98.0%"></div>
+            <div id="core-objects---boolean" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Core Objects - Boolean</h2>
+                    <p>1 features | 51 tests | 98.0% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 98.0%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -311,17 +444,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="core objects - number">
-                <h2>Core Objects - Number</h2>
-                <p>1 features | 335 tests | 97.6% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 97.6%"></div>
+            <div id="core-objects---number" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Core Objects - Number</h2>
+                    <p>1 features | 335 tests | 97.6% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 97.6%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -340,17 +474,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="core objects - object">
-                <h2>Core Objects - Object</h2>
-                <p>1 features | 3,410 tests | 96.5% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 96.5%"></div>
+            <div id="core-objects---object" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Core Objects - Object</h2>
+                    <p>1 features | 3,410 tests | 96.5% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 96.5%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -369,17 +504,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="core objects - string">
-                <h2>Core Objects - String</h2>
-                <p>1 features | 1,212 tests | 95.2% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 95.2%"></div>
+            <div id="core-objects---string" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Core Objects - String</h2>
+                    <p>1 features | 1,212 tests | 95.2% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 95.2%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -398,17 +534,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="es6+ objects">
-                <h2>ES6+ Objects</h2>
-                <p>4 features | 1,197 tests | 59.6% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 59.6%"></div>
+            <div id="es6+-objects" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>ES6+ Objects</h2>
+                    <p>4 features | 1,197 tests | 59.6% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 59.6%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -445,17 +582,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="language - expressions">
-                <h2>Language - Expressions</h2>
-                <p>68 features | 5,263 tests | 64.6% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 64.6%"></div>
+            <div id="language---expressions" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Language - Expressions</h2>
+                    <p>68 features | 5,263 tests | 64.6% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 64.6%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -876,17 +1014,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="language - statements">
-                <h2>Language - Statements</h2>
-                <p>29 features | 3,190 tests | 51.1% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 51.1%"></div>
+            <div id="language---statements" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Language - Statements</h2>
+                    <p>29 features | 3,190 tests | 51.1% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 51.1%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -1073,17 +1212,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="language - types">
-                <h2>Language - Types</h2>
-                <p>1 features | 113 tests | 92.0% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 92.0%"></div>
+            <div id="language---types" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Language - Types</h2>
+                    <p>1 features | 113 tests | 92.0% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 92.0%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -1102,17 +1242,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="language features">
-                <h2>Language Features</h2>
-                <p>25 features | 2,423 tests | 65.2% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 65.2%"></div>
+            <div id="language-features" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Language Features</h2>
+                    <p>25 features | 2,423 tests | 65.2% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 65.2%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -1275,17 +1416,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="other">
-                <h2>Other</h2>
-                <p>2837 features | 1,287 tests | 7.2% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 7.2%"></div>
+            <div id="other" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Other</h2>
+                    <p>2837 features | 1,287 tests | 7.2% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 7.2%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -18320,17 +18462,18 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
-            <div class="category-section" data-category="other built-ins">
-                <h2>Other Built-ins</h2>
-                <p>46 features | 8,998 tests | 37.1% pass rate</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 37.1%"></div>
+            <div id="other-built-ins" class="tab-content" style="display: none;">
+                <div class="category-header">
+                    <h2>Other Built-ins</h2>
+                    <p>46 features | 8,998 tests | 37.1% pass rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 37.1%"></div>
+                    </div>
                 </div>
-                <details>
-                    <summary>View Details</summary>
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
@@ -18619,27 +18762,54 @@
                 
                         </tbody>
                     </table>
-                </details>
+                </div>
             </div>
             
         </div>
     </div>
     
     <script>
-        // Simple search functionality
-        document.getElementById('searchBox').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const sections = document.querySelectorAll('.category-section');
+        function openTab(evt, categoryId) {
+            // Hide all tab contents
+            var tabContents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabContents.length; i++) {
+                tabContents[i].style.display = 'none';
+            }
             
-            sections.forEach(section => {
-                const category = section.getAttribute('data-category');
-                if (searchTerm === '' || category.includes(searchTerm)) {
-                    section.style.display = 'block';
-                } else {
-                    section.style.display = 'none';
+            // Remove active class from all buttons
+            var tabButtons = document.getElementsByClassName('tab-button');
+            for (var i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].className = tabButtons[i].className.replace(' active', '');
+            }
+            
+            // Show selected tab and mark button as active
+            document.getElementById(categoryId).style.display = 'block';
+            evt.currentTarget.className += ' active';
+        }
+        
+        function filterTable() {
+            var input = document.getElementById('searchBox');
+            var filter = input.value.toLowerCase();
+            var tables = document.getElementsByTagName('table');
+            
+            for (var i = 0; i < tables.length; i++) {
+                var tbody = tables[i].getElementsByTagName('tbody')[0];
+                if (tbody) {
+                    var rows = tbody.getElementsByTagName('tr');
+                    for (var j = 0; j < rows.length; j++) {
+                        var firstCell = rows[j].getElementsByTagName('td')[0];
+                        if (firstCell) {
+                            var textValue = firstCell.textContent || firstCell.innerText;
+                            if (textValue.toLowerCase().indexOf(filter) > -1) {
+                                rows[j].style.display = '';
+                            } else {
+                                rows[j].style.display = 'none';
+                            }
+                        }
+                    }
                 }
-            });
-        });
+            }
+        }
     </script>
 </body>
 </html>
