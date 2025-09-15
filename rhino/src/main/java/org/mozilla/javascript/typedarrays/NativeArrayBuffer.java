@@ -14,6 +14,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -53,30 +54,19 @@ public class NativeArrayBuffer extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "slice",
-                2,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_slice(lcx, lscope, thisObj, constructor, args),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "slice", 2, NativeArrayBuffer::js_slice, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "transfer",
                 0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_transfer(lcx, lscope, thisObj, constructor, args),
+                NativeArrayBuffer::js_transfer,
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "transferToFixedLength",
                 0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_transferToFixedLength(lcx, lscope, thisObj, constructor, args),
+                NativeArrayBuffer::js_transferToFixedLength,
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeProperty(
@@ -184,11 +174,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     private static NativeArrayBuffer js_slice(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            LambdaConstructor defaultConstructor,
-            Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
 
         if (self.isDetached()) {
@@ -211,7 +197,13 @@ public class NativeArrayBuffer extends ScriptableObject {
         int len = endI - startI;
 
         Constructable constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(
+                        cx,
+                        thisObj,
+                        TopLevel.getBuiltinCtor(
+                                cx,
+                                ScriptableObject.getTopLevelScope(scope),
+                                TopLevel.Builtins.ArrayBuffer));
         Scriptable newBuf = constructor.construct(cx, scope, new Object[] {len});
         if (!(newBuf instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
@@ -241,11 +233,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     // ES2025 ArrayBuffer.prototype.transfer
     private static Scriptable js_transfer(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            LambdaConstructor defaultConstructor,
-            Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
 
         // 1. Perform ? RequireInternalSlot(O, [[ArrayBufferData]])
@@ -263,7 +251,13 @@ public class NativeArrayBuffer extends ScriptableObject {
 
         // 6. Let new be ? Construct(%ArrayBuffer%, « 𝔽(newByteLength) »)
         Constructable constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(
+                        cx,
+                        thisObj,
+                        TopLevel.getBuiltinCtor(
+                                cx,
+                                ScriptableObject.getTopLevelScope(scope),
+                                TopLevel.Builtins.ArrayBuffer));
         Scriptable newBuf = constructor.construct(cx, scope, new Object[] {newByteLength});
         if (!(newBuf instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
@@ -287,11 +281,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     // ES2025 ArrayBuffer.prototype.transferToFixedLength
     private static Scriptable js_transferToFixedLength(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            LambdaConstructor defaultConstructor,
-            Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
 
         // 1. Let O be the this value
@@ -314,7 +304,13 @@ public class NativeArrayBuffer extends ScriptableObject {
         // 8. Let new be ? Construct(%ArrayBuffer%, « 𝔽(newByteLength) »)
         // Note: This creates a fixed-length buffer (no maxByteLength parameter)
         Constructable constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(
+                        cx,
+                        thisObj,
+                        TopLevel.getBuiltinCtor(
+                                cx,
+                                ScriptableObject.getTopLevelScope(scope),
+                                TopLevel.Builtins.ArrayBuffer));
         Scriptable newBuf = constructor.construct(cx, scope, new Object[] {newByteLength});
 
         // 9. NOTE: This method returns a fixed-length ArrayBuffer

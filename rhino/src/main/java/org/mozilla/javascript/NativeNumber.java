@@ -121,14 +121,7 @@ final class NativeNumber extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "valueOf",
-                0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        toSelf(thisObj).doubleValue,
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "valueOf", 0, NativeNumber::js_valueOf, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope, "toFixed", 1, null, NativeNumber::js_toFixed, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
@@ -172,6 +165,11 @@ final class NativeNumber extends ScriptableObject {
     private static Object js_constructorFunc(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return (args.length > 0) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
+    }
+
+    private static Object js_valueOf(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return toSelf(thisObj).doubleValue;
     }
 
     private static Object js_toFixed(

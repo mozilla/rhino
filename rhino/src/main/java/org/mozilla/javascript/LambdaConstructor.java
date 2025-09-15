@@ -386,7 +386,7 @@ public class LambdaConstructor extends LambdaFunction {
             SerializableCallable target,
             int attributes,
             int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        LambdaFunction f = new LambdaFunction(scope, name, length, target, false);
         f.setStandardPropertyAttributes(propertyAttributes);
         defineProperty(name, f, attributes);
     }

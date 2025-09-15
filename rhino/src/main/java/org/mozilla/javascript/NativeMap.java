@@ -31,96 +31,24 @@ public class NativeMap extends ScriptableObject {
         constructor.defineConstructorMethod(scope, "groupBy", 2, NativeMap::jsGroupBy, DONTENUM);
 
         constructor.definePrototypeMethod(
-                scope,
-                "set",
-                2,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "set")
-                                .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "set", 2, NativeMap::js_set, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "delete",
-                1,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "delete").js_delete(key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "delete", 1, NativeMap::js_delete, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "get",
-                1,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "get").js_get(key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "get", 1, NativeMap::js_get, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "has",
-                1,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "has").js_has(key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "has", 1, NativeMap::js_has, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "clear",
-                0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "clear").js_clear(),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "clear", 0, NativeMap::js_clear, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "keys",
-                0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "keys")
-                                .js_iterator(scope, NativeCollectionIterator.Type.KEYS),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "keys", 0, NativeMap::js_keys, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "values",
-                0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "values")
-                                .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "values", 0, NativeMap::js_values, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "forEach",
-                1,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "forEach")
-                                .js_forEach(
-                                        lcx,
-                                        lscope,
-                                        args.length > 0 ? args[0] : Undefined.instance,
-                                        args.length > 1 ? args[1] : Undefined.instance),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "forEach", 1, NativeMap::js_forEach, DONTENUM, DONTENUM | READONLY);
 
         constructor.definePrototypeMethod(
-                scope,
-                "entries",
-                0,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "entries")
-                                .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "entries", 0, NativeMap::js_entries, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeAlias("entries", SymbolKey.ITERATOR, DONTENUM);
 
         // The spec requires very specific handling of the "size" prototype
@@ -190,6 +118,11 @@ public class NativeMap extends ScriptableObject {
         return map;
     }
 
+    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "set")
+                .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance);
+    }
+
     private Object js_set(Object k, Object v) {
         // Special handling of "negative zero" from the spec.
         Object key = k;
@@ -200,8 +133,17 @@ public class NativeMap extends ScriptableObject {
         return this;
     }
 
+    private static Object js_delete(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "delete").js_delete(key(args));
+    }
+
     private Object js_delete(Object arg) {
         return entries.deleteEntry(arg);
+    }
+
+    private static Object js_get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "get").js_get(key(args));
     }
 
     private Object js_get(Object arg) {
@@ -212,6 +154,10 @@ public class NativeMap extends ScriptableObject {
         return entry.value;
     }
 
+    private static Object js_has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "has").js_has(key(args));
+    }
+
     private Object js_has(Object arg) {
         return entries.has(arg);
     }
@@ -220,13 +166,42 @@ public class NativeMap extends ScriptableObject {
         return entries.size();
     }
 
+    private static Object js_keys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "keys").js_iterator(scope, NativeCollectionIterator.Type.KEYS);
+    }
+
+    private static Object js_values(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "values").js_iterator(scope, NativeCollectionIterator.Type.VALUES);
+    }
+
+    private static Object js_entries(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "entries").js_iterator(scope, NativeCollectionIterator.Type.BOTH);
+    }
+
     private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
         return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
+    }
+
+    private static Object js_clear(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "clear").js_clear();
     }
 
     private Object js_clear() {
         entries.clear();
         return Undefined.instance;
+    }
+
+    private static Object js_forEach(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "forEach")
+                .js_forEach(
+                        cx,
+                        scope,
+                        args.length > 0 ? args[0] : Undefined.instance,
+                        args.length > 1 ? args[1] : Undefined.instance);
     }
 
     private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {

@@ -69,28 +69,11 @@ public class NativePromise extends ScriptableObject {
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
         constructor.definePrototypeMethod(
-                scope,
-                "then",
-                2,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    NativePromise self =
-                            LambdaConstructor.convertThisObject(thisObj, NativePromise.class);
-                    return self.then(lcx, lscope, constructor, args);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "then", 2, NativePromise::doThen, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope, "catch", 1, null, NativePromise::doCatch, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope,
-                "finally",
-                1,
-                null,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        doFinally(lcx, lscope, thisObj, constructor, args),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "finally", 1, NativePromise::doFinally, DONTENUM, DONTENUM | READONLY);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, "Promise", DONTENUM | READONLY);
@@ -389,10 +372,15 @@ public class NativePromise extends ScriptableObject {
     }
 
     // Promise.prototype.then
-    private Object then(
-            Context cx, Scriptable scope, LambdaConstructor defaultConstructor, Object[] args) {
+    private Object then(Context cx, Scriptable scope, Object[] args) {
         Constructable constructable =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(
+                        cx,
+                        this,
+                        TopLevel.getBuiltinCtor(
+                                cx,
+                                ScriptableObject.getTopLevelScope(scope),
+                                TopLevel.Builtins.Promise));
         Capability capability = new Capability(cx, scope, constructable);
 
         Callable onFulfilled = null;
@@ -427,6 +415,11 @@ public class NativePromise extends ScriptableObject {
         }
     }
 
+    private static Object doThen(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativePromise self = LambdaConstructor.convertThisObject(thisObj, NativePromise.class);
+        return self.then(cx, scope, args);
+    }
+
     // Promise.prototype.catch
     private static Object doCatch(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
@@ -438,19 +431,18 @@ public class NativePromise extends ScriptableObject {
 
     // Promise.prototype.finally
     private static Object doFinally(
-            Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
-            LambdaConstructor defaultConstructor,
-            Object[] args) {
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
         Object onFinally = args.length > 0 ? args[0] : Undefined.SCRIPTABLE_UNDEFINED;
         Object thenFinally = onFinally;
         Object catchFinally = onFinally;
+        var ctor =
+                TopLevel.getBuiltinCtor(
+                        cx, ScriptableObject.getTopLevelScope(scope), TopLevel.Builtins.Promise);
         Constructable constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, ctor);
         if (onFinally instanceof Callable) {
             Callable callableOnFinally = (Callable) thenFinally;
             thenFinally = makeThenFinally(scope, constructor, callableOnFinally);

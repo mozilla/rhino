@@ -30,13 +30,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         ctor.defineConstructorMethod(
-                scope,
-                "for",
-                1,
-                null,
-                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
-                DONTENUM,
-                DONTENUM | READONLY);
+                scope, "for", 1, NativeSymbol::js_for, DONTENUM, DONTENUM | READONLY);
         ctor.defineConstructorMethod(
                 scope, "keyFor", 1, null, NativeSymbol::js_keyFor, DONTENUM, DONTENUM | READONLY);
 
@@ -135,7 +129,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
