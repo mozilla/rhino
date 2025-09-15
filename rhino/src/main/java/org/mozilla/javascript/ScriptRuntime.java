@@ -89,6 +89,13 @@ public class ScriptRuntime {
         return cx.typeErrorThrower;
     }
 
+    public static Object concat(Object lhs, Object rhs) {
+        String rhsString = ScriptRuntime.toString(rhs);
+        String lhsString = ScriptRuntime.toString(lhs);
+
+        return new ConsString(lhsString, rhsString);
+    }
+
     static class NoSuchMethodShim implements Callable {
         String methodName;
         Callable noSuchMethodMethod;

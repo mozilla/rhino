@@ -1416,6 +1416,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.NOT] = new DoNot();
         instructionObjs[base + Token.BINDNAME] = new DoBindName();
         instructionObjs[base + Token.STRICT_SETNAME] = new DoSetName();
+        instructionObjs[base + Token.STRING_CONCAT] = new DoStringConcat();
         instructionObjs[base + Token.SETNAME] = new DoSetName();
         instructionObjs[base + Icode_SETCONST] = new DoSetConst();
         instructionObjs[base + Token.DELPROP] = new DoDelName();
@@ -2750,6 +2751,25 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
+    private static class DoStringConcat extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object rhs = frame.stack[state.stackTop];
+            Object lhs = frame.stack[state.stackTop - 1];
+
+            if (rhs == DOUBLE_MARK) {
+                rhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            }
+            if (lhs == DOUBLE_MARK) {
+                lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop - 1]);
+            }
+
+            frame.stack[state.stackTop - 1] = ScriptRuntime.concat(lhs, rhs);
+            --state.stackTop;
+            return null;
+        }
+    }
+
     private static class DoSetConst extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
@@ -2767,14 +2787,12 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoDelName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            final Object[] stack = frame.stack;
-            final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object rhs = frame.stack[state.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             --state.stackTop;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] =
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] =
                     ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode_DELNAME);
             return null;
         }

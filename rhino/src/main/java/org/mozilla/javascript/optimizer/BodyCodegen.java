@@ -1343,6 +1343,13 @@ class BodyCodegen {
                 }
                 break;
 
+            case Token.STRING_CONCAT:
+                generateExpression(child, node);
+                generateExpression(child.getNext(), node);
+                addScriptRuntimeInvoke(
+                        "concat", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                break;
+
             case Token.SUB:
             case Token.MUL:
             case Token.DIV:
