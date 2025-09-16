@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * ClassFileWriter
@@ -228,7 +229,7 @@ public class ClassFileWriter {
      * @param flags the attributes of the field, such as ACC_PUBLIC, etc. bitwise or'd together
      */
     public void startMethod(String methodName, String type, short flags) {
-        if (DEBUGCODE | DEBUGMETHODS) {
+        if (DEBUGCODE || DEBUGMETHODS) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
             }
@@ -252,7 +253,7 @@ public class ClassFileWriter {
      *     the method
      */
     public void stopMethod(int maxLocals) {
-        if (DEBUGCODE | DEBUGMETHODS) {
+        if (DEBUGCODE || DEBUGMETHODS) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
             }
@@ -4530,11 +4531,12 @@ public class ClassFileWriter {
 
     private static final int FileHeaderConstant = 0xCAFEBABE;
     // Set DEBUG flags to true to get better checking and progress info.
-    private static final boolean DEBUGSTACK = false;
-    private static final boolean DEBUGLABELS = false;
-    private static final boolean DEBUGCODE = false;
-    private static final boolean DEBUGCODEORIGINS = false;
-    private static final boolean DEBUGMETHODS = false;
+    private static final boolean DEBUGSTACK = RhinoConfig.get("rhino.cfw.debugStack", false);
+    private static final boolean DEBUGLABELS = RhinoConfig.get("rhino.cfw.debugLabels", false);
+    private static final boolean DEBUGCODE = RhinoConfig.get("rhino.cfw.debugBytecode", false);
+    private static final boolean DEBUGCODEORIGINS =
+            RhinoConfig.get("rhino.cfw.debugCallers", false);
+    private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
 
     private String generatedClassName;
 
