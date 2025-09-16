@@ -47,12 +47,15 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final Object REGEXP_TAG = new Object();
 
-    public static final int JSREG_GLOB = 0x1; // 'g' flag: global
-    public static final int JSREG_FOLD = 0x2; // 'i' flag: fold
-    public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
-    public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
-    public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
-    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
+    // Flag constants
+    public static final int JSREG_GLOB = 0x01; // 'g' flag
+    public static final int JSREG_FOLD = 0x02; // 'i' flag
+    public static final int JSREG_MULTILINE = 0x04; // 'm' flag
+    public static final int JSREG_DOTALL = 0x08; // 's' flag (ES2018)
+    public static final int JSREG_STICKY = 0x10; // 'y' flag (ES2015)
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag (ES2015)
+    public static final int JSREG_HASINDICES = 0x40; // 'd' flag (ES2022)
+    public static final int JSREG_UNICODESETS = 0x80; // 'v' flag (ES2024)
 
     // type of match to perform
     public static final int TEST = 0;
@@ -248,12 +251,15 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private void appendFlags(StringBuilder buf) {
+        // Output flags in alphabetical order per ES spec
+        if ((re.flags & JSREG_HASINDICES) != 0) buf.append('d');
         if ((re.flags & JSREG_GLOB) != 0) buf.append('g');
         if ((re.flags & JSREG_FOLD) != 0) buf.append('i');
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
-        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
         if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
+        if ((re.flags & JSREG_UNICODESETS) != 0) buf.append('v');
+        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
     }
 
     NativeRegExp() {}
@@ -641,20 +647,33 @@ public class NativeRegExp extends IdScriptableObject {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
                 int f = 0;
-                if (c == 'g') {
-                    f = JSREG_GLOB;
-                } else if (c == 'i') {
-                    f = JSREG_FOLD;
-                } else if (c == 'm') {
-                    f = JSREG_MULTILINE;
-                } else if (c == 's') {
-                    f = JSREG_DOTALL;
-                } else if (c == 'y') {
-                    f = JSREG_STICKY;
-                } else if (c == 'u') {
-                    f = JSREG_UNICODE;
-                } else {
-                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                switch (c) {
+                    case 'g':
+                        f = JSREG_GLOB;
+                        break;
+                    case 'i':
+                        f = JSREG_FOLD;
+                        break;
+                    case 'm':
+                        f = JSREG_MULTILINE;
+                        break;
+                    case 's':
+                        f = JSREG_DOTALL;
+                        break;
+                    case 'y':
+                        f = JSREG_STICKY;
+                        break;
+                    case 'u':
+                        f = JSREG_UNICODE;
+                        break;
+                    case 'd':
+                        f = JSREG_HASINDICES;
+                        break;
+                    case 'v':
+                        f = JSREG_UNICODESETS;
+                        break;
+                    default:
+                        reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
                 if ((flags & f) != 0) {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
@@ -663,9 +682,18 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        // We don't support u and i flags together, yet.
+        // Validate flag combinations
+        // u and i flags are incompatible (current Rhino limitation)
         if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
             reportError("msg.invalid.re.flag", "u and i");
+        }
+        // u and v flags are mutually exclusive (ES2024 spec)
+        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_UNICODESETS) != 0) {
+            reportError("msg.invalid.re.flag", "u and v");
+        }
+        // v and i flags are incompatible (v implies Unicode mode)
+        if ((flags & JSREG_UNICODESETS) != 0 && (flags & JSREG_FOLD) != 0) {
+            reportError("msg.invalid.re.flag", "v and i");
         }
 
         // We support unicode mode in ES6 and later.
@@ -3680,7 +3708,9 @@ public class NativeRegExp extends IdScriptableObject {
             Id_dotAll = 7,
             Id_sticky = 8,
             Id_unicode = 9,
-            MAX_INSTANCE_ID = 9;
+            Id_hasIndices = 10,
+            Id_unicodeSets = 11,
+            MAX_INSTANCE_ID = 11;
 
     @Override
     protected int getMaxInstanceId() {
@@ -3718,6 +3748,12 @@ public class NativeRegExp extends IdScriptableObject {
             case "unicode":
                 id = Id_unicode;
                 break;
+            case "hasIndices":
+                id = Id_hasIndices;
+                break;
+            case "unicodeSets":
+                id = Id_unicodeSets;
+                break;
             default:
                 id = 0;
                 break;
@@ -3738,6 +3774,8 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_dotAll:
             case Id_sticky:
             case Id_unicode:
+            case Id_hasIndices:
+            case Id_unicodeSets:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
             default:
@@ -3767,6 +3805,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return "sticky";
             case Id_unicode:
                 return "unicode";
+            case Id_hasIndices:
+                return "hasIndices";
+            case Id_unicodeSets:
+                return "unicodeSets";
         }
         return super.getInstanceIdName(id);
     }
@@ -3796,6 +3838,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
             case Id_unicode:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODE) != 0);
+            case Id_hasIndices:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_HASINDICES) != 0);
+            case Id_unicodeSets:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODESETS) != 0);
         }
         return super.getInstanceIdValue(id);
     }
