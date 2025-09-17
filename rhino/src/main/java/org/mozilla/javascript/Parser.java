@@ -3911,6 +3911,9 @@ public class Parser {
                     && !(pname instanceof ComputedPropertyKey)) {
                 switch (entryKind) {
                     case PROP_ENTRY:
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            break;
+                        }
                     case METHOD_ENTRY:
                         if (getterNames.contains(propertyName)
                                 || setterNames.contains(propertyName)) {
