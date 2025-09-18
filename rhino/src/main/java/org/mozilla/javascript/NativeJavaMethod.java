@@ -9,8 +9,12 @@ package org.mozilla.javascript;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 /**
  * This class reflects Java methods into the JavaScript environment and handles overloading of
@@ -137,7 +141,16 @@ public class NativeJavaMethod extends BaseFunction {
 
         MemberBox meth = methods[index];
 
-        args = meth.wrapArgsInternal(args);
+        Map<VariableTypeInfo, TypeInfo> mapping = Map.of();
+        if (thisObj instanceof NativeJavaObject) {
+            var staticType = ((NativeJavaObject) thisObj).staticType;
+            if (staticType instanceof ParameterizedTypeInfo) {
+                mapping =
+                        ((ParameterizedTypeInfo) staticType)
+                                .extractConsolidationMapping(TypeInfoFactory.get(scope));
+            }
+        }
+        args = meth.wrapArgsInternal(args, mapping);
 
         Object javaObject;
         if (meth.isStatic()) {
@@ -166,8 +179,8 @@ public class NativeJavaMethod extends BaseFunction {
             printDebug("Calling ", meth, args);
         }
 
-        Object returnValue = meth.invoke(javaObject, args);
-        Class<?> returnType = meth.method().getReturnType();
+        var returnValue = meth.invoke(javaObject, args);
+        var returnType = meth.getReturnType();
 
         if (debug) {
             Class<?> actualType = (returnValue == null) ? null : returnValue.getClass();
@@ -177,10 +190,10 @@ public class NativeJavaMethod extends BaseFunction {
                             + " actual = "
                             + actualType
                             + " expect = "
-                            + returnType);
+                            + returnType.asClass());
         }
 
-        if (returnType == Void.TYPE) {
+        if (returnType == TypeInfo.PRIMITIVE_VOID) {
             // skip result wrapping if we don't need result at all
             return Undefined.instance;
         }
