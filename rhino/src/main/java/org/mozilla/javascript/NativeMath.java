@@ -781,8 +781,12 @@ final class NativeMath extends ScriptableObject {
 
         // Handle all zeros (including empty input)
         if (allZeros) {
-            // Empty input or all zeros - return -0 for empty, appropriate zero for actual zeros
-            return ScriptRuntime.wrapNumber(partialsSize == 0 || hasNegativeZero ? -0.0 : 0.0);
+            // Empty input should always return -0
+            if (partialsSize == 0) {
+                return ScriptRuntime.wrapNumber(-0.0);
+            }
+            // All zeros - return -0 if any negative zeros, otherwise +0
+            return ScriptRuntime.wrapNumber(hasNegativeZero ? -0.0 : 0.0);
         }
 
         // Sum partials
