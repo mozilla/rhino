@@ -9,6 +9,7 @@ package org.mozilla.javascript.optimizer;
 import java.util.HashMap;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.IRFactory;
+import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JavaAdapter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
@@ -136,8 +137,11 @@ public class ClassCompiler {
 
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
+        JSDescriptor.Builder builder = new JSDescriptor.Builder();
+        OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv();
         byte[] scriptClassBytes =
-                codegen.compileToClassFile(compilerEnv, scriptClassName, tree, source, false);
+                codegen.compileToClassFile(
+                        compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
 
         if (isPrimary) {
             return new Object[] {scriptClassName, scriptClassBytes};
