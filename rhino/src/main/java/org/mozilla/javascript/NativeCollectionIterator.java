@@ -18,7 +18,7 @@ public class NativeCollectionIterator extends ES6Iterator {
         BOTH
     }
 
-    static void init(ScriptableObject scope, String tag, boolean sealed) {
+    static void init(JSScope scope, String tag, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeCollectionIterator(tag), tag);
     }
 
@@ -29,7 +29,7 @@ public class NativeCollectionIterator extends ES6Iterator {
     }
 
     public NativeCollectionIterator(
-            Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
+            JSScope scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
         super(scope, className);
         this.className = className;
         this.iterator = iterator;
@@ -42,12 +42,12 @@ public class NativeCollectionIterator extends ES6Iterator {
     }
 
     @Override
-    protected boolean isDone(Context cx, Scriptable scope) {
+    protected boolean isDone(Context cx, JSScope scope) {
         return !iterator.hasNext();
     }
 
     @Override
-    protected Object nextValue(Context cx, Scriptable scope) {
+    protected Object nextValue(Context cx, JSScope scope) {
         final Hashtable.Entry e = iterator.next();
         switch (type) {
             case KEYS:

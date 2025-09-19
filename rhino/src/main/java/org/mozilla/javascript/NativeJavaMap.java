@@ -27,12 +27,12 @@ public class NativeJavaMap extends NativeJavaObject {
 
     private Map<Object, Object> map;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeJavaMapIterator.init(scope, sealed);
     }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaMap(Scriptable scope, Object map) {
+    public NativeJavaMap(JSScope scope, Object map) {
         super(scope, map, map.getClass());
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
@@ -44,7 +44,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
@@ -55,7 +55,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(Integer.valueOf(index))) {
@@ -66,7 +66,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key)) {
             return true;
         }
@@ -74,7 +74,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
@@ -86,7 +86,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(Integer.valueOf(index))) {
@@ -98,7 +98,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key)) {
             return symbol_iterator;
         }
@@ -106,7 +106,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             map.put(name, Context.jsToJava(value, Object.class));
@@ -116,7 +116,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         Context cx = Context.getContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
@@ -153,7 +153,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (Context cx, JSScope scope, Object thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaMap)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -164,7 +164,7 @@ public class NativeJavaMap extends NativeJavaObject {
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
+        static void init(JSScope scope, boolean sealed) {
             ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
         }
 
@@ -173,7 +173,7 @@ public class NativeJavaMap extends NativeJavaObject {
             super();
         }
 
-        NativeJavaMapIterator(Scriptable scope, Map<Object, Object> map) {
+        NativeJavaMapIterator(JSScope scope, Map<Object, Object> map) {
             super(scope, ITERATOR_TAG);
             this.iterator = map.entrySet().iterator();
         }
@@ -184,12 +184,12 @@ public class NativeJavaMap extends NativeJavaObject {
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, JSScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, JSScope scope) {
             if (!iterator.hasNext()) {
                 return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
             }

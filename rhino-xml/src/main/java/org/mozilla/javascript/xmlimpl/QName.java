@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -28,7 +29,7 @@ final class QName extends IdScriptableObject {
 
     private QName() {}
 
-    static QName create(XMLLibImpl lib, Scriptable scope, QName prototype, XmlNode.QName delegate) {
+    static QName create(XMLLibImpl lib, JSScope scope, QName prototype, XmlNode.QName delegate) {
         QName rv = new QName();
         rv.lib = lib;
         rv.setParentScope(scope);
@@ -253,7 +254,7 @@ final class QName extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(QNAME_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -269,7 +270,7 @@ final class QName extends IdScriptableObject {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private QName realThis(Scriptable thisObj, IdFunctionObject f) {
+    private QName realThis(Object thisObj, IdFunctionObject f) {
         return ensureType(thisObj, QName.class, f);
     }
 

@@ -25,11 +25,11 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     public interface Getter<U extends ScriptableObject> extends Serializable {
-        Object apply(U builtIn, Scriptable start);
+        Object apply(U builtIn, JSScope start);
     }
 
     public interface Setter<U extends ScriptableObject> extends Serializable {
-        boolean apply(U builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow);
+        boolean apply(U builtIn, Object value, JSScope owner, JSScope start, boolean isThrow);
     }
 
     public interface AttributeSetter<U extends ScriptableObject> extends Serializable {
@@ -130,13 +130,13 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Object getValue(Scriptable start) {
+    public Object getValue(JSScope start) {
         return getter.apply(((T) this.value), start);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+    public boolean setValue(Object value, JSScope owner, JSScope start, boolean isThrow) {
         if ((getAttributes() & ScriptableObject.READONLY) != 0) {
             if (isThrow) {
                 throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
@@ -153,7 +153,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     _without_ the normal checks on readonly and similar. */
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
-            Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+            Object value, JSScope owner, JSScope start, boolean isThrow) {
         setter.apply(((T) this.value), value, owner, start, isThrow);
     }
 
@@ -166,7 +166,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @Override
     @SuppressWarnings("unchecked")
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+    ScriptableObject getPropertyDescriptor(Context cx, JSScope scope) {
         return ScriptableObject.buildDataDescriptor(
                 scope, getValue((T) this.value), getAttributes());
     }
@@ -178,7 +178,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     }
 
     private static <T extends ScriptableObject> boolean defaultSetter(
-            T builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+            T builtIn, Object value, JSScope owner, JSScope start, boolean isThrow) {
         return true;
     }
 

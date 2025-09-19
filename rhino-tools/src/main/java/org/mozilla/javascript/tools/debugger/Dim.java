@@ -22,6 +22,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeCall;
 import org.mozilla.javascript.NativeObject;
@@ -578,7 +579,7 @@ public class Dim {
         }
 
         Scriptable proto = scriptable.getPrototype();
-        Scriptable parent = scriptable.getParentScope();
+        JSScope parent = scriptable.getParentScope();
         int extra = 0;
         if (proto != null) {
             ++extra;
@@ -969,10 +970,10 @@ public class Dim {
         private ContextData contextData;
 
         /** The scope. */
-        private Scriptable scope;
+        private JSScope scope;
 
         /** The 'this' object. */
-        private Scriptable thisObj;
+        private Object thisObj;
 
         /** Information about the function. */
         private FunctionSource fsource;
@@ -994,7 +995,7 @@ public class Dim {
 
         /** Called when the stack frame is entered. */
         @Override
-        public void onEnter(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, JSScope scope, Object thisObj, Object[] args) {
             contextData.pushFrame(this);
             this.scope = scope;
             this.thisObj = thisObj;

@@ -9,6 +9,7 @@ package org.mozilla.javascript.regexp;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -29,7 +30,7 @@ import org.mozilla.javascript.Undefined;
 class NativeRegExpCtor {
     private static final long serialVersionUID = -5733330028285400526L;
 
-    public static LambdaConstructor init(Context cx, Scriptable scopeArg, boolean sealed) {
+    public static LambdaConstructor init(Context cx, JSScope scopeArg, boolean sealed) {
         // We have to keep parameter types to match lazy evaluation.
         ScriptableObject scope = (ScriptableObject) scopeArg;
 
@@ -93,16 +94,17 @@ class NativeRegExpCtor {
     }
 
     private static Scriptable js_constructCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (args.length > 0
                 && args[0] instanceof NativeRegExp
                 && (args.length == 1 || args[1] == Undefined.instance)) {
             return (Scriptable) args[0];
         }
-        return js_construct(cx, scope, args);
+        return js_construct(cx, scope, null, args);
     }
 
-    private static Scriptable js_construct(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_construct(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, scope, args);
         ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);

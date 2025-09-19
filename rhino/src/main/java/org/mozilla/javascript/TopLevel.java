@@ -137,7 +137,7 @@ public class TopLevel extends IdScriptableObject {
      * @param type the built-in type
      * @return the built-in constructor
      */
-    public static Function getBuiltinCtor(Context cx, Scriptable scope, Builtins type) {
+    public static Function getBuiltinCtor(Context cx, JSScope scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -169,7 +169,7 @@ public class TopLevel extends IdScriptableObject {
      * @param type the native error type
      * @return the native error constructor
      */
-    static Function getNativeErrorCtor(Context cx, Scriptable scope, NativeErrors type) {
+    static Function getNativeErrorCtor(Context cx, JSScope scope, NativeErrors type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -191,7 +191,7 @@ public class TopLevel extends IdScriptableObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
-    public static Scriptable getBuiltinPrototype(Scriptable scope, Builtins type) {
+    public static Scriptable getBuiltinPrototype(JSScope scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {

@@ -56,7 +56,7 @@ public interface ConstProperties {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void putConst(String name, Scriptable start, Object value);
+    public void putConst(String name, JSScope start, Object value);
 
     /**
      * Reserves a definition spot for a const. This will set up a definition of the const property,
@@ -66,7 +66,7 @@ public interface ConstProperties {
      * @param name The name of the property.
      * @param start The object whose property is being reserved.
      */
-    public void defineConst(String name, Scriptable start);
+    public void defineConst(String name, JSScope start);
 
     /**
      * Returns true if the named property is defined as a const on this object.

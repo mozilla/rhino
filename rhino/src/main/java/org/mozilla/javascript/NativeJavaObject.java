@@ -35,18 +35,18 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     private static final long serialVersionUID = -6948590651130498591L;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
     }
 
     public NativeJavaObject() {}
 
-    public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType) {
+    public NativeJavaObject(JSScope scope, Object javaObject, Class<?> staticType) {
         this(scope, javaObject, staticType, false);
     }
 
     public NativeJavaObject(
-            Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
+            JSScope scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
@@ -66,17 +66,17 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return members.has(name, false);
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return false;
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
             return true;
         }
@@ -84,7 +84,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
             if (result != null) {
@@ -97,7 +97,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
             return symbol_iterator;
         }
@@ -106,12 +106,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
@@ -121,7 +121,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
+    public void put(Symbol symbol, JSScope start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
@@ -134,7 +134,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
@@ -170,13 +170,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Returns the parent (enclosing) scope of the object. */
     @Override
-    public Scriptable getParentScope() {
+    public JSScope getParentScope() {
         return parent;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
+    public void setParentScope(JSScope m) {
         parent = m;
     }
 
@@ -190,7 +190,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
      */
     @Deprecated
-    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
+    public static Object wrap(JSScope scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
@@ -234,7 +234,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 value =
                         f.call(
                                 Context.getContext(),
-                                f.getParentScope(),
+                                (Scriptable) f.getParentScope(),
                                 this,
                                 ScriptRuntime.emptyArgs);
             } else {
@@ -913,7 +913,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (Context cx, JSScope scope, Object thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaObject)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -928,7 +928,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
+        static void init(JSScope scope, boolean sealed) {
             ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
         }
 
@@ -937,7 +937,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             super();
         }
 
-        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+        JavaIterableIterator(JSScope scope, Iterable iterable) {
             super(scope, ITERATOR_TAG);
             this.iterator = iterable.iterator();
         }
@@ -948,12 +948,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, JSScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, JSScope scope) {
             if (!iterator.hasNext()) {
                 return Undefined.instance;
             }
@@ -973,7 +973,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected Scriptable prototype;
 
     /** The parent scope of this object. */
-    protected Scriptable parent;
+    protected JSScope parent;
 
     protected transient Object javaObject;
 

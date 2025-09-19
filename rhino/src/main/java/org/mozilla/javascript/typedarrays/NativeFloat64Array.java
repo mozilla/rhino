@@ -7,10 +7,10 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
@@ -39,14 +39,14 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, JSScope lscope, Object target, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,
@@ -73,7 +73,7 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeFloat64Array realThis(Scriptable thisObj) {
+    private static NativeFloat64Array realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeFloat64Array.class);
     }
 

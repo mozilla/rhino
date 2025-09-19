@@ -14,16 +14,4 @@ package org.mozilla.javascript;
  *
  * @since 1.7.8
  */
-public interface SymbolScriptable {
-    /** Return the value of the property with the specified key, or NOT_FOUND. */
-    Object get(Symbol key, Scriptable start);
-
-    /** Return true if the specified property exists. */
-    boolean has(Symbol key, Scriptable start);
-
-    /** Add a new property to to the object. */
-    void put(Symbol key, Scriptable start, Object value);
-
-    /** Delete a property with the specified key. */
-    void delete(Symbol key);
-}
+public interface SymbolScriptable extends Scriptable {}

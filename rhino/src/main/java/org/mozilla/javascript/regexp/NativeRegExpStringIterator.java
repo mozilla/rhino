@@ -8,9 +8,9 @@ package org.mozilla.javascript.regexp;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ES6Iterator;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 // See ECMAScript spec 22.2.9.1
@@ -25,7 +25,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     private boolean nextDone;
     private Object next = null;
 
-    public static void init(ScriptableObject scope, boolean sealed) {
+    public static void init(JSScope scope, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeRegExpStringIterator(), ITERATOR_TAG);
     }
 
@@ -35,11 +35,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     }
 
     public NativeRegExpStringIterator(
-            Scriptable scope,
-            Scriptable regexp,
-            String string,
-            boolean global,
-            boolean fullUnicode) {
+            JSScope scope, Scriptable regexp, String string, boolean global, boolean fullUnicode) {
         super(scope, ITERATOR_TAG);
 
         this.regexp = regexp;
@@ -55,7 +51,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     }
 
     @Override
-    protected boolean isDone(Context cx, Scriptable scope) {
+    protected boolean isDone(Context cx, JSScope scope) {
         // The base class calls _first_ isDone and _then_ nextValue, so we'll just compute the next
         // value here and return it form "nextValue".
         // Also, for non-global regexp, we need to return the first match and then "done" on the
@@ -90,7 +86,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     }
 
     @Override
-    protected Object nextValue(Context cx, Scriptable scope) {
+    protected Object nextValue(Context cx, JSScope scope) {
         return next;
     }
 

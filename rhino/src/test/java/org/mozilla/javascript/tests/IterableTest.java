@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
@@ -40,7 +41,7 @@ public class IterableTest {
         }
 
         @Override
-        public boolean has(Symbol key, Scriptable start) {
+        public boolean has(Symbol key, JSScope start) {
             return false;
         }
     }
@@ -52,7 +53,7 @@ public class IterableTest {
         }
 
         @Override
-        public Object get(String name, Scriptable start) {
+        public Object get(String name, JSScope start) {
             switch (name) {
                 case "length":
                     return 1;
@@ -61,7 +62,7 @@ public class IterableTest {
         }
 
         @Override
-        public Object get(int index, Scriptable start) {
+        public Object get(int index, JSScope start) {
             switch (index) {
                 case 0:
                     return 123;
@@ -71,7 +72,7 @@ public class IterableTest {
         }
 
         @Override
-        public Object get(Symbol key, Scriptable start) {
+        public Object get(Symbol key, JSScope start) {
             if (SymbolKey.ITERATOR.equals(key)) {
                 return ScriptableObject.getProperty(
                         ScriptableObject.getArrayPrototype(scope), SymbolKey.ITERATOR);
@@ -80,7 +81,7 @@ public class IterableTest {
         }
 
         @Override
-        public boolean has(Symbol key, Scriptable start) {
+        public boolean has(Symbol key, JSScope start) {
             return SymbolKey.ITERATOR.equals(key);
         }
     }
@@ -221,32 +222,32 @@ public class IterableTest {
         }
 
         @Override
-        public Object get(String name, Scriptable start) {
+        public Object get(String name, JSScope start) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public Object get(int index, Scriptable start) {
+        public Object get(int index, JSScope start) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean has(String name, Scriptable start) {
+        public boolean has(String name, JSScope start) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean has(int index, Scriptable start) {
+        public boolean has(int index, JSScope start) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public void put(String name, JSScope start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public void put(int index, JSScope start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -266,7 +267,7 @@ public class IterableTest {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {
+        public void setParentScope(JSScope parent) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -288,7 +289,7 @@ public class IterableTest {
         }
 
         @Override
-        public Object get(Symbol key, Scriptable start) {
+        public Object get(Symbol key, JSScope start) {
             if (SymbolKey.TO_PRIMITIVE == key) {
                 return null;
             }
@@ -298,14 +299,14 @@ public class IterableTest {
         }
 
         @Override
-        public boolean has(Symbol key, Scriptable start) {
+        public boolean has(Symbol key, JSScope start) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.
         }
 
         @Override
-        public void put(Symbol key, Scriptable start, Object value) {
+        public void put(Symbol key, JSScope start, Object value) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.

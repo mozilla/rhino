@@ -9,6 +9,7 @@ package org.mozilla.javascript.json;
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.Scriptable;
@@ -24,13 +25,13 @@ import org.mozilla.javascript.Scriptable;
 public class JsonParser {
 
     private Context cx;
-    private Scriptable scope;
+    private JSScope scope;
 
     private int pos;
     private int length;
     private String src;
 
-    public JsonParser(Context cx, Scriptable scope) {
+    public JsonParser(Context cx, JSScope scope) {
         this.cx = cx;
         this.scope = scope;
     }

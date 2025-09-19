@@ -30,7 +30,7 @@ final class NativeError extends IdScriptableObject {
     private RhinoException stackProvider;
     private Object stack;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(JSScope scope, boolean sealed) {
         NativeError obj = new NativeError();
         ScriptableObject.putProperty(obj, "name", "Error");
         ScriptableObject.putProperty(obj, "message", "");
@@ -42,7 +42,7 @@ final class NativeError extends IdScriptableObject {
         NativeCallSite.init(obj, sealed);
     }
 
-    static NativeError makeProto(Scriptable scope, Function ctorObj) {
+    static NativeError makeProto(JSScope scope, Function ctorObj) {
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
 
         NativeError obj = new NativeError();
@@ -51,7 +51,7 @@ final class NativeError extends IdScriptableObject {
         return obj;
     }
 
-    static NativeError make(Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError make(Context cx, JSScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
@@ -78,8 +78,7 @@ final class NativeError extends IdScriptableObject {
         return obj;
     }
 
-    static NativeError makeAggregate(
-            Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError makeAggregate(Context cx, JSScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
@@ -169,7 +168,7 @@ final class NativeError extends IdScriptableObject {
         return toString instanceof String ? (String) toString : super.toString();
     }
 
-    private static NativeError realThis(Scriptable thisObj, IdFunctionObject f) {
+    private static NativeError realThis(Object thisObj, IdFunctionObject f) {
         return ensureType(thisObj, NativeError.class, f);
     }
 
@@ -198,7 +197,7 @@ final class NativeError extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(ERROR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -209,15 +208,15 @@ final class NativeError extends IdScriptableObject {
 
             case Id_toString:
                 if (thisObj != scope && thisObj instanceof NativeObject) {
-                    return js_toString(thisObj);
+                    return js_toString((Scriptable) thisObj);
                 }
                 return js_toString(realThis(thisObj, f));
 
             case Id_toSource:
-                return js_toSource(cx, scope, thisObj);
+                return js_toSource(cx, scope, (Scriptable) thisObj);
 
             case ConstructorId_captureStackTrace:
-                js_captureStackTrace(cx, scope, thisObj, args);
+                js_captureStackTrace(cx, scope, (Scriptable) thisObj, args);
                 return Undefined.instance;
 
             case ConstructorId_isError:
@@ -315,7 +314,7 @@ final class NativeError extends IdScriptableObject {
         }
     }
 
-    private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
+    private static String js_toSource(Context cx, JSScope scope, Scriptable thisObj) {
         // Emulation of SpiderMonkey behavior
         Object name = ScriptableObject.getProperty(thisObj, "name");
         Object message = ScriptableObject.getProperty(thisObj, "message");
@@ -354,7 +353,7 @@ final class NativeError extends IdScriptableObject {
     }
 
     private static void js_captureStackTrace(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSScope scope, Scriptable thisObj, Object[] args) {
         ScriptableObject obj = (ScriptableObject) ScriptRuntime.toObject(cx, scope, args[0]);
         Function func = null;
         if (args.length > 1) {

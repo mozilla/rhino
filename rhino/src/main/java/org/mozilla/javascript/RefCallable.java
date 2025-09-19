@@ -17,5 +17,5 @@ public interface RefCallable extends Callable {
      * @param thisObj the JavaScript <code>this</code> object
      * @param args the array of arguments
      */
-    public Ref refCall(Context cx, Scriptable thisObj, Object[] args);
+    public Ref refCall(Context cx, Object thisObj, Object[] args);
 }

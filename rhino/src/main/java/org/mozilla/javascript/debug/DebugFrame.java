@@ -9,7 +9,7 @@
 package org.mozilla.javascript.debug;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.JSScope;
 
 /**
  * Interface to implement if the application is interested in receiving debug information during
@@ -26,7 +26,7 @@ public interface DebugFrame {
      * @param thisObj value of the JavaScript <code>this</code> object
      * @param args the array of arguments
      */
-    public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args);
+    public void onEnter(Context cx, JSScope activation, Object thisObj, Object[] args);
 
     /**
      * Called when executed code reaches new line in the source.

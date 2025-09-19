@@ -122,7 +122,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         // Find a method that matches the types given.
         if (methods.length == 0) {
             throw new RuntimeException("No methods defined for call");
@@ -143,7 +143,7 @@ public class NativeJavaMethod extends BaseFunction {
         if (meth.isStatic()) {
             javaObject = null; // don't need an object
         } else {
-            Scriptable o = thisObj;
+            Scriptable o = (Scriptable) thisObj;
             Class<?> c = meth.getDeclaringClass();
             for (; ; ) {
                 if (o == null) {

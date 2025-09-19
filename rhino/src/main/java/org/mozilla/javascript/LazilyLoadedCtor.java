@@ -22,7 +22,7 @@ public final class LazilyLoadedCtor implements Serializable {
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;
 
-    private final Scriptable scope;
+    private final JSScope scope;
     private final Initializable initializer;
     private final String propertyName;
     private final boolean sealed;
@@ -38,7 +38,7 @@ public final class LazilyLoadedCtor implements Serializable {
      * initialization function.
      */
     public LazilyLoadedCtor(
-            ScriptableObject scope,
+            JSScope scope,
             String propertyName,
             boolean sealed,
             boolean privileged,
@@ -50,7 +50,8 @@ public final class LazilyLoadedCtor implements Serializable {
         this.state = STATE_BEFORE_INIT;
         this.initializer = initializer;
 
-        scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
+        ((ScriptableObject) scope)
+                .addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
     }
 
     /**
@@ -61,7 +62,7 @@ public final class LazilyLoadedCtor implements Serializable {
      * initialization function.
      */
     public LazilyLoadedCtor(
-            ScriptableObject scope,
+            JSScope scope,
             String propertyName,
             boolean sealed,
             Initializable initializer,
@@ -73,8 +74,7 @@ public final class LazilyLoadedCtor implements Serializable {
      * Create a constructor that loads via reflection, looking for an "init" method on the class.
      * This is a legacy mechanism.
      */
-    public LazilyLoadedCtor(
-            ScriptableObject scope, String propertyName, String className, boolean sealed) {
+    public LazilyLoadedCtor(JSScope scope, String propertyName, String className, boolean sealed) {
         this(scope, propertyName, className, sealed, false);
     }
 
@@ -83,7 +83,7 @@ public final class LazilyLoadedCtor implements Serializable {
      * This is a legacy mechanism.
      */
     public LazilyLoadedCtor(
-            ScriptableObject scope,
+            JSScope scope,
             String propertyName,
             String className,
             boolean sealed,
@@ -93,7 +93,7 @@ public final class LazilyLoadedCtor implements Serializable {
                 propertyName,
                 sealed,
                 privileged,
-                (Context lcx, Scriptable lscope, boolean lsealed) ->
+                (Context lcx, JSScope lscope, boolean lsealed) ->
                         buildUsingReflection(lscope, className, propertyName, lsealed));
     }
 
@@ -140,7 +140,7 @@ public final class LazilyLoadedCtor implements Serializable {
     }
 
     private static Object buildUsingReflection(
-            Scriptable scope, String className, String propertyName, boolean sealed) {
+            JSScope scope, String className, String propertyName, boolean sealed) {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {

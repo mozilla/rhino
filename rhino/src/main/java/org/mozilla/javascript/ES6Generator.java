@@ -13,7 +13,7 @@ public final class ES6Generator extends IdScriptableObject {
 
     private static final Object GENERATOR_TAG = "Generator";
 
-    static ES6Generator init(ScriptableObject scope, boolean sealed) {
+    static ES6Generator init(JSScope scope, boolean sealed) {
 
         ES6Generator prototype = new ES6Generator();
         if (scope != null) {
@@ -30,7 +30,7 @@ public final class ES6Generator extends IdScriptableObject {
         // to use to find the prototype. Use the "associateValue"
         // approach instead.
         if (scope != null) {
-            scope.associateValue(GENERATOR_TAG, prototype);
+            ((ScriptableObject) scope).associateValue(GENERATOR_TAG, prototype);
         }
 
         return prototype;
@@ -39,7 +39,7 @@ public final class ES6Generator extends IdScriptableObject {
     /** Only for constructing the prototype object. */
     private ES6Generator() {}
 
-    public ES6Generator(Scriptable scope, NativeFunction function, Object savedState) {
+    public ES6Generator(JSScope scope, NativeFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
@@ -87,7 +87,7 @@ public final class ES6Generator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(GENERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -121,7 +121,7 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegee(Context cx, JSScope scope, Object value) {
         try {
             // Be super-careful and only pass an arg to next if it expects one
             Object[] nextArgs =
@@ -153,7 +153,7 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeThrow(Context cx, JSScope scope, Object value) {
         boolean returnCalled = false;
         try {
             // Delegate to "throw" method. If it's not defined we'll get an error here.
@@ -195,7 +195,7 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeReturn(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeReturn(Context cx, JSScope scope, Object value) {
         try {
             // Call "return" but don't throw if it can't be found
             Object retResult = callReturnOptionally(cx, scope, value);
@@ -228,7 +228,7 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeLocal(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeLocal(Context cx, JSScope scope, Object value) {
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -302,7 +302,7 @@ public final class ES6Generator extends IdScriptableObject {
         return result;
     }
 
-    private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value) {
+    private Scriptable resumeAbruptLocal(Context cx, JSScope scope, int op, Object value) {
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
@@ -374,7 +374,7 @@ public final class ES6Generator extends IdScriptableObject {
         return result;
     }
 
-    private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
+    private Object callReturnOptionally(Context cx, JSScope scope, Object value) {
         Object[] retArgs =
                 Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
         // Delegate to "return" method. If it's not defined we ignore it

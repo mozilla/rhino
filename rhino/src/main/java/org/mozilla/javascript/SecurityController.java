@@ -134,15 +134,15 @@ public abstract class SecurityController {
             Object securityDomain,
             Context cx,
             final Callable callable,
-            Scriptable scope,
-            final Scriptable thisObj,
+            JSScope scope,
+            final Object thisObj,
             final Object[] args) {
         return execWithDomain(
                 cx,
                 scope,
                 new Script() {
                     @Override
-                    public Object exec(Context cx, Scriptable scope, Scriptable thisObjIgnored) {
+                    public Object exec(Context cx, JSScope scope, Object thisObjIgnored) {
                         return callable.call(cx, scope, thisObj, args);
                     }
                 },
@@ -155,8 +155,7 @@ public abstract class SecurityController {
      *     Scriptable thisObj, Object[] args)}.
      */
     @Deprecated
-    public Object execWithDomain(
-            Context cx, Scriptable scope, Script script, Object securityDomain) {
+    public Object execWithDomain(Context cx, JSScope scope, Script script, Object securityDomain) {
         throw new IllegalStateException("callWithDomain should be overridden");
     }
 }

@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
@@ -317,7 +318,7 @@ public interface TypeInfoFactory extends Serializable {
      * @see #get(Scriptable)
      * @see #associate(ScriptableObject topScope)
      */
-    static TypeInfoFactory getOrElse(Scriptable scope, TypeInfoFactory fallback) {
+    static TypeInfoFactory getOrElse(JSScope scope, TypeInfoFactory fallback) {
         var got = (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
         if (got == null) {
             return fallback;

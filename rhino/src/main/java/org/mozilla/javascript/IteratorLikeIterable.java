@@ -21,19 +21,19 @@ import java.util.NoSuchElementException;
  */
 public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     private final Context cx;
-    private final Scriptable scope;
+    private final JSScope scope;
     private final Callable next;
     private final Callable returnFunc;
     private final Scriptable iterator;
     private boolean closed;
 
-    public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
+    public IteratorLikeIterable(Context cx, JSScope scope, Object target) {
         this.cx = cx;
         this.scope = scope;
         // This will throw if "next" is not a function or undefined
         var nextCall = ScriptRuntime.getPropAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
         next = nextCall.getCallable();
-        iterator = nextCall.getThis();
+        iterator = (Scriptable) nextCall.getThis();
         Object retObj =
                 ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
         // We only care about "return" if it is not null or undefined
@@ -52,7 +52,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
         if (!closed) {
             closed = true;
             if (returnFunc != null) {
-                returnFunc.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+                returnFunc.call(cx, (Scriptable) scope, iterator, ScriptRuntime.emptyArgs);
             }
         }
     }
@@ -71,7 +71,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
             if (isDone) {
                 return false;
             }
-            Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+            Object val = next.call(cx, (Scriptable) scope, iterator, ScriptRuntime.emptyArgs);
             // This will throw if "val" is not an object.
             // "getObjectPropNoWarn" won't, so do this as follows.
             Object doneval =

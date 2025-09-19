@@ -23,7 +23,7 @@ public class LazyLoadSlot extends Slot {
     }
 
     @Override
-    public Object getValue(Scriptable start) {
+    public Object getValue(JSScope start) {
         Object val = this.value;
         if (val instanceof LazilyLoadedCtor) {
             LazilyLoadedCtor initializer = (LazilyLoadedCtor) val;

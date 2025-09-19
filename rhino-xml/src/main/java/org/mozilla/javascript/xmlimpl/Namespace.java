@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -25,7 +26,7 @@ class Namespace extends IdScriptableObject {
 
     private Namespace() {}
 
-    static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
+    static Namespace create(JSScope scope, Namespace prototype, XmlNode.Namespace namespace) {
         Namespace rv = new Namespace();
         rv.setParentScope(scope);
         rv.prototype = prototype;
@@ -221,7 +222,7 @@ class Namespace extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(NAMESPACE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -237,7 +238,7 @@ class Namespace extends IdScriptableObject {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
+    private Namespace realThis(Object thisObj, IdFunctionObject f) {
         return ensureType(thisObj, Namespace.class, f);
     }
 

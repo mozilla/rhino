@@ -58,7 +58,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 
     /** Create function embedded in script or another function. */
     static InterpretedFunction createFunction(
-            Context cx, Scriptable scope, InterpretedFunction parent, int index) {
+            Context cx, JSScope scope, InterpretedFunction parent, int index) {
         InterpretedFunction f = new InterpretedFunction(parent, index);
         f.initScriptFunction(cx, scope, f.idata.isES6Generator, f.idata.isShorthand);
         return f;
@@ -80,7 +80,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
      * @return the result of the function call.
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
@@ -88,7 +88,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
     }
 
     @Override
-    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
+    public Object exec(Context cx, JSScope scope, Object thisObj) {
         if (!isScript()) {
             // Can only be applied to scripts
             throw new IllegalStateException();
@@ -122,7 +122,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 
     @Override
     public Object resumeGenerator(
-            Context cx, Scriptable scope, int operation, Object state, Object value) {
+            Context cx, JSScope scope, int operation, Object state, Object value) {
         return Interpreter.resumeGenerator(cx, scope, operation, state, value);
     }
 

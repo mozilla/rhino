@@ -7,6 +7,7 @@
 package org.mozilla.javascript.xmlimpl;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -17,7 +18,7 @@ class XML extends XMLObjectImpl {
 
     private XmlNode node;
 
-    XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
+    XML(XMLLibImpl lib, JSScope scope, XMLObject prototype, XmlNode node) {
         super(lib, scope, prototype);
         initialize(node);
     }
@@ -65,7 +66,7 @@ class XML extends XMLObjectImpl {
     // change the behavior
     //    The comment: XML[0] should return this, all other indexes are Undefined
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         if (index == 0) {
             return this;
         } else {
@@ -74,12 +75,12 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return (index == 0);
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         //    TODO    Clarify the following comment and add a reference to the spec
         //    The comment: Spec says assignment to indexed XML object should return type error
         throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");
@@ -182,7 +183,7 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+    protected Object jsConstructor(Context cx, boolean inNewExpr, Object newTarget, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             args = new Object[] {""};
         }

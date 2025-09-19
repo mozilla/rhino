@@ -12,7 +12,7 @@ import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.JSScope;
 
 /**
  * This linker optimizes accesses to the "prototype" property of any standard Rhino function so that
@@ -58,7 +58,7 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     @SuppressWarnings("unused")
-    private static Object getPrototype(Object o, Context cx, Scriptable scope) {
+    private static Object getPrototype(Object o, Context cx, JSScope scope) {
         return ((BaseFunction) o).getPrototypeProperty();
     }
 }

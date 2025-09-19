@@ -107,7 +107,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     private Scriptable prototypeObject;
 
     /** The parent scope of this object. */
-    private Scriptable parentScopeObject;
+    private JSScope parentScopeObject;
 
     // Where external array data is stored.
     private transient ExternalArrayData externalData;
@@ -128,7 +128,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     protected static ScriptableObject buildDataDescriptor(
-            Scriptable scope, Object value, int attributes) {
+            JSScope scope, Object value, int attributes) {
         ScriptableObject desc = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
         desc.defineProperty("value", value, EMPTY);
@@ -155,7 +155,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         super(0);
     }
 
-    public ScriptableObject(Scriptable scope, Scriptable prototype) {
+    public ScriptableObject(JSScope scope, Scriptable prototype) {
         super(0);
         if (scope == null) throw new IllegalArgumentException();
 
@@ -190,7 +190,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return true if and only if the property was found in the object
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return null != getMap().query(name, 0);
     }
 
@@ -202,7 +202,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return true if and only if the property was found in the object
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         if (externalData != null) {
             return (index < externalData.getArrayLength());
         }
@@ -211,7 +211,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     /** A version of "has" that supports symbols. */
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         return null != getMap().query(key, 0);
     }
 
@@ -225,7 +225,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return the value of the property (may be null), or NOT_FOUND
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Slot slot = getMap().query(name, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -241,7 +241,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return the value of the property (may be null), or NOT_FOUND
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         if (externalData != null) {
             if (index < externalData.getArrayLength()) {
                 return externalData.getArrayElement(index);
@@ -258,7 +258,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     /** Another version of Get that supports Symbol keyed properties. */
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         Slot slot = getMap().query(key, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -279,7 +279,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
@@ -293,7 +293,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(String name, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(String name, JSScope start, Object value, boolean isThrow) {
         return putImpl(name, 0, start, value, isThrow);
     }
 
@@ -306,7 +306,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (externalData != null) {
             if (index < externalData.getArrayLength()) {
                 externalData.setArrayElement(index, value);
@@ -336,17 +336,17 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(int index, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(int index, JSScope start, Object value, boolean isThrow) {
         return putImpl(null, index, start, value, isThrow);
     }
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, JSScope start, Object value) {
         if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
-        ensureSymbolScriptable(start).put(key, start, value);
+        start.put(key, start, value);
     }
 
     /**
@@ -356,7 +356,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(Symbol key, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(Symbol key, JSScope start, Object value, boolean isThrow) {
         return putImpl(key, 0, start, value, isThrow);
     }
 
@@ -420,7 +420,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param value value to set the property to
      */
     @Override
-    public void putConst(String name, Scriptable start, Object value) {
+    public void putConst(String name, JSScope start, Object value) {
         if (putConstImpl(name, 0, start, value, READONLY)) return;
 
         if (start == this) throw Kit.codeBug();
@@ -430,7 +430,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     @Override
-    public void defineConst(String name, Scriptable start) {
+    public void defineConst(String name, JSScope start) {
         if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
 
         if (start == this) throw Kit.codeBug();
@@ -630,7 +630,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *     getter or the setter for the property, depending on the value of isSetter (may be
      *     undefined if unset).
      */
-    public Object getGetterOrSetter(String name, int index, Scriptable scope, boolean isSetter) {
+    public Object getGetterOrSetter(String name, int index, JSScope scope, boolean isSetter) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         Slot slot = getMap().query(name, index);
         if (slot == null) return null;
@@ -750,12 +750,12 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Returns the parent (enclosing) scope of the object. */
     @Override
     public Scriptable getParentScope() {
-        return parentScopeObject;
+        return (Scriptable) parentScopeObject;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
+    public void setParentScope(JSScope m) {
         parentScopeObject = m;
     }
 
@@ -830,7 +830,12 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (cx == null) {
                 cx = Context.getContext();
             }
-            v = fun.call(cx, fun.getParentScope(), object, ScriptRuntime.emptyArgs);
+            v =
+                    fun.call(
+                            cx,
+                            (Scriptable) fun.getParentScope(),
+                            (Scriptable) object,
+                            ScriptRuntime.emptyArgs);
             if (v != null) {
                 if (!(v instanceof Scriptable)) {
                     return v;
@@ -1016,7 +1021,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @since 1.4R3
      */
     public static <T extends Scriptable> void defineClass(
-            Scriptable scope, Class<T> clazz, boolean sealed)
+            JSScope scope, Class<T> clazz, boolean sealed)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         defineClass(scope, clazz, sealed, false);
     }
@@ -1044,7 +1049,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @since 1.6R2
      */
     public static <T extends Scriptable> String defineClass(
-            Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
+            JSScope scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         BaseFunction ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
         if (ctor == null) return null;
@@ -1054,7 +1059,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     static <T extends Scriptable> BaseFunction buildClassCtor(
-            Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
+            JSScope scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (Method method : methods) {
@@ -1062,7 +1067,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
                     && parmTypes[0] == ScriptRuntime.ContextClass
-                    && parmTypes[1] == ScriptRuntime.ScriptableClass
+                    && parmTypes[1] == ScriptRuntime.JSScopeClass
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
                 Object[] args = {
@@ -1156,12 +1161,12 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
         }
 
-        FunctionObject ctor = new FunctionObject(className, ctorMember, scope);
+        FunctionObject ctor = new FunctionObject(className, ctorMember, (Scriptable) scope);
         if (ctor.isVarArgsMethod()) {
             throw Context.reportRuntimeErrorById("msg.varargs.ctor", ctorMember.getName());
         }
         ctor.initAsConstructor(
-                scope,
+                (Scriptable) scope,
                 proto,
                 ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
 
@@ -1379,7 +1384,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param attributes the attributes of the JavaScript property
      */
     public static void defineProperty(
-            Scriptable destination, String propertyName, Object value, int attributes) {
+            JSScope destination, String propertyName, Object value, int attributes) {
         if (!(destination instanceof ScriptableObject)) {
             destination.put(propertyName, destination, value);
             return;
@@ -1401,13 +1406,13 @@ public abstract class ScriptableObject extends SlotMapOwner
      *     of the internal LambdaFunction, which differ for many * native objects.
      */
     public void defineProperty(
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             SerializableCallable target,
             int attributes,
             int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        LambdaFunction f = new LambdaFunction((Scriptable) scope, name, length, target);
         f.setStandardPropertyAttributes(propertyAttributes);
         defineProperty(name, f, attributes);
     }
@@ -1420,7 +1425,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param destination ScriptableObject to define the property on
      * @param propertyName the name of the property to define.
      */
-    public static void defineConstProperty(Scriptable destination, String propertyName) {
+    public static void defineConstProperty(JSScope destination, String propertyName) {
         if (destination instanceof ConstProperties) {
             ConstProperties cp = (ConstProperties) destination;
             cp.defineConst(propertyName, destination);
@@ -1858,7 +1863,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * "defineProperty" method.
      */
     public interface LambdaGetterFunction extends Serializable {
-        Object apply(Scriptable scope);
+        Object apply(JSScope scope);
     }
 
     /**
@@ -1866,7 +1871,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * "defineProperty" method.
      */
     public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable scope, Object value);
+        void accept(JSScope scope, Object value);
     }
 
     /**
@@ -2188,7 +2193,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * @param scope an object in the scope chain
      */
-    public static Scriptable getObjectPrototype(Scriptable scope) {
+    public static Scriptable getObjectPrototype(JSScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Object);
     }
 
@@ -2197,16 +2202,16 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * @param scope an object in the scope chain
      */
-    public static Scriptable getFunctionPrototype(Scriptable scope) {
+    public static Scriptable getFunctionPrototype(JSScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Function);
     }
 
-    public static Scriptable getGeneratorFunctionPrototype(Scriptable scope) {
+    public static Scriptable getGeneratorFunctionPrototype(JSScope scope) {
         return TopLevel.getBuiltinPrototype(
                 getTopLevelScope(scope), TopLevel.Builtins.GeneratorFunction);
     }
 
-    public static Scriptable getArrayPrototype(Scriptable scope) {
+    public static Scriptable getArrayPrototype(JSScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Array);
     }
 
@@ -2222,9 +2227,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param className the name of the constructor
      * @return the prototype for the named class, or null if it cannot be found.
      */
-    public static Scriptable getClassPrototype(Scriptable scope, String className) {
+    public static Scriptable getClassPrototype(JSScope scope, String className) {
         scope = getTopLevelScope(scope);
-        Object ctor = getProperty(scope, className);
+        Object ctor = getProperty((Scriptable) scope, className);
         Object proto;
         if (ctor instanceof BaseFunction) {
             proto = ((BaseFunction) ctor).getPrototypeProperty();
@@ -2249,11 +2254,11 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param obj a JavaScript object
      * @return the corresponding global scope
      */
-    public static Scriptable getTopLevelScope(Scriptable obj) {
+    public static Scriptable getTopLevelScope(JSScope obj) {
         for (; ; ) {
-            Scriptable parent = obj.getParentScope();
+            JSScope parent = obj.getParentScope();
             if (parent == null) {
-                return obj;
+                return (Scriptable) obj;
             }
             obj = parent;
         }
@@ -2348,7 +2353,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *     object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
      * @since 1.5R2
      */
-    public static Object getProperty(Scriptable obj, String name) {
+    public static Object getProperty(JSScope obj, String name) {
         return getPropWalkingPrototypeChain(obj, name, obj);
     }
 
@@ -2360,13 +2365,13 @@ public abstract class ScriptableObject extends SlotMapOwner
         return getPropWalkingPrototypeChain(superObj, name, thisObj);
     }
 
-    private static Object getPropWalkingPrototypeChain(
-            Scriptable obj, String name, Scriptable start) {
+    private static Object getPropWalkingPrototypeChain(JSScope obj, String name, JSScope start) {
         Object result;
         do {
             result = obj.get(name, start);
+            if (!(obj instanceof Scriptable)) break;
             if (result != Scriptable.NOT_FOUND) break;
-            obj = obj.getPrototype();
+            obj = ((Scriptable) obj).getPrototype();
         } while (obj != null);
         return result;
     }
@@ -2381,11 +2386,10 @@ public abstract class ScriptableObject extends SlotMapOwner
         return getPropWalkingPrototypeChain(superObj, thisObj, key);
     }
 
-    private static Object getPropWalkingPrototypeChain(
-            Scriptable obj, Scriptable start, Symbol key) {
+    private static Object getPropWalkingPrototypeChain(Scriptable obj, JSScope start, Symbol key) {
         Object result;
         do {
-            result = ensureSymbolScriptable(obj).get(key, start);
+            result = obj.get(key, start);
             if (result != Scriptable.NOT_FOUND) break;
             obj = obj.getPrototype();
         } while (obj != null);
@@ -2485,7 +2489,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return the true if property was found
      * @since 1.5R2
      */
-    public static boolean hasProperty(Scriptable obj, String name) {
+    public static boolean hasProperty(JSScope obj, String name) {
         return null != getBase(obj, name);
     }
 
@@ -2497,8 +2501,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * <p>A property redefinition is incompatible if the first definition was a const declaration or
      * if this one is. They are compatible only if neither was const.
      */
-    public static void redefineProperty(Scriptable obj, String name, boolean isConst) {
-        Scriptable base = getBase(obj, name);
+    public static void redefineProperty(JSScope obj, String name, boolean isConst) {
+        JSScope base = getBase(obj, name);
         if (base == null) return;
         if (base instanceof ConstProperties) {
             ConstProperties cp = (ConstProperties) base;
@@ -2543,35 +2547,38 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putProperty(Scriptable obj, String name, Object value) {
-        Scriptable base = getBase(obj, name);
+    public static void putProperty(JSScope obj, String name, Object value) {
+        JSScope base = null;
+        if (obj instanceof Scriptable) {
+            base = getBase((Scriptable) obj, name);
+        }
         if (base == null) base = obj;
         base.put(name, obj, value);
     }
 
     /** Variant of putProperty to handle super.name = value */
     public static void putSuperProperty(
-            Scriptable superObj, Scriptable thisObj, String name, Object value) {
+            JSScope superObj, Scriptable thisObj, String name, Object value) {
         // in contrast to putProperty we start searching at superObj
-        Scriptable base = getBase(superObj, name);
+        JSScope base = getBase(superObj, name);
         if (base == null) base = superObj;
         base.put(name, thisObj, value);
     }
 
     /** This is a version of putProperty for Symbol keys. */
-    public static void putProperty(Scriptable obj, Symbol key, Object value) {
-        Scriptable base = getBase(obj, key);
+    public static void putProperty(JSScope obj, Symbol key, Object value) {
+        JSScope base = getBase(obj, key);
         if (base == null) base = obj;
-        ensureSymbolScriptable(base).put(key, obj, value);
+        base.put(key, obj, value);
     }
 
     /** Variant of putProperty to handle super[key] = value where key is a symbol */
     public static void putSuperProperty(
-            Scriptable superObj, Scriptable thisObj, Symbol key, Object value) {
+            JSScope superObj, Scriptable thisObj, Symbol key, Object value) {
         // in contrast to putProperty we start searching at superObj
-        Scriptable base = getBase(superObj, key);
+        JSScope base = getBase(superObj, key);
         if (base == null) base = superObj;
-        ensureSymbolScriptable(base).put(key, thisObj, value);
+        base.put(key, thisObj, value);
     }
 
     /**
@@ -2589,8 +2596,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putConstProperty(Scriptable obj, String name, Object value) {
-        Scriptable base = getBase(obj, name);
+    public static void putConstProperty(JSScope obj, String name, Object value) {
+        JSScope base = getBase(obj, name);
         if (base == null) base = obj;
         if (base instanceof ConstProperties) ((ConstProperties) base).putConst(name, obj, value);
     }
@@ -2610,17 +2617,17 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putProperty(Scriptable obj, int index, Object value) {
-        Scriptable base = getBase(obj, index);
+    public static void putProperty(JSScope obj, int index, Object value) {
+        JSScope base = getBase(obj, index);
         if (base == null) base = obj;
         base.put(index, obj, value);
     }
 
     /** Variant of putProperty to handle super[index] = value where index is integer */
     public static void putSuperProperty(
-            Scriptable superObj, Scriptable thisObj, int index, Object value) {
+            JSScope superObj, Scriptable thisObj, int index, Object value) {
         // in contrast to putProperty we start searching at superObj
-        Scriptable base = getBase(superObj, index);
+        JSScope base = getBase(superObj, index);
         if (base == null) base = superObj;
         base.put(index, thisObj, value);
     }
@@ -2637,7 +2644,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @since 1.5R2
      */
     public static boolean deleteProperty(Scriptable obj, String name) {
-        Scriptable base = getBase(obj, name);
+        JSScope base = getBase(obj, name);
         if (base == null) return true;
         base.delete(name);
         return !base.has(name, obj);
@@ -2655,7 +2662,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @since 1.5R2
      */
     public static boolean deleteProperty(Scriptable obj, int index) {
-        Scriptable base = getBase(obj, index);
+        JSScope base = getBase(obj, index);
         if (base == null) return true;
         base.delete(index);
         return !base.has(index, obj);
@@ -2663,11 +2670,10 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     /** A version of deleteProperty for properties with Symbol keys. */
     public static boolean deleteProperty(Scriptable obj, Symbol key) {
-        Scriptable base = getBase(obj, key);
+        JSScope base = getBase(obj, key);
         if (base == null) return true;
-        SymbolScriptable scriptable = ensureSymbolScriptable(base);
-        scriptable.delete(key);
-        return !scriptable.has(key, obj);
+        base.delete(key);
+        return !base.has(key, obj);
     }
 
     /**
@@ -2754,8 +2760,11 @@ public abstract class ScriptableObject extends SlotMapOwner
         return Context.call(null, fun, scope, obj, args);
     }
 
-    static Scriptable getBase(Scriptable start, String name) {
-        Scriptable obj = start;
+    static JSScope getBase(JSScope start, String name) {
+        if (!(start instanceof Scriptable)) {
+            return start.has(name, start) ? start : null;
+        }
+        Scriptable obj = (Scriptable) start;
         do {
             if (obj.has(name, start)) break;
             obj = obj.getPrototype();
@@ -2763,8 +2772,11 @@ public abstract class ScriptableObject extends SlotMapOwner
         return obj;
     }
 
-    static Scriptable getBase(Scriptable start, int index) {
-        Scriptable obj = start;
+    static JSScope getBase(JSScope start, int index) {
+        if (!(start instanceof Scriptable)) {
+            return start.has(index, start) ? start : null;
+        }
+        Scriptable obj = (Scriptable) start;
         do {
             if (obj.has(index, start)) break;
             obj = obj.getPrototype();
@@ -2772,10 +2784,13 @@ public abstract class ScriptableObject extends SlotMapOwner
         return obj;
     }
 
-    static Scriptable getBase(Scriptable start, Symbol key) {
-        Scriptable obj = start;
+    static JSScope getBase(JSScope start, Symbol key) {
+        if (!(start instanceof Scriptable)) {
+            return start.has(key, start) ? start : null;
+        }
+        Scriptable obj = (Scriptable) start;
         do {
-            if (ensureSymbolScriptable(obj).has(key, start)) break;
+            if (obj.has(key, start)) break;
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
@@ -2803,7 +2818,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param key key object to select particular value.
      * @see #getAssociatedValue(Object key)
      */
-    public static Object getTopScopeValue(Scriptable scope, Object key) {
+    public static Object getTopScopeValue(JSScope scope, Object key) {
         scope = ScriptableObject.getTopLevelScope(scope);
         for (; ; ) {
             if (scope instanceof ScriptableObject) {
@@ -2813,7 +2828,11 @@ public abstract class ScriptableObject extends SlotMapOwner
                     return value;
                 }
             }
-            scope = scope.getPrototype();
+            if (scope instanceof Scriptable) {
+                scope = ((Scriptable) scope).getPrototype();
+            } else {
+                scope = null;
+            }
             if (scope == null) {
                 return null;
             }
@@ -2852,8 +2871,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @return false if this != start and no slot was found. true if this == start or this != start
      *     and a READONLY slot was found.
      */
-    private boolean putImpl(
-            Object key, int index, Scriptable start, Object value, boolean isThrow) {
+    private boolean putImpl(Object key, int index, JSScope start, Object value, boolean isThrow) {
         // This method is very hot (basically called on each assignment),
         // so we inline the extensible/sealed checks below.
         Slot slot;
@@ -2900,7 +2918,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      *     and a READONLY slot was found.
      */
     private boolean putConstImpl(
-            String name, int index, Scriptable start, Object value, int constFlag) {
+            String name, int index, JSScope start, Object value, int constFlag) {
         assert (constFlag != EMPTY);
         if (!isExtensible) {
             Context cx = Context.getContext();

@@ -22,7 +22,7 @@ public class BoundFunction extends BaseFunction {
 
     public BoundFunction(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {
@@ -51,15 +51,15 @@ public class BoundFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] extraArgs) {
         return targetFunction.call(cx, scope, getCallThis(cx, scope), concat(boundArgs, extraArgs));
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] extraArgs) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] extraArgs) {
         if (targetFunction instanceof Constructable) {
             return ((Constructable) targetFunction)
-                    .construct(cx, scope, concat(boundArgs, extraArgs));
+                    .construct(cx, scope, target, concat(boundArgs, extraArgs));
         }
         throw ScriptRuntime.typeErrorById("msg.not.ctor");
     }
@@ -100,10 +100,10 @@ public class BoundFunction extends BaseFunction {
         return boundArgs;
     }
 
-    Scriptable getCallThis(Context cx, Scriptable scope) {
-        Scriptable callThis = boundThis;
+    Object getCallThis(Context cx, JSScope scope) {
+        Object callThis = boundThis;
         if (callThis == null && ScriptRuntime.hasTopCall(cx)) {
-            callThis = ScriptRuntime.getTopCallScope(cx);
+            callThis = (Scriptable) ScriptRuntime.getTopCallScope(cx);
         }
         if (callThis == null) {
             callThis = getTopLevelScope(scope);

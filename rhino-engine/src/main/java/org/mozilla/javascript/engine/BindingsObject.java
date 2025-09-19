@@ -6,6 +6,7 @@ package org.mozilla.javascript.engine;
 
 import javax.script.Bindings;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -29,7 +30,7 @@ public class BindingsObject extends ScriptableObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         if (!bindings.containsKey(name)) {
             return Scriptable.NOT_FOUND;
         }
@@ -37,7 +38,7 @@ public class BindingsObject extends ScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         bindings.put(name, Context.javaToJS(value, start));
     }
 
@@ -47,7 +48,7 @@ public class BindingsObject extends ScriptableObject {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return bindings.containsKey(name);
     }
 

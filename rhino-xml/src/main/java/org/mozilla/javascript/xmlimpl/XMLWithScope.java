@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.xml.XMLObject;
@@ -18,7 +19,7 @@ final class XMLWithScope extends NativeWith {
     private XMLList _xmlList;
     private XMLObject _dqPrototype;
 
-    XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype) {
+    XMLWithScope(XMLLibImpl lib, JSScope parent, XMLObject prototype) {
         super(parent, prototype);
         this.lib = lib;
     }
@@ -37,7 +38,7 @@ final class XMLWithScope extends NativeWith {
         if (prototype instanceof XMLList) {
             XMLList xl = (XMLList) prototype;
             if (xl.length() > 0) {
-                setPrototype((Scriptable) xl.get(0, null));
+                setPrototype((Scriptable) xl.get(0, (Scriptable) null));
             }
         }
         // Always return the outer-most type of XML lValue of
@@ -61,7 +62,7 @@ final class XMLWithScope extends NativeWith {
             int idx = _currIndex;
 
             if (value) {
-                xmlL.addToList(orgXmlL.get(idx, null));
+                xmlL.addToList(orgXmlL.get(idx, (Scriptable) null));
             }
 
             // More elements to test?
@@ -70,7 +71,7 @@ final class XMLWithScope extends NativeWith {
                 // reset the expression to run with this object as
                 // the WITH selector.
                 _currIndex = idx;
-                setPrototype((Scriptable) orgXmlL.get(idx, null));
+                setPrototype((Scriptable) orgXmlL.get(idx, (Scriptable) null));
 
                 // continue looping
                 return null;

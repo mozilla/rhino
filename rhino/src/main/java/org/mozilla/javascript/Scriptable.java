@@ -23,7 +23,7 @@ package org.mozilla.javascript;
  * @author Nick Thompson
  * @author Brendan Eich
  */
-public interface Scriptable {
+public interface Scriptable extends JSScope {
 
     /**
      * Get the name of the set of objects implemented by this Java class. This corresponds to the
@@ -76,7 +76,8 @@ public interface Scriptable {
      * @return the value of the property (may be null), or NOT_FOUND
      * @see org.mozilla.javascript.Context#getUndefinedValue
      */
-    public Object get(String name, Scriptable start);
+    @Override
+    public Object get(String name, JSScope start);
 
     /**
      * Get a property from the object selected by an integral index.
@@ -89,7 +90,8 @@ public interface Scriptable {
      * @return the value of the property (may be null), or NOT_FOUND
      * @see org.mozilla.javascript.Scriptable#get(String,Scriptable)
      */
-    public Object get(int index, Scriptable start);
+    @Override
+    public Object get(int index, JSScope start);
 
     /**
      * Indicates whether or not a named property is defined in an object.
@@ -104,7 +106,8 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, String)
      */
-    public boolean has(String name, Scriptable start);
+    @Override
+    public boolean has(String name, JSScope start);
 
     /**
      * Indicates whether or not an indexed property is defined in an object.
@@ -119,7 +122,8 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#getProperty(Scriptable, int)
      */
-    public boolean has(int index, Scriptable start);
+    @Override
+    public boolean has(int index, JSScope start);
 
     /**
      * Sets a named property in this object.
@@ -168,7 +172,8 @@ public interface Scriptable {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(String name, Scriptable start, Object value);
+    @Override
+    public void put(String name, JSScope start, Object value);
 
     /**
      * Sets an indexed property in this object.
@@ -186,7 +191,8 @@ public interface Scriptable {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, int, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(int index, Scriptable start, Object value);
+    @Override
+    public void put(int index, JSScope start, Object value);
 
     /**
      * Removes a property from this object. This operation corresponds to the ECMA [[Delete]] except
@@ -205,6 +211,7 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
      */
+    @Override
     public void delete(String name);
 
     /**
@@ -221,6 +228,7 @@ public interface Scriptable {
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
      */
+    @Override
     public void delete(int index);
 
     /**
@@ -242,14 +250,16 @@ public interface Scriptable {
      *
      * @return the parent scope
      */
-    public Scriptable getParentScope();
+    @Override
+    public JSScope getParentScope();
 
     /**
      * Set the parent scope of the object.
      *
      * @param parent the parent scope to set
      */
-    public void setParentScope(Scriptable parent);
+    @Override
+    public void setParentScope(JSScope parent);
 
     /**
      * Get an array of property ids.
@@ -290,4 +300,27 @@ public interface Scriptable {
      * @return an implementation dependent value
      */
     public boolean hasInstance(Scriptable instance);
+
+    /** Delete a property with the specified key. */
+    @Override
+    default void delete(Symbol key) {}
+
+    /** Return the value of the property with the specified key, or NOT_FOUND. */
+    @Override
+    default Object get(Symbol key, JSScope start) {
+        return NOT_FOUND;
+    }
+
+    /** Return true if the specified property exists. */
+    @Override
+    default boolean has(Symbol key, JSScope start) {
+        return false;
+    }
+
+    /** Add a new property to to the object. */
+    @Override
+    default void put(Symbol key, JSScope start, Object value) {
+        throw ScriptRuntime.typeErrorById(
+                "msg.object.not.symbolscriptable", ScriptRuntime.typeof(this));
+    }
 }

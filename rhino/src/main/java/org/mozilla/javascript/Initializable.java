@@ -8,5 +8,5 @@ import java.io.Serializable;
  */
 public interface Initializable extends Serializable {
     /** Initialize the class in question, returning the new constructor. */
-    Object initialize(Context cx, Scriptable scope, boolean sealed);
+    Object initialize(Context cx, JSScope scope, boolean sealed);
 }

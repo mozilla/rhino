@@ -21,7 +21,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     public IdFunctionObject(
-            IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
+            IdFunctionCall idcall, Object tag, int id, String name, int arity, JSScope scope) {
         super(scope, null);
 
         if (arity < 0) throw new IllegalArgumentException();
@@ -79,12 +79,12 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return idcall.execIdCall(this, cx, scope, thisObj, args);
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
+        return idcall.execIdCall(this, cx, scope, (Scriptable) thisObj, args);
     }
 
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, JSScope scope) {
         if (useCallAsConstructor) {
             return null;
         }

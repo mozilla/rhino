@@ -17,7 +17,7 @@ interface Signatures {
     String PROP_GET =
             "(Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -26,7 +26,7 @@ interface Signatures {
      */
     String PROP_GET_NOWARN =
             "(Ljava/lang/Object;Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;";
+                    + "Lorg/mozilla/javascript/JSScope;)Ljava/lang/Object;";
 
     /**
      * PROP:GET_SUPER:{name}: Looks up the super property named "name". Falls back to
@@ -35,7 +35,7 @@ interface Signatures {
     String PROP_GET_SUPER =
             "(Ljava/lang/Object;" // superObj
                     + "Lorg/mozilla/javascript/Context;" // cx
-                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Lorg/mozilla/javascript/JSScope;" // scope
                     + "Ljava/lang/Object;" // thisObj
                     + "Z" // noWarn
                     + ")Ljava/lang/Object;";
@@ -47,7 +47,7 @@ interface Signatures {
     String PROP_GET_THIS =
             "(Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;";
 
     /**
@@ -58,7 +58,7 @@ interface Signatures {
             "(Ljava/lang/Object;"
                     + "D"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -69,7 +69,7 @@ interface Signatures {
             "(Ljava/lang/Object;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -80,7 +80,7 @@ interface Signatures {
             "(Ljava/lang/Object;" // super
                     + "Ljava/lang/Object;" // elem
                     + "Lorg/mozilla/javascript/Context;" // cx
-                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Lorg/mozilla/javascript/JSScope;" // scope
                     + "Ljava/lang/Object;" // this
                     + ")Ljava/lang/Object;";
 
@@ -90,7 +90,7 @@ interface Signatures {
      */
     String PROP_SET =
             "(Ljava/lang/Object;Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/Scriptable;)Ljava/lang/Object;";
+                    + "Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/JSScope;)Ljava/lang/Object;";
 
     /**
      * PROP:SETSUPER:{name}: Sets the named property on super. Falls back to
@@ -101,7 +101,7 @@ interface Signatures {
                     + "Ljava/lang/Object;" // superObj
                     + "Ljava/lang/Object;" // value
                     + "Lorg/mozilla/javascript/Context;" // cx
-                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Lorg/mozilla/javascript/JSScope;" // scope
                     + "Ljava/lang/Object;" // thisObj
                     + ")Ljava/lang/Object;";
 
@@ -114,7 +114,7 @@ interface Signatures {
                     + "D"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -126,7 +126,7 @@ interface Signatures {
                     + "Ljava/lang/Object;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -138,7 +138,7 @@ interface Signatures {
                     + "Ljava/lang/Object;" // elem
                     + "Ljava/lang/Object;" // value
                     + "Lorg/mozilla/javascript/Context;" // cx
-                    + "Lorg/mozilla/javascript/Scriptable;" // scope
+                    + "Lorg/mozilla/javascript/JSScope;" // scope
                     + "Ljava/lang/Object;" // this
                     + ")Ljava/lang/Object;";
 
@@ -149,7 +149,7 @@ interface Signatures {
      * they can always assume that the "receiver" of an operation is the first argument.
      */
     String NAME_GET =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/JSScope;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";
 
@@ -161,16 +161,16 @@ interface Signatures {
      * uses this same signature.
      */
     String NAME_GET_THIS =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/JSScope;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;";
 
     /** NAME:SET:{name}: Sets the named value in the scope. Falls back to ScriptRuntime.setName. */
     String NAME_SET =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/JSScope;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -180,9 +180,9 @@ interface Signatures {
      * "receiver".
      */
     String NAME_BIND =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/JSScope;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + ")Lorg/mozilla/javascript/Scriptable;";
+                    + ")Lorg/mozilla/javascript/JSScope;";
 
     /**
      * NAME:SETSTRICT:{name}: Sets the named value in the scope, and enforces strict mode. Falls
@@ -192,7 +192,7 @@ interface Signatures {
             "(Lorg/mozilla/javascript/Scriptable;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/JSScope;"
                     + ")Ljava/lang/Object;";
 
     /**

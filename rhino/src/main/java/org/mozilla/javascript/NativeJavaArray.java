@@ -25,7 +25,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         return "JavaArray";
     }
 
-    public static NativeJavaArray wrap(Scriptable scope, Object array) {
+    public static NativeJavaArray wrap(JSScope scope, Object array) {
         return new NativeJavaArray(scope, array);
     }
 
@@ -34,7 +34,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         return array;
     }
 
-    public NativeJavaArray(Scriptable scope, Object array) {
+    public NativeJavaArray(JSScope scope, Object array) {
         super(scope, null, ScriptRuntime.ObjectClass);
         Class<?> cl = array.getClass();
         if (!cl.isArray()) {
@@ -46,22 +46,22 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public boolean has(String id, Scriptable start) {
+    public boolean has(String id, JSScope start) {
         return id.equals("length") || super.has(id, start);
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return 0 <= index && index < length;
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         return SymbolKey.IS_CONCAT_SPREADABLE.equals(key);
     }
 
     @Override
-    public Object get(String id, Scriptable start) {
+    public Object get(String id, JSScope start) {
         if (id.equals("length")) return Integer.valueOf(length);
         Object result = super.get(id, start);
         if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
@@ -72,7 +72,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         if (0 <= index && index < length) {
             Context cx = Context.getContext();
             Object obj = Array.get(array, index);
@@ -82,7 +82,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
             return Boolean.TRUE;
         }
@@ -90,14 +90,14 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public void put(String id, JSScope start, Object value) {
         // Ignore assignments to "length"--it's readonly.
         if (!id.equals("length"))
             throw Context.reportRuntimeErrorById("msg.java.array.member.not.found", id);
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         if (0 <= index && index < length) {
             Array.set(array, index, Context.jsToJava(value, cls));
         } else {

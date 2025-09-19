@@ -593,8 +593,8 @@ public class Context implements Closeable {
     public static Object call(
             ContextFactory factory,
             final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
+            final JSScope scope,
+            final Object thisObj,
             final Object[] args) {
         if (factory == null) {
             factory = ContextFactory.getGlobal();
@@ -1250,7 +1250,7 @@ public class Context implements Closeable {
      * @see org.mozilla.javascript.SecurityController
      */
     public final Object evaluateString(
-            Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
+            JSScope scope, String source, String sourceName, int lineno, Object securityDomain) {
         Script script = compileString(source, sourceName, lineno, securityDomain);
         if (script != null) {
             return script.exec(this, scope, scope);
@@ -1611,7 +1611,7 @@ public class Context implements Closeable {
      * @param scope the scope to search for the constructor and to evaluate against
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope) {
+    public Scriptable newObject(JSScope scope) {
         NativeObject result = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Object);
         return result;
@@ -1626,7 +1626,7 @@ public class Context implements Closeable {
      * @param constructorName the name of the constructor to call
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope, String constructorName) {
+    public Scriptable newObject(JSScope scope, String constructorName) {
         return newObject(scope, constructorName, ScriptRuntime.emptyArgs);
     }
 
@@ -1650,7 +1650,7 @@ public class Context implements Closeable {
      * @param args the array of arguments for the constructor
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope, String constructorName, Object[] args) {
+    public Scriptable newObject(JSScope scope, String constructorName, Object[] args) {
         return ScriptRuntime.newObject(this, scope, constructorName, args);
     }
 
@@ -1662,7 +1662,7 @@ public class Context implements Closeable {
      *     dynamically).
      * @return the new array object
      */
-    public Scriptable newArray(Scriptable scope, int length) {
+    public Scriptable newArray(JSScope scope, int length) {
         NativeArray result = new NativeArray(length);
         ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
         return result;
@@ -1676,7 +1676,7 @@ public class Context implements Closeable {
      *     JavaScript type and type of array should be exactly Object[], not SomeObjectSubclass[].
      * @return the new array object.
      */
-    public Scriptable newArray(Scriptable scope, Object[] elements) {
+    public Scriptable newArray(JSScope scope, Object[] elements) {
         if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass)
             throw new IllegalArgumentException();
         NativeArray result = new NativeArray(elements);
@@ -1755,7 +1755,7 @@ public class Context implements Closeable {
      * @param scope global scope containing constructors for Number, Boolean, and String
      * @return new JavaScript object
      */
-    public static Scriptable toObject(Object value, Scriptable scope) {
+    public static Scriptable toObject(Object value, JSScope scope) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -1764,7 +1764,7 @@ public class Context implements Closeable {
      * @see #toObject(Object, Scriptable)
      */
     @Deprecated
-    public static Scriptable toObject(Object value, Scriptable scope, Class<?> staticType) {
+    public static Scriptable toObject(Object value, JSScope scope, Class<?> staticType) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -1794,7 +1794,7 @@ public class Context implements Closeable {
      * @param scope top scope object
      * @return value suitable to pass to any API that takes JavaScript values.
      */
-    public static Object javaToJS(Object value, Scriptable scope) {
+    public static Object javaToJS(Object value, JSScope scope) {
         return javaToJS(value, scope, null);
     }
 
@@ -1824,7 +1824,7 @@ public class Context implements Closeable {
      * @param cx context to use for wrapping LiveConnect objects
      * @return value suitable to pass to any API that takes JavaScript values.
      */
-    public static Object javaToJS(Object value, Scriptable scope, Context cx) {
+    public static Object javaToJS(Object value, JSScope scope, Context cx) {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
@@ -2773,7 +2773,7 @@ public class Context implements Closeable {
     private boolean sealed;
     private Object sealKey;
 
-    Scriptable topCallScope;
+    JSScope topCallScope;
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;
@@ -2827,7 +2827,7 @@ public class Context implements Closeable {
     long scratchUint32;
 
     // It can be used to return the second Scriptable result from function
-    Scriptable scratchScriptable;
+    Object scratchScriptable;
 
     // Generate an observer count on compiled code
     boolean generateObserverCount = false;

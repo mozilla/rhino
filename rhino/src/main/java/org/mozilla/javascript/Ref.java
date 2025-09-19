@@ -28,7 +28,7 @@ public abstract class Ref implements Serializable {
     @Deprecated
     public abstract Object set(Context cx, Object value);
 
-    public Object set(Context cx, Scriptable scope, Object value) {
+    public Object set(Context cx, JSScope scope, Object value) {
         return set(cx, value);
     }
 

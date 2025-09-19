@@ -22,6 +22,7 @@ import java.util.Enumeration;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 
 public class JavaPolicySecurity extends SecurityProxy {
@@ -202,8 +203,8 @@ public class JavaPolicySecurity extends SecurityProxy {
             Object securityDomain,
             final Context cx,
             final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
+            final JSScope scope,
+            final Object thisObj,
             final Object[] args) {
         ProtectionDomain staticDomain = (ProtectionDomain) securityDomain;
         // There is no direct way in Java to intersect permissions according

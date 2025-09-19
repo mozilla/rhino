@@ -8,6 +8,7 @@ package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.Scriptable;
@@ -52,10 +53,10 @@ public abstract class XMLObject extends IdScriptableObject {
     public abstract Ref memberRef(Context cx, Object namespace, Object elem, int memberTypeFlags);
 
     /** Wrap this object into NativeWith to implement the with statement. */
-    public abstract NativeWith enterWith(Scriptable scope);
+    public abstract NativeWith enterWith(JSScope scope);
 
     /** Wrap this object into NativeWith to implement the .() query. */
-    public abstract NativeWith enterDotQuery(Scriptable scope);
+    public abstract NativeWith enterDotQuery(JSScope scope);
 
     /**
      * Custom <code>+</code> operator. Should return {@link Scriptable#NOT_FOUND} if this object

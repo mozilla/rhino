@@ -11,7 +11,7 @@ public class AbstractEcmaStringOperations {
      */
     public static String getSubstitution(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             String matched,
             String str,
             int position,

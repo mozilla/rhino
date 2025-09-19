@@ -7,9 +7,9 @@
 package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 public abstract class XMLLib {
@@ -37,7 +37,7 @@ public abstract class XMLLib {
         public abstract String getImplementationClassName();
     }
 
-    public static XMLLib extractFromScopeOrNull(Scriptable scope) {
+    public static XMLLib extractFromScopeOrNull(JSScope scope) {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // If library is not yet initialized, return null
@@ -51,7 +51,7 @@ public abstract class XMLLib {
         return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
     }
 
-    public static XMLLib extractFromScope(Scriptable scope) {
+    public static XMLLib extractFromScope(JSScope scope) {
         XMLLib lib = extractFromScopeOrNull(scope);
         if (lib != null) {
             return lib;
@@ -60,7 +60,7 @@ public abstract class XMLLib {
         throw Context.reportRuntimeError(msg);
     }
 
-    protected final XMLLib bindToScope(Scriptable scope) {
+    protected final XMLLib bindToScope(JSScope scope) {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // standard library should be initialized at this point
@@ -71,10 +71,10 @@ public abstract class XMLLib {
 
     public abstract boolean isXMLName(Context cx, Object name);
 
-    public abstract Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags);
+    public abstract Ref nameRef(Context cx, Object name, JSScope scope, int memberTypeFlags);
 
     public abstract Ref nameRef(
-            Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags);
+            Context cx, Object namespace, Object name, JSScope scope, int memberTypeFlags);
 
     /**
      * Escapes the reserved characters in a value of an attribute.
