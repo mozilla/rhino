@@ -736,129 +736,294 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static Object js_fromAsync(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        // Get the Promise constructor
+
+        Object items = args.length >= 1 ? args[0] : Undefined.instance;
+        Object mapfn = args.length >= 2 ? args[1] : Undefined.instance;
+        Object thisArg = args.length >= 3 ? args[2] : Undefined.instance;
+
+        // Get Promise constructor
         Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
         if (!(promiseCtor instanceof Function)) {
             throw ScriptRuntime.typeErrorById("msg.no.promise");
         }
         Function promiseFunc = (Function) promiseCtor;
 
-        // Create executor for the Promise
-        AsyncFromExecutor executor = new AsyncFromExecutor(thisObj, args);
+        // Create promise executor
+        Callable executor =
+                new LambdaFunction(
+                        scope,
+                        2,
+                        (Context lcx,
+                                Scriptable lscope,
+                                Scriptable lthisObj,
+                                Object[] executorArgs) -> {
+                            if (executorArgs.length < 2) {
+                                return Undefined.instance;
+                            }
+
+                            Function resolveFunc = (Function) executorArgs[0];
+                            Function rejectFunc = (Function) executorArgs[1];
+
+                            try {
+                                // Validate mapfn if provided
+                                Function mapFunction = null;
+                                Scriptable mapThis = null;
+
+                                if (!Undefined.isUndefined(mapfn)) {
+                                    if (!(mapfn instanceof Function)) {
+                                        throw ScriptRuntime.typeErrorById("msg.map.function.not");
+                                    }
+                                    mapFunction = (Function) mapfn;
+                                    mapThis =
+                                            ScriptRuntime.getApplyOrCallThis(
+                                                    lcx, lscope, thisArg, 1, mapFunction);
+                                }
+
+                                // Process items
+                                processAsyncItems(
+                                        lcx,
+                                        lscope,
+                                        thisObj,
+                                        items,
+                                        mapFunction,
+                                        mapThis,
+                                        resolveFunc,
+                                        rejectFunc);
+
+                            } catch (RhinoException re) {
+                                rejectFunc.call(
+                                        lcx,
+                                        lscope,
+                                        null,
+                                        new Object[] {getErrorObject(lcx, lscope, re)});
+                            }
+
+                            return Undefined.instance;
+                        });
+
         return promiseFunc.construct(cx, scope, new Object[] {executor});
     }
 
-    // Helper class to handle Promise executor logic
-    private static class AsyncFromExecutor extends BaseFunction {
-        private final Scriptable constructorThis;
-        private final Object[] fromAsyncArgs;
-
-        AsyncFromExecutor(Scriptable constructorThis, Object[] fromAsyncArgs) {
-            this.constructorThis = constructorThis;
-            this.fromAsyncArgs = fromAsyncArgs;
-        }
-
-        @Override
-        public Object call(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] executorArgs) {
-            if (executorArgs.length < 2) {
-                return Undefined.instance;
-            }
-            Function resolve = (Function) executorArgs[0];
-            Function reject = (Function) executorArgs[1];
-
-            try {
-                // Extract arguments
-                Object items = (fromAsyncArgs.length >= 1) ? fromAsyncArgs[0] : Undefined.instance;
-                Object mapArg = (fromAsyncArgs.length >= 2) ? fromAsyncArgs[1] : Undefined.instance;
-                Object mapperThisArg =
-                        (fromAsyncArgs.length >= 3)
-                                ? fromAsyncArgs[2]
-                                : Undefined.SCRIPTABLE_UNDEFINED;
-
-                // Validate and prepare mapper
-                Function mapFn = null;
-                Scriptable mapThisArg = null;
-                if (!Undefined.isUndefined(mapArg)) {
-                    if (!(mapArg instanceof Function)) {
-                        throw ScriptRuntime.typeErrorById("msg.map.function.not");
-                    }
-                    mapFn = (Function) mapArg;
-                    mapThisArg =
-                            ScriptRuntime.getApplyOrCallThis(cx, scope, mapperThisArg, 1, mapFn);
-                }
-
-                // Process the async iteration
-                processAsyncIteration(
-                        cx, scope, constructorThis, items, mapFn, mapThisArg, resolve, reject);
-
-            } catch (RhinoException e) {
-                reject.call(cx, scope, null, new Object[] {e});
-            }
-
-            return Undefined.instance;
-        }
-
-        @Override
-        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-            throw ScriptRuntime.typeErrorById("msg.not.ctor", "AsyncFromExecutor");
-        }
-    }
-
-    private static void processAsyncIteration(
+    private static void processAsyncItems(
             Context cx,
             Scriptable scope,
             Scriptable thisObj,
             Object items,
             Function mapFn,
-            Scriptable thisArg,
+            Scriptable mapThis,
             Function resolve,
             Function reject) {
 
         try {
             Scriptable itemsObj = ScriptRuntime.toObject(scope, items);
 
-            // Check for Symbol.iterator
+            // Check for iterator
             Object iteratorProp = ScriptableObject.getProperty(itemsObj, SymbolKey.ITERATOR);
 
-            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
-                // Handle iterable case
+            if (iteratorProp != Scriptable.NOT_FOUND && !Undefined.isUndefined(iteratorProp)) {
+                // Iterable path
                 Object iterator = ScriptRuntime.callIterator(itemsObj, cx, scope);
                 if (!Undefined.isUndefined(iterator)) {
-                    Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, 0, false);
+                    Scriptable A = callConstructorOrCreateArray(cx, scope, thisObj, 0, false);
+                    IteratorLikeIterable iter = new IteratorLikeIterable(cx, scope, iterator);
 
-                    // Collect all values into promises
-                    List<Object> promises = new ArrayList<>();
-
-                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                        for (Object value : it) {
-                            // Convert each value to a promise
-                            Object promiseValue = promiseResolve(cx, scope, value);
-                            promises.add(promiseValue);
-                        }
-                    }
-
-                    // Use Promise.all to await all values
-                    awaitAllAndFinish(cx, scope, result, promises, mapFn, thisArg, resolve);
+                    processAsyncIterable(cx, scope, iter, A, 0, mapFn, mapThis, resolve, reject);
                     return;
                 }
             }
 
-            // Handle array-like case
-            long length = getLengthProperty(cx, itemsObj);
-            Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, length, true);
+            // Array-like path
+            long len = getLengthProperty(cx, itemsObj);
+            Scriptable A = callConstructorOrCreateArray(cx, scope, thisObj, len, true);
 
-            List<Object> promises = new ArrayList<>();
-            for (long k = 0; k < length; k++) {
-                Object value = getElem(cx, itemsObj, k);
-                Object promiseValue = promiseResolve(cx, scope, value);
-                promises.add(promiseValue);
+            if (len == 0) {
+                resolve.call(cx, scope, null, new Object[] {A});
+                return;
             }
 
-            // Use Promise.all to await all values
-            awaitAllAndFinish(cx, scope, result, promises, mapFn, thisArg, resolve);
+            processAsyncArrayLike(cx, scope, itemsObj, A, 0, len, mapFn, mapThis, resolve, reject);
 
-        } catch (RhinoException e) {
+        } catch (RhinoException re) {
+            reject.call(cx, scope, null, new Object[] {getErrorObject(cx, scope, re)});
+        }
+    }
+
+    private static void processAsyncIterable(
+            Context cx,
+            Scriptable scope,
+            IteratorLikeIterable iter,
+            Scriptable A,
+            long k,
+            Function mapFn,
+            Scriptable mapThis,
+            Function resolve,
+            Function reject) {
+
+        try {
+            if (!iter.iterator().hasNext()) {
+                setLengthProperty(cx, A, k);
+                resolve.call(cx, scope, null, new Object[] {A});
+                iter.close();
+                return;
+            }
+
+            Object value = iter.iterator().next();
+            Object promise = promiseResolve(cx, scope, value);
+
+            if (!(promise instanceof Scriptable)) {
+                Object mappedValue = value;
+                if (mapFn != null) {
+                    mappedValue =
+                            mapFn.call(cx, scope, mapThis, new Object[] {value, Long.valueOf(k)});
+                }
+                ArrayLikeAbstractOperations.defineElem(cx, A, k, mappedValue);
+                processAsyncIterable(cx, scope, iter, A, k + 1, mapFn, mapThis, resolve, reject);
+                return;
+            }
+
+            Object thenMethod = ScriptableObject.getProperty((Scriptable) promise, "then");
+            if (!(thenMethod instanceof Function)) {
+                Object mappedValue = promise;
+                if (mapFn != null) {
+                    mappedValue =
+                            mapFn.call(cx, scope, mapThis, new Object[] {promise, Long.valueOf(k)});
+                }
+                ArrayLikeAbstractOperations.defineElem(cx, A, k, mappedValue);
+                processAsyncIterable(cx, scope, iter, A, k + 1, mapFn, mapThis, resolve, reject);
+                return;
+            }
+
+            Callable onFulfilled =
+                    new LambdaFunction(
+                            scope,
+                            1,
+                            (Context c, Scriptable s, Scriptable t, Object[] args) -> {
+                                try {
+                                    Object val = args.length > 0 ? args[0] : Undefined.instance;
+                                    if (mapFn != null) {
+                                        val =
+                                                mapFn.call(
+                                                        c,
+                                                        s,
+                                                        mapThis,
+                                                        new Object[] {val, Long.valueOf(k)});
+                                    }
+                                    ArrayLikeAbstractOperations.defineElem(c, A, k, val);
+                                    processAsyncIterable(
+                                            c, s, iter, A, k + 1, mapFn, mapThis, resolve, reject);
+                                } catch (Exception e) {
+                                    iter.close();
+                                    reject.call(c, s, null, new Object[] {e});
+                                }
+                                return Undefined.instance;
+                            });
+
+            Callable onRejected =
+                    new LambdaFunction(
+                            scope,
+                            1,
+                            (Context c, Scriptable s, Scriptable t, Object[] args) -> {
+                                iter.close();
+                                Object error = args.length > 0 ? args[0] : Undefined.instance;
+                                reject.call(c, s, null, new Object[] {error});
+                                return Undefined.instance;
+                            });
+
+            ((Function) thenMethod)
+                    .call(cx, scope, (Scriptable) promise, new Object[] {onFulfilled, onRejected});
+
+        } catch (Exception e) {
+            iter.close();
+            reject.call(cx, scope, null, new Object[] {e});
+        }
+    }
+
+    private static void processAsyncArrayLike(
+            Context cx,
+            Scriptable scope,
+            Scriptable source,
+            Scriptable A,
+            long k,
+            long len,
+            Function mapFn,
+            Scriptable mapThis,
+            Function resolve,
+            Function reject) {
+
+        if (k >= len) {
+            setLengthProperty(cx, A, len);
+            resolve.call(cx, scope, null, new Object[] {A});
+            return;
+        }
+
+        try {
+            Object value = getElem(cx, source, k);
+            Object promise = promiseResolve(cx, scope, value);
+
+            if (!(promise instanceof Scriptable)) {
+                Object mappedValue = value;
+                if (mapFn != null) {
+                    mappedValue =
+                            mapFn.call(cx, scope, mapThis, new Object[] {value, Long.valueOf(k)});
+                }
+                ArrayLikeAbstractOperations.defineElem(cx, A, k, mappedValue);
+                processAsyncArrayLike(
+                        cx, scope, source, A, k + 1, len, mapFn, mapThis, resolve, reject);
+                return;
+            }
+
+            Object thenMethod = ScriptableObject.getProperty((Scriptable) promise, "then");
+            if (!(thenMethod instanceof Function)) {
+                Object mappedValue = promise;
+                if (mapFn != null) {
+                    mappedValue =
+                            mapFn.call(cx, scope, mapThis, new Object[] {promise, Long.valueOf(k)});
+                }
+                ArrayLikeAbstractOperations.defineElem(cx, A, k, mappedValue);
+                processAsyncArrayLike(
+                        cx, scope, source, A, k + 1, len, mapFn, mapThis, resolve, reject);
+                return;
+            }
+
+            Callable onFulfilled =
+                    new LambdaFunction(
+                            scope,
+                            1,
+                            (Context c, Scriptable s, Scriptable t, Object[] args) -> {
+                                try {
+                                    Object val = args.length > 0 ? args[0] : Undefined.instance;
+                                    if (mapFn != null) {
+                                        val =
+                                                mapFn.call(
+                                                        c,
+                                                        s,
+                                                        mapThis,
+                                                        new Object[] {val, Long.valueOf(k)});
+                                    }
+                                    ArrayLikeAbstractOperations.defineElem(c, A, k, val);
+                                    processAsyncArrayLike(
+                                            c, s, source, A, k + 1, len, mapFn, mapThis, resolve,
+                                            reject);
+                                } catch (Exception e) {
+                                    reject.call(c, s, null, new Object[] {e});
+                                }
+                                return Undefined.instance;
+                            });
+
+            Callable onRejected =
+                    new LambdaFunction(
+                            scope,
+                            1,
+                            (Context c, Scriptable s, Scriptable t, Object[] args) -> {
+                                Object error = args.length > 0 ? args[0] : Undefined.instance;
+                                reject.call(c, s, null, new Object[] {error});
+                                return Undefined.instance;
+                            });
+
+            ((Function) thenMethod)
+                    .call(cx, scope, (Scriptable) promise, new Object[] {onFulfilled, onRejected});
+
+        } catch (Exception e) {
             reject.call(cx, scope, null, new Object[] {e});
         }
     }
@@ -866,7 +1031,6 @@ public class NativeArray extends ScriptableObject implements List {
     private static Object promiseResolve(Context cx, Scriptable scope, Object value) {
         Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
         if (promiseCtor instanceof Function) {
-            Function promise = (Function) promiseCtor;
             Object resolveMethod =
                     ScriptableObject.getProperty((Scriptable) promiseCtor, "resolve");
             if (resolveMethod instanceof Function) {
@@ -877,87 +1041,11 @@ public class NativeArray extends ScriptableObject implements List {
         return value;
     }
 
-    private static void awaitAllAndFinish(
-            Context cx,
-            Scriptable scope,
-            Scriptable result,
-            List<Object> promises,
-            Function mapFn,
-            Scriptable thisArg,
-            Function resolve) {
-
-        Object promiseCtor = ScriptableObject.getProperty(scope, "Promise");
-        if (!(promiseCtor instanceof Function)) {
-            return;
+    private static Object getErrorObject(Context cx, Scriptable scope, RhinoException re) {
+        if (re instanceof JavaScriptException) {
+            return ((JavaScriptException) re).getValue();
         }
-
-        Object allMethod = ScriptableObject.getProperty((Scriptable) promiseCtor, "all");
-        if (!(allMethod instanceof Function)) {
-            return;
-        }
-
-        // Create array from promises
-        Scriptable promiseArray = cx.newArray(scope, promises.toArray());
-
-        // Call Promise.all
-        Object allPromise =
-                ((Function) allMethod)
-                        .call(cx, scope, (Scriptable) promiseCtor, new Object[] {promiseArray});
-
-        // Chain with then to process results
-        if (!(allPromise instanceof Scriptable)) {
-            return;
-        }
-
-        Object thenMethod = ScriptableObject.getProperty((Scriptable) allPromise, "then");
-        if (!(thenMethod instanceof Function)) {
-            return;
-        }
-
-        // Create handler for Promise.all resolution
-        AsyncFromHandler handler = new AsyncFromHandler(result, mapFn, thisArg, resolve);
-        ((Function) thenMethod).call(cx, scope, (Scriptable) allPromise, new Object[] {handler});
-    }
-
-    // Helper class to handle Promise.all resolution
-    private static class AsyncFromHandler extends BaseFunction {
-        private final Scriptable result;
-        private final Function mapFn;
-        private final Scriptable thisArg;
-        private final Function resolve;
-
-        AsyncFromHandler(Scriptable result, Function mapFn, Scriptable thisArg, Function resolve) {
-            this.result = result;
-            this.mapFn = mapFn;
-            this.thisArg = thisArg;
-            this.resolve = resolve;
-        }
-
-        @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            if (args.length > 0 && args[0] instanceof Scriptable) {
-                Scriptable values = (Scriptable) args[0];
-                long len = getLengthProperty(cx, values);
-
-                for (long k = 0; k < len; k++) {
-                    Object value = getElem(cx, values, k);
-                    if (mapFn != null) {
-                        value =
-                                mapFn.call(
-                                        cx, scope, thisArg, new Object[] {value, Long.valueOf(k)});
-                    }
-                    ArrayLikeAbstractOperations.defineElem(cx, result, k, value);
-                }
-                setLengthProperty(cx, result, len);
-            }
-            resolve.call(cx, scope, null, new Object[] {result});
-            return Undefined.instance;
-        }
-
-        @Override
-        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-            throw ScriptRuntime.typeErrorById("msg.not.ctor", "AsyncFromHandler");
-        }
+        return re;
     }
 
     private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
