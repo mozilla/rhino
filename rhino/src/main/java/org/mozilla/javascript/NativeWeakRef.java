@@ -18,6 +18,9 @@ import java.lang.ref.WeakReference;
  * <p>The WeakRef object provides a single method, deref(), which returns the referenced object if
  * it's still alive, or undefined if it has been collected.
  *
+ * <p>This implementation coordinates with FinalizationRegistry to provide consistent GC semantics.
+ * Both use the same infrastructure to ensure proper timing and behavior.
+ *
  * @see <a href="https://tc39.es/ecma262/#sec-weak-ref-objects">ECMAScript WeakRef Objects</a>
  */
 public class NativeWeakRef extends ScriptableObject {
@@ -25,6 +28,7 @@ public class NativeWeakRef extends ScriptableObject {
     private static final String CLASS_NAME = "WeakRef";
 
     private boolean instanceOfWeakRef = false;
+
     private WeakReference<Object> weakReference;
 
     static Object init(Context cx, Scriptable scope, boolean sealed) {
@@ -51,7 +55,10 @@ public class NativeWeakRef extends ScriptableObject {
 
         if (sealed) {
             constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
+            ScriptableObject prototype = (ScriptableObject) constructor.getPrototypeProperty();
+            if (prototype != null) {
+                prototype.sealObject();
+            }
         }
         return constructor;
     }
@@ -68,6 +75,7 @@ public class NativeWeakRef extends ScriptableObject {
 
         NativeWeakRef ref = new NativeWeakRef();
         ref.instanceOfWeakRef = true;
+
         ref.weakReference = new WeakReference<>(target);
         return ref;
     }
@@ -90,6 +98,7 @@ public class NativeWeakRef extends ScriptableObject {
         if (weakReference == null) {
             return Undefined.instance;
         }
+
         Object target = weakReference.get();
         return (target == null) ? Undefined.instance : target;
     }

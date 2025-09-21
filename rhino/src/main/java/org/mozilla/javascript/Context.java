@@ -520,6 +520,13 @@ public class Context implements Closeable {
             currentContext.set(cx);
         }
         ++cx.enterCount;
+
+        // Process any pending finalization cleanups when Context becomes active
+        // This ensures cleanups run even if they were enqueued while no Context was available
+        if (cx.enterCount == 1) {
+            FinalizationQueueManager.getInstance().processPendingCleanups(cx);
+        }
+
         return cx;
     }
 
@@ -555,6 +562,10 @@ public class Context implements Closeable {
     }
 
     private static void releaseContext(Context cx) {
+        // Process any pending microtasks and finalization cleanups before releasing
+        cx.processMicrotasks();
+        cx.processFinalizationCleanups();
+
         // do not use contextLocal.remove() here, as this might be much slower, when the same thread
         // creates a new context. See ContextThreadLocalBenchmark.
         currentContext.set(null);
@@ -2490,6 +2501,41 @@ public class Context implements Closeable {
     }
 
     /**
+     * Schedule a finalization cleanup task to run after microtasks. This is used by
+     * FinalizationRegistry to schedule cleanup callbacks. The finalization cleanup queue is not
+     * thread-safe.
+     *
+     * @param cleanup the cleanup task to schedule
+     */
+    void scheduleFinalizationCleanup(Runnable cleanup) {
+        finalizationCleanups.add(cleanup);
+    }
+
+    /**
+     * Process all pending finalization cleanup tasks. This is called after microtasks to ensure
+     * proper execution order. Errors in cleanup callbacks are caught and logged but not propagated.
+     */
+    void processFinalizationCleanups() {
+        Runnable cleanup;
+        int processed = 0;
+        // Process up to 100 cleanups to avoid blocking
+        while ((cleanup = finalizationCleanups.poll()) != null && processed < 100) {
+            try {
+                cleanup.run();
+                processed++;
+            } catch (Exception e) {
+                // Log but don't propagate errors from cleanup callbacks
+                if (hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // If we still have cleanups pending after processing 100,
+        // let them run in the next cycle to avoid blocking
+    }
+
+    /**
      * Control whether to track unhandled promise rejections. If "track" is set to true, then the
      * tracker returned by "getUnhandledPromiseTracker" must be periodically used to process the
      * queue of unhandled promise rejections, or a memory leak may result.
@@ -2810,6 +2856,7 @@ public class Context implements Closeable {
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
     private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
+    private final ArrayDeque<Runnable> finalizationCleanups = new ArrayDeque<>();
     private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
 
     /** This is the list of names of objects forcing the creation of function activation records. */
