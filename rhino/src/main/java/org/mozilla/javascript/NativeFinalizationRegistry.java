@@ -6,8 +6,7 @@
 
 package org.mozilla.javascript;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.lang.ref.PhantomReference;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,6 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>The FinalizationRegistry object provides two methods: register() to register an object for
  * cleanup, and unregister() to remove a registration using a token.
  *
+ * <p>This implementation uses PhantomReferences for correct GC semantics and a shared
+ * FinalizationQueueManager for efficient resource usage across all registries.
+ *
  * @see <a href="https://tc39.es/ecma262/#sec-finalization-registry-objects">ECMAScript
  *     FinalizationRegistry Objects</a>
  */
@@ -28,38 +30,16 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     private static final long serialVersionUID = 1L;
     private static final String CLASS_NAME = "FinalizationRegistry";
 
+    private boolean instanceOfFinalizationRegistry = false;
     private final Function cleanupCallback;
-    private final ReferenceQueue<Scriptable> referenceQueue;
-    private final ConcurrentHashMap<FinalizationWeakReference, RegistrationRecord> registrations;
-    private final ConcurrentHashMap<Object, Set<FinalizationWeakReference>> tokenMap;
-
-    private class FinalizationWeakReference extends WeakReference<Scriptable> {
-        FinalizationWeakReference(Scriptable referent) {
-            super(referent, referenceQueue);
-        }
-    }
-
-    private static class RegistrationRecord {
-        final Object heldValue;
-        final Object unregisterToken;
-
-        RegistrationRecord(Object heldValue, Object unregisterToken) {
-            this.heldValue = heldValue;
-            this.unregisterToken = unregisterToken;
-        }
-    }
+    // Thread-local override callback for cleanupSome()
+    private volatile Function temporaryCallbackOverride = null;
+    // Maps PhantomReferences to their unregister tokens for token-based unregistration
+    private final ConcurrentHashMap<PhantomReference<?>, Object> referenceToTokenMap;
+    // Maps unregister tokens to sets of PhantomReferences for efficient unregistration
+    private final ConcurrentHashMap<Object, Set<PhantomReference<?>>> tokenToReferencesMap;
 
     public static Object init(Context cx, Scriptable scope, boolean sealed) {
-        LambdaConstructor constructor = createConstructor(scope);
-        configurePrototype(constructor, scope);
-
-        if (sealed) {
-            sealConstructor(constructor);
-        }
-        return constructor;
-    }
-
-    private static LambdaConstructor createConstructor(Scriptable scope) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -68,10 +48,6 @@ public class NativeFinalizationRegistry extends ScriptableObject {
                         LambdaConstructor.CONSTRUCTOR_NEW,
                         NativeFinalizationRegistry::constructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        return constructor;
-    }
-
-    private static void configurePrototype(LambdaConstructor constructor, Scriptable scope) {
         constructor.definePrototypeMethod(
                 scope,
                 "register",
@@ -100,65 +76,76 @@ public class NativeFinalizationRegistry extends ScriptableObject {
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-    }
 
-    private static void sealConstructor(LambdaConstructor constructor) {
-        constructor.sealObject();
-        ScriptableObject prototype = (ScriptableObject) constructor.getPrototypeProperty();
-        if (prototype != null) {
-            prototype.sealObject();
+        if (sealed) {
+            constructor.sealObject();
+            ScriptableObject prototype = (ScriptableObject) constructor.getPrototypeProperty();
+            if (prototype != null) {
+                prototype.sealObject();
+            }
         }
+        return constructor;
     }
 
     private static Scriptable constructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length < 1 || !(args[0] instanceof Function)) {
             throw ScriptRuntime.typeErrorById("msg.finalization.registry.no.callback");
         }
-        return new NativeFinalizationRegistry((Function) args[0]);
+        NativeFinalizationRegistry registry = new NativeFinalizationRegistry((Function) args[0]);
+        registry.instanceOfFinalizationRegistry = true;
+        return registry;
     }
 
     private NativeFinalizationRegistry(Function cleanupCallback) {
         this.cleanupCallback = cleanupCallback;
-        this.referenceQueue = new ReferenceQueue<>();
-        this.registrations = new ConcurrentHashMap<>();
-        this.tokenMap = new ConcurrentHashMap<>();
+        this.referenceToTokenMap = new ConcurrentHashMap<>();
+        this.tokenToReferencesMap = new ConcurrentHashMap<>();
     }
 
     private static Object register(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        NativeFinalizationRegistry registry = ensureFinalizationRegistry(thisObj);
+        NativeFinalizationRegistry registry = realThis(thisObj, "register");
         return registry.registerTarget(args);
     }
 
     private static Object unregister(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        NativeFinalizationRegistry registry = ensureFinalizationRegistry(thisObj);
+        NativeFinalizationRegistry registry = realThis(thisObj, "unregister");
         return registry.unregisterToken(args);
     }
 
     private static Object cleanupSome(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        NativeFinalizationRegistry registry = ensureFinalizationRegistry(thisObj);
+        NativeFinalizationRegistry registry = realThis(thisObj, "cleanupSome");
 
+        // Validate optional callback parameter
         Function callback = null;
-        if (args.length > 0) {
-            if (!Undefined.isUndefined(args[0]) && !(args[0] instanceof Function)) {
+        if (args.length > 0 && !Undefined.isUndefined(args[0])) {
+            if (!(args[0] instanceof Function)) {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function",
                         ScriptRuntime.toString(args[0]),
                         ScriptRuntime.typeof(args[0]));
             }
-            if (args[0] instanceof Function) {
-                callback = (Function) args[0];
-            }
+            callback = (Function) args[0];
         }
 
+        // Per spec: cleanupSome synchronously processes any available finalization cleanups
+        // If a callback is provided, it's used instead of the registry's callback
+        // Process any pending cleanups immediately
         registry.performCleanupSome(cx, callback);
+
         return Undefined.instance;
     }
 
-    private static NativeFinalizationRegistry ensureFinalizationRegistry(Scriptable thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeFinalizationRegistry.class);
+    private static NativeFinalizationRegistry realThis(Scriptable thisObj, String name) {
+        if (thisObj instanceof NativeFinalizationRegistry) {
+            NativeFinalizationRegistry registry = (NativeFinalizationRegistry) thisObj;
+            if (registry.instanceOfFinalizationRegistry) {
+                return registry;
+            }
+        }
+        throw ScriptRuntime.typeErrorById("msg.incompat.call", name);
     }
 
     private Object registerTarget(Object[] args) {
@@ -186,18 +173,21 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.finalization.registry.register.same.target");
         }
 
-        // Process any pending cleanups before registering new ones
-        processPendingCleanups();
-
+        // Register with the FinalizationQueueManager using PhantomReference
         Scriptable scriptableTarget = (Scriptable) target;
-        FinalizationWeakReference weakRef = new FinalizationWeakReference(scriptableTarget);
-        RegistrationRecord record = new RegistrationRecord(heldValue, unregisterToken);
+        FinalizationQueueManager manager = FinalizationQueueManager.getInstance();
+        PhantomReference<Scriptable> ref =
+                manager.register(scriptableTarget, this, heldValue, unregisterToken);
 
-        registrations.put(weakRef, record);
-
+        // Track the reference for unregistration - atomic operation
         if (unregisterToken != null) {
-            tokenMap.computeIfAbsent(unregisterToken, k -> ConcurrentHashMap.newKeySet())
-                    .add(weakRef);
+            // Perform both map updates atomically to prevent inconsistent state
+            synchronized (this) {
+                referenceToTokenMap.put(ref, unregisterToken);
+                tokenToReferencesMap
+                        .computeIfAbsent(unregisterToken, k -> ConcurrentHashMap.newKeySet())
+                        .add(ref);
+            }
         }
 
         return Undefined.instance;
@@ -216,15 +206,25 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             return Boolean.FALSE;
         }
 
-        Set<FinalizationWeakReference> refs = tokenMap.remove(token);
+        // Perform map operations atomically to prevent race conditions
+        Set<PhantomReference<?>> refs;
+        synchronized (this) {
+            refs = tokenToReferencesMap.remove(token);
+            if (refs == null || refs.isEmpty()) {
+                return Boolean.FALSE;
+            }
 
-        if (refs == null || refs.isEmpty()) {
-            return Boolean.FALSE;
+            // Remove from the reference map while still synchronized
+            for (PhantomReference<?> ref : refs) {
+                referenceToTokenMap.remove(ref);
+            }
         }
 
+        // Unregister outside synchronized block to avoid potential deadlock
+        FinalizationQueueManager manager = FinalizationQueueManager.getInstance();
         boolean unregistered = false;
-        for (FinalizationWeakReference ref : refs) {
-            if (registrations.remove(ref) != null) {
+        for (PhantomReference<?> ref : refs) {
+            if (manager.unregister(ref)) {
                 unregistered = true;
             }
         }
@@ -232,92 +232,69 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return Boolean.valueOf(unregistered);
     }
 
-    private void processPendingCleanups() {
-        @SuppressWarnings("unchecked")
-        FinalizationWeakReference ref;
-        while ((ref = (FinalizationWeakReference) referenceQueue.poll()) != null) {
-            processCleanup(ref);
-        }
-    }
+    /**
+     * Called by FinalizationQueueManager when a registered object has been garbage collected. This
+     * method is called in the appropriate JavaScript Context.
+     *
+     * @param heldValue The value that was registered with the object
+     */
+    void executeCleanupCallback(Object heldValue) {
+        // Use override callback if set (for cleanupSome), otherwise use the normal callback
+        Function callbackToUse =
+                temporaryCallbackOverride != null ? temporaryCallbackOverride : cleanupCallback;
 
-    private void processCleanup(FinalizationWeakReference ref) {
-        // Remove registration record and get cleanup data atomically
-        RegistrationRecord record = registrations.remove(ref);
-        if (record == null) {
-            return;
-        }
-
-        // Remove from token map atomically to prevent race conditions
-        if (record.unregisterToken != null) {
-            tokenMap.computeIfPresent(
-                    record.unregisterToken,
-                    (token, refs) -> {
-                        refs.remove(ref);
-                        return refs.isEmpty() ? null : refs;
-                    });
-        }
-
-        executeCleanupCallback(record.heldValue);
-    }
-
-    private void performCleanupSome(Context cx, Function callback) {
-        Function callbackToUse = (callback != null) ? callback : this.cleanupCallback;
         if (callbackToUse == null) {
-            return;
-        }
-
-        int cleanupCount = 0;
-        int maxCleanups = 100;
-
-        @SuppressWarnings("unchecked")
-        FinalizationWeakReference ref;
-        while (cleanupCount < maxCleanups
-                && (ref = (FinalizationWeakReference) referenceQueue.poll()) != null) {
-            RegistrationRecord record = registrations.remove(ref);
-            if (record != null) {
-                if (record.unregisterToken != null) {
-                    final FinalizationWeakReference finalRef = ref;
-                    tokenMap.computeIfPresent(
-                            record.unregisterToken,
-                            (token, refs) -> {
-                                refs.remove(finalRef);
-                                return refs.isEmpty() ? null : refs;
-                            });
-                }
-
-                try {
-                    Scriptable scope = callbackToUse.getParentScope();
-                    callbackToUse.call(cx, scope, scope, new Object[] {record.heldValue});
-                    cleanupCount++;
-                } catch (RhinoException e) {
-                    Context.reportWarning(
-                            "FinalizationRegistry cleanup callback error: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    private void executeCleanupCallback(Object heldValue) {
-        if (cleanupCallback == null) {
             return;
         }
 
         Context cx = Context.getCurrentContext();
         if (cx == null) {
-            try (Context enteredCx = Context.enter()) {
-                callCleanupCallback(enteredCx, heldValue);
+            // This should not happen as we're called from Context
+            return;
+        }
+
+        try {
+            Scriptable scope = callbackToUse.getParentScope();
+            callbackToUse.call(cx, scope, scope, new Object[] {heldValue});
+        } catch (ThreadDeath td) {
+            // Always rethrow ThreadDeath to allow thread termination
+            throw td;
+        } catch (Throwable t) {
+            // Per spec, errors in cleanup callbacks should not propagate
+            // Catch all errors to prevent cleanup thread death
+            String msg = "FinalizationRegistry cleanup callback error: ";
+            if (t.getMessage() != null) {
+                msg += t.getMessage();
+            } else {
+                msg += t.getClass().getName();
             }
-        } else {
-            callCleanupCallback(cx, heldValue);
+            Context.reportWarning(msg);
         }
     }
 
-    private void callCleanupCallback(Context cx, Object heldValue) {
-        try {
-            Scriptable scope = cleanupCallback.getParentScope();
-            cleanupCallback.call(cx, scope, scope, new Object[] {heldValue});
-        } catch (RhinoException e) {
-            Context.reportWarning("FinalizationRegistry cleanup callback error: " + e.getMessage());
+    /**
+     * Performs synchronous cleanup for cleanupSome() method. Per spec, this should process any
+     * available cleanups immediately.
+     *
+     * @param cx The current Context
+     * @param callbackOverride Optional callback to use instead of the registry's callback
+     */
+    private void performCleanupSome(Context cx, Function callbackOverride) {
+        // Set the temporary callback override if provided
+        if (callbackOverride != null) {
+            try {
+                // Set the override - executeCleanupCallback will use it
+                this.temporaryCallbackOverride = callbackOverride;
+
+                // Process cleanups with the override callback
+                cx.processFinalizationCleanups();
+            } finally {
+                // Always clear the override
+                this.temporaryCallbackOverride = null;
+            }
+        } else {
+            // Process cleanups with the normal callback
+            cx.processFinalizationCleanups();
         }
     }
 
