@@ -554,14 +554,14 @@ class JavaMembers {
 
     private static boolean maskingExistedMember(
             boolean includePrivate, Map<String, Object> members, String beanName) {
-        // A private field shouldn't block a public getter/setter
-        if (!includePrivate) {
-            return false; // no field
-        }
-
         var existed = members.get(beanName);
+        if (existed == null) {
+            return false;
+        }
+        // A private field shouldn't block a public getter/setter
         // true <-> there's a non-private field
-        return existed instanceof Member && !Modifier.isPrivate(((Member) existed).getModifiers());
+        return existed instanceof Member
+                && !(includePrivate && Modifier.isPrivate(((Member) existed).getModifiers()));
     }
 
     private static String getBeaningName(String nameComponent) {
@@ -581,7 +581,7 @@ class JavaMembers {
     }
 
     /** at this stage, {@code members} includes {@link NativeJavaMethod} and {@link Field} */
-    private Map<String, BeanProperty> extractBeaning(
+    private static Map<String, BeanProperty> extractBeaning(
             Map<String, Object> members, boolean isStatic, boolean includePrivate) {
         var beans = new HashMap<String, BeanProperty>();
         for (var entry : members.entrySet()) {
