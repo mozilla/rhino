@@ -13,12 +13,7 @@ import java.lang.ref.ReferenceQueue;
 /**
  * Shared finalization queue infrastructure for FinalizationRegistry.
  *
- * <p>Provides a shared ReferenceQueue (for JVM efficiency per aardvark179's recommendation) and
- * polling mechanism during JavaScript execution. Each FinalizationRegistry manages its own state
- * while using this shared infrastructure for GC detection.
- *
- * <p>This design avoids the overhead of multiple ReferenceQueues while maintaining proper
- * separation of registry-specific logic.
+ * <p>Provides shared ReferenceQueue for JVM efficiency and GC detection polling.
  */
 public class FinalizationQueue {
 

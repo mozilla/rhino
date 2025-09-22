@@ -11,25 +11,10 @@ import java.lang.ref.WeakReference;
 /**
  * Implementation of ECMAScript 2021 WeakRef.
  *
- * <p>WeakRef allows holding a weak reference to an object without preventing its garbage
- * collection. This is useful for caches, mappings, or any scenario where you want to reference an
- * object without keeping it alive.
- *
- * <p>Key features:
- *
- * <ul>
- *   <li>Weak reference semantics - target can be garbage collected
- *   <li>Single {@code deref()} method to access target if still alive
- *   <li>Returns undefined if target has been collected
- *   <li>Thread-safe access using standard Java WeakReference
- *   <li>Coordinates with FinalizationRegistry for consistent GC behavior
- * </ul>
- *
- * <p>Unlike FinalizationRegistry which reacts to object finalization, WeakRef simply provides a way
- * to check if an object is still reachable without keeping it alive.
+ * <p>Allows holding weak references to objects without preventing garbage collection. Provides
+ * {@code deref()} method to access target if still alive.
  *
  * @see <a href="https://tc39.es/ecma262/#sec-weak-ref-objects">ECMAScript WeakRef Objects</a>
- * @see NativeFinalizationRegistry
  */
 public class NativeWeakRef extends ScriptableObject {
     private static final long serialVersionUID = 1L;
@@ -41,14 +26,7 @@ public class NativeWeakRef extends ScriptableObject {
     /** The weak reference to the target object */
     private WeakReference<Object> weakReference;
 
-    /**
-     * Initialize the WeakRef constructor and prototype in the given scope.
-     *
-     * @param cx the JavaScript context
-     * @param scope the scope to install WeakRef in
-     * @param sealed whether to seal the constructor and prototype
-     * @return the WeakRef constructor function
-     */
+    /** Initialize WeakRef constructor and prototype. */
     static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
@@ -81,15 +59,7 @@ public class NativeWeakRef extends ScriptableObject {
         return constructor;
     }
 
-    /**
-     * JavaScript constructor implementation.
-     *
-     * @param cx the JavaScript context
-     * @param scope the constructor scope
-     * @param args constructor arguments (first must be an object)
-     * @return new WeakRef instance
-     * @throws TypeError if target is not an object
-     */
+    /** JavaScript constructor implementation. */
     private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById(
@@ -121,14 +91,7 @@ public class NativeWeakRef extends ScriptableObject {
         return ScriptRuntime.isObject(target);
     }
 
-    /**
-     * Validate and cast 'this' object to WeakRef.
-     *
-     * @param thisObj the 'this' object from JavaScript call
-     * @param name method name for error messages
-     * @return validated WeakRef instance
-     * @throws TypeError if thisObj is not a proper WeakRef
-     */
+    /** Validate and cast 'this' object to WeakRef. */
     private static NativeWeakRef realThis(Scriptable thisObj, String name) {
         if (!(thisObj instanceof NativeWeakRef)) {
             throw ScriptRuntime.typeErrorById("msg.incompat.call", CLASS_NAME + '.' + name);
