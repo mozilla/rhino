@@ -23,7 +23,7 @@ function test()
  
   var f = (function() {return "\uD800\uD800";});
   var g = uneval(f);
-  var h = eval(g);
+  var h = eval('(' + g + ')');
 
   expect = "\uD800\uD800";
   actual = h();
