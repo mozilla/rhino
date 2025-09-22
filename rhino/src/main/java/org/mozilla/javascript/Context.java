@@ -521,10 +521,9 @@ public class Context implements Closeable {
         }
         ++cx.enterCount;
 
-        // Process any pending finalization cleanups when Context becomes active
-        // This ensures cleanups run even if they were enqueued while no Context was available
+        // Poll for finalized objects when Context becomes active
         if (cx.enterCount == 1) {
-            FinalizationQueueManager.getInstance().processPendingCleanups(cx);
+            FinalizationQueue.pollAndScheduleCleanups(cx, 100);
         }
 
         return cx;
@@ -2547,6 +2546,9 @@ public class Context implements Closeable {
      * proper execution order. Errors in cleanup callbacks are caught and logged but not propagated.
      */
     void processFinalizationCleanups() {
+        // First check for newly finalized objects
+        FinalizationQueue.pollAndScheduleCleanups(this, 100);
+
         Runnable cleanup;
         int processed = 0;
         // Process up to 100 cleanups to avoid blocking
