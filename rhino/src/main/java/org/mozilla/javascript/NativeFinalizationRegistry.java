@@ -15,24 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Implementation of ECMAScript 2021 FinalizationRegistry.
  *
- * <p>FinalizationRegistry allows JavaScript code to register cleanup callbacks that are called when
- * objects are garbage collected. This implementation provides:
- *
- * <ul>
- *   <li>Self-contained design - each registry manages its own registrations
- *   <li>Shared ReferenceQueue for JVM efficiency (per aardvark179's recommendation)
- *   <li>Integration with Rhino's Context finalization infrastructure
- *   <li>Thread-safe registration/unregistration using concurrent data structures
- *   <li>Bounded cleanup processing to prevent performance issues
- * </ul>
- *
- * <p>Key methods:
- *
- * <ul>
- *   <li>{@code register(target, heldValue, unregisterToken)} - register object for cleanup
- *   <li>{@code unregister(token)} - remove registrations by token
- *   <li>{@code cleanupSome(callback)} - process pending cleanups synchronously
- * </ul>
+ * <p>Allows JavaScript code to register cleanup callbacks for garbage collected objects. Uses
+ * shared ReferenceQueue for efficiency and integrates with Rhino's Context system.
  *
  * @see <a href="https://tc39.es/ecma262/#sec-finalization-registry-objects">ECMAScript
  *     FinalizationRegistry</a>
@@ -59,14 +43,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /** Temporary callback override for cleanupSome() method */
     private volatile Function cleanupSomeCallback = null;
 
-    /**
-     * Initialize the FinalizationRegistry constructor and prototype in the given scope.
-     *
-     * @param cx the JavaScript context
-     * @param scope the scope to install FinalizationRegistry in
-     * @param sealed whether to seal the constructor and prototype
-     * @return the FinalizationRegistry constructor function
-     */
+    /** Initialize FinalizationRegistry constructor and prototype. */
     public static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
@@ -120,24 +97,12 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return constructor;
     }
 
-    /**
-     * Private constructor for FinalizationRegistry instances.
-     *
-     * @param cleanupCallback the function to call when objects are finalized
-     */
+    /** Private constructor for FinalizationRegistry instances. */
     private NativeFinalizationRegistry(Function cleanupCallback) {
         this.cleanupCallback = cleanupCallback;
     }
 
-    /**
-     * JavaScript constructor implementation.
-     *
-     * @param cx the JavaScript context
-     * @param scope the constructor scope
-     * @param args constructor arguments (first must be a function)
-     * @return new FinalizationRegistry instance
-     * @throws TypeError if callback is not a function
-     */
+    /** JavaScript constructor implementation. */
     private static NativeFinalizationRegistry jsConstructor(
             Context cx, Scriptable scope, Object[] args) {
         if (args.length < 1 || !(args[0] instanceof Function)) {
@@ -153,16 +118,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return registry;
     }
 
-    /**
-     * JavaScript register() method implementation.
-     *
-     * @param cx the JavaScript context (unused but required by Rhino)
-     * @param scope the method scope (unused but required by Rhino)
-     * @param thisObj the 'this' object (must be FinalizationRegistry)
-     * @param args method arguments: target, heldValue, [unregisterToken]
-     * @return undefined
-     * @throws TypeError if arguments are invalid
-     */
+    /** JavaScript register() method implementation. */
     private static Object register(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeFinalizationRegistry registry = realThis(thisObj, "register");
@@ -198,31 +154,14 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return Undefined.instance;
     }
 
-    /**
-     * JavaScript unregister() method implementation.
-     *
-     * @param cx the JavaScript context (unused but required by Rhino)
-     * @param scope the method scope (unused but required by Rhino)
-     * @param thisObj the 'this' object (must be FinalizationRegistry)
-     * @param args method arguments: unregisterToken
-     * @return boolean indicating whether any registrations were removed
-     */
+    /** JavaScript unregister() method implementation. */
     private static Object unregister(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeFinalizationRegistry registry = realThis(thisObj, "unregister");
         return registry.unregisterToken(args);
     }
 
-    /**
-     * JavaScript cleanupSome() method implementation.
-     *
-     * @param cx the JavaScript context
-     * @param scope the method scope (unused but required by Rhino)
-     * @param thisObj the 'this' object (must be FinalizationRegistry)
-     * @param args method arguments: [callback]
-     * @return undefined
-     * @throws TypeError if callback is provided but not a function
-     */
+    /** JavaScript cleanupSome() method implementation. */
     private static Object cleanupSome(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeFinalizationRegistry registry = realThis(thisObj, "cleanupSome");
@@ -411,17 +350,8 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /**
      * Clean up when this registry is being GC'd.
      *
-     * <p>Note: finalize() is deprecated in Java 9+ but is still the most appropriate mechanism for
-     * this use case. The newer Cleaner API is not suitable because:
-     *
-     * <ul>
-     *   <li>FinalizationRegistry needs dynamic registration/unregistration
-     *   <li>Cleaner requires static cleanup actions defined at object creation
-     *   <li>We need to clear references when the registry itself is collected
-     * </ul>
-     *
-     * <p>This is intentionally using finalize() as recommended by aardvark179 for this specific use
-     * case where we need to clean up when the registry itself is GC'd.
+     * <p>Uses finalize() over Cleaner API due to dynamic registration requirements. Recommended by
+     * aardvark179 for this specific GC cleanup use case.
      */
     @Override
     @SuppressWarnings({"deprecation", "finalize", "Finalize"})
