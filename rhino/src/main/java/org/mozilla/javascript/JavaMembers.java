@@ -555,10 +555,15 @@ class JavaMembers {
     private static boolean maskingExistedMember(
             boolean includePrivate, Map<String, Object> members, String beanName) {
         var existed = members.get(beanName);
-        // A private field shouldn't mask a public getter/setter
-        // true <-> there's a non-private field
-        return existed instanceof Member
-                && (!includePrivate || !Modifier.isPrivate(((Member) existed).getModifiers()));
+
+        if (existed == null) { // no member
+            return false;
+        } else if (existed instanceof Member) { // member is field
+            // A private field shouldn't mask a public getter/setter
+            return !includePrivate || !Modifier.isPrivate(((Member) existed).getModifiers());
+        }
+        // member is NativeJavaMethod
+        return true;
     }
 
     /**
@@ -566,7 +571,7 @@ class JavaMembers {
      *     "getX"
      * @return bean property name. E.g. "value" if provided "Value", "X" if provided "X"
      */
-    private static String getBeaningName(String nameComponent) {
+    private static String getBeanName(String nameComponent) {
         char ch0 = nameComponent.charAt(0);
         if (Character.isUpperCase(ch0)) {
             if (nameComponent.length() == 1) {
@@ -599,8 +604,8 @@ class JavaMembers {
                 continue;
             }
 
-            var beaningName = getBeaningName(nameComponent);
-            if (maskingExistedMember(includePrivate, members, beaningName)) {
+            var beanName = getBeanName(nameComponent);
+            if (maskingExistedMember(includePrivate, members, beanName)) {
                 continue;
             }
 
@@ -609,7 +614,7 @@ class JavaMembers {
 
                 var candidate = extractGetMethod(method.methods, isStatic);
                 if (candidate != null) {
-                    var bean = beans.computeIfAbsent(beaningName, BeanProperty::new);
+                    var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                     if (method.methods.length == 1) {
                         bean.getter = method;
                     } else {
@@ -617,7 +622,7 @@ class JavaMembers {
                     }
                 }
             } else { // isSetBeaning
-                var bean = beans.computeIfAbsent(beaningName, BeanProperty::new);
+                var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                 // capture all possible setters for now, actual setter will be searched later
                 bean.setter = (NativeJavaMethod) entry.getValue();
             }

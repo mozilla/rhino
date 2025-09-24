@@ -11,6 +11,9 @@ import org.mozilla.javascript.testutils.Utils;
  */
 public class JavaBeaningTest {
 
+    private static final String SCRIPT_INIT =
+            String.format("let obj = new %s();\n", BeaningTestObject.class.getName());
+
     @Test
     public void testMasked() {
         // 'maskedValue' is private, with getter/setter
@@ -19,14 +22,7 @@ public class JavaBeaningTest {
         expect("obj.maskedValue", "_getter");
 
         // set & get
-        expect(Utils.lines("obj.maskedValue = '42'", "obj.maskedValue"), "42_setter_getter");
-    }
-
-    @Test
-    public void testPublic() {
-        // 'value' is public. In this case, no getter/setter should be used
-        expect("obj.value", 42);
-        expect("obj.value = 123; obj.value", 123);
+        expect("obj.maskedValue = '42'; obj.maskedValue", "42_setter_getter");
     }
 
     @Test
@@ -39,22 +35,48 @@ public class JavaBeaningTest {
         expect("obj.maskedValue = 42; obj.maskedValue", "42_setter_getter");
     }
 
+    /**
+     * @see BeaningTestObject#value
+     * @see BeaningTestObject#getValue()
+     * @see BeaningTestObject#setValue(Number)
+     */
+    @Test
+    public void testMaskingPublicField() {
+        // public field should not be masked
+        expect("obj.value", 42);
+        expect("obj.value = 123; obj.value", 123);
+    }
+
+    /**
+     * @see BeaningTestObject#elementAt(int)
+     * @see BeaningTestObject#setElementAt(int)
+     */
+    @Test
+    public void testMaskingMethod() {
+        // method should not be masked
+        Utils.assertEvaluatorExceptionES6(
+                "Java method \"elementAt\" cannot be assigned to", SCRIPT_INIT + "obj.elementAt = 42");
+    }
+
     private static void expect(String script, Object expected) {
-        for (int i = 0; i < 2; i++) {
-            try (var cx = ContextFactory.getGlobal().enterContext()) {
-                cx.setInterpretedMode(i == 0);
+        expect(false, script, expected);
+        expect(true, script, expected);
+    }
 
-                var scope = cx.initStandardObjects();
+    private static void expect(boolean interpreted, String script, Object expected) {
+        try (var cx = ContextFactory.getGlobal().enterContext()) {
+            cx.setInterpretedMode(interpreted);
 
-                var testObject = new BeaningTestObject<>();
-                scope.put("obj", scope, testObject);
+            var scope = cx.initStandardObjects();
 
-                var result = cx.evaluateString(scope, script, "test.js", 1, null);
-                while (result instanceof Wrapper) {
-                    result = ((Wrapper) result).unwrap();
-                }
-                Assertions.assertEquals(expected, result);
+            var testObject = new BeaningTestObject<>();
+            scope.put("obj", scope, testObject);
+
+            var result = cx.evaluateString(scope, script, "test.js", 1, null);
+            while (result instanceof Wrapper) {
+                result = ((Wrapper) result).unwrap();
             }
+            Assertions.assertEquals(expected, result);
         }
     }
 
@@ -84,6 +106,15 @@ public class JavaBeaningTest {
 
         public void setValue(Number value) {
             throw new IllegalStateException("'value' is public, field access should be preferred");
+        }
+
+        public int elementAt(int index) {
+            return index;
+        }
+
+        public void setElementAt(int value) {
+            throw new IllegalStateException(
+                    "There's an existed method 'elementAt', no beaning should be applied");
         }
     }
 }
