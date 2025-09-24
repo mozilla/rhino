@@ -555,26 +555,26 @@ class JavaMembers {
     private static boolean maskingExistedMember(
             boolean includePrivate, Map<String, Object> members, String beanName) {
         var existed = members.get(beanName);
-        if (existed == null) {
-            return false;
-        }
-        // A private field shouldn't block a public getter/setter
+        // A private field shouldn't mask a public getter/setter
         // true <-> there's a non-private field
         return existed instanceof Member
-                && !(includePrivate && Modifier.isPrivate(((Member) existed).getModifiers()));
+                && (!includePrivate || !Modifier.isPrivate(((Member) existed).getModifiers()));
     }
 
+    /**
+     * @param nameComponent method name without prefix. E.g. "Value" in "getValue", and "X" in
+     *     "getX"
+     * @return bean property name. E.g. "value" if provided "Value", "X" if provided "X"
+     */
     private static String getBeaningName(String nameComponent) {
-        // Make the bean property name.
         char ch0 = nameComponent.charAt(0);
         if (Character.isUpperCase(ch0)) {
             if (nameComponent.length() == 1) {
-                nameComponent = nameComponent.toLowerCase(Locale.ROOT);
-            } else {
-                char ch1 = nameComponent.charAt(1);
-                if (!Character.isUpperCase(ch1)) {
-                    nameComponent = Character.toLowerCase(ch0) + nameComponent.substring(1);
-                }
+                return nameComponent.toLowerCase(Locale.ROOT);
+            }
+            char ch1 = nameComponent.charAt(1);
+            if (!Character.isUpperCase(ch1)) {
+                return Character.toLowerCase(ch0) + nameComponent.substring(1);
             }
         }
         return nameComponent;
