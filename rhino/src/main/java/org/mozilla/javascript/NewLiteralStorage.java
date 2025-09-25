@@ -56,10 +56,8 @@ public abstract class NewLiteralStorage {
 
     public void spread(Context cx, Scriptable scope, Object source) {
         if (keys == null) {
-            // This is an array literal - use array spread logic
             spreadArray(cx, scope, source);
         } else {
-            // This is an object literal - use object spread logic
             spreadObject(cx, scope, source);
         }
     }
@@ -69,17 +67,19 @@ public abstract class NewLiteralStorage {
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
 
-            // For arrays, we want to iterate over the array elements in order
+            // Resize array storage
+            int spreadSize =
+                    (src instanceof NativeArray)
+                            ? (int) ((NativeArray) src).getLength()
+                            : src.getIds().length;
+            int newLen = values.length + spreadSize;
+            getterSetters = Arrays.copyOf(getterSetters, newLen);
+            values = Arrays.copyOf(values, newLen);
+
             if (src instanceof NativeArray) {
                 NativeArray arr = (NativeArray) src;
                 long length = arr.getLength();
 
-                // Resize the values array
-                int newLen = values.length + (int) length;
-                getterSetters = Arrays.copyOf(getterSetters, newLen);
-                values = Arrays.copyOf(values, newLen);
-
-                // Copy array elements in order
                 for (int i = 0; i < length; i++) {
                     Object value = arr.get(i, arr);
                     if (value != Scriptable.NOT_FOUND) {
@@ -89,26 +89,10 @@ public abstract class NewLiteralStorage {
                     }
                 }
             } else {
-                // For other iterable objects, use the standard iteration protocol
                 Object[] ids = src.getIds();
 
-                // Resize the values array
-                int newLen = values.length + ids.length;
-                getterSetters = Arrays.copyOf(getterSetters, newLen);
-                values = Arrays.copyOf(values, newLen);
-
-                // For array literals, we only care about the values, not the keys
                 for (Object id : ids) {
-                    Object value;
-                    if (id instanceof String) {
-                        value = ScriptableObject.getProperty(src, (String) id);
-                    } else if (id instanceof Integer) {
-                        value = ScriptableObject.getProperty(src, (int) id);
-                    } else if (ScriptRuntime.isSymbol(id)) {
-                        value = ScriptableObject.getProperty(src, (Symbol) id);
-                    } else {
-                        throw Kit.codeBug();
-                    }
+                    Object value = getPropertyById(src, id);
                     pushValue(value);
                 }
             }
@@ -137,17 +121,7 @@ public abstract class NewLiteralStorage {
 
             // getIds() can only return a string, int or a symbol
             for (Object id : ids) {
-                Object value;
-                if (id instanceof String) {
-                    value = ScriptableObject.getProperty(src, (String) id);
-                } else if (id instanceof Integer) {
-                    value = ScriptableObject.getProperty(src, (int) id);
-                } else if (ScriptRuntime.isSymbol(id)) {
-                    value = ScriptableObject.getProperty(src, (Symbol) id);
-                } else {
-                    throw Kit.codeBug();
-                }
-
+                Object value = getPropertyById(src, id);
                 pushKey(id);
                 pushValue(value);
             }
@@ -164,6 +138,18 @@ public abstract class NewLiteralStorage {
 
     public Object[] getValues() {
         return values;
+    }
+
+    private Object getPropertyById(Scriptable src, Object id) {
+        if (id instanceof String) {
+            return ScriptableObject.getProperty(src, (String) id);
+        } else if (id instanceof Integer) {
+            return ScriptableObject.getProperty(src, (int) id);
+        } else if (ScriptRuntime.isSymbol(id)) {
+            return ScriptableObject.getProperty(src, (Symbol) id);
+        } else {
+            throw Kit.codeBug();
+        }
     }
 
     public static NewLiteralStorage create(Context cx, Object[] ids) {
