@@ -65,7 +65,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     public void exportAsScopeProperty() {
-        addAsProperty(getParentScope());
+        addAsProperty(getDeclarationScope());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class IdFunctionObject extends BaseFunction {
         // may not be called at all
         Scriptable proto = super.getPrototype();
         if (proto == null) {
-            proto = getFunctionPrototype(getParentScope());
+            proto = getFunctionPrototype(getDeclarationScope());
             setPrototype(proto);
         }
         return proto;
