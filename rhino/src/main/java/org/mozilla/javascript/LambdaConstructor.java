@@ -439,7 +439,7 @@ public class LambdaConstructor extends LambdaFunction {
      * be an object with a specific "internal data slot."
      */
     public void setPrototypeScriptable(ScriptableObject proto) {
-        proto.setParentScope(getParentScope());
+        proto.setParentScope(getDeclarationScope());
         setPrototypeProperty(proto);
         Scriptable objectProto = getObjectPrototype(this);
         if (proto != objectProto) {
