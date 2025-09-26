@@ -28,7 +28,7 @@ function test()
   actual = g + '';
   compareSource(expect, actual, summary);
 
-  h = eval('(' + uneval(g) + ')');
+  h = eval(uneval(g));
   expect = g(1, 10, 100);
   actual = h(1, 10, 100);
   reportCompare(expect, actual, summary);
@@ -40,7 +40,7 @@ function test()
   actual = p + '';
   compareSource(expect, actual, summary);
 
-  q = eval('(' + uneval(p) + ')');
+  q = eval(uneval(p));
   expect = p(3, "4", "5");
   actual = q(3, "4", "5");
   reportCompare(expect, actual, summary);

@@ -99,7 +99,7 @@ addThis();
 
 status = inSection(10);
 obj1 = function(x) {function g(y){return y+1;} return g(x);};
-obj2 = eval('(' + uneval(obj1) + ')');
+obj2 = eval(uneval(obj1));
 actual = obj2.toSource();
 expect = obj1.toSource();
 addThis();
