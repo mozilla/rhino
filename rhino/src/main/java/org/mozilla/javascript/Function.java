@@ -45,4 +45,8 @@ public interface Function extends Scriptable, Callable, Constructable {
      */
     @Override
     Scriptable construct(Context cx, Scriptable scope, Object[] args);
+
+    default Scriptable getDeclarationScope() {
+        return this.getParentScope();
+    }
 }
