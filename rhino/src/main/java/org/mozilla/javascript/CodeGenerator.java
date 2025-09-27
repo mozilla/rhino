@@ -296,16 +296,20 @@ class CodeGenerator extends Icode {
                             throw Kit.codeBug();
                         }
                     }
-                    // For function statements or function expression statements
-                    // in scripts, we need to ensure that the result of the script
-                    // is the function if it is the last statement in the script.
-                    // For example, eval("function () {}") should return a
-                    // function, not undefined.
-                    if (!itsInFunctionFlag) {
-                        addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
-                        stackChange(1);
-                        addIcode(Icode_POP_RESULT);
-                        stackChange(-1);
+
+                    // This is for backward compatibility only!
+                    if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+                        // For function statements or function expression statements
+                        // in scripts, we need to ensure that the result of the script
+                        // is the function if it is the last statement in the script.
+                        // For example, eval("function () {}") should return a
+                        // function, not undefined.
+                        if (!itsInFunctionFlag) {
+                            addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                            stackChange(1);
+                            addIcode(Icode_POP_RESULT);
+                            stackChange(-1);
+                        }
                     }
                 }
                 break;
