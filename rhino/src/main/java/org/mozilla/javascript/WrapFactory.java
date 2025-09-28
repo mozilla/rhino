@@ -119,7 +119,7 @@ public class WrapFactory {
 
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
-        if (staticType == TypeInfo.NONE && javaObject != null) {
+        if (staticType.shouldReplace() && javaObject != null) {
             staticType =
                     TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL)
                             .create(javaObject.getClass());

@@ -18,8 +18,8 @@ public enum NoTypeInfo implements TypeInfo {
     }
 
     @Override
-    public boolean shouldConvert() {
-        return false;
+    public boolean shouldReplace() {
+        return true;
     }
 
     @Override

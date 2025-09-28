@@ -130,8 +130,12 @@ public interface TypeInfo {
         return false;
     }
 
-    default boolean shouldConvert() {
-        return true;
+    /**
+     * @return {@code true} if this type contains too little information (e.g. being {@link #NONE})
+     *     and should be replaced by actual object type, {@code false} otherwise
+     */
+    default boolean shouldReplace() {
+        return false;
     }
 
     /**
