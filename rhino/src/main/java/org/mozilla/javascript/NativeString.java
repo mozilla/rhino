@@ -561,7 +561,7 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected ScriptableObject.DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -574,16 +574,8 @@ final class NativeString extends ScriptableObject {
         return super.getOwnPropertyDescriptor(cx, id);
     }
 
-    private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
-        Scriptable scope = getParentScope();
-        if (scope == null) scope = this;
-        ScriptableObject desc = new NativeObject();
-        ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-        desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", Boolean.FALSE, EMPTY);
-        desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
-        desc.defineProperty("configurable", Boolean.FALSE, EMPTY);
-        return desc;
+    private ScriptableObject.DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
+        return new ScriptableObject.DescriptorInfo(true, false, false, NOT_FOUND, NOT_FOUND, value);
     }
 
     /*

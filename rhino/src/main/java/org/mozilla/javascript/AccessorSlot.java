@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
+
 /**
  * This is a specialization of Slot to store various types of values that are retrieved dynamically
  * using Java and JavaScript functions. Unlike LambdaSlot, the fact that these values are accessed
@@ -43,45 +45,40 @@ public class AccessorSlot extends Slot {
     }
 
     @Override
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
         // It sounds logical that this would be the same as the logic for a normal Slot,
         // but the spec is super pedantic about things like the order of properties here,
         // so we need special support here.
 
-        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
         int attr = getAttributes();
-
+        DescriptorInfo desc;
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
         if (es6) {
+            desc = new DescriptorInfo(ScriptableObject.NOT_FOUND, attr, false);
             if (getter == null && setter == null) {
-                desc.defineProperty(
-                        "writable",
-                        (attr & ScriptableObject.READONLY) == 0,
-                        ScriptableObject.EMPTY);
+                desc.writable = (attr & ScriptableObject.READONLY) == 0;
             }
         } else {
-            desc.setCommonDescriptorProperties(attr, getter == null && setter == null);
+            desc =
+                    new DescriptorInfo(
+                            ScriptableObject.NOT_FOUND, attr, getter == null && setter == null);
         }
 
         String fName = name == null ? "f" : name.toString();
         if (getter != null) {
             Function f = getter.asGetterFunction(fName, scope);
-            desc.defineProperty("get", f == null ? Undefined.instance : f, ScriptableObject.EMPTY);
+            desc.getter = f == null ? Undefined.instance : f;
         }
         if (setter != null) {
             Function f = setter.asSetterFunction(fName, scope);
-            desc.defineProperty("set", f == null ? Undefined.instance : f, ScriptableObject.EMPTY);
+            desc.setter = f == null ? Undefined.instance : f;
         } else if (es6) {
-            desc.defineProperty("set", Undefined.instance, ScriptableObject.EMPTY);
+            desc.setter = Undefined.instance;
         }
 
         if (es6) {
-            desc.defineProperty(
-                    "enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
-            desc.defineProperty(
-                    "configurable",
-                    (attr & ScriptableObject.PERMANENT) == 0,
-                    ScriptableObject.EMPTY);
+            desc.enumerable = (attr & ScriptableObject.DONTENUM) == 0;
+            desc.configurable = (attr & ScriptableObject.PERMANENT) == 0;
         }
 
         return desc;

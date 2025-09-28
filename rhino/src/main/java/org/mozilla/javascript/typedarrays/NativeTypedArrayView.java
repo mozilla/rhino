@@ -143,7 +143,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     @Override
     protected boolean defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
         if (id instanceof CharSequence) {
             String name = id.toString();
             Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
@@ -153,19 +153,19 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                     return false;
                 }
 
-                if (Boolean.FALSE.equals(getProperty(desc, "configurable"))) {
+                if (Boolean.FALSE.equals(desc.configurable)) {
                     return false;
                 }
-                if (Boolean.FALSE.equals(getProperty(desc, "enumerable"))) {
+                if (Boolean.FALSE.equals(desc.enumerable)) {
                     return false;
                 }
                 if (isAccessorDescriptor(desc)) {
                     return false;
                 }
-                if (Boolean.FALSE.equals(getProperty(desc, "writable"))) {
+                if (Boolean.FALSE.equals(desc.writable)) {
                     return false;
                 }
-                Object value = getProperty(desc, "value");
+                Object value = desc.value;
                 if (value != NOT_FOUND) {
                     js_set(idx, value);
                 }
