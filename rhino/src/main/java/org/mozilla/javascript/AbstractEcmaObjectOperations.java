@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * Abstract Object Operations as defined by EcmaScript
@@ -83,12 +84,12 @@ public class AbstractEcmaObjectOperations {
             ids = obj.getIds(map, true, true);
         }
         for (Object name : ids) {
-            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-            if (Boolean.TRUE.equals(desc.get("configurable"))) return false;
+            DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, name);
+            if (Boolean.TRUE.equals(desc.configurable)) return false;
 
             if (level == INTEGRITY_LEVEL.FROZEN
                     && ScriptableObject.isDataDescriptor(desc)
-                    && Boolean.TRUE.equals(desc.get("writable"))) return false;
+                    && Boolean.TRUE.equals(desc.writable)) return false;
         }
 
         return true;
@@ -150,21 +151,20 @@ public class AbstractEcmaObjectOperations {
             ids = obj.getIds(map, true, true);
         }
         for (Object key : ids) {
-            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, key);
+            DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, key);
 
             if (level == INTEGRITY_LEVEL.SEALED) {
-                if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, Boolean.FALSE);
+                if (Boolean.TRUE.equals(desc.configurable)) {
+                    desc.configurable = false;
 
                     obj.defineOwnProperty(cx, key, desc, false);
                 }
             } else {
-                if (ScriptableObject.isDataDescriptor(desc)
-                        && Boolean.TRUE.equals(desc.get("writable"))) {
-                    desc.put("writable", desc, Boolean.FALSE);
+                if (ScriptableObject.isDataDescriptor(desc) && Boolean.TRUE.equals(desc.writable)) {
+                    desc.writable = false;
                 }
-                if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, Boolean.FALSE);
+                if (Boolean.TRUE.equals(desc.configurable)) {
+                    desc.configurable = false;
                 }
                 obj.defineOwnProperty(cx, key, desc, false);
             }
@@ -402,7 +402,7 @@ public class AbstractEcmaObjectOperations {
      * IsCompatiblePropertyDescriptor (Extensible, Desc, Current)</a>
      */
     static boolean isCompatiblePropertyDescriptor(
-            Context cx, boolean extensible, ScriptableObject desc, ScriptableObject current) {
+            Context cx, boolean extensible, DescriptorInfo desc, DescriptorInfo current) {
         return validateAndApplyPropertyDescriptor(
                 cx,
                 Undefined.SCRIPTABLE_UNDEFINED,
@@ -424,8 +424,8 @@ public class AbstractEcmaObjectOperations {
             Scriptable o,
             Scriptable p,
             boolean extensible,
-            ScriptableObject desc,
-            ScriptableObject current) {
+            DescriptorInfo desc,
+            DescriptorInfo current) {
         if (Undefined.isUndefined(current)) {
             if (!extensible) {
                 return false;
@@ -445,18 +445,22 @@ public class AbstractEcmaObjectOperations {
             return true;
         }
 
-        if (desc.getIds().length == 0) {
+        if (desc.enumerable == ScriptableObject.NOT_FOUND
+                && desc.configurable == ScriptableObject.NOT_FOUND
+                && desc.writable == ScriptableObject.NOT_FOUND
+                && desc.getter == ScriptableObject.NOT_FOUND
+                && desc.setter == ScriptableObject.NOT_FOUND
+                && desc.value == ScriptableObject.NOT_FOUND) {
             return true;
         }
 
-        if (Boolean.FALSE.equals(current.get("configurable"))) {
-            if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "configurable"))
-                    && Boolean.TRUE.equals(desc.get("configurable"))) {
+        if (Boolean.FALSE.equals(current.configurable)) {
+            if (Boolean.TRUE.equals(desc.configurable)) {
                 return false;
             }
 
-            if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "enumerable"))
-                    && !Objects.equals(desc.get("enumerable"), current.get("enumerable"))) {
+            if (desc.enumerable != ScriptableObject.NOT_FOUND
+                    && !Objects.equals(desc.enumerable, current.enumerable)) {
                 return false;
             }
         }
@@ -466,11 +470,11 @@ public class AbstractEcmaObjectOperations {
         }
 
         if (ScriptableObject.isDataDescriptor(current) != ScriptableObject.isDataDescriptor(desc)) {
-            if (Boolean.FALSE.equals(current.get("configurable"))) {
+            if (Boolean.FALSE.equals(current.configurable)) {
                 return false;
             }
             if (ScriptableObject.isDataDescriptor(current)) {
-                if (Boolean.FALSE.equals(current.get("configurable"))) {
+                if (Boolean.FALSE.equals(current.configurable)) {
                     // i. i. If O is not undefined, convert the property named P of object O from a
                     // data property to an accessor property. Preserve the existing values of the
                     // converted property's [[Configurable]] and [[Enumerable]] attributes and set
@@ -484,26 +488,25 @@ public class AbstractEcmaObjectOperations {
             }
         } else if (ScriptableObject.isDataDescriptor(current)
                 && ScriptableObject.isDataDescriptor(desc)) {
-            if (Boolean.FALSE.equals(current.get("configurable"))
-                    && Boolean.FALSE.equals(current.get("writable"))) {
-                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "writable"))
-                        && Boolean.TRUE.equals(desc.get("writable"))) {
+            if (Boolean.FALSE.equals(current.configurable)
+                    && Boolean.FALSE.equals(current.writable)) {
+                if (Boolean.TRUE.equals(desc.writable)) {
                     return false;
                 }
-                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "value"))
-                        && !Objects.equals(desc.get("value"), current.get("value"))) {
+                if (desc.value != ScriptableObject.NOT_FOUND
+                        && !Objects.equals(desc.value, current.value)) {
                     return false;
                 }
                 return true;
             }
         } else {
-            if (Boolean.FALSE.equals(current.get("configurable"))) {
-                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "set"))
-                        && !Objects.equals(desc.get("set"), current.get("set"))) {
+            if (Boolean.FALSE.equals(current.configurable)) {
+                if (desc.setter != ScriptableObject.NOT_FOUND
+                        && !Objects.equals(desc.setter, current.setter)) {
                     return false;
                 }
-                if (Boolean.TRUE.equals(ScriptableObject.hasProperty(desc, "get"))
-                        && !Objects.equals(desc.get("get"), current.get("get"))) {
+                if (desc.getter != ScriptableObject.NOT_FOUND
+                        && !Objects.equals(desc.getter, current.getter)) {
                     return false;
                 }
                 return true;

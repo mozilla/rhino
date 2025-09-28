@@ -254,7 +254,7 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
         if (ScriptRuntime.isSymbol(id) || id instanceof Scriptable) {
             return super.getOwnPropertyDescriptor(cx, id);
         }
@@ -272,18 +272,16 @@ class Arguments extends ScriptableObject {
             value = getFromActivation(index);
         }
         if (super.has(index, this)) { // the descriptor has been redefined
-            ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
-            desc.put("value", desc, value);
+            DescriptorInfo desc = super.getOwnPropertyDescriptor(cx, id);
+            desc.value = value;
             return desc;
         }
-        Scriptable scope = getParentScope();
-        if (scope == null) scope = this;
-        return buildDataDescriptor(scope, value, EMPTY);
+        return buildDataDescriptor(value, EMPTY);
     }
 
     @Override
     protected boolean defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
         super.defineOwnProperty(cx, id, desc, checkValid);
         if (ScriptRuntime.isSymbol(id)) {
             return true;
@@ -301,12 +299,12 @@ class Arguments extends ScriptableObject {
             return true;
         }
 
-        Object newValue = getProperty(desc, "value");
+        Object newValue = desc.value;
         if (newValue == NOT_FOUND) return true;
 
         replaceArg(index, newValue);
 
-        if (isFalse(getProperty(desc, "writable"))) {
+        if (isFalse(desc.writable)) {
             removeArg(index);
         }
         return true;
