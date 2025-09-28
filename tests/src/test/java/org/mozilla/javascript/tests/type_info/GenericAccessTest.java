@@ -30,6 +30,20 @@ import org.mozilla.javascript.testutils.Utils;
 public class GenericAccessTest {
 
     @Test
+    public void testGenericHolder() {
+        var scriptSuffix = "classAndValue(genericHolder.value)";
+
+        // Double auto wrapped to String
+        expect("genericHolder.forString().set(3.45);" + scriptSuffix, "String 3.45");
+
+        // Double auto wrapped to Integer
+        expect("genericHolder.forInt().set(3.45);" + scriptSuffix, "Integer 3");
+
+        // String auto wrapped to Double
+        expect("genericHolder.forDouble().set('3');" + scriptSuffix, "Double 3.0");
+    }
+
+    @Test
     public void testBeanAccess() {
         String js =
                 "bean.integers[0] = 3;\n"
@@ -177,6 +191,7 @@ public class GenericAccessTest {
         bindings.put("intList", IntegerArrayList.createTestObject());
         bindings.put("dblList", DoubleArrayList.createTestObject());
         bindings.put("numList", NumberArrayList.createTestObject());
+        bindings.put("genericHolder", new GenericObjHolder<>());
         bindings.put("classAndValue", (Callable) GenericAccessTest::readClassAndValue);
 
         // test member access via beaning
