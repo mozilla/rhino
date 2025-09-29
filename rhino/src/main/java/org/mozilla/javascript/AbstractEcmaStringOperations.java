@@ -312,8 +312,10 @@ public class AbstractEcmaStringOperations {
                 List<T> captures,
                 Object namedCaptures) {
             if (Undefined.isUndefined(namedCaptures)) {
-                return "$<" + groupName + ">";
+                List<ReplacementOperation> ops = buildReplacementList(groupName);
+                return "$<" + getSubstitution(cx, scope, matched, str, position, captures, namedCaptures, ops) + ">";
             }
+
             Object capture = ScriptRuntime.getObjectProp(namedCaptures, groupName, cx, scope);
             if (Undefined.isUndefined(capture)) {
                 return "";
