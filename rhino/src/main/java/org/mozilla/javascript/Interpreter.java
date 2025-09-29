@@ -3469,7 +3469,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 } else if (fun instanceof LambdaConstructor) {
                     break;
                 } else if (fun instanceof LambdaFunction) {
-                    fun = ((LambdaFunction) fun).getTarget();
+                    break;
                 } else if (fun instanceof BoundFunction) {
                     BoundFunction bfun = (BoundFunction) fun;
                     fun = bfun.getTargetFunction();

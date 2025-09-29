@@ -132,6 +132,7 @@ public class LambdaConstructor extends LambdaFunction {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
+        scope = getDeclarationScope();
         if (target == null) {
             return fireConstructor(cx, scope, args);
         }
@@ -143,7 +144,7 @@ public class LambdaConstructor extends LambdaFunction {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
-        return fireConstructor(cx, scope, args);
+        return fireConstructor(cx, getDeclarationScope(), args);
     }
 
     private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
