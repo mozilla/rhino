@@ -103,6 +103,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
             ret = Interpreter.interpret(this, cx, scope, thisObj, ScriptRuntime.emptyArgs);
         }
         cx.processMicrotasks();
+        cx.processFinalizationCleanups();
         return ret;
     }
 
