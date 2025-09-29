@@ -24,7 +24,7 @@ function assertAsync(b, s) {
   if (b) {
     //print(s, "succeeded")
   } else {
-    AbortJS(s + " FAILED!")  // Simply throwing here will have no effect.
+    AbortJS(s + " FAILED async!")  // Simply throwing here will have no effect.
   }
   --asyncAssertsExpected
 }
@@ -40,7 +40,7 @@ function assertLater(f, name) {
     } else if (iterations++ < 10) {
       EnqueueMicrotask(runAssertion);
     } else {
-      AbortJS(name + " FAILED!");
+      AbortJS(name + " FAILED later!");
     }
   }
   EnqueueMicrotask(runAssertion);
@@ -60,16 +60,16 @@ function assertAsyncDone(iteration) {
 
 (function() {
   var res = '';
-  var f = function () { res += this; }
+  var f = function () { res += (this === globalThis ? "globalThis" : this); }
 
   Promise.resolve().then(f.bind(null));
 
-  assertLater(function() { return res == "[object Object]"; }, "Promise.resolve().then(f.bind(null))");
+  assertLater(function() { return res == "globalThis"; }, "Promise.resolve().then(f.bind(null))");
 })();
 
 (function() {
   var res = '';
-  var f = function () { res += this; }
+  var f = function () { res += (this === globalThis ? "globalThis" : this); }
 
   Promise.resolve().then(f.bind('abcd'));
 
@@ -78,16 +78,16 @@ function assertAsyncDone(iteration) {
 
 (function() {
   var res = '';
-  var f = function () { res += this; }
+  var f = function () { res += (this === globalThis ? "globalThis" : this); }
 
   Promise.resolve().then(() => f.bind(null).call());
 
-  assertLater(function() { return res == "[object Object]"; }, "Promise.resolve().then(() => f.bind(null).call())");
+  assertLater(function() { return res == "globalThis"; }, "Promise.resolve().then(() => f.bind(null).call())");
 })();
 
 (function() {
   var res = '';
-  var f = function () { res += this; }
+  var f = function () { res += (this === globalThis ? "globalThis" : this); }
 
   Promise.resolve().then(() => f.bind('abcd').call());
 
