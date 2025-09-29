@@ -1247,8 +1247,7 @@ public class ScriptRuntime {
 
         if (isSymbol(val)) {
             if (val instanceof SymbolKey) {
-                NativeSymbol result =
-                        new NativeSymbol((SymbolKey) val, NativeSymbol.SymbolKind.REGULAR);
+                NativeSymbol result = new NativeSymbol((SymbolKey) val);
                 setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
                 return result;
             }
@@ -6007,9 +6006,12 @@ public class ScriptRuntime {
     static boolean isUnregisteredSymbol(Object obj) {
         if (obj instanceof NativeSymbol) {
             NativeSymbol ns = (NativeSymbol) obj;
-            return ns.isSymbol() && ns.getKind() != NativeSymbol.SymbolKind.REGISTERED;
+            return ns.isSymbol() && ns.getKind() != Symbol.Kind.REGISTERED;
+        } else if (obj instanceof Symbol) {
+            Symbol s = (Symbol) obj;
+            return s.getKind() != Symbol.Kind.REGISTERED;
         }
-        return (obj instanceof SymbolKey);
+        return false;
     }
 
     private static RuntimeException errorWithClassName(String msg, Object val) {
