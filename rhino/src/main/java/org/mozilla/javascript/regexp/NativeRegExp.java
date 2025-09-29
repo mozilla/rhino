@@ -4374,6 +4374,8 @@ public class NativeRegExp extends IdScriptableObject {
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(rx, "flags", cx));
         boolean unicodeMatching = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
         NativeArray a = (NativeArray) cx.newArray(scope, 0);
+        String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
+        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
 
         Object limit = args.length > 1 ? args[1] : Undefined.instance;
         long lim;
@@ -4386,9 +4388,6 @@ public class NativeRegExp extends IdScriptableObject {
             return a;
         }
 
-        String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
-
-        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
         if (splitter instanceof NativeRegExp) {
             var regexp = (NativeRegExp) splitter;
             var exec = ScriptableObject.getProperty(regexp, "exec");
