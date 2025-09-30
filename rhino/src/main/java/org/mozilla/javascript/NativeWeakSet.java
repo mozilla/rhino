@@ -23,7 +23,7 @@ public class NativeWeakSet extends ScriptableObject {
 
     private boolean instanceOfWeakSet = false;
 
-    private transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
+    private transient WeakHashMap<Object, Boolean> map = new WeakHashMap<>();
 
     static Object init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
@@ -95,7 +95,7 @@ public class NativeWeakSet extends ScriptableObject {
         }
         // Add a value to the map, but don't make it the key -- otherwise the WeakHashMap
         // will never GC anything.
-        map.put((Scriptable) key, Boolean.TRUE);
+        map.put(key, Boolean.TRUE);
         return this;
     }
 

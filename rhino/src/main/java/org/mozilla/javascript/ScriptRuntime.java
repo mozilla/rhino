@@ -1245,14 +1245,8 @@ public class ScriptRuntime {
             throw typeErrorById("msg.undef.to.object");
         }
 
-        if (isSymbol(val)) {
-            if (val instanceof SymbolKey) {
-                NativeSymbol result = new NativeSymbol((SymbolKey) val);
-                setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
-                return result;
-            }
-
-            NativeSymbol result = new NativeSymbol((NativeSymbol) val);
+        if (val instanceof SymbolKey) {
+            NativeSymbol result = new NativeSymbol((SymbolKey) val);
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
             return result;
         }
@@ -1929,6 +1923,7 @@ public class ScriptRuntime {
     /** Call obj.[[Put]](id, value) */
     public static Object setObjectElem(
             Object obj, Object elem, Object value, Context cx, Scriptable scope) {
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(obj, elem, value, cx);
         Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, elem, value);
         return setObjectElem(sobj, elem, value, cx);
     }
@@ -2052,6 +2047,7 @@ public class ScriptRuntime {
     /** A cheaper and less general version of the above for well-known argument types. */
     public static Object setObjectIndex(
             Object obj, double dblIndex, Object value, Context cx, Scriptable scope) {
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(obj, dblIndex, value, cx);
         Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, dblIndex, value);
         int index = (int) dblIndex;
         if (index == dblIndex && index >= 0) {
@@ -5740,6 +5736,15 @@ public class ScriptRuntime {
                 && cx.isStrictMode()
                 && cx.getLanguageVersion() >= Context.VERSION_1_8) {
             throw undefWriteError(obj, property, value);
+        }
+    }
+
+    private static void verifyIsScriptableOrComplainWriteErrorInEs5Strict(
+            Object obj, Object elem, Object value, Context cx) {
+        if (!(obj instanceof Scriptable)
+                && cx.isStrictMode()
+                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+            throw undefWriteError(obj, elem, value);
         }
     }
 

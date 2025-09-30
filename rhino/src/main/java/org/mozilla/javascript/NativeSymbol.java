@@ -21,19 +21,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     public static final String CLASS_NAME = "Symbol";
     public static final String TYPE_NAME = "symbol";
 
-    private static final Object GLOBAL_TABLE_KEY = new Object();
-
     private final SymbolKey key;
-    private final NativeSymbol symbolData;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor ctor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        0,
-                        LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        NativeSymbol::js_constructor);
+                new LambdaConstructor(scope, CLASS_NAME, 0, NativeSymbol::js_constructorCall, null);
 
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
@@ -87,12 +79,6 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     NativeSymbol(SymbolKey key) {
         this.key = key;
-        this.symbolData = this;
-    }
-
-    public NativeSymbol(NativeSymbol s) {
-        this.key = s.key;
-        this.symbolData = s.symbolData;
     }
 
     @Override
@@ -105,33 +91,27 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return CLASS_NAME;
     }
 
-    private static SymbolKey createRegisteredSymbol(Scriptable scope, String name) {
-        return new SymbolKey(name, Symbol.Kind.REGISTERED);
-    }
-
     private static void createStandardSymbol(
             Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
-        NativeSymbol sym = new NativeSymbol(key);
-        sym.setPrototype(ctor.getClassPrototype());
-        sym.setParentScope(scope);
-        ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
+        ctor.defineProperty(name, key, DONTENUM | READONLY | PERMANENT);
     }
 
     private static NativeSymbol getSelf(Scriptable thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
-    private static NativeSymbol js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static SymbolKey js_constructorCall(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String desc = null;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
         }
 
         if (args.length > 1) {
-            return new NativeSymbol((SymbolKey) args[1]);
+            return (SymbolKey) args[1];
         }
 
-        return new NativeSymbol(new SymbolKey(desc, Symbol.Kind.REGULAR));
+        return new SymbolKey(desc, Symbol.Kind.REGULAR);
     }
 
     private static String js_toString(
@@ -141,7 +121,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static Object js_valueOf(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return getSelf(thisObj).symbolData;
+        return getSelf(thisObj).key;
     }
 
     private static Object js_description(Scriptable thisObj) {
@@ -233,7 +213,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
      */
     @SuppressWarnings("ReferenceEquality")
     public boolean isSymbol() {
-        return (symbolData == this);
+        return false;
     }
 
     @Override
