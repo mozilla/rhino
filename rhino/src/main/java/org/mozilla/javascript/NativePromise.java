@@ -38,26 +38,33 @@ public class NativePromise extends ScriptableObject {
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         constructor.defineConstructorMethod(
-                scope, "resolve", 1, NativePromise::resolve, DONTENUM, DONTENUM | READONLY);
+                scope, "resolve", 1, null, NativePromise::resolve, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "reject", 1, NativePromise::reject, DONTENUM, DONTENUM | READONLY);
+                scope, "reject", 1, null, NativePromise::reject, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "all", 1, NativePromise::all, DONTENUM, DONTENUM | READONLY);
+                scope, "all", 1, null, NativePromise::all, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "allSettled", 1, NativePromise::allSettled, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "allSettled",
+                1,
+                null,
+                NativePromise::allSettled,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "race", 1, NativePromise::race, DONTENUM, DONTENUM | READONLY);
+                scope, "race", 1, null, NativePromise::race, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "any", 1, NativePromise::any, DONTENUM, DONTENUM | READONLY);
+                scope, "any", 1, null, NativePromise::any, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
                 scope,
                 "withResolvers",
                 0,
+                null,
                 NativePromise::withResolvers,
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "try", 1, NativePromise::promiseTry, DONTENUM, DONTENUM | READONLY);
+                scope, "try", 1, null, NativePromise::promiseTry, DONTENUM, DONTENUM | READONLY);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
@@ -65,6 +72,7 @@ public class NativePromise extends ScriptableObject {
                 scope,
                 "then",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     NativePromise self =
                             LambdaConstructor.convertThisObject(thisObj, NativePromise.class);
@@ -73,11 +81,12 @@ public class NativePromise extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "catch", 1, NativePromise::doCatch, DONTENUM, DONTENUM | READONLY);
+                scope, "catch", 1, null, NativePromise::doCatch, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "finally",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         doFinally(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,

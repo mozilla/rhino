@@ -206,8 +206,11 @@ public class LambdaConstructor extends LambdaFunction {
             int length,
             SerializableCallable target,
             int attributes,
-            int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, "[" + name.getName() + "]", length, target);
+            int propertyAttributes,
+            boolean defaultPrototype) {
+        LambdaFunction f =
+                new LambdaFunction(
+                        scope, "[" + name.getName() + "]", length, target, defaultPrototype);
         f.setStandardPropertyAttributes(propertyAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);

@@ -89,10 +89,10 @@ final class NativeString extends ScriptableObject {
                 wrapConstructor(NativeString::js_toLocaleLowerCase));
 
         /* Back to prototype methods -- these are all part of ECMAScript */
-        defProtoMethod(c, scope, SymbolKey.ITERATOR, 0, NativeString::js_iterator);
-        defProtoMethod(c, scope, "toString", 0, NativeString::js_toString);
-        defProtoMethod(c, scope, "toSource", 0, NativeString::js_toSource);
-        defProtoMethod(c, scope, "valueOf", 0, NativeString::js_toString);
+        defProtoMethodWithoutProto(c, scope, SymbolKey.ITERATOR, 0, NativeString::js_iterator);
+        defProtoMethodWithoutProto(c, scope, "toString", 0, NativeString::js_toString);
+        defProtoMethodWithoutProto(c, scope, "toSource", 0, NativeString::js_toSource);
+        defProtoMethodWithoutProto(c, scope, "valueOf", 0, NativeString::js_toString);
         defProtoMethodWithoutProto(c, scope, "charAt", 1, NativeString::js_charAt);
         defProtoMethodWithoutProto(c, scope, "charCodeAt", 1, NativeString::js_charCodeAt);
         defProtoMethodWithoutProto(c, scope, "indexOf", 1, NativeString::js_indexOf);
@@ -104,47 +104,48 @@ final class NativeString extends ScriptableObject {
         defProtoMethodWithoutProto(c, scope, "substr", 2, NativeString::js_substr);
         defProtoMethodWithoutProto(c, scope, "concat", 1, NativeString::js_concat);
         defProtoMethodWithoutProto(c, scope, "slice", 2, NativeString::js_slice);
-        defProtoMethod(c, scope, "bold", 0, NativeString::js_bold);
-        defProtoMethod(c, scope, "italics", 0, NativeString::js_italics);
-        defProtoMethod(c, scope, "fixed", 0, NativeString::js_fixed);
-        defProtoMethod(c, scope, "strike", 0, NativeString::js_strike);
-        defProtoMethod(c, scope, "small", 0, NativeString::js_small);
-        defProtoMethod(c, scope, "big", 0, NativeString::js_big);
-        defProtoMethod(c, scope, "blink", 0, NativeString::js_blink);
-        defProtoMethod(c, scope, "sup", 0, NativeString::js_sup);
-        defProtoMethod(c, scope, "sub", 0, NativeString::js_sub);
-        defProtoMethod(c, scope, "fontsize", 0, NativeString::js_fontsize);
-        defProtoMethod(c, scope, "fontcolor", 0, NativeString::js_fontcolor);
-        defProtoMethod(c, scope, "link", 0, NativeString::js_link);
-        defProtoMethod(c, scope, "anchor", 0, NativeString::js_anchor);
-        defProtoMethod(c, scope, "equals", 1, NativeString::js_equals);
-        defProtoMethod(c, scope, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase);
+        defProtoMethodWithoutProto(c, scope, "bold", 0, NativeString::js_bold);
+        defProtoMethodWithoutProto(c, scope, "italics", 0, NativeString::js_italics);
+        defProtoMethodWithoutProto(c, scope, "fixed", 0, NativeString::js_fixed);
+        defProtoMethodWithoutProto(c, scope, "strike", 0, NativeString::js_strike);
+        defProtoMethodWithoutProto(c, scope, "small", 0, NativeString::js_small);
+        defProtoMethodWithoutProto(c, scope, "big", 0, NativeString::js_big);
+        defProtoMethodWithoutProto(c, scope, "blink", 0, NativeString::js_blink);
+        defProtoMethodWithoutProto(c, scope, "sup", 0, NativeString::js_sup);
+        defProtoMethodWithoutProto(c, scope, "sub", 0, NativeString::js_sub);
+        defProtoMethodWithoutProto(c, scope, "fontsize", 0, NativeString::js_fontsize);
+        defProtoMethodWithoutProto(c, scope, "fontcolor", 0, NativeString::js_fontcolor);
+        defProtoMethodWithoutProto(c, scope, "link", 0, NativeString::js_link);
+        defProtoMethodWithoutProto(c, scope, "anchor", 0, NativeString::js_anchor);
+        defProtoMethodWithoutProto(c, scope, "equals", 1, NativeString::js_equals);
+        defProtoMethodWithoutProto(
+                c, scope, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase);
         defProtoMethodWithoutProto(c, scope, "match", 1, NativeString::js_match);
         defProtoMethodWithoutProto(c, scope, "matchAll", 1, NativeString::js_matchAll);
         defProtoMethodWithoutProto(c, scope, "search", 1, NativeString::js_search);
         defProtoMethodWithoutProto(c, scope, "replace", 2, NativeString::js_replace);
         defProtoMethodWithoutProto(c, scope, "replaceAll", 2, NativeString::js_replaceAll);
-        defProtoMethod(c, scope, "at", 1, NativeString::js_at);
+        defProtoMethodWithoutProto(c, scope, "at", 1, NativeString::js_at);
         defProtoMethodWithoutProto(c, scope, "localeCompare", 1, NativeString::js_localeCompare);
         defProtoMethodWithoutProto(
                 c, scope, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase);
         defProtoMethodWithoutProto(
                 c, scope, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase);
-        defProtoMethod(c, scope, "trim", 0, NativeString::js_trim);
-        defProtoMethod(c, scope, "trimLeft", 0, NativeString::js_trimLeft);
-        defProtoMethod(c, scope, "trimStart", 0, NativeString::js_trimLeft);
-        defProtoMethod(c, scope, "trimRight", 0, NativeString::js_trimRight);
-        defProtoMethod(c, scope, "trimEnd", 0, NativeString::js_trimRight);
-        defProtoMethod(c, scope, "includes", 1, NativeString::js_includes);
-        defProtoMethod(c, scope, "startsWith", 1, NativeString::js_startsWith);
-        defProtoMethod(c, scope, "endsWith", 1, NativeString::js_endsWith);
-        defProtoMethod(c, scope, "normalize", 0, NativeString::js_normalize);
-        defProtoMethod(c, scope, "repeat", 1, NativeString::js_repeat);
-        defProtoMethod(c, scope, "codePointAt", 1, NativeString::js_codePointAt);
-        defProtoMethod(c, scope, "padStart", 1, NativeString::js_padStart);
-        defProtoMethod(c, scope, "padEnd", 1, NativeString::js_padEnd);
-        defProtoMethod(c, scope, "isWellFormed", 0, NativeString::js_isWellFormed);
-        defProtoMethod(c, scope, "toWellFormed", 0, NativeString::js_toWellFormed);
+        defProtoMethodWithoutProto(c, scope, "trim", 0, NativeString::js_trim);
+        defProtoMethodWithoutProto(c, scope, "trimLeft", 0, NativeString::js_trimLeft);
+        defProtoMethodWithoutProto(c, scope, "trimStart", 0, NativeString::js_trimLeft);
+        defProtoMethodWithoutProto(c, scope, "trimRight", 0, NativeString::js_trimRight);
+        defProtoMethodWithoutProto(c, scope, "trimEnd", 0, NativeString::js_trimRight);
+        defProtoMethodWithoutProto(c, scope, "includes", 1, NativeString::js_includes);
+        defProtoMethodWithoutProto(c, scope, "startsWith", 1, NativeString::js_startsWith);
+        defProtoMethodWithoutProto(c, scope, "endsWith", 1, NativeString::js_endsWith);
+        defProtoMethodWithoutProto(c, scope, "normalize", 0, NativeString::js_normalize);
+        defProtoMethodWithoutProto(c, scope, "repeat", 1, NativeString::js_repeat);
+        defProtoMethodWithoutProto(c, scope, "codePointAt", 1, NativeString::js_codePointAt);
+        defProtoMethodWithoutProto(c, scope, "padStart", 1, NativeString::js_padStart);
+        defProtoMethodWithoutProto(c, scope, "padEnd", 1, NativeString::js_padEnd);
+        defProtoMethodWithoutProto(c, scope, "isWellFormed", 0, NativeString::js_isWellFormed);
+        defProtoMethodWithoutProto(c, scope, "toWellFormed", 0, NativeString::js_toWellFormed);
 
         if (sealed) {
             c.sealObject();
@@ -159,25 +160,16 @@ final class NativeString extends ScriptableObject {
             String name,
             int length,
             SerializableCallable target) {
-        c.defineConstructorMethod(scope, name, length, target, DONTENUM);
+        c.defineConstructorMethod(scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
     }
 
-    private static void defProtoMethod(
-            LambdaConstructor c,
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY, true);
-    }
-
-    private static void defProtoMethod(
+    private static void defProtoMethodWithoutProto(
             LambdaConstructor c,
             Scriptable scope,
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        c.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+        c.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY, false);
     }
 
     private static void defProtoMethodWithoutProto(

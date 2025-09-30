@@ -31,11 +31,29 @@ final class NativeBoolean extends ScriptableObject {
         constructor.setPrototypeScriptable(new NativeBoolean(false));
 
         constructor.definePrototypeMethod(
-                scope, "toString", 0, NativeBoolean::js_toString, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "toString",
+                0,
+                null,
+                NativeBoolean::js_toString,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "toSource", 0, NativeBoolean::js_toSource, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "toSource",
+                0,
+                null,
+                NativeBoolean::js_toSource,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "valueOf", 0, NativeBoolean::js_valueOf, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "valueOf",
+                0,
+                null,
+                NativeBoolean::js_valueOf,
+                DONTENUM,
+                DONTENUM | READONLY);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {
