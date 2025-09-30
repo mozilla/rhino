@@ -67,7 +67,8 @@ public abstract class NewLiteralStorage {
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
 
-            // Resize array storage
+            // TODO: Simplify code generator
+            // TODO: Resize array storage -- need to handle Iterable protocol
             int spreadSize =
                     (src instanceof NativeArray)
                             ? (int) ((NativeArray) src).getLength()
@@ -81,14 +82,10 @@ public abstract class NewLiteralStorage {
                 long length = arr.getLength();
 
                 for (int i = 0; i < length; i++) {
-                    Object value = arr.get(i, arr);
-                    if (value != Scriptable.NOT_FOUND) {
-                        pushValue(value);
-                    } else {
-                        pushValue(Undefined.instance);
-                    }
+                    Object value = NativeArray.getElem(cx, arr, i);
+                    pushValue(value);
                 }
-            } else {
+            } else { // TODO: should call SymbolKey.ITERATOR -- js_from
                 Object[] ids = src.getIds();
 
                 for (Object id : ids) {
