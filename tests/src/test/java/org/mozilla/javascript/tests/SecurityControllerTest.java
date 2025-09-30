@@ -89,8 +89,8 @@ public class SecurityControllerTest {
         String script =
                 "f = new com.example.securitytest.SomeFactory();\n"
                         + "var i = f.create();\n"
-                        + "i.size();\n"
-                        + "i.bar();";
+                        + "i.foo();\n" // from SomeInterface, always accessible
+                        + "i.bar();"; // from SomeClass, not accessible if SomeClass is blocked
 
         // try in allowed scope
         runScript(script, ALLOW_IMPL_ACCESS);
@@ -100,7 +100,7 @@ public class SecurityControllerTest {
             runScript(script, RESTRICT_IMPL_ACCESS);
             fail("EcmaError expected");
         } catch (EcmaError ee) {
-            assertTrue(ee.getMessage().contains("Cannot find function bar"));
+            assertTrue(ee.toString(), ee.getMessage().contains("Cannot find function bar"));
         }
 
         // try in allowed scope again
