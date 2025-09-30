@@ -4415,26 +4415,18 @@ public final class Interpreter extends Icode implements Evaluator {
             }
             Object[] values = store.getValues();
 
-            // Check if this is a spread array by looking for our special marker
-            boolean isSpreadArray = false;
+            // Check if we have a target array below the storage (spread case)
+            // For spread arrays, DoLiteralNewArray creates a marked target array at stackTop-1
             if (state.stackTop > 0 && frame.stack[state.stackTop - 1] instanceof NativeArray) {
                 NativeArray targetArray = (NativeArray) frame.stack[state.stackTop - 1];
-                isSpreadArray = targetArray.has("__rhino_spread_target__", targetArray);
+                if (targetArray.has("__rhino_spread_target__", targetArray)) {
+                    --state.stackTop;
+                }
             }
 
-            if (isSpreadArray) {
-                // Spread array: follow DoObjectLit pattern
-                --state.stackTop;
-                // Create final result array (the spread has already been processed into the store)
-                Scriptable result =
-                        ScriptRuntime.newArrayLiteral(values, skipIndexces, cx, frame.scope);
-                frame.stack[state.stackTop] = result;
-            } else {
-                // Regular array: just replace storage with result
-                Scriptable result =
-                        ScriptRuntime.newArrayLiteral(values, skipIndexces, cx, frame.scope);
-                frame.stack[state.stackTop] = result;
-            }
+            Scriptable result =
+                    ScriptRuntime.newArrayLiteral(values, skipIndexces, cx, frame.scope);
+            frame.stack[state.stackTop] = result;
             return null;
         }
     }

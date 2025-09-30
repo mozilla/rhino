@@ -7,25 +7,10 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for array literal spread syntax (...) functionality. */
 public class ArrayLiteralSpreadTest {
-
-    private Object evaluateScript(String script) {
-        Context cx = Context.enter();
-        try {
-            cx.setInterpretedMode(true);
-            cx.setLanguageVersion(Context.VERSION_ES6); // Enable ES6 features
-            Scriptable scope = cx.initStandardObjects();
-            return cx.evaluateString(scope, script, "test", 1, null);
-        } finally {
-            Context.exit();
-        }
-    }
-
     @Test
     public void testBasicSpread() {
         String script =
