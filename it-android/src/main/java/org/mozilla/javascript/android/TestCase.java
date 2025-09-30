@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,9 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.commonjs.module.ModuleScript;
+import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
+import org.mozilla.javascript.commonjs.module.RequireBuilder;
 
 /**
  * Utility class, that search for testcases in "assets/tests".
@@ -32,7 +36,7 @@ public class TestCase {
             new ContextFactory() {
                 @Override
                 protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == Context.FEATURE_ENABLE_XML_SECURE_PARSING) return false;
+                    if (featureIndex == 20 /*Context.FEATURE_ENABLE_XML_SECURE_PARSING*/) return false;
                     return super.hasFeature(cx, featureIndex);
                 }
 
@@ -40,7 +44,8 @@ public class TestCase {
                 protected Context makeContext() {
                     Context cx = super.makeContext();
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
-                    cx.setGeneratingDebug(true);
+                    cx.setGeneratingDebug(false);
+                    cx.setOptimizationLevel(-1);
                     cx.seal(null);
                     return cx;
                 }
@@ -53,9 +58,9 @@ public class TestCase {
     }
 
     public String run() {
+        Context cx = factory.enterContext();
         try (InputStream in = assetManager.open("tests/" + name);
-                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-                Context cx = factory.enterContext()) {
+                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
 
             Scriptable scope = cx.newObject(global);
             scope.setPrototype(global);
@@ -64,6 +69,8 @@ public class TestCase {
             return ScriptRuntime.toString(result);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } finally {
+            Context.exit();
         }
     }
 
@@ -77,12 +84,14 @@ public class TestCase {
         AssetManager assetManager = context.getAssets();
         // define assert object
         ScriptableObject global;
+        Context cx = factory.enterContext();
         try (InputStream in = assetManager.open("assert.js");
-                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8);
-                Context cx = factory.enterContext()) {
+                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
             global = cx.initStandardObjects();
             cx.evaluateReader(global, rdr, "assert.js", 1, null);
             global.sealObject();
+        } finally {
+            Context.exit();
         }
 
         String[] files = assetManager.list("tests");

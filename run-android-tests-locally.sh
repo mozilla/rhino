@@ -35,6 +35,7 @@ while ! ($CONTAINER_CMD exec -it $CONTAINER_NAME adb shell getprop sys.boot_comp
   echo "- Waiting for emulator to boot..."
   sleep 10
 done
+set -e
 ./gradlew it-android:connectedAndroidTest
 ./gradlew it-android:installDebug
 echo "Open http://localhost:$HTTP_PORT in your browser and check result"
