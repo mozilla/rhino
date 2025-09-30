@@ -60,15 +60,28 @@ final class NativeNumber extends ScriptableObject {
         constructor.defineProperty("EPSILON", ScriptRuntime.wrapNumber(EPSILON), propAttr);
 
         constructor.defineConstructorMethod(
-                scope, "isFinite", 1, NativeNumber::js_isFinite, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "isFinite",
+                1,
+                null,
+                NativeNumber::js_isFinite,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "isNaN", 1, NativeNumber::js_isNaN, DONTENUM, DONTENUM | READONLY);
+                scope, "isNaN", 1, null, NativeNumber::js_isNaN, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
-                scope, "isInteger", 1, NativeNumber::js_isInteger, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "isInteger",
+                1,
+                null,
+                NativeNumber::js_isInteger,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.defineConstructorMethod(
                 scope,
                 "isSafeInteger",
                 1,
+                null,
                 NativeNumber::js_isSafeInteger,
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -83,31 +96,46 @@ final class NativeNumber extends ScriptableObject {
         }
 
         constructor.definePrototypeMethod(
-                scope, "toString", 1, NativeNumber::js_toString, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "toString",
+                1,
+                null,
+                NativeNumber::js_toString,
+                DONTENUM,
+                DONTENUM | READONLY);
         // Alias toLocaleString to toString
         constructor.definePrototypeMethod(
                 scope,
                 "toLocaleString",
                 0,
+                null,
                 NativeNumber::js_toString,
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "toSource", 0, NativeNumber::js_toSource, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "toSource",
+                0,
+                null,
+                NativeNumber::js_toSource,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "valueOf",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         toSelf(thisObj).doubleValue,
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "toFixed", 1, NativeNumber::js_toFixed, DONTENUM, DONTENUM | READONLY);
+                scope, "toFixed", 1, null, NativeNumber::js_toFixed, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "toExponential",
                 1,
+                null,
                 NativeNumber::js_toExponential,
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -115,6 +143,7 @@ final class NativeNumber extends ScriptableObject {
                 scope,
                 "toPrecision",
                 1,
+                null,
                 NativeNumber::js_toPrecision,
                 DONTENUM,
                 DONTENUM | READONLY);
