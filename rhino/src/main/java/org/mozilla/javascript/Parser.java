@@ -3908,7 +3908,8 @@ public class Parser {
 
             if (this.inUseStrictDirective
                     && propertyName != null
-                    && !(pname instanceof ComputedPropertyKey) && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+                    && !(pname instanceof ComputedPropertyKey)
+                    && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
                 switch (entryKind) {
                     case PROP_ENTRY:
                     case METHOD_ENTRY:
