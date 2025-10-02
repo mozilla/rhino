@@ -51,7 +51,9 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return members.has(name, true) || javaClassPropertyName.equals(name);
+        return members.has(name, true)
+                || javaClassPropertyName.equals(name)
+                || "class".equals(name);
     }
 
     @Override
@@ -68,14 +70,18 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         }
 
         if (members.has(name, true)) {
-            return members.get(this, name, javaObject, true);
+            Object member = members.get(this, name, javaObject, true);
+            // trying to access .class when there is an existing static setClass()
+            if (!("class".equals(name) && member == NOT_FOUND)) {
+                return member;
+            }
         }
 
         Context cx = Context.getContext();
         Scriptable scope = ScriptableObject.getTopLevelScope(start);
         WrapFactory wrapFactory = cx.getWrapFactory();
 
-        if (javaClassPropertyName.equals(name)) {
+        if (javaClassPropertyName.equals(name) || "class".equals(name)) {
             return wrapFactory.wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
         }
 
