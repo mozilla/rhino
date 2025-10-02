@@ -10,7 +10,6 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -55,7 +54,7 @@ import org.mozilla.javascript.xml.XMLLib;
  * @author Norris Boyd
  * @author Brendan Eich
  */
-public class Context implements Closeable {
+public class Context implements AutoCloseable {
     /**
      * Language versions.
      *
