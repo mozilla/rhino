@@ -67,7 +67,7 @@ test {
 
     jacoco {
         // These particular tests produce Jacoco exceptions because of their size
-        excludes = ['**perlstress**', '**start_unicode**']
+        excludes = ['**perlstress**', '**start_unicode**', '**ojsc**']
     }
 }
 
