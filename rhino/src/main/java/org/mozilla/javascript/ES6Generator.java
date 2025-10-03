@@ -199,7 +199,8 @@ public final class ES6Generator extends IdScriptableObject {
         try {
             // Call "return" but don't throw if it can't be found
             Object retResult = callReturnOptionally(cx, scope, value);
-            if (retResult != null) {
+            // Per spec, treat undefined return value same as null
+            if (retResult != null && !Undefined.instance.equals(retResult)) {
                 if (ScriptRuntime.isIteratorDone(cx, retResult)) {
                     // Iterator is "done".
                     delegee = null;
@@ -325,7 +326,7 @@ public final class ES6Generator extends IdScriptableObject {
         Object throwValue = value;
         if (op == NativeGenerator.GENERATOR_CLOSE) {
             if (!(value instanceof NativeGenerator.GeneratorClosedException)) {
-                throwValue = new NativeGenerator.GeneratorClosedException();
+                throwValue = new NativeGenerator.GeneratorClosedException(value);
             }
         } else {
             if (value instanceof JavaScriptException) {
@@ -343,6 +344,7 @@ public final class ES6Generator extends IdScriptableObject {
 
         } catch (NativeGenerator.GeneratorClosedException gce) {
             state = State.COMPLETED;
+            ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, gce.getValue());
         } catch (JavaScriptException jse) {
             state = State.COMPLETED;
             if (jse.getValue() instanceof NativeIterator.StopIteration) {
@@ -380,7 +382,8 @@ public final class ES6Generator extends IdScriptableObject {
         // Delegate to "return" method. If it's not defined we ignore it
         Object retFnObj =
                 ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
-        if (!Undefined.instance.equals(retFnObj)) {
+        // Per spec, if return is null or undefined, treat as if it doesn't exist
+        if (!Undefined.instance.equals(retFnObj) && retFnObj != null) {
             if (!(retFnObj instanceof Callable)) {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function",

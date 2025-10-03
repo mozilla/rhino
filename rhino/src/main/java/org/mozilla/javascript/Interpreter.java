@@ -1314,6 +1314,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 } catch (RuntimeException e) {
                     // Only propagate exceptions other than closingException
                     if (e != value) throw e;
+                    // Re-throw GeneratorClosedException so ES6Generator can catch and complete
+                    if (e instanceof NativeGenerator.GeneratorClosedException) {
+                        throw e;
+                    }
                 }
                 return Undefined.instance;
             }
