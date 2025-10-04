@@ -22,9 +22,6 @@ shadowJar {
     // Ensure that the "jar" from this step is the shadowed one that we want to 
     // publish in Maven.
     archiveClassifier.set('')
-    manifest {
-      inheritFrom(project.tasks.jar.manifest)
-    }
 }
 
 startScripts {
