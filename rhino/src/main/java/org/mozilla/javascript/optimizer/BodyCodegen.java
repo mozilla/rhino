@@ -3860,8 +3860,12 @@ class BodyCodegen {
             }
         } else {
             generateExpression(child, node);
-            if (!isArithmeticNode(child)) addObjectToNumeric();
             generateExpression(child.getNext(), node);
+            if (!isArithmeticNode(child)) {
+                cfw.add(ByteCode.SWAP);
+                addObjectToNumeric();
+                cfw.add(ByteCode.SWAP);
+            }
             if (!isArithmeticNode(child.getNext())) addObjectToNumeric();
 
             switch (type) {
