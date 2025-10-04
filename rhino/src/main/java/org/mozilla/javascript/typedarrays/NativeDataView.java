@@ -82,6 +82,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getFloat32",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getFloat(4, args),
                 DONTENUM,
@@ -90,6 +91,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getFloat64",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getFloat(8, args),
                 DONTENUM,
@@ -98,6 +100,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getInt8",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(1, true, args),
                 DONTENUM,
@@ -106,6 +109,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getInt16",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(2, true, args),
                 DONTENUM,
@@ -114,6 +118,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getInt32",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(4, true, args),
                 DONTENUM,
@@ -122,6 +127,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getUint8",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(1, false, args),
                 DONTENUM,
@@ -130,6 +136,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getUint16",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(2, false, args),
                 DONTENUM,
@@ -138,6 +145,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "getUint32",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj).js_getInt(4, false, args),
                 DONTENUM,
@@ -146,6 +154,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setFloat32",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setFloat(4, args);
                     return Undefined.instance;
@@ -156,6 +165,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setFloat64",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setFloat(8, args);
                     return Undefined.instance;
@@ -166,6 +176,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setInt8",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(1, true, args);
                     return Undefined.instance;
@@ -176,6 +187,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setInt16",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(2, true, args);
                     return Undefined.instance;
@@ -186,6 +198,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setInt32",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(4, true, args);
                     return Undefined.instance;
@@ -196,6 +209,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setUint8",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(1, false, args);
                     return Undefined.instance;
@@ -206,6 +220,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setUint16",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(2, false, args);
                     return Undefined.instance;
@@ -216,6 +231,7 @@ public class NativeDataView extends NativeArrayBufferView {
                 scope,
                 "setUint32",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     realThis(thisObj).js_setInt(4, false, args);
                     return Undefined.instance;

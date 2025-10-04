@@ -31,6 +31,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "add",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "add").js_add(NativeMap.key(args)),
                 DONTENUM,
@@ -39,6 +40,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "delete",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
@@ -47,6 +49,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "has",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,
@@ -55,6 +58,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "clear",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "clear").js_clear(),
                 DONTENUM,
@@ -63,6 +67,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "values",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "values")
                                 .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
@@ -75,6 +80,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "forEach",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "forEach")
                                 .js_forEach(
@@ -89,6 +95,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "entries",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "entries")
                                 .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
@@ -100,6 +107,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "intersection",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "intersection").js_intersection(lcx, lscope, args),
                 DONTENUM,
@@ -108,6 +116,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "union",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "union").js_union(lcx, lscope, args),
                 DONTENUM,
@@ -116,6 +125,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "difference",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "difference").js_difference(lcx, lscope, args),
                 DONTENUM,
@@ -124,6 +134,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "symmetricDifference",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "symmetricDifference")
                                 .js_symmetricDifference(lcx, lscope, args),
@@ -133,6 +144,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isSubsetOf",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "isSubsetOf").js_isSubsetOf(lcx, lscope, args),
                 DONTENUM,
@@ -141,6 +153,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isSupersetOf",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "isSupersetOf").js_isSupersetOf(lcx, lscope, args),
                 DONTENUM,
@@ -149,6 +162,7 @@ public class NativeSet extends ScriptableObject {
                 scope,
                 "isDisjointFrom",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "isDisjointFrom").js_isDisjointFrom(lcx, lscope, args),
                 DONTENUM,

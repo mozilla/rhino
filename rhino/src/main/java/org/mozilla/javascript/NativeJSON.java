@@ -35,8 +35,9 @@ public final class NativeJSON extends ScriptableObject {
         json.setPrototype(getObjectPrototype(scope));
         json.setParentScope(scope);
 
-        json.defineProperty(scope, "parse", 2, NativeJSON::parse, DONTENUM, DONTENUM | READONLY);
-        json.defineProperty(
+        json.defineBuiltinProperty(
+                scope, "parse", 2, NativeJSON::parse, DONTENUM, DONTENUM | READONLY);
+        json.defineBuiltinProperty(
                 scope, "stringify", 3, NativeJSON::stringify, DONTENUM, DONTENUM | READONLY);
 
         json.defineProperty("toSource", "JSON", DONTENUM | READONLY | PERMANENT);
