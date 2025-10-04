@@ -6,8 +6,9 @@
 
 package org.mozilla.javascript;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * This is an implementation of the standard "Symbol" type that implements all of its weird
@@ -20,26 +21,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     public static final String CLASS_NAME = "Symbol";
     public static final String TYPE_NAME = "symbol";
 
-    private static final Object GLOBAL_TABLE_KEY = new Object();
-
-    enum SymbolKind {
-        REGULAR, // A regular symbol is created using the constructor
-        BUILT_IN, // A built-in symbol is one of the properties of the "Symbol" constructor
-        REGISTERED // A registered symbol was created using "Symbol.for"
-    }
-
     private final SymbolKey key;
-    private final SymbolKind kind;
-    private final NativeSymbol symbolData;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor ctor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        0,
-                        LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        NativeSymbol::js_constructor);
+                new LambdaConstructor(scope, CLASS_NAME, 0, NativeSymbol::js_constructorCall, null);
 
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
@@ -91,20 +77,13 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         }
     }
 
-    NativeSymbol(SymbolKey key, SymbolKind kind) {
+    NativeSymbol(SymbolKey key) {
         this.key = key;
-        this.symbolData = this;
-        this.kind = kind;
     }
 
-    public NativeSymbol(NativeSymbol s) {
-        this.key = s.key;
-        this.symbolData = s.symbolData;
-        this.kind = s.kind;
-    }
-
-    SymbolKind getKind() {
-        return kind;
+    @Override
+    public Symbol.Kind getKind() {
+        return key.getKind();
     }
 
     @Override
@@ -112,37 +91,27 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return CLASS_NAME;
     }
 
-    private static NativeSymbol createRegisteredSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name) {
-        NativeSymbol sym = new NativeSymbol(new SymbolKey(name), SymbolKind.REGISTERED);
-        sym.setPrototype(ctor.getClassPrototype());
-        sym.setParentScope(scope);
-        return sym;
-    }
-
     private static void createStandardSymbol(
             Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
-        NativeSymbol sym = new NativeSymbol(key, SymbolKind.BUILT_IN);
-        sym.setPrototype(ctor.getClassPrototype());
-        sym.setParentScope(scope);
-        ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
+        ctor.defineProperty(name, key, DONTENUM | READONLY | PERMANENT);
     }
 
     private static NativeSymbol getSelf(Scriptable thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
-    private static NativeSymbol js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static SymbolKey js_constructorCall(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String desc = null;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
         }
 
         if (args.length > 1) {
-            return new NativeSymbol((SymbolKey) args[1], SymbolKind.REGULAR);
+            return (SymbolKey) args[1];
         }
 
-        return new NativeSymbol(new SymbolKey(desc), SymbolKind.REGULAR);
+        return new SymbolKey(desc, Symbol.Kind.REGULAR);
     }
 
     private static String js_toString(
@@ -152,7 +121,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static Object js_valueOf(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return getSelf(thisObj).symbolData;
+        return getSelf(thisObj).key;
     }
 
     private static Object js_description(Scriptable thisObj) {
@@ -165,22 +134,26 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                         ? ScriptRuntime.toString(args[0])
                         : ScriptRuntime.toString(Undefined.instance));
 
-        Map<String, NativeSymbol> table = getGlobalMap(scope);
-        return table.computeIfAbsent(name, (k) -> createRegisteredSymbol(scope, constructor, name));
+        Map<String, SymbolKey> table = getGlobalMap();
+        return table.computeIfAbsent(name, (k) -> new SymbolKey(k, Symbol.Kind.REGISTERED));
     }
 
     @SuppressWarnings("ReferenceEquality")
     private static Object js_keyFor(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object s = (args.length > 0 ? args[0] : Undefined.instance);
-        if (!(s instanceof NativeSymbol)) {
+        SymbolKey sym;
+        if (s instanceof NativeSymbol) {
+            sym = ((NativeSymbol) s).key;
+        } else if (s instanceof SymbolKey) {
+            sym = (SymbolKey) s;
+        } else {
             throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
         }
-        NativeSymbol sym = (NativeSymbol) s;
 
-        Map<String, NativeSymbol> table = getGlobalMap(scope);
-        for (Map.Entry<String, NativeSymbol> e : table.entrySet()) {
-            if (e.getValue().key == sym.key) {
+        Map<String, SymbolKey> table = getGlobalMap();
+        for (var e : table.entrySet()) {
+            if (e.getValue() == sym) {
                 return e.getKey();
             }
         }
@@ -240,7 +213,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
      */
     @SuppressWarnings("ReferenceEquality")
     public boolean isSymbol() {
-        return (symbolData == this);
+        return false;
     }
 
     @Override
@@ -262,20 +235,16 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return key;
     }
 
+    private static final Map<String, SymbolKey> globalMap =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
     /**
      * Return the Map that stores global symbols for the 'for' and 'keyFor' operations. It must work
      * across "realms" in the same top-level Rhino scope, so we store it there as an associated
      * property.
      */
     @SuppressWarnings("unchecked")
-    private static Map<String, NativeSymbol> getGlobalMap(Scriptable scope) {
-        ScriptableObject top = (ScriptableObject) getTopLevelScope(scope);
-        Map<String, NativeSymbol> map =
-                (Map<String, NativeSymbol>) top.getAssociatedValue(GLOBAL_TABLE_KEY);
-        if (map == null) {
-            map = new HashMap<>();
-            top.associateValue(GLOBAL_TABLE_KEY, map);
-        }
-        return map;
+    private static Map<String, SymbolKey> getGlobalMap() {
+        return globalMap;
     }
 }

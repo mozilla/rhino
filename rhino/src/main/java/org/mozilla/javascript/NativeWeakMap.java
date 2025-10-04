@@ -25,7 +25,7 @@ public class NativeWeakMap extends ScriptableObject {
 
     private boolean instanceOfWeakMap = false;
 
-    private transient WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
+    private transient WeakHashMap<Object, Object> map = new WeakHashMap<>();
 
     private static final Object NULL_VALUE = new Object();
 
@@ -138,7 +138,7 @@ public class NativeWeakMap extends ScriptableObject {
         // Map.get() does not distinguish between "not found" and a null value. So,
         // replace true null here with a marker so that we can re-convert in "get".
         final Object value = (v == null ? NULL_VALUE : v);
-        map.put((Scriptable) key, value);
+        map.put(key, value);
         return this;
     }
 
