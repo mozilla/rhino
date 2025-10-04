@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.List;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.debug.DebuggableScript;
 
 /** Abstraction of evaluation, which can be implemented either by an interpreter or compiler. */
 public interface Evaluator {
@@ -90,4 +91,8 @@ public interface Evaluator {
      * @param script script to mark as from eval
      */
     public void setEvalScriptFlag(Script script);
+
+    public default DebuggableScript getDebuggableScript(Object bytecode) {
+        return null;
+    }
 }

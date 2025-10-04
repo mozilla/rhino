@@ -1297,15 +1297,26 @@ public class Context implements Closeable {
      */
     public Object executeScriptWithContinuations(Script script, Scriptable scope)
             throws ContinuationPending {
-        if (!(script instanceof InterpretedFunction)
-                || !((InterpretedFunction) script).isScript()) {
+        if (!(script instanceof JSScript)
+                || !(((JSScript) script).getCode() instanceof InterpreterData)) {
             // Can only be applied to scripts
             throw new IllegalArgumentException(
                     "Script argument was not"
                             + " a script or was not created by interpreted mode ");
         }
-        return callFunctionWithContinuations(
-                (InterpretedFunction) script, scope, ScriptRuntime.emptyArgs);
+        return callFunctionWithContinuations((JSScript) script, scope);
+    }
+
+    public Object executeScriptWithContinuations(Callable callable, Scriptable scope)
+            throws ContinuationPending {
+        if (!(callable instanceof JSFunction)
+                || !(((JSFunction) callable).getCode() instanceof InterpreterData)) {
+            // Can only be applied to scripts
+            throw new IllegalArgumentException(
+                    "Script argument was not"
+                            + " a script or was not created by interpreted mode ");
+        }
+        return callFunctionWithContinuations((JSFunction) callable, scope, ScriptRuntime.emptyArgs);
     }
 
     /**
@@ -1313,17 +1324,17 @@ public class Context implements Closeable {
      * to catch a ContinuationPending exception and resume execution by calling {@link
      * #resumeContinuation(Object, Scriptable, Object)}.
      *
-     * @param function The function to call. The function must have been compiled with interpreted
-     *     mode (optimization level -1)
+     * @param script The script to call. The script must have been compiled with interpreted mode
+     *     (optimization level -1)
      * @param scope The scope to execute the script against
-     * @param args The arguments for the function
      * @throws ContinuationPending if the script calls a function that results in a call to {@link
      *     #captureContinuation()}
      * @since 1.7 Release 2
      */
-    public Object callFunctionWithContinuations(Callable function, Scriptable scope, Object[] args)
+    public Object callFunctionWithContinuations(Script script, Scriptable scope)
             throws ContinuationPending {
-        if (!(function instanceof InterpretedFunction)) {
+        if (!(script instanceof JSScript)
+                || !(script.getDescriptor().getCode() instanceof InterpreterData)) {
             // Can only be applied to scripts
             throw new IllegalArgumentException(
                     "Function argument was not" + " created by interpreted mode ");
@@ -1336,7 +1347,28 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(function, this, scope, scope, args, isTopLevelStrict);
+        return ScriptRuntime.doTopCall(script, this, scope, scope, isTopLevelStrict);
+    }
+
+    public Object callFunctionWithContinuations(Callable callable, Scriptable scope, Object[] args)
+            throws ContinuationPending {
+        if (!(callable instanceof JSFunction)
+                || !(((JSFunction) callable).getDescriptor().getCode()
+                        instanceof InterpreterData)) {
+            // Can only be applied to scripts
+            throw new IllegalArgumentException(
+                    "Function argument was not" + " created by interpreted mode ");
+        }
+        if (ScriptRuntime.hasTopCall(this)) {
+            throw new IllegalStateException(
+                    "Cannot have any pending top "
+                            + "calls when executing a script with continuations");
+        }
+        // Annotate so we can check later to ensure no java code in
+        // intervening frames
+        isContinuationsTopCall = true;
+        return ScriptRuntime.doTopCall(
+                (JSFunction) callable, this, scope, scope, args, isTopLevelStrict);
     }
 
     /**
@@ -1560,8 +1592,7 @@ public class Context implements Closeable {
      * @return a string representing the script source
      */
     public final String decompileScript(Script script, int indent) {
-        NativeFunction scriptImpl = (NativeFunction) script;
-        return scriptImpl.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
+        return ((JSScript) script).getDescriptor().getRawSource();
     }
 
     /**
@@ -2286,9 +2317,9 @@ public class Context implements Closeable {
      * Return DebuggableScript instance if any associated with the script. If callable supports
      * DebuggableScript implementation, the method returns it. Otherwise null is returned.
      */
-    public static DebuggableScript getDebuggableView(Script script) {
-        if (script instanceof NativeFunction) {
-            return ((NativeFunction) script).getDebuggableView();
+    public static DebuggableScript getDebuggableView(ScriptOrFn<?> script) {
+        if (script instanceof JSFunction) {
+            return ((JSFunction) script).getDebuggableView();
         }
         return null;
     }
@@ -2543,6 +2574,7 @@ public class Context implements Closeable {
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
+        compilerEnv.setSecurityDomain(securityDomain);
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
@@ -2586,8 +2618,8 @@ public class Context implements Closeable {
 
         if (debugger != null) {
             if (sourceString == null) Kit.codeBug();
-            if (bytecode instanceof DebuggableScript) {
-                DebuggableScript dscript = (DebuggableScript) bytecode;
+            DebuggableScript dscript = compiler.getDebuggableScript(bytecode);
+            if (dscript != null) {
                 notifyDebugger_r(this, dscript, sourceString);
             } else {
                 throw new RuntimeException("NOT SUPPORTED");

@@ -119,6 +119,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
         var proto = new NativeObject();
+        Scriptable top = ScriptableObject.getTopLevelScope(scope);
 
         var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
         var functionProto =
@@ -127,7 +128,10 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         var iterator = (Scriptable) ScriptableObject.getProperty(scope, "Iterator");
         var iteratorPrototype = ScriptableObject.getProperty(iterator, PROTOTYPE_PROPERTY_NAME);
-        ScriptableObject.putProperty(proto, PROTOTYPE_PROPERTY_NAME, iteratorPrototype);
+        ScriptableObject.putProperty(
+                proto,
+                PROTOTYPE_PROPERTY_NAME,
+                ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG));
 
         LambdaConstructor ctor =
                 new LambdaConstructor(
@@ -138,11 +142,12 @@ public class BaseFunction extends ScriptableObject implements Function {
                         BaseFunction::js_gen_constructorCall,
                         BaseFunction::js_gen_constructor);
 
-        proto.defineProperty("constructor", ctor, DONTENUM);
+        proto.defineProperty("constructor", ctor, READONLY | DONTENUM);
 
         // Function.prototype attributes: see ECMA 15.3.3.1
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
+        proto.defineProperty(SymbolKey.TO_STRING_TAG, "GeneratorFunction", READONLY | DONTENUM);
         ScriptableObject.putProperty(scope, GENERATOR_FUNCTION_CLASS, ctor);
         // Function.prototype attributes: see ECMA 15.3.3.1
         // The "GeneratorFunction" name actually never appears in the global scope.
@@ -387,7 +392,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         Object protoProp = null;
         if (thisObj instanceof BoundFunction)
             protoProp =
-                    ((NativeFunction) ((BoundFunction) thisObj).getTargetFunction())
+                    ((JSFunction) ((BoundFunction) thisObj).getTargetFunction())
                             .getPrototypeProperty();
         else {
             protoProp = ScriptableObject.getProperty(thisObj, PROTOTYPE_PROPERTY_NAME);
@@ -655,7 +660,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     protected boolean hasPrototypeProperty() {
         return (prototypeProperty != null && prototypeProperty != UniqueTag.NOT_FOUND)
-                || this instanceof NativeFunction;
+                || this instanceof JSFunction;
     }
 
     public Object getPrototypeProperty() {
