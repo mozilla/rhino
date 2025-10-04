@@ -3944,8 +3944,10 @@ class BodyCodegen {
             return;
         }
         if (childNumberFlag == -1) {
-            addObjectToNumeric();
             generateExpression(child.getNext(), node);
+            cfw.add(ByteCode.SWAP);
+            addObjectToNumeric();
+            cfw.add(ByteCode.SWAP);
             addObjectToNumeric();
 
             switch (type) {
