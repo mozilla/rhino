@@ -7,6 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrapFactory;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * An example WrapFactory that can be used to avoid wrapping of Java types that can be converted to
@@ -24,7 +25,7 @@ import org.mozilla.javascript.WrapFactory;
 public class PrimitiveWrapFactory extends WrapFactory {
 
     @Override
-    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+    public Object wrap(Context cx, Scriptable scope, Object obj, TypeInfo staticType) {
         if (obj instanceof String || obj instanceof Number || obj instanceof Boolean) {
             return obj;
         } else if (obj instanceof Character) {

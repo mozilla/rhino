@@ -20,11 +20,6 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
     }
 
     @Override
-    public boolean shouldConvert() {
-        return type != Object.class;
-    }
-
-    @Override
     public int hashCode() {
         return type.hashCode();
     }

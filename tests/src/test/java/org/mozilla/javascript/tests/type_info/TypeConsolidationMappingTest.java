@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.BaseStream;
@@ -24,7 +25,7 @@ public class TypeConsolidationMappingTest {
 
     @Test
     public void testGeneric() {
-        assertMappingMatch(E.class, "Ta -> Te", "Tb -> Te", "Tc -> String", "Td -> String");
+        assertMappingMatch(E.class, "Ta -> Te[]", "Tb -> Te", "Tc -> List<String>", "Td -> String");
         assertMappingMatch(Collection.class, "T -> E");
 
         // T from BaseStream -> T from Stream
@@ -43,12 +44,12 @@ public class TypeConsolidationMappingTest {
     public void testGenericParent() {
         assertMappingMatch(
                 GenericSuperClass.class,
-                "Ta -> Integer",
+                "Ta -> Integer[]",
                 "Tb -> Integer",
-                "Tc -> String",
+                "Tc -> List<String>",
                 "Td -> String",
                 "Te -> Integer");
-        assertMappingMatch(GenericSuperInterface.class, "Tc -> Number", "Td -> Number");
+        assertMappingMatch(GenericSuperInterface.class, "Tc -> List<Number>", "Td -> Number");
 
         // E from Enum, T from Comparable
         assertMappingMatch(NoTypeInfo.class, "T -> NoTypeInfo", "E -> NoTypeInfo");
@@ -120,11 +121,11 @@ public class TypeConsolidationMappingTest {
 
     static class A<Ta> {}
 
-    static class B<Tb> extends A<Tb> {}
+    static class B<Tb> extends A<Tb[]> {}
 
     interface C<Tc> {}
 
-    interface D<Td> extends C<Td> {}
+    interface D<Td> extends C<List<Td>> {}
 
     static class E<Te> extends B<Te> implements D<String> {}
 

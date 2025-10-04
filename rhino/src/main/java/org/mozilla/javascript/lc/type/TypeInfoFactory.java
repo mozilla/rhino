@@ -7,10 +7,12 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -134,6 +136,81 @@ public interface TypeInfoFactory extends Serializable {
     }
 
     /// helpers
+
+    /**
+     * consolidate a type using the mapping extracted from {@code consolidateHint}
+     *
+     * <p>Example: {@code type} is {@code E in List<E>}, {@code consolidateHint} is {@code
+     * ArrayList<SomeRandomType>}, result (for factories that support Java Generic) should then be
+     * {@code SomeRandomType}
+     *
+     * @see TypeInfo#consolidate(Map)
+     * @see #getConsolidationMapping(Class)
+     * @see ParameterizedTypeInfo#extractConsolidationMapping(TypeInfoFactory)
+     */
+    default TypeInfo consolidateType(TypeInfo type, TypeInfo consolidateHint) {
+        type = type.consolidate(getConsolidationMapping(consolidateHint.asClass()));
+        if (consolidateHint instanceof ParameterizedTypeInfo) {
+            type =
+                    type.consolidate(
+                            ((ParameterizedTypeInfo) consolidateHint)
+                                    .extractConsolidationMapping(this));
+        }
+        return type;
+    }
+
+    /**
+     * Transform provided {@code types} by applying {@link TypeInfo#consolidate(Map)} on its
+     * elements
+     *
+     * <p>Example: types is {@code [int, E]}, mapping is {@code E -> String}, return value will then
+     * be {@code [int, String]}
+     */
+    static List<TypeInfo> consolidateAll(
+            List<TypeInfo> types, Map<VariableTypeInfo, TypeInfo> mapping) {
+        if (mapping.isEmpty()) { // implicit null check
+            return types;
+        }
+
+        var size = types.size();
+
+        if (size == 0) {
+            return List.of();
+        }
+
+        if (size == 1) {
+            var type = types.get(0);
+            var consolidated = type.consolidate(mapping);
+            return type == consolidated ? types : List.of(consolidated);
+        }
+
+        var consolidatedTypes = new ArrayList<TypeInfo>(types.size());
+        for (var type : types) {
+            consolidatedTypes.add(type.consolidate(mapping));
+        }
+        return consolidatedTypes;
+    }
+
+    /**
+     * Transform a mapping by applying {@link TypeInfo#consolidate(Map)} on its values.
+     *
+     * <p>Example: mapping is {@code K -> V}, transformer is {@code V -> String}, return value will
+     * then be {@code K -> String}
+     */
+    static Map<VariableTypeInfo, TypeInfo> transformMapping(
+            Map<VariableTypeInfo, TypeInfo> mapping, Map<VariableTypeInfo, TypeInfo> transformer) {
+        if (mapping.isEmpty()) {
+            return Map.of();
+        } else if (mapping.size() == 1) {
+            var entry = mapping.entrySet().iterator().next();
+            return Map.of(entry.getKey(), entry.getValue().consolidate(transformer));
+        }
+        var transformed = new HashMap<>(mapping);
+        for (var entry : transformed.entrySet()) {
+            entry.setValue(entry.getValue().consolidate(transformer));
+        }
+        return transformed;
+    }
 
     /**
      * create a {@link TypeInfo} from {@link Type}.
