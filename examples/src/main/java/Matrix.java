@@ -7,6 +7,7 @@
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -82,7 +83,7 @@ public class Matrix implements Scriptable {
      * @param start the object where lookup began
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return name.equals("dim");
     }
 
@@ -93,7 +94,7 @@ public class Matrix implements Scriptable {
      * @param start the object where lookup began
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return true;
     }
 
@@ -106,7 +107,7 @@ public class Matrix implements Scriptable {
      * @param start the object where the lookup began
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         if (name.equals("dim")) return Integer.valueOf(dim);
 
         return NOT_FOUND;
@@ -122,7 +123,7 @@ public class Matrix implements Scriptable {
      * @param start the object where the lookup began
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         while (index >= list.size()) {
             list.add(null);
         }
@@ -148,7 +149,7 @@ public class Matrix implements Scriptable {
      * <p>We do nothing here, so all properties are effectively read-only.
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {}
+    public void put(String name, JSScope start, Object value) {}
 
     /**
      * Set an indexed property.
@@ -156,7 +157,7 @@ public class Matrix implements Scriptable {
      * <p>We do nothing here, so all properties are effectively read-only.
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {}
+    public void put(int index, JSScope start, Object value) {}
 
     /**
      * Remove a named property.
@@ -189,12 +190,12 @@ public class Matrix implements Scriptable {
     /** Get parent. */
     @Override
     public Scriptable getParentScope() {
-        return parent;
+        return (Scriptable) parent;
     }
 
     /** Set parent. */
     @Override
-    public void setParentScope(Scriptable parent) {
+    public void setParentScope(JSScope parent) {
         this.parent = parent;
     }
 
@@ -239,5 +240,6 @@ public class Matrix implements Scriptable {
     private int dim;
 
     private List<Object> list;
-    private Scriptable prototype, parent;
+    private Scriptable prototype;
+    private JSScope parent;
 }

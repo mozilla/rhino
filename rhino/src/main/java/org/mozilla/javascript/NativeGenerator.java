@@ -17,7 +17,7 @@ public final class NativeGenerator extends IdScriptableObject {
 
     private static final Object GENERATOR_TAG = "Generator";
 
-    static NativeGenerator init(ScriptableObject scope, boolean sealed) {
+    static NativeGenerator init(JSScope scope, boolean sealed) {
         // Generator
         // Can't use "NativeGenerator().exportAsJSClass" since we don't want
         // to define "Generator" as a constructor in the top-level scope.
@@ -37,7 +37,7 @@ public final class NativeGenerator extends IdScriptableObject {
         // to use to find the prototype. Use the "associateValue"
         // approach instead.
         if (scope != null) {
-            scope.associateValue(GENERATOR_TAG, prototype);
+            ((ScriptableObject) scope).associateValue(GENERATOR_TAG, prototype);
         }
 
         return prototype;
@@ -46,7 +46,7 @@ public final class NativeGenerator extends IdScriptableObject {
     /** Only for constructing the prototype object. */
     private NativeGenerator() {}
 
-    public NativeGenerator(Scriptable scope, NativeFunction function, Object savedState) {
+    public NativeGenerator(JSScope scope, NativeFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
@@ -99,7 +99,7 @@ public final class NativeGenerator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(GENERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -138,7 +138,7 @@ public final class NativeGenerator extends IdScriptableObject {
         }
     }
 
-    private Object resume(Context cx, Scriptable scope, int operation, Object value) {
+    private Object resume(Context cx, JSScope scope, int operation, Object value) {
         if (savedState == null) {
             if (operation == GENERATOR_CLOSE) return Undefined.instance;
             Object thrown;

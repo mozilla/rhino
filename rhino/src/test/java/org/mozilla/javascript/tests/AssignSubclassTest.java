@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -88,7 +89,7 @@ public class AssignSubclassTest {
         }
 
         @Override
-        public Object get(String name, Scriptable start) {
+        public Object get(String name, JSScope start) {
             if ("foo".equals(name)) {
                 return foo;
             }
@@ -96,13 +97,12 @@ public class AssignSubclassTest {
         }
 
         @Override
-        public boolean has(String name, Scriptable start) {
+        public boolean has(String name, JSScope start) {
             return "foo".equals(name) || super.has(name, start);
         }
 
         @Override
-        public boolean putOwnProperty(
-                String name, Scriptable start, Object value, boolean isThrow) {
+        public boolean putOwnProperty(String name, JSScope start, Object value, boolean isThrow) {
             if ("foo".equals(name)) {
                 foo = ScriptRuntime.toString(value);
                 return true;
@@ -111,7 +111,7 @@ public class AssignSubclassTest {
         }
 
         @Override
-        public Object get(int ix, Scriptable start) {
+        public Object get(int ix, JSScope start) {
             if (ix == 0) {
                 return bar;
             }
@@ -119,12 +119,12 @@ public class AssignSubclassTest {
         }
 
         @Override
-        public boolean has(int ix, Scriptable start) {
+        public boolean has(int ix, JSScope start) {
             return ix == 0 || super.has(ix, start);
         }
 
         @Override
-        public boolean putOwnProperty(int ix, Scriptable start, Object value, boolean isThrow) {
+        public boolean putOwnProperty(int ix, JSScope start, Object value, boolean isThrow) {
             if (ix == 0) {
                 bar = ScriptRuntime.toString(value);
                 return true;

@@ -120,7 +120,7 @@ class JavaMembers {
         return cx.getWrapFactory().wrap(cx, scope, rval, type);
     }
 
-    void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
+    void put(JSScope scope, String name, Object javaObject, Object value, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
         if (!isStatic && member == null) {
@@ -787,7 +787,7 @@ class JavaMembers {
     }
 
     static JavaMembers lookupClass(
-            Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
+            JSScope scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
         JavaMembers members;
         ClassCache cache = ClassCache.get(scope);
         Map<ClassCache.CacheKey, JavaMembers> ct = cache.getClassCacheMap();

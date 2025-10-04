@@ -12,7 +12,7 @@ import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.JSScope;
 
 /**
  * This linker optimizes:
@@ -85,7 +85,7 @@ class ConsStringLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     @SuppressWarnings("unused")
-    private static Object getLength(Object o, Context cx, Scriptable scope) {
+    private static Object getLength(Object o, Context cx, JSScope scope) {
         return ((ConsString) o).length();
     }
 }

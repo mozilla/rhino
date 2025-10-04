@@ -23,7 +23,7 @@ class SpecialRef extends Ref {
         this.name = name;
     }
 
-    static Ref createSpecial(Context cx, Scriptable scope, Object object, String name) {
+    static Ref createSpecial(Context cx, JSScope scope, Object object, String name) {
         Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
         if (target == null) {
             throw ScriptRuntime.undefReadError(object, name);
@@ -67,7 +67,7 @@ class SpecialRef extends Ref {
     }
 
     @Override
-    public Object set(Context cx, Scriptable scope, Object value) {
+    public Object set(Context cx, JSScope scope, Object value) {
         switch (type) {
             case SPECIAL_NONE:
                 return ScriptRuntime.setObjectProp(target, name, value, cx);
@@ -78,13 +78,13 @@ class SpecialRef extends Ref {
                     if (obj != null) {
                         // Check that obj does not contain on its prototype/scope
                         // chain to prevent cycles
-                        Scriptable search = obj;
+                        JSScope search = obj;
                         do {
                             if (search == target) {
                                 throw Context.reportRuntimeErrorById("msg.cyclic.value", name);
                             }
                             if (type == SPECIAL_PROTO) {
-                                search = search.getPrototype();
+                                search = ((Scriptable) search).getPrototype();
                             } else {
                                 search = search.getParentScope();
                             }

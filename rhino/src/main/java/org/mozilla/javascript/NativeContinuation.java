@@ -15,7 +15,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 
     private Object implementation;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         NativeContinuation obj = new NativeContinuation();
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
@@ -34,12 +34,12 @@ public final class NativeContinuation extends IdScriptableObject implements Func
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
         throw Context.reportRuntimeError("Direct call is not supported");
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return Interpreter.restartContinuation(this, cx, scope, args);
     }
 
@@ -79,7 +79,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(FTAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

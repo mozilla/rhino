@@ -9,6 +9,7 @@ package org.mozilla.javascript.xmlimpl;
 import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Node;
@@ -30,11 +31,11 @@ abstract class XMLObjectImpl extends XMLObject {
     private XMLLibImpl lib;
     private boolean prototypeFlag;
 
-    protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    protected XMLObjectImpl(XMLLibImpl lib, JSScope scope, XMLObject prototype) {
         initialize(lib, scope, prototype);
     }
 
-    final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    final void initialize(XMLLibImpl lib, JSScope scope, XMLObject prototype) {
         setParentScope(scope);
         setPrototype(prototype);
         prototypeFlag = (prototype == null);
@@ -105,7 +106,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public final void setParentScope(Scriptable parent) {
+    public final void setParentScope(JSScope parent) {
         super.setParentScope(parent);
     }
 
@@ -198,7 +199,8 @@ abstract class XMLObjectImpl extends XMLObject {
 
     abstract Object valueOf();
 
-    protected abstract Object jsConstructor(Context cx, boolean inNewExpr, Object[] args);
+    protected abstract Object jsConstructor(
+            Context cx, boolean inNewExpr, Object newTarget, Object[] args);
 
     //
     //
@@ -237,7 +239,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         return hasXMLProperty(lib.toXMLNameFromString(cx, name));
     }
@@ -260,7 +262,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Context cx = Context.getCurrentContext();
         return getXMLProperty(lib.toXMLNameFromString(cx, name));
     }
@@ -280,7 +282,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         Context cx = Context.getCurrentContext();
         putXMLProperty(lib.toXMLNameFromString(cx, name), value);
     }
@@ -360,12 +362,12 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public NativeWith enterWith(Scriptable scope) {
+    public NativeWith enterWith(JSScope scope) {
         return new XMLWithScope(lib, scope, this);
     }
 
     @Override
-    public NativeWith enterDotQuery(Scriptable scope) {
+    public NativeWith enterDotQuery(JSScope scope) {
         XMLWithScope xws = new XMLWithScope(lib, scope, this);
         xws.initAsDotQuery();
         return xws;
@@ -863,13 +865,13 @@ abstract class XMLObjectImpl extends XMLObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(XMLOBJECT_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
         if (id == Id_constructor) {
-            return jsConstructor(cx, thisObj == null, args);
+            return jsConstructor(cx, thisObj == null, null, args);
         }
 
         // All (XML|XMLList).prototype methods require thisObj to be XML

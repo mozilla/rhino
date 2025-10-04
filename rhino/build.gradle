@@ -63,6 +63,7 @@ decycle {
     // accepted cycle: o.m.j.debug is strongly coupled to o.m.j
     ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Kit"
     ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Context"
+    ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.JSScope"
     ignoring from: "org.mozilla.javascript.debug.*", to: "org.mozilla.javascript.Scriptable"
 
     // accepted cycle: o.m.j.xml is strongly coupled to o.m.j (xmlimpl already in separate module)

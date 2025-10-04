@@ -1,7 +1,7 @@
 package org.mozilla.javascript.regexp;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.JSScope;
 
 public class NativeRegExpInstantiator {
 
@@ -16,7 +16,7 @@ public class NativeRegExpInstantiator {
     }
 
     static NativeRegExp withLanguageVersionScopeCompiled(
-            int languageVersion, Scriptable scope, RECompiled compiled) {
+            int languageVersion, JSScope scope, RECompiled compiled) {
         if (languageVersion < Context.VERSION_ES6) {
             return new NativeRegExpCallable(scope, compiled);
         } else {

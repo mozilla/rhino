@@ -42,6 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
@@ -450,13 +451,12 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, JSScope scope, Object thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
 
-        public static Object evalScript(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public static Object evalScript(Context cx, JSScope scope, Object thisObj, Object[] args) {
             if (args.length == 0) {
                 throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }
@@ -464,18 +464,17 @@ public class Test262SuiteTest {
             return cx.evaluateString(scope, source, "<evalScript>", 1, null);
         }
 
-        public static Object getGlobal(Scriptable scriptable) {
+        public static Object getGlobal(JSScope scriptable) {
             return scriptable.getParentScope();
         }
 
-        public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public static $262 createRealm(Context cx, JSScope scope, Object thisObj, Object[] args) {
             ScriptableObject realm = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
-            return install(realm, thisObj.getPrototype());
+            return install(realm, ((Scriptable) thisObj).getPrototype());
         }
 
         public static Object detachArrayBuffer(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, JSScope scope, Object thisObj, Object[] args) {
             Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
             if (buf instanceof NativeArrayBuffer) {
                 ((NativeArrayBuffer) buf).detach();
@@ -483,7 +482,7 @@ public class Test262SuiteTest {
             return Undefined.instance;
         }
 
-        public static Object getAgent(Scriptable scriptable) {
+        public static Object getAgent(JSScope scriptable) {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
 

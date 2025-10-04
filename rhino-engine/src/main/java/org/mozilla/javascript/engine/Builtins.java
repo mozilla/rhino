@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import javax.script.ScriptContext;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -45,7 +46,7 @@ public class Builtins {
                 ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 
-    private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object print(Context cx, JSScope scope, Object thisObj, Object[] args) {
         try {
             Builtins self = getSelf(thisObj);
             for (Object arg : args) {
@@ -60,10 +61,10 @@ public class Builtins {
         return Undefined.instance;
     }
 
-    private static Builtins getSelf(Scriptable scope) {
+    private static Builtins getSelf(Object scope) {
         // Since this class is invoked as a set of anonymous functions, "this"
         // in JavaScript does not point to "this" in Java. We set a key on the
         // top-level scope to address this.
-        return (Builtins) ScriptableObject.getTopScopeValue(scope, BUILTIN_KEY);
+        return (Builtins) ScriptableObject.getTopScopeValue((Scriptable) scope, BUILTIN_KEY);
     }
 }

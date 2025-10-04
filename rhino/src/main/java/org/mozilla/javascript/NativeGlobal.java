@@ -23,7 +23,7 @@ import org.mozilla.javascript.xml.XMLLib;
 public class NativeGlobal implements Serializable {
     static final long serialVersionUID = 6080442165748707530L;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         defineGlobalFunction(
                 scope,
                 sealed,
@@ -103,7 +103,8 @@ public class NativeGlobal implements Serializable {
             with the 'name' property set to the name of the error.
         */
         Scriptable nativeError =
-                ScriptableObject.ensureScriptable(ScriptableObject.getProperty(scope, "Error"));
+                ScriptableObject.ensureScriptable(
+                        ScriptableObject.getProperty((Scriptable) scope, "Error"));
         Scriptable nativeErrorProto =
                 ScriptableObject.ensureScriptable(
                         ScriptableObject.getProperty(nativeError, "prototype"));
@@ -134,7 +135,10 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx,
+                                    JSScope callScope,
+                                    Object target,
+                                    Object[] args) {
                                 return NativeError.makeAggregate(
                                         callCx, callScope, lateBoundCtor, args);
                             }
@@ -145,7 +149,7 @@ public class NativeGlobal implements Serializable {
                             // built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js work
                             // correctly
                             @Override
-                            public Scriptable createObject(Context cx, Scriptable scope) {
+                            public Scriptable createObject(Context cx, JSScope scope) {
                                 return null;
                             }
                         };
@@ -157,7 +161,10 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx,
+                                    JSScope callScope,
+                                    Object target,
+                                    Object[] args) {
                                 return NativeError.make(callCx, callScope, lateBoundCtor, args);
                             }
                         };
@@ -182,17 +189,13 @@ public class NativeGlobal implements Serializable {
     }
 
     private static void defineGlobalFunction(
-            Scriptable scope,
-            boolean sealed,
-            String name,
-            int length,
-            SerializableCallable callable) {
+            JSScope scope, boolean sealed, String name, int length, SerializableCallable callable) {
         LambdaFunction fun = new LambdaFunction(scope, name, length, null, callable);
         registerGlobalFunction(scope, sealed, name, fun);
     }
 
     private static void registerGlobalFunction(
-            Scriptable scope, boolean sealed, String name, LambdaFunction fun) {
+            JSScope scope, boolean sealed, String name, LambdaFunction fun) {
         ScriptableObject.defineProperty(scope, name, fun, DONTENUM);
         if (sealed) {
             fun.sealObject();
@@ -200,7 +203,7 @@ public class NativeGlobal implements Serializable {
     }
 
     // Eval is special because we need to "recognize" it in isEvalFunction
-    private static void defineGlobalFunctionEval(Scriptable scope, boolean sealed) {
+    private static void defineGlobalFunctionEval(JSScope scope, boolean sealed) {
         LambdaFunction evalFun = new EvalLambdaFunction(scope);
         registerGlobalFunction(scope, sealed, "eval", evalFun);
     }
@@ -209,12 +212,12 @@ public class NativeGlobal implements Serializable {
         return functionObj instanceof EvalLambdaFunction;
     }
 
-    private static String js_uneval(Context cx, Scriptable scope, Object[] args) {
+    private static String js_uneval(Context cx, JSScope scope, Object[] args) {
         Object value = (args.length != 0) ? args[0] : Undefined.instance;
         return ScriptRuntime.uneval(cx, scope, value);
     }
 
-    private static Boolean js_isXMLName(Context cx, Scriptable scope, Object[] args) {
+    private static Boolean js_isXMLName(Context cx, JSScope scope, Object[] args) {
         Object name = (args.length == 0) ? Undefined.instance : args[0];
         XMLLib xmlLib = XMLLib.extractFromScope(scope);
         return xmlLib.isXMLName(cx, name);
@@ -528,7 +531,7 @@ public class NativeGlobal implements Serializable {
      * This is an indirect call to eval, and thus uses the global environment. Direct calls are
      * executed via ScriptRuntime.callSpecial().
      */
-    private static Object js_eval(Context cx, Scriptable scope, Object[] args) {
+    private static Object js_eval(Context cx, JSScope scope, Object[] args) {
         Scriptable global = ScriptableObject.getTopLevelScope(scope);
         return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
     }
@@ -788,7 +791,7 @@ public class NativeGlobal implements Serializable {
      * in {@link NativeGlobal#isEvalFunction}
      */
     private static class EvalLambdaFunction extends LambdaFunction {
-        public EvalLambdaFunction(Scriptable scope) {
+        public EvalLambdaFunction(JSScope scope) {
             super(
                     scope,
                     "eval",

@@ -29,7 +29,7 @@ public class KnownBuiltInFunction extends LambdaFunction {
      */
     public KnownBuiltInFunction(
             Object tag,
-            Scriptable scope,
+            JSScope scope,
             String name,
             int length,
             Object prototype,

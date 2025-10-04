@@ -29,7 +29,7 @@ public class NativeWeakMap extends ScriptableObject {
 
     private static final Object NULL_VALUE = new Object();
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -43,7 +43,7 @@ public class NativeWeakMap extends ScriptableObject {
                 scope,
                 "set",
                 2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "set")
                                 .js_set(
                                         NativeMap.key(args),
@@ -54,7 +54,7 @@ public class NativeWeakMap extends ScriptableObject {
                 scope,
                 "delete",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -62,7 +62,7 @@ public class NativeWeakMap extends ScriptableObject {
                 scope,
                 "get",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "get").js_get(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -70,7 +70,7 @@ public class NativeWeakMap extends ScriptableObject {
                 scope,
                 "has",
                 1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, JSScope lscope, Object thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,
                 DONTENUM | READONLY);
@@ -91,7 +91,8 @@ public class NativeWeakMap extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSScope scope, Object target, Object[] args) {
         NativeWeakMap nm = new NativeWeakMap();
         nm.instanceOfWeakMap = true;
         if (args.length > 0) {
@@ -146,7 +147,7 @@ public class NativeWeakMap extends ScriptableObject {
         return ScriptRuntime.isUnregisteredSymbol(key) || ScriptRuntime.isObject(key);
     }
 
-    private static NativeWeakMap realThis(Scriptable thisObj, String name) {
+    private static NativeWeakMap realThis(Object thisObj, String name) {
         NativeWeakMap nm = LambdaConstructor.convertThisObject(thisObj, NativeWeakMap.class);
         if (!nm.instanceOfWeakMap) {
             // Check for "Map internal data tag"

@@ -11,7 +11,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
     private static final long serialVersionUID = 2438373029140003950L;
 
     protected static void init(
-            ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+            JSScope scope, boolean sealed, IdScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
@@ -26,7 +26,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
         // to use to find the prototype. Use the "associateValue"
         // approach instead.
         if (scope != null) {
-            scope.associateValue(tag, prototype);
+            ((ScriptableObject) scope).associateValue(tag, prototype);
         }
     }
 
@@ -35,7 +35,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
     protected ES6Iterator() {}
 
-    protected ES6Iterator(Scriptable scope, String tag) {
+    protected ES6Iterator(JSScope scope, String tag) {
         // Set parent and prototype properties. Since we don't have a
         // "Iterator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
@@ -70,7 +70,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(getTag())) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -106,11 +106,11 @@ public abstract class ES6Iterator extends IdScriptableObject {
         return 0;
     }
 
-    protected abstract boolean isDone(Context cx, Scriptable scope);
+    protected abstract boolean isDone(Context cx, JSScope scope);
 
-    protected abstract Object nextValue(Context cx, Scriptable scope);
+    protected abstract Object nextValue(Context cx, JSScope scope);
 
-    protected Object next(Context cx, Scriptable scope) {
+    protected Object next(Context cx, JSScope scope) {
         Object value = Undefined.instance;
         boolean done = isDone(cx, scope) || this.exhausted;
         if (!done) {
@@ -126,11 +126,11 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     // 25.1.1.3 The IteratorResult Interface
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
+    static Scriptable makeIteratorResult(Context cx, JSScope scope, Boolean done) {
         return makeIteratorResult(cx, scope, done, Undefined.instance);
     }
 
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
+    static Scriptable makeIteratorResult(Context cx, JSScope scope, Boolean done, Object value) {
         final Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);

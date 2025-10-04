@@ -11,8 +11,8 @@ import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.Scriptable;
 
 /**
  * This linker optimizes accesses to the "length" property of native arrays by delegating directly
@@ -59,7 +59,7 @@ class NativeArrayLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     @SuppressWarnings("unused")
-    private static Object getLength(Object o, Context cx, Scriptable scope) {
+    private static Object getLength(Object o, Context cx, JSScope scope) {
         long length = ((NativeArray) o).getLength();
         if (length < Integer.MAX_VALUE) {
             return (int) length;

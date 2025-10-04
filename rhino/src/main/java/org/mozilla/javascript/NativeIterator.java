@@ -18,7 +18,7 @@ public final class NativeIterator extends IdScriptableObject {
     private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = "Iterator";
 
-    static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, JSScope scope, boolean sealed) {
         // Iterator
         NativeIterator iterator = new NativeIterator();
         iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -41,7 +41,7 @@ public final class NativeIterator extends IdScriptableObject {
         // Use "associateValue" so that generators can continue to
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
-        scope.associateValue(ITERATOR_TAG, obj);
+        ((ScriptableObject) scope).associateValue(ITERATOR_TAG, obj);
     }
 
     /** Only for constructing the prototype object. */
@@ -59,7 +59,7 @@ public final class NativeIterator extends IdScriptableObject {
      * @param scope a scope whose parent chain reaches a top-level scope
      * @return the StopIteration object
      */
-    public static Object getStopIterationObject(Scriptable scope) {
+    public static Object getStopIterationObject(JSScope scope) {
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         return ScriptableObject.getTopScopeValue(top, ITERATOR_TAG);
     }
@@ -126,7 +126,7 @@ public final class NativeIterator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(ITERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -152,8 +152,7 @@ public final class NativeIterator extends IdScriptableObject {
     }
 
     /* The JavaScript constructor */
-    private static Object jsConstructor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object jsConstructor(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             Object argument = args.length == 0 ? Undefined.instance : args[0];
             throw ScriptRuntime.typeErrorById(
@@ -202,7 +201,7 @@ public final class NativeIterator extends IdScriptableObject {
         return result;
     }
 
-    private Object next(Context cx, Scriptable scope) {
+    private Object next(Context cx, JSScope scope) {
         Boolean b = ScriptRuntime.enumNext(this.objectIterator, cx);
         if (!b.booleanValue()) {
             // Out of values. Throw StopIteration.
@@ -227,7 +226,7 @@ public final class NativeIterator extends IdScriptableObject {
     }
 
     public static class WrappedJavaIterator {
-        WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
+        WrappedJavaIterator(Iterator<?> iterator, JSScope scope) {
             this.iterator = iterator;
             this.scope = scope;
         }
@@ -246,7 +245,7 @@ public final class NativeIterator extends IdScriptableObject {
         }
 
         private Iterator<?> iterator;
-        private Scriptable scope;
+        private JSScope scope;
     }
 
     @Override

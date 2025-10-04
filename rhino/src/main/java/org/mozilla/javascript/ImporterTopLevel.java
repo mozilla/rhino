@@ -64,7 +64,7 @@ public class ImporterTopLevel extends TopLevel {
         return topScopeFlag ? "global" : "JavaImporter";
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, JSScope scope, boolean sealed) {
         ImporterTopLevel obj = new ImporterTopLevel();
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
@@ -88,21 +88,21 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return super.has(name, start) || getPackageProperty(name, start) != NOT_FOUND;
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         Object result = super.get(name, start);
         if (result != NOT_FOUND) return result;
         result = getPackageProperty(name, start);
         return result;
     }
 
-    private Object getPackageProperty(String name, Scriptable start) {
+    private Object getPackageProperty(String name, JSScope start) {
         Object result = NOT_FOUND;
-        Scriptable scope = start;
+        JSScope scope = start;
         if (topScopeFlag) {
             scope = ScriptableObject.getTopLevelScope(scope);
         }
@@ -126,7 +126,7 @@ public class ImporterTopLevel extends TopLevel {
         return result;
     }
 
-    private static Object[] getNativeJavaPackages(Scriptable scope) {
+    private static Object[] getNativeJavaPackages(JSScope scope) {
         // retrivee the native java packages stored in top scope.
         synchronized (scope) {
             if (scope instanceof ScriptableObject) {
@@ -150,7 +150,7 @@ public class ImporterTopLevel extends TopLevel {
         js_importPackage(this, args);
     }
 
-    private Object js_construct(Scriptable scope, Object[] args) {
+    private Object js_construct(JSScope scope, Object[] args) {
         ImporterTopLevel result = new ImporterTopLevel();
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
@@ -184,7 +184,7 @@ public class ImporterTopLevel extends TopLevel {
         return Undefined.instance;
     }
 
-    private static Object js_importPackage(ScriptableObject scope, Object[] args) {
+    private static Object js_importPackage(JSScope scope, Object[] args) {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaPackage)) {
@@ -195,16 +195,17 @@ public class ImporterTopLevel extends TopLevel {
         return Undefined.instance;
     }
 
-    private static void importPackage(ScriptableObject scope, NativeJavaPackage pkg) {
+    private static void importPackage(JSScope scope, NativeJavaPackage pkg) {
         if (pkg == null) {
             return;
         }
         synchronized (scope) {
             @SuppressWarnings("unchecked")
-            ArrayList<Object> importedPackages = (ArrayList<Object>) scope.getAssociatedValue(AKEY);
+            ArrayList<Object> importedPackages =
+                    (ArrayList<Object>) ((ScriptableObject) scope).getAssociatedValue(AKEY);
             if (importedPackages == null) {
                 importedPackages = new ArrayList<>();
-                scope.associateValue(AKEY, importedPackages);
+                ((ScriptableObject) scope).associateValue(AKEY, importedPackages);
             }
             for (int j = 0; j != importedPackages.size(); j++) {
                 if (pkg.equals(importedPackages.get(j))) {
@@ -254,7 +255,7 @@ public class ImporterTopLevel extends TopLevel {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!f.hasTag(IMPORTER_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -272,7 +273,7 @@ public class ImporterTopLevel extends TopLevel {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private ScriptableObject realScope(Scriptable scope, Scriptable thisObj, IdFunctionObject f) {
+    private ScriptableObject realScope(JSScope scope, Object thisObj, IdFunctionObject f) {
         if (topScopeFlag) {
             // when used as top scope importPackage and importClass are global
             // function that ignore thisObj. We use the the top level scope

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -23,7 +24,7 @@ class XMLList extends XMLObjectImpl implements Function {
     private XMLObjectImpl targetObject = null;
     private XmlNode.QName targetProperty = null;
 
-    XMLList(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    XMLList(XMLLibImpl lib, JSScope scope, XMLObject prototype) {
         super(lib, scope, prototype);
         _annos = new XmlNode.InternalList();
     }
@@ -92,7 +93,7 @@ class XMLList extends XMLObjectImpl implements Function {
     //
 
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         // Log("get index: " + index);
 
         if (index >= 0 && index < length()) {
@@ -109,7 +110,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return 0 <= index && index < length();
     }
 
@@ -181,7 +182,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         Object parent = Undefined.instance;
         // Convert text into XML if needed.
         XMLObject xmlValue;
@@ -713,7 +714,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private Object applyOrCall(
-            boolean isApply, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, JSScope scope, Object thisObj, Object[] args) {
         String methodName = isApply ? "apply" : "call";
         if (!(thisObj instanceof XMLList) || ((XMLList) thisObj).targetProperty == null)
             throw ScriptRuntime.typeErrorById("msg.isnt.function", methodName);
@@ -722,7 +723,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+    protected Object jsConstructor(Context cx, boolean inNewExpr, Object newTarget, Object[] args) {
         if (args.length == 0) {
             return newXMLList();
         } else {
@@ -745,7 +746,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         // This XMLList is being called as a Function.
         // Let's find the real Function object.
         if (targetProperty == null) throw ScriptRuntime.notFunctionError(this);
@@ -760,7 +761,7 @@ class XMLList extends XMLObjectImpl implements Function {
             throw ScriptRuntime.typeErrorById("msg.incompat.call", methodName);
         }
         Object func = null;
-        Scriptable sobj = thisObj;
+        Scriptable sobj = (Scriptable) thisObj;
 
         while (sobj instanceof XMLObject) {
             XMLObject xmlObject = (XMLObject) sobj;
@@ -784,7 +785,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object newTarget, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
 }

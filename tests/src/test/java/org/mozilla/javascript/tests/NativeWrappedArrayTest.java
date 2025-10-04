@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -129,12 +130,12 @@ public class NativeWrappedArrayTest {
         }
 
         @Override
-        public Object get(int ix, Scriptable start) {
+        public Object get(int ix, JSScope start) {
             return list.get(ix);
         }
 
         @Override
-        public void put(int ix, Scriptable start, Object val) {
+        public void put(int ix, JSScope start, Object val) {
             // Ensure enough capacity for array expansion
             // by automatically expanding the array like JavaScript sort of does.
             for (int ax = list.size(); ax <= ix; ax++) {
@@ -167,16 +168,12 @@ public class NativeWrappedArrayTest {
                     WrappedArray::lengthAttrSetter);
         }
 
-        private static Object lengthGetter(WrappedArray array, Scriptable start) {
+        private static Object lengthGetter(WrappedArray array, JSScope start) {
             return ScriptRuntime.wrapNumber(array.length);
         }
 
         private static boolean lengthSetter(
-                WrappedArray builtIn,
-                Object value,
-                Scriptable owner,
-                Scriptable start,
-                boolean isThrow) {
+                WrappedArray builtIn, Object value, JSScope owner, JSScope start, boolean isThrow) {
             builtIn.length = ScriptRuntime.toInt32(value);
             return true;
         }

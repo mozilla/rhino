@@ -47,7 +47,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
                 revocableProxy.targetObj = null;
@@ -57,7 +57,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         }
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, JSScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -68,9 +68,11 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                         NativeProxy::constructor) {
 
                     @Override
-                    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+                    public Scriptable construct(
+                            Context cx, JSScope scope, Object target, Object[] args) {
                         NativeProxy obj =
-                                (NativeProxy) getTargetConstructor().construct(cx, scope, args);
+                                (NativeProxy)
+                                        getTargetConstructor().construct(cx, scope, target, args);
                         // avoid getting trapped
                         obj.setPrototypeDirect(getClassPrototype());
                         obj.setParentScope(scope);
@@ -109,7 +111,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Construct]] (argumentsList, newTarget)</a>
      */
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object newTarget, Object[] args) {
         /*
          * 1. Let handler be O.[[ProxyHandler]].
          * 2. If handler is null, throw a TypeError exception.
@@ -135,7 +137,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return (ScriptableObject) result;
         }
 
-        return ((Constructable) target).construct(cx, scope, args);
+        return ((Constructable) target).construct(cx, scope, newTarget, args);
     }
 
     /**
@@ -144,7 +146,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -198,7 +200,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -251,7 +253,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[HasProperty]] (P)</a>
      */
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         ScriptableObject target = getTargetThrowIfRevoked();
 
         Callable trap = getTrap(TRAP_HAS);
@@ -276,8 +278,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (start == this) {
             start = target;
         }
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        return symbolScriptableTarget.has(key, start);
+        return target.has(key, start);
     }
 
     /**
@@ -411,7 +412,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -471,7 +472,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -532,7 +533,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Get]] (P, Receiver)</a>
      */
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -583,8 +584,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (start == this) {
             start = target;
         }
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        return symbolScriptableTarget.get(key, start);
+        return target.get(key, start);
     }
 
     /**
@@ -593,7 +593,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -655,7 +655,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -720,7 +720,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, JSScope start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -773,8 +773,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
         if (start == this) {
             start = target;
         }
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        symbolScriptableTarget.put(key, start, value);
+        target.put(key, start, value);
     }
 
     /**
@@ -928,8 +927,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
             return; // true
         }
 
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        symbolScriptableTarget.delete(key);
+        target.delete(key);
     }
 
     /**
@@ -1291,7 +1289,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
      * [[Call]] (thisArgument, argumentsList)</a>
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         /*
          * 1. Let handler be O.[[ProxyHandler]].
          * 2. If handler is null, throw a TypeError exception.
@@ -1316,7 +1314,8 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                 true, cx, scope, target, new Object[] {thisObj, argumentsList});
     }
 
-    private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeProxy constructor(
+            Context cx, JSScope scope, Object newTarget, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -1334,12 +1333,11 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
     }
 
     // Proxy.revocable
-    private static Object revocable(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object revocable(Context cx, JSScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
-        NativeProxy proxy = constructor(cx, scope, args);
+        NativeProxy proxy = constructor(cx, scope, null, args);
 
         NativeObject revocable = (NativeObject) cx.newObject(scope);
 

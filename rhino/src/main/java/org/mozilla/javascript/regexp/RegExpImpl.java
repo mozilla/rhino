@@ -8,6 +8,7 @@ package org.mozilla.javascript.regexp;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSScope;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.LazilyLoadedCtor;
 import org.mozilla.javascript.RegExpProxy;
@@ -20,7 +21,7 @@ import org.mozilla.javascript.Undefined;
 public class RegExpImpl implements RegExpProxy {
 
     @Override
-    public void register(ScriptableObject scope, boolean sealed) {
+    public void register(JSScope scope, boolean sealed) {
         NativeRegExpStringIterator.init(scope, sealed);
         new LazilyLoadedCtor(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
@@ -36,14 +37,13 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     @Override
-    public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
+    public Scriptable wrapRegExp(Context cx, JSScope scope, Object compiled) {
         return NativeRegExpInstantiator.withLanguageVersionScopeCompiled(
                 cx.getLanguageVersion(), scope, (RECompiled) compiled);
     }
 
     @Override
-    public Object action(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
+    public Object action(Context cx, JSScope scope, Object thisObj, Object[] args, int actionType) {
         GlobData data = new GlobData();
         data.mode = actionType;
         data.str = ScriptRuntime.toString(thisObj);
@@ -173,7 +173,7 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     private static NativeRegExp createRegExp(
-            Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
+            Context cx, JSScope scope, Object[] args, int optarg, boolean forceFlat) {
         NativeRegExp re;
         Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
         if (args.length == 0 || args[0] == Undefined.instance) {
@@ -203,8 +203,8 @@ public class RegExpImpl implements RegExpProxy {
     /** Analog of C match_or_replace. */
     private static Object matchOrReplace(
             Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
+            JSScope scope,
+            Object thisObj,
             Object[] args,
             RegExpImpl reImpl,
             GlobData data,
@@ -255,7 +255,7 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public int find_split(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             String target,
             String separator,
             Scriptable reObj,
@@ -341,7 +341,7 @@ public class RegExpImpl implements RegExpProxy {
      * Analog of match_glob() in jsstr.c
      */
     private static void match_glob(
-            GlobData mdata, Context cx, Scriptable scope, int count, RegExpImpl reImpl) {
+            GlobData mdata, Context cx, JSScope scope, int count, RegExpImpl reImpl) {
         if (mdata.arrayobj == null) {
             mdata.arrayobj = cx.newArray(scope, 0);
         }
@@ -356,7 +356,7 @@ public class RegExpImpl implements RegExpProxy {
     private static void replace_glob(
             GlobData rdata,
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             RegExpImpl reImpl,
             int leftIndex,
             int leftlen) {
@@ -549,7 +549,7 @@ public class RegExpImpl implements RegExpProxy {
      * argument.
      */
     @Override
-    public Object js_split(Context cx, Scriptable scope, String target, Object[] args) {
+    public Object js_split(Context cx, JSScope scope, String target, Object[] args) {
         // create an empty Array to return;
         Scriptable result = cx.newArray(scope, 0);
 
@@ -652,7 +652,7 @@ public class RegExpImpl implements RegExpProxy {
      */
     private static int find_split(
             Context cx,
-            Scriptable scope,
+            JSScope scope,
             String target,
             String separator,
             int version,

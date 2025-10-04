@@ -86,12 +86,12 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, JSScope start) {
         return getDelegee().get(name, start);
     }
 
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, JSScope start) {
         final Scriptable delegee = getDelegee();
         if (delegee instanceof SymbolScriptable) {
             return ((SymbolScriptable) delegee).get(key, start);
@@ -103,7 +103,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, JSScope start) {
         return getDelegee().get(index, start);
     }
 
@@ -111,12 +111,12 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, JSScope start) {
         return getDelegee().has(name, start);
     }
 
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, JSScope start) {
         final Scriptable delegee = getDelegee();
         if (delegee instanceof SymbolScriptable) {
             return ((SymbolScriptable) delegee).has(key, start);
@@ -128,7 +128,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, JSScope start) {
         return getDelegee().has(index, start);
     }
 
@@ -136,7 +136,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, JSScope start, Object value) {
         getDelegee().put(name, start, value);
     }
 
@@ -144,7 +144,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.SymbolScriptable#put(Symbol, Scriptable, Object)
      */
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
+    public void put(Symbol symbol, JSScope start, Object value) {
         final Scriptable delegee = getDelegee();
         if (delegee instanceof SymbolScriptable) {
             ((SymbolScriptable) delegee).put(symbol, start, value);
@@ -155,7 +155,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, JSScope start, Object value) {
         getDelegee().put(index, start, value);
     }
 
@@ -203,7 +203,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#getParentScope
      */
     @Override
-    public Scriptable getParentScope() {
+    public JSScope getParentScope() {
         return getDelegee().getParentScope();
     }
 
@@ -211,7 +211,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#setParentScope
      */
     @Override
-    public void setParentScope(Scriptable parent) {
+    public void setParentScope(JSScope parent) {
         getDelegee().setParentScope(parent);
     }
 
@@ -253,7 +253,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Function#call
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, JSScope scope, Object thisObj, Object[] args) {
         return ((Function) getDelegee()).call(cx, scope, thisObj, args);
     }
 
@@ -270,7 +270,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see Constructable#construct(Context, Scriptable, Object[])
      */
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, JSScope scope, Object target, Object[] args) {
         Scriptable myDelegee = getDelegee();
         if (myDelegee == null) {
             // this little trick allows us to declare prototype objects for Delegators
@@ -284,6 +284,6 @@ public class Delegator implements Function, SymbolScriptable {
             n.setDelegee(delegee);
             return n;
         }
-        return ((Constructable) myDelegee).construct(cx, scope, args);
+        return ((Constructable) myDelegee).construct(cx, scope, target, args);
     }
 }
