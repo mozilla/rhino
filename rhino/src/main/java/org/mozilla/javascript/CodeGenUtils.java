@@ -7,8 +7,13 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 
+/**
+ * Common utilities usable by all the compilers for populating {@link JSDescriptor.Builder} entries
+ * from IR nodes.
+ */
 public class CodeGenUtils {
 
+    /** Populates builder data for a nested function. */
     public static void fillInForNestedFunction(
             JSDescriptor.Builder<JSFunction> builder,
             JSDescriptor.Builder<?> parent,
@@ -54,6 +59,7 @@ public class CodeGenUtils {
         fillInCommon(builder, fn);
     }
 
+    /** Populate builder data for a top level function. */
     public static void fillInForTopLevelFunction(
             JSDescriptor.Builder builder,
             FunctionNode fn,
@@ -66,6 +72,7 @@ public class CodeGenUtils {
         fillInForFunction(builder, fn);
     }
 
+    /** Populate builder data for a top level script. */
     public static void fillInForScript(
             JSDescriptor.Builder builder,
             ScriptNode scriptOrFn,
@@ -105,6 +112,7 @@ public class CodeGenUtils {
         builder.rawSourceEnd = scriptOrFn.getRawSourceEnd();
     }
 
+    /** Configure the constructor appropriately based on a function's type. */
     public static <T extends ScriptOrFn<T>> void setConstructor(
             JSDescriptor.Builder<T> builder, ScriptNode scriptOrFn) {
         if (scriptOrFn instanceof FunctionNode) {

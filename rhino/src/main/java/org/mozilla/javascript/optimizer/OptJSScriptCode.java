@@ -6,6 +6,10 @@ import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * Subclass of {@link OptJSCode} which narrows the type paramter to {@link JSScript}. This allows
+ * compiled code to be type safe and avoid casting when accessing the executable object.
+ */
 public abstract class OptJSScriptCode extends OptJSCode<JSScript> {
 
     protected OptJSScriptCode() {}

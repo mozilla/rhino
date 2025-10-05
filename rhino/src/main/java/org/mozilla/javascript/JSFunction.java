@@ -3,6 +3,11 @@ package org.mozilla.javascript;
 import java.util.EnumSet;
 import org.mozilla.javascript.debug.DebuggableScript;
 
+/**
+ * Represents a JavaScript function built upon a a {@link JSDescriptor}. All the immutable metadata
+ * associated with the function is stored on the descriptor, with only the lexically bound this, the
+ * home object required for super calls, and mutable properties held on the function object itself.
+ */
 public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     private final JSDescriptor<JSFunction> descriptor;
     private final Scriptable lexicalThis;

@@ -7,6 +7,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.mozilla.javascript.debug.DebuggableScript;
 
+/**
+ * This class holds all the meta-data associated with a function in as an immutable form as
+ * possible, along with the executable things associated with the function. The idea here is to push
+ * all the expensive parts of creating this to an object that can be cached and reused, while
+ * function objects represented by {@link JSFunction}s become more lightweight in their creation.
+ */
 public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable, DebuggableScript {
     private static final long seria_ersio_ID = 5067677351589230234L;
 
@@ -267,6 +273,11 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return parent;
     }
 
+    /**
+     * A mutable object for creating the final immutable {@link JSDescriptor}. This is populated
+     * during the compilation process, and then {@link Builder#build(Consumer)} is called at the end
+     * of the process to gneeate the final objects.
+     */
     public static class Builder<T extends ScriptOrFn<T>> {
         public JSCode.Builder<T> code;
         public JSCode.Builder<T> constructor;
@@ -311,12 +322,19 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             this.securityDomain = parent.securityDomain;
         }
 
+        /**
+         * Create a builder for the descriptor of a nested function. This will inherit language
+         * version and other traits from its parent.
+         */
         public Builder<JSFunction> createChildBuilder() {
             Builder<JSFunction> child = new Builder<>(this);
             nestedFunctions.add(child);
             return child;
         }
 
+        /**
+         * Build the final object, calling the consumer as each {@link JSDescriptor} is generated.
+         */
         public JSDescriptor<T> build(Consumer<JSDescriptor<?>> consumer) {
             if (parent != null) {
                 throw new Error();

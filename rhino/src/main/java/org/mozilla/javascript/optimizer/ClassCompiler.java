@@ -185,6 +185,11 @@ public class ClassCompiler {
         return result;
     }
 
+    /**
+     * Build script class initialisation method and main method. The init method will create all the
+     * class descriptors, and the main method will create a {@link JSDescriptor} object based on the
+     * first descriptor and pass that to the main method in the runtime.
+     */
     private Object[] buildDescriptorsAndMain(String mainClassName, JSDescriptor.Builder builder) {
         var classes = new HashMap<String, byte[]>();
         var mainName = mainClassName + "Main";
@@ -245,6 +250,11 @@ public class ClassCompiler {
         return result;
     }
 
+    /**
+     * Generates a byte code for a method to create a {@link JSDescriptor}. It might be more
+     * efficient in future to use a const dynamic for this, when our bytecode generation and
+     * supported platforms can all handle it.
+     */
     private void buildDescriptor(
             ClassFileWriter cfw,
             JSDescriptor.Builder builder,
