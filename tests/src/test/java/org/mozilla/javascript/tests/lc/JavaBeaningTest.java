@@ -59,6 +59,15 @@ public class JavaBeaningTest {
                 SCRIPT_INIT + "obj.elementAt = 42");
     }
 
+    /**
+     * 'get' should be preferred over 'is'
+     */
+    @Test
+    public void testGetterPreference() {
+        expect("obj.getInParent", "getGetInParent");
+        expect("obj.isInParent", "getIsInParent");
+    }
+
     private static void expect(String script, Object expected) {
         expect(false, script, expected);
         expect(true, script, expected);
@@ -81,7 +90,7 @@ public class JavaBeaningTest {
         }
     }
 
-    public static class BeaningTestObject<N extends Number> {
+    public static class BeaningTestObject<N extends Number> extends BeaningTestObjectBase {
         private String maskedValue = "";
         public Integer value = 42;
 
@@ -116,6 +125,25 @@ public class JavaBeaningTest {
         public void setElementAt(int value) {
             throw new IllegalStateException(
                     "There's an existed method 'elementAt', no beaning should be applied");
+        }
+
+        public String isGetInParent() {
+            throw new IllegalStateException("'get' getter should be preferred over 'is'");
+        }
+
+        public String getIsInParent() {
+            return "getIsInParent";
+        }
+    }
+
+    public static class BeaningTestObjectBase {
+
+        public String getGetInParent() {
+            return "getGetInParent";
+        }
+
+        public String isIsInParent() {
+            throw new IllegalStateException("'get' getter should be preferred over 'is'");
         }
     }
 }

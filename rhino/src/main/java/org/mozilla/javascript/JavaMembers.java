@@ -615,10 +615,14 @@ class JavaMembers {
                 var candidate = extractGetMethod(method.methods, isStatic);
                 if (candidate != null) {
                     var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
-                    if (method.methods.length == 1) {
-                        bean.getter = method;
-                    } else {
-                        bean.getter = new NativeJavaMethod(new MemberBox[] {candidate});
+                    if (bean.getter == null
+                            // prefer 'get' over 'is'
+                            || bean.getter.getFunctionName().startsWith("is")) {
+                        if (method.methods.length == 1) {
+                            bean.getter = method;
+                        } else {
+                            bean.getter = new NativeJavaMethod(new MemberBox[] {candidate});
+                        }
                     }
                 }
             } else { // isSetBeaning
