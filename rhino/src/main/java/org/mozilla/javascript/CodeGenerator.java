@@ -1499,22 +1499,22 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             ++count;
         }
 
-	    int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
         addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
         stackChange(1);
 
-		while (child != null) {
-	        if (child.getType() == Token.DOTDOTDOT) {
-		        visitExpression(child.getFirstChild(), 0);
-		        addIcode(Icode_SPREAD);
-		        stackChange(-1);
-	        } else {
-		        visitLiteralValue(child);
-	        }
+        while (child != null) {
+            if (child.getType() == Token.DOTDOTDOT) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_SPREAD);
+                stackChange(-1);
+            } else {
+                visitLiteralValue(child);
+            }
             child = child.getNext();
         }
 
-		int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
         if (skipIndexes == null) {
             addToken(Token.ARRAYLIT);
         } else {
@@ -1524,7 +1524,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
     }
 
-	private void visitLiteralValue(Node child) {
+    private void visitLiteralValue(Node child) {
         int childType = child.getType();
         if (childType == Token.GET) {
             visitExpression(child.getFirstChild(), 0);
