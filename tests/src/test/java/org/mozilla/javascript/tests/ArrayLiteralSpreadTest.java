@@ -144,4 +144,18 @@ class ArrayLiteralSpreadTest {
 		String script = "var arr = [1, 2, 3];" + "var result = [0, ,...arr, , 4];" + "result.join(',');";
 		Utils.assertWithAllModes_ES6("0,,1,2,3,,4", script);
 	}
+
+	@Test
+	@Disabled("TODO: needs to be implemented, not passing currently")
+	void testSpreadSymbolIterator() {
+		String script = "var obj = {\n" +
+				"  *[Symbol.iterator]() {\n" +
+				"    yield 1;\n" +
+				"    yield 2;\n" +
+				"  }\n" +
+				"};\n" +
+				"var arr = [...obj];\n" +
+				"arr.join(',')\n";
+		Utils.assertWithAllModes_ES6("1,2", script);
+	}
 }
