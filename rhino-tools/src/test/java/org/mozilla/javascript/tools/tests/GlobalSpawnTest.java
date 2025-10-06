@@ -49,8 +49,8 @@ public class GlobalSpawnTest {
     }
 
     @Test
-    public void testSubmitFunction() {
-        String cmd = "function g(f) { return a * f }; a = 5; var f = submit(g, [2]); f.get()";
+    public void testRunAsyncFunction() {
+        String cmd = "function g(f) { return a * f }; a = 5; var f = runAsync(g, [2]); f.get()";
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
@@ -64,8 +64,8 @@ public class GlobalSpawnTest {
     }
 
     @Test
-    public void testSubmitScript() {
-        String cmd = "a = 5; var f = submit(script); f.get()";
+    public void testRunAsyncScript() {
+        String cmd = "a = 5; var f = runAsync(script); f.get()";
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);

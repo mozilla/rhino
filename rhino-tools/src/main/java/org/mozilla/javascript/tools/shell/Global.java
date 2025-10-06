@@ -121,11 +121,11 @@ public class Global extends ImporterTopLevel {
             "readline",
             "readFile",
             "readUrl",
+            "runAsync",
             "runCommand",
             "seal",
             "serialize",
             "spawn",
-            "submit",
             "sync",
             "toint32",
             "version",
@@ -522,8 +522,12 @@ public class Global extends ImporterTopLevel {
     /**
      * The spawn function runs a given function or script in a different thread.
      *
-     * <p>js&gt; function g() { a = 7; } js&gt; a = 3; 3 js&gt; spawn(g) Thread[Thread-1,5,main]
-     * js&gt; a 3
+     * <pre>
+     * js&gt; function g() { a = 7; }
+     * js&gt; a = 3; 3
+     * js&gt; spawn(g) Thread[Thread-1,5,main]
+     * js&gt; a 7
+     * </pre>
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         Scriptable scope = funObj.getParentScope();
@@ -535,12 +539,18 @@ public class Global extends ImporterTopLevel {
     }
 
     /**
-     * The submit function runs a given function or script in a ThreadPool.
+     * The runAsync function runs a given function or script in a ThreadPool.
      *
-     * <p>js&gt; function g() { a = 7; } js&gt; a = 3; 3 js&gt; submit(g) Future js&gt; a 3
+     * <p>It returns a {@link Future} and you can use {@link Future#get()} to await the computation.
+     *
+     * <pre>
+     * js&gt; function g() { return 3+5 }
+     * js&gt; f = runAsync(g); Future
+     * js&gt; f.get(); 8
+     * </pre>
      */
     @SuppressWarnings("AndroidJdkLibsChecker")
-    public static Object submit(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+    public static Object runAsync(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         Scriptable scope = funObj.getParentScope();
         ContextAction<Object> action = getAsyncAction(cx, args, scope);
         ContextFactory factory = cx.getFactory();
@@ -570,10 +580,18 @@ public class Global extends ImporterTopLevel {
     /**
      * The sync function creates a synchronized function (in the sense of a Java synchronized
      * method) from an existing function. The new function synchronizes on the the second argument
-     * if it is defined, or otherwise the <code>this</code> object of its invocation. js&gt; var o =
-     * { f : sync(function(x) { print("entry"); Packages.java.lang.Thread.sleep(x*1000);
-     * print("exit"); })}; js&gt; spawn(function() {o.f(5);}); Thread[Thread-0,5,main] entry js&gt;
-     * spawn(function() {o.f(5);}); Thread[Thread-1,5,main] js&gt; exit entry exit
+     * if it is defined, or otherwise the <code>this</code> object of its invocation.
+     *
+     * <pre>
+     * js&gt; var o = { f : sync(function(x) {
+     *                             print("entry");
+     *                             Packages.java.lang.Thread.sleep(x*1000);
+     *                             print("exit");
+     *                           })};
+     * js&gt; spawn(function() {o.f(5);}); Thread[Thread-0,5,main] entry
+     * js&gt; spawn(function() {o.f(5);}); Thread[Thread-1,5,main]
+     * js&gt; exit entry exit
+     * </pre>
      */
     public static Object sync(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         if (args.length >= 1 && args.length <= 2 && args[0] instanceof Function) {
