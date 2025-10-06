@@ -4310,22 +4310,8 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoLiteralNewArray extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            // For arrays with spread, create a NewLiteralStorage like objects do
-            if (state.indexReg < 0) {
-                // We have spread elements - create both target array and storage
-                ++state.stackTop;
-                NativeArray targetArray =
-                        (NativeArray) cx.newArray(frame.scope, 0); // Empty target array
-                // Mark this as a spread target array by setting a special property
-                targetArray.put("__rhino_spread_target__", targetArray, Boolean.TRUE);
-                frame.stack[state.stackTop] = targetArray;
-                ++state.stackTop;
-                frame.stack[state.stackTop] =
-                        NewLiteralStorage.create(cx, -state.indexReg - 1, false);
-            } else {
-                // Regular array creation - just the NewLiteralStorage
-                frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
-            }
+	        // indexReg: number of values in the literal
+	        frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
             return null;
         }
     }
@@ -4413,20 +4399,8 @@ public final class Interpreter extends Icode implements Evaluator {
             if (op == Icode_SPARE_ARRAYLIT) {
                 skipIndexces = (int[]) frame.idata.literalIds[state.indexReg];
             }
-            Object[] values = store.getValues();
-
-            // Check if we have a target array below the storage (spread case)
-            // For spread arrays, DoLiteralNewArray creates a marked target array at stackTop-1
-            if (state.stackTop > 0 && frame.stack[state.stackTop - 1] instanceof NativeArray) {
-                NativeArray targetArray = (NativeArray) frame.stack[state.stackTop - 1];
-                if (targetArray.has("__rhino_spread_target__", targetArray)) {
-                    --state.stackTop;
-                }
-            }
-
-            Scriptable result =
-                    ScriptRuntime.newArrayLiteral(values, skipIndexces, cx, frame.scope);
-            frame.stack[state.stackTop] = result;
+	        frame.stack[state.stackTop] =
+			        ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
             return null;
         }
     }
