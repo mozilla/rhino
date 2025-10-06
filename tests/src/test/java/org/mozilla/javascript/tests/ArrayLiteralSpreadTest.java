@@ -7,10 +7,19 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for array literal spread syntax (...) functionality. */
 public class ArrayLiteralSpreadTest {
+	@Test
+	public void unsupportedInES5() {
+		String script =
+				"var arr = [1, 2, 3];"
+						+ "var result = [...arr]";
+		Utils.assertEvaluatorException_1_8("syntax error (test#1)", script);
+	}
+
     @Test
     public void testBasicSpread() {
         String script =
@@ -18,7 +27,7 @@ public class ArrayLiteralSpreadTest {
                         + "var arr2 = [4, 5, 6];"
                         + "var result = [...arr1, ...arr2];"
                         + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4,5,6", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4,5,6", script);
     }
 
     @Test
@@ -28,13 +37,13 @@ public class ArrayLiteralSpreadTest {
                         + "var arr2 = [5, 6];"
                         + "var result = [1, ...arr1, 4, ...arr2, 7];"
                         + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4,5,6,7", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4,5,6,7", script);
     }
 
     @Test
     public void testEmptyArraySpread() {
         String script = "var empty = [];" + "var result = [...empty, 1, 2];" + "result.join(',');";
-        Utils.assertWithAllModes("1,2", script);
+        Utils.assertWithAllModes_ES6("1,2", script);
     }
 
     @Test
@@ -44,14 +53,14 @@ public class ArrayLiteralSpreadTest {
                         + "var empty2 = [];"
                         + "var result = [...empty1, ...empty2, 1];"
                         + "result.join(',');";
-        Utils.assertWithAllModes("1", script);
+        Utils.assertWithAllModes_ES6("1", script);
     }
 
     @Test
     public void testSingleElementSpread() {
         String script =
                 "var single = [42];" + "var result = [...single, ...single];" + "result.join(',');";
-        Utils.assertWithAllModes("42,42", script);
+        Utils.assertWithAllModes_ES6("42,42", script);
     }
 
     @Test
@@ -67,19 +76,19 @@ public class ArrayLiteralSpreadTest {
     @Test
     public void testSpreadAtBeginning() {
         String script = "var arr = [1, 2];" + "var result = [...arr, 3, 4];" + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
     public void testSpreadAtEnd() {
         String script = "var arr = [3, 4];" + "var result = [1, 2, ...arr];" + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
     public void testSpreadInMiddle() {
         String script = "var arr = [2, 3];" + "var result = [1, ...arr, 4];" + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
@@ -90,7 +99,7 @@ public class ArrayLiteralSpreadTest {
                         + "var arr3 = [5, 6];"
                         + "var result = [...arr1, ...arr2, ...arr3];"
                         + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3,4,5,6", script);
+        Utils.assertWithAllModes_ES6("1,2,3,4,5,6", script);
     }
 
     @Test
@@ -99,7 +108,7 @@ public class ArrayLiteralSpreadTest {
                 "var sparse = [1, , 3];"
                         + "var result = [...sparse];"
                         + "result.length + ',' + result[0] + ',' + (result[1] === undefined) + ',' + result[2];";
-        Utils.assertWithAllModes("3,1,true,3", script);
+        Utils.assertWithAllModes_ES6("3,1,true,3", script);
     }
 
     @Test
@@ -109,7 +118,7 @@ public class ArrayLiteralSpreadTest {
                         + "for (var i = 0; i < 100; i++) arr.push(i);"
                         + "var result = [999, ...arr, 1000];"
                         + "result.length + ',' + result[0] + ',' + result[1] + ',' + result[100] + ',' + result[101];";
-        Utils.assertWithAllModes("102,999,0,99,1000", script);
+        Utils.assertWithAllModes_ES6("102,999,0,99,1000", script);
     }
 
     @Test
@@ -119,12 +128,12 @@ public class ArrayLiteralSpreadTest {
                         + "var arr = Array.prototype.slice.call(arrayLike);"
                         + "var result = ['x', ...arr, 'y'];"
                         + "result.join(',');";
-        Utils.assertWithAllModes("x,a,b,c,y", script);
+        Utils.assertWithAllModes_ES6("x,a,b,c,y", script);
     }
 
     @Test
     public void testSpreadOnlyArray() {
         String script = "var arr = [1, 2, 3];" + "var result = [...arr];" + "result.join(',');";
-        Utils.assertWithAllModes("1,2,3", script);
+        Utils.assertWithAllModes_ES6("1,2,3", script);
     }
 }
