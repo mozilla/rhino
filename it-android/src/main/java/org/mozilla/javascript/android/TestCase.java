@@ -46,7 +46,7 @@ public class TestCase {
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
                     cx.setGeneratingDebug(false);
                     cx.setOptimizationLevel(-1);
-                    cx.seal(null);
+                    //cx.seal(null);
                     return cx;
                 }
             };

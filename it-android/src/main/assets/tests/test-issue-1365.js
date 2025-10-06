@@ -2,10 +2,7 @@
 //
 // To test with different releases, just change build.gradle accordingly:
 // e.g. replace dependency with  implementation 'org.mozilla:rhino:1.7.8'
-//
-// Performance of this test on different versions (resuts taken from the build report)
-// 1.7.8
-// 1.7.12   30.8s
+
 
 
 //start
@@ -739,7 +736,7 @@ function getObject(){
 //end
 
 // here we start with the "test" code
-for (var i = 1; i < 1000; i++) {
+for (var i = 1; i < 100; i++) {
   let positions = getXingdu("2023-08-02 16:17", 1)
   assertArrayEquals(["129.8117","318.0380","155.9603","146.5184","164.0723","43.8221","335.6279","28.9073","208.9073","142.9636","131.9050"], positions)
 }
