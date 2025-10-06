@@ -2112,7 +2112,7 @@ class BodyCodegen {
     private void visitArrayLiteral(Node node, Node child, boolean topLevel) {
         int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
         if (numberOfSpread > 0) {
-            visitArrayLiteralWithSpread(node, child, topLevel, numberOfSpread);
+            visitArrayLiteralWithSpread(node, child, numberOfSpread);
             return;
         }
 
@@ -2196,8 +2196,7 @@ class BodyCodegen {
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
-    private void visitArrayLiteralWithSpread(
-            Node node, Node child, boolean topLevel, int numberOfSpread) {
+    private void visitArrayLiteralWithSpread(Node node, Node child, int numberOfSpread) {
         int count = countArguments(child);
 
         // Create NewLiteralStorage for the array
