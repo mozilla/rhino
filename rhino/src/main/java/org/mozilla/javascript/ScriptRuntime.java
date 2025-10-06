@@ -23,6 +23,7 @@ import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
@@ -39,7 +40,6 @@ import org.mozilla.javascript.typedarrays.NativeUint32Array;
 import org.mozilla.javascript.typedarrays.NativeUint8Array;
 import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
-import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLLib;
 import org.mozilla.javascript.xml.XMLLoader;
 import org.mozilla.javascript.xml.XMLObject;
@@ -1051,27 +1051,18 @@ public class ScriptRuntime {
     }
 
     public static String numberToString(double d, int base) {
+        if (base == 10) {
+            return DoubleFormatter.toString(d);
+        }
+
         if ((base < 2) || (base > 36)) {
             throw ScriptRuntime.rangeErrorById("msg.bad.radix", Integer.toString(base));
         }
-
         if (Double.isNaN(d)) return "NaN";
         if (d == Double.POSITIVE_INFINITY) return "Infinity";
         if (d == Double.NEGATIVE_INFINITY) return "-Infinity";
         if (d == 0.0) return "0";
-
-        if (base != 10) {
-            return DToA.JS_dtobasestr(base, d);
-        }
-        // V8 FastDtoa can't convert all numbers, so try it first but
-        // fall back to old DToA in case it fails
-        String result = FastDtoa.numberToString(d);
-        if (result != null) {
-            return result;
-        }
-        StringBuilder buffer = new StringBuilder();
-        DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
-        return buffer.toString();
+        return DToA.JS_dtobasestr(base, d);
     }
 
     public static String bigIntToString(BigInteger n, int base) {
