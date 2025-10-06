@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +14,6 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.commonjs.module.ModuleScript;
-import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
-import org.mozilla.javascript.commonjs.module.RequireBuilder;
 
 /**
  * Utility class, that search for testcases in "assets/tests".
@@ -36,7 +32,8 @@ public class TestCase {
             new ContextFactory() {
                 @Override
                 protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == 20 /*Context.FEATURE_ENABLE_XML_SECURE_PARSING*/) return false;
+                    if (featureIndex == 20 /*Context.FEATURE_ENABLE_XML_SECURE_PARSING*/)
+                        return false;
                     return super.hasFeature(cx, featureIndex);
                 }
 
@@ -46,7 +43,7 @@ public class TestCase {
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
                     cx.setGeneratingDebug(false);
                     cx.setOptimizationLevel(-1);
-                    //cx.seal(null);
+                    // cx.seal(null);
                     return cx;
                 }
             };
