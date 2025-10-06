@@ -59,9 +59,7 @@ public class JavaBeaningTest {
                 SCRIPT_INIT + "obj.elementAt = 42");
     }
 
-    /**
-     * 'get' should be preferred over 'is'
-     */
+    /** 'get' should be preferred over 'is' */
     @Test
     public void testGetterPreference() {
         expect("obj.getInParent", "getGetInParent");
@@ -136,6 +134,10 @@ public class JavaBeaningTest {
         }
     }
 
+    /**
+     * Methods in parent will be scanned later than those in subclass. We can utilize this to create
+     * test cases for order-dependent action
+     */
     public static class BeaningTestObjectBase {
 
         public String getGetInParent() {
