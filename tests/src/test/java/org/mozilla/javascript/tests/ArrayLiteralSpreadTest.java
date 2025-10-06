@@ -6,20 +6,17 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for array literal spread syntax (...) functionality. */
 class ArrayLiteralSpreadTest {
-	@Test
-	void unsupportedInES5() {
-		String script =
-				"var arr = [1, 2, 3];"
-						+ "var result = [...arr]";
-		Utils.assertEvaluatorException_1_8("syntax error (test#1)", script);
-	}
+    @Test
+    void unsupportedInES5() {
+        String script = "var arr = [1, 2, 3];" + "var result = [...arr]";
+        Utils.assertEvaluatorException_1_8("syntax error (test#1)", script);
+    }
 
     @Test
     void testBasicSpread() {
@@ -123,7 +120,7 @@ class ArrayLiteralSpreadTest {
     }
 
     @Test
-     void testSpreadArrayLikeObjects() {
+    void testSpreadArrayLikeObjects() {
         String script =
                 "var arrayLike = {0: 'a', 1: 'b', 2: 'c', length: 3};"
                         + "var arr = Array.prototype.slice.call(arrayLike);"
@@ -138,24 +135,26 @@ class ArrayLiteralSpreadTest {
         Utils.assertWithAllModes_ES6("1,2,3", script);
     }
 
-	@Test
-	@Disabled("TODO: needs to be implemented, not passing currently")
-	void testSpreadAndSkipIndexes() {
-		String script = "var arr = [1, 2, 3];" + "var result = [0, ,...arr, , 4];" + "result.join(',');";
-		Utils.assertWithAllModes_ES6("0,,1,2,3,,4", script);
-	}
+    @Test
+    @Disabled("TODO: needs to be implemented, not passing currently")
+    void testSpreadAndSkipIndexes() {
+        String script =
+                "var arr = [1, 2, 3];" + "var result = [0, ,...arr, , 4];" + "result.join(',');";
+        Utils.assertWithAllModes_ES6("0,,1,2,3,,4", script);
+    }
 
-	@Test
-	@Disabled("TODO: needs to be implemented, not passing currently")
-	void testSpreadSymbolIterator() {
-		String script = "var obj = {\n" +
-				"  *[Symbol.iterator]() {\n" +
-				"    yield 1;\n" +
-				"    yield 2;\n" +
-				"  }\n" +
-				"};\n" +
-				"var arr = [...obj];\n" +
-				"arr.join(',')\n";
-		Utils.assertWithAllModes_ES6("1,2", script);
-	}
+    @Test
+    @Disabled("TODO: needs to be implemented, not passing currently")
+    void testSpreadSymbolIterator() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 1;\n"
+                        + "    yield 2;\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var arr = [...obj];\n"
+                        + "arr.join(',')\n";
+        Utils.assertWithAllModes_ES6("1,2", script);
+    }
 }

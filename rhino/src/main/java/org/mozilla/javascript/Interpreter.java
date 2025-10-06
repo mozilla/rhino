@@ -4310,8 +4310,8 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoLiteralNewArray extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-	        // indexReg: number of values in the literal
-	        frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
+            // indexReg: number of values in the literal
+            frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
             return null;
         }
     }
@@ -4399,8 +4399,8 @@ public final class Interpreter extends Icode implements Evaluator {
             if (op == Icode_SPARE_ARRAYLIT) {
                 skipIndexces = (int[]) frame.idata.literalIds[state.indexReg];
             }
-	        frame.stack[state.stackTop] =
-			        ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
+            frame.stack[state.stackTop] =
+                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
             return null;
         }
     }
