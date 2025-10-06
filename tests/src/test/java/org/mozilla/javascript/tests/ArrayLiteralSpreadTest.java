@@ -6,14 +6,15 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for array literal spread syntax (...) functionality. */
-public class ArrayLiteralSpreadTest {
+class ArrayLiteralSpreadTest {
 	@Test
-	public void unsupportedInES5() {
+	void unsupportedInES5() {
 		String script =
 				"var arr = [1, 2, 3];"
 						+ "var result = [...arr]";
@@ -21,7 +22,7 @@ public class ArrayLiteralSpreadTest {
 	}
 
     @Test
-    public void testBasicSpread() {
+    void testBasicSpread() {
         String script =
                 "var arr1 = [1, 2, 3];"
                         + "var arr2 = [4, 5, 6];"
@@ -31,7 +32,7 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadWithElements() {
+    void testSpreadWithElements() {
         String script =
                 "var arr1 = [2, 3];"
                         + "var arr2 = [5, 6];"
@@ -41,13 +42,13 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testEmptyArraySpread() {
+    void testEmptyArraySpread() {
         String script = "var empty = [];" + "var result = [...empty, 1, 2];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("1,2", script);
     }
 
     @Test
-    public void testSpreadEmptyArrays() {
+    void testSpreadEmptyArrays() {
         String script =
                 "var empty1 = [];"
                         + "var empty2 = [];"
@@ -57,14 +58,14 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSingleElementSpread() {
+    void testSingleElementSpread() {
         String script =
                 "var single = [42];" + "var result = [...single, ...single];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("42,42", script);
     }
 
     @Test
-    public void testNestedArraySpread() {
+    void testNestedArraySpread() {
         String script =
                 "var arr1 = [1, [2, 3]];"
                         + "var arr2 = [4, 5];"
@@ -74,25 +75,25 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadAtBeginning() {
+    void testSpreadAtBeginning() {
         String script = "var arr = [1, 2];" + "var result = [...arr, 3, 4];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
-    public void testSpreadAtEnd() {
+    void testSpreadAtEnd() {
         String script = "var arr = [3, 4];" + "var result = [1, 2, ...arr];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
-    public void testSpreadInMiddle() {
+    void testSpreadInMiddle() {
         String script = "var arr = [2, 3];" + "var result = [1, ...arr, 4];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("1,2,3,4", script);
     }
 
     @Test
-    public void testMultipleConsecutiveSpreads() {
+    void testMultipleConsecutiveSpreads() {
         String script =
                 "var arr1 = [1, 2];"
                         + "var arr2 = [3, 4];"
@@ -103,7 +104,7 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadWithUndefinedElements() {
+    void testSpreadWithUndefinedElements() {
         String script =
                 "var sparse = [1, , 3];"
                         + "var result = [...sparse];"
@@ -112,7 +113,7 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadLargeArray() {
+    void testSpreadLargeArray() {
         String script =
                 "var arr = [];"
                         + "for (var i = 0; i < 100; i++) arr.push(i);"
@@ -122,7 +123,7 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadArrayLikeObjects() {
+     void testSpreadArrayLikeObjects() {
         String script =
                 "var arrayLike = {0: 'a', 1: 'b', 2: 'c', length: 3};"
                         + "var arr = Array.prototype.slice.call(arrayLike);"
@@ -132,8 +133,15 @@ public class ArrayLiteralSpreadTest {
     }
 
     @Test
-    public void testSpreadOnlyArray() {
+    void testSpreadOnlyArray() {
         String script = "var arr = [1, 2, 3];" + "var result = [...arr];" + "result.join(',');";
         Utils.assertWithAllModes_ES6("1,2,3", script);
     }
+
+	@Test
+	@Disabled("TODO: needs to be implemented, not passing currently")
+	void testSpreadAndSkipIndexes() {
+		String script = "var arr = [1, 2, 3];" + "var result = [0, ,...arr, , 4];" + "result.join(',');";
+		Utils.assertWithAllModes_ES6("0,,1,2,3,,4", script);
+	}
 }
