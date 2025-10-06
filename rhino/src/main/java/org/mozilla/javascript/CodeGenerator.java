@@ -1494,23 +1494,27 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     }
 
     private void visitArrayLiteral(Node node, Node child) {
-        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
-        if (numberOfSpread > 0) {
-            visitArrayLiteralWithSpread(node, child, numberOfSpread);
-            return;
-        }
-
         int count = 0;
         for (Node n = child; n != null; n = n.getNext()) {
             ++count;
         }
-        addIndexOp(Icode_LITERAL_NEW_ARRAY, count);
+
+	    int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
         stackChange(1);
-        while (child != null) {
-            visitLiteralValue(child);
+
+		while (child != null) {
+	        if (child.getType() == Token.DOTDOTDOT) {
+		        visitExpression(child.getFirstChild(), 0);
+		        addIcode(Icode_SPREAD);
+		        stackChange(-1);
+	        } else {
+		        visitLiteralValue(child);
+	        }
             child = child.getNext();
         }
-        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+
+		int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
         if (skipIndexes == null) {
             addToken(Token.ARRAYLIT);
         } else {
@@ -1520,33 +1524,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
     }
 
-    private void visitArrayLiteralWithSpread(Node node, Node child, int numberOfSpread) {
-        int count = 0;
-        for (Node n = child; n != null; n = n.getNext()) {
-            ++count;
-        }
-
-        addIcode(Icode_REG_IND4);
-        addInt(-(count - numberOfSpread) - 1);
-        addIcode(Icode_LITERAL_NEW_ARRAY);
-        stackChange(+2);
-
-        while (child != null) {
-            if (child.getType() == Token.DOTDOTDOT) {
-                visitExpression(child.getFirstChild(), 0);
-                addIcode(Icode_SPREAD);
-                stackChange(-1);
-            } else {
-                visitLiteralValue(child);
-            }
-            child = child.getNext();
-        }
-
-        addToken(Token.ARRAYLIT);
-        stackChange(-1);
-    }
-
-    private void visitLiteralValue(Node child) {
+	private void visitLiteralValue(Node child) {
         int childType = child.getType();
         if (childType == Token.GET) {
             visitExpression(child.getFirstChild(), 0);
