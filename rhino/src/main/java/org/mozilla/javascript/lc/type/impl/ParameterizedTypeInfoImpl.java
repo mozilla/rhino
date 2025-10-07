@@ -1,16 +1,20 @@
 package org.mozilla.javascript.lc.type.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements ParameterizedTypeInfo {
     private final TypeInfo rawType;
     private final List<TypeInfo> params;
     private int hashCode;
+    private Map<VariableTypeInfo, TypeInfo> cachedMapping;
 
     public ParameterizedTypeInfoImpl(TypeInfo rawType, List<TypeInfo> params) {
         this.rawType = rawType;
@@ -40,9 +44,22 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
     }
 
     @Override
+    public Map<VariableTypeInfo, TypeInfo> extractConsolidationMapping(TypeInfoFactory factory) {
+        if (cachedMapping == null) {
+            cachedMapping = ParameterizedTypeInfo.super.extractConsolidationMapping(factory);
+        }
+        return cachedMapping;
+    }
+
+    @Override
     public int hashCode() {
         if (hashCode == 0) {
             hashCode = rawType.hashCode() * 31 + params.hashCode();
+
+            // make sure computed hashcode is never 0 to prevent computing again
+            if (hashCode == 0) {
+                hashCode = -1;
+            }
         }
 
         return hashCode;
@@ -82,5 +99,12 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
         for (var param : params) {
             param.collectComponentClass(collector);
         }
+    }
+
+    @Override
+    public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
+        var params = this.params;
+        var consolidated = TypeInfoFactory.consolidateAll(params, mapping);
+        return params == consolidated ? this : new ParameterizedTypeInfoImpl(rawType, consolidated);
     }
 }

@@ -1,10 +1,12 @@
 package org.mozilla.javascript.lc.type.impl;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 public final class ArrayTypeInfo extends TypeInfoBase {
     private final TypeInfo component;
@@ -37,7 +39,8 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 
     @Override
     public int hashCode() {
-        return component.hashCode();
+        // prevent hash collision with component type
+        return component.hashCode() + 1;
     }
 
     @Override
@@ -68,5 +71,12 @@ public final class ArrayTypeInfo extends TypeInfoBase {
     @Override
     public int getTypeTag() {
         return FunctionObject.JAVA_UNSUPPORTED_TYPE;
+    }
+
+    @Override
+    public TypeInfo consolidate(Map<VariableTypeInfo, TypeInfo> mapping) {
+        var component = this.component;
+        var consolidated = component.consolidate(mapping);
+        return component == consolidated ? this : new ArrayTypeInfo(consolidated);
     }
 }
