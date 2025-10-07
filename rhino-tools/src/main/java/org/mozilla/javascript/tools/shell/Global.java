@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mozilla.javascript.Context;
@@ -121,7 +119,6 @@ public class Global extends ImporterTopLevel {
             "readline",
             "readFile",
             "readUrl",
-            "runAsync",
             "runCommand",
             "seal",
             "serialize",
@@ -536,26 +533,6 @@ public class Global extends ImporterTopLevel {
         Thread thread = new Thread(() -> factory.call(action));
         thread.start();
         return cx.getWrapFactory().wrap(cx, scope, thread, Thread.class);
-    }
-
-    /**
-     * The runAsync function runs a given function or script in a ThreadPool.
-     *
-     * <p>It returns a {@link Future} and you can use {@link Future#get()} to await the computation.
-     *
-     * <pre>
-     * js&gt; function g() { return 3+5 }
-     * js&gt; f = runAsync(g); Future
-     * js&gt; f.get(); 8
-     * </pre>
-     */
-    @SuppressWarnings("AndroidJdkLibsChecker")
-    public static Object runAsync(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Scriptable scope = funObj.getParentScope();
-        ContextAction<Object> action = getAsyncAction(cx, args, scope);
-        ContextFactory factory = cx.getFactory();
-        Future<Object> future = ForkJoinPool.commonPool().submit(() -> factory.call(action));
-        return cx.getWrapFactory().wrap(cx, scope, future, Future.class);
     }
 
     private static ContextAction<Object> getAsyncAction(
