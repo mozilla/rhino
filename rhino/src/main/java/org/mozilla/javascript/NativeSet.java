@@ -11,7 +11,7 @@ public class NativeSet extends ScriptableObject {
     private static final String CLASS_NAME = "Set";
     static final String ITERATOR_TAG = "Set Iterator";
 
-    static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]");
+    static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]", Symbol.Kind.REGULAR);
 
     private final Hashtable entries = new Hashtable();
 

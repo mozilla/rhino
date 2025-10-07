@@ -103,7 +103,9 @@ public class LambdaConstructor extends LambdaFunction {
             SerializableConstructable targetConstructor) {
         super(scope, name, length, target, true);
         this.targetConstructor = targetConstructor;
-        this.flags = CONSTRUCTOR_DEFAULT;
+        this.flags =
+                (target != null ? CONSTRUCTOR_FUNCTION : 0)
+                        | (targetConstructor != null ? CONSTRUCTOR_NEW : 0);
     }
 
     public LambdaConstructor(

@@ -1246,15 +1246,8 @@ public class ScriptRuntime {
             throw typeErrorById("msg.undef.to.object");
         }
 
-        if (isSymbol(val)) {
-            if (val instanceof SymbolKey) {
-                NativeSymbol result =
-                        new NativeSymbol((SymbolKey) val, NativeSymbol.SymbolKind.REGULAR);
-                setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
-                return result;
-            }
-
-            NativeSymbol result = new NativeSymbol((NativeSymbol) val);
+        if (val instanceof SymbolKey) {
+            NativeSymbol result = new NativeSymbol((SymbolKey) val);
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
             return result;
         }
@@ -1931,6 +1924,7 @@ public class ScriptRuntime {
     /** Call obj.[[Put]](id, value) */
     public static Object setObjectElem(
             Object obj, Object elem, Object value, Context cx, Scriptable scope) {
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(obj, elem, value, cx);
         Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, elem, value);
         return setObjectElem(sobj, elem, value, cx);
     }
@@ -2054,6 +2048,7 @@ public class ScriptRuntime {
     /** A cheaper and less general version of the above for well-known argument types. */
     public static Object setObjectIndex(
             Object obj, double dblIndex, Object value, Context cx, Scriptable scope) {
+        verifyIsScriptableOrComplainWriteErrorInEs5Strict(obj, dblIndex, value, cx);
         Scriptable sobj = asScriptableOrThrowUndefWriteError(cx, scope, obj, dblIndex, value);
         int index = (int) dblIndex;
         if (index == dblIndex && index >= 0) {
@@ -5745,6 +5740,15 @@ public class ScriptRuntime {
         }
     }
 
+    private static void verifyIsScriptableOrComplainWriteErrorInEs5Strict(
+            Object obj, Object elem, Object value, Context cx) {
+        if (!(obj instanceof Scriptable)
+                && cx.isStrictMode()
+                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+            throw undefWriteError(obj, elem, value);
+        }
+    }
+
     public static RuntimeException undefReadError(Object object, Object id) {
         return typeErrorById("msg.undef.prop.read", toString(object), toString(id));
     }
@@ -6008,9 +6012,12 @@ public class ScriptRuntime {
     static boolean isUnregisteredSymbol(Object obj) {
         if (obj instanceof NativeSymbol) {
             NativeSymbol ns = (NativeSymbol) obj;
-            return ns.isSymbol() && ns.getKind() != NativeSymbol.SymbolKind.REGISTERED;
+            return ns.isSymbol() && ns.getKind() != Symbol.Kind.REGISTERED;
+        } else if (obj instanceof Symbol) {
+            Symbol s = (Symbol) obj;
+            return s.getKind() != Symbol.Kind.REGISTERED;
         }
-        return (obj instanceof SymbolKey);
+        return false;
     }
 
     private static RuntimeException errorWithClassName(String msg, Object val) {
