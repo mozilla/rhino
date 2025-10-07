@@ -144,7 +144,6 @@ class ArrayLiteralSpreadTest {
     }
 
     @Test
-    @Disabled("TODO: needs to be implemented, not passing currently")
     void testSpreadSymbolIterator() {
         String script =
                 "var obj = {\n"

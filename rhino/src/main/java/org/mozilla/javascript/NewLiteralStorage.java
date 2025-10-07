@@ -63,12 +63,41 @@ public abstract class NewLiteralStorage {
     }
 
     private void spreadArray(Context cx, Scriptable scope, Object source) {
-        // See ECMAScript 13.2.5.5 (Array Spread)
+        // See ecma-262 2026, 13.2.5.5 (Array Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
 
-            // TODO: Simplify code generator
-            // TODO: Resize array storage -- need to handle Iterable protocol
+            // Check if the object has Symbol.iterator
+            Object iteratorProp = ScriptableObject.getProperty(src, SymbolKey.ITERATOR);
+            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
+                try {
+                    final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
+                    if (!Undefined.isUndefined(iterator)) {
+                        java.util.List<Object> spreadValues = new java.util.ArrayList<>();
+                        try (IteratorLikeIterable it =
+                                new IteratorLikeIterable(cx, scope, iterator)) {
+                            for (Object temp : it) {
+                                spreadValues.add(temp);
+                            }
+                        }
+
+                        // Resize arrays
+                        int spreadSize = spreadValues.size();
+                        int newLen = values.length + spreadSize;
+                        getterSetters = Arrays.copyOf(getterSetters, newLen);
+                        values = Arrays.copyOf(values, newLen);
+
+                        // Push all values
+                        for (Object value : spreadValues) {
+                            pushValue(value);
+                        }
+                        return;
+                    }
+                } catch (Exception e) {
+                    // Fall through to non-iterator path
+                }
+            }
+            // Fallback for objects without Symbol.iterator or when iterator fails
             int spreadSize =
                     (src instanceof NativeArray)
                             ? (int) ((NativeArray) src).getLength()
@@ -85,7 +114,7 @@ public abstract class NewLiteralStorage {
                     Object value = NativeArray.getElem(cx, arr, i);
                     pushValue(value);
                 }
-            } else { // TODO: should call SymbolKey.ITERATOR -- js_from
+            } else {
                 Object[] ids = src.getIds();
 
                 for (Object id : ids) {
