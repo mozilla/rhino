@@ -199,7 +199,8 @@ public final class ES6Generator extends IdScriptableObject {
         try {
             // Call "return" but don't throw if it can't be found
             Object retResult = callReturnOptionally(cx, scope, value);
-            // Per spec, treat undefined return value same as null
+            // Treat undefined return value same as null
+            // See https://tc39.es/ecma262/#sec-iteratorclose (7.4.11, 4b)
             if (retResult != null && !Undefined.instance.equals(retResult)) {
                 if (ScriptRuntime.isIteratorDone(cx, retResult)) {
                     // Iterator is "done".
@@ -382,8 +383,9 @@ public final class ES6Generator extends IdScriptableObject {
         // Delegate to "return" method. If it's not defined we ignore it
         Object retFnObj =
                 ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
-        // Per spec, if return is null or undefined, treat as if it doesn't exist
-        if (!Undefined.instance.equals(retFnObj) && retFnObj != null) {
+        // Treat a return method that's null or undefined as if it doesn't exist
+        // See https://tc39.es/ecma262/#sec-getmethod (7.3.10, 2)
+        if (retFnObj != null && !Undefined.instance.equals(retFnObj)) {
             if (!(retFnObj instanceof Callable)) {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function",
