@@ -125,9 +125,7 @@ public final class ES6Generator extends IdScriptableObject {
         try {
             // Be super-careful and only pass an arg to next if it expects one
             Object[] nextArgs =
-                    Undefined.instance.equals(value)
-                            ? ScriptRuntime.emptyArgs
-                            : new Object[] {value};
+                    Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
 
             var nextFn = ScriptRuntime.getPropAndThis(delegee, ES6Iterator.NEXT_METHOD, cx, scope);
             Object nr = nextFn.call(cx, scope, nextArgs);
@@ -203,7 +201,7 @@ public final class ES6Generator extends IdScriptableObject {
             // This calls GetMethod: https://tc39.es/ecma262/#sec-getmethod (2026, 7.3.10, 2)
             // We need to check if the return value is present and after the call
             // if return value is not undefined treat it same as null
-            if (retResult != null && !Undefined.instance.equals(retResult)) {
+            if (retResult != null && !Undefined.isUndefined(retResult)) {
                 if (ScriptRuntime.isIteratorDone(cx, retResult)) {
                     // Iterator is "done".
                     delegee = null;
@@ -381,13 +379,13 @@ public final class ES6Generator extends IdScriptableObject {
 
     private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
         Object[] retArgs =
-                Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
+                Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
         // Delegate to "return" method. If it's not defined we ignore it
         Object retFnObj =
                 ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
         // Treat a return method that's null or undefined as if it doesn't exist
         // See https://tc39.es/ecma262/#sec-getmethod (2026, 7.3.10, 2)
-        if (retFnObj != null && !Undefined.instance.equals(retFnObj)) {
+        if (retFnObj != null && !Undefined.isUndefined(retFnObj)) {
             if (!(retFnObj instanceof Callable)) {
                 throw ScriptRuntime.typeErrorById(
                         "msg.isnt.function",
