@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.IntPredicate;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
@@ -937,6 +939,103 @@ public class NativeRegExp extends ScriptableObject {
         }
         char cl = Character.toLowerCase(ch);
         return (cl < 128) ? ch : cl;
+    }
+
+    /**
+     * Unicode simple case folding for case-insensitive matching. This approximates Unicode simple
+     * case folding without full tables.
+     */
+    private static int unicodeCaseFold(int codePoint) {
+        // Turkish İ (U+0130) and ı (U+0131) have no simple case fold mapping.
+        // They only have Turkish-specific ('T') and full ('F') mappings in Unicode,
+        // which should be ignored for ECMAScript simple case folding.
+        if (codePoint == 0x0130 || codePoint == 0x0131) {
+            return codePoint;
+        }
+        // For other characters, use Java's built-in case conversion
+        // This approximates Unicode case folding for most common cases
+        return Character.toString(codePoint)
+                .toLowerCase(Locale.ROOT)
+                .toUpperCase(Locale.ROOT)
+                .codePointAt(0);
+    }
+
+    /** Check if two code points match case-insensitively in Unicode mode */
+    private static boolean unicodeCaseInsensitiveEquals(int cp1, int cp2) {
+        if (cp1 == cp2) return true;
+
+        // Try case folding both ways
+        int fold1 = unicodeCaseFold(cp1);
+        int fold2 = unicodeCaseFold(cp2);
+
+        return (fold1 == fold2);
+    }
+
+    /**
+     * Checks if any inverse case fold variant of folded matches the predicate. Given a folded
+     * codepoint, tests all codepoints that fold to the same value. This handles special Unicode
+     * cases where multiple characters share a common case fold but aren't connected via simple
+     * toLowerCase/toUpperCase.
+     */
+    private static boolean anyInverseCaseFoldMatches(int folded, IntPredicate predicate) {
+        switch (folded) {
+            case 0x004B: // 'K' - also Kelvin sign U+212A and 'k'
+                return predicate.test(0x212A) || predicate.test(0x006B);
+            case 0x0053: // 'S' - also long s U+017F, ligatures U+FB05, U+FB06
+                return predicate.test(0x017F)
+                        || predicate.test(0xFB05)
+                        || predicate.test(0xFB06)
+                        || predicate.test(0x0073);
+            case 0x0049: // 'I' - also 'i'
+                // Note: İ (U+0130) and ı (U+0131) are NOT included here because they
+                // have no simple case fold mapping in Unicode (only Turkish-specific).
+                return predicate.test(0x0069);
+            case 0x0399: // Greek capital iota - U+0390, U+1FD3, U+03B9, U+0345
+                return predicate.test(0x0390)
+                        || predicate.test(0x1FD3)
+                        || predicate.test(0x03B9)
+                        || predicate.test(0x0345);
+            case 0x03A5: // Greek capital upsilon - U+03B0, U+1FE3, U+03C5
+                return predicate.test(0x03B0) || predicate.test(0x1FE3) || predicate.test(0x03C5);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Checks if any case variant of the codepoint matches the predicate. Uses early-return
+     * optimization to avoid unnecessary computations.
+     */
+    private static boolean anyCaseVariantMatches(int codePoint, IntPredicate predicate) {
+        // Check raw codepoint first
+        if (predicate.test(codePoint)) return true;
+
+        // Check lower and upper
+        int lower = Character.toLowerCase(codePoint);
+        int upper = Character.toUpperCase(codePoint);
+        if (lower != codePoint && predicate.test(lower)) return true;
+        if (upper != codePoint && upper != lower && predicate.test(upper)) return true;
+
+        // Only compute fold if still no match
+        int folded = unicodeCaseFold(codePoint);
+        if (folded != codePoint && folded != lower && folded != upper) {
+            if (predicate.test(folded)) return true;
+        }
+
+        // Title case (usually same as upper)
+        int title = Character.toTitleCase(codePoint);
+        if (title != codePoint && title != lower && title != upper && title != folded) {
+            if (predicate.test(title)) return true;
+        }
+
+        // lowerOfFolded
+        int lowerOfFolded = Character.toLowerCase(folded);
+        if (lowerOfFolded != codePoint && lowerOfFolded != lower && lowerOfFolded != folded) {
+            if (predicate.test(lowerOfFolded)) return true;
+        }
+
+        // Inverse mappings
+        return anyInverseCaseFoldMatches(folded, predicate);
     }
 
     static class ParserParameters {
