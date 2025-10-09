@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
@@ -826,6 +827,30 @@ public class NativeRegExp extends IdScriptableObject {
         }
         char cl = Character.toLowerCase(ch);
         return (cl < 128) ? ch : cl;
+    }
+
+    /**
+     * Unicode case folding approximation for case-insensitive matching. This is a simplified
+     * version that handles common cases without case folding tables.
+     */
+    private static int unicodeCaseFold(int codePoint) {
+        // For non-ASCII, use Java's built-in case folding
+        // This approximates Unicode case folding for most common cases
+        return Character.toString(codePoint)
+                .toLowerCase(Locale.ROOT)
+                .toUpperCase(Locale.ROOT)
+                .codePointAt(0);
+    }
+
+    /** Check if two code points match case-insensitively in Unicode mode */
+    private static boolean unicodeCaseInsensitiveEquals(int cp1, int cp2) {
+        if (cp1 == cp2) return true;
+
+        // Try case folding both ways
+        int fold1 = unicodeCaseFold(cp1);
+        int fold2 = unicodeCaseFold(cp2);
+
+        return (fold1 == fold2);
     }
 
     static class ParserParameters {
