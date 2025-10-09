@@ -3860,8 +3860,12 @@ class BodyCodegen {
             }
         } else {
             generateExpression(child, node);
-            if (!isArithmeticNode(child)) addObjectToNumeric();
             generateExpression(child.getNext(), node);
+            if (!isArithmeticNode(child)) {
+                cfw.add(ByteCode.SWAP);
+                addObjectToNumeric();
+                cfw.add(ByteCode.SWAP);
+            }
             if (!isArithmeticNode(child.getNext())) addObjectToNumeric();
 
             switch (type) {
@@ -3931,8 +3935,11 @@ class BodyCodegen {
         // that we can return a 32-bit unsigned value, and call
         // toUint32 instead of toInt32.
         if (type == Token.URSH) {
-            addDynamicInvoke("MATH:TOUINT32", Signatures.MATH_TO_UINT32);
             generateExpression(child.getNext(), node);
+            cfw.add(ByteCode.SWAP);
+            addDynamicInvoke("MATH:TOUINT32", Signatures.MATH_TO_UINT32);
+            cfw.add(ByteCode.DUP2_X1);
+            cfw.add(ByteCode.POP2);
             addDynamicInvoke("MATH:TOINT32", Signatures.MATH_TO_INT32);
             // Looks like we need to explicitly mask the shift to 5 bits -
             // LUSHR takes 6 bits.
@@ -3944,8 +3951,10 @@ class BodyCodegen {
             return;
         }
         if (childNumberFlag == -1) {
-            addObjectToNumeric();
             generateExpression(child.getNext(), node);
+            cfw.add(ByteCode.SWAP);
+            addObjectToNumeric();
+            cfw.add(ByteCode.SWAP);
             addObjectToNumeric();
 
             switch (type) {
