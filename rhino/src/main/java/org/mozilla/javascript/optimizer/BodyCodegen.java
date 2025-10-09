@@ -101,8 +101,8 @@ class BodyCodegen {
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(
                     ByteCode.INVOKEINTERFACE,
-                    "org/mozilla/javascript/Scriptable",
-                    "getParentScope",
+                    "org/mozilla/javascript/Function",
+                    "getDeclarationScope",
                     "()Lorg/mozilla/javascript/Scriptable;");
             cfw.addAStore(variableObjectLocal);
         }
@@ -234,8 +234,8 @@ class BodyCodegen {
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(
                     ByteCode.INVOKEINTERFACE,
-                    "org/mozilla/javascript/Scriptable",
-                    "getParentScope",
+                    "org/mozilla/javascript/Function",
+                    "getDeclarationScope",
                     "()Lorg/mozilla/javascript/Scriptable;");
             cfw.addAStore(variableObjectLocal);
         }
