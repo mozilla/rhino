@@ -776,11 +776,6 @@ public class NativeRegExp extends ScriptableObject {
             }
         }
 
-        // We don't support u and i flags together, yet.
-        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
-            reportError("msg.invalid.re.flag", "u and i");
-        }
-
         // We support unicode mode in ES6 and later.
         if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
             reportError("msg.invalid.re.flag", "u");
