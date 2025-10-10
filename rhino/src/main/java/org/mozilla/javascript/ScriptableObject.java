@@ -1413,6 +1413,11 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     public void defineBuiltinProperty(
+            Scriptable scope, String name, int length, SerializableCallable target) {
+        defineBuiltinProperty(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    public void defineBuiltinProperty(
             Scriptable scope,
             String name,
             int length,

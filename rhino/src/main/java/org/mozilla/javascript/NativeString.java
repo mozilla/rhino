@@ -157,7 +157,7 @@ final class NativeString extends ScriptableObject {
             String name,
             int length,
             SerializableCallable target) {
-        c.defineConstructorMethod(scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+        c.defineConstructorMethod(scope, name, length, target);
     }
 
     private static void defProtoMethod(
@@ -166,7 +166,7 @@ final class NativeString extends ScriptableObject {
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        c.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+        c.definePrototypeMethod(scope, key, length, target);
     }
 
     private static void defProtoMethod(
@@ -175,7 +175,7 @@ final class NativeString extends ScriptableObject {
             String name,
             int length,
             SerializableCallable target) {
-        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+        c.definePrototypeMethod(scope, name, length, target);
     }
 
     NativeString(CharSequence s) {

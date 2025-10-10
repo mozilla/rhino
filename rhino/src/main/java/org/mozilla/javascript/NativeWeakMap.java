@@ -39,14 +39,10 @@ public class NativeWeakMap extends ScriptableObject {
                         NativeWeakMap::jsConstructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
-        constructor.definePrototypeMethod(
-                scope, "set", 2, NativeWeakMap::js_set, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "delete", 1, NativeWeakMap::js_delete, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "get", 1, NativeWeakMap::js_get, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "has", 1, NativeWeakMap::js_has, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "set", 2, NativeWeakMap::js_set);
+        constructor.definePrototypeMethod(scope, "delete", 1, NativeWeakMap::js_delete);
+        constructor.definePrototypeMethod(scope, "get", 1, NativeWeakMap::js_get);
+        constructor.definePrototypeMethod(scope, "has", 1, NativeWeakMap::js_has);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);

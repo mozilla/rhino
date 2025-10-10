@@ -78,58 +78,22 @@ public class NativeDataView extends NativeArrayBufferView {
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getFloat32",
-                1,
-                NativeDataView::js_getFloat32,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getFloat64",
-                1,
-                NativeDataView::js_getFloat64,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getInt8", 1, NativeDataView::js_getInt8, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getInt16", 1, NativeDataView::js_getInt16, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getInt32", 1, NativeDataView::js_getInt32, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getUint8", 1, NativeDataView::js_getUint8, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getUint16", 1, NativeDataView::js_getUint16, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "getUint32", 1, NativeDataView::js_getUint32, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setFloat32",
-                2,
-                NativeDataView::js_setFloat32,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setFloat64",
-                2,
-                NativeDataView::js_setFloat64,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setInt8", 2, NativeDataView::js_setInt8, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setInt16", 2, NativeDataView::js_setInt16, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setInt32", 2, NativeDataView::js_setInt32, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setUint8", 2, NativeDataView::js_setUint8, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setUint16", 2, NativeDataView::js_setUint16, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "setUint32", 2, NativeDataView::js_setUint32, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "getFloat32", 1, NativeDataView::js_getFloat32);
+        constructor.definePrototypeMethod(scope, "getFloat64", 1, NativeDataView::js_getFloat64);
+        constructor.definePrototypeMethod(scope, "getInt8", 1, NativeDataView::js_getInt8);
+        constructor.definePrototypeMethod(scope, "getInt16", 1, NativeDataView::js_getInt16);
+        constructor.definePrototypeMethod(scope, "getInt32", 1, NativeDataView::js_getInt32);
+        constructor.definePrototypeMethod(scope, "getUint8", 1, NativeDataView::js_getUint8);
+        constructor.definePrototypeMethod(scope, "getUint16", 1, NativeDataView::js_getUint16);
+        constructor.definePrototypeMethod(scope, "getUint32", 1, NativeDataView::js_getUint32);
+        constructor.definePrototypeMethod(scope, "setFloat32", 2, NativeDataView::js_setFloat32);
+        constructor.definePrototypeMethod(scope, "setFloat64", 2, NativeDataView::js_setFloat64);
+        constructor.definePrototypeMethod(scope, "setInt8", 2, NativeDataView::js_setInt8);
+        constructor.definePrototypeMethod(scope, "setInt16", 2, NativeDataView::js_setInt16);
+        constructor.definePrototypeMethod(scope, "setInt32", 2, NativeDataView::js_setInt32);
+        constructor.definePrototypeMethod(scope, "setUint8", 2, NativeDataView::js_setUint8);
+        constructor.definePrototypeMethod(scope, "setUint16", 2, NativeDataView::js_setUint16);
+        constructor.definePrototypeMethod(scope, "setUint32", 2, NativeDataView::js_setUint32);
 
         if (sealed) {
             constructor.sealObject();

@@ -124,8 +124,7 @@ public class NativeObject extends ScriptableObject implements Map {
             String name,
             int length,
             SerializableCallable target) {
-        constructor.definePrototypeMethod(
-                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, name, length, target);
     }
 
     @Override

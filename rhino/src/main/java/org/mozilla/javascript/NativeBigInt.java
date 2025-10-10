@@ -29,54 +29,24 @@ final class NativeBigInt extends ScriptableObject {
                 scope,
                 "asIntN",
                 2,
-                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_asIntOrUintN(true, args),
-                DONTENUM,
-                DONTENUM | READONLY);
+                        js_asIntOrUintN(true, args));
         constructor.defineConstructorMethod(
                 scope,
                 "asUintN",
                 2,
-                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        js_asIntOrUintN(false, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toString",
-                0,
-                null,
-                NativeBigInt::js_toString,
-                DONTENUM,
-                DONTENUM | READONLY);
+                        js_asIntOrUintN(false, args));
+        constructor.definePrototypeMethod(scope, "toString", 0, NativeBigInt::js_toString);
         // Alias toLocaleString to toString
-        constructor.definePrototypeMethod(
-                scope,
-                "toLocaleString",
-                0,
-                null,
-                NativeBigInt::js_toString,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "toSource",
-                0,
-                null,
-                NativeBigInt::js_toSource,
-                DONTENUM,
-                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "toLocaleString", 0, NativeBigInt::js_toString);
+        constructor.definePrototypeMethod(scope, "toSource", 0, NativeBigInt::js_toSource);
         constructor.definePrototypeMethod(
                 scope,
                 "valueOf",
                 0,
-                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        toSelf(thisObj).bigIntValue,
-                DONTENUM,
-                DONTENUM | READONLY);
+                        toSelf(thisObj).bigIntValue);
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
         if (sealed) {

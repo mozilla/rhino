@@ -37,43 +37,21 @@ public class NativePromise extends ScriptableObject {
                         NativePromise::constructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
+        constructor.defineConstructorMethod(scope, "resolve", 1, NativePromise::resolve);
+        constructor.defineConstructorMethod(scope, "reject", 1, NativePromise::reject);
+        constructor.defineConstructorMethod(scope, "all", 1, NativePromise::all);
+        constructor.defineConstructorMethod(scope, "allSettled", 1, NativePromise::allSettled);
+        constructor.defineConstructorMethod(scope, "race", 1, NativePromise::race);
+        constructor.defineConstructorMethod(scope, "any", 1, NativePromise::any);
         constructor.defineConstructorMethod(
-                scope, "resolve", 1, null, NativePromise::resolve, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "reject", 1, null, NativePromise::reject, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "all", 1, null, NativePromise::all, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "allSettled",
-                1,
-                null,
-                NativePromise::allSettled,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "race", 1, null, NativePromise::race, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "any", 1, null, NativePromise::any, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "withResolvers",
-                0,
-                null,
-                NativePromise::withResolvers,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "try", 1, null, NativePromise::promiseTry, DONTENUM, DONTENUM | READONLY);
+                scope, "withResolvers", 0, NativePromise::withResolvers);
+        constructor.defineConstructorMethod(scope, "try", 1, NativePromise::promiseTry);
 
         ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
 
-        constructor.definePrototypeMethod(
-                scope, "then", 2, NativePromise::doThen, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "catch", 1, null, NativePromise::doCatch, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "finally", 1, NativePromise::doFinally, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "then", 2, NativePromise::doThen);
+        constructor.definePrototypeMethod(scope, "catch", 1, NativePromise::doCatch);
+        constructor.definePrototypeMethod(scope, "finally", 1, NativePromise::doFinally);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, "Promise", DONTENUM | READONLY);

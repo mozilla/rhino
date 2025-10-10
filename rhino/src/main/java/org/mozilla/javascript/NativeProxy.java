@@ -78,8 +78,7 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
                     }
                 };
 
-        constructor.defineConstructorMethod(
-                scope, "revocable", 2, NativeProxy::revocable, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(scope, "revocable", 2, NativeProxy::revocable);
         if (sealed) {
             constructor.sealObject();
         }

@@ -83,8 +83,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             String name,
             int length,
             SerializableCallable target) {
-        constructor.definePrototypeMethod(
-                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, name, length, target);
     }
 
     private static void defKnownBuiltInOnProto(

@@ -28,27 +28,18 @@ public class NativeMap extends ScriptableObject {
                         NativeMap::jsConstructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
-        constructor.defineConstructorMethod(scope, "groupBy", 2, NativeMap::jsGroupBy, DONTENUM);
+        constructor.defineConstructorMethod(scope, "groupBy", 2, NativeMap::jsGroupBy);
 
-        constructor.definePrototypeMethod(
-                scope, "set", 2, NativeMap::js_set, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "delete", 1, NativeMap::js_delete, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "get", 1, NativeMap::js_get, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "has", 1, NativeMap::js_has, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "clear", 0, NativeMap::js_clear, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "keys", 0, NativeMap::js_keys, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "values", 0, NativeMap::js_values, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "forEach", 1, NativeMap::js_forEach, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "set", 2, NativeMap::js_set);
+        constructor.definePrototypeMethod(scope, "delete", 1, NativeMap::js_delete);
+        constructor.definePrototypeMethod(scope, "get", 1, NativeMap::js_get);
+        constructor.definePrototypeMethod(scope, "has", 1, NativeMap::js_has);
+        constructor.definePrototypeMethod(scope, "clear", 0, NativeMap::js_clear);
+        constructor.definePrototypeMethod(scope, "keys", 0, NativeMap::js_keys);
+        constructor.definePrototypeMethod(scope, "values", 0, NativeMap::js_values);
+        constructor.definePrototypeMethod(scope, "forEach", 1, NativeMap::js_forEach);
 
-        constructor.definePrototypeMethod(
-                scope, "entries", 0, NativeMap::js_entries, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "entries", 0, NativeMap::js_entries);
         constructor.definePrototypeAlias("entries", SymbolKey.ITERATOR, DONTENUM);
 
         // The spec requires very specific handling of the "size" prototype

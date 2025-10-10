@@ -159,9 +159,7 @@ public class LambdaConstructor extends LambdaFunction {
      */
     public void definePrototypeMethod(
             Scriptable scope, String name, int length, SerializableCallable target) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
-        ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, f, 0);
+        definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /**
@@ -179,6 +177,15 @@ public class LambdaConstructor extends LambdaFunction {
         f.setStandardPropertyAttributes(propertyAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers.
+     */
+    public void definePrototypeMethod(
+            Scriptable scope, SymbolKey name, int length, SerializableCallable target) {
+        definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /**
@@ -341,16 +348,10 @@ public class LambdaConstructor extends LambdaFunction {
      *     for the "name" property of the Function object
      * @param length the value to return for the "length" property of the Function object
      * @param target the target to call when the method is invoked
-     * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target,
-            int attributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
-        defineProperty(name, f, attributes);
+            Scriptable scope, String name, int length, SerializableCallable target) {
+        defineConstructorMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /**
@@ -361,17 +362,10 @@ public class LambdaConstructor extends LambdaFunction {
      * @param name the value to return for the "name" property of the Function object
      * @param length the value to return for the "length" property of the Function object
      * @param target the target to call when the method is invoked
-     * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
-            Scriptable scope,
-            Symbol key,
-            String name,
-            int length,
-            SerializableCallable target,
-            int attributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
-        defineProperty(key, f, attributes);
+            Scriptable scope, Symbol key, String name, int length, SerializableCallable target) {
+        defineConstructorMethod(scope, name, length, target);
     }
 
     /**

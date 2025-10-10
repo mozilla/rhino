@@ -257,7 +257,8 @@ public class LambdaFunctionTest {
                     1,
                     (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
                             TestClass.sayHello(args),
-                    0);
+                    0,
+                    DONTENUM | READONLY);
             constructor.definePrototypeMethod(
                     scope,
                     "appendToValue",

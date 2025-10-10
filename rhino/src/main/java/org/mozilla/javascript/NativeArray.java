@@ -170,8 +170,7 @@ public class NativeArray extends ScriptableObject implements List {
             String name,
             int length,
             SerializableCallable target) {
-        constructor.defineConstructorMethod(
-                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(scope, name, length, target);
     }
 
     private static void defineMethodOnPrototype(
@@ -180,8 +179,7 @@ public class NativeArray extends ScriptableObject implements List {
             String name,
             int length,
             SerializableCallable target) {
-        constructor.definePrototypeMethod(
-                scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, name, length, target);
     }
 
     private static void exposeMethodOnConstructor(
@@ -194,14 +192,11 @@ public class NativeArray extends ScriptableObject implements List {
                 scope,
                 name,
                 length,
-                null,
                 (cx, s, thisObj, args) -> {
                     var realThis = ScriptRuntime.toObject(cx, scope, args[0]);
                     var realArgs = Arrays.copyOfRange(args, 1, args.length);
                     return target.call(cx, s, realThis, realArgs);
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
+                });
     }
 
     static int getMaximumInitialCapacity() {
