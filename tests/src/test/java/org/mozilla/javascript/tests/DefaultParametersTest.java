@@ -463,4 +463,28 @@ public class DefaultParametersTest {
         Utils.assertEvaluatorException_1_8(
                 "Default values are only supported in version >= 200", script + "()");
     }
+
+    // Test that length property reflects the number of parameters without defaults
+    @Test
+    public void arrowFunctionLengthSimple() throws Exception {
+        Utils.assertWithAllModes_ES6(1, "var f = (a, b = 39) => a; f.length");
+    }
+
+    @Test
+    public void arrowFunctionLengthWithDefaultParameters() throws Exception {
+        final String script =
+                "var callCount = 0;\n"
+                        + "var ref;\n"
+                        + "ref = (a, b = 39,) => {\n"
+                        + "    if (a !== 42) throw 'a should be 42';\n"
+                        + "    if (b !== 39) throw 'b should be 39';\n"
+                        + "    callCount = callCount + 1;\n"
+                        + "};\n"
+                        + "\n"
+                        + "ref(42, undefined, 1);\n"
+                        + "if (callCount !== 1) throw 'arrow function not invoked exactly once';\n"
+                        + "ref.length;";
+
+        Utils.assertWithAllModes_ES6(1, script);
+    }
 }
