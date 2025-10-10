@@ -34,6 +34,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "set",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "set")
                                 .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance),
@@ -43,6 +44,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "delete",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(key(args)),
                 DONTENUM,
@@ -51,6 +53,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "get",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "get").js_get(key(args)),
                 DONTENUM,
@@ -59,6 +62,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "has",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(key(args)),
                 DONTENUM,
@@ -67,6 +71,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "clear",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "clear").js_clear(),
                 DONTENUM,
@@ -75,6 +80,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "keys",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "keys")
                                 .js_iterator(scope, NativeCollectionIterator.Type.KEYS),
@@ -84,6 +90,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "values",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "values")
                                 .js_iterator(scope, NativeCollectionIterator.Type.VALUES),
@@ -93,6 +100,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "forEach",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "forEach")
                                 .js_forEach(
@@ -107,6 +115,7 @@ public class NativeMap extends ScriptableObject {
                 scope,
                 "entries",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "entries")
                                 .js_iterator(scope, NativeCollectionIterator.Type.BOTH),
@@ -125,8 +134,8 @@ public class NativeMap extends ScriptableObject {
                         "get size",
                         0,
                         (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                realThis(thisObj, "size").js_getSize());
-        sizeFunc.setPrototypeProperty(Undefined.instance);
+                                realThis(thisObj, "size").js_getSize(),
+                        false);
         desc.put("get", desc, sizeFunc);
         constructor.definePrototypeProperty(cx, "size", desc);
         constructor.definePrototypeProperty(cx, NativeSet.GETSIZE, desc);

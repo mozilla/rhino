@@ -41,7 +41,8 @@ public class ScriptRuntimeES6 {
                         "get [Symbol.species]",
                         0,
                         (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                thisObj));
+                                thisObj,
+                        false));
         constructor.defineOwnProperty(cx, SymbolKey.SPECIES, speciesDescriptor, false);
     }
 

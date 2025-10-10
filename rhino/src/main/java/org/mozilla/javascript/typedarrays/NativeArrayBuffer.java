@@ -45,11 +45,18 @@ public class NativeArrayBuffer extends ScriptableObject {
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         constructor.defineConstructorMethod(
-                scope, "isView", 1, NativeArrayBuffer::js_isView, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "isView",
+                1,
+                null,
+                NativeArrayBuffer::js_isView,
+                DONTENUM,
+                DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope,
                 "slice",
                 2,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         js_slice(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,
@@ -58,6 +65,7 @@ public class NativeArrayBuffer extends ScriptableObject {
                 scope,
                 "transfer",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         js_transfer(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,
@@ -66,6 +74,7 @@ public class NativeArrayBuffer extends ScriptableObject {
                 scope,
                 "transferToFixedLength",
                 0,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         js_transferToFixedLength(lcx, lscope, thisObj, constructor, args),
                 DONTENUM,

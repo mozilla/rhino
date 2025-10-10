@@ -39,6 +39,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "add",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "add").js_add(NativeMap.key(args)),
                 DONTENUM,
@@ -47,6 +48,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "delete",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
                 DONTENUM,
@@ -55,6 +57,7 @@ public class NativeWeakSet extends ScriptableObject {
                 scope,
                 "has",
                 1,
+                null,
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
                         realThis(thisObj, "has").js_has(NativeMap.key(args)),
                 DONTENUM,

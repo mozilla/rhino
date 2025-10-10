@@ -33,16 +33,23 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                 scope,
                 "for",
                 1,
+                null,
                 (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
                 DONTENUM,
                 DONTENUM | READONLY);
         ctor.defineConstructorMethod(
-                scope, "keyFor", 1, NativeSymbol::js_keyFor, DONTENUM, DONTENUM | READONLY);
+                scope, "keyFor", 1, null, NativeSymbol::js_keyFor, DONTENUM, DONTENUM | READONLY);
 
         ctor.definePrototypeMethod(
-                scope, "toString", 0, NativeSymbol::js_toString, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "toString",
+                0,
+                null,
+                NativeSymbol::js_toString,
+                DONTENUM,
+                DONTENUM | READONLY);
         ctor.definePrototypeMethod(
-                scope, "valueOf", 0, NativeSymbol::js_valueOf, DONTENUM, DONTENUM | READONLY);
+                scope, "valueOf", 0, null, NativeSymbol::js_valueOf, DONTENUM, DONTENUM | READONLY);
         ctor.definePrototypeMethod(
                 scope,
                 SymbolKey.TO_PRIMITIVE,

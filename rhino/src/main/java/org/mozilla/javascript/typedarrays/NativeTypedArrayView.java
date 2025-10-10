@@ -249,9 +249,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineMethod(ta, s, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
 
             ta.defineConstructorMethod(
-                    scope, "from", 1, NativeTypedArrayView::js_from, DONTENUM, DONTENUM | READONLY);
+                    scope,
+                    "from",
+                    1,
+                    null,
+                    NativeTypedArrayView::js_from,
+                    DONTENUM,
+                    DONTENUM | READONLY);
             ta.defineConstructorMethod(
-                    scope, "of", 0, NativeTypedArrayView::js_of, DONTENUM, DONTENUM | READONLY);
+                    scope,
+                    "of",
+                    0,
+                    null,
+                    NativeTypedArrayView::js_of,
+                    DONTENUM,
+                    DONTENUM | READONLY);
 
             ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
         }
