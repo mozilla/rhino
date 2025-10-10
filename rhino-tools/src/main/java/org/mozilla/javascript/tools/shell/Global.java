@@ -519,39 +519,56 @@ public class Global extends ImporterTopLevel {
     /**
      * The spawn function runs a given function or script in a different thread.
      *
-     * <p>js&gt; function g() { a = 7; } js&gt; a = 3; 3 js&gt; spawn(g) Thread[Thread-1,5,main]
-     * js&gt; a 3
+     * <pre>
+     * js&gt; function g() { a = 7; }
+     * js&gt; a = 3; 3
+     * js&gt; spawn(g) Thread[Thread-1,5,main]
+     * js&gt; a 7
+     * </pre>
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         Scriptable scope = funObj.getParentScope();
-        Runner runner;
+        ContextAction<?> action = getAsyncAction(cx, args, scope);
+        ContextFactory factory = cx.getFactory();
+        Thread thread = new Thread(() -> factory.call(action));
+        thread.start();
+        return cx.getWrapFactory().wrap(cx, scope, thread, Thread.class);
+    }
+
+    private static ContextAction<Object> getAsyncAction(
+            Context cx, Object[] args, Scriptable scope) {
+        ContextAction<Object> action;
         if (args.length != 0 && args[0] instanceof Function) {
-            Object[] newArgs = null;
-            if (args.length > 1 && args[1] instanceof Scriptable) {
-                newArgs = cx.getElements((Scriptable) args[1]);
-            }
-            if (newArgs == null) {
-                newArgs = ScriptRuntime.emptyArgs;
-            }
-            runner = new Runner(scope, (Function) args[0], newArgs);
+            Function f = (Function) args[0];
+            Object[] newArgs =
+                    args.length > 1 && args[1] instanceof Scriptable
+                            ? cx.getElements((Scriptable) args[1])
+                            : ScriptRuntime.emptyArgs;
+            action = cx2 -> f.call(cx2, scope, scope, newArgs);
         } else if (args.length != 0 && args[0] instanceof Script) {
-            runner = new Runner(scope, (Script) args[0]);
+            Script s = (Script) args[0];
+            action = cx2 -> s.exec(cx2, scope, scope);
         } else {
             throw reportRuntimeError("msg.spawn.args");
         }
-        runner.factory = cx.getFactory();
-        Thread thread = new Thread(runner);
-        thread.start();
-        return thread;
+        return action;
     }
 
     /**
      * The sync function creates a synchronized function (in the sense of a Java synchronized
      * method) from an existing function. The new function synchronizes on the the second argument
-     * if it is defined, or otherwise the <code>this</code> object of its invocation. js&gt; var o =
-     * { f : sync(function(x) { print("entry"); Packages.java.lang.Thread.sleep(x*1000);
-     * print("exit"); })}; js&gt; spawn(function() {o.f(5);}); Thread[Thread-0,5,main] entry js&gt;
-     * spawn(function() {o.f(5);}); Thread[Thread-1,5,main] js&gt; exit entry exit
+     * if it is defined, or otherwise the <code>this</code> object of its invocation.
+     *
+     * <pre>
+     * js&gt; var o = { f : sync(function(x) {
+     *                             print("entry");
+     *                             Packages.java.lang.Thread.sleep(x*1000);
+     *                             print("exit");
+     *                           })};
+     * js&gt; spawn(function() {o.f(5);}); Thread[Thread-0,5,main] entry
+     * js&gt; spawn(function() {o.f(5);}); Thread[Thread-1,5,main]
+     * js&gt; exit entry exit
+     * </pre>
      */
     public static Object sync(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         if (args.length >= 1 && args.length <= 2 && args[0] instanceof Function) {
@@ -884,35 +901,4 @@ public class Global extends ImporterTopLevel {
     public interface CommandExecutor {
         Process exec(String[] cmdarray, String[] envp, File dir) throws IOException;
     }
-}
-
-class Runner implements Runnable, ContextAction<Object> {
-
-    Runner(Scriptable scope, Function func, Object[] args) {
-        this.scope = scope;
-        f = func;
-        this.args = args;
-    }
-
-    Runner(Scriptable scope, Script script) {
-        this.scope = scope;
-        s = script;
-    }
-
-    @Override
-    public void run() {
-        factory.call(this);
-    }
-
-    @Override
-    public Object run(Context cx) {
-        if (f != null) return f.call(cx, scope, scope, args);
-        else return s.exec(cx, scope, scope);
-    }
-
-    ContextFactory factory;
-    private Scriptable scope;
-    private Function f;
-    private Script s;
-    private Object[] args;
 }
