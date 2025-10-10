@@ -503,4 +503,56 @@ public class FunctionNode extends ScriptNode {
             }
         }
     }
+
+    /**
+     * Calculate the arity (function.length) for a function. According to ECMAScript spec, the
+     * length property should only count parameters up to (but not including) the first one with a
+     * default value.
+     *
+     * <p>Ref: ECMA 2026, 15.1.5 Static Semantics: ExpectedArgumentCount
+     *
+     * @param scriptOrFn the function or script node
+     * @return the arity (number of parameters before first default parameter)
+     */
+    public static int calculateFunctionArity(ScriptNode scriptOrFn) {
+        int paramCount = scriptOrFn.getParamCount();
+        int arity = paramCount;
+
+        if (scriptOrFn instanceof FunctionNode) {
+            FunctionNode fnNode = (FunctionNode) scriptOrFn;
+            java.util.List<Object> defaultParams = fnNode.getDefaultParams();
+
+            if (defaultParams != null && !defaultParams.isEmpty()) {
+                // defaultParams stores pairs: [paramName (String), defaultValue (AstNode), ...]
+                // count up to the first parameter that has a default value
+                java.util.List<AstNode> params = fnNode.getParams();
+                if (params != null && !params.isEmpty()) {
+                    for (int i = 0; i < defaultParams.size(); i += 2) {
+                        if (defaultParams.get(i) instanceof String) {
+                            String paramWithDefault = (String) defaultParams.get(i);
+
+                            for (int paramIndex = 0; paramIndex < params.size(); paramIndex++) {
+                                AstNode param = params.get(paramIndex);
+                                if (param instanceof Name) {
+                                    String paramName = ((Name) param).getIdentifier();
+                                    if (paramName.equals(paramWithDefault)) {
+                                        arity = paramIndex;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (arity != paramCount) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Rest parameters don't count toward length
+        if (scriptOrFn.hasRestParameter()) {
+            arity = Math.max(0, arity - 1);
+        }
+
+        return arity;
+    }
 }

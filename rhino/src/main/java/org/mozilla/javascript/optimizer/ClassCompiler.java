@@ -318,6 +318,7 @@ public class ClassCompiler {
         cfw.addLoadConstant(builder.languageVersion);
         cfw.addLoadConstant(builder.paramAndVarCount);
         cfw.addLoadConstant(builder.paramCount);
+        cfw.addLoadConstant(builder.arity);
         cfw.add(builder.hasDefaultParameters ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.add(builder.requiresActivationFrame ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.add(builder.requiresArgumentObject ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
