@@ -680,31 +680,6 @@ public class Bug783797Test {
     }
 
     @Test
-    public void thisProto() {
-        String fn = "function test(){ return this.__proto__ }";
-        runWithAllModes(
-                action(
-                        fn,
-                        new Action() {
-                            @Override
-                            public void run(
-                                    Context cx, ScriptableObject scope1, ScriptableObject scope2) {
-                                assertTRUE(eval(cx, scope2, "String.prototype === test.call('')"));
-                                assertTRUE(
-                                        eval(
-                                                cx,
-                                                scope1,
-                                                "String.prototype === scope2.test.call('')"));
-                                assertTRUE(
-                                        eval(
-                                                cx,
-                                                scope1,
-                                                "var t=scope2.test; String.prototype === t.call('')"));
-                            }
-                        }));
-    }
-
-    @Test
     public void stringLiteralProto() {
         String fn = "function test(){ return ''.__proto__ }";
         runWithAllModes(

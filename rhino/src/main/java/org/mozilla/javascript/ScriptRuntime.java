@@ -2537,16 +2537,15 @@ public class ScriptRuntime {
         Scriptable iterator;
     }
 
-    public static Scriptable toIterator(
-            Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
+    public static Scriptable toIterator(Context cx, Scriptable obj, boolean keyOnly) {
         if (ScriptableObject.hasProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME)) {
             Object v = ScriptableObject.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
-            if (!(v instanceof Callable)) {
+            if (!(v instanceof Function)) {
                 throw typeErrorById("msg.invalid.iterator");
             }
-            Callable f = (Callable) v;
+            Function f = (Function) v;
             Object[] args = new Object[] {keyOnly ? Boolean.TRUE : Boolean.FALSE};
-            v = f.call(cx, scope, obj, args);
+            v = f.call(cx, f.getDeclarationScope(), obj, args);
             if (!(v instanceof Scriptable)) {
                 throw typeErrorById("msg.iterator.primitive");
             }
@@ -2600,12 +2599,7 @@ public class ScriptRuntime {
         if (enumType != ENUMERATE_KEYS_NO_ITERATOR
                 && enumType != ENUMERATE_VALUES_NO_ITERATOR
                 && enumType != ENUMERATE_ARRAY_NO_ITERATOR) {
-            x.iterator =
-                    toIterator(
-                            cx,
-                            x.obj.getParentScope(),
-                            x.obj,
-                            enumType == ScriptRuntime.ENUMERATE_KEYS);
+            x.iterator = toIterator(cx, x.obj, enumType == ScriptRuntime.ENUMERATE_KEYS);
         }
         if (x.iterator == null) {
             // enumInit should read all initial ids before returning
@@ -2627,8 +2621,13 @@ public class ScriptRuntime {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
         Callable f = (Callable) iterator;
-        Scriptable scope = x.obj.getParentScope();
         Object[] args = new Object[] {};
+        Scriptable scope;
+        if (f instanceof Function) {
+            scope = ((Function) f).getDeclarationScope();
+        } else {
+            scope = cx.topCallScope;
+        }
         Object v = f.call(cx, scope, x.obj, args);
         if (!(v instanceof Scriptable)) {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
@@ -2658,8 +2657,14 @@ public class ScriptRuntime {
             Object v = ScriptableObject.getProperty(x.iterator, "next");
             if (!(v instanceof Callable)) return Boolean.FALSE;
             Callable f = (Callable) v;
+            Scriptable scope;
+            if (f instanceof Function) {
+                scope = ((Function) f).getDeclarationScope();
+            } else {
+                scope = cx.topCallScope;
+            }
             try {
-                x.currentId = f.call(cx, x.iterator.getParentScope(), x.iterator, emptyArgs);
+                x.currentId = f.call(cx, scope, x.iterator, emptyArgs);
                 return Boolean.TRUE;
             } catch (JavaScriptException e) {
                 if (e.getValue() instanceof NativeIterator.StopIteration) {
@@ -2702,7 +2707,12 @@ public class ScriptRuntime {
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
-        Scriptable scope = enumObj.iterator.getParentScope();
+        Scriptable scope;
+        if (f instanceof Function) {
+            scope = ((Function) f).getDeclarationScope();
+        } else {
+            scope = cx.topCallScope;
+        }
         Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
         Scriptable iteratorResult = toObject(cx, scope, r);
         Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
@@ -3211,21 +3221,16 @@ public class ScriptRuntime {
 
         Callable f = (Callable) value;
         Scriptable thisObj = null;
-        if (f instanceof Scriptable) {
-            thisObj = ((Scriptable) f).getParentScope();
+        if (f instanceof Function) {
+            thisObj = ((Function) f).getDeclarationScope();
         }
         if (thisObj == null) {
             if (cx.topCallScope == null) throw new IllegalStateException();
             thisObj = cx.topCallScope;
         }
-        if (thisObj.getParentScope() != null) {
-            if (thisObj instanceof NativeWith) {
-                // functions defined inside with should have with target
-                // as their thisObj
-            } else if (thisObj instanceof NativeCall) {
-                // nested functions should have top scope as their thisObj
-                thisObj = ScriptableObject.getTopLevelScope(thisObj);
-            }
+        if (thisObj instanceof NativeCall) {
+            // nested functions should have top scope as their thisObj
+            thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
         storeScriptable(cx, thisObj);
         return f;
@@ -3257,21 +3262,16 @@ public class ScriptRuntime {
 
         Callable f = (Callable) value;
         Scriptable thisObj = null;
-        if (f instanceof Scriptable) {
-            thisObj = ((Scriptable) f).getParentScope();
+        if (f instanceof Function) {
+            thisObj = ((Function) f).getDeclarationScope();
         }
         if (thisObj == null) {
             if (cx.topCallScope == null) throw new IllegalStateException();
             thisObj = cx.topCallScope;
         }
-        if (thisObj.getParentScope() != null) {
-            if (thisObj instanceof NativeWith) {
-                // functions defined inside with should have with target
-                // as their thisObj
-            } else if (thisObj instanceof NativeCall) {
-                // nested functions should have top scope as their thisObj
-                thisObj = ScriptableObject.getTopLevelScope(thisObj);
-            }
+        if (thisObj instanceof NativeCall) {
+            // nested functions should have top scope as their thisObj
+            thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
         return new LookupResult(f, thisObj, value);
     }
@@ -4190,7 +4190,7 @@ public class ScriptRuntime {
         if (exoticToPrim instanceof Function) {
             final Function func = (Function) exoticToPrim;
             final Context cx = Context.getCurrentContext();
-            final Scriptable scope = func.getParentScope();
+            final Scriptable scope = func.getDeclarationScope();
             final String hint;
             if (preferredType == null) {
                 hint = "default";

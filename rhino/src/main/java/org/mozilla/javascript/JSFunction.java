@@ -29,6 +29,11 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
+    public Scriptable getDeclarationScope() {
+        return this.getParentScope();
+    }
+
+    @Override
     public JSDescriptor<JSFunction> getDescriptor() {
         return descriptor;
     }
