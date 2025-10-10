@@ -8,9 +8,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mozilla.javascript.NativeFunction;
+import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.optimizer.OptJSCode;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -34,11 +35,10 @@ public class CodegenTest {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
                     if (!_cx.isInterpretedMode()) {
+                        Assert.assertTrue("Expected JSScript", script instanceof JSScript);
                         Assert.assertTrue(
-                                script.getClass().getName(),
-                                script.getClass()
-                                        .getName()
-                                        .startsWith("org.mozilla.javascript.gen.test_source_"));
+                                "Expected OptJSCode",
+                                script.getDescriptor().getCode() instanceof OptJSCode);
                     }
                     return null;
                 });
@@ -56,7 +56,7 @@ public class CodegenTest {
                             script.getClass().getName(),
                             script.getClass()
                                     .getName()
-                                    .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                    .startsWith("org.mozilla.javascript.JSScript"));
                     return null;
                 });
 
@@ -73,10 +73,10 @@ public class CodegenTest {
                                 script.getClass().getName(),
                                 script.getClass()
                                         .getName()
-                                        .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                        .startsWith("org.mozilla.javascript.JSScript"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getRawSource().length(),
-                                ((NativeFunction) script).getRawSource().length() > 1000);
+                                "" + script.getDescriptor().getRawSource().length(),
+                                script.getDescriptor().getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -121,11 +121,10 @@ public class CodegenTest {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
                     if (!_cx.isInterpretedMode()) {
+                        Assert.assertTrue("Expected JSScript", script instanceof JSScript);
                         Assert.assertTrue(
-                                script.getClass().getName(),
-                                script.getClass()
-                                        .getName()
-                                        .startsWith("org.mozilla.javascript.gen.test_source_"));
+                                "Expected JavaScriptFuncton",
+                                script.getDescriptor().getCode() instanceof OptJSCode);
                     }
                     return null;
                 });
@@ -143,10 +142,10 @@ public class CodegenTest {
                             script.getClass().getName(),
                             script.getClass()
                                     .getName()
-                                    .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                    .startsWith("org.mozilla.javascript.JSScript"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getRawSource().length(),
-                            ((NativeFunction) script).getRawSource().length() > 1000);
+                            "" + script.getDescriptor().getRawSource().length(),
+                            script.getDescriptor().getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -163,10 +162,10 @@ public class CodegenTest {
                                 script.getClass().getName(),
                                 script.getClass()
                                         .getName()
-                                        .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                        .startsWith("org.mozilla.javascript.JSScript"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getRawSource().length(),
-                                ((NativeFunction) script).getRawSource().length() > 1000);
+                                "" + script.getDescriptor().getRawSource().length(),
+                                script.getDescriptor().getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -190,11 +189,10 @@ public class CodegenTest {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
                     if (!_cx.isInterpretedMode()) {
+                        Assert.assertTrue("Expected JSScript", script instanceof JSScript);
                         Assert.assertTrue(
-                                script.getClass().getName(),
-                                script.getClass()
-                                        .getName()
-                                        .startsWith("org.mozilla.javascript.gen.test_source_"));
+                                "Expected JavaScriptFuncton",
+                                script.getDescriptor().getCode() instanceof OptJSCode);
                     }
                     return null;
                 });
@@ -215,10 +213,10 @@ public class CodegenTest {
                             script.getClass().getName(),
                             script.getClass()
                                     .getName()
-                                    .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                    .startsWith("org.mozilla.javascript.JSScript"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getRawSource().length(),
-                            ((NativeFunction) script).getRawSource().length() > 1000);
+                            "" + script.getDescriptor().getRawSource().length(),
+                            script.getDescriptor().getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -235,10 +233,10 @@ public class CodegenTest {
                                 script.getClass().getName(),
                                 script.getClass()
                                         .getName()
-                                        .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                        .startsWith("org.mozilla.javascript.JSScript"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getRawSource().length(),
-                                ((NativeFunction) script).getRawSource().length() > 1000);
+                                "" + script.getDescriptor().getRawSource().length(),
+                                script.getDescriptor().getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -261,11 +259,10 @@ public class CodegenTest {
                     Script script =
                             _cx.compileString(scriptSource.toString(), "test-source", 1, null);
                     if (!_cx.isInterpretedMode()) {
+                        Assert.assertTrue("Expected JSScript", script instanceof JSScript);
                         Assert.assertTrue(
-                                script.getClass().getName(),
-                                script.getClass()
-                                        .getName()
-                                        .startsWith("org.mozilla.javascript.gen.test_source_"));
+                                "Expected JavaScriptFuncton",
+                                script.getDescriptor().getCode() instanceof OptJSCode);
                     }
                     return null;
                 });
@@ -283,10 +280,10 @@ public class CodegenTest {
                             script.getClass().getName(),
                             script.getClass()
                                     .getName()
-                                    .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                    .startsWith("org.mozilla.javascript.JSScript"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getRawSource().length(),
-                            ((NativeFunction) script).getRawSource().length() > 1000);
+                            "" + script.getDescriptor().getRawSource().length(),
+                            script.getDescriptor().getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -303,10 +300,10 @@ public class CodegenTest {
                                 script.getClass().getName(),
                                 script.getClass()
                                         .getName()
-                                        .startsWith("org.mozilla.javascript.InterpretedFunction"));
+                                        .startsWith("org.mozilla.javascript.JSScript"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getRawSource().length(),
-                                ((NativeFunction) script).getRawSource().length() > 1000);
+                                "" + script.getDescriptor().getRawSource().length(),
+                                script.getDescriptor().getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());

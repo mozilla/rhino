@@ -12,17 +12,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
-import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
 
 /** Generates bytecode for the Interpreter. */
-class CodeGenerator extends Icode {
+class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
     private static final int MIN_LABEL_TABLE_SIZE = 32;
     private static final int MIN_FIXUP_TABLE_SIZE = 40;
@@ -32,7 +28,8 @@ class CodeGenerator extends Icode {
     private boolean itsInFunctionFlag;
     private boolean itsInTryFlag;
 
-    private InterpreterData itsData;
+    private InterpreterData.Builder<T> itsData;
+    private JSDescriptor.Builder<T> builder;
 
     private ScriptNode scriptOrFn;
     private int iCodeTop;
@@ -56,7 +53,7 @@ class CodeGenerator extends Icode {
     // ECF_ or Expression Context Flags constants: for now only TAIL
     private static final int ECF_TAIL = 1 << 0;
 
-    public InterpreterData compile(
+    public JSDescriptor<T> compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
             String rawSource,
@@ -81,20 +78,20 @@ class CodeGenerator extends Icode {
             scriptOrFn = tree;
         }
 
-        itsData =
-                new InterpreterData(
-                        compilerEnv.getLanguageVersion(),
-                        scriptOrFn.getSourceName(),
-                        rawSource,
-                        scriptOrFn.isInStrictMode());
-        itsData.topLevel = true;
+        builder = new JSDescriptor.Builder<T>();
+        itsData = new InterpreterData.Builder<T>();
+        builder.code = itsData;
 
         if (returnFunction) {
+            CodeGenUtils.fillInForTopLevelFunction(
+                    builder, (FunctionNode) scriptOrFn, rawSource, compilerEnv);
             generateFunctionICode();
         } else {
+            CodeGenUtils.fillInForScript(builder, scriptOrFn, rawSource, compilerEnv);
+            CodeGenUtils.setConstructor(builder, scriptOrFn);
             generateICodeFromTree(scriptOrFn);
         }
-        return itsData;
+        return builder.build(x -> {});
     }
 
     private void generateFunctionICode() {
@@ -102,24 +99,11 @@ class CodeGenerator extends Icode {
 
         FunctionNode theFunction = (FunctionNode) scriptOrFn;
 
-        itsData.itsFunctionType = theFunction.getFunctionType();
-        itsData.itsNeedsActivation = theFunction.requiresActivation();
-        itsData.itsRequiresArgumentObject = theFunction.requiresArgumentObject();
-        if (theFunction.getFunctionName() != null) {
-            itsData.itsName = theFunction.getName();
-        }
+        CodeGenUtils.setConstructor(builder, theFunction);
+
         if (theFunction.isGenerator()) {
             addIcode(Icode_GENERATOR);
             addUint16(theFunction.getBaseLineno() & 0xFFFF);
-        }
-        if (theFunction.isInStrictMode()) {
-            itsData.isStrict = true;
-        }
-        if (theFunction.isES6Generator()) {
-            itsData.isES6Generator = true;
-        }
-        if (theFunction.isShorthand()) {
-            itsData.isShorthand = true;
         }
 
         generateICodeFromTree(theFunction.getLastChild());
@@ -135,12 +119,12 @@ class CodeGenerator extends Icode {
         visitStatement(tree, 0);
         fixLabelGotos();
         // add RETURN_RESULT only to scripts as function always ends with RETURN
-        if (itsData.itsFunctionType == 0) {
+        if (builder.functionType == 0) {
             addToken(Token.RETURN_RESULT);
         }
 
         if (itsData.itsICode.length != iCodeTop) {
-            // Make itsData.itsICode length exactly iCodeTop to save memory
+            // Make builder.itsICode length exactly iCodeTop to save memory
             // and catch bugs with jumps beyond icode as early as possible
             byte[] tmp = new byte[iCodeTop];
             System.arraycopy(itsData.itsICode, 0, tmp, 0, iCodeTop);
@@ -186,15 +170,6 @@ class CodeGenerator extends Icode {
         // stack and sDbl arrays
         itsData.itsMaxFrameArray = itsData.itsMaxVars + itsData.itsMaxLocals + itsData.itsMaxStack;
 
-        itsData.argNames = scriptOrFn.getParamAndVarNames();
-        itsData.argIsConst = scriptOrFn.getParamAndVarConst();
-        itsData.argCount = scriptOrFn.getParamCount();
-        itsData.argsHasRest = scriptOrFn.hasRestParameter();
-        itsData.argsHasDefaults = scriptOrFn.getDefaultParams() != null;
-
-        itsData.rawSourceStart = scriptOrFn.getRawSourceStart();
-        itsData.rawSourceEnd = scriptOrFn.getRawSourceEnd();
-
         if (literalIds.size() != 0) {
             itsData.literalIds = literalIds.toArray();
         }
@@ -206,24 +181,17 @@ class CodeGenerator extends Icode {
         int functionCount = scriptOrFn.getFunctionCount();
         if (functionCount == 0) return;
 
-        InterpreterData[] array = new InterpreterData[functionCount];
         for (int i = 0; i != functionCount; i++) {
             FunctionNode fn = scriptOrFn.getFunctionNode(i);
-            CodeGenerator gen = new CodeGenerator();
+            CodeGenerator<JSFunction> gen = new CodeGenerator<JSFunction>();
             gen.compilerEnv = compilerEnv;
             gen.scriptOrFn = fn;
-            gen.itsData = new InterpreterData(itsData);
+            gen.builder = builder.createChildBuilder();
+            gen.itsData = new InterpreterData.Builder<JSFunction>();
+            gen.builder.code = gen.itsData;
+            CodeGenUtils.fillInForNestedFunction(gen.builder, builder, fn);
             gen.generateFunctionICode();
-            array[i] = gen.itsData;
-
-            final AstNode fnParent = fn.getParent();
-            if (!(fnParent instanceof AstRoot
-                    || fnParent instanceof Scope
-                    || fnParent instanceof Block)) {
-                gen.itsData.declaredAsFunctionExpression = true;
-            }
         }
-        itsData.itsNestedFunctions = array;
     }
 
     private void generateRegExpLiterals() {
@@ -573,9 +541,10 @@ class CodeGenerator extends Icode {
                             && fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
                         throw Kit.codeBug();
                     }
-                    addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
                     if (fn.isMethodDefinition()) {
-                        addIcode(ICode_FN_STORE_HOME_OBJECT);
+                        addIndexOp(Icode_METHOD_EXPR, fnIndex);
+                    } else {
+                        addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
                     }
                     stackChange(1);
                 }
@@ -949,7 +918,7 @@ class CodeGenerator extends Icode {
                     int index = -1;
                     // use typeofname if an activation frame exists
                     // since the vars all exist there instead of in jregs
-                    if (itsInFunctionFlag && !itsData.itsNeedsActivation)
+                    if (itsInFunctionFlag && !builder.requiresActivationFrame)
                         index = scriptOrFn.getIndexForNameNode(node);
                     if (index == -1) {
                         addStringOp(Icode_TYPEOFNAME, node.getString());
@@ -983,7 +952,7 @@ class CodeGenerator extends Icode {
 
             case Token.GETVAR:
                 {
-                    if (itsData.itsNeedsActivation) Kit.codeBug();
+                    if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(node);
                     addVarOp(Token.GETVAR, index);
                     stackChange(1);
@@ -992,7 +961,7 @@ class CodeGenerator extends Icode {
 
             case Token.SETVAR:
                 {
-                    if (itsData.itsNeedsActivation) Kit.codeBug();
+                    if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(child);
                     child = child.getNext();
                     visitExpression(child, 0);
@@ -1002,7 +971,7 @@ class CodeGenerator extends Icode {
 
             case Token.SETCONSTVAR:
                 {
-                    if (itsData.itsNeedsActivation) Kit.codeBug();
+                    if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(child);
                     child = child.getNext();
                     visitExpression(child, 0);
@@ -1301,7 +1270,7 @@ class CodeGenerator extends Icode {
         switch (childType) {
             case Token.GETVAR:
                 {
-                    if (itsData.itsNeedsActivation) Kit.codeBug();
+                    if (builder.requiresActivationFrame) Kit.codeBug();
                     int i = scriptOrFn.getIndexForNameNode(child);
                     addVarOp(Icode_VAR_INC_DEC, i);
                     addUint8(incrDecrMask);

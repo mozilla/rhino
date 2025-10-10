@@ -108,8 +108,8 @@ class NativeScript extends BaseFunction {
 
     @Override
     String decompile(int indent, EnumSet<DecompilerFlag> flags) {
-        if (script instanceof NativeFunction) {
-            return ((NativeFunction) script).decompile(indent, flags);
+        if (script instanceof JSFunction) {
+            return ((JSFunction) script).decompile(indent, flags);
         }
         return super.decompile(indent, flags);
     }

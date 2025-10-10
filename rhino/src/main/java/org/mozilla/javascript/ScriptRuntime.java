@@ -3437,7 +3437,7 @@ public class ScriptRuntime {
             boolean missingCallThis =
                     callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
             boolean isFunctionStrict =
-                    !(target instanceof NativeFunction) || ((NativeFunction) target).isStrict();
+                    !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
             if (missingCallThis && !isFunctionStrict) {
                 callThis = getTopCallScope(cx);
             }
@@ -3526,6 +3526,8 @@ public class ScriptRuntime {
             throw new JavaScriptException("Interpreter not present", filename, lineNumber);
         }
 
+        var homeObject = scope instanceof NativeCall ? ((NativeCall) scope).getHomeObject() : null;
+
         // Compile with explicit interpreter instance to force interpreter
         // mode.
         Consumer<CompilerEnvirons> compilerEnvironsProcessor =
@@ -3540,7 +3542,10 @@ public class ScriptRuntime {
                             scope instanceof NativeCall
                                     && ((NativeCall) scope).getHomeObject() != null;
                     compilerEnvs.setAllowSuper(isInsideMethod);
+                    compilerEnvs.setInEval(true);
+                    compilerEnvs.setHomeObject(homeObject);
                 };
+
         Script script =
                 cx.compileString(
                         x.toString(),
@@ -3550,13 +3555,11 @@ public class ScriptRuntime {
                         1,
                         null,
                         compilerEnvironsProcessor);
-        evaluator.setEvalScriptFlag(script);
-        Callable c = (Callable) script;
         Scriptable thisObject =
                 thisArg == Undefined.instance
                         ? Undefined.SCRIPTABLE_UNDEFINED
                         : (Scriptable) thisArg;
-        return c.call(cx, scope, thisObject, ScriptRuntime.emptyArgs);
+        return script.exec(cx, scope, thisObject);
     }
 
     /** The typeof operator */
@@ -4760,6 +4763,12 @@ public class ScriptRuntime {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
     }
 
+    @Deprecated
+    public static Object doTopCall(
+            Script script, Context cx, Scriptable scope, Scriptable thisObj) {
+        return doTopCall(script, cx, scope, thisObj, cx.isTopLevelStrict);
+    }
+
     public static Object doTopCall(
             Callable callable,
             Context cx,
@@ -4778,6 +4787,35 @@ public class ScriptRuntime {
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
+        } finally {
+            cx.topCallScope = null;
+            // Cleanup cached references
+            cx.cachedXMLLib = null;
+            cx.isTopLevelStrict = previousTopLevelStrict;
+            // Function should always call exitActivationFunction
+            // if it creates activation record
+            assert (cx.currentActivationCall == null);
+        }
+        return result;
+    }
+
+    public static Object doTopCall(
+            Script script,
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            boolean isTopLevelStrict) {
+        if (scope == null) throw new IllegalArgumentException();
+        if (cx.topCallScope != null) throw new IllegalStateException();
+
+        Object result;
+        cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
+        cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
+        boolean previousTopLevelStrict = cx.isTopLevelStrict;
+        cx.isTopLevelStrict = isTopLevelStrict;
+        ContextFactory f = cx.getFactory();
+        try {
+            result = f.doTopCall(script, cx, scope, thisObj);
         } finally {
             cx.topCallScope = null;
             // Cleanup cached references
@@ -4822,14 +4860,16 @@ public class ScriptRuntime {
     }
 
     public static void initScript(
-            NativeFunction funObj,
+            ScriptOrFn execObj,
             Scriptable thisObj,
             Context cx,
             Scriptable scope,
             boolean evalScript) {
         if (cx.topCallScope == null) throw new IllegalStateException();
 
-        int varCount = funObj.getParamAndVarCount();
+        var desc = execObj.getDescriptor();
+
+        int varCount = desc.getParamAndVarCount();
         if (varCount != 0) {
 
             Scriptable varScope = scope;
@@ -4840,16 +4880,15 @@ public class ScriptRuntime {
             }
 
             for (int i = varCount; i-- != 0; ) {
-                String name = funObj.getParamOrVarName(i);
-                boolean isConst = funObj.getParamOrVarConst(i);
+                String name = desc.getParamOrVarName(i);
+                boolean isConst = desc.getParamOrVarConst(i);
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
                 if (!ScriptableObject.hasProperty(scope, name)) {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(varScope, name);
                     } else if (!evalScript) {
-                        if (!(funObj instanceof InterpretedFunction)
-                                || ((InterpretedFunction) funObj).hasFunctionNamed(name)) {
+                        if (desc.hasFunctionNamed(name)) {
                             // Global var definitions are supposed to be DONTDELETE
                             ScriptableObject.defineProperty(
                                     varScope, name, Undefined.instance, ScriptableObject.PERMANENT);
@@ -4865,128 +4904,90 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args) {
+            JSFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false, null);
+                funObj, Context.getCurrentContext(), scope, args, false, false);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
+            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj,
-                Context.getCurrentContext(),
-                scope,
-                args,
-                false,
-                isStrict,
-                false,
-                true,
-                null);
+                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, true);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest,
-            Scriptable homeObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, false, isStrict, argsHasRest, true, homeObject);
+            boolean argsHasRest) {
+        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
     }
 
     public static Scriptable createFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject,
-            Scriptable homeObject) {
+            boolean requiresArgumentObject) {
         return new NativeCall(
-                funObj,
-                cx,
-                scope,
-                args,
-                false,
-                isStrict,
-                argsHasRest,
-                requiresArgumentObject,
-                homeObject);
+                funObj, cx, scope, args, false, isStrict, argsHasRest, requiresArgumentObject);
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
+            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj,
-                Context.getCurrentContext(),
-                scope,
-                args,
-                true,
-                isStrict,
-                false,
-                true,
-                null);
+                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, true);
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(NativeFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean, Scriptable)} instead
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
-            boolean argsHasRest,
-            Scriptable homeObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, true, homeObject);
+            boolean argsHasRest) {
+        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
     }
 
     public static Scriptable createArrowFunctionActivation(
-            NativeFunction funObj,
+            JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject,
-            Scriptable homeObject) {
+            boolean requiresArgumentObject) {
         return new NativeCall(
-                funObj,
-                cx,
-                scope,
-                args,
-                true,
-                isStrict,
-                argsHasRest,
-                requiresArgumentObject,
-                homeObject);
+                funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
@@ -5312,7 +5313,7 @@ public class ScriptRuntime {
     }
 
     public static void initFunction(
-            Context cx, Scriptable scope, NativeFunction function, int type, boolean fromEvalCode) {
+            Context cx, Scriptable scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
             String name = function.getFunctionName();
             if (name != null && name.length() != 0) {
@@ -5458,8 +5459,8 @@ public class ScriptRuntime {
                                 && NativeObject.PROTO_PROPERTY.equals(stringId)) {
                             if (value == null) {
                                 object.setPrototype(null);
-                            } else if (value instanceof NativeFunction) {
-                                if (((NativeFunction) value).isShorthand()) {
+                            } else if (value instanceof JSFunction) {
+                                if (((JSFunction) value).isShorthand()) {
                                     object.put(stringId, object, value);
                                 } else {
                                     NativeObject.js_protoSetter(object, value);
@@ -5788,7 +5789,7 @@ public class ScriptRuntime {
     public static RuntimeException notFunctionError(Object obj, Object value, String propertyName) {
         // Use obj and value for better error reporting
         String objString = toString(obj);
-        if (obj instanceof NativeFunction) {
+        if (obj instanceof JSFunction) {
             // Omit function body in string representations of functions
             int paren = objString.indexOf(')');
             int curly = objString.indexOf('{', paren);
