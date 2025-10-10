@@ -56,8 +56,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
                 1,
                 NativeSymbol::js_valueOf,
                 DONTENUM | READONLY,
-                DONTENUM | READONLY,
-                false);
+                DONTENUM | READONLY);
         ctor.definePrototypeProperty(SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
         ctor.definePrototypeProperty(
                 cx, "description", NativeSymbol::js_description, DONTENUM | READONLY);

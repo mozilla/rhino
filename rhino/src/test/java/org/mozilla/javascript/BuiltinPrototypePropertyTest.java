@@ -20,6 +20,7 @@ class BuiltinPrototypePropertyTest {
                 "Array.from",
                 "Array.isArray",
                 "Array.of",
+                "Object.getOwnPropertyDescriptor(Array, Symbol.species).get",
                 "Array.prototype.at",
                 "Array.prototype.concat",
                 "Array.prototype.copyWithin",
@@ -401,6 +402,7 @@ class BuiltinPrototypePropertyTest {
                 "Map.prototype.values",
                 "Map.prototype[Symbol.iterator]",
                 "Map.prototype[Symbol.toStringTag]",
+                "Object.getOwnPropertyDescriptor(Map.prototype, 'size').get",
                 "Math.abs",
                 "Math.acos",
                 "Math.acosh",
@@ -529,6 +531,7 @@ class BuiltinPrototypePropertyTest {
                 "Set.prototype.values",
                 "Set.prototype[Symbol.iterator]",
                 "Set.prototype[Symbol.toStringTag]",
+                "Object.getOwnPropertyDescriptor(Set.prototype, 'size').get",
                 "String.fromCharCode",
                 "String.fromCodePoint",
                 "String.prototype.anchor",
@@ -736,7 +739,7 @@ class BuiltinPrototypePropertyTest {
                 "WeakSet.prototype.add",
                 "WeakSet.prototype.delete",
                 "WeakSet.prototype.has",
-                "WeakSet.prototype[Symbol.toStringTag]"
+                "WeakSet.prototype[Symbol.toStringTag]",
             })
     void builtinShouldNotHavePrototypeProperty(String name) {
         Utils.assertWithAllModes_ES6("undefined", String.format("typeof %s.prototype ", name));

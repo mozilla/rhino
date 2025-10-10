@@ -179,8 +179,8 @@ public class NativeSet extends ScriptableObject {
                         "get size",
                         0,
                         (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                                realThis(thisObj, "size").js_getSize());
-        sizeFunc.setPrototypeProperty(Undefined.instance);
+                                realThis(thisObj, "size").js_getSize(),
+                        false);
         desc.put("get", desc, sizeFunc);
         constructor.definePrototypeProperty(cx, "size", desc);
         constructor.definePrototypeProperty(cx, NativeSet.GETSIZE, desc);

@@ -297,7 +297,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             int length,
             SerializableCallable target) {
         typedArray.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY, false);
+                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     private static void defineMethod(
@@ -306,8 +306,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        typedArray.definePrototypeMethod(
-                scope, key, length, target, DONTENUM, DONTENUM | READONLY, false);
+        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /** Returns <code>true</code>, if the index is wrong. */
