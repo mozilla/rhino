@@ -218,5 +218,18 @@ public final class NativeGenerator extends IdScriptableObject {
 
     public static class GeneratorClosedException extends RuntimeException {
         private static final long serialVersionUID = 2561315658662379681L;
+        private final Object value;
+
+        public GeneratorClosedException() {
+            this(Undefined.instance);
+        }
+
+        public GeneratorClosedException(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
+        }
     }
 }
