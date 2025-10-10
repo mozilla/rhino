@@ -55,7 +55,78 @@ public abstract class NewLiteralStorage {
     }
 
     public void spread(Context cx, Scriptable scope, Object source) {
-        // See ECMAScript 13.2.5.5
+        if (keys == null) {
+            spreadArray(cx, scope, source);
+        } else {
+            spreadObject(cx, scope, source);
+        }
+    }
+
+    private void spreadArray(Context cx, Scriptable scope, Object source) {
+        // See ecma-262 2026, 13.2.5.5 (Array Spread)
+        if (source != null && !Undefined.isUndefined(source)) {
+            Scriptable src = ScriptRuntime.toObject(cx, scope, source);
+
+            // Check if the object has Symbol.iterator
+            Object iteratorProp = ScriptableObject.getProperty(src, SymbolKey.ITERATOR);
+            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
+                try {
+                    final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
+                    if (!Undefined.isUndefined(iterator)) {
+                        java.util.List<Object> spreadValues = new java.util.ArrayList<>();
+                        try (IteratorLikeIterable it =
+                                new IteratorLikeIterable(cx, scope, iterator)) {
+                            for (Object temp : it) {
+                                spreadValues.add(temp);
+                            }
+                        }
+
+                        // Resize arrays
+                        int spreadSize = spreadValues.size();
+                        int newLen = values.length + spreadSize;
+                        getterSetters = Arrays.copyOf(getterSetters, newLen);
+                        values = Arrays.copyOf(values, newLen);
+
+                        // Push all values
+                        for (Object value : spreadValues) {
+                            pushValue(value);
+                        }
+                        return;
+                    }
+                } catch (Exception e) {
+                    // Fall through to non-iterator path
+                }
+            }
+            // Fallback for objects without Symbol.iterator or when iterator fails
+            int spreadSize =
+                    (src instanceof NativeArray)
+                            ? (int) ((NativeArray) src).getLength()
+                            : src.getIds().length;
+            int newLen = values.length + spreadSize;
+            getterSetters = Arrays.copyOf(getterSetters, newLen);
+            values = Arrays.copyOf(values, newLen);
+
+            if (src instanceof NativeArray) {
+                NativeArray arr = (NativeArray) src;
+                long length = arr.getLength();
+
+                for (int i = 0; i < length; i++) {
+                    Object value = NativeArray.getElem(cx, arr, i);
+                    pushValue(value);
+                }
+            } else {
+                Object[] ids = src.getIds();
+
+                for (Object id : ids) {
+                    Object value = getPropertyById(src, id);
+                    pushValue(value);
+                }
+            }
+        }
+    }
+
+    private void spreadObject(Context cx, Scriptable scope, Object source) {
+        // See ECMAScript 13.2.5.5 (Object Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
             Object[] ids;
@@ -76,17 +147,7 @@ public abstract class NewLiteralStorage {
 
             // getIds() can only return a string, int or a symbol
             for (Object id : ids) {
-                Object value;
-                if (id instanceof String) {
-                    value = ScriptableObject.getProperty(src, (String) id);
-                } else if (id instanceof Integer) {
-                    value = ScriptableObject.getProperty(src, (int) id);
-                } else if (ScriptRuntime.isSymbol(id)) {
-                    value = ScriptableObject.getProperty(src, (Symbol) id);
-                } else {
-                    throw Kit.codeBug();
-                }
-
+                Object value = getPropertyById(src, id);
                 pushKey(id);
                 pushValue(value);
             }
@@ -103,6 +164,18 @@ public abstract class NewLiteralStorage {
 
     public Object[] getValues() {
         return values;
+    }
+
+    private Object getPropertyById(Scriptable src, Object id) {
+        if (id instanceof String) {
+            return ScriptableObject.getProperty(src, (String) id);
+        } else if (id instanceof Integer) {
+            return ScriptableObject.getProperty(src, (int) id);
+        } else if (ScriptRuntime.isSymbol(id)) {
+            return ScriptableObject.getProperty(src, (Symbol) id);
+        } else {
+            throw Kit.codeBug();
+        }
     }
 
     public static NewLiteralStorage create(Context cx, Object[] ids) {

@@ -1498,12 +1498,22 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         for (Node n = child; n != null; n = n.getNext()) {
             ++count;
         }
-        addIndexOp(Icode_LITERAL_NEW_ARRAY, count);
+
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
         stackChange(1);
+
         while (child != null) {
-            visitLiteralValue(child);
+            if (child.getType() == Token.DOTDOTDOT) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_SPREAD);
+                stackChange(-1);
+            } else {
+                visitLiteralValue(child);
+            }
             child = child.getNext();
         }
+
         int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
         if (skipIndexes == null) {
             addToken(Token.ARRAYLIT);
