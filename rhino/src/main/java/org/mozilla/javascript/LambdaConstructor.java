@@ -188,6 +188,15 @@ public class LambdaConstructor extends LambdaFunction {
         definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
+    public void definePrototypeMethod(
+            Scriptable scope,
+            SymbolKey name,
+            int length,
+            SerializableCallable target,
+            int attributes) {
+        definePrototypeMethod(scope, name, length, target, attributes, DONTENUM | READONLY);
+    }
+
     /**
      * Define a function property on the prototype of the constructor using a LambdaFunction under
      * the covers.
@@ -296,6 +305,11 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     public void definePrototypeProperty(
+            Context cx, String name, ScriptableObject.LambdaGetterFunction getter) {
+        definePrototypeProperty(cx, name, getter, DONTENUM | READONLY);
+    }
+
+    public void definePrototypeProperty(
             Context cx, Symbol key, ScriptableObject.LambdaGetterFunction getter, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, key, getter, null, attributes);
@@ -318,12 +332,28 @@ public class LambdaConstructor extends LambdaFunction {
 
     public void definePrototypeProperty(
             Context cx,
+            String name,
+            ScriptableObject.LambdaGetterFunction getter,
+            ScriptableObject.LambdaSetterFunction setter) {
+        definePrototypeProperty(cx, name, getter, setter, DONTENUM);
+    }
+
+    public void definePrototypeProperty(
+            Context cx,
             Symbol key,
             ScriptableObject.LambdaGetterFunction getter,
             ScriptableObject.LambdaSetterFunction setter,
             int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(cx, key, getter, setter, attributes);
+    }
+
+    public void definePrototypeProperty(
+            Context cx,
+            Symbol name,
+            ScriptableObject.LambdaGetterFunction getter,
+            ScriptableObject.LambdaSetterFunction setter) {
+        definePrototypeProperty(cx, name, getter, setter, DONTENUM);
     }
 
     /** Define a property on the prototype that has the same value as another property. */

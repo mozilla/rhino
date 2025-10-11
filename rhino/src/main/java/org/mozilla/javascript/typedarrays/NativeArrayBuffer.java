@@ -50,10 +50,8 @@ public class NativeArrayBuffer extends ScriptableObject {
         constructor.definePrototypeMethod(scope, "transfer", 0, NativeArrayBuffer::js_transfer);
         constructor.definePrototypeMethod(
                 scope, "transferToFixedLength", 0, NativeArrayBuffer::js_transferToFixedLength);
-        constructor.definePrototypeProperty(
-                cx, "byteLength", NativeArrayBuffer::js_byteLength, DONTENUM | READONLY);
-        constructor.definePrototypeProperty(
-                cx, "detached", NativeArrayBuffer::js_detached, DONTENUM | READONLY);
+        constructor.definePrototypeProperty(cx, "byteLength", NativeArrayBuffer::js_byteLength);
+        constructor.definePrototypeProperty(cx, "detached", NativeArrayBuffer::js_detached);
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, "ArrayBuffer", DONTENUM | READONLY);
 

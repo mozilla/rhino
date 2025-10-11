@@ -49,10 +49,7 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         constructor.definePrototypeProperty(
-                cx,
-                "buffer",
-                (Scriptable thisObj) -> realThis(thisObj).arrayBuffer,
-                DONTENUM | READONLY);
+                cx, "buffer", (Scriptable thisObj) -> realThis(thisObj).arrayBuffer);
         constructor.definePrototypeProperty(
                 cx,
                 "byteLength",
@@ -62,8 +59,7 @@ public class NativeDataView extends NativeArrayBufferView {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
                     }
                     return self.byteLength;
-                },
-                DONTENUM | READONLY);
+                });
         constructor.definePrototypeProperty(
                 cx,
                 "byteOffset",
@@ -73,8 +69,7 @@ public class NativeDataView extends NativeArrayBufferView {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
                     }
                     return self.offset;
-                },
-                DONTENUM | READONLY);
+                });
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);

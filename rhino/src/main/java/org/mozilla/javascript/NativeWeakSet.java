@@ -35,12 +35,9 @@ public class NativeWeakSet extends ScriptableObject {
                         NativeWeakSet::jsConstructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
-        constructor.definePrototypeMethod(
-                scope, "add", 1, NativeWeakSet::js_add, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "delete", 1, NativeWeakSet::js_delete, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "has", 1, NativeWeakSet::js_has, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "add", 1, NativeWeakSet::js_add);
+        constructor.definePrototypeMethod(scope, "delete", 1, NativeWeakSet::js_delete);
+        constructor.definePrototypeMethod(scope, "has", 1, NativeWeakSet::js_has);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);

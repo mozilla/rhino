@@ -419,18 +419,10 @@ public class Test262SuiteTest {
             proto.setPrototype(getObjectPrototype(scope));
             proto.setParentScope(scope);
 
-            proto.defineProperty(scope, "gc", 0, $262::gc, DONTENUM, DONTENUM | READONLY);
-            proto.defineProperty(
-                    scope, "createRealm", 0, $262::createRealm, DONTENUM, DONTENUM | READONLY);
-            proto.defineProperty(
-                    scope, "evalScript", 1, $262::evalScript, DONTENUM, DONTENUM | READONLY);
-            proto.defineProperty(
-                    scope,
-                    "detachArrayBuffer",
-                    0,
-                    $262::detachArrayBuffer,
-                    DONTENUM,
-                    DONTENUM | READONLY);
+            proto.defineProperty(scope, "gc", 0, $262::gc);
+            proto.defineProperty(scope, "createRealm", 0, $262::createRealm);
+            proto.defineProperty(scope, "evalScript", 1, $262::evalScript);
+            proto.defineProperty(scope, "detachArrayBuffer", 0, $262::detachArrayBuffer);
 
             proto.defineProperty(cx, "global", $262::getGlobal, null, DONTENUM | READONLY);
             proto.defineProperty(cx, "agent", $262::getAgent, null, DONTENUM | READONLY);

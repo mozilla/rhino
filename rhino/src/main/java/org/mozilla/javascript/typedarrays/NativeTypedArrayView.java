@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import static org.mozilla.javascript.SymbolKey.TO_STRING_TAG;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -212,8 +214,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineProtoProperty(ta, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
             defineProtoProperty(ta, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);
             defineProtoProperty(ta, cx, "length", NativeTypedArrayView::js_length, null);
-            defineProtoProperty(
-                    ta, cx, SymbolKey.TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
+            defineProtoProperty(ta, cx, TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
 
             defineMethod(ta, s, "at", 1, NativeTypedArrayView::js_at);
             defineMethod(ta, s, "copyWithin", 2, NativeTypedArrayView::js_copyWithin);
@@ -273,7 +274,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolKey name,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter) {
-        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+        typedArray.definePrototypeProperty(cx, name, getter, setter);
     }
 
     private static void defineMethod(
@@ -282,8 +283,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             String name,
             int length,
             SerializableCallable target) {
-        typedArray.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+        typedArray.definePrototypeMethod(scope, name, length, target);
     }
 
     private static void defineMethod(
@@ -292,7 +292,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+        typedArray.definePrototypeMethod(scope, key, length, target);
     }
 
     /** Returns <code>true</code>, if the index is wrong. */
