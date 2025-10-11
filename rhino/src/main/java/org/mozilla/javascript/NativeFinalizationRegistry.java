@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.lang.ref.WeakReference;
-
 /**
  * Implementation of ECMAScript 2021 FinalizationRegistry.
  *
@@ -192,8 +190,6 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return registry;
     }
 
-
-
     /**
      * Execute the cleanup callback using JSCode architecture (Context-safe).
      *
@@ -248,8 +244,6 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
     }
 
-
-
     /**
      * Clean up when this registry is being GC'd.
      *
@@ -279,81 +273,5 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     public String getClassName() {
         return CLASS_NAME;
     }
-
-    /**
-     * Custom PhantomReference that tracks cleanup task and registry.
-     *
-     * <p>This reference is automatically enqueued when its target is garbage collected. It
-     * maintains a weak reference to the registry to avoid circular dependencies, and holds the
-     * cleanup task data needed for callback execution.
-     */
-    private static class RegistrationReference extends FinalizationQueue.TrackedPhantomReference {
-        private final WeakReference<NativeFinalizationRegistry> registryRef;
-        private final Object heldValue;
-
-        /**
-         * Create a registration reference for the given target.
-         *
-         * @param target the object to track for finalization
-         * @param registry the registry that owns this registration
-         * @param heldValue the value to pass to cleanup callback
-         */
-        RegistrationReference(
-                Object target, NativeFinalizationRegistry registry, Object heldValue) {
-            super(target);
-            this.registryRef = new WeakReference<>(registry);
-            this.heldValue = heldValue;
-        }
-
-        Object getHeldValue() {
-            return heldValue;
-        }
-
-        @Override
-        protected void scheduleJSCodeCleanup(Context cx) {
-            NativeFinalizationRegistry registry = registryRef.get();
-            if (registry != null) {
-                // Use JSCode execution for Context safety
-                cx.scheduleFinalizationCleanup(
-                        () -> registry.executeCleanupWithFreshContext(heldValue));
-
-                // Registry tracking now handled by RegistrationManager
-            }
-        }
-    }
-
-    /**
-     * Key for token-based lookup using identity equality.
-     *
-     * <p>Wraps unregister tokens to provide identity-based equality and hashing, as required by the
-     * ECMAScript specification. Two TokenKeys are equal only if they wrap the exact same object
-     * reference.
-     */
-    private static class TokenKey {
-        private final Object token;
-        private final int hashCode;
-
-        /**
-         * Create a token key for the given object.
-         *
-         * @param token the unregister token object
-         */
-        TokenKey(Object token) {
-            this.token = token;
-            this.hashCode = System.identityHashCode(token);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof TokenKey)) return false;
-            TokenKey other = (TokenKey) o;
-            return token == other.token; // Identity equality
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-    }
 }
+
