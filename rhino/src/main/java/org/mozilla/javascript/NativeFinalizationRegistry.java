@@ -7,10 +7,6 @@
 package org.mozilla.javascript;
 
 import java.lang.ref.WeakReference;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of ECMAScript 2021 FinalizationRegistry.
@@ -32,20 +28,9 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /** The cleanup callback function provided to the constructor */
     private final Function cleanupCallback;
 
-    /**
-     * Active registrations using the reference as both key and value. Using ConcurrentHashMap for
-     * thread-safe access from GC and execution threads. This is the optimal choice per architecture
-     * analysis - specialized slot maps are designed for string keys and single-threaded access.
-     */
-    private final Set<RegistrationReference> activeRegistrations = ConcurrentHashMap.newKeySet();
-
-    /**
-     * Index for unregister token lookup: token -> set of references. Memory-optimized using
-     * ConcurrentHashMap.newKeySet() for efficient set storage. Initial capacity set to 16 to reduce
-     * resizing overhead for typical usage patterns.
-     */
-    private final Map<TokenKey, Set<RegistrationReference>> unregisterTokenIndex =
-            new ConcurrentHashMap<>(16);
+    /** Manages all registration and cleanup operations */
+    private final FinalizationRegistrationManager registrationManager =
+            new FinalizationRegistrationManager();
 
     /** Temporary callback override for cleanupSome() method */
     private volatile Function cleanupSomeCallback = null;
@@ -146,7 +131,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         FinalizationValidation.validateNotSameValue(target, heldValue);
         FinalizationValidation.validateUnregisterToken(unregisterToken);
 
-        registry.registerTarget(target, heldValue, unregisterToken);
+        registry.registrationManager.register(target, heldValue, unregisterToken, registry);
         return Undefined.instance;
     }
 
@@ -154,7 +139,14 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     private static Object unregister(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeFinalizationRegistry registry = realThis(thisObj, "unregister");
-        return registry.performUnregister(args);
+        if (args.length < 1) {
+            return false;
+        }
+
+        Object token = args[0];
+        FinalizationValidation.validateUnregisterTokenStrict(token);
+
+        return registry.registrationManager.unregister(token);
     }
 
     /** JavaScript cleanupSome() method implementation. */
@@ -173,7 +165,11 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             callback = (Function) args[0];
         }
 
-        registry.performCleanupSome(cx, callback);
+        registry.cleanupSomeCallback = callback;
+        registry.registrationManager.processCleanups(100, heldValue -> {
+            registry.executeCleanupCallback(cx, heldValue);
+        });
+        registry.cleanupSomeCallback = null;
         return Undefined.instance;
     }
 
@@ -196,59 +192,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         return registry;
     }
 
-    /**
-     * Register a target object for finalization cleanup.
-     *
-     * <p>Creates a PhantomReference to track the target and stores the cleanup task. If an
-     * unregister token is provided, indexes the registration for later removal.
-     *
-     * @param target the object to watch for finalization
-     * @param heldValue the value to pass to cleanup callback
-     * @param unregisterToken optional token for later unregistration (may be null)
-     */
-    private void registerTarget(Object target, Object heldValue, Object unregisterToken) {
-        RegistrationReference ref = new RegistrationReference(target, this, heldValue);
 
-        activeRegistrations.add(ref);
-
-        if (unregisterToken != null) {
-            TokenKey key = new TokenKey(unregisterToken);
-            Set<RegistrationReference> refs =
-                    unregisterTokenIndex.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet());
-            refs.add(ref);
-        }
-    }
-
-    /**
-     * Remove registrations associated with the given token.
-     *
-     * @param args the method arguments (first should be the unregister token)
-     * @return true if any registrations were removed, false otherwise
-     */
-    private Object performUnregister(Object[] args) {
-        if (args.length < 1) {
-            // Per ECMAScript spec: unregister() with no arguments should return false
-            // (different from explicit undefined which throws)
-            return false;
-        }
-
-        Object token = args[0];
-        FinalizationValidation.validateUnregisterTokenStrict(token);
-
-        TokenKey key = new TokenKey(token);
-        Set<RegistrationReference> refs = unregisterTokenIndex.remove(key);
-
-        if (refs == null || refs.isEmpty()) {
-            return false;
-        }
-
-        for (RegistrationReference ref : refs) {
-            activeRegistrations.remove(ref);
-            ref.clear();
-        }
-
-        return true;
-    }
 
     /**
      * Execute the cleanup callback using JSCode architecture (Context-safe).
@@ -304,61 +248,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
     }
 
-    /**
-     * Perform cleanupSome() - process some cleanups synchronously.
-     *
-     * <p>Processes up to 10 pending cleanups. If a callback override is provided, uses it
-     * temporarily instead of the registry's main callback.
-     *
-     * @param cx the JavaScript context
-     * @param callbackOverride optional callback to use instead of main callback
-     */
-    private void performCleanupSome(Context cx, Function callbackOverride) {
-        if (callbackOverride != null) {
-            try {
-                this.cleanupSomeCallback = callbackOverride;
-                processCleanups(cx, 10);
-            } finally {
-                this.cleanupSomeCallback = null;
-            }
-        } else {
-            processCleanups(cx, 10);
-        }
-    }
 
-    /**
-     * Process pending cleanups for this registry.
-     *
-     * <p>Checks active registrations for any that have been enqueued (GC'd) and schedules cleanup
-     * callbacks for them. Also polls the shared queue for additional finalized references.
-     *
-     * @param cx the JavaScript context
-     * @param maxCleanups maximum number of cleanups to process
-     */
-    private void processCleanups(Context cx, int maxCleanups) {
-        // Check our registrations for any that have been collected
-        int processed = 0;
-        Iterator<RegistrationReference> it = activeRegistrations.iterator();
-
-        while (it.hasNext() && processed < maxCleanups) {
-            RegistrationReference ref = it.next();
-
-            // Check if the reference was enqueued (target was GC'd)
-            if (ref.isEnqueued()) {
-                it.remove();
-
-                // Schedule cleanup using JSCode execution
-                cx.scheduleFinalizationCleanup(
-                        () -> executeCleanupWithFreshContext(ref.getHeldValue()));
-
-                ref.clear();
-                processed++;
-            }
-        }
-
-        // Also poll the shared queue for any of our references
-        FinalizationQueue.pollAndScheduleCleanups(cx, maxCleanups - processed);
-    }
 
     /**
      * Clean up when this registry is being GC'd.
@@ -372,12 +262,8 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     // ErrorProne: Finalize is acceptable for FinalizationRegistry cleanup
     protected void finalize() throws Throwable {
         try {
-            // Clear all our registrations to prevent memory leaks
-            for (RegistrationReference ref : activeRegistrations) {
-                ref.clear();
-            }
-            activeRegistrations.clear();
-            unregisterTokenIndex.clear();
+            // Clear all registrations to prevent memory leaks
+            registrationManager.clear();
         } finally {
             super.finalize();
         }
@@ -431,8 +317,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
                 cx.scheduleFinalizationCleanup(
                         () -> registry.executeCleanupWithFreshContext(heldValue));
 
-                // Remove from registry's tracking
-                registry.activeRegistrations.remove(this);
+                // Registry tracking now handled by RegistrationManager
             }
         }
     }
