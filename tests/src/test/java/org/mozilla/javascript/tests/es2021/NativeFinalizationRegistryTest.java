@@ -93,8 +93,9 @@ public class NativeFinalizationRegistryTest {
 
     @Test
     public void finalizationRegistryRegisterSymbolTarget() {
+        // Symbols are valid targets per ECMAScript specification
         assertES6(
-                "var registry = new FinalizationRegistry(function(){}); try { registry.register(Symbol('test'), 'cleanup data'); false; } catch(e) { e instanceof TypeError; }",
+                "var registry = new FinalizationRegistry(function(){}); try { registry.register(Symbol('test'), 'cleanup data'); true; } catch(e) { false; }",
                 true);
     }
 
@@ -315,8 +316,9 @@ public class NativeFinalizationRegistryTest {
 
     @Test
     public void finalizationRegistryUnregisterWithExtraArguments() {
+        // String token should throw TypeError, not return false
         assertES6(
-                "var registry = new FinalizationRegistry(function(){}); registry.unregister('token', 'extra', 'args')",
-                false);
+                "var registry = new FinalizationRegistry(function(){}); try { registry.unregister('token', 'extra', 'args'); false; } catch(e) { e instanceof TypeError; }",
+                true);
     }
 }

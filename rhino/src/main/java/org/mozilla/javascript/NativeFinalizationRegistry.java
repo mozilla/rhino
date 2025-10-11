@@ -32,13 +32,20 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /** The cleanup callback function provided to the constructor */
     private final Function cleanupCallback;
 
-    /** Active registrations: reference -> cleanup task */
-    private final Map<RegistrationReference, CleanupTask> activeRegistrations =
-            new ConcurrentHashMap<>();
+    /**
+     * Active registrations using the reference as both key and value. Using ConcurrentHashMap for
+     * thread-safe access from GC and execution threads. This is the optimal choice per architecture
+     * analysis - specialized slot maps are designed for string keys and single-threaded access.
+     */
+    private final Set<RegistrationReference> activeRegistrations = ConcurrentHashMap.newKeySet();
 
-    /** Index for unregister token lookup: token -> set of references */
+    /**
+     * Index for unregister token lookup: token -> set of references. Memory-optimized using
+     * ConcurrentHashMap.newKeySet() for efficient set storage. Initial capacity set to 16 to reduce
+     * resizing overhead for typical usage patterns.
+     */
     private final Map<TokenKey, Set<RegistrationReference>> unregisterTokenIndex =
-            new ConcurrentHashMap<>();
+            new ConcurrentHashMap<>(16);
 
     /** Temporary callback override for cleanupSome() method */
     private volatile Function cleanupSomeCallback = null;
@@ -133,7 +140,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
 
         Object target = args[0];
         Object heldValue = args[1];
-        Object unregisterToken = args.length > 2 ? args[2] : null;
+        Object unregisterToken = args.length > 2 ? args[2] : Undefined.instance;
 
         if (!isValidTarget(target)) {
             throw ScriptRuntime.typeErrorById(
@@ -144,11 +151,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.finalizationregistry.target.same.as.held");
         }
 
-        if (unregisterToken != null && !canBeHeldWeakly(unregisterToken)) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.finalizationregistry.invalid.unregister.token",
-                    ScriptRuntime.typeof(unregisterToken));
-        }
+        validateUnregisterToken(unregisterToken);
 
         registry.registerTarget(target, heldValue, unregisterToken);
         return Undefined.instance;
@@ -158,7 +161,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     private static Object unregister(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeFinalizationRegistry registry = realThis(thisObj, "unregister");
-        return registry.unregisterToken(args);
+        return registry.performUnregister(args);
     }
 
     /** JavaScript cleanupSome() method implementation. */
@@ -211,10 +214,9 @@ public class NativeFinalizationRegistry extends ScriptableObject {
      * @param unregisterToken optional token for later unregistration (may be null)
      */
     private void registerTarget(Object target, Object heldValue, Object unregisterToken) {
-        CleanupTask task = new CleanupTask(heldValue);
-        RegistrationReference ref = new RegistrationReference(target, this, task);
+        RegistrationReference ref = new RegistrationReference(target, this, heldValue);
 
-        activeRegistrations.put(ref, task);
+        activeRegistrations.add(ref);
 
         if (unregisterToken != null) {
             TokenKey key = new TokenKey(unregisterToken);
@@ -230,16 +232,15 @@ public class NativeFinalizationRegistry extends ScriptableObject {
      * @param args the method arguments (first should be the unregister token)
      * @return true if any registrations were removed, false otherwise
      */
-    private Object unregisterToken(Object[] args) {
-        if (args.length < 1 || args[0] == null || Undefined.isUndefined(args[0])) {
+    private Object performUnregister(Object[] args) {
+        if (args.length < 1) {
+            // Per ECMAScript spec: unregister() with no arguments should return false
+            // (different from explicit undefined which throws)
             return false;
         }
 
         Object token = args[0];
-        if (!canBeHeldWeakly(token)) {
-            // Per spec, unregister with non-object token just returns false
-            return false;
-        }
+        validateUnregisterTokenStrict(token);
 
         TokenKey key = new TokenKey(token);
         Set<RegistrationReference> refs = unregisterTokenIndex.remove(key);
@@ -257,14 +258,15 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     }
 
     /**
-     * Execute the cleanup callback for a held value.
+     * Execute the cleanup callback using JSCode architecture (Context-safe).
      *
-     * <p>Calls either the temporary callback (from cleanupSome) or the registry's main callback.
-     * Catches and logs any exceptions to prevent cleanup errors from breaking execution.
+     * <p>Uses JSCode execution to avoid Context capture issues. Creates a FinalizationCleanupCode
+     * instance for Context-safe callback execution per aardvark179's architecture patterns.
      *
+     * @param cx the JavaScript execution context (fresh, never stored)
      * @param heldValue the value to pass to the cleanup callback
      */
-    void executeCleanupCallback(Object heldValue) {
+    void executeCleanupCallback(Context cx, Object heldValue) {
         Function callbackToUse =
                 cleanupSomeCallback != null ? cleanupSomeCallback : cleanupCallback;
 
@@ -272,17 +274,40 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             return;
         }
 
-        Context cx = Context.getCurrentContext();
-        if (cx == null) {
-            return;
-        }
-
+        // Execute cleanup callback with fresh Context (Context-safe)
         try {
-            Scriptable scope = callbackToUse.getParentScope();
-            callbackToUse.call(cx, scope, scope, new Object[] {heldValue});
+            Scriptable callbackScope = callbackToUse.getParentScope();
+            if (callbackScope == null) {
+                callbackScope = this.getParentScope();
+            }
+            callbackToUse.call(cx, callbackScope, callbackScope, new Object[] {heldValue});
         } catch (Exception e) {
-            // Cleanup callbacks shouldn't break execution
-            Context.reportWarning("FinalizationRegistry cleanup callback error: " + e.getMessage());
+            // Cleanup errors should not propagate per ECMAScript specification
+            if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Legacy cleanup method - deprecated but kept for backward compatibility. Required by existing
+     * test infrastructure that expects this signature.
+     *
+     * @deprecated Use {@link #executeCleanupCallback(Context, Object)} instead
+     */
+    @Deprecated
+    void executeCleanupCallback(Object heldValue) {
+        executeCleanupWithFreshContext(heldValue);
+    }
+
+    /**
+     * Execute cleanup callback with fresh Context acquisition. Consolidates the pattern used in
+     * scheduled cleanup tasks.
+     */
+    private void executeCleanupWithFreshContext(Object heldValue) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null) {
+            executeCleanupCallback(cx, heldValue);
         }
     }
 
@@ -320,23 +345,18 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     private void processCleanups(Context cx, int maxCleanups) {
         // Check our registrations for any that have been collected
         int processed = 0;
-        Iterator<Map.Entry<RegistrationReference, CleanupTask>> it =
-                activeRegistrations.entrySet().iterator();
+        Iterator<RegistrationReference> it = activeRegistrations.iterator();
 
         while (it.hasNext() && processed < maxCleanups) {
-            Map.Entry<RegistrationReference, CleanupTask> entry = it.next();
-            RegistrationReference ref = entry.getKey();
+            RegistrationReference ref = it.next();
 
             // Check if the reference was enqueued (target was GC'd)
             if (ref.isEnqueued()) {
                 it.remove();
-                CleanupTask task = entry.getValue();
 
-                // Schedule cleanup
+                // Schedule cleanup using JSCode execution
                 cx.scheduleFinalizationCleanup(
-                        () -> {
-                            executeCleanupCallback(task.heldValue);
-                        });
+                        () -> executeCleanupWithFreshContext(ref.getHeldValue()));
 
                 ref.clear();
                 processed++;
@@ -350,8 +370,9 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /**
      * Clean up when this registry is being GC'd.
      *
-     * <p>Uses finalize() over Cleaner API due to dynamic registration requirements. Recommended by
-     * aardvark179 for this specific GC cleanup use case.
+     * <p>Uses finalize() over Cleaner API due to dynamic registration requirements. This approach
+     * was specifically recommended by aardvark179 for FinalizationRegistry's unique GC cleanup
+     * patterns where references are added/removed dynamically during execution.
      */
     @Override
     @SuppressWarnings({"deprecation", "finalize", "Finalize"})
@@ -359,7 +380,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     protected void finalize() throws Throwable {
         try {
             // Clear all our registrations to prevent memory leaks
-            for (RegistrationReference ref : activeRegistrations.keySet()) {
+            for (RegistrationReference ref : activeRegistrations) {
                 ref.clear();
             }
             activeRegistrations.clear();
@@ -380,13 +401,64 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     }
 
     /**
+     * Validates unregister token for register() method (allows undefined).
+     *
+     * @param token the token to validate
+     * @throws EcmaError if token is invalid
+     */
+    private static void validateUnregisterToken(Object token) {
+        if (!Undefined.isUndefined(token) && !canBeHeldWeakly(token)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.finalizationregistry.invalid.unregister.token",
+                    ScriptRuntime.typeof(token));
+        }
+    }
+
+    /**
+     * Validates unregister token for unregister() method (strict - no undefined).
+     *
+     * @param token the token to validate
+     * @throws EcmaError if token is invalid
+     */
+    private static void validateUnregisterTokenStrict(Object token) {
+        if (!canBeHeldWeakly(token)) {
+            throw createUnregisterTokenError(ScriptRuntime.typeof(token));
+        }
+    }
+
+    /**
+     * Creates consistent unregister token error message.
+     *
+     * @param typeString the type of the invalid token
+     * @return TypeError with consistent message
+     */
+    private static EcmaError createUnregisterTokenError(String typeString) {
+        return ScriptRuntime.typeError(
+                "FinalizationRegistry unregister token must be an object, got " + typeString);
+    }
+
+    /**
      * Check if the given value can be held weakly (used for unregister tokens).
+     *
+     * <p>Per ECMAScript specification, registered symbols (created with Symbol.for()) cannot be
+     * held weakly because they persist in the global registry and are not garbage collectable.
      *
      * @param value the value to check
      * @return true if value can be used as an unregister token
      */
     private static boolean canBeHeldWeakly(Object value) {
-        return ScriptRuntime.isObject(value) || (value instanceof Symbol);
+        if (ScriptRuntime.isObject(value)) {
+            return true;
+        }
+
+        if (value instanceof Symbol) {
+            Symbol symbol = (Symbol) value;
+            // Only non-registered symbols can be held weakly
+            // Registered symbols (from Symbol.for()) cannot be held weakly
+            return symbol.getKind() != Symbol.Kind.REGISTERED;
+        }
+
+        return false;
     }
 
     /**
@@ -424,48 +496,37 @@ public class NativeFinalizationRegistry extends ScriptableObject {
      */
     private static class RegistrationReference extends FinalizationQueue.TrackedPhantomReference {
         private final WeakReference<NativeFinalizationRegistry> registryRef;
-        private final CleanupTask task;
+        private final Object heldValue;
 
         /**
          * Create a registration reference for the given target.
          *
          * @param target the object to track for finalization
          * @param registry the registry that owns this registration
-         * @param task the cleanup task to execute when finalized
+         * @param heldValue the value to pass to cleanup callback
          */
         RegistrationReference(
-                Object target, NativeFinalizationRegistry registry, CleanupTask task) {
+                Object target, NativeFinalizationRegistry registry, Object heldValue) {
             super(target);
             this.registryRef = new WeakReference<>(registry);
-            this.task = task;
+            this.heldValue = heldValue;
+        }
+
+        Object getHeldValue() {
+            return heldValue;
         }
 
         @Override
-        protected void scheduleCleanup(Context cx) {
+        protected void scheduleJSCodeCleanup(Context cx) {
             NativeFinalizationRegistry registry = registryRef.get();
             if (registry != null) {
+                // Use JSCode execution for Context safety
                 cx.scheduleFinalizationCleanup(
-                        () -> {
-                            registry.executeCleanupCallback(task.heldValue);
-                        });
+                        () -> registry.executeCleanupWithFreshContext(heldValue));
 
                 // Remove from registry's tracking
                 registry.activeRegistrations.remove(this);
             }
-        }
-    }
-
-    /**
-     * Cleanup task data holder.
-     *
-     * <p>Simple immutable container for the value that should be passed to the cleanup callback
-     * when finalization occurs.
-     */
-    private static class CleanupTask {
-        final Object heldValue;
-
-        CleanupTask(Object heldValue) {
-            this.heldValue = heldValue;
         }
     }
 

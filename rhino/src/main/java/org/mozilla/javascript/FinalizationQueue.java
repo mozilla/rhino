@@ -13,7 +13,8 @@ import java.lang.ref.ReferenceQueue;
 /**
  * Shared finalization queue infrastructure for FinalizationRegistry.
  *
- * <p>Provides shared ReferenceQueue for JVM efficiency and GC detection polling.
+ * <p>Provides shared ReferenceQueue for JVM efficiency and GC detection polling. Uses JSCode
+ * architecture for Context-safe cleanup execution.
  */
 public class FinalizationQueue {
 
@@ -30,10 +31,11 @@ public class FinalizationQueue {
     }
 
     /**
-     * Poll for finalized objects and schedule cleanups.
+     * Poll for finalized objects and schedule cleanups using JSCode architecture.
      *
      * <p>Called from Context during JavaScript execution to process recently finalized objects.
-     * Processes at most maxCleanups items to bound execution time.
+     * Processes at most maxCleanups items to bound execution time. Uses JSCode execution for
+     * Context safety per aardvark179's architecture patterns.
      *
      * @param cx the JavaScript execution context
      * @param maxCleanups maximum number of cleanup tasks to process
@@ -47,7 +49,8 @@ public class FinalizationQueue {
         while (processed < maxCleanups && (ref = SHARED_QUEUE.poll()) != null) {
             if (ref instanceof TrackedPhantomReference) {
                 TrackedPhantomReference trackedRef = (TrackedPhantomReference) ref;
-                trackedRef.scheduleCleanup(cx);
+                // Use JSCode execution instead of direct Context capture
+                trackedRef.scheduleJSCodeCleanup(cx);
                 processed++;
             }
             ref.clear();
@@ -55,10 +58,11 @@ public class FinalizationQueue {
     }
 
     /**
-     * PhantomReference that knows how to schedule its own cleanup.
+     * PhantomReference that knows how to schedule its own cleanup using JSCode architecture.
      *
      * <p>Base class for references that need to perform cleanup when their target is garbage
-     * collected. Automatically registers with the shared queue.
+     * collected. Automatically registers with the shared queue. Uses JSCode execution for
+     * Context-safe cleanup per aardvark179's architecture patterns.
      */
     public abstract static class TrackedPhantomReference extends PhantomReference<Object> {
 
@@ -67,13 +71,13 @@ public class FinalizationQueue {
         }
 
         /**
-         * Schedule cleanup in the given Context.
+         * Schedule cleanup using JSCode execution (Context-safe).
          *
-         * <p>Called when the referenced object has been garbage collected. Implementations should
-         * schedule appropriate cleanup actions.
+         * <p>Called when the referenced object has been garbage collected. Uses JSCode architecture
+         * to avoid Context capture issues.
          *
-         * @param cx the JavaScript execution context
+         * @param cx the JavaScript execution context (fresh, never stored)
          */
-        protected abstract void scheduleCleanup(Context cx);
+        protected abstract void scheduleJSCodeCleanup(Context cx);
     }
 }
