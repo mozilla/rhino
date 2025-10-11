@@ -142,16 +142,9 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         Object heldValue = args[1];
         Object unregisterToken = args.length > 2 ? args[2] : Undefined.instance;
 
-        if (!isValidTarget(target)) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.finalizationregistry.invalid.target", ScriptRuntime.typeof(target));
-        }
-
-        if (isSameValue(target, heldValue)) {
-            throw ScriptRuntime.typeErrorById("msg.finalizationregistry.target.same.as.held");
-        }
-
-        validateUnregisterToken(unregisterToken);
+        FinalizationValidation.validateTarget(target);
+        FinalizationValidation.validateNotSameValue(target, heldValue);
+        FinalizationValidation.validateUnregisterToken(unregisterToken);
 
         registry.registerTarget(target, heldValue, unregisterToken);
         return Undefined.instance;
@@ -240,7 +233,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
 
         Object token = args[0];
-        validateUnregisterTokenStrict(token);
+        FinalizationValidation.validateUnregisterTokenStrict(token);
 
         TokenKey key = new TokenKey(token);
         Set<RegistrationReference> refs = unregisterTokenIndex.remove(key);
@@ -390,97 +383,11 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
     }
 
-    /**
-     * Check if the given object can be used as a registration target.
-     *
-     * @param target the target object to validate
-     * @return true if target is a valid object that can be registered
-     */
-    private static boolean isValidTarget(Object target) {
-        return ScriptRuntime.isObject(target) || (target instanceof Symbol);
-    }
 
-    /**
-     * Validates unregister token for register() method (allows undefined).
-     *
-     * @param token the token to validate
-     * @throws EcmaError if token is invalid
-     */
-    private static void validateUnregisterToken(Object token) {
-        if (!Undefined.isUndefined(token) && !canBeHeldWeakly(token)) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.finalizationregistry.invalid.unregister.token",
-                    ScriptRuntime.typeof(token));
-        }
-    }
 
-    /**
-     * Validates unregister token for unregister() method (strict - no undefined).
-     *
-     * @param token the token to validate
-     * @throws EcmaError if token is invalid
-     */
-    private static void validateUnregisterTokenStrict(Object token) {
-        if (!canBeHeldWeakly(token)) {
-            throw createUnregisterTokenError(ScriptRuntime.typeof(token));
-        }
-    }
 
-    /**
-     * Creates consistent unregister token error message.
-     *
-     * @param typeString the type of the invalid token
-     * @return TypeError with consistent message
-     */
-    private static EcmaError createUnregisterTokenError(String typeString) {
-        return ScriptRuntime.typeError(
-                "FinalizationRegistry unregister token must be an object, got " + typeString);
-    }
 
-    /**
-     * Check if the given value can be held weakly (used for unregister tokens).
-     *
-     * <p>Per ECMAScript specification, registered symbols (created with Symbol.for()) cannot be
-     * held weakly because they persist in the global registry and are not garbage collectable.
-     *
-     * @param value the value to check
-     * @return true if value can be used as an unregister token
-     */
-    private static boolean canBeHeldWeakly(Object value) {
-        if (ScriptRuntime.isObject(value)) {
-            return true;
-        }
 
-        if (value instanceof Symbol) {
-            Symbol symbol = (Symbol) value;
-            // Only non-registered symbols can be held weakly
-            // Registered symbols (from Symbol.for()) cannot be held weakly
-            return symbol.getKind() != Symbol.Kind.REGISTERED;
-        }
-
-        return false;
-    }
-
-    /**
-     * Implement SameValue comparison per ECMAScript specification.
-     *
-     * <p>Used to check if target and heldValue are the same (which is forbidden). Handles special
-     * cases like NaN === NaN.
-     *
-     * @param a first value to compare
-     * @param b second value to compare
-     * @return true if values are the same per SameValue algorithm
-     */
-    private static boolean isSameValue(Object a, Object b) {
-        if (a == b) return true;
-        if (a == null || b == null) return false;
-        if (a instanceof Number && b instanceof Number) {
-            double na = ((Number) a).doubleValue();
-            double nb = ((Number) b).doubleValue();
-            if (Double.isNaN(na) && Double.isNaN(nb)) return true;
-        }
-        return false;
-    }
 
     @Override
     public String getClassName() {

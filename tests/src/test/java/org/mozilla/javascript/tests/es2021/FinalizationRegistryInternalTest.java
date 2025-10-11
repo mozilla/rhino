@@ -148,31 +148,6 @@ public class FinalizationRegistryInternalTest {
         }
     }
 
-    @Test
-    public void testIsValidTargetMethod() throws Exception {
-        // Use reflection to test the static isValidTarget method
-        Method method =
-                NativeFinalizationRegistry.class.getDeclaredMethod("isValidTarget", Object.class);
-        method.setAccessible(true);
-
-        try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            Scriptable scope = cx.initStandardObjects();
-
-            // Test with valid object
-            Object obj = cx.evaluateString(scope, "({})", "test", 1, null);
-            assertTrue((Boolean) method.invoke(null, obj));
-
-            // Test with undefined
-            assertEquals(false, method.invoke(null, Undefined.instance));
-
-            // Test with null
-            assertEquals(false, method.invoke(null, new Object[] {null}));
-
-            // Test with primitive wrapped as Object
-            assertEquals(false, method.invoke(null, "string"));
-            assertEquals(false, method.invoke(null, 42));
-            assertEquals(false, method.invoke(null, true));
-        }
-    }
+    // Note: testIsValidTargetMethod removed - validation is now tested through public API
+    // in NativeFinalizationRegistryTest which provides better functional test coverage
 }
