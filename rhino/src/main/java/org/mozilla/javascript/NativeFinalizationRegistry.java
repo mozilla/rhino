@@ -376,7 +376,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
      * @return true if target is a valid object that can be registered
      */
     private static boolean isValidTarget(Object target) {
-        return ScriptRuntime.isObject(target);
+        return ScriptRuntime.isObject(target) || (target instanceof Symbol);
     }
 
     /**
@@ -386,7 +386,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
      * @return true if value can be used as an unregister token
      */
     private static boolean canBeHeldWeakly(Object value) {
-        return ScriptRuntime.isObject(value);
+        return ScriptRuntime.isObject(value) || (value instanceof Symbol);
     }
 
     /**
