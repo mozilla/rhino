@@ -165,10 +165,10 @@ public class NativePromise extends ScriptableObject {
         Capability cap = new Capability(cx, scope, thisObj);
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
 
-        JavaIteratorAdapter iterable;
+        IteratorLikeIterable iterable;
         try {
             Object maybeIterable = ScriptRuntime.callIterator(arg, cx, scope);
-            iterable = new JavaIteratorAdapter(cx, scope, maybeIterable);
+            iterable = new IteratorLikeIterable(cx, scope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
                     cx,
@@ -178,7 +178,7 @@ public class NativePromise extends ScriptableObject {
             return cap.promise;
         }
 
-        JavaIteratorAdapter.Itr iterator = iterable.iterator();
+        IteratorLikeIterable.Itr iterator = iterable.iterator();
         try {
             PromiseAllResolver resolver = new PromiseAllResolver(iterator, thisObj, cap, failFast);
             try {
@@ -214,10 +214,10 @@ public class NativePromise extends ScriptableObject {
         Capability cap = new Capability(cx, scope, thisObj);
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
 
-        JavaIteratorAdapter iterable;
+        IteratorLikeIterable iterable;
         try {
             Object maybeIterable = ScriptRuntime.callIterator(arg, cx, scope);
-            iterable = new JavaIteratorAdapter(cx, scope, maybeIterable);
+            iterable = new IteratorLikeIterable(cx, scope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
                     cx,
@@ -227,7 +227,7 @@ public class NativePromise extends ScriptableObject {
             return cap.promise;
         }
 
-        JavaIteratorAdapter.Itr iterator = iterable.iterator();
+        IteratorLikeIterable.Itr iterator = iterable.iterator();
         try {
             try {
                 return performRace(cx, scope, iterator, thisObj, cap);
@@ -249,7 +249,7 @@ public class NativePromise extends ScriptableObject {
     private static Object performRace(
             Context cx,
             Scriptable scope,
-            JavaIteratorAdapter.Itr iterator,
+            IteratorLikeIterable.Itr iterator,
             Scriptable thisObj,
             Capability cap) {
         var resolve = ScriptRuntime.getPropAndThis(thisObj, "resolve", cx, scope);
@@ -289,10 +289,10 @@ public class NativePromise extends ScriptableObject {
         Capability cap = new Capability(cx, scope, thisObj);
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
 
-        JavaIteratorAdapter iterable;
+        IteratorLikeIterable iterable;
         try {
             Object maybeIterable = ScriptRuntime.callIterator(arg, cx, scope);
-            iterable = new JavaIteratorAdapter(cx, scope, maybeIterable);
+            iterable = new IteratorLikeIterable(cx, scope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
                     cx,
@@ -302,7 +302,7 @@ public class NativePromise extends ScriptableObject {
             return cap.promise;
         }
 
-        JavaIteratorAdapter.Itr iterator = iterable.iterator();
+        IteratorLikeIterable.Itr iterator = iterable.iterator();
         try {
             PromiseAnyRejector rejector = new PromiseAnyRejector(iterator, thisObj, cap);
             try {
@@ -775,13 +775,13 @@ public class NativePromise extends ScriptableObject {
         final ArrayList<Object> values = new ArrayList<>();
         int remainingElements = 1;
 
-        JavaIteratorAdapter.Itr iterator;
+        IteratorLikeIterable.Itr iterator;
         Scriptable thisObj;
         Capability capability;
         boolean failFast;
 
         PromiseAllResolver(
-                JavaIteratorAdapter.Itr iter,
+                IteratorLikeIterable.Itr iter,
                 Scriptable thisObj,
                 Capability cap,
                 boolean failFast) {
@@ -894,11 +894,11 @@ public class NativePromise extends ScriptableObject {
         final ArrayList<Object> errors = new ArrayList<>();
         int remainingElements = 1;
 
-        JavaIteratorAdapter.Itr iterator;
+        IteratorLikeIterable.Itr iterator;
         Scriptable thisObj;
         Capability capability;
 
-        PromiseAnyRejector(JavaIteratorAdapter.Itr iter, Scriptable thisObj, Capability cap) {
+        PromiseAnyRejector(IteratorLikeIterable.Itr iter, Scriptable thisObj, Capability cap) {
             this.iterator = iter;
             this.thisObj = thisObj;
             this.capability = cap;

@@ -315,7 +315,7 @@ public class AbstractEcmaObjectOperations {
         // LinkedHashMap used to preserve key creation order
         Map<Object, List<Object>> groups = new LinkedHashMap<>();
         final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             double i = 0;
             for (Object o : it) {
                 if (i > NativeNumber.MAX_SAFE_INTEGER) {

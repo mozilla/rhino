@@ -22,12 +22,12 @@ import java.util.NoSuchElementException;
  *
  * <p><strong>Note:</strong> This class now uses IteratorOperations internally for Context safety.
  */
-public class JavaIteratorAdapter implements Iterable<Object>, Closeable {
+public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     private final Scriptable iterator;
     private final Callable returnFunc;
     private boolean closed;
 
-    public JavaIteratorAdapter(Context cx, Scriptable scope, Object target) {
+    public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
         // Validate target has iterator interface - delegate to IteratorOperations
         if (!(target instanceof Scriptable)) {
             throw ScriptRuntime.typeErrorById("msg.not.iterable", target);

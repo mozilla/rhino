@@ -279,7 +279,7 @@ public class NativeSet extends ScriptableObject {
         Callable add = addCall.getCallable();
 
         // Finally, run through all the iterated values and add them!
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, ito)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
             for (Object val : it) {
                 final Object finalVal = val == Scriptable.NOT_FOUND ? Undefined.instance : val;
                 add.call(cx, scope, set, new Object[] {finalVal});
@@ -368,7 +368,7 @@ public class NativeSet extends ScriptableObject {
                                     ScriptRuntime.emptyArgs),
                             cx,
                             scope);
-            try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                 for (Object key : it) {
                     if (js_has(key) == Boolean.TRUE) {
                         result.js_add(key);
@@ -422,7 +422,7 @@ public class NativeSet extends ScriptableObject {
         Object iterator =
                 ScriptRuntime.callIterator(
                         keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 result.js_add(key);
             }
@@ -500,7 +500,7 @@ public class NativeSet extends ScriptableObject {
                                     ScriptRuntime.emptyArgs),
                             cx,
                             scope);
-            try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                 for (Object key : it) {
                     // Convert -0 to +0 as the spec requires
                     if (key instanceof Number
@@ -573,7 +573,7 @@ public class NativeSet extends ScriptableObject {
         Object iterator =
                 ScriptRuntime.callIterator(
                         keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 if (js_has(key) != Boolean.TRUE) {
                     result.js_add(key);
@@ -671,7 +671,7 @@ public class NativeSet extends ScriptableObject {
         Object iterator =
                 ScriptRuntime.callIterator(
                         keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object value : it) {
                 if (js_has(value) != Boolean.TRUE) {
                     return Boolean.FALSE;
@@ -733,7 +733,7 @@ public class NativeSet extends ScriptableObject {
                             keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
                             cx,
                             scope);
-            try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                 for (Object key : it) {
                     if (js_has(key) == Boolean.TRUE) {
                         return Boolean.FALSE;

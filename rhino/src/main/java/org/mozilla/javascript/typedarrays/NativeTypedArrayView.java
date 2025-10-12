@@ -25,7 +25,7 @@ import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.Function;
-import org.mozilla.javascript.JavaIteratorAdapter;
+import org.mozilla.javascript.IteratorLikeIterable;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
@@ -1279,7 +1279,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 && !Undefined.isUndefined(iteratorProp)) {
             final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
             if (!Undefined.isUndefined(iterator)) {
-                try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                     listFromIterator = new ArrayList<>();
                     for (Object temp : it) {
                         listFromIterator.add(temp);

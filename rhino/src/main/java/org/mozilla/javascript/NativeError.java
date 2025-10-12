@@ -105,7 +105,7 @@ final class NativeError extends IdScriptableObject {
             }
 
             final Object iterator = ScriptRuntime.callIterator(args[0], cx, scope);
-            try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                 List<Object> errors = new ArrayList<>();
                 for (Object o : it) {
                     errors.add(o);

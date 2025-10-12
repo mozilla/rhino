@@ -715,7 +715,7 @@ public class NativeArray extends ScriptableObject implements List {
                 final Scriptable result =
                         callConstructorOrCreateArray(cx, scope, thisObj, 0, false);
                 long k = 0;
-                try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, iterator)) {
+                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
                     for (Object temp : it) {
                         if (mapping) {
                             temp =

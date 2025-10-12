@@ -2797,7 +2797,7 @@ public class ScriptRuntime {
         }
 
         // Finally, run through all the iterated values and add them!
-        try (JavaIteratorAdapter it = new JavaIteratorAdapter(cx, scope, ito)) {
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
             for (Object val : it) {
                 Scriptable sVal = ScriptableObject.ensureScriptable(val);
                 if (sVal instanceof Symbol) {
