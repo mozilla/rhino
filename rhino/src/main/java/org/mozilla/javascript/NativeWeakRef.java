@@ -88,7 +88,9 @@ public class NativeWeakRef extends ScriptableObject {
      * @return true if target is a valid object that can be weakly referenced
      */
     private static boolean isValidTarget(Object target) {
-        return ScriptRuntime.isObject(target) || (target instanceof Symbol);
+        // According to ECMAScript spec, only objects can be held weakly
+        // Symbols, primitives, null, and undefined cannot be held weakly
+        return ScriptRuntime.isObject(target) && !(target instanceof Symbol);
     }
 
     /** Validate and cast 'this' object to WeakRef. */
