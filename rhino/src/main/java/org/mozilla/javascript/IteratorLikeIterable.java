@@ -108,7 +108,8 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
             Object iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
 
             if (!(iterResult instanceof Scriptable)) {
-                throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(iterResult));
+                throw ScriptRuntime.typeErrorById(
+                        "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
             }
 
             Scriptable result = (Scriptable) iterResult;
