@@ -16,7 +16,6 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.NativeFinalizationRegistry;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Undefined;
 
 /**
  * Internal tests for FinalizationRegistry using reflection to test private methods. These are

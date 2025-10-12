@@ -68,8 +68,7 @@ final class FinalizationValidation {
      */
     static void validateNotSameValue(Object target, Object heldValue) {
         if (isSameValue(target, heldValue)) {
-            throw ScriptRuntime.typeErrorById(
-                    "msg.finalizationregistry.target.same.as.held");
+            throw ScriptRuntime.typeErrorById("msg.finalizationregistry.target.same.as.held");
         }
     }
 

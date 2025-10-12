@@ -34,8 +34,11 @@ final class FinalizationRegistrationManager {
      * @param unregisterToken optional token for later removal
      * @param registry the FinalizationRegistry instance
      */
-    void register(Object target, Object heldValue, Object unregisterToken,
-                  NativeFinalizationRegistry registry) {
+    void register(
+            Object target,
+            Object heldValue,
+            Object unregisterToken,
+            NativeFinalizationRegistry registry) {
         RegistrationReference ref = new RegistrationReference(target, registry, heldValue);
 
         activeRegistrations.add(ref);
@@ -43,7 +46,7 @@ final class FinalizationRegistrationManager {
         if (unregisterToken != null && !Undefined.isUndefined(unregisterToken)) {
             TokenKey key = new TokenKey(unregisterToken);
             Set<RegistrationReference> refs =
-                tokenIndex.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet());
+                    tokenIndex.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet());
             refs.add(ref);
         }
     }
@@ -93,36 +96,30 @@ final class FinalizationRegistrationManager {
         }
     }
 
-    /**
-     * Get the current number of active registrations.
-     */
+    /** Get the current number of active registrations. */
     int getActiveCount() {
         return activeRegistrations.size();
     }
 
-    /**
-     * Clear all registrations (for finalization cleanup).
-     */
+    /** Clear all registrations (for finalization cleanup). */
     void clear() {
         activeRegistrations.clear();
         tokenIndex.clear();
     }
 
-    /**
-     * Callback interface for executing cleanup operations.
-     */
+    /** Callback interface for executing cleanup operations. */
     interface CleanupExecutor {
         void executeCleanup(Object heldValue);
     }
 
-    /**
-     * PhantomReference that tracks target objects for finalization.
-     */
-    private static final class RegistrationReference extends FinalizationQueue.TrackedPhantomReference {
+    /** PhantomReference that tracks target objects for finalization. */
+    private static final class RegistrationReference
+            extends FinalizationQueue.TrackedPhantomReference {
         private final NativeFinalizationRegistry registry;
         private final Object heldValue;
 
-        RegistrationReference(Object target, NativeFinalizationRegistry registry, Object heldValue) {
+        RegistrationReference(
+                Object target, NativeFinalizationRegistry registry, Object heldValue) {
             super(target);
             this.registry = registry;
             this.heldValue = heldValue;
@@ -135,15 +132,14 @@ final class FinalizationRegistrationManager {
         @Override
         protected void scheduleJSCodeCleanup(Context cx) {
             // Schedule cleanup to be executed in the Context processing loop
-            cx.scheduleFinalizationCleanup(() -> {
-                registry.executeCleanupCallback(cx, heldValue);
-            });
+            cx.scheduleFinalizationCleanup(
+                    () -> {
+                        registry.executeCleanupCallback(cx, heldValue);
+                    });
         }
     }
 
-    /**
-     * Wrapper for unregister tokens providing identity-based equality.
-     */
+    /** Wrapper for unregister tokens providing identity-based equality. */
     private static final class TokenKey {
         private final Object token;
 

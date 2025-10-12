@@ -164,9 +164,11 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
 
         registry.cleanupSomeCallback = callback;
-        registry.registrationManager.processCleanups(100, heldValue -> {
-            registry.executeCleanupCallback(cx, heldValue);
-        });
+        registry.registrationManager.processCleanups(
+                100,
+                heldValue -> {
+                    registry.executeCleanupCallback(cx, heldValue);
+                });
         registry.cleanupSomeCallback = null;
         return Undefined.instance;
     }
@@ -263,15 +265,8 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         }
     }
 
-
-
-
-
-
-
     @Override
     public String getClassName() {
         return CLASS_NAME;
     }
 }
-
