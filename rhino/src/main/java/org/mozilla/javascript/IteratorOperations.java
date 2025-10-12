@@ -74,38 +74,80 @@ public final class IteratorOperations {
         Object returnProp = ScriptableObject.getProperty(iterator, "return");
         Callable returnMethod = (returnProp instanceof Callable) ? (Callable) returnProp : null;
 
+        Exception iteratorError = null;
         try {
             while (true) {
-                // Call next() method
-                Object iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+                Object iterResult;
+                try {
+                    // Call next() method - errors here must be immediately propagated
+                    iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+                } catch (Exception e) {
+                    // Iterator .next() threw - this must be propagated per ECMAScript spec
+                    iteratorError = e;
+                    break;
+                }
 
                 if (!(iterResult instanceof Scriptable)) {
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
+                    iteratorError =
+                            ScriptRuntime.typeErrorById(
+                                    "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
+                    break;
                 }
 
                 Scriptable result = (Scriptable) iterResult;
-                Object done = ScriptableObject.getProperty(result, "done");
-
-                if (ScriptRuntime.toBoolean(done)) {
-                    break; // Iterator exhausted
+                Object done;
+                try {
+                    // Access to .done property can throw - must propagate immediately
+                    done = ScriptableObject.getProperty(result, "done");
+                } catch (Exception e) {
+                    iteratorError = e;
+                    break;
                 }
 
-                Object value = ScriptableObject.getProperty(result, "value");
-                value = (value == Scriptable.NOT_FOUND) ? Undefined.instance : value;
+                if (ScriptRuntime.toBoolean(done)) {
+                    break; // Iterator exhausted normally
+                }
 
-                consumer.accept(value);
+                Object value;
+                try {
+                    // Access to .value property can throw - must propagate immediately
+                    value = ScriptableObject.getProperty(result, "value");
+                    value = (value == Scriptable.NOT_FOUND) ? Undefined.instance : value;
+                } catch (Exception e) {
+                    iteratorError = e;
+                    break;
+                }
+
+                try {
+                    consumer.accept(value);
+                } catch (Exception e) {
+                    // Consumer error - also must propagate
+                    iteratorError = e;
+                    break;
+                }
             }
-        } catch (Exception e) {
-            // Cleanup on error
+        } finally {
+            // Always try cleanup, but don't let cleanup errors mask iterator errors
             if (returnMethod != null) {
                 try {
                     returnMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
                 } catch (Exception cleanupError) {
-                    // Ignore cleanup errors
+                    // If we already have an iterator error, preserve it
+                    // Otherwise, propagate the cleanup error
+                    if (iteratorError == null) {
+                        iteratorError = cleanupError;
+                    }
                 }
             }
-            throw e;
+        }
+
+        // Propagate any iterator error after cleanup
+        if (iteratorError != null) {
+            if (iteratorError instanceof RuntimeException) {
+                throw (RuntimeException) iteratorError;
+            } else {
+                throw new RuntimeException(iteratorError);
+            }
         }
     }
 

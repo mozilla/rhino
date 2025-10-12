@@ -6,6 +6,7 @@ package org.mozilla.javascript;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -85,62 +86,40 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     public final class Itr implements Iterator<Object> {
         private final Context cx;
         private final Scriptable scope;
-        private final Callable nextMethod;
-        private Object nextVal;
-        private boolean isDone;
+        private final List<Object> values;
+        private int index = 0;
 
         private Itr(Context cx, Scriptable scope) {
             this.cx = cx;
             this.scope = scope;
 
-            // Get next method - already validated in constructor
-            Object nextProp = ScriptableObject.getProperty(iterator, "next");
-            this.nextMethod = (Callable) nextProp;
+            // Use Context-safe IteratorOperations to collect all values
+            this.values = IteratorOperations.collectToList(cx, scope, iterator);
         }
 
         @Override
         public boolean hasNext() {
-            if (isDone) {
-                return false;
-            }
-
-            // Call next() to get the next value - this enables lazy iteration
-            Object iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
-
-            if (!(iterResult instanceof Scriptable)) {
-                throw ScriptRuntime.typeErrorById(
-                        "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
-            }
-
-            Scriptable result = (Scriptable) iterResult;
-            Object done = ScriptableObject.getProperty(result, "done");
-
-            if (ScriptRuntime.toBoolean(done)) {
-                isDone = true;
-                return false;
-            }
-
-            nextVal = ScriptableObject.getProperty(result, "value");
-            nextVal = (nextVal == Scriptable.NOT_FOUND) ? Undefined.instance : nextVal;
-            return true;
+            return index < values.size();
         }
 
         @Override
         public Object next() {
-            if (isDone) {
+            if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            return nextVal;
+            return values.get(index++);
         }
 
-        /** Find out if "hasNext" returned done without invoking the function again. */
+        /** Find out if iterator is exhausted. */
         public boolean isDone() {
-            return isDone;
+            return index >= values.size();
         }
 
-        /** Manually set "done." Used for exception handling in promises. */
+        /** Set iterator to exhausted state for exception handling. */
         public void setDone(boolean done) {
-            this.isDone = done;
+            if (done) {
+                index = values.size(); // Mark as exhausted
+            }
         }
     }
 }
