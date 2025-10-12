@@ -1,0 +1,120 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.javascript;
+
+import java.io.Closeable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+/**
+ * This is a class that makes it easier to iterate over "iterator-like" objects as defined in the
+ * ECMAScript spec. The caller is responsible for retrieving an object that implements the
+ * "iterator" pattern. This class will follow that pattern and throw appropriate JavaScript
+ * exceptions.
+ *
+ * <p>The pattern that the target class should follow is: * It must have a function property called
+ * "next" * The function must return an object with a boolean value called "done". * If "done" is
+ * true, then the returned object should also contain a "value" property. * If it has a function
+ * property called "return" then it will be called when the caller is done iterating.
+ *
+ * <p><strong>Note:</strong> This class now uses IteratorOperations internally for Context safety.
+ */
+public class JavaIteratorAdapter implements Iterable<Object>, Closeable {
+    private final Scriptable iterator;
+    private final Callable returnFunc;
+    private boolean closed;
+
+    public JavaIteratorAdapter(Context cx, Scriptable scope, Object target) {
+        // Validate target has iterator interface - delegate to IteratorOperations
+        if (!(target instanceof Scriptable)) {
+            throw ScriptRuntime.typeErrorById("msg.not.iterable", target);
+        }
+        this.iterator = (Scriptable) target;
+
+        // Validate iterator has 'next' method
+        Object nextProp = ScriptableObject.getProperty(iterator, "next");
+        if (!(nextProp instanceof Callable)) {
+            throw ScriptRuntime.typeErrorById("msg.not.iterable", iterator);
+        }
+
+        // Get return method for cleanup
+        Object returnProp = ScriptableObject.getProperty(iterator, "return");
+        this.returnFunc = (returnProp instanceof Callable) ? (Callable) returnProp : null;
+    }
+
+    @Override
+    public void close() {
+        // Default close - requires Context to be passed for cleanup
+        close(Context.getCurrentContext(), iterator.getParentScope());
+    }
+
+    /**
+     * Close with explicit Context and scope (Context-safe version).
+     *
+     * @param cx fresh Context for cleanup
+     * @param scope scope for cleanup
+     */
+    public void close(Context cx, Scriptable scope) {
+        if (!closed) {
+            closed = true;
+            if (returnFunc != null && cx != null) {
+                returnFunc.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+            }
+        }
+    }
+
+    @Override
+    public Itr iterator() {
+        // Default iterator uses current Context (not ideal but compatible)
+        return new Itr(Context.getCurrentContext(), iterator.getParentScope());
+    }
+
+    /**
+     * Create iterator with explicit Context and scope (Context-safe version).
+     *
+     * @param cx fresh Context for iteration
+     * @param scope scope for iteration
+     * @return new iterator instance
+     */
+    public Itr iterator(Context cx, Scriptable scope) {
+        return new Itr(cx, scope);
+    }
+
+    public final class Itr implements Iterator<Object> {
+        private final List<Object> values;
+        private int index = 0;
+
+        private Itr(Context cx, Scriptable scope) {
+            // Use IteratorOperations to collect all values Context-safely
+            this.values = IteratorOperations.collectToList(cx, scope, iterator);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index < values.size();
+        }
+
+        @Override
+        public Object next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            return values.get(index++);
+        }
+
+        /** Find out if "hasNext" returned done without invoking the function again. */
+        public boolean isDone() {
+            return !hasNext();
+        }
+
+        /** Manually set "done." Used for exception handling in promises. */
+        public void setDone(boolean done) {
+            if (done) {
+                index = values.size();
+            }
+        }
+    }
+}
