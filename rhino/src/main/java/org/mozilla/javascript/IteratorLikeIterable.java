@@ -83,6 +83,12 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     }
 
     public final class Itr implements Iterator<Object> {
+        // NOTE: Context capture here is unavoidable due to Java's Iterator interface.
+        // This is acceptable because:
+        // 1. Context is captured at iterator creation, not at IteratorLikeIterable creation
+        // 2. Iterator lifetime is short (single iteration sequence)
+        // 3. Java Iterator.hasNext()/next() cannot accept Context parameters
+        // For Context-safe iteration without this limitation, use IteratorOperations directly.
         private final Context cx;
         private final Scriptable scope;
         private final Callable nextMethod;
