@@ -17,7 +17,7 @@ package org.mozilla.javascript;
 public interface ContextAction<T> {
     /**
      * Execute action using the supplied Context instance. When Rhino runtime calls the method,
-     * <code>cx</code> will be associated with the current thread as active context.
+     * {@code cx} will be associated with the current thread as active context.
      *
      * @see ContextFactory#call(ContextAction)
      */

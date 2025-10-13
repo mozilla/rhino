@@ -13,8 +13,8 @@ import java.security.PrivilegedAction;
 import org.mozilla.javascript.config.RhinoConfig;
 
 /**
- * Factory class that Rhino runtime uses to create new {@link Context} instances. A <code>
- * ContextFactory</code> can also notify listeners about context creation and release.
+ * Factory class that Rhino runtime uses to create new {@link Context} instances. A {@code
+ * ContextFactory} can also notify listeners about context creation and release.
  *
  * <p>When the Rhino runtime needs to create new {@link Context} instance during execution of {@link
  * Context#enter()} or {@link Context}, it will call {@link #makeContext()} of the current global
@@ -198,8 +198,8 @@ public class ContextFactory {
     /**
      * Create new {@link Context} instance to be associated with the current thread. This is a
      * callback method used by Rhino to create {@link Context} instance when it is necessary to
-     * associate one with the current execution thread. <code>makeContext()</code> is allowed to
-     * call {@link Context#seal(Object)} on the result to prevent {@link Context} changes by hostile
+     * associate one with the current execution thread. {@code makeContext()} is allowed to call
+     * {@link Context#seal(Object)} on the result to prevent {@link Context} changes by hostile
      * scripts or applets.
      */
     protected Context makeContext() {
@@ -459,9 +459,9 @@ public class ContextFactory {
      * before execution may begin. Once a thread has entered a Context, then getCurrentContext() may
      * be called to find the context that is associated with the current thread.
      *
-     * <p>Calling <code>enterContext()</code> will return either the Context currently associated
-     * with the thread, or will create a new context and associate it with the current thread. Each
-     * call to <code>enterContext()</code> must have a matching call to {@link Context#exit()}.
+     * <p>Calling {@code enterContext()} will return either the Context currently associated with
+     * the thread, or will create a new context and associate it with the current thread. Each call
+     * to {@code enterContext()} must have a matching call to {@link Context#exit()}.
      *
      * <pre>
      *      Context cx = contextFactory.enterContext();
@@ -473,7 +473,7 @@ public class ContextFactory {
      *      }
      * </pre>
      *
-     * Instead of using <code>enterContext()</code>, <code>exit()</code> pair consider using {@link
+     * Instead of using {@code enterContext()}, {@code exit()} pair consider using {@link
      * #call(ContextAction)} which guarantees proper association of Context instances with the
      * current thread. With this method the above example becomes:
      *
@@ -516,16 +516,15 @@ public class ContextFactory {
     /**
      * Get a Context associated with the current thread, using the given Context if need be.
      *
-     * <p>The same as <code>enterContext()</code> except that <code>cx</code> is associated with the
-     * current thread and returned if the current thread has no associated context and <code>cx
-     * </code> is not associated with any other thread.
+     * <p>The same as {@code enterContext()} except that {@code cx} is associated with the current
+     * thread and returned if the current thread has no associated context and {@code cx } is not
+     * associated with any other thread.
      *
      * @param cx a Context to associate with the thread if possible
      * @return a Context associated with the current thread
      * @see #enterContext()
      * @see #call(ContextAction)
-     * @throws IllegalStateException if <code>cx</code> is already associated with a different
-     *     thread
+     * @throws IllegalStateException if {@code cx} is already associated with a different thread
      */
     public final Context enterContext(Context cx) {
         return Context.enter(cx, this);

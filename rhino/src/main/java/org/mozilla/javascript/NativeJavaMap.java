@@ -13,15 +13,14 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
- * <code>NativeJavaMap</code> is a wrapper for java objects implementing <code>java.util.Map
- * </code> interface. When {@link Context#FEATURE_ENABLE_JAVA_MAP_ACCESS} is enabled, property-based
- * access like <code>map[key]</code> is delegated to {@link Map#get(Object)} or {@link
- * Map#put(Object, Object)} operations so that a <code>JavaMap</code> acts very similar to a
- * javascript <code>Object</code> There is also an iterator to iterate over entries with <code>
- * for .. of</code>.
+ * {@code NativeJavaMap} is a wrapper for java objects implementing {@code java.util.Map }
+ * interface. When {@link Context#FEATURE_ENABLE_JAVA_MAP_ACCESS} is enabled, property-based access
+ * like {@code map[key]} is delegated to {@link Map#get(Object)} or {@link Map#put(Object, Object)}
+ * operations so that a {@code JavaMap} acts very similar to a javascript {@code Object} There is
+ * also an iterator to iterate over entries with {@code for .. of}.
  *
- * <p><b>Limitations:</b> The wrapped map should have <code>String</code> or <code>Integer</code> as
- * key. Otherwise, property-based access may not work properly.
+ * <p><b>Limitations:</b> The wrapped map should have {@code String} or {@code Integer} as key.
+ * Otherwise, property-based access may not work properly.
  */
 public class NativeJavaMap extends NativeJavaObject {
 

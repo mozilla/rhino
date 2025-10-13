@@ -224,9 +224,9 @@ public class Delegator implements Function, SymbolScriptable {
     }
 
     /**
-     * Note that this method does not get forwarded to the delegee if the <code>hint</code>
-     * parameter is null, <code>ScriptRuntime.ScriptableClass</code> or <code>
-     * ScriptRuntime.FunctionClass</code>. Instead the object itself is returned.
+     * Note that this method does not get forwarded to the delegee if the {@code hint} parameter is
+     * null, {@code ScriptRuntime.ScriptableClass} or {@code ScriptRuntime.FunctionClass}. Instead
+     * the object itself is returned.
      *
      * @param hint the type hint
      * @return the default value
@@ -258,9 +258,9 @@ public class Delegator implements Function, SymbolScriptable {
     }
 
     /**
-     * Note that if the <code>delegee</code> is <code>null</code>, this method creates a new
-     * instance of the Delegator itself rather than forwarding the call to the <code>delegee</code>
-     * . This permits the use of Delegator prototypes.
+     * Note that if the {@code delegee} is {@code null}, this method creates a new instance of the
+     * Delegator itself rather than forwarding the call to the {@code delegee} . This permits the
+     * use of Delegator prototypes.
      *
      * @param cx the current Context for this thread
      * @param scope an enclosing scope of the caller except when the function is called from a

@@ -3510,7 +3510,7 @@ class BodyCodegen {
 
     /**
      * Generate calls to ScriptRuntime.addInstructionCount to keep track of executed instructions
-     * and call <code>observeInstructionCount()</code> if a threshold is exceeded.<br>
+     * and call {@code observeInstructionCount()} if a threshold is exceeded.<br>
      * Calculates the count from getCurrentCodeOffset - savedCodeOffset
      */
     private void addInstructionCount() {
@@ -3523,7 +3523,7 @@ class BodyCodegen {
 
     /**
      * Generate calls to ScriptRuntime.addInstructionCount to keep track of executed instructions
-     * and call <code>observeInstructionCount()</code> if a threshold is exceeded.<br>
+     * and call {@code observeInstructionCount()} if a threshold is exceeded.<br>
      * Takes the count as a parameter - used to add monitoring to loops and other blocks that don't
      * have any ops - this allows for monitoring/killing of while(true) loops and such.
      */

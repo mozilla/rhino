@@ -954,8 +954,8 @@ final class NativeDate extends IdScriptableObject {
      * Parse input string according to simplified ISO-8601 Extended Format:
      *
      * <ul>
-     *   <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code>
-     *   <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code>
+     *   <li>{@code YYYY-MM-DD'T'HH:mm:ss.sss'Z'}
+     *   <li>or {@code YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm}
      * </ul>
      */
     private static double parseISOString(Context cx, String s) {

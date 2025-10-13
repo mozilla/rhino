@@ -166,8 +166,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Gets the value that will be returned by calling the typeof operator on this object.
      *
-     * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in
-     *     which case it returns "undefined"
+     * @return default is "object" unless {@link #avoidObjectDetection()} is {@code true} in which
+     *     case it returns "undefined"
      */
     public String getTypeOf() {
         return avoidObjectDetection() ? "undefined" : "object";
@@ -491,7 +491,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Get the attributes of a named property.
      *
-     * <p>The property is specified by <code>name</code> as defined for <code>has</code>.
+     * <p>The property is specified by {@code name} as defined for {@code has}.
      *
      * @param name the identifier for the property
      * @return the bitset of attributes
@@ -529,7 +529,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Set the attributes of a named property.
      *
-     * <p>The property is specified by <code>name</code> as defined for <code>has</code>.
+     * <p>The property is specified by {@code name} as defined for {@code has}.
      *
      * <p>The possible attributes are READONLY, DONTENUM, and PERMANENT. Combinations of attributes
      * are expressed by the bitwise OR of attributes. EMPTY is the state of no attributes set. Any
@@ -797,7 +797,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * <p>Note that the toPrimitive conversion is a no-op for every type other than Object, for
      * which [[DefaultValue]] is called. See ECMA 9.1.
      *
-     * <p>A <code>hint</code> of null means "no hint".
+     * <p>A {@code hint} of null means "no hint".
      *
      * @param typeHint the type hint
      * @return the default value for the object
@@ -894,14 +894,14 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     /**
-     * Custom <code>==</code> operator. Must return {@link Scriptable#NOT_FOUND} if this object does
-     * not have custom equality operator for the given value, <code>Boolean.TRUE</code> if this
-     * object is equivalent to <code>value</code>, <code>Boolean.FALSE</code> if this object is not
-     * equivalent to <code>value</code>.
+     * Custom {@code ==} operator. Must return {@link Scriptable#NOT_FOUND} if this object does not
+     * have custom equality operator for the given value, {@code Boolean.TRUE} if this object is
+     * equivalent to {@code value}, {@code Boolean.FALSE} if this object is not equivalent to {@code
+     * value}.
      *
-     * <p>The default implementation returns Boolean.TRUE if <code>this == value</code> or {@link
+     * <p>The default implementation returns Boolean.TRUE if {@code this == value} or {@link
      * Scriptable#NOT_FOUND} otherwise. It indicates that by default custom equality is available
-     * only if <code>value</code> is <code>this</code> in which case true is returned.
+     * only if {@code value} is {@code this} in which case true is returned.
      */
     protected Object equivalentValues(Object value) {
         return (this == value) ? Boolean.TRUE : Scriptable.NOT_FOUND;
@@ -934,12 +934,12 @@ public abstract class ScriptableObject extends SlotMapOwner
      * meaning for defining JavaScript objects. These special prefixes are
      *
      * <ul>
-     *   <li><code>jsFunction_</code> for a JavaScript function
-     *   <li><code>jsStaticFunction_</code> for a JavaScript function that is a property of the
+     *   <li>{@code jsFunction_} for a JavaScript function
+     *   <li>{@code jsStaticFunction_} for a JavaScript function that is a property of the
      *       constructor
-     *   <li><code>jsGet_</code> for a getter of a JavaScript property
-     *   <li><code>jsSet_</code> for a setter of a JavaScript property
-     *   <li><code>jsConstructor</code> for a JavaScript function that is the constructor
+     *   <li>{@code jsGet_} for a getter of a JavaScript property
+     *   <li>{@code jsSet_} for a setter of a JavaScript property
+     *   <li>{@code jsConstructor} for a JavaScript function that is the constructor
      * </ul>
      *
      * <p>If the method's name begins with "jsFunction_", a JavaScript function is created with a
@@ -978,8 +978,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      *                        Scriptable prototype)
      * </pre>
      *
-     * it will be called to finish any initialization. The <code>scope</code> argument will be
-     * passed, along with the newly created constructor and the newly created prototype.
+     * it will be called to finish any initialization. The {@code scope} argument will be passed,
+     * along with the newly created constructor and the newly created prototype.
      *
      * @param scope The scope in which to define the constructor.
      * @param clazz The Java class to use to define the JavaScript objects and properties.
@@ -1000,7 +1000,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Defines JavaScript objects from a Java class, optionally allowing sealing.
      *
-     * <p>Similar to <code>defineClass(Scriptable scope, Class clazz)</code> except that sealing is
+     * <p>Similar to {@code defineClass(Scriptable scope, Class clazz)} except that sealing is
      * allowed. An object that is sealed cannot have properties added or removed. Note that sealing
      * is not allowed in the current ECMA/ISO language specification, but is likely for the next
      * version.
@@ -1025,7 +1025,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Defines JavaScript objects from a Java class, optionally allowing sealing and mapping of Java
      * inheritance to JavaScript prototype-based inheritance.
      *
-     * <p>Similar to <code>defineClass(Scriptable scope, Class clazz)</code> except that sealing and
+     * <p>Similar to {@code defineClass(Scriptable scope, Class clazz)} except that sealing and
      * inheritance mapping are allowed. An object that is sealed cannot have properties added or
      * removed. Note that sealing is not allowed in the current ECMA/ISO language specification, but
      * is likely for the next version.
@@ -1458,8 +1458,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * method with one parameter.
      *
      * @param propertyName the name of the property to define. This name also affects the name of
-     *     the setter and getter to search for. If the propertyId is "foo", then <code>clazz</code>
-     *     will be searched for "getFoo" and "setFoo" methods.
+     *     the setter and getter to search for. If the propertyId is "foo", then {@code clazz} will
+     *     be searched for "getFoo" and "setFoo" methods.
      * @param clazz the Java class to search for the getter and setter
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
@@ -1489,9 +1489,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      *
      * <p>Use this method only if you wish to define getters and setters for a given property in a
      * ScriptableObject. To create a property without special getter or setter side effects, use
-     * <code>defineProperty(String,int)</code>.
+     * {@code defineProperty(String,int)}.
      *
-     * <p>If <code>setter</code> is null, the attribute READONLY is added to the given attributes.
+     * <p>If {@code setter} is null, the attribute READONLY is added to the given attributes.
      *
      * <p>Several forms of getters or setters are allowed. In all cases the type of the value
      * parameter can be any one of the following types: Object, String, boolean, Scriptable, byte,
@@ -1514,9 +1514,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      * static void setFoo(Scriptable obj, SomeType value);
      * </pre>
      *
-     * Finally, it is possible to delegate to another object entirely using the <code>delegateTo
-     * </code> parameter. In this case the methods are nonstatic methods of the class delegated to,
-     * and the object whose property is being accessed is passed in as an extra argument:
+     * Finally, it is possible to delegate to another object entirely using the {@code delegateTo }
+     * parameter. In this case the methods are nonstatic methods of the class delegated to, and the
+     * object whose property is being accessed is passed in as an extra argument:
      *
      * <pre>
      * Object getFoo(Scriptable obj);
@@ -2235,9 +2235,9 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Get the prototype for the named class.
      *
-     * <p>For example, <code>getClassPrototype(s, "Date")</code> will first walk up the parent chain
-     * to find the outermost scope, then will search that scope for the Date constructor, and then
-     * will return Date.prototype. If any of the lookups fail, or the prototype is not a JavaScript
+     * <p>For example, {@code getClassPrototype(s, "Date")} will first walk up the parent chain to
+     * find the outermost scope, then will search that scope for the Date constructor, and then will
+     * return Date.prototype. If any of the lookups fail, or the prototype is not a JavaScript
      * object, then null will be returned.
      *
      * @param scope an object in the scope chain
@@ -2362,12 +2362,12 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Gets a named property from an object or any object in its prototype chain.
      *
-     * <p>Searches the prototype chain for a property named <code>name</code>.
+     * <p>Searches the prototype chain for a property named {@code name}.
      *
      * @param obj a JavaScript object
      * @param name a property name
-     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
-     *     object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
+     * @return the value of a property with name {@code name} found in {@code obj} or any object in
+     *     its prototype chain, or {@code Scriptable.NOT_FOUND} if not found
      * @since 1.5R2
      */
     public static Object getProperty(Scriptable obj, String name) {
@@ -2418,15 +2418,15 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Gets an indexed property from an object or any object in its prototype chain and coerces it
      * to the requested Java type.
      *
-     * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
-     * that if you wish to look for properties with numerical but non-integral indicies, you should
-     * use getProperty(Scriptable,String) with the string value of the index.
+     * <p>Searches the prototype chain for a property with integral index {@code index}. Note that
+     * if you wish to look for properties with numerical but non-integral indicies, you should use
+     * getProperty(Scriptable,String) with the string value of the index.
      *
      * @param s a JavaScript object
      * @param index an integral index
      * @param type the required Java type of the result
-     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
-     *     object in its prototype chain, or null if not found. Note that it does not return {@link
+     * @return the value of a property with name {@code name} found in {@code obj} or any object in
+     *     its prototype chain, or null if not found. Note that it does not return {@link
      *     Scriptable#NOT_FOUND} as it can ordinarily not be converted to most of the types.
      * @since 1.7R3
      */
@@ -2441,14 +2441,14 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Gets an indexed property from an object or any object in its prototype chain.
      *
-     * <p>Searches the prototype chain for a property with integral index <code>index</code>. Note
-     * that if you wish to look for properties with numerical but non-integral indicies, you should
-     * use getProperty(Scriptable,String) with the string value of the index.
+     * <p>Searches the prototype chain for a property with integral index {@code index}. Note that
+     * if you wish to look for properties with numerical but non-integral indicies, you should use
+     * getProperty(Scriptable,String) with the string value of the index.
      *
      * @param obj a JavaScript object
      * @param index an integral index
-     * @return the value of a property with index <code>index</code> found in <code>obj</code> or
-     *     any object in its prototype chain, or <code>Scriptable.NOT_FOUND</code> if not found
+     * @return the value of a property with index {@code index} found in {@code obj} or any object
+     *     in its prototype chain, or {@code Scriptable.NOT_FOUND} if not found
      * @since 1.5R2
      */
     public static Object getProperty(Scriptable obj, int index) {
@@ -2478,13 +2478,13 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Gets a named property from an object or any object in its prototype chain and coerces it to
      * the requested Java type.
      *
-     * <p>Searches the prototype chain for a property named <code>name</code>.
+     * <p>Searches the prototype chain for a property named {@code name}.
      *
      * @param s a JavaScript object
      * @param name a property name
      * @param type the required Java type of the result
-     * @return the value of a property with name <code>name</code> found in <code>obj</code> or any
-     *     object in its prototype chain, or null if not found. Note that it does not return {@link
+     * @return the value of a property with name {@code name} found in {@code obj} or any object in
+     *     its prototype chain, or null if not found. Note that it does not return {@link
      *     Scriptable#NOT_FOUND} as it can ordinarily not be converted to most of the types.
      * @since 1.7R3
      */
@@ -2500,7 +2500,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Returns whether a named property is defined in an object or any object in its prototype
      * chain.
      *
-     * <p>Searches the prototype chain for a property named <code>name</code>.
+     * <p>Searches the prototype chain for a property named {@code name}.
      *
      * @param obj a JavaScript object
      * @param name a property name
@@ -2534,7 +2534,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Returns whether an indexed property is defined in an object or any object in its prototype
      * chain.
      *
-     * <p>Searches the prototype chain for a property with index <code>index</code>.
+     * <p>Searches the prototype chain for a property with index {@code index}.
      *
      * @param obj a JavaScript object
      * @param index a property index
@@ -2554,11 +2554,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Puts a named property in an object or in an object in its prototype chain.
      *
      * <p>Searches for the named property in the prototype chain. If it is found, the value of the
-     * property in <code>obj</code> is changed through a call to {@link Scriptable#put(String,
-     * Scriptable, Object)} on the prototype passing <code>obj</code> as the <code>start</code>
-     * argument. This allows the prototype to veto the property setting in case the prototype
-     * defines the property with [[ReadOnly]] attribute. If the property is not found, it is added
-     * in <code>obj</code>.
+     * property in {@code obj} is changed through a call to {@link Scriptable#put(String,
+     * Scriptable, Object)} on the prototype passing {@code obj} as the {@code start} argument. This
+     * allows the prototype to veto the property setting in case the prototype defines the property
+     * with [[ReadOnly]] attribute. If the property is not found, it is added in {@code obj}.
      *
      * @param obj a JavaScript object
      * @param name a property name
@@ -2600,11 +2599,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Puts a named property in an object or in an object in its prototype chain.
      *
      * <p>Searches for the named property in the prototype chain. If it is found, the value of the
-     * property in <code>obj</code> is changed through a call to {@link Scriptable#put(String,
-     * Scriptable, Object)} on the prototype passing <code>obj</code> as the <code>start</code>
-     * argument. This allows the prototype to veto the property setting in case the prototype
-     * defines the property with [[ReadOnly]] attribute. If the property is not found, it is added
-     * in <code>obj</code>.
+     * property in {@code obj} is changed through a call to {@link Scriptable#put(String,
+     * Scriptable, Object)} on the prototype passing {@code obj} as the {@code start} argument. This
+     * allows the prototype to veto the property setting in case the prototype defines the property
+     * with [[ReadOnly]] attribute. If the property is not found, it is added in {@code obj}.
      *
      * @param obj a JavaScript object
      * @param name a property name
@@ -2621,11 +2619,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      * Puts an indexed property in an object or in an object in its prototype chain.
      *
      * <p>Searches for the indexed property in the prototype chain. If it is found, the value of the
-     * property in <code>obj</code> is changed through a call to {@link Scriptable#put(int,
-     * Scriptable, Object)} on the prototype passing <code>obj</code> as the <code>start</code>
-     * argument. This allows the prototype to veto the property setting in case the prototype
-     * defines the property with [[ReadOnly]] attribute. If the property is not found, it is added
-     * in <code>obj</code>.
+     * property in {@code obj} is changed through a call to {@link Scriptable#put(int, Scriptable,
+     * Object)} on the prototype passing {@code obj} as the {@code start} argument. This allows the
+     * prototype to veto the property setting in case the prototype defines the property with
+     * [[ReadOnly]] attribute. If the property is not found, it is added in {@code obj}.
      *
      * @param obj a JavaScript object
      * @param index a property index
@@ -2650,8 +2647,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Removes the property from an object or its prototype chain.
      *
-     * <p>Searches for a property with <code>name</code> in obj or its prototype chain. If it is
-     * found, the object's delete method is called.
+     * <p>Searches for a property with {@code name} in obj or its prototype chain. If it is found,
+     * the object's delete method is called.
      *
      * @param obj a JavaScript object
      * @param name a property name
@@ -2668,8 +2665,8 @@ public abstract class ScriptableObject extends SlotMapOwner
     /**
      * Removes the property from an object or its prototype chain.
      *
-     * <p>Searches for a property with <code>index</code> in obj or its prototype chain. If it is
-     * found, the object's delete method is called.
+     * <p>Searches for a property with {@code index} in obj or its prototype chain. If it is found,
+     * the object's delete method is called.
      *
      * @param obj a JavaScript object
      * @param index a property index

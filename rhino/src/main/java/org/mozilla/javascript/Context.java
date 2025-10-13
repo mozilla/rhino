@@ -137,38 +137,38 @@ public class Context implements Closeable {
     public static final int VERSION_ECMASCRIPT = 250;
 
     /**
-     * Controls behaviour of <code>Date.prototype.getYear()</code>. If <code>
-     * hasFeature(FEATURE_NON_ECMA_GET_YEAR)</code> returns true, Date.prototype.getYear subtructs
-     * 1900 only if 1900 &lt;= date &lt; 2000. The default behavior of {@link #hasFeature(int)} is
-     * always to subtract 1900 as required by ECMAScript B.2.4.
+     * Controls behaviour of {@code Date.prototype.getYear()}. If {@code
+     * hasFeature(FEATURE_NON_ECMA_GET_YEAR)} returns true, Date.prototype.getYear subtructs 1900
+     * only if 1900 &lt;= date &lt; 2000. The default behavior of {@link #hasFeature(int)} is always
+     * to subtract 1900 as required by ECMAScript B.2.4.
      */
     public static final int FEATURE_NON_ECMA_GET_YEAR = 1;
 
     /**
-     * Control if member expression as function name extension is available. If <code>
-     * hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)</code> returns true, allow <code>
-     * function memberExpression(args) { body }</code> to be syntax sugar for <code>
-     * memberExpression = function(args) { body }</code>, when memberExpression is not a simple
-     * identifier. See ECMAScript-262, section 11.2 for definition of memberExpression. By default
-     * {@link #hasFeature(int)} returns false.
+     * Control if member expression as function name extension is available. If {@code
+     * hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)} returns true, allow {@code function
+     * memberExpression(args) { body }} to be syntax sugar for {@code memberExpression =
+     * function(args) { body }}, when memberExpression is not a simple identifier. See
+     * ECMAScript-262, section 11.2 for definition of memberExpression. By default {@link
+     * #hasFeature(int)} returns false.
      */
     public static final int FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME = 2;
 
     /**
-     * Control if reserved keywords are treated as identifiers. If <code>
-     * hasFeature(RESERVED_KEYWORD_AS_IDENTIFIER)</code> returns true, treat future reserved keyword
-     * (see Ecma-262, section 7.5.3) as ordinary identifiers but warn about this usage.
+     * Control if reserved keywords are treated as identifiers. If {@code
+     * hasFeature(RESERVED_KEYWORD_AS_IDENTIFIER)} returns true, treat future reserved keyword (see
+     * Ecma-262, section 7.5.3) as ordinary identifiers but warn about this usage.
      *
      * <p>By default {@link #hasFeature(int)} returns false.
      */
     public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
 
     /**
-     * Control if <code>toString()</code> should returns the same result as <code>toSource()</code>
-     * when applied to objects and arrays. If <code>hasFeature(FEATURE_TO_STRING_AS_SOURCE)</code>
-     * returns true, calling <code>toString()</code> on JS objects gives the same result as calling
-     * <code>toSource()</code>. That is it returns JS source with code to create an object with all
-     * enumerable fields of the original object instead of printing <code>[object <i>result of
+     * Control if {@code toString()} should returns the same result as {@code toSource()} when
+     * applied to objects and arrays. If {@code hasFeature(FEATURE_TO_STRING_AS_SOURCE)} returns
+     * true, calling {@code toString()} on JS objects gives the same result as calling {@code
+     * toSource()}. That is it returns JS source with code to create an object with all enumerable
+     * fields of the original object instead of printing <code>[object <i>result of
      * {@link Scriptable#getClassName()}</i>]</code>.
      *
      * <p>By default {@link #hasFeature(int)} returns true only if the current JS version is set to
@@ -177,16 +177,15 @@ public class Context implements Closeable {
     public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
     /**
-     * Control if properties <code>__proto__</code> and <code>__parent__</code> are treated
-     * specially. If <code>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</code> returns true, treat
-     * <code>__parent__</code> and <code>__proto__</code> as special properties.
+     * Control if properties {@code __proto__} and {@code __parent__} are treated specially. If
+     * {@code hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)} returns true, treat {@code __parent__}
+     * and {@code __proto__} as special properties.
      *
      * <p>The properties allow to query and set scope and prototype chains for the objects. The
      * special meaning of the properties is available only when they are used as the right hand side
-     * of the dot operator. For example, while <code>x.__proto__ = y</code> changes the prototype
-     * chain of the object <code>x</code> to point to <code>y</code>, <code>x["__proto__"] = y
-     * </code> simply assigns a new value to the property <code>__proto__</code> in <code>x</code>
-     * even when the feature is on.
+     * of the dot operator. For example, while {@code x.__proto__ = y} changes the prototype chain
+     * of the object {@code x} to point to {@code y}, {@code x["__proto__"] = y } simply assigns a
+     * new value to the property {@code __proto__} in {@code x} even when the feature is on.
      *
      * <p>By default {@link #hasFeature(int)} returns true.
      */
@@ -331,7 +330,7 @@ public class Context implements Closeable {
 
     /**
      * If set, then all integer numbers will be returned without decimal place. For instance assume
-     * there is a function like this: <code>function foo() {return 5;}</code> 5 will be returned if
+     * there is a function like this: {@code function foo() {return 5;}} 5 will be returned if
      * feature is set, 5.0 otherwise.
      */
     public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = 18;
@@ -480,9 +479,9 @@ public class Context implements Closeable {
     /**
      * Get a Context associated with the current thread, using the given Context if need be.
      *
-     * <p>The same as <code>enter()</code> except that <code>cx</code> is associated with the
-     * current thread and returned if the current thread has no associated context and <code>cx
-     * </code> is not associated with any other thread.
+     * <p>The same as {@code enter()} except that {@code cx} is associated with the current thread
+     * and returned if the current thread has no associated context and {@code cx } is not
+     * associated with any other thread.
      *
      * @param cx a Context to associate with the thread if possible
      * @return a Context associated with the current thread
@@ -526,7 +525,7 @@ public class Context implements Closeable {
     /**
      * Exit a block of code requiring a Context.
      *
-     * <p>Calling <code>exit()</code> will remove the association between the current thread and a
+     * <p>Calling {@code exit()} will remove the association between the current thread and a
      * Context if the prior call to {@link ContextFactory#enterContext()} on this thread newly
      * associated a Context with this thread. Once the current thread no longer has an associated
      * Context, it cannot be used to execute JavaScript until it is again associated with a Context.
@@ -563,9 +562,9 @@ public class Context implements Closeable {
 
     /**
      * Call {@link ContextAction#run(Context cx)} using the Context instance associated with the
-     * current thread. If no Context is associated with the thread, then <code>
-     * ContextFactory.getGlobal().makeContext()</code> will be called to construct new Context
-     * instance. The instance will be temporary associated with the thread during call to {@link
+     * current thread. If no Context is associated with the thread, then {@code
+     * ContextFactory.getGlobal().makeContext()} will be called to construct new Context instance.
+     * The instance will be temporary associated with the thread during call to {@link
      * ContextAction#run(Context)}.
      *
      * @deprecated use {@link ContextFactory#call(ContextAction)} instead as this method relies on
@@ -584,9 +583,8 @@ public class Context implements Closeable {
      * Context instance. The instance will be temporary associated with the thread during call to
      * {@link ContextAction#run(Context)}.
      *
-     * <p>It is allowed but not advisable to use null for <code>factory</code> argument in which
-     * case the global static singleton ContextFactory instance will be used to create new context
-     * instances.
+     * <p>It is allowed but not advisable to use null for {@code factory} argument in which case the
+     * global static singleton ContextFactory instance will be used to create new context instances.
      *
      * @see ContextFactory#call(ContextAction)
      */
@@ -664,8 +662,8 @@ public class Context implements Closeable {
      * Seal this Context object so any attempt to modify any of its properties including calling
      * {@link #enter()} and {@link #exit()} methods will throw an exception.
      *
-     * <p>If <code>sealKey</code> is not null, calling {@link #unseal(Object sealKey)} with the same
-     * key unseals the object. If <code>sealKey</code> is null, unsealing is no longer possible.
+     * <p>If {@code sealKey} is not null, calling {@link #unseal(Object sealKey)} with the same key
+     * unseals the object. If {@code sealKey} is null, unsealing is no longer possible.
      *
      * @see #isSealed()
      * @see #unseal(Object)
@@ -677,9 +675,9 @@ public class Context implements Closeable {
     }
 
     /**
-     * Unseal previously sealed Context object. The <code>sealKey</code> argument should not be null
-     * and should match <code>sealKey</code> supplied with the last call to {@link #seal(Object)} or
-     * an exception will be thrown.
+     * Unseal previously sealed Context object. The {@code sealKey} argument should not be null and
+     * should match {@code sealKey} supplied with the last call to {@link #seal(Object)} or an
+     * exception will be thrown.
      *
      * @see #isSealed()
      * @see #seal(Object sealKey)
@@ -775,7 +773,7 @@ public class Context implements Closeable {
      * <p>The implementation version is of the form
      *
      * <pre>
-     *    "<i>name langVer</i> <code>release</code> <i>relNum date</i>"
+     *    "<i>name langVer</i> {@code release} <i>relNum date</i>"
      * </pre>
      *
      * where <i>name</i> is the name of the product, <i>langVer</i> is the language version,
@@ -1651,7 +1649,7 @@ public class Context implements Closeable {
     /**
      * Create a new JavaScript object by executing the named constructor.
      *
-     * <p>The call <code>newObject(scope, "Foo")</code> is equivalent to evaluating "new Foo()".
+     * <p>The call {@code newObject(scope, "Foo")} is equivalent to evaluating "new Foo()".
      *
      * @param scope the scope to search for the constructor and to evaluate against
      * @param constructorName the name of the constructor to call
@@ -1664,8 +1662,8 @@ public class Context implements Closeable {
     /**
      * Creates a new JavaScript object by executing the named constructor.
      *
-     * <p>Searches <code>scope</code> for the named constructor, calls it with the given arguments,
-     * and returns the result.
+     * <p>Searches {@code scope} for the named constructor, calls it with the given arguments, and
+     * returns the result.
      *
      * <p>The code
      *
@@ -1674,7 +1672,7 @@ public class Context implements Closeable {
      * newObject(scope, "Foo", args)</pre>
      *
      * is equivalent to evaluating "new Foo('a', 'b')", assuming that the Foo constructor has been
-     * defined in <code>scope</code>.
+     * defined in {@code scope}.
      *
      * @param scope The scope to search for the constructor and to evaluate against
      * @param constructorName the name of the constructor to call
@@ -1807,8 +1805,8 @@ public class Context implements Closeable {
      * function and object.
      *
      * <p>Note that for Number instances during any arithmetic operation in JavaScript the engine
-     * will always use the result of <code>Number.doubleValue()</code> resulting in a precision loss
-     * if the number can not fit into double.
+     * will always use the result of {@code Number.doubleValue()} resulting in a precision loss if
+     * the number can not fit into double.
      *
      * <p>If value is an instance of Character, it will be converted to string of length 1 and its
      * JavaScript type will be string.
@@ -1837,8 +1835,8 @@ public class Context implements Closeable {
      * function and object.
      *
      * <p>Note that for Number instances during any arithmetic operation in JavaScript the engine
-     * will always use the result of <code>Number.doubleValue()</code> resulting in a precision loss
-     * if the number can not fit into double.
+     * will always use the result of {@code Number.doubleValue()} resulting in a precision loss if
+     * the number can not fit into double.
      *
      * <p>If value is an instance of Character, it will be converted to string of length 1 and its
      * JavaScript type will be string.
@@ -2136,8 +2134,7 @@ public class Context implements Closeable {
      * Set the security controller for this context.
      *
      * <p>SecurityController may only be set if it is currently null and {@link
-     * SecurityController#hasGlobal()} is <code>false</code>. Otherwise a SecurityException is
-     * thrown.
+     * SecurityController#hasGlobal()} is {@code false}. Otherwise a SecurityException is thrown.
      *
      * @param controller a SecurityController object
      * @throws SecurityException if there is already a SecurityController object for this Context or
@@ -2334,7 +2331,7 @@ public class Context implements Closeable {
      * implementation.
      *
      * @param featureIndex feature index to check
-     * @return true if the <code>featureIndex</code> feature is turned on
+     * @return true if the {@code featureIndex} feature is turned on
      * @see #FEATURE_NON_ECMA_GET_YEAR
      * @see #FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME
      * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
@@ -2355,17 +2352,17 @@ public class Context implements Closeable {
     }
 
     /**
-     * Returns an object which specifies an E4X implementation to use within this <code>Context
-     * </code>. Note that the XMLLib.Factory interface should be considered experimental.
+     * Returns an object which specifies an E4X implementation to use within this {@code Context }.
+     * Note that the XMLLib.Factory interface should be considered experimental.
      *
-     * <p>The default implementation uses the implementation provided by this <code>Context</code>'s
+     * <p>The default implementation uses the implementation provided by this {@code Context}'s
      * {@link ContextFactory}.
      *
      * <p>This is no longer used in E4X -- an implementation is only provided for backward
      * compatibility.
      *
-     * @return An XMLLib.Factory. Should not return <code>null</code> if {@link #FEATURE_E4X} is
-     *     enabled. See {@link #hasFeature}.
+     * @return An XMLLib.Factory. Should not return {@code null} if {@link #FEATURE_E4X} is enabled.
+     *     See {@link #hasFeature}.
      */
     @Deprecated
     public XMLLib.Factory getE4xImplementationFactory() {
@@ -2376,25 +2373,25 @@ public class Context implements Closeable {
     }
 
     /**
-     * Get threshold of executed instructions counter that triggers call to <code>
-     * observeInstructionCount()</code>. When the threshold is zero, instruction counting is
-     * disabled, otherwise each time the run-time executes at least the threshold value of script
-     * instructions, <code>observeInstructionCount()</code> will be called.
+     * Get threshold of executed instructions counter that triggers call to {@code
+     * observeInstructionCount()}. When the threshold is zero, instruction counting is disabled,
+     * otherwise each time the run-time executes at least the threshold value of script
+     * instructions, {@code observeInstructionCount()} will be called.
      */
     public final int getInstructionObserverThreshold() {
         return instructionThreshold;
     }
 
     /**
-     * Set threshold of executed instructions counter that triggers call to <code>
-     * observeInstructionCount()</code>. When the threshold is zero, instruction counting is
-     * disabled, otherwise each time the run-time executes at least the threshold value of script
-     * instructions, <code>observeInstructionCount()</code> will be called.<br>
+     * Set threshold of executed instructions counter that triggers call to {@code
+     * observeInstructionCount()}. When the threshold is zero, instruction counting is disabled,
+     * otherwise each time the run-time executes at least the threshold value of script
+     * instructions, {@code observeInstructionCount()} will be called.<br>
      * Note that the meaning of "instruction" is not guaranteed to be consistent between compiled
      * and interpretive modes: executing a given script or function in the different modes will
      * result in different instruction counts against the threshold. {@link
-     * #setGenerateObserverCount} is called with true if <code>threshold</code> is greater than
-     * zero, false otherwise.
+     * #setGenerateObserverCount} is called with true if {@code threshold} is greater than zero,
+     * false otherwise.
      *
      * @param threshold The instruction threshold
      */
@@ -2427,15 +2424,15 @@ public class Context implements Closeable {
     /**
      * Allow application to monitor counter of executed script instructions in Context subclasses.
      * Run-time calls this when instruction counting is enabled and the counter reaches limit set by
-     * <code>setInstructionObserverThreshold()</code>. The method is useful to observe long running
+     * {@code setInstructionObserverThreshold()}. The method is useful to observe long running
      * scripts and if necessary to terminate them.
      *
      * <p>The default implementation calls {@link ContextFactory#observeInstructionCount(Context cx,
      * int instructionCount)} that allows to customize Context behavior without introducing Context
      * subclasses.
      *
-     * @param instructionCount amount of script instruction executed since last call to <code>
-     *     observeInstructionCount</code>
+     * @param instructionCount amount of script instruction executed since last call to {@code
+     *     observeInstructionCount}
      * @throws Error to terminate the script
      * @see #setOptimizationLevel(int)
      */

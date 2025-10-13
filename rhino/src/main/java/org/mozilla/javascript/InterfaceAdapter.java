@@ -26,8 +26,8 @@ public class InterfaceAdapter {
      * Make glue object implementing interface cl that will call the supplied JS function when
      * called. Only interfaces were all methods have the same signature is supported.
      *
-     * @return The glue object or null if <code>cl</code> is not interface or has methods with
-     *     different signatures.
+     * @return The glue object or null if {@code cl} is not interface or has methods with different
+     *     signatures.
      */
     static Object create(Context cx, Class<?> cl, ScriptableObject object) {
         if (!cl.isInterface()) throw new IllegalArgumentException();

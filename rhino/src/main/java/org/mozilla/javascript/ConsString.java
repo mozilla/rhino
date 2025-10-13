@@ -10,8 +10,8 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 
 /**
- * This class represents a string composed of two components, each of which may be a <code>
- * java.lang.String</code> or another ConsString.
+ * This class represents a string composed of two components, each of which may be a {@code
+ * java.lang.String} or another ConsString.
  *
  * <p>This string representation is optimized for concatenation using the "+" operator. Instead of
  * immediately copying both components to a new character array, ConsString keeps references to the

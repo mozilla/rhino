@@ -70,7 +70,7 @@ public interface ModuleSourceProvider {
      *
      * @param uri the absolute URI from which to load the module source, but without an extension
      *     such as ".js".
-     * @param baseUri the module path base URI from which <code>uri</code> was derived.
+     * @param baseUri the module path base URI from which {@code uri} was derived.
      * @param validator a validator for an existing loaded and cached module. This will either be
      *     null, or an object that this source provider returned earlier as part of a {@link
      *     ModuleSource}. It can be used to validate the existing cached module and avoid reloading

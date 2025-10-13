@@ -58,9 +58,8 @@ public abstract class XMLObject extends IdScriptableObject {
     public abstract NativeWith enterDotQuery(Scriptable scope);
 
     /**
-     * Custom <code>+</code> operator. Should return {@link Scriptable#NOT_FOUND} if this object
-     * does not have custom addition operator for the given value, or the result of the addition
-     * operation.
+     * Custom {@code +} operator. Should return {@link Scriptable#NOT_FOUND} if this object does not
+     * have custom addition operator for the given value, or the result of the addition operation.
      *
      * <p>The default implementation returns {@link Scriptable#NOT_FOUND} to indicate no custom
      * addition operation.
@@ -78,7 +77,7 @@ public abstract class XMLObject extends IdScriptableObject {
      * Gets the value returned by calling the typeof operator on this object.
      *
      * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
-     * @return "xml" or "undefined" if {@link #avoidObjectDetection()} returns <code>true</code>
+     * @return "xml" or "undefined" if {@link #avoidObjectDetection()} returns {@code true}
      */
     @Override
     public String getTypeOf() {

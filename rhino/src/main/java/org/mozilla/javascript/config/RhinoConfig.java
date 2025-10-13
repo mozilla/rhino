@@ -27,7 +27,7 @@ public class RhinoConfig {
     /**
      * Returns the property as string.
      *
-     * <p>If the value is not set, <code>defaultVaule</code> is returned.
+     * <p>If the value is not set, {@code defaultVaule} is returned.
      */
     private static String get(String property, String defaultValue) {
         Object ret = INSTANCE.get(property);
@@ -46,9 +46,9 @@ public class RhinoConfig {
      * Returns the property as enum.
      *
      * <p>If the property is set to any of the enum names (case-insensitive), this enum value is
-     * returned, otherwise <code>defaultValue</code> is returned.
+     * returned, otherwise {@code defaultValue} is returned.
      *
-     * <p>Note: <code>defaultValue</code> must be specified to derive the enum class and its values.
+     * <p>Note: {@code defaultValue} must be specified to derive the enum class and its values.
      */
     @SuppressWarnings("unchecked")
     public static <T extends Enum<T>> T get(String property, T defaultValue) {
@@ -69,9 +69,9 @@ public class RhinoConfig {
     /**
      * Returns the property as boolean.
      *
-     * <p>A property is true, if it is either <code>Boolean.TRUE</code> or if and only if the string
+     * <p>A property is true, if it is either {@code Boolean.TRUE} or if and only if the string
      * representation is equal to {@code "true"} (case-insensitive). If the property is not set,
-     * <code>defaultValue</code> is returned
+     * {@code defaultValue} is returned
      *
      * <p>Same behaviour as {@link Boolean#getBoolean(String)}
      */
@@ -89,8 +89,7 @@ public class RhinoConfig {
     /**
      * Returns the property as integer.
      *
-     * <p>if the property is not set or not a valid integer value, <code>defaultValue</code> is
-     * returned.
+     * <p>if the property is not set or not a valid integer value, {@code defaultValue} is returned.
      */
     public static int get(String property, int defaultValue) {
         Object ret = INSTANCE.get(property);

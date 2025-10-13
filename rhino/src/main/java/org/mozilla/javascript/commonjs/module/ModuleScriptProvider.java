@@ -24,9 +24,9 @@ public interface ModuleScriptProvider {
      * @param cx current context. Can be used to compile module scripts.
      * @param moduleId the ID of the module. An implementation must only accept an absolute ID,
      *     starting with a term.
-     * @param moduleUri the URI of the module. If this is not null, resolution of <code>moduleId
-     *     </code> is bypassed and the script is directly loaded from <code>moduleUri</code>
-     * @param baseUri the module path base URI from which <code>moduleUri</code> was derived.
+     * @param moduleUri the URI of the module. If this is not null, resolution of {@code moduleId }
+     *     is bypassed and the script is directly loaded from {@code moduleUri}
+     * @param baseUri the module path base URI from which {@code moduleUri} was derived.
      * @param paths the value of the require() function's "paths" attribute. If the require()
      *     function is sandboxed, it will be null, otherwise it will be a JavaScript Array object.
      *     It is up to the provider implementation whether and how it wants to honor the contents of

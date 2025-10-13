@@ -111,7 +111,7 @@ public class ScriptRuntime {
          *
          * @param cx the current Context for this thread
          * @param scope the scope to use to resolve properties.
-         * @param thisObj the JavaScript <code>this</code> object
+         * @param thisObj the JavaScript {@code this} object
          * @param args the array of arguments
          * @return the result of the call
          */
@@ -4829,9 +4829,9 @@ public class ScriptRuntime {
     }
 
     /**
-     * Return <code>possibleDynamicScope</code> if <code>staticTopScope</code> is present on its
-     * prototype chain and return <code>staticTopScope</code> otherwise. Should only be called when
-     * <code>staticTopScope</code> is top scope.
+     * Return {@code possibleDynamicScope} if {@code staticTopScope} is present on its prototype
+     * chain and return {@code staticTopScope} otherwise. Should only be called when {@code
+     * staticTopScope} is top scope.
      */
     static Scriptable checkDynamicScope(
             Scriptable possibleDynamicScope, Scriptable staticTopScope) {
