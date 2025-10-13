@@ -60,4 +60,14 @@ public class BasicClassTypeInfo extends ClassTypeInfo {
     public boolean isObjectExact() {
         return asClass() == Object.class;
     }
+
+    /**
+     * not standard, made only because return type of {@link
+     * java.lang.reflect.Array#newInstance(Class, int)} is {@link Object} instead of something
+     * representing an array
+     */
+    @Override
+    public boolean shouldReplace() {
+        return asClass() == Object.class;
+    }
 }

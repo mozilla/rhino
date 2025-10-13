@@ -1,6 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
-    id 'com.gradleup.shadow' version '9.1.0'
+    id 'com.gradleup.shadow' version '9.2.2'
     id 'application'
 }
 
@@ -22,9 +22,6 @@ shadowJar {
     // Ensure that the "jar" from this step is the shadowed one that we want to 
     // publish in Maven.
     archiveClassifier.set('')
-    manifest {
-      inheritFrom(project.tasks.jar.manifest)
-    }
 }
 
 startScripts {

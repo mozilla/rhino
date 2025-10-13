@@ -27,17 +27,15 @@ public final class NativeCall extends IdScriptableObject {
     NativeCall() {}
 
     NativeCall(
-            NativeFunction function,
+            JSFunction function,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isArrow,
             boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject,
-            Scriptable homeObject) {
+            boolean requiresArgumentObject) {
         this.function = function;
-        this.homeObject = homeObject;
         this.isArrow = isArrow;
 
         setParentScope(scope);
@@ -92,8 +90,7 @@ public final class NativeCall extends IdScriptableObject {
                 if (!super.has(name, this)) {
                     if (function.getParamOrVarConst(i)) {
                         defineProperty(name, Undefined.instance, CONST);
-                    } else if (!(function instanceof InterpretedFunction)
-                            || ((InterpretedFunction) function).hasFunctionNamed(name)) {
+                    } else if (function.hasFunctionNamed(name)) {
                         defineProperty(name, Undefined.instance, PERMANENT);
                     }
                 }
@@ -150,17 +147,16 @@ public final class NativeCall extends IdScriptableObject {
     }
 
     public Scriptable getHomeObject() {
-        return homeObject;
+        return function.getHomeObject();
     }
 
     private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
 
-    NativeFunction function;
+    JSFunction function;
     Object[] originalArgs;
     boolean isStrict;
     private Arguments arguments;
     boolean isArrow;
-    private Scriptable homeObject;
 
     transient NativeCall parentActivationCall;
 }

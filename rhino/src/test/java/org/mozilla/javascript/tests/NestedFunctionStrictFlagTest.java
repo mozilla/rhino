@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeFunction;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -21,7 +21,7 @@ class NestedFunctionStrictFlagTest {
                     cx.initStandardObjects(topLevel);
 
                     Object res = cx.evaluateString(topLevel, script, "test", 1, null);
-                    NativeFunction function = assertInstanceOf(NativeFunction.class, res);
+                    JSFunction function = assertInstanceOf(JSFunction.class, res);
                     assertTrue(
                             function.isStrict(),
                             () ->
