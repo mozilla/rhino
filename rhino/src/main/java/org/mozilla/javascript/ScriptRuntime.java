@@ -232,6 +232,11 @@ public class ScriptRuntime {
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
+        // ES2025 Iterator constructor
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            NativeES2025Iterator.init(cx, scope, sealed);
+        }
+
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
