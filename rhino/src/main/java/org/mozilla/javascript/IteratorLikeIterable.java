@@ -6,7 +6,6 @@ package org.mozilla.javascript;
 
 import java.io.Closeable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -86,40 +85,91 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     public final class Itr implements Iterator<Object> {
         private final Context cx;
         private final Scriptable scope;
-        private final List<Object> values;
-        private int index = 0;
+        private final Callable nextMethod;
+        private Object nextVal;
+        private boolean isDone;
 
         private Itr(Context cx, Scriptable scope) {
             this.cx = cx;
             this.scope = scope;
 
-            // Use Context-safe IteratorOperations to collect all values
-            this.values = IteratorOperations.collectToList(cx, scope, iterator);
+            // Get next method - already validated in constructor
+            Object nextProp = ScriptableObject.getProperty(iterator, "next");
+            this.nextMethod = (Callable) nextProp;
         }
 
         @Override
         public boolean hasNext() {
-            return index < values.size();
+            if (isDone) {
+                return false;
+            }
+
+            Object iterResult;
+            try {
+                // Call next() to get the next value - this enables lazy iteration
+                // CRITICAL: Errors must propagate immediately per ECMAScript spec
+                iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+            } catch (Exception e) {
+                isDone = true;
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
+                throw new RuntimeException(e);
+            }
+
+            if (!(iterResult instanceof Scriptable)) {
+                isDone = true;
+                throw ScriptRuntime.typeErrorById(
+                        "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
+            }
+
+            Scriptable result = (Scriptable) iterResult;
+            Object done;
+            try {
+                done = ScriptableObject.getProperty(result, "done");
+            } catch (Exception e) {
+                isDone = true;
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
+                throw new RuntimeException(e);
+            }
+
+            if (ScriptRuntime.toBoolean(done)) {
+                isDone = true;
+                return false;
+            }
+
+            try {
+                nextVal = ScriptableObject.getProperty(result, "value");
+                nextVal = (nextVal == Scriptable.NOT_FOUND) ? Undefined.instance : nextVal;
+            } catch (Exception e) {
+                isDone = true;
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
+                throw new RuntimeException(e);
+            }
+
+            return true;
         }
 
         @Override
         public Object next() {
-            if (!hasNext()) {
+            if (isDone) {
                 throw new NoSuchElementException();
             }
-            return values.get(index++);
+            return nextVal;
         }
 
         /** Find out if iterator is exhausted. */
         public boolean isDone() {
-            return index >= values.size();
+            return isDone;
         }
 
         /** Set iterator to exhausted state for exception handling. */
         public void setDone(boolean done) {
-            if (done) {
-                index = values.size(); // Mark as exhausted
-            }
+            this.isDone = done;
         }
     }
 }
