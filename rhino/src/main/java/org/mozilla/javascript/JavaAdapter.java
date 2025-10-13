@@ -689,7 +689,7 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 4); // 4: this + factory + delegee + self
+        cfw.stopMethod(4); // 4: this + factory + delegee + self
     }
 
     private static void generateEmptyCtor(
@@ -741,7 +741,7 @@ public final class JavaAdapter implements IdFunctionCall {
         cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 2); // this + delegee
+        cfw.stopMethod(2); // this + delegee
     }
 
     /**

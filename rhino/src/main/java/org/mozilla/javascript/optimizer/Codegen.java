@@ -364,7 +364,7 @@ public class Codegen implements Evaluator {
         cfw.addALoad(6);
         cfw.addInvoke(ByteCode.INVOKESTATIC, mainClass, methodName, methodType);
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short) 7);
+        cfw.stopMethod(7);
         // 5: this, cx, js function, new.target, scope, js this, args[]
     }
 
@@ -383,7 +383,7 @@ public class Codegen implements Evaluator {
             cfw.addInvoke(ByteCode.INVOKESTATIC, mainClass, methodName, methodType);
         }
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short) 7);
+        cfw.stopMethod(7);
         // 5: this, cx, js function, new.target, scope, js this, args[]
     }
 
@@ -638,7 +638,7 @@ public class Codegen implements Evaluator {
         cfw.addPush(1);
         cfw.add(ByteCode.PUTSTATIC, mainClassName, "_reInitDone", "Z");
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 2);
+        cfw.stopMethod(2);
     }
 
     /**
@@ -716,7 +716,7 @@ public class Codegen implements Evaluator {
         cfw.addPush(true);
         cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 0);
+        cfw.stopMethod(0);
     }
 
     private void emitConstantDudeInitializers(ClassFileWriter cfw) {
@@ -747,7 +747,7 @@ public class Codegen implements Evaluator {
         }
 
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 0);
+        cfw.stopMethod(0);
     }
 
     void pushNumberAsObject(ClassFileWriter cfw, double num) {
