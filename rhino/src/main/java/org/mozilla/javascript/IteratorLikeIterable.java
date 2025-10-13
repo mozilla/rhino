@@ -18,48 +18,40 @@ import java.util.NoSuchElementException;
  * "next" * The function must return an object with a boolean value called "done". * If "done" is
  * true, then the returned object should also contain a "value" property. * If it has a function
  * property called "return" then it will be called when the caller is done iterating.
- *
- * <p><strong>Note:</strong> This class now uses IteratorOperations internally for Context safety.
  */
 public class IteratorLikeIterable implements Iterable<Object>, Closeable {
-    private final Scriptable iterator;
+    private final Context cx;
+    private final Scriptable scope;
+    private final Callable next;
     private final Callable returnFunc;
+    private final Scriptable iterator;
     private boolean closed;
 
     public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
-        // Validate target has iterator interface - delegate to IteratorOperations
-        if (!(target instanceof Scriptable)) {
-            throw ScriptRuntime.typeErrorById("msg.not.iterable", target);
+        this.cx = cx;
+        this.scope = scope;
+        // This will throw if "next" is not a function or undefined
+        var nextCall = ScriptRuntime.getPropAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
+        next = nextCall.getCallable();
+        iterator = nextCall.getThis();
+        Object retObj =
+                ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
+        // We only care about "return" if it is not null or undefined
+        if ((retObj != null) && !Undefined.isUndefined(retObj)) {
+            if (!(retObj instanceof Callable)) {
+                throw ScriptRuntime.notFunctionError(target, retObj, ES6Iterator.RETURN_PROPERTY);
+            }
+            returnFunc = (Callable) retObj;
+        } else {
+            returnFunc = null;
         }
-        this.iterator = (Scriptable) target;
-
-        // Validate iterator has 'next' method
-        Object nextProp = ScriptableObject.getProperty(iterator, "next");
-        if (!(nextProp instanceof Callable)) {
-            throw ScriptRuntime.typeErrorById("msg.not.iterable", iterator);
-        }
-
-        // Get return method for cleanup
-        Object returnProp = ScriptableObject.getProperty(iterator, "return");
-        this.returnFunc = (returnProp instanceof Callable) ? (Callable) returnProp : null;
     }
 
     @Override
     public void close() {
-        // Default close - requires Context to be passed for cleanup
-        close(Context.getCurrentContext(), iterator.getParentScope());
-    }
-
-    /**
-     * Close with explicit Context and scope (Context-safe version).
-     *
-     * @param cx fresh Context for cleanup
-     * @param scope scope for cleanup
-     */
-    public void close(Context cx, Scriptable scope) {
         if (!closed) {
             closed = true;
-            if (returnFunc != null && cx != null) {
+            if (returnFunc != null) {
                 returnFunc.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             }
         }
@@ -67,96 +59,33 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 
     @Override
     public Itr iterator() {
-        // Default iterator uses current Context (not ideal but compatible)
-        return new Itr(Context.getCurrentContext(), iterator.getParentScope());
-    }
-
-    /**
-     * Create iterator with explicit Context and scope (Context-safe version).
-     *
-     * @param cx fresh Context for iteration
-     * @param scope scope for iteration
-     * @return new iterator instance
-     */
-    public Itr iterator(Context cx, Scriptable scope) {
-        return new Itr(cx, scope);
+        return new Itr();
     }
 
     public final class Itr implements Iterator<Object> {
-        // NOTE: Context capture here is unavoidable due to Java's Iterator interface.
-        // This is acceptable because:
-        // 1. Context is captured at iterator creation, not at IteratorLikeIterable creation
-        // 2. Iterator lifetime is short (single iteration sequence)
-        // 3. Java Iterator.hasNext()/next() cannot accept Context parameters
-        // For Context-safe iteration without this limitation, use IteratorOperations directly.
-        private final Context cx;
-        private final Scriptable scope;
-        private final Callable nextMethod;
         private Object nextVal;
         private boolean isDone;
-
-        private Itr(Context cx, Scriptable scope) {
-            this.cx = cx;
-            this.scope = scope;
-
-            // Get next method - already validated in constructor
-            Object nextProp = ScriptableObject.getProperty(iterator, "next");
-            this.nextMethod = (Callable) nextProp;
-        }
 
         @Override
         public boolean hasNext() {
             if (isDone) {
                 return false;
             }
-
-            Object iterResult;
-            try {
-                // Call next() to get the next value - this enables lazy iteration
-                // CRITICAL: Errors must propagate immediately per ECMAScript spec
-                iterResult = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
-            } catch (Exception e) {
-                isDone = true;
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                throw new RuntimeException(e);
+            Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+            // This will throw if "val" is not an object.
+            // "getObjectPropNoWarn" won't, so do this as follows.
+            Object doneval =
+                    ScriptableObject.getProperty(
+                            ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
+            if (doneval == Scriptable.NOT_FOUND) {
+                doneval = Undefined.instance;
             }
-
-            if (!(iterResult instanceof Scriptable)) {
-                isDone = true;
-                throw ScriptRuntime.typeErrorById(
-                        "msg.arg.not.object", ScriptRuntime.typeof(iterResult));
-            }
-
-            Scriptable result = (Scriptable) iterResult;
-            Object done;
-            try {
-                done = ScriptableObject.getProperty(result, "done");
-            } catch (Exception e) {
-                isDone = true;
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                throw new RuntimeException(e);
-            }
-
-            if (ScriptRuntime.toBoolean(done)) {
+            // It's OK if done is undefined.
+            if (ScriptRuntime.toBoolean(doneval)) {
                 isDone = true;
                 return false;
             }
-
-            try {
-                nextVal = ScriptableObject.getProperty(result, "value");
-                nextVal = (nextVal == Scriptable.NOT_FOUND) ? Undefined.instance : nextVal;
-            } catch (Exception e) {
-                isDone = true;
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                throw new RuntimeException(e);
-            }
-
+            nextVal = ScriptRuntime.getObjectPropNoWarn(val, ES6Iterator.VALUE_PROPERTY, cx, scope);
             return true;
         }
 
@@ -168,12 +97,12 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
             return nextVal;
         }
 
-        /** Find out if iterator is exhausted. */
+        /** Find out if "hasNext" returned done without invoking the function again. */
         public boolean isDone() {
             return isDone;
         }
 
-        /** Set iterator to exhausted state for exception handling. */
+        /** Manually set "done." Used for exception handling in promises. */
         public void setDone(boolean done) {
             this.isDone = done;
         }
