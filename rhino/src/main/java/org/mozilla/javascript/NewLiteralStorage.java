@@ -145,8 +145,7 @@ public abstract class NewLiteralStorage {
         @Override
         protected void attemptToInferFunctionName(Object value) {
             // Try to infer the name if the value is a normal JS function
-            if (this.keys == null
-                    || (!(value instanceof NativeFunction) && !(value instanceof ArrowFunction))) {
+            if (this.keys == null || !(value instanceof JSFunction)) {
                 return;
             }
 
@@ -180,7 +179,7 @@ public abstract class NewLiteralStorage {
                     // `__proto__` is, as usual, weird and applies only to methods, meaning:
                     // - { __proto__(){} } infers the name
                     // - { __proto__: function(){} } does not!
-                    if (fun instanceof NativeFunction && ((NativeFunction) fun).isShorthand()) {
+                    if (fun instanceof JSFunction && ((JSFunction) fun).isShorthand()) {
                         fun.setFunctionName(prefix + propKey);
                     }
                 }

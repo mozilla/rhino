@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.Symbol.Kind.BUILT_IN;
+
 import java.io.Serializable;
 
 /**
@@ -12,25 +14,33 @@ public class SymbolKey implements Symbol, Serializable {
 
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.
-    public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator");
-    public static final SymbolKey TO_STRING_TAG = new SymbolKey("Symbol.toStringTag");
-    public static final SymbolKey SPECIES = new SymbolKey("Symbol.species");
-    public static final SymbolKey HAS_INSTANCE = new SymbolKey("Symbol.hasInstance");
-    public static final SymbolKey IS_CONCAT_SPREADABLE = new SymbolKey("Symbol.isConcatSpreadable");
-    public static final SymbolKey IS_REGEXP = new SymbolKey("Symbol.isRegExp");
-    public static final SymbolKey TO_PRIMITIVE = new SymbolKey("Symbol.toPrimitive");
-    public static final SymbolKey MATCH = new SymbolKey("Symbol.match");
-    public static final SymbolKey MATCH_ALL = new SymbolKey("Symbol.matchAll");
-    public static final SymbolKey REPLACE = new SymbolKey("Symbol.replace");
-    public static final SymbolKey SEARCH = new SymbolKey("Symbol.search");
-    public static final SymbolKey SPLIT = new SymbolKey("Symbol.split");
-    public static final SymbolKey UNSCOPABLES = new SymbolKey("Symbol.unscopables");
+    public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator", BUILT_IN);
+    public static final SymbolKey TO_STRING_TAG = new SymbolKey("Symbol.toStringTag", BUILT_IN);
+    public static final SymbolKey SPECIES = new SymbolKey("Symbol.species", BUILT_IN);
+    public static final SymbolKey HAS_INSTANCE = new SymbolKey("Symbol.hasInstance", BUILT_IN);
+    public static final SymbolKey IS_CONCAT_SPREADABLE =
+            new SymbolKey("Symbol.isConcatSpreadable", BUILT_IN);
+    public static final SymbolKey IS_REGEXP = new SymbolKey("Symbol.isRegExp", BUILT_IN);
+    public static final SymbolKey TO_PRIMITIVE = new SymbolKey("Symbol.toPrimitive", BUILT_IN);
+    public static final SymbolKey MATCH = new SymbolKey("Symbol.match", BUILT_IN);
+    public static final SymbolKey MATCH_ALL = new SymbolKey("Symbol.matchAll", BUILT_IN);
+    public static final SymbolKey REPLACE = new SymbolKey("Symbol.replace", BUILT_IN);
+    public static final SymbolKey SEARCH = new SymbolKey("Symbol.search", BUILT_IN);
+    public static final SymbolKey SPLIT = new SymbolKey("Symbol.split", BUILT_IN);
+    public static final SymbolKey UNSCOPABLES = new SymbolKey("Symbol.unscopables", BUILT_IN);
 
     // If passed a javascript undefined, this will be a (java) null
     private final String name;
+    private final Symbol.Kind kind;
 
-    public SymbolKey(String name) {
+    public SymbolKey(String name, Symbol.Kind kind) {
         this.name = name;
+        this.kind = kind;
+    }
+
+    @Override
+    public Kind getKind() {
+        return kind;
     }
 
     /** {@inheritDoc} */

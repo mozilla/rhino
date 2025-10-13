@@ -20,10 +20,6 @@ public abstract class NativeFunction extends BaseFunction {
 
     private boolean isShorthand;
 
-    public final void initScriptFunction(Context cx, Scriptable scope) {
-        initScriptFunction(cx, scope, isGeneratorFunction(), isShorthand());
-    }
-
     public final void initScriptFunction(
             Context cx, Scriptable scope, boolean es6GeneratorFunction, boolean isShorthand) {
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, es6GeneratorFunction);
@@ -38,7 +34,7 @@ public abstract class NativeFunction extends BaseFunction {
      * @param flags Flags specifying format of decompilation output
      */
     @Override
-    final String decompile(int indent, EnumSet<DecompilerFlag> flags) {
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         String rawSource = getRawSource();
         if (rawSource != null) {
             return rawSource;

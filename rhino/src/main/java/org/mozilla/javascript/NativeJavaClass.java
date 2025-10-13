@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
+import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * This class reflects Java classes into the JavaScript environment, mainly for constructors and
@@ -34,7 +35,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter) {
-        super(scope, cl, null, isAdapter);
+        super(scope, cl, TypeInfo.NONE, isAdapter);
     }
 
     @Override
@@ -76,7 +77,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         WrapFactory wrapFactory = cx.getWrapFactory();
 
         if (javaClassPropertyName.equals(name)) {
-            return wrapFactory.wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
+            return wrapFactory.wrap(cx, scope, javaObject, TypeInfo.RAW_CLASS);
         }
 
         // experimental:  look for nested classes by appending $name to
@@ -160,7 +161,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
                 Object obj =
                         createInterfaceAdapter(
                                 classObject, ScriptableObject.ensureScriptableObject(args[0]));
-                return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+                return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
             }
             // use JavaAdapter to construct a new class on the fly that
             // implements/extends this interface/abstract class.
@@ -188,7 +189,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     static Object constructInternal(Object[] args, MemberBox ctor) {
-        args = ctor.wrapArgsInternal(args);
+        args = ctor.wrapArgsInternal(args, Map.of());
 
         return ctor.newInstance(args);
     }
