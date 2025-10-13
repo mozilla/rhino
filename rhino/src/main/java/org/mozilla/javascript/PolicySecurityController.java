@@ -161,7 +161,7 @@ public class PolicySecurityController extends SecurityController {
         cfw.addALoad(0);
         cfw.addInvoke(ByteCode.INVOKESPECIAL, secureCallerClassName, "<init>", "()V");
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short) 1);
+        cfw.stopMethod(1);
         String callableCallSig =
                 "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
@@ -181,7 +181,7 @@ public class PolicySecurityController extends SecurityController {
                 "call",
                 "(" + callableCallSig);
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short) 6);
+        cfw.stopMethod(6);
         return cfw.toByteArray();
     }
 }

@@ -185,7 +185,7 @@ class BodyCodegen {
         newTargetLocal = 2;
         variableObjectLocal = 3;
         thisObjLocal = 4;
-        localsMax = (short) 5; // number of parms + "this"
+        localsMax = 5; // number of parms + "this"
         firstFreeLocal = 5;
 
         popvLocal = -1;
@@ -540,7 +540,7 @@ class BodyCodegen {
                     if (e.getKey().getType() == Token.FINALLY) {
                         FinallyReturnPoint ret = e.getValue();
                         // the finally will jump here
-                        cfw.markLabel(ret.tableLabel, (short) 1);
+                        cfw.markLabel(ret.tableLabel, 1);
 
                         // start generating a dispatch table
                         int startSwitch = cfw.addTableSwitch(0, ret.jsrPoints.size() - 1);
@@ -2948,7 +2948,7 @@ class BodyCodegen {
          * javascript catch and finally clauses.  */
 
         int startLabel = cfw.acquireLabel();
-        cfw.markLabel(startLabel, (short) 0);
+        cfw.markLabel(startLabel, 0);
 
         Node catchTarget = node.target;
         Node finallyTarget = node.getFinally();
