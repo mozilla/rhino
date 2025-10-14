@@ -7,6 +7,7 @@ package org.mozilla.javascript.commonjs.module.provider;
 import java.io.Reader;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Objects;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.commonjs.module.ModuleScript;
@@ -168,7 +169,7 @@ public abstract class CachingModuleScriptProviderBase
     }
 
     private static boolean equal(Object o1, Object o2) {
-        return o1 == null ? o2 == null : o1.equals(o2);
+        return Objects.equals(o1, o2);
     }
 
     /**

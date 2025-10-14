@@ -59,11 +59,7 @@ public abstract class SecureCaller {
                                 });
         Map<ClassLoader, SoftReference<SecureCaller>> classLoaderMap;
         synchronized (callers) {
-            classLoaderMap = callers.get(codeSource);
-            if (classLoaderMap == null) {
-                classLoaderMap = new WeakHashMap<>();
-                callers.put(codeSource, classLoaderMap);
-            }
+            classLoaderMap = callers.computeIfAbsent(codeSource, k -> new WeakHashMap<>());
         }
         SecureCaller caller;
         synchronized (classLoaderMap) {

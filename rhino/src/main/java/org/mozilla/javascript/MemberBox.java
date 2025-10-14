@@ -425,8 +425,7 @@ final class MemberBox implements Serializable {
                     if (Modifier.isPublic(intf.getModifiers())) {
                         try {
                             return intf.getMethod(name, params);
-                        } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {
+                        } catch (NoSuchMethodException | SecurityException ex) {
                         }
                     }
                 }
@@ -442,8 +441,7 @@ final class MemberBox implements Serializable {
                             if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
                                 return m;
                             }
-                        } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {
+                        } catch (NoSuchMethodException | SecurityException ex) {
                         }
                     }
                 }

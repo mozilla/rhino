@@ -5994,7 +5994,7 @@ public class ScriptRuntime {
     static boolean isGeneratedScript(String sourceUrl) {
         // ALERT: this may clash with a valid URL containing (eval) or
         // (Function)
-        return sourceUrl.indexOf("(eval)") >= 0 || sourceUrl.indexOf("(Function)") >= 0;
+        return sourceUrl.contains("(eval)") || sourceUrl.contains("(Function)");
     }
 
     /**

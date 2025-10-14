@@ -8,6 +8,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Objects;
+
 public class IdFunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
 
@@ -42,7 +44,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     public final boolean hasTag(Object tag) {
-        return tag == null ? this.tag == null : tag.equals(this.tag);
+        return Objects.equals(tag, this.tag);
     }
 
     public Object getTag() {
