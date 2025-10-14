@@ -120,10 +120,7 @@ public class InterfaceAdapter {
             proxy = c.newInstance(handler);
         } catch (InvocationTargetException ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
-        } catch (IllegalAccessException ex) {
-            // Should not happen
-            throw new IllegalStateException(ex);
-        } catch (InstantiationException ex) {
+        } catch (IllegalAccessException | InstantiationException ex) {
             // Should not happen
             throw new IllegalStateException(ex);
         }

@@ -40,7 +40,7 @@ public class JavaToJSONConverters {
     public static final UnaryOperator<Object> UNDEFINED = o -> Undefined.instance;
 
     /** Always return an empty object */
-    public static final UnaryOperator<Object> EMPTY_OBJECT = o -> Collections.EMPTY_MAP;
+    public static final UnaryOperator<Object> EMPTY_OBJECT = o -> Collections.emptyMap();
 
     /** Throw a TypeError naming the class that could not be converted */
     public static final UnaryOperator<Object> THROW_TYPE_ERROR =
