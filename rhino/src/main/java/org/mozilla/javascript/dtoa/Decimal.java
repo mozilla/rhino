@@ -34,6 +34,11 @@ public class Decimal {
     private int length;
     private final char[] buf = new char[MAX_CHARS];
 
+    enum Mode {
+        DEFAULT,
+        TO_EXPONENTIAL
+    };
+
     Decimal(long d, int e, boolean n) {
         this.digits = d;
         this.exponent = e;
@@ -46,6 +51,10 @@ public class Decimal {
      */
     @Override
     public String toString() {
+        return toString(Mode.DEFAULT);
+    }
+
+    String toString(Mode mode) {
         length = 0;
 
         /*
@@ -101,17 +110,19 @@ public class Decimal {
             append('-');
         }
 
-        if (0 < e && e <= 8) {
-            return toFixed(h, m, l, e);
-        }
-        if (8 < e && e <= 16) {
-            return toFixedBigger(h, m, l, e);
-        }
-        if (16 < e && e <= 21) {
-            return toFixedBiggest(h, m, l, e);
-        }
-        if (-6 < e && e <= 0) {
-            return toFixedSmall(h, m, l, e);
+        if (mode == Mode.DEFAULT) {
+            if (0 < e && e <= 8) {
+                return toFixed(h, m, l, e);
+            }
+            if (8 < e && e <= 16) {
+                return toFixedBigger(h, m, l, e);
+            }
+            if (16 < e && e <= 21) {
+                return toFixedBiggest(h, m, l, e);
+            }
+            if (-6 < e && e <= 0) {
+                return toFixedSmall(h, m, l, e);
+            }
         }
         return toExponential(h, m, l, e);
     }
