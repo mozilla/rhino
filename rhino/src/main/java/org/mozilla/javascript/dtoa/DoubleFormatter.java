@@ -82,6 +82,29 @@ public class DoubleFormatter {
      * can handle any number including non-finite numbers.
      */
     public static String toString(double v) {
+        long bits = Double.doubleToRawLongBits(v);
+        long t = bits & T_MASK;
+        int bq = (int) (bits >>> (P - 1)) & BQ_MASK;
+        if (bq < BQ_MASK) {
+            if (bq == 0 && t == 0) {
+                return "0";
+            }
+            return toDecimalImpl(bits, t, bq).toString();
+        }
+        if (t != 0) {
+            return "NaN";
+        }
+        return bits > 0 ? "Infinity" : "-Infinity";
+    }
+
+    public static Decimal toDecimal(double v) {
+        long bits = Double.doubleToRawLongBits(v);
+        long t = bits & T_MASK;
+        int bq = (int) (bits >>> (P - 1)) & BQ_MASK;
+        return toDecimalImpl(bits, t, bq);
+    }
+
+    private static Decimal toDecimalImpl(long bits, long t, int bq) {
         /*
         For full details see references [2] and [1].
 
@@ -91,42 +114,35 @@ public class DoubleFormatter {
                 either    2^(P-1) <= c < 2^P                 (normal)
                 or        0 < c < 2^(P-1)  and  q = Q_MIN    (subnormal)
          */
-        long bits = Double.doubleToRawLongBits(v);
-        long t = bits & T_MASK;
-        int bq = (int) (bits >>> (P - 1)) & BQ_MASK;
+        // Only finite numbers are supported
+        assert bq < BQ_MASK;
         boolean negative = false;
-        if (bq < BQ_MASK) {
-            if (bits < 0) {
-                negative = true;
-            }
-            if (bq != 0) {
-                // normal value. Here mq = -q
-                int mq = -Q_MIN + 1 - bq;
-                long c = C_MIN | t;
-                // The fast path discussed in section 8.2 of [1].
-                if (0 < mq && mq < P) {
-                    long f = c >> mq;
-                    if (f << mq == c) {
-                        return new Decimal(f, 0, negative).toString();
-                    }
+        if (bits < 0) {
+            negative = true;
+        }
+        if (bq != 0) {
+            // normal value. Here mq = -q
+            int mq = -Q_MIN + 1 - bq;
+            long c = C_MIN | t;
+            // The fast path discussed in section 8.2 of [1].
+            if (0 < mq && mq < P) {
+                long f = c >> mq;
+                if (f << mq == c) {
+                    return new Decimal(f, 0, negative);
                 }
-                return toDecimalImpl(-mq, c, 0, negative).toString();
             }
-            if (t != 0) {
-                // subnormal value
-                return t < C_TINY
-                        ? toDecimalImpl(Q_MIN, 10 * t, -1, negative).toString()
-                        : toDecimalImpl(Q_MIN, t, 0, negative).toString();
-            }
-            return "0";
+            return toDecimalFull(-mq, c, 0, negative);
         }
         if (t != 0) {
-            return "NaN";
+            // subnormal value
+            return t < C_TINY
+                    ? toDecimalFull(Q_MIN, 10 * t, -1, negative)
+                    : toDecimalFull(Q_MIN, t, 0, negative);
         }
-        return bits > 0 ? "Infinity" : "-Infinity";
+        return new Decimal(0, 1, false);
     }
 
-    private static Decimal toDecimalImpl(int q, long c, int dk, boolean negative) {
+    private static Decimal toDecimalFull(int q, long c, int dk, boolean negative) {
         /*
         The skeleton corresponds to figure 4 of [1].
         The efficient computations are those summarized in figure 7.
