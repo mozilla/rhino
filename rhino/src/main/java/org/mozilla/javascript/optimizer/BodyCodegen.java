@@ -82,7 +82,7 @@ class BodyCodegen {
         }
     }
 
-    // This creates a the user-facing function that returns a NativeGenerator
+    // This creates a user-facing function that returns a NativeGenerator
     // object.
     private void generateGenerator() {
         cfw.startMethod(
@@ -3382,8 +3382,8 @@ class BodyCodegen {
     /**
      * Get a FINALLY node at a point in the IR.
      *
-     * <p>This is strongly dependent on the generated IR. If the node is a TARGET, it only check the
-     * next node to see if it is a FINALLY node.
+     * <p>This is strongly dependent on the generated IR. If the node is a TARGET, it only checks
+     * the next node to see if it is a FINALLY node.
      */
     private static Node getFinallyAtTarget(Node node) {
         if (node == null) {

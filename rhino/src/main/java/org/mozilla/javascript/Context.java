@@ -364,7 +364,7 @@ public class Context implements Closeable {
      *
      * <p>WARNING: This feature is similar to the one in Nashorn, but incomplete.
      *
-     * <p>1. A entry has priority over method.
+     * <p>1. An entry has priority over method.
      *
      * <p>map.put("put", "abc"); map.put; // abc map.put("put", "efg"); // ERROR
      *
@@ -2768,7 +2768,7 @@ public class Context implements Closeable {
      * objects.
      *
      * @param name the name of the object to test
-     * @return true if an function activation object is needed.
+     * @return true if a function activation object is needed.
      */
     public final boolean isActivationNeeded(String name) {
         return activationNames != null && activationNames.contains(name);

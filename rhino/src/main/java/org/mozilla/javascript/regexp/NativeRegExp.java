@@ -2502,7 +2502,7 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /*
-     *   Initialize the character set if it this is the first call.
+     *   Initialize the character set if it is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
