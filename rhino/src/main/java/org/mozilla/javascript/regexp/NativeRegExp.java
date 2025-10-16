@@ -1457,7 +1457,6 @@ public class NativeRegExp extends IdScriptableObject {
                 if (!parseLegacyOctalEscapeSequence(state)) {
                     throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
                 }
-                ;
                 break;
             /* Control escape */
             case 'f':
@@ -4169,7 +4168,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
 
             if (position >= nextSourcePosition) {
-                accumulatedResult.append(s.substring(nextSourcePosition, position));
+                accumulatedResult.append(s, nextSourcePosition, position);
                 accumulatedResult.append(replacementString);
                 nextSourcePosition = position + matchLength;
             }

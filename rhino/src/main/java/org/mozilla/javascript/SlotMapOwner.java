@@ -121,7 +121,6 @@ public abstract class SlotMapOwner {
                 if (currentMap != this) {
                     currentMap.add(owner, newSlot);
                 }
-                return;
             }
         }
 
