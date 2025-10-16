@@ -27,7 +27,7 @@ public class RhinoConfig {
     /**
      * Returns the property as string.
      *
-     * <p>If the value is not set, {@code defaultVaule} is returned.
+     * <p>If the value is not set, {@code defaultValue} is returned.
      */
     private static String get(String property, String defaultValue) {
         Object ret = INSTANCE.get(property);
