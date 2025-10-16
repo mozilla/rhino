@@ -784,6 +784,15 @@ public class NativeRegExp extends IdScriptableObject {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || isDigit(c) || c == '_';
     }
 
+    private static boolean isWord(int codePoint, boolean isCaseInsensitiveUnicode) {
+        if (isCaseInsensitiveUnicode) { // For Unicode case-insensitive, do case folding first
+            int folded = unicodeCaseFold(codePoint);
+            return folded <= Character.MAX_VALUE && isWord((char) folded);
+        } else {
+            return codePoint <= 0xFFFF && isWord((char) codePoint);
+        }
+    }
+
     private static boolean isControlLetter(char c) {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
     }
@@ -2471,6 +2480,8 @@ public class NativeRegExp extends IdScriptableObject {
         int byteLength;
         int i;
         ClassContents classContents = charSet.classContents;
+        boolean isCaseInsensitiveUnicode =
+                (gData.regexp.flags & JSREG_FOLD) != 0 && (gData.regexp.flags & JSREG_UNICODE) != 0;
 
         byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
@@ -2519,12 +2530,21 @@ public class NativeRegExp extends IdScriptableObject {
                         if (!isREWhiteSpace(i)) addCharacterToCharSet(charSet, (char) i);
                     break;
                 case REOP_ALNUM:
-                    for (i = (charSet.length - 1); i >= 0; i--)
-                        if (isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
+                    for (i = (charSet.length - 1); i >= 0; i--) {
+                        if (isWord(i, isCaseInsensitiveUnicode)) {
+                            addCharacterToCharSet(charSet, (char) i);
+                        }
+                    }
                     break;
                 case REOP_NONALNUM:
-                    for (i = (charSet.length - 1); i >= 0; i--)
-                        if (!isWord((char) i)) addCharacterToCharSet(charSet, (char) i);
+                    boolean unicodeCaseInsensitiveNonAlnum =
+                            (gData.regexp.flags & JSREG_UNICODE) != 0
+                                    && (gData.regexp.flags & JSREG_FOLD) != 0;
+                    for (i = (charSet.length - 1); i >= 0; i--) {
+                        if (!isWord(i, unicodeCaseInsensitiveNonAlnum)) {
+                            addCharacterToCharSet(charSet, (char) i);
+                        }
+                    }
                     break;
                 case REOP_UPROP:
                     charSet.unicodeProps.add(escape.unicodeProperty);
@@ -2603,6 +2623,9 @@ public class NativeRegExp extends IdScriptableObject {
         int cpDelta;
         final int cpToMatch;
         final boolean cpInBounds;
+        final boolean isCaseInsensitiveUnicode =
+                (gData.regexp.flags & JSREG_FOLD) != 0 && (gData.regexp.flags & JSREG_UNICODE) != 0;
+        boolean prevIsWord, currIsWord;
 
         if ((gData.regexp.flags & JSREG_UNICODE) != 0 && gData.cp < end) {
             if (matchBackward) {
@@ -2649,14 +2672,28 @@ public class NativeRegExp extends IdScriptableObject {
                 result = true;
                 break;
             case REOP_WBDRY:
-                result =
-                        ((gData.cp == 0 || !isWord(input.charAt(gData.cp - 1)))
-                                ^ !((gData.cp < end) && isWord(input.charAt(gData.cp))));
+                // Note: for non-unicode regexps, doing input.codePointAt(gData.cp) is not the
+                // right thing to do, but since we use it to call isWord, which in the non-unicode
+                // matches only ASCII, it is safe to do so.
+                prevIsWord =
+                        gData.cp != 0
+                                && isWord(
+                                        input.codePointBefore(gData.cp), isCaseInsensitiveUnicode);
+                currIsWord =
+                        gData.cp < end
+                                && isWord(input.codePointAt(gData.cp), isCaseInsensitiveUnicode);
+                result = prevIsWord ^ currIsWord;
                 break;
             case REOP_WNONBDRY:
-                result =
-                        ((gData.cp == 0 || !isWord(input.charAt(gData.cp - 1)))
-                                ^ ((gData.cp < end) && isWord(input.charAt(gData.cp))));
+                // Note: See comment about input.codePointAt in the REOP_WBDRY case
+                prevIsWord =
+                        gData.cp != 0
+                                && isWord(
+                                        input.codePointBefore(gData.cp), isCaseInsensitiveUnicode);
+                currIsWord =
+                        gData.cp < end
+                                && isWord(input.codePointAt(gData.cp), isCaseInsensitiveUnicode);
+                result = prevIsWord == currIsWord;
                 break;
             case REOP_DOT:
                 if (cpInBounds
@@ -2679,15 +2716,25 @@ public class NativeRegExp extends IdScriptableObject {
                 }
                 break;
             case REOP_ALNUM:
-                if (cpInBounds && isWord(input.charAt(cpToMatch))) {
-                    result = true;
-                    gData.cp += cpDelta;
+                // Note: See comment about input.codePointAt in the REOP_WBDRY case
+                if (cpInBounds) {
+                    boolean isWordChar =
+                            isWord(input.codePointAt(cpToMatch), isCaseInsensitiveUnicode);
+                    if (isWordChar) {
+                        result = true;
+                        gData.cp += cpDelta;
+                    }
                 }
                 break;
             case REOP_NONALNUM:
-                if (cpInBounds && !isWord(input.charAt(cpToMatch))) {
-                    result = true;
-                    gData.cp += cpDelta;
+                // Note: See comment about input.codePointAt in the REOP_WBDRY case
+                if (cpInBounds) {
+                    boolean isWordChar =
+                            isWord(input.codePointAt(cpToMatch), isCaseInsensitiveUnicode);
+                    if (!isWordChar) {
+                        result = true;
+                        gData.cp += cpDelta;
+                    }
                 }
                 break;
             case REOP_SPACE:

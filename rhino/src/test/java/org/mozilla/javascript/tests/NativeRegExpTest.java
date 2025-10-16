@@ -1241,4 +1241,12 @@ public class NativeRegExpTest {
                         + "/[a\\nb]*$/s.exec('a\\nb')[0]"
                         + "].join('-')");
     }
+
+    @Test
+    public void testUnicodeCaseInsensitiveWordCharacter() {
+        Utils.assertWithAllModes_ES6(
+                "Zanabazar Square",
+                "Kİ",
+                "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
+    }
 }
