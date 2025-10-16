@@ -480,8 +480,7 @@ public class NativeSet extends ScriptableObject {
                     if (key instanceof Number
                             && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
                         result.js_delete(ScriptRuntime.zeroObj);
-                    }
-                    else {
+                    } else {
                         result.js_delete(key);
                     }
                 }
