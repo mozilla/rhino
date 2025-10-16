@@ -39,41 +39,10 @@ public class NativeWeakMap extends ScriptableObject {
                         NativeWeakMap::jsConstructor);
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
-        constructor.definePrototypeMethod(
-                scope,
-                "set",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "set")
-                                .js_set(
-                                        NativeMap.key(args),
-                                        args.length > 1 ? args[1] : Undefined.instance),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "delete",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "delete").js_delete(NativeMap.key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "get",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "get").js_get(NativeMap.key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "has",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj, "has").js_has(NativeMap.key(args)),
-                DONTENUM,
-                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "set", 2, NativeWeakMap::js_set);
+        constructor.definePrototypeMethod(scope, "delete", 1, NativeWeakMap::js_delete);
+        constructor.definePrototypeMethod(scope, "get", 1, NativeWeakMap::js_get);
+        constructor.definePrototypeMethod(scope, "has", 1, NativeWeakMap::js_has);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
@@ -100,11 +69,20 @@ public class NativeWeakMap extends ScriptableObject {
         return nm;
     }
 
+    private static Object js_delete(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "delete").js_delete(NativeMap.key(args));
+    }
+
     private Object js_delete(Object key) {
         if (!isValidKey(key)) {
             return Boolean.FALSE;
         }
         return map.remove(key) != null;
+    }
+
+    private static Object js_get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "get").js_get(NativeMap.key(args));
     }
 
     private Object js_get(Object key) {
@@ -120,11 +98,20 @@ public class NativeWeakMap extends ScriptableObject {
         return result;
     }
 
+    private static Object js_has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "has").js_has(NativeMap.key(args));
+    }
+
     private Object js_has(Object key) {
         if (!isValidKey(key)) {
             return Boolean.FALSE;
         }
         return map.containsKey(key);
+    }
+
+    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return realThis(thisObj, "set")
+                .js_set(NativeMap.key(args), args.length > 1 ? args[1] : Undefined.instance);
     }
 
     private Object js_set(Object key, Object v) {

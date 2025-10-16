@@ -1407,7 +1407,29 @@ public abstract class ScriptableObject extends SlotMapOwner
             SerializableCallable target,
             int attributes,
             int propertyAttributes) {
-        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        LambdaFunction f = new LambdaFunction(scope, name, length, target, true);
+        f.setStandardPropertyAttributes(propertyAttributes);
+        defineProperty(name, f, attributes);
+    }
+
+    public void defineProperty(
+            Scriptable scope, String name, int length, SerializableCallable target) {
+        defineProperty(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    public void defineBuiltinProperty(
+            Scriptable scope, String name, int length, SerializableCallable target) {
+        defineBuiltinProperty(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    }
+
+    public void defineBuiltinProperty(
+            Scriptable scope,
+            String name,
+            int length,
+            SerializableCallable target,
+            int attributes,
+            int propertyAttributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target, false);
         f.setStandardPropertyAttributes(propertyAttributes);
         defineProperty(name, f, attributes);
     }

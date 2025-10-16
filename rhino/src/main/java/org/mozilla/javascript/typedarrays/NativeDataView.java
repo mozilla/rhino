@@ -49,10 +49,7 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         constructor.definePrototypeProperty(
-                cx,
-                "buffer",
-                (Scriptable thisObj) -> realThis(thisObj).arrayBuffer,
-                DONTENUM | READONLY);
+                cx, "buffer", (Scriptable thisObj) -> realThis(thisObj).arrayBuffer);
         constructor.definePrototypeProperty(
                 cx,
                 "byteLength",
@@ -62,8 +59,7 @@ public class NativeDataView extends NativeArrayBufferView {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
                     }
                     return self.byteLength;
-                },
-                DONTENUM | READONLY);
+                });
         constructor.definePrototypeProperty(
                 cx,
                 "byteOffset",
@@ -73,155 +69,26 @@ public class NativeDataView extends NativeArrayBufferView {
                         throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
                     }
                     return self.offset;
-                },
-                DONTENUM | READONLY);
+                });
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getFloat32",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getFloat(4, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getFloat64",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getFloat(8, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getInt8",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(1, true, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getInt16",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(2, true, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getInt32",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(4, true, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getUint8",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(1, false, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getUint16",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(2, false, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "getUint32",
-                1,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
-                        realThis(thisObj).js_getInt(4, false, args),
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setFloat32",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setFloat(4, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setFloat64",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setFloat(8, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setInt8",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(1, true, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setInt16",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(2, true, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setInt32",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(4, true, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setUint8",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(1, false, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setUint16",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(2, false, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope,
-                "setUint32",
-                2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
-                    realThis(thisObj).js_setInt(4, false, args);
-                    return Undefined.instance;
-                },
-                DONTENUM,
-                DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "getFloat32", 1, NativeDataView::js_getFloat32);
+        constructor.definePrototypeMethod(scope, "getFloat64", 1, NativeDataView::js_getFloat64);
+        constructor.definePrototypeMethod(scope, "getInt8", 1, NativeDataView::js_getInt8);
+        constructor.definePrototypeMethod(scope, "getInt16", 1, NativeDataView::js_getInt16);
+        constructor.definePrototypeMethod(scope, "getInt32", 1, NativeDataView::js_getInt32);
+        constructor.definePrototypeMethod(scope, "getUint8", 1, NativeDataView::js_getUint8);
+        constructor.definePrototypeMethod(scope, "getUint16", 1, NativeDataView::js_getUint16);
+        constructor.definePrototypeMethod(scope, "getUint32", 1, NativeDataView::js_getUint32);
+        constructor.definePrototypeMethod(scope, "setFloat32", 2, NativeDataView::js_setFloat32);
+        constructor.definePrototypeMethod(scope, "setFloat64", 2, NativeDataView::js_setFloat64);
+        constructor.definePrototypeMethod(scope, "setInt8", 2, NativeDataView::js_setInt8);
+        constructor.definePrototypeMethod(scope, "setInt16", 2, NativeDataView::js_setInt16);
+        constructor.definePrototypeMethod(scope, "setInt32", 2, NativeDataView::js_setInt32);
+        constructor.definePrototypeMethod(scope, "setUint8", 2, NativeDataView::js_setUint8);
+        constructor.definePrototypeMethod(scope, "setUint16", 2, NativeDataView::js_setUint16);
+        constructor.definePrototypeMethod(scope, "setUint32", 2, NativeDataView::js_setUint32);
 
         if (sealed) {
             constructor.sealObject();
@@ -280,7 +147,44 @@ public class NativeDataView extends NativeArrayBufferView {
         return new NativeDataView(ab, pos, len);
     }
 
-    private Object js_getInt(int bytes, boolean signed, Object[] args) {
+    private static Object js_getInt8(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 1, true, args);
+    }
+
+    private static Object js_getInt16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 2, true, args);
+    }
+
+    private static Object js_getInt32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 4, true, args);
+    }
+
+    private static Object js_getUint8(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 1, false, args);
+    }
+
+    private static Object js_getUint16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 2, false, args);
+    }
+
+    private static Object js_getUint32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getInt(cx, scope, 4, false, args);
+    }
+
+    private Object js_getInt(
+            Context cx, Scriptable scope, int bytes, boolean signed, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
@@ -316,7 +220,19 @@ public class NativeDataView extends NativeArrayBufferView {
         }
     }
 
-    private Object js_getFloat(int bytes, Object[] args) {
+    private static Object js_getFloat32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getFloat(cx, scope, 4, args);
+    }
+
+    private static Object js_getFloat64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getFloat(cx, scope, 8, args);
+    }
+
+    private Object js_getFloat(Context cx, Scriptable scope, int bytes, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
@@ -340,7 +256,49 @@ public class NativeDataView extends NativeArrayBufferView {
         }
     }
 
-    private void js_setInt(int bytes, boolean signed, Object[] args) {
+    private static Object js_setInt8(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 1, true, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setInt16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 2, true, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setInt32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 4, true, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setUint8(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 1, false, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setUint16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 2, false, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setUint32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setInt(cx, scope, 4, false, args);
+        return Undefined.instance;
+    }
+
+    private void js_setInt(Context cx, Scriptable scope, int bytes, boolean signed, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         Object val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : ScriptRuntime.zeroObj;
@@ -407,7 +365,21 @@ public class NativeDataView extends NativeArrayBufferView {
         }
     }
 
-    private void js_setFloat(int bytes, Object[] args) {
+    private static Object js_setFloat32(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setFloat(cx, scope, 4, args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setFloat64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setFloat(cx, scope, 8, args);
+        return Undefined.instance;
+    }
+
+    private void js_setFloat(Context cx, Scriptable scope, int bytes, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
         double val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : Double.NaN;

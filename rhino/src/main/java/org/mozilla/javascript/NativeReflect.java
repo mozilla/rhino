@@ -25,64 +25,21 @@ final class NativeReflect extends ScriptableObject {
         reflect.setPrototype(getObjectPrototype(scope));
         reflect.setParentScope(scope);
 
-        reflect.defineProperty(
-                scope, "apply", 3, NativeReflect::apply, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope, "construct", 2, NativeReflect::construct, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "defineProperty",
-                3,
-                NativeReflect::defineProperty,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "deleteProperty",
-                2,
-                NativeReflect::deleteProperty,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(scope, "get", 2, NativeReflect::get, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "getOwnPropertyDescriptor",
-                2,
-                NativeReflect::getOwnPropertyDescriptor,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "getPrototypeOf",
-                1,
-                NativeReflect::getPrototypeOf,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(scope, "has", 2, NativeReflect::has, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "isExtensible",
-                1,
-                NativeReflect::isExtensible,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope, "ownKeys", 1, NativeReflect::ownKeys, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "preventExtensions",
-                1,
-                NativeReflect::preventExtensions,
-                DONTENUM,
-                DONTENUM | READONLY);
-        reflect.defineProperty(scope, "set", 3, NativeReflect::set, DONTENUM, DONTENUM | READONLY);
-        reflect.defineProperty(
-                scope,
-                "setPrototypeOf",
-                2,
-                NativeReflect::setPrototypeOf,
-                DONTENUM,
-                DONTENUM | READONLY);
+        reflect.defineBuiltinProperty(scope, "apply", 3, NativeReflect::apply);
+        reflect.defineBuiltinProperty(scope, "construct", 2, NativeReflect::construct);
+        reflect.defineBuiltinProperty(scope, "defineProperty", 3, NativeReflect::defineProperty);
+        reflect.defineBuiltinProperty(scope, "deleteProperty", 2, NativeReflect::deleteProperty);
+        reflect.defineBuiltinProperty(scope, "get", 2, NativeReflect::get);
+        reflect.defineBuiltinProperty(
+                scope, "getOwnPropertyDescriptor", 2, NativeReflect::getOwnPropertyDescriptor);
+        reflect.defineBuiltinProperty(scope, "getPrototypeOf", 1, NativeReflect::getPrototypeOf);
+        reflect.defineBuiltinProperty(scope, "has", 2, NativeReflect::has);
+        reflect.defineBuiltinProperty(scope, "isExtensible", 1, NativeReflect::isExtensible);
+        reflect.defineBuiltinProperty(scope, "ownKeys", 1, NativeReflect::ownKeys);
+        reflect.defineBuiltinProperty(
+                scope, "preventExtensions", 1, NativeReflect::preventExtensions);
+        reflect.defineBuiltinProperty(scope, "set", 3, NativeReflect::set);
+        reflect.defineBuiltinProperty(scope, "setPrototypeOf", 2, NativeReflect::setPrototypeOf);
 
         reflect.defineProperty(SymbolKey.TO_STRING_TAG, REFLECT_TAG, DONTENUM | READONLY);
         if (sealed) {

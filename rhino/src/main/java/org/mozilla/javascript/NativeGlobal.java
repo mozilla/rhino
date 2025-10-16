@@ -24,70 +24,20 @@ public class NativeGlobal implements Serializable {
     static final long serialVersionUID = 6080442165748707530L;
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
+        defineGlobalFunction(scope, sealed, "decodeURI", 1, NativeGlobal::js_decodeURI);
         defineGlobalFunction(
-                scope,
-                sealed,
-                "decodeURI",
-                1,
-                (callCx, callScope, thisObj, args) -> js_decodeURI(args));
+                scope, sealed, "decodeURIComponent", 1, NativeGlobal::js_decodeURIComponent);
+        defineGlobalFunction(scope, sealed, "encodeURI", 1, NativeGlobal::js_encodeURI);
         defineGlobalFunction(
-                scope,
-                sealed,
-                "decodeURIComponent",
-                1,
-                (callCx, callScope, thisObj, args) -> js_decodeURIComponent(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "encodeURI",
-                1,
-                (callCx, callScope, thisObj, args) -> js_encodeURI(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "encodeURIComponent",
-                1,
-                (callCx, callScope, thisObj, args) -> js_encodeURIComponent(args));
-        defineGlobalFunction(
-                scope, sealed, "escape", 1, (callCx, callScope, thisObj, args) -> js_escape(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "isFinite",
-                1,
-                (callCx, callScope, thisObj, args) -> js_isFinite(args));
-        defineGlobalFunction(
-                scope, sealed, "isNaN", 1, (callCx, callScope, thisObj, args) -> js_isNaN(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "isXMLName",
-                1,
-                (callCx, callScope, thisObj, args) -> js_isXMLName(callCx, callScope, args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "parseFloat",
-                1,
-                (callCx, callScope, thisObj, args) -> js_parseFloat(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "parseInt",
-                2,
-                (callCx, callScope, thisObj, args) -> js_parseInt(callCx, args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "unescape",
-                1,
-                (callCx, callScope, thisObj, args) -> js_unescape(args));
-        defineGlobalFunction(
-                scope,
-                sealed,
-                "uneval",
-                1,
-                (callCx, callScope, thisObj, args) -> js_uneval(callCx, callScope, args));
+                scope, sealed, "encodeURIComponent", 1, NativeGlobal::js_encodeURIComponent);
+        defineGlobalFunction(scope, sealed, "escape", 1, NativeGlobal::js_escape);
+        defineGlobalFunction(scope, sealed, "isFinite", 1, NativeGlobal::js_isFinite);
+        defineGlobalFunction(scope, sealed, "isNaN", 1, NativeGlobal::js_isNaN);
+        defineGlobalFunction(scope, sealed, "isXMLName", 1, NativeGlobal::js_isXMLName);
+        defineGlobalFunction(scope, sealed, "parseFloat", 1, NativeGlobal::js_parseFloat);
+        defineGlobalFunction(scope, sealed, "parseInt", 2, NativeGlobal::js_parseInt);
+        defineGlobalFunction(scope, sealed, "unescape", 1, NativeGlobal::js_unescape);
+        defineGlobalFunction(scope, sealed, "uneval", 1, NativeGlobal::js_uneval);
         defineGlobalFunctionEval(scope, sealed);
 
         ScriptableObject.defineProperty(
@@ -209,18 +159,21 @@ public class NativeGlobal implements Serializable {
         return functionObj instanceof EvalLambdaFunction;
     }
 
-    private static String js_uneval(Context cx, Scriptable scope, Object[] args) {
+    private static String js_uneval(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object value = (args.length != 0) ? args[0] : Undefined.instance;
         return ScriptRuntime.uneval(cx, scope, value);
     }
 
-    private static Boolean js_isXMLName(Context cx, Scriptable scope, Object[] args) {
+    private static Boolean js_isXMLName(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Object name = (args.length == 0) ? Undefined.instance : args[0];
         XMLLib xmlLib = XMLLib.extractFromScope(scope);
         return xmlLib.isXMLName(cx, name);
     }
 
-    private static Boolean js_isNaN(Object[] args) {
+    private static Boolean js_isNaN(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // The global method isNaN, as per ECMA-262 15.1.2.6.
         if (args.length < 1) {
             return true;
@@ -230,35 +183,40 @@ public class NativeGlobal implements Serializable {
         }
     }
 
-    private static Object js_isFinite(Object[] args) {
+    private static Object js_isFinite(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) {
             return Boolean.FALSE;
         }
         return NativeNumber.isFinite(args[0]);
     }
 
-    private static String js_decodeURI(Object[] args) {
+    private static String js_decodeURI(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, true);
     }
 
-    private static String js_decodeURIComponent(Object[] args) {
+    private static String js_decodeURIComponent(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, false);
     }
 
-    private static String js_encodeURI(Object[] args) {
+    private static String js_encodeURI(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, true);
     }
 
-    private static String js_encodeURIComponent(Object[] args) {
+    private static String js_encodeURIComponent(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, false);
     }
 
     /** The global method parseInt, as per ECMA-262 15.1.2.2. */
-    static Object js_parseInt(Context cx, Object[] args) {
+    static Object js_parseInt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int radix = ScriptRuntime.toInt32(args, 1);
 
@@ -311,7 +269,7 @@ public class NativeGlobal implements Serializable {
      *
      * @param args the arguments to parseFloat, ignoring args[>=1]
      */
-    static Object js_parseFloat(Object[] args) {
+    static Object js_parseFloat(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) return ScriptRuntime.NaNobj;
 
         String s = ScriptRuntime.toString(args[0]);
@@ -421,7 +379,8 @@ public class NativeGlobal implements Serializable {
      * <p>Includes code for the 'mask' argument supported by the C escape method, which used to be
      * part of the browser embedding. Blame for the strange constant names should be directed there.
      */
-    private static Object js_escape(Object[] args) {
+    private static Object js_escape(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         final int URL_XALPHAS = 1, URL_XPALPHAS = 2, URL_PATH = 4;
 
         String s = ScriptRuntime.toString(args, 0);
@@ -486,7 +445,8 @@ public class NativeGlobal implements Serializable {
     }
 
     /** The global unescape method, as per ECMA-262 15.1.2.5. */
-    private static Object js_unescape(Object[] args) {
+    private static Object js_unescape(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int firstEscapePos = s.indexOf('%');
         if (firstEscapePos >= 0) {

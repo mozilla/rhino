@@ -93,17 +93,17 @@ final class NativeString extends ScriptableObject {
         defProtoMethod(c, scope, "toString", 0, NativeString::js_toString);
         defProtoMethod(c, scope, "toSource", 0, NativeString::js_toSource);
         defProtoMethod(c, scope, "valueOf", 0, NativeString::js_toString);
-        defProtoMethodWithoutProto(c, scope, "charAt", 1, NativeString::js_charAt);
-        defProtoMethodWithoutProto(c, scope, "charCodeAt", 1, NativeString::js_charCodeAt);
-        defProtoMethodWithoutProto(c, scope, "indexOf", 1, NativeString::js_indexOf);
-        defProtoMethodWithoutProto(c, scope, "lastIndexOf", 1, NativeString::js_lastIndexOf);
-        defProtoMethodWithoutProto(c, scope, "split", 2, NativeString::js_split);
-        defProtoMethodWithoutProto(c, scope, "substring", 2, NativeString::js_substring);
-        defProtoMethodWithoutProto(c, scope, "toLowerCase", 0, NativeString::js_toLowerCase);
-        defProtoMethodWithoutProto(c, scope, "toUpperCase", 0, NativeString::js_toUpperCase);
-        defProtoMethodWithoutProto(c, scope, "substr", 2, NativeString::js_substr);
-        defProtoMethodWithoutProto(c, scope, "concat", 1, NativeString::js_concat);
-        defProtoMethodWithoutProto(c, scope, "slice", 2, NativeString::js_slice);
+        defProtoMethod(c, scope, "charAt", 1, NativeString::js_charAt);
+        defProtoMethod(c, scope, "charCodeAt", 1, NativeString::js_charCodeAt);
+        defProtoMethod(c, scope, "indexOf", 1, NativeString::js_indexOf);
+        defProtoMethod(c, scope, "lastIndexOf", 1, NativeString::js_lastIndexOf);
+        defProtoMethod(c, scope, "split", 2, NativeString::js_split);
+        defProtoMethod(c, scope, "substring", 2, NativeString::js_substring);
+        defProtoMethod(c, scope, "toLowerCase", 0, NativeString::js_toLowerCase);
+        defProtoMethod(c, scope, "toUpperCase", 0, NativeString::js_toUpperCase);
+        defProtoMethod(c, scope, "substr", 2, NativeString::js_substr);
+        defProtoMethod(c, scope, "concat", 1, NativeString::js_concat);
+        defProtoMethod(c, scope, "slice", 2, NativeString::js_slice);
         defProtoMethod(c, scope, "bold", 0, NativeString::js_bold);
         defProtoMethod(c, scope, "italics", 0, NativeString::js_italics);
         defProtoMethod(c, scope, "fixed", 0, NativeString::js_fixed);
@@ -119,17 +119,15 @@ final class NativeString extends ScriptableObject {
         defProtoMethod(c, scope, "anchor", 0, NativeString::js_anchor);
         defProtoMethod(c, scope, "equals", 1, NativeString::js_equals);
         defProtoMethod(c, scope, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase);
-        defProtoMethodWithoutProto(c, scope, "match", 1, NativeString::js_match);
-        defProtoMethodWithoutProto(c, scope, "matchAll", 1, NativeString::js_matchAll);
-        defProtoMethodWithoutProto(c, scope, "search", 1, NativeString::js_search);
-        defProtoMethodWithoutProto(c, scope, "replace", 2, NativeString::js_replace);
-        defProtoMethodWithoutProto(c, scope, "replaceAll", 2, NativeString::js_replaceAll);
+        defProtoMethod(c, scope, "match", 1, NativeString::js_match);
+        defProtoMethod(c, scope, "matchAll", 1, NativeString::js_matchAll);
+        defProtoMethod(c, scope, "search", 1, NativeString::js_search);
+        defProtoMethod(c, scope, "replace", 2, NativeString::js_replace);
+        defProtoMethod(c, scope, "replaceAll", 2, NativeString::js_replaceAll);
         defProtoMethod(c, scope, "at", 1, NativeString::js_at);
-        defProtoMethodWithoutProto(c, scope, "localeCompare", 1, NativeString::js_localeCompare);
-        defProtoMethodWithoutProto(
-                c, scope, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase);
-        defProtoMethodWithoutProto(
-                c, scope, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase);
+        defProtoMethod(c, scope, "localeCompare", 1, NativeString::js_localeCompare);
+        defProtoMethod(c, scope, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase);
+        defProtoMethod(c, scope, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase);
         defProtoMethod(c, scope, "trim", 0, NativeString::js_trim);
         defProtoMethod(c, scope, "trimLeft", 0, NativeString::js_trimLeft);
         defProtoMethod(c, scope, "trimStart", 0, NativeString::js_trimLeft);
@@ -159,16 +157,7 @@ final class NativeString extends ScriptableObject {
             String name,
             int length,
             SerializableCallable target) {
-        c.defineConstructorMethod(scope, name, length, target, DONTENUM);
-    }
-
-    private static void defProtoMethod(
-            LambdaConstructor c,
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY, true);
+        c.defineConstructorMethod(scope, name, length, target);
     }
 
     private static void defProtoMethod(
@@ -177,16 +166,16 @@ final class NativeString extends ScriptableObject {
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        c.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+        c.definePrototypeMethod(scope, key, length, target);
     }
 
-    private static void defProtoMethodWithoutProto(
+    private static void defProtoMethod(
             LambdaConstructor c,
             Scriptable scope,
             String name,
             int length,
             SerializableCallable target) {
-        c.definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY, false);
+        c.definePrototypeMethod(scope, name, length, target);
     }
 
     NativeString(CharSequence s) {

@@ -30,12 +30,9 @@ final class NativeBoolean extends ScriptableObject {
         // Boolean is an unusual object in that the prototype is itself a Boolean
         constructor.setPrototypeScriptable(new NativeBoolean(false));
 
-        constructor.definePrototypeMethod(
-                scope, "toString", 0, NativeBoolean::js_toString, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "toSource", 0, NativeBoolean::js_toSource, DONTENUM, DONTENUM | READONLY);
-        constructor.definePrototypeMethod(
-                scope, "valueOf", 0, NativeBoolean::js_valueOf, DONTENUM, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "toString", 0, NativeBoolean::js_toString);
+        constructor.definePrototypeMethod(scope, "toSource", 0, NativeBoolean::js_toSource);
+        constructor.definePrototypeMethod(scope, "valueOf", 0, NativeBoolean::js_valueOf);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {

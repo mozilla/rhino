@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import static org.mozilla.javascript.SymbolKey.TO_STRING_TAG;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -212,8 +214,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineProtoProperty(ta, cx, "byteLength", NativeTypedArrayView::js_byteLength, null);
             defineProtoProperty(ta, cx, "byteOffset", NativeTypedArrayView::js_byteOffset, null);
             defineProtoProperty(ta, cx, "length", NativeTypedArrayView::js_length, null);
-            defineProtoProperty(
-                    ta, cx, SymbolKey.TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
+            defineProtoProperty(ta, cx, TO_STRING_TAG, NativeTypedArrayView::js_toStringTag, null);
 
             defineMethod(ta, s, "at", 1, NativeTypedArrayView::js_at);
             defineMethod(ta, s, "copyWithin", 2, NativeTypedArrayView::js_copyWithin);
@@ -248,10 +249,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             defineMethod(ta, s, "with", 2, NativeTypedArrayView::js_with);
             defineMethod(ta, s, SymbolKey.ITERATOR, 0, NativeTypedArrayView::js_iterator);
 
-            ta.defineConstructorMethod(
-                    scope, "from", 1, NativeTypedArrayView::js_from, DONTENUM, DONTENUM | READONLY);
-            ta.defineConstructorMethod(
-                    scope, "of", 0, NativeTypedArrayView::js_of, DONTENUM, DONTENUM | READONLY);
+            ta.defineConstructorMethod(scope, "from", 1, NativeTypedArrayView::js_from);
+            ta.defineConstructorMethod(scope, "of", 0, NativeTypedArrayView::js_of);
 
             ta = (LambdaConstructor) s.associateValue(TYPED_ARRAY_TAG, ta);
         }
@@ -275,7 +274,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolKey name,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter) {
-        typedArray.definePrototypeProperty(cx, name, getter, setter, DONTENUM | READONLY);
+        typedArray.definePrototypeProperty(cx, name, getter, setter);
     }
 
     private static void defineMethod(
@@ -284,8 +283,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             String name,
             int length,
             SerializableCallable target) {
-        typedArray.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+        typedArray.definePrototypeMethod(scope, name, length, target);
     }
 
     private static void defineMethod(
@@ -294,7 +292,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolKey key,
             int length,
             SerializableCallable target) {
-        typedArray.definePrototypeMethod(scope, key, length, target, DONTENUM, DONTENUM | READONLY);
+        typedArray.definePrototypeMethod(scope, key, length, target);
     }
 
     /** Returns <code>true</code>, if the index is wrong. */

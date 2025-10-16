@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.SymbolKey.TO_PRIMITIVE;
+import static org.mozilla.javascript.SymbolKey.TO_STRING_TAG;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -29,30 +32,15 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
         ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
-        ctor.defineConstructorMethod(
-                scope,
-                "for",
-                1,
-                (lcx, lscope, thisObj, args) -> NativeSymbol.js_for(lscope, args, ctor),
-                DONTENUM,
-                DONTENUM | READONLY);
-        ctor.defineConstructorMethod(
-                scope, "keyFor", 1, NativeSymbol::js_keyFor, DONTENUM, DONTENUM | READONLY);
+        ctor.defineConstructorMethod(scope, "for", 1, NativeSymbol::js_for);
+        ctor.defineConstructorMethod(scope, "keyFor", 1, NativeSymbol::js_keyFor);
 
+        ctor.definePrototypeMethod(scope, "toString", 0, NativeSymbol::js_toString);
+        ctor.definePrototypeMethod(scope, "valueOf", 0, NativeSymbol::js_valueOf);
         ctor.definePrototypeMethod(
-                scope, "toString", 0, NativeSymbol::js_toString, DONTENUM, DONTENUM | READONLY);
-        ctor.definePrototypeMethod(
-                scope, "valueOf", 0, NativeSymbol::js_valueOf, DONTENUM, DONTENUM | READONLY);
-        ctor.definePrototypeMethod(
-                scope,
-                SymbolKey.TO_PRIMITIVE,
-                1,
-                NativeSymbol::js_valueOf,
-                DONTENUM | READONLY,
-                DONTENUM | READONLY);
-        ctor.definePrototypeProperty(SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-        ctor.definePrototypeProperty(
-                cx, "description", NativeSymbol::js_description, DONTENUM | READONLY);
+                scope, TO_PRIMITIVE, 1, NativeSymbol::js_valueOf, DONTENUM | READONLY);
+        ctor.definePrototypeProperty(TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
+        ctor.definePrototypeProperty(cx, "description", NativeSymbol::js_description);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, ctor, DONTENUM);
 
@@ -128,7 +116,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Scriptable scope, Object[] args, LambdaConstructor constructor) {
+    private static Object js_for(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])

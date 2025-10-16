@@ -56,7 +56,22 @@ public class TopLevel extends IdScriptableObject {
         /** The built-in GeneratorFunction type. */
         GeneratorFunction,
         /** The built-in BigInt type. */
-        BigInt
+        BigInt,
+        /** The built-in Promise type. */
+        Promise,
+        ArrayBuffer,
+        Int8Array,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int16Array,
+        Uint16Array,
+        Int32Array,
+        Uint32Array,
+        BigInt64Array,
+        BigUint64Array,
+        Float32Array,
+        Float64Array,
+        DataView
     }
 
     /** An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6] */
