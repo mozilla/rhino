@@ -2023,14 +2023,14 @@ public final class IRFactory {
         int type = Node.NON_SPECIALCALL;
         if (child.getType() == Token.NAME) {
             String name = child.getString();
-            if (name.equals("eval")) {
+            if ("eval".equals(name)) {
                 type = Node.SPECIALCALL_EVAL;
-            } else if (name.equals("With")) {
+            } else if ("With".equals(name)) {
                 type = Node.SPECIALCALL_WITH;
             }
         } else if (child.getType() == Token.GETPROP) {
             String name = child.getLastChild().getString();
-            if (name.equals("eval")) {
+            if ("eval".equals(name)) {
                 type = Node.SPECIALCALL_EVAL;
             }
         }
@@ -2124,7 +2124,7 @@ public final class IRFactory {
         Node nsNode = null;
         if (namespace != null) {
             // See 11.1.2 in ECMA 357
-            if (namespace.equals("*")) {
+            if ("*".equals(namespace)) {
                 nsNode = new Node(Token.NULL);
             } else {
                 nsNode = parser.createName(namespace);

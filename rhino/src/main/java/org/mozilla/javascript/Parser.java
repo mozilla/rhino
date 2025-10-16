@@ -638,7 +638,7 @@ public class Parser {
                         String directive = getDirective(n);
                         if (directive == null) {
                             inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
+                        } else if ("use strict".equals(directive)) {
                             inUseStrictDirective = true;
                             root.setInStrictMode(true);
                         }
@@ -738,7 +738,7 @@ public class Parser {
                                 String directive = getDirective(n);
                                 if (directive == null) {
                                     inDirectivePrologue = false;
-                                } else if (directive.equals("use strict")) {
+                                } else if ("use strict".equals(directive)) {
                                     if (fnNode.getDefaultParams() != null) {
                                         reportError("msg.default.args.use.strict");
                                     }
@@ -3637,7 +3637,7 @@ public class Parser {
         pushScope(pn);
         try {
             if (matchToken(Token.NAME, true)) {
-                if (ts.getString().equals("each")) {
+                if ("each".equals(ts.getString())) {
                     eachPos = ts.tokenBeg - pos;
                 } else {
                     reportError("msg.no.paren.for");

@@ -2214,7 +2214,7 @@ public class ClassFileWriter {
                     int rParen = methodType.indexOf(')');
                     String returnType = methodType.substring(rParen + 1);
                     returnType = descriptorToInternalName(returnType);
-                    if (!returnType.equals("V")) {
+                    if (!"V".equals(returnType)) {
                         push(TypeInfo.fromType(returnType, itsConstantPool));
                     }
                     break;
@@ -2228,7 +2228,7 @@ public class ClassFileWriter {
                     rParen = methodType.indexOf(')');
                     returnType = methodType.substring(rParen + 1);
                     returnType = descriptorToInternalName(returnType);
-                    if (!returnType.equals("V")) {
+                    if (!"V".equals(returnType)) {
                         push(TypeInfo.fromType(returnType, itsConstantPool));
                     }
                     break;

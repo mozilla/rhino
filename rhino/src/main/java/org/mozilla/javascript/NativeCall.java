@@ -105,7 +105,7 @@ public final class NativeCall extends IdScriptableObject {
 
     @Override
     protected int findPrototypeId(String s) {
-        return s.equals("constructor") ? Id_constructor : 0;
+        return "constructor".equals(s) ? Id_constructor : 0;
     }
 
     @Override

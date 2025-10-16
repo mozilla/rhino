@@ -65,7 +65,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        if (name.equals("length")) {
+        if ("length".equals(name)) {
             return true;
         }
         return super.has(name, start);

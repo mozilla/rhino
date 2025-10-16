@@ -215,14 +215,13 @@ public class RegExpImpl implements RegExpProxy {
         Object result = null;
         if (data.mode == RA_SEARCH) {
             result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
-            if (result != null && result.equals(Boolean.TRUE))
-                result = Integer.valueOf(reImpl.leftContext.length);
+            if (Boolean.TRUE.equals(result)) result = Integer.valueOf(reImpl.leftContext.length);
             else result = Integer.valueOf(-1);
         } else if (data.global) {
             re.lastIndex = ScriptRuntime.zeroObj;
             for (int count = 0; indexp[0] <= str.length(); count++) {
                 result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
-                if (result == null || !result.equals(Boolean.TRUE)) break;
+                if (!Boolean.TRUE.equals(result)) break;
                 if (data.mode == RA_MATCH) {
                     match_glob(data, cx, scope, count, reImpl);
                 } else {
