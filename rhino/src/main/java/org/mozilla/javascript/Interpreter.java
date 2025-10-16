@@ -1311,6 +1311,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (operation == NativeGenerator.GENERATOR_CLOSE) {
                 try {
                     return interpretLoop(cx, activeFrame, generatorState);
+                } catch (NativeGenerator.GeneratorClosedException e) {
+                    // Re-throw GeneratorClosedException so ES6Generator can catch and complete
+                    throw e;
                 } catch (RuntimeException e) {
                     // Only propagate exceptions other than closingException
                     if (e != value) throw e;
