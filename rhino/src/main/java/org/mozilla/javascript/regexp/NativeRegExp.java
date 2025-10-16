@@ -91,7 +91,9 @@ public class NativeRegExp extends IdScriptableObject {
     private static final byte REOP_UCFLAT1i = REOP_UCFLAT1 + 1; /* case-independent REOP_UCFLAT1 */
     private static final byte REOP_UCSPFLAT1 =
             REOP_UCFLAT1i + 1; /* single Unicode surrogate pair */
-    private static final byte REOP_CLASS = REOP_UCSPFLAT1 + 1; /* character class with index */
+    private static final byte REOP_UCSPFLAT1i =
+            REOP_UCSPFLAT1 + 1; /* case-independent REOP_UCSPFLAT1 */
+    private static final byte REOP_CLASS = REOP_UCSPFLAT1i + 1; /* character class with index */
     private static final byte REOP_NCLASS = REOP_CLASS + 1; /* negated character class with index */
     private static final byte REOP_NAMED_BACKREF = REOP_NCLASS + 1; /* named back-reference */
     private static final byte REOP_UPROP = REOP_NAMED_BACKREF + 1; /* unicode property */
@@ -427,6 +429,17 @@ public class NativeRegExp extends IdScriptableObject {
                             "UCSPFLAT1: "
                                     + Character.toString(
                                             Character.toCodePoint(highSurrogate, lowSurrogate)));
+                    break;
+                case REOP_UCSPFLAT1i:
+                    // high and low surrogates (case-insensitive)
+                    char highSurrogateI = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogateI = (char) getIndex(regexp.program, pc);
+                    pc += INDEX_LEN;
+                    System.out.println(
+                            "UCSPFLAT1i: "
+                                    + Character.toString(
+                                            Character.toCodePoint(highSurrogateI, lowSurrogateI)));
                     break;
                 case REOP_CLASS:
                     int classIndex = getIndex(regexp.program, pc);
@@ -2151,7 +2164,8 @@ public class NativeRegExp extends IdScriptableObject {
                             else program[pc - 1] = REOP_UCFLAT1;
                             pc = addIndex(program, pc, t.chr);
                         } else {
-                            program[pc - 1] = REOP_UCSPFLAT1;
+                            if ((state.flags & JSREG_FOLD) != 0) program[pc - 1] = REOP_UCSPFLAT1i;
+                            else program[pc - 1] = REOP_UCSPFLAT1;
                             pc = addIndex(program, pc, t.chr);
                             pc = addIndex(program, pc, t.lowSurrogate);
                         }
@@ -2849,14 +2863,24 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_UCFLAT1i:
                 {
-                    // Note: No support for unicode with REOP_UCFLAT1i
                     matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
-                            result = true;
-                            gData.cp += cpDelta;
+                        int inputCodePoint;
+                        if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                            inputCodePoint = input.codePointAt(cpToMatch);
+                            // Use Unicode case matching for Unicode mode
+                            if (unicodeCaseInsensitiveEquals(matchCodePoint, inputCodePoint)) {
+                                result = true;
+                                gData.cp += cpDelta;
+                            }
+                        } else {
+                            // Legacy behavior for non-Unicode mode
+                            char c = input.charAt(cpToMatch);
+                            if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                                result = true;
+                                gData.cp += cpDelta;
+                            }
                         }
                     }
                 }
@@ -2890,6 +2914,22 @@ public class NativeRegExp extends IdScriptableObject {
                     if (cpInBounds) {
                         int inputCodePoint = input.codePointAt(cpToMatch);
                         if (matchCodePoint == inputCodePoint) {
+                            result = true;
+                            gData.cp += cpDelta;
+                        }
+                    }
+                }
+                break;
+            case REOP_UCSPFLAT1i:
+                {
+                    char highSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    char lowSurrogate = (char) getIndex(program, pc);
+                    pc += INDEX_LEN;
+                    matchCodePoint = Character.toCodePoint(highSurrogate, lowSurrogate);
+                    if (cpInBounds) {
+                        int inputCodePoint = input.codePointAt(cpToMatch);
+                        if (unicodeCaseInsensitiveEquals(matchCodePoint, inputCodePoint)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
