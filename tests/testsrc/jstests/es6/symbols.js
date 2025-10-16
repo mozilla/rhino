@@ -50,6 +50,7 @@ function TestNew() {
       symbols.push(Symbol())
       symbols.push(Symbol(undefined))
       symbols.push(Symbol("66"))
+      symbols.push(Symbol(undefined, "ignored"))
       symbols.push(Symbol(66))
       symbols.push(Symbol().valueOf())
       symbols.push(indirect())
