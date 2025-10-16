@@ -1241,4 +1241,12 @@ public class NativeRegExpTest {
                         + "/[a\\nb]*$/s.exec('a\\nb')[0]"
                         + "].join('-')");
     }
+
+    @Test
+    public void testUnicodeCaseInsensitiveWordCharacter() {
+        // İ (U+0130) has no simple case fold, so it does not match \w
+        // Only K (Kelvin sign U+212A) matches because it folds to K which is in \w
+        // The match returns the original Kelvin sign character, not ASCII 'K'
+        Utils.assertWithAllModes_ES6("\u212A", "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
+    }
 }
