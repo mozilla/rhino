@@ -90,15 +90,12 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static SymbolKey js_constructorCall(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        String desc = null;
+        String desc;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
+        } else {
+            desc = null;
         }
-
-        if (args.length > 1) {
-            return (SymbolKey) args[1];
-        }
-
         return new SymbolKey(desc, Symbol.Kind.REGULAR);
     }
 
