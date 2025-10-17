@@ -1485,8 +1485,16 @@ public class Parser {
 
         AstNode discriminant = expr(false);
         pn.setExpression(discriminant);
-        enterSwitch(pn);
 
+        // a bit of a hack, but there is no separate scope for the switch statement
+        // therefore the check done in defineSymbol(int, java.lang.String, boolean)
+        // still thinks we are in a for loop if the 'switch' directly follow the 'for'
+        // without brackets
+        // therefore we (miss-)use the inForInit var to disable the check for the
+        // 'switch' body
+        boolean wasInForInit = inForInit;
+        inForInit = true;
+        enterSwitch(pn);
         try {
             if (mustMatchToken(Token.RP, "msg.no.paren.after.switch", true))
                 pn.setRp(ts.tokenBeg - pos);
@@ -1553,6 +1561,7 @@ public class Parser {
                 pn.addCase(caseNode);
             }
         } finally {
+            inForInit = wasInForInit;
             exitSwitch();
         }
         return pn;
