@@ -53,7 +53,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
     @Override
     public boolean has(String id, Scriptable start) {
-        return id.equals("length") || super.has(id, start);
+        return "length".equals(id) || super.has(id, start);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
     @Override
     public Object get(String id, Scriptable start) {
-        if (id.equals("length")) return Integer.valueOf(length);
+        if ("length".equals(id)) return Integer.valueOf(length);
         Object result = super.get(id, start);
         if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
             throw Context.reportRuntimeErrorById(
@@ -98,7 +98,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     @Override
     public void put(String id, Scriptable start, Object value) {
         // Ignore assignments to "length"--it's readonly.
-        if (!id.equals("length"))
+        if (!"length".equals(id))
             throw Context.reportRuntimeErrorById("msg.java.array.member.not.found", id);
     }
 

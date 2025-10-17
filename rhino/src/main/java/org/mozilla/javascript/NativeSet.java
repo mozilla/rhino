@@ -479,9 +479,10 @@ public class NativeSet extends ScriptableObject {
                     // Convert -0 to +0 as the spec requires
                     if (key instanceof Number
                             && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
-                        key = ScriptRuntime.zeroObj;
+                        result.js_delete(ScriptRuntime.zeroObj);
+                    } else {
+                        result.js_delete(key);
                     }
-                    result.js_delete(key);
                 }
             }
         } else {

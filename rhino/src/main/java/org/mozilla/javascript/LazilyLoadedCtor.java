@@ -167,7 +167,7 @@ public final class LazilyLoadedCtor implements Serializable {
         return Scriptable.NOT_FOUND;
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("unchecked")
     private static Class<? extends Scriptable> cast(Class<?> cl) {
         return (Class<? extends Scriptable>) cl;
     }

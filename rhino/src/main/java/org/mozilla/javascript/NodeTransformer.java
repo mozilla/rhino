@@ -349,7 +349,7 @@ public class NodeTransformer {
                         if (node.getFirstChild().getType() == Token.BINDNAME) {
                             Node name = node.getFirstChild();
                             if (name instanceof Name
-                                    && ((Name) name).getIdentifier().equals("eval")) {
+                                    && "eval".equals(((Name) name).getIdentifier())) {
                                 // Don't allow set of `eval` in strict mode
                                 reportError("syntax error");
                             }

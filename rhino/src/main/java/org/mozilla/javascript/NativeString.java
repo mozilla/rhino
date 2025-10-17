@@ -1246,7 +1246,7 @@ final class NativeString extends ScriptableObject {
             i *= 2;
         }
         if (i < icnt) {
-            retval.append(retval.substring(0, str.length() * (icnt - i)));
+            retval.append(retval, 0, str.length() * (icnt - i));
         }
 
         return retval.toString();

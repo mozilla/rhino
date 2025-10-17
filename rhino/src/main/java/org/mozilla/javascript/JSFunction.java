@@ -60,6 +60,11 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
+    protected boolean hasPrototypeProperty() {
+        return true;
+    }
+
+    @Override
     public int getLength() {
         int paramCount = getParamCount();
         if (getLanguageVersion() != Context.VERSION_1_2) {

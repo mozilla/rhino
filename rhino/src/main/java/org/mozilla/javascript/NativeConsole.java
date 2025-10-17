@@ -223,7 +223,7 @@ public class NativeConsole extends IdScriptableObject {
                 String placeHolder = matcher.group();
                 String replaceArg;
 
-                if (placeHolder.equals("%%")) {
+                if ("%%".equals(placeHolder)) {
                     replaceArg = "%";
                 } else if (argIndex >= args.length) {
                     replaceArg = placeHolder;

@@ -1058,7 +1058,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (Method method : methods) {
-            if (!method.getName().equals("init")) continue;
+            if (!"init".equals(method.getName())) continue;
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
                     && parmTypes[0] == ScriptRuntime.ContextClass
@@ -1172,7 +1172,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                 continue;
             }
             String name = method.getName();
-            if (name.equals("finishInit")) {
+            if ("finishInit".equals(name)) {
                 Class<?>[] parmTypes = method.getParameterTypes();
                 if (parmTypes.length == 3
                         && parmTypes[0] == ScriptRuntime.ScriptableClass
@@ -1333,7 +1333,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         return propName;
     }
 
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("unchecked")
     private static <T extends Scriptable> Class<T> extendsScriptable(Class<?> c) {
         if (ScriptRuntime.ScriptableClass.isAssignableFrom(c)) return (Class<T>) c;
         return null;

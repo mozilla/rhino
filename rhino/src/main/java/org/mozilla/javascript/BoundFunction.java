@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 /**
- * The class for results of the Function.bind operation EcmaScript 5 spec, 15.3.4.5
+ * The class for results of the Function.bind() operation EcmaScript 5 spec, 15.3.4.5
  *
  * @author Raphael Speyer
  */

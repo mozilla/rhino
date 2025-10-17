@@ -54,7 +54,7 @@ public class ImplementationVersion {
                 // Ignore this unlikely event
             }
         }
-        // We are probably in a IDE
+        // We are probably in an IDE
         versionString = "Rhino Snapshot";
     }
 }

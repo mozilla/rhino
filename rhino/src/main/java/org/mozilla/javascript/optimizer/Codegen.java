@@ -860,7 +860,7 @@ public class Codegen implements Evaluator {
         return "_c_" + cleanName(n) + "_" + index;
     }
 
-    /** Gets a Java-compatible "informative" name for the the ScriptOrFnNode */
+    /** Gets a Java-compatible "informative" name for the ScriptOrFnNode */
     String cleanName(final ScriptNode n) {
         String result = "";
         if (n instanceof FunctionNode) {
