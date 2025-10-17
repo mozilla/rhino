@@ -830,7 +830,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (cx == null) {
                 cx = Context.getContext();
             }
-            v = fun.call(cx, fun.getParentScope(), object, ScriptRuntime.emptyArgs);
+            v = fun.call(cx, fun.getDeclarationScope(), object, ScriptRuntime.emptyArgs);
             if (v != null) {
                 if (!(v instanceof Scriptable)) {
                     return v;
@@ -868,9 +868,10 @@ public abstract class ScriptableObject extends SlotMapOwner
 
         Context cx = Context.getCurrentContext();
         Object hasInstance = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
-        if (hasInstance instanceof Callable) {
+        if (hasInstance instanceof Function) {
+            var scope = ((Function) hasInstance).getDeclarationScope();
             return ScriptRuntime.toBoolean(
-                    ((Callable) hasInstance).call(cx, getParentScope(), this, new Object[] {this}));
+                    ((Function) hasInstance).call(cx, scope, this, new Object[] {this}));
         }
         if (!(this instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.instanceof.bad.target");

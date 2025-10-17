@@ -395,7 +395,7 @@ public class FunctionObject extends BaseFunction {
                 if (!clazz.isInstance(thisObj)) {
                     boolean compatible = false;
                     if (thisObj == scope || thisObj instanceof ModuleScope) {
-                        Scriptable parentScope = getParentScope();
+                        Scriptable parentScope = getDeclarationScope();
                         if (scope != parentScope) {
                             // Call with dynamic scope for standalone function,
                             // use parentScope as thisObj
@@ -490,7 +490,7 @@ public class FunctionObject extends BaseFunction {
         }
 
         result.setPrototype(getClassPrototype());
-        result.setParentScope(getParentScope());
+        result.setParentScope(getDeclarationScope());
         return result;
     }
 

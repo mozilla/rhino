@@ -234,7 +234,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 value =
                         f.call(
                                 Context.getContext(),
-                                f.getParentScope(),
+                                f.getDeclarationScope(),
                                 this,
                                 ScriptRuntime.emptyArgs);
             } else {

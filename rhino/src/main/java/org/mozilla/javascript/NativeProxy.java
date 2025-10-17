@@ -16,7 +16,7 @@ import java.util.Objects;
  *
  * @author Ronald Brill
  */
-final class NativeProxy extends ScriptableObject implements Callable, Constructable {
+final class NativeProxy extends ScriptableObject implements Function {
     private static final long serialVersionUID = 6676871870513494844L;
 
     private static final String PROXY_TAG = "Proxy";
@@ -1313,6 +1313,16 @@ final class NativeProxy extends ScriptableObject implements Callable, Constructa
 
         return ScriptRuntime.applyOrCall(
                 true, cx, scope, target, new Object[] {thisObj, argumentsList});
+    }
+
+    @Override
+    public Scriptable getDeclarationScope() {
+        ScriptableObject target = getTargetThrowIfRevoked();
+        if (target instanceof Function) {
+            return ((Function) target).getDeclarationScope();
+        }
+        Kit.codeBug();
+        return null;
     }
 
     private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {

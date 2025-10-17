@@ -7,7 +7,7 @@ load("testsrc/assert.js");
 res = "";
 
 function logElement(value, key) {
-    res += "set[" + key + "] (" + this + ") ";
+    res += "set[" + key + "] (" + (this === globalThis ? "globalThis" : this) + ") ";
 }
 
 (function TestForEach() {
@@ -15,7 +15,7 @@ function logElement(value, key) {
   var mySet = new Set(['key1', 17]);
   mySet.forEach(logElement);
 
-  assertEquals("a) set[key1] ([object Object]) set[17] ([object Object]) ", res);
+  assertEquals("a) set[key1] (globalThis) set[17] (globalThis) ", res);
 })();
 
 (function TestForEachStrict() {
@@ -32,7 +32,7 @@ function logElement(value, key) {
   var mySet = new Set(['', undefined, null, 19]);
   mySet.forEach(logElement);
 
-  assertEquals("b) set[] ([object Object]) set[undefined] ([object Object]) set[null] ([object Object]) set[19] ([object Object]) ", res);
+  assertEquals("b) set[] (globalThis) set[undefined] (globalThis) set[null] (globalThis) set[19] (globalThis) ", res);
 })();
 
 (function TestForEachNoKeyStrict() {
