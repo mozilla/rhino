@@ -1245,8 +1245,21 @@ public class NativeRegExpTest {
     @Test
     public void testUnicodeCaseInsensitiveWordCharacter() {
         Utils.assertWithAllModes_ES6(
-                "Zanabazar Square",
-                "Kİ",
-                "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
+                "Zanabazar Square", "Kİ", "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveFlatMatching() {
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/cAfé$/ui.test('CAFÉ') + '-' + "
+                        + "/straße$/ui.test('Straße') + '-' + "
+                        + "/ελληνικά$/ui.test('ΕΛΛΗΝΙΚΆ') + '-' + "
+                        + "/ki$/ui.test('Kİ')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveBackwardFlatMatching() {
+        Utils.assertWithAllModes_ES6(true, "/(?<=Kİ)1/ui.test('ki1')");
     }
 }
