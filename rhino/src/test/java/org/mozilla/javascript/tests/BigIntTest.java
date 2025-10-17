@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -90,5 +91,21 @@ public class BigIntTest {
 
         // Test zero bits edge case
         Utils.assertWithAllModes_ES6("0", "BigInt.asIntN(0, 123n).toString()");
+    }
+
+    @Test
+    public void manyBigIntLiteral() {
+        // We want to ensure we use all the icode, so we need to have a bigint literal that doesn't
+        // fit in an ushort
+        final long n = 0xFFFF + 1;
+
+        // Generate 0n + 1n + 2n + ...
+        StringBuilder src = new StringBuilder("var sum = 0n;\n");
+        for (long i = 1; i <= n; ++i) {
+            src.append("sum += ").append(i).append("n;\n");
+        }
+        src.append("sum");
+
+        Utils.assertWithAllModes_ES6(BigInteger.valueOf((n * (n + 1)) / 2), src.toString());
     }
 }

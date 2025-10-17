@@ -174,7 +174,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             itsData.literalIds = literalIds.toArray();
         }
 
-        if (Token.printICode) Interpreter.dumpICode(itsData);
+        if (Token.printICode) Interpreter.dumpICode(itsData, builder);
     }
 
     private void generateNestedFunctions() {
