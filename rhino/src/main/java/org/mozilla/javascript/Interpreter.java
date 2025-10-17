@@ -898,12 +898,17 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + indexReg);
                     ++pc;
                     break;
-                // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
                 case Icode_REG_BIGINT_C0:
+                    out.println(tname + " " + bigInts[0].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C1:
+                    out.println(tname + " " + bigInts[1].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C2:
+                    out.println(tname + " " + bigInts[2].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C3:
-                    Kit.codeBug();
+                    out.println(tname + " " + bigInts[3].toString() + 'n');
                     break;
                 case Icode_REG_BIGINT1:
                     {

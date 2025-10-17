@@ -67,6 +67,32 @@ class InterpreterBytecodeDumpTest {
                 getByteCodeFrom("o = { f() {} }"));
     }
 
+    @Test
+    void bigIntsArePrinted() throws IOException {
+        assertEquals(
+                ""
+                        + "ICode dump, for null, length = 20\n"
+                        + "MaxStack = 2\n"
+                        + " [0] LINE : 1\n"
+                        + " [3] REG_BIGINT_C0 1n\n"
+                        + " [4] BIGINT\n"
+                        + " [5] REG_BIGINT_C1 2n\n"
+                        + " [6] BIGINT\n"
+                        + " [7] ADD\n"
+                        + " [8] REG_BIGINT_C2 3n\n"
+                        + " [9] BIGINT\n"
+                        + " [10] ADD\n"
+                        + " [11] REG_BIGINT_C3 4n\n"
+                        + " [12] BIGINT\n"
+                        + " [13] ADD\n"
+                        + " [14] LOAD_BIGINT1 5n\n"
+                        + " [16] BIGINT\n"
+                        + " [17] ADD\n"
+                        + " [18] POP_RESULT\n"
+                        + " [19] RETURN_RESULT\n",
+                getByteCodeFrom("1n + 2n + 3n + 4n + 5n"));
+    }
+
     private static String getByteCodeFrom(String source) throws IOException {
         var oldBytecodePrintStream = Interpreter.interpreterBytecodePrintStream;
         var oldTokenPrintICode = Token.printICode;
