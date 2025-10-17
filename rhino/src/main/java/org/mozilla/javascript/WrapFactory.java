@@ -100,7 +100,7 @@ public class WrapFactory {
      * JavaScript.
      *
      * <p>{@link #wrap(Context, Scriptable, Object, Class)} and {@link #wrapNewObject(Context,
-     * Scriptable, Object)} call this method when they can not convert <code>javaObject</code> to
+     * Scriptable, Object)} call this method when they can not convert {@code javaObject} to
      * JavaScript primitive value or JavaScript array.
      *
      * <p>Subclasses can override the method to provide custom wrappers for Java objects.
@@ -151,12 +151,12 @@ public class WrapFactory {
     }
 
     /**
-     * Return <code>false</code> if result of Java method, which is instance of <code>String</code>,
-     * <code>Number</code>, <code>Boolean</code> and <code>Character</code>, should be used directly
-     * as JavaScript primitive type. By default the method returns true to indicate that instances
-     * of <code>String</code>, <code>Number</code>, <code>Boolean</code> and <code>Character</code>
-     * should be wrapped as any other Java object and scripts can access any Java method available
-     * in these objects. Use {@link #setJavaPrimitiveWrap(boolean)} to change this.
+     * Return {@code false} if result of Java method, which is instance of {@code String}, {@code
+     * Number}, {@code Boolean} and {@code Character}, should be used directly as JavaScript
+     * primitive type. By default the method returns true to indicate that instances of {@code
+     * String}, {@code Number}, {@code Boolean} and {@code Character} should be wrapped as any other
+     * Java object and scripts can access any Java method available in these objects. Use {@link
+     * #setJavaPrimitiveWrap(boolean)} to change this.
      */
     public final boolean isJavaPrimitiveWrap() {
         return javaPrimitiveWrap;

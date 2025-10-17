@@ -64,7 +64,7 @@ public abstract class RhinoException extends RuntimeException {
      * Initialize the uri of the script source containing the error.
      *
      * @param sourceName the uri of the script source responsible for the error. It should not be
-     *     <code>null</code>.
+     *     {@code null}.
      * @throws IllegalStateException if the method is called more then once.
      */
     public final void initSourceName(String sourceName) {
@@ -116,7 +116,7 @@ public abstract class RhinoException extends RuntimeException {
      * Initialize the text of the source line containing the error.
      *
      * @param lineSource the text of the source line responsible for the error. It should not be
-     *     <code>null</code>.
+     *     {@code null}.
      * @throws IllegalStateException if the method is called more then once.
      */
     public final void initLineSource(String lineSource) {
@@ -329,9 +329,9 @@ public abstract class RhinoException extends RuntimeException {
     }
 
     /**
-     * Returns true if subclasses of <code>RhinoException</code> use the Mozilla/Firefox style of
-     * rendering script stacks (<code>functionName()@fileName:lineNumber</code>) instead of Rhino's
-     * own Java-inspired format (<code>    at fileName:lineNumber (functionName)</code>).
+     * Returns true if subclasses of {@code RhinoException} use the Mozilla/Firefox style of
+     * rendering script stacks ({@code functionName()@fileName:lineNumber}) instead of Rhino's own
+     * Java-inspired format ({@code at fileName:lineNumber (functionName)}).
      *
      * @return true if stack is rendered in Mozilla/Firefox style
      * @see ScriptStackElement
@@ -342,10 +342,10 @@ public abstract class RhinoException extends RuntimeException {
     }
 
     /**
-     * Tell subclasses of <code>RhinoException</code> whether to use the Mozilla/Firefox style of
-     * rendering script stacks (<code>functionName()@fileName:lineNumber</code>) instead of Rhino's
-     * own Java-inspired format (<code>    at fileName:lineNumber (functionName)</code>). Use
-     * "setStackStyle" to select between more than just the "Mozilla" and "Rhino" formats.
+     * Tell subclasses of {@code RhinoException} whether to use the Mozilla/Firefox style of
+     * rendering script stacks ({@code functionName()@fileName:lineNumber}) instead of Rhino's own
+     * Java-inspired format ({@code at fileName:lineNumber (functionName)}). Use "setStackStyle" to
+     * select between more than just the "Mozilla" and "Rhino" formats.
      *
      * @param flag whether to render stacks in Mozilla/Firefox style
      * @see ScriptStackElement

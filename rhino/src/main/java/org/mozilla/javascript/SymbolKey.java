@@ -51,7 +51,7 @@ public class SymbolKey implements Symbol, Serializable {
 
     /**
      * Returns the symbol's description - will return {@link Undefined#instance} if we have an
-     * anonymous symbol (i.e. something created with <code>Symbol()</code>).
+     * anonymous symbol (i.e. something created with {@code Symbol()}).
      */
     public Object getDescription() {
         return name != null ? name : Undefined.instance;

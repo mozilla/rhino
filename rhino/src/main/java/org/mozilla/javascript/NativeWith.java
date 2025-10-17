@@ -9,7 +9,7 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 
 /**
- * This class implements the object lookup required for the <code>with</code> statement. It simply
+ * This class implements the object lookup required for the {@code with} statement. It simply
  * delegates every action to its prototype except for operations on its parent.
  */
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {

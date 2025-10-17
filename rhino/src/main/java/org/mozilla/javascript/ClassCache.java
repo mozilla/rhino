@@ -125,13 +125,12 @@ public class ClassCache implements Serializable {
     /**
      * Set whether to cache some values.
      *
-     * <p>By default, the engine will cache the results of <code>Class.getMethods()</code> and
-     * similar calls. This can speed execution dramatically, but increases the memory footprint.
-     * Also, with caching enabled, references may be held to objects past the lifetime of any real
-     * usage.
+     * <p>By default, the engine will cache the results of {@code Class.getMethods()} and similar
+     * calls. This can speed execution dramatically, but increases the memory footprint. Also, with
+     * caching enabled, references may be held to objects past the lifetime of any real usage.
      *
-     * <p>If caching is enabled and this method is called with a <code>false</code> argument, the
-     * caches will be emptied.
+     * <p>If caching is enabled and this method is called with a {@code false} argument, the caches
+     * will be emptied.
      *
      * <p>Caching is enabled by default.
      *

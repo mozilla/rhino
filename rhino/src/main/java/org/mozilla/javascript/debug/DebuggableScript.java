@@ -42,9 +42,9 @@ public interface DebuggableScript {
     public int getParamAndVarCount();
 
     /**
-     * Get name of a declared parameter or local variable. <code>index</code> should be less then
-     * {@link #getParamAndVarCount()}. If <code>index&nbsp;&lt;&nbsp;{@link #getParamCount()}</code>
-     * , return the name of the corresponding parameter, otherwise return the name of variable. If
+     * Get name of a declared parameter or local variable. {@code index} should be less then {@link
+     * #getParamAndVarCount()}. If <code>index&nbsp;&lt;&nbsp;{@link #getParamCount()}</code> ,
+     * return the name of the corresponding parameter, otherwise return the name of variable. If
      * this script is not function, return the name of the declared global variable.
      */
     public String getParamOrVarName(int index);
@@ -53,14 +53,14 @@ public interface DebuggableScript {
     public String getSourceName();
 
     /**
-     * Returns true if this script or function were runtime-generated from JavaScript using <code>
-     * eval</code> function or <code>Function</code> or <code>Script</code> constructors.
+     * Returns true if this script or function were runtime-generated from JavaScript using {@code
+     * eval} function or {@code Function} or {@code Script} constructors.
      */
     public boolean isGeneratedScript();
 
     /**
-     * Get array containing the line numbers that that can be passed to <code>
-     * DebugFrame.onLineChange()</code>. Note that line order in the resulting array is arbitrary
+     * Get array containing the line numbers that that can be passed to {@code
+     * DebugFrame.onLineChange()}. Note that line order in the resulting array is arbitrary
      */
     public int[] getLineNumbers();
 

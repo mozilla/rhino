@@ -246,8 +246,8 @@ public class ClassFileWriter {
     /**
      * Complete generation of the method.
      *
-     * <p>After this method is called, no more code can be added to the method begun with <code>
-     * startMethod</code>.
+     * <p>After this method is called, no more code can be added to the method begun with {@code
+     * startMethod}.
      *
      * @param maxLocals the maximum number of local variable slots (a.k.a. Java registers) used by
      *     the method

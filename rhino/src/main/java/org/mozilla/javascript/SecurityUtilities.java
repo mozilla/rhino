@@ -44,7 +44,7 @@ public class SecurityUtilities {
     /**
      * Look up the top-most element in the current stack representing a script and return its
      * protection domain. This relies on the system-wide SecurityManager being an instance of {@link
-     * RhinoSecurityManager}, otherwise it returns <code>null</code>.
+     * RhinoSecurityManager}, otherwise it returns {@code null}.
      *
      * @return The protection of the top-most script in the current stack, or null
      */

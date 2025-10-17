@@ -24,7 +24,7 @@ public class FunctionObject extends BaseFunction {
     /**
      * Create a JavaScript function object from a Java method.
      *
-     * <p>The <code>member</code> argument must be either a java.lang.reflect.Method or a
+     * <p>The {@code member} argument must be either a java.lang.reflect.Method or a
      * java.lang.reflect.Constructor and must match one of two forms.
      *
      * <p>The first form is a member with zero or more parameters of the following types: Object,
@@ -61,17 +61,17 @@ public class FunctionObject extends BaseFunction {
      *
      * and an Object result.
      *
-     * <p>When the function varargs form is called as part of a function call, the <code>args</code>
-     * parameter contains the arguments, with <code>thisObj</code> set to the JavaScript 'this'
-     * value. <code>funObj</code> is the function object for the invoked function.
+     * <p>When the function varargs form is called as part of a function call, the {@code args}
+     * parameter contains the arguments, with {@code thisObj} set to the JavaScript 'this' value.
+     * {@code funObj} is the function object for the invoked function.
      *
-     * <p>When the constructor varargs form is called or invoked while evaluating a <code>new</code>
-     * expression, <code>args</code> contains the arguments, <code>ctorObj</code> refers to this
-     * FunctionObject, and <code>inNewExpr</code> is true if and only if a <code>new</code>
-     * expression caused the call. This supports defining a function that has different behavior
-     * when called as a constructor than when invoked as a normal function call. (For example, the
-     * Boolean constructor, when called as a function, will convert to boolean rather than creating
-     * a new object.)
+     * <p>When the constructor varargs form is called or invoked while evaluating a {@code new}
+     * expression, {@code args} contains the arguments, {@code ctorObj} refers to this
+     * FunctionObject, and {@code inNewExpr} is true if and only if a {@code new} expression caused
+     * the call. This supports defining a function that has different behavior when called as a
+     * constructor than when invoked as a normal function call. (For example, the Boolean
+     * constructor, when called as a function, will convert to boolean rather than creating a new
+     * object.)
      *
      * @param name the name of the function
      * @param methodOrConstructor a java.lang.reflect.Method or a java.lang.reflect.Constructor that
@@ -150,7 +150,7 @@ public class FunctionObject extends BaseFunction {
     }
 
     /**
-     * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type or {@link
+     * @return One of {@code JAVA_*_TYPE} constants to indicate desired type or {@link
      *     #JAVA_UNSUPPORTED_TYPE} if the conversion is not possible
      * @see TypeInfo#getTypeTag()
      */
@@ -292,7 +292,7 @@ public class FunctionObject extends BaseFunction {
      *
      * <p>Sets up the "prototype" and "constructor" properties. Also calls setParent and
      * setPrototype with appropriate values. Then adds the function object as a property of the
-     * given scope, using <code>prototype.getClassName()</code> as the name of the property.
+     * given scope, using {@code prototype.getClassName()} as the name of the property.
      *
      * @param scope the scope in which to define the constructor (typically the global object)
      * @param prototype the prototype object
@@ -313,7 +313,7 @@ public class FunctionObject extends BaseFunction {
      *
      * <p>Sets up the "prototype" and "constructor" properties. Also calls setParent and
      * setPrototype with appropriate values. Then adds the function object as a property of the
-     * given scope, using <code>prototype.getClassName()</code> as the name of the property.
+     * given scope, using {@code prototype.getClassName()} as the name of the property.
      *
      * @param scope the scope in which to define the constructor (typically the global object)
      * @param prototype the prototype object

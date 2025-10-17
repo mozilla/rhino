@@ -34,7 +34,7 @@ public interface Script {
      * current thread. The script is executed relative to a scope--definitions and uses of global
      * top-level variables and functions will access properties of the scope object. For compliant
      * ECMA programs, the scope must be an object that has been initialized as a global object using
-     * <code>Context.initStandardObjects</code>.
+     * {@code Context.initStandardObjects}.
      *
      * @param cx the Context associated with the current thread
      * @param scope the scope to execute relative to

@@ -12,18 +12,17 @@ public interface ConstProperties {
     /**
      * Sets a named const property in this object.
      *
-     * <p>The property is specified by a string name as defined for <code>Scriptable.get</code>.
+     * <p>The property is specified by a string name as defined for {@code Scriptable.get}.
      *
-     * <p>The possible values that may be passed in are as defined for <code>Scriptable.get</code>.
-     * A class that implements this method may choose to ignore calls to set certain properties, in
+     * <p>The possible values that may be passed in are as defined for {@code Scriptable.get}. A
+     * class that implements this method may choose to ignore calls to set certain properties, in
      * which case those properties are effectively read-only.
      *
-     * <p>For properties defined in a prototype chain, use <code>putProperty</code> in
-     * ScriptableObject.
+     * <p>For properties defined in a prototype chain, use {@code putProperty} in ScriptableObject.
      *
      * <p>Note that if a property <i>a</i> is defined in the prototype <i>p</i> of an object
-     * <i>o</i>, then evaluating <code>o.a = 23</code> will cause <code>set</code> to be called on
-     * the prototype <i>p</i> with <i>o</i> as the <i>start</i> parameter. To preserve JavaScript
+     * <i>o</i>, then evaluating {@code o.a = 23} will cause {@code set} to be called on the
+     * prototype <i>p</i> with <i>o</i> as the <i>start</i> parameter. To preserve JavaScript
      * semantics, it is the Scriptable object's responsibility to modify <i>o</i>.
      *
      * <p>This design allows properties to be defined in prototypes and implemented in terms of
@@ -40,13 +39,13 @@ public interface ConstProperties {
      *   <LI>The value returned by Context.getUndefinedValue()
      * </UL>
      *
-     * <p>Arbitrary Java objects may be wrapped in a Scriptable by first calling <code>
-     * Context.toObject</code>. This allows the property of a JavaScript object to contain an
-     * arbitrary Java object as a value.
+     * <p>Arbitrary Java objects may be wrapped in a Scriptable by first calling {@code
+     * Context.toObject}. This allows the property of a JavaScript object to contain an arbitrary
+     * Java object as a value.
      *
-     * <p>Note that <code>has</code> will be called by the runtime first before <code>set</code> is
-     * called to determine in which object the property is defined. Note that this method is not
-     * expected to traverse the prototype chain, which is different from the ECMA [[Put]] operation.
+     * <p>Note that {@code has} will be called by the runtime first before {@code set} is called to
+     * determine in which object the property is defined. Note that this method is not expected to
+     * traverse the prototype chain, which is different from the ECMA [[Put]] operation.
      *
      * @param name the name of the property
      * @param start the object whose property is being set

@@ -46,9 +46,9 @@ public class ClassCompiler {
 
     /**
      * Set the class name to use for main method implementation. The class must have a method
-     * matching <code>public static void main(Script sc, String[] args)</code>, it will be called
-     * when <code>main(String[] args)</code> is called in the generated class. The class name should
-     * be fully qualified name and include the package name like in <code>org.foo.Bar</code>.
+     * matching {@code public static void main(Script sc, String[] args)}, it will be called when
+     * {@code main(String[] args)} is called in the generated class. The class name should be fully
+     * qualified name and include the package name like in {@code org.foo.Bar}.
      */
     public void setMainMethodClass(String className) {
         // XXX Should this check for a valid class name?

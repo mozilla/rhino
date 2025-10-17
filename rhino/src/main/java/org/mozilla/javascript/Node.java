@@ -554,7 +554,7 @@ public class Node implements Iterable<Node> {
         this.column = column;
     }
 
-    /** Can only be called when <code>getType() == Token.NUMBER</code> */
+    /** Can only be called when {@code getType() == Token.NUMBER} */
     public final double getDouble() {
         return ((NumberLiteral) this).getNumber();
     }
@@ -563,7 +563,7 @@ public class Node implements Iterable<Node> {
         ((NumberLiteral) this).setNumber(number);
     }
 
-    /** Can only be called when <code>getType() == Token.BIGINT</code> */
+    /** Can only be called when {@code getType() == Token.BIGINT} */
     public BigInteger getBigInt() {
         throw new UnsupportedOperationException("Can only be called when Token.BIGINT");
     }

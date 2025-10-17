@@ -23,7 +23,7 @@ public interface DebugFrame {
      *
      * @param cx current Context for this thread
      * @param activation the activation scope for the function or script.
-     * @param thisObj value of the JavaScript <code>this</code> object
+     * @param thisObj value of the JavaScript {@code this} object
      * @param args the array of arguments
      */
     public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args);

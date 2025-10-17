@@ -110,8 +110,8 @@ public class TopLevel extends IdScriptableObject {
      * Cache the built-in ECMAScript objects to protect them against modifications by the script.
      * This method is called automatically by {@link ScriptRuntime#initStandardObjects
      * ScriptRuntime.initStandardObjects} if the scope argument is an instance of this class. It
-     * only has to be called by the embedding if a top-level scope is not initialized through <code>
-     * initStandardObjects()</code>.
+     * only has to be called by the embedding if a top-level scope is not initialized through {@code
+     * initStandardObjects()}.
      */
     public void cacheBuiltins(Scriptable scope, boolean sealed) {
         ctors = new EnumMap<>(Builtins.class);
@@ -143,9 +143,9 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Static helper method to get a built-in object constructor with the given <code>type</code>
-     * from the given <code>scope</code>. If the scope is not an instance of this class or does have
-     * a cache of built-ins, the constructor is looked up via normal property lookup.
+     * Static helper method to get a built-in object constructor with the given {@code type} from
+     * the given {@code scope}. If the scope is not an instance of this class or does have a cache
+     * of built-ins, the constructor is looked up via normal property lookup.
      *
      * @param cx the current Context
      * @param scope the top-level scope
@@ -175,9 +175,9 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Static helper method to get a native error constructor with the given <code>type</code> from
-     * the given <code>scope</code>. If the scope is not an instance of this class or does have a
-     * cache of native errors, the constructor is looked up via normal property lookup.
+     * Static helper method to get a native error constructor with the given {@code type} from the
+     * given {@code scope}. If the scope is not an instance of this class or does have a cache of
+     * native errors, the constructor is looked up via normal property lookup.
      *
      * @param cx the current Context
      * @param scope the top-level scope
@@ -198,9 +198,9 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Static helper method to get a built-in object prototype with the given <code>type</code> from
-     * the given <code>scope</code>. If the scope is not an instance of this class or does have a
-     * cache of built-ins, the prototype is looked up via normal property lookup.
+     * Static helper method to get a built-in object prototype with the given {@code type} from the
+     * given {@code scope}. If the scope is not an instance of this class or does have a cache of
+     * built-ins, the prototype is looked up via normal property lookup.
      *
      * @param scope the top-level scope
      * @param type the built-in type
@@ -229,7 +229,7 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached built-in object constructor from this scope with the given <code>type</code>.
+     * Get the cached built-in object constructor from this scope with the given {@code type}.
      * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
      * object.
      *
@@ -241,9 +241,8 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached native error constructor from this scope with the given <code>type</code>.
-     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
-     * object.
+     * Get the cached native error constructor from this scope with the given {@code type}. Returns
+     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
      *
      * @param type the native error type
      * @return the native error constructor
@@ -253,9 +252,8 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached built-in object prototype from this scope with the given <code>type</code>.
-     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
-     * object.
+     * Get the cached built-in object prototype from this scope with the given {@code type}. Returns
+     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
      *
      * @param type the built-in type
      * @return the built-in prototype

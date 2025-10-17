@@ -2567,16 +2567,16 @@ public class NativeArray extends ScriptableObject implements List {
      */
     private Object[] dense;
 
-    /** True if all numeric properties are stored in <code>dense</code>. */
+    /** True if all numeric properties are stored in {@code dense}. */
     private boolean denseOnly;
 
-    /** The maximum size of <code>dense</code> that will be allocated initially. */
+    /** The maximum size of {@code dense} that will be allocated initially. */
     private static int maximumInitialCapacity = 10000;
 
-    /** The default capacity for <code>dense</code>. */
+    /** The default capacity for {@code dense}. */
     private static final int DEFAULT_INITIAL_CAPACITY = 10;
 
-    /** The factor to grow <code>dense</code> by. */
+    /** The factor to grow {@code dense} by. */
     private static final double GROW_FACTOR = 1.5;
 
     private static final int MAX_PRE_GROW_SIZE = (int) (Integer.MAX_VALUE / GROW_FACTOR);

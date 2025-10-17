@@ -295,7 +295,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         typedArray.definePrototypeMethod(scope, key, length, target);
     }
 
-    /** Returns <code>true</code>, if the index is wrong. */
+    /** Returns {@code true}, if the index is wrong. */
     protected boolean checkIndex(int index) {
         return isTypedArrayOutOfBounds() || ((index < 0) || (index >= length));
     }
