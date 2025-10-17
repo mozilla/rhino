@@ -269,16 +269,16 @@ public class UnicodeProperties {
             Character.UnicodeScript.values();
 
     /**
-     * Tests if a code point has a specific Unicode property.
-     *
-     * @param property Encoded property (from lookup method)
-     * @param codePoint Character code point to test
-     * @return true if the code point has the property
+     * Tests if a code point has a specific Unicode property (direct check without case handling).
      */
     public static boolean hasProperty(int property, int codePoint) {
         byte propByte = (byte) ((property >> 8) & 0xFF);
         int valueByte = (property & 0xFF);
+        return hasPropertyDirect(propByte, valueByte, codePoint);
+    }
 
+    /** Direct property check without any case handling. */
+    private static boolean hasPropertyDirect(byte propByte, int valueByte, int codePoint) {
         switch (propByte) {
             case ALPHABETIC:
                 return Character.isAlphabetic(codePoint) == (valueByte == TRUE);
@@ -441,5 +441,112 @@ public class UnicodeProperties {
         return (codePoint >= '0' && codePoint <= '9')
                 || (codePoint >= 'a' && codePoint <= 'f')
                 || (codePoint >= 'A' && codePoint <= 'F');
+    }
+
+    /**
+     * Checks if a character matches \p{property}/iu (case-insensitive Unicode mode).
+     *
+     * <p>Algorithm: caseFold(input) ∈ caseFold(P) iff input is case-equivalent to some character
+     * with property P. We check if input OR any of its case variants has the property.
+     *
+     * @param encodedProperty The encoded property from UnicodeProperties.lookup()
+     * @param inputCp The input codepoint to test
+     * @param foldedCp The case-folded codepoint (from NativeRegExp.unicodeCaseFold)
+     * @return true if the character matches \p{property}/iu
+     */
+    public static boolean matchesPropCaseInsensitive(
+            int encodedProperty, int inputCp, int foldedCp) {
+        // Check if input itself has the property
+        if (hasProperty(encodedProperty, inputCp)) {
+            return true;
+        }
+
+        // Check case variants using the same case folding as NativeRegExp
+        if (foldedCp != inputCp && hasProperty(encodedProperty, foldedCp)) {
+            return true;
+        }
+
+        // Also check via Character methods for additional case variants
+        int lower = Character.toLowerCase(inputCp);
+        if (lower != inputCp && lower != foldedCp && hasProperty(encodedProperty, lower)) {
+            return true;
+        }
+
+        int upper = Character.toUpperCase(inputCp);
+        if (upper != inputCp && upper != foldedCp && hasProperty(encodedProperty, upper)) {
+            return true;
+        }
+
+        int title = Character.toTitleCase(inputCp);
+        if (title != inputCp && title != upper && title != foldedCp
+                && hasProperty(encodedProperty, title)) {
+            return true;
+        }
+
+        // Critical: Check if the lowercase of the case-folded value has the property
+        // This handles cases like U+0345 which case-folds to U+0399 (Greek capital iota),
+        // and U+0399's lowercase U+03B9 is in Ll
+        int lowerOfFolded = Character.toLowerCase(foldedCp);
+        if (lowerOfFolded != inputCp && lowerOfFolded != lower && lowerOfFolded != foldedCp
+                && hasProperty(encodedProperty, lowerOfFolded)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a character matches \P{property}/iu (negated, case-insensitive Unicode mode).
+     *
+     * <p>Algorithm: caseFold(input) ∈ caseFold(complement(P)) iff input is case-equivalent to some
+     * character WITHOUT property P. We check if input OR any of its case variants does NOT have the
+     * property.
+     *
+     * <p>Note: This is NOT the complement of matchesPropCaseInsensitive. Both can return true for
+     * the same input if the input has case variants on both sides of the property boundary.
+     *
+     * @param encodedProperty The encoded property from UnicodeProperties.lookup()
+     * @param inputCp The input codepoint to test
+     * @param foldedCp The case-folded codepoint (from NativeRegExp.unicodeCaseFold)
+     * @return true if the character matches \P{property}/iu
+     */
+    public static boolean matchesNegatedPropCaseInsensitive(
+            int encodedProperty, int inputCp, int foldedCp) {
+        // Check if input itself does NOT have the property
+        if (!hasProperty(encodedProperty, inputCp)) {
+            return true;
+        }
+
+        // Check case variants using the same case folding as NativeRegExp
+        if (foldedCp != inputCp && !hasProperty(encodedProperty, foldedCp)) {
+            return true;
+        }
+
+        // Also check via Character methods for additional case variants
+        int lower = Character.toLowerCase(inputCp);
+        if (lower != inputCp && lower != foldedCp && !hasProperty(encodedProperty, lower)) {
+            return true;
+        }
+
+        int upper = Character.toUpperCase(inputCp);
+        if (upper != inputCp && upper != foldedCp && !hasProperty(encodedProperty, upper)) {
+            return true;
+        }
+
+        int title = Character.toTitleCase(inputCp);
+        if (title != inputCp && title != upper && title != foldedCp
+                && !hasProperty(encodedProperty, title)) {
+            return true;
+        }
+
+        // Check lowercase of case-folded value for completeness
+        int lowerOfFolded = Character.toLowerCase(foldedCp);
+        if (lowerOfFolded != inputCp && lowerOfFolded != lower && lowerOfFolded != foldedCp
+                && !hasProperty(encodedProperty, lowerOfFolded)) {
+            return true;
+        }
+
+        // All case variants have the property, so input doesn't match \P{property}/iu
+        return false;
     }
 }

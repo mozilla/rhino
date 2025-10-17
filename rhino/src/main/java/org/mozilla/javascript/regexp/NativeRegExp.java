@@ -2673,35 +2673,54 @@ public class NativeRegExp extends IdScriptableObject {
             processCharSet(gData, charSet);
         }
 
+        boolean caseInsensitiveUnicode =
+                (gData.regexp.flags & JSREG_UNICODE) != 0
+                        && (gData.regexp.flags & JSREG_FOLD) != 0;
 
-        if ((gData.regexp.flags & JSREG_UNICODE) != 0 && (gData.regexp.flags & JSREG_FOLD) != 0) {
-            codePoint = unicodeCaseFold(codePoint);
+        // For character class matching (not unicode properties), case-fold the input
+        int foldedCodePoint = codePoint;
+        if (caseInsensitiveUnicode) {
+            foldedCodePoint = unicodeCaseFold(codePoint);
         }
-        if (codePoint <= 0xFFFF) {
-            int byteIndex = codePoint >> 3;
+
+        if (foldedCodePoint <= 0xFFFF) {
+            int byteIndex = foldedCodePoint >> 3;
             if (!(charSet.length == 0
-                    || codePoint >= charSet.length
-                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0))
+                    || foldedCodePoint >= charSet.length
+                    || (charSet.bits[byteIndex] & (1 << (foldedCodePoint & 0x7))) == 0))
                 return charSet.classContents.sense;
         }
 
-        if (charSet.classContents.nonBMPCodepoints.contains(codePoint))
+        if (charSet.classContents.nonBMPCodepoints.contains(foldedCodePoint))
             return charSet.classContents.sense;
 
         for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
-            if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
-                    && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
+            if (foldedCodePoint >= charSet.classContents.nonBMPRanges.get(i)
+                    && foldedCodePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
                 return charSet.classContents.sense;
             }
         }
 
+        // For Unicode property escapes, use UnicodeProperties in case-insensitive Unicode mode
         for (int encodedProp : charSet.unicodeProps) {
-            if (UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+            if (caseInsensitiveUnicode) {
+                if (UnicodeProperties.matchesPropCaseInsensitive(
+                        encodedProp, codePoint, foldedCodePoint))
+                    return charSet.classContents.sense;
+            } else {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint))
+                    return charSet.classContents.sense;
+            }
         }
         for (int encodedProp : charSet.negUnicodeProps) {
-            if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+            if (caseInsensitiveUnicode) {
+                if (UnicodeProperties.matchesNegatedPropCaseInsensitive(
+                        encodedProp, codePoint, foldedCodePoint))
+                    return charSet.classContents.sense;
+            } else {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
+                    return charSet.classContents.sense;
+            }
         }
         return !charSet.classContents.sense;
     }
@@ -3040,10 +3059,23 @@ public class NativeRegExp extends IdScriptableObject {
                     pc += INDEX_LEN;
                     if (cpInBounds) {
                         boolean sense = (op == REOP_UPROP);
-                        result =
-                                sense
-                                        ^ !UnicodeProperties.hasProperty(
-                                                encodedProp, input.codePointAt(cpToMatch));
+                        boolean caseInsensitiveUnicode =
+                                (gData.regexp.flags & JSREG_FOLD) != 0
+                                        && (gData.regexp.flags & JSREG_UNICODE) != 0;
+                        int cp = input.codePointAt(cpToMatch);
+
+                        if (caseInsensitiveUnicode) {
+                            // Use case-fold matching for /iu mode
+                            int folded = unicodeCaseFold(cp);
+                            result =
+                                    sense
+                                            ? UnicodeProperties.matchesPropCaseInsensitive(
+                                                    encodedProp, cp, folded)
+                                            : UnicodeProperties.matchesNegatedPropCaseInsensitive(
+                                                    encodedProp, cp, folded);
+                        } else {
+                            result = sense ^ !UnicodeProperties.hasProperty(encodedProp, cp);
+                        }
                         gData.cp += cpDelta;
                     }
                     break;
