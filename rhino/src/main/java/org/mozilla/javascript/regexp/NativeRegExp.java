@@ -3601,6 +3601,10 @@ public class NativeRegExp extends IdScriptableObject {
                         if (matchCodePoint == anchorCodePoint) {
                             break;
                         }
+                        if ((gData.regexp.flags & JSREG_FOLD) != 0
+                                && unicodeCaseInsensitiveEquals(matchCodePoint, anchorCodePoint)) {
+                            break;
+                        }
                         charCount = Character.charCount(matchCodePoint);
                     } else {
                         char matchCh = input.charAt(i);
