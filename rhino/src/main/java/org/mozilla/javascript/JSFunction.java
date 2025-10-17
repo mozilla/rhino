@@ -59,6 +59,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         return descriptor.getLanguageVersion();
     }
 
+    @Override
     protected boolean hasPrototypeProperty() {
         return true;
     }
