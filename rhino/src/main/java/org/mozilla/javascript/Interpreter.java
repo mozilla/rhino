@@ -1041,6 +1041,18 @@ public final class Interpreter extends Icode implements Evaluator {
             case Icode_LITERAL_NEW_OBJECT:
                 // make a copy or not flag
                 return 1 + 1;
+
+            case Icode_REG_BIGINT1:
+                // ubyte bigint index
+                return 1 + 1;
+
+            case Icode_REG_BIGINT2:
+                // ushort bigint index
+                return 1 + 2;
+
+            case Icode_REG_BIGINT4:
+                // uint bigint index
+                return 1 + 4;
         }
         if (!validBytecode(bytecode)) throw Kit.codeBug();
         return 1;
