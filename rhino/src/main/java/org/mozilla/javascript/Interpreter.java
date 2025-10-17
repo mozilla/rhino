@@ -753,7 +753,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_CLOSURE_EXPR:
                 case Icode_CLOSURE_STMT:
                 case Icode_METHOD_EXPR:
-                    out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
+                    out.println(tname + " #" + indexReg);
                     break;
                 case Token.CALL:
                 case Icode_CALL_ON_SUPER:

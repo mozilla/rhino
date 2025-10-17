@@ -17,7 +17,8 @@ class InterpreterBytecodeDumpTest {
     @Test
     void basicSmokeTest() throws IOException {
         assertEquals(
-                "ICode dump, for null, length = 8\n"
+                ""
+                        + "ICode dump, for null, length = 8\n"
                         + "MaxStack = 1\n"
                         + " [0] LINE : 1\n"
                         + " [3] SHORTNUMBER 42\n"
@@ -29,7 +30,8 @@ class InterpreterBytecodeDumpTest {
     @Test
     void functionNamesArePrinted() throws IOException {
         assertEquals(
-                "ICode dump, for f, length = 4\n"
+                ""
+                        + "ICode dump, for f, length = 4\n"
                         + "MaxStack = 0\n"
                         + " [0] LINE : 1\n"
                         + " [3] RETUNDEF\n"
@@ -37,6 +39,32 @@ class InterpreterBytecodeDumpTest {
                         + "MaxStack = 0\n"
                         + " [0] RETURN_RESULT\n",
                 getByteCodeFrom("function f() {}"));
+    }
+
+    @Test
+    void methodsArePrinted() throws IOException {
+        assertEquals(
+                ""
+                        + "ICode dump, for f, length = 4\n"
+                        + "MaxStack = 0\n"
+                        + " [0] LINE : 1\n"
+                        + " [3] RETUNDEF\n"
+                        + "ICode dump, for null, length = 16\n"
+                        + "MaxStack = 4\n"
+                        + " [0] LINE : 1\n"
+                        + " [3] REG_STR_C0 \"o\"\n"
+                        + " [4] BINDNAME\n"
+                        + " [5] REG_IND_C0\n"
+                        + " [6] LITERAL_NEW_OBJECT [f] false\n"
+                        + " [8] REG_IND_C0\n"
+                        + " [9] METHOD_EXPR #0\n"
+                        + " [10] LITERAL_SET\n"
+                        + " [11] OBJECTLIT\n"
+                        + " [12] REG_STR_C0 \"o\"\n"
+                        + " [13] SETNAME\n"
+                        + " [14] POP_RESULT\n"
+                        + " [15] RETURN_RESULT\n",
+                getByteCodeFrom("o = { f() {} }"));
     }
 
     private static String getByteCodeFrom(String source) throws IOException {
