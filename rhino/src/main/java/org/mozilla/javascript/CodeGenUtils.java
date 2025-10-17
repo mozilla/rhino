@@ -108,6 +108,9 @@ public class CodeGenUtils {
         builder.hasRestArg = scriptOrFn.hasRestParameter();
         builder.hasDefaultParameters = scriptOrFn.getDefaultParams() != null;
 
+        // Calculate arity (function.length) - count params before first default
+        builder.arity = FunctionNode.calculateFunctionArity(scriptOrFn);
+
         builder.rawSourceStart = scriptOrFn.getRawSourceStart();
         builder.rawSourceEnd = scriptOrFn.getRawSourceEnd();
     }
