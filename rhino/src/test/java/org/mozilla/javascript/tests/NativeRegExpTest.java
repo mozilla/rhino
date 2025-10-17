@@ -1262,4 +1262,58 @@ public class NativeRegExpTest {
     public void testUnicodeCaseInsensitiveBackwardFlatMatching() {
         Utils.assertWithAllModes_ES6(true, "/(?<=Kİ)1/ui.test('ki1')");
     }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassKAndI() {
+        // Test with K (U+212A KELVIN SIGN) and İ (U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE)
+        // K folds to k, İ folds to i with dot above
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^[Kİ]$/ui.test('k') + '-' + "
+                        + "/^[Kİ]$/ui.test('K') + '-' + "
+                        + "/^[Kİ]$/ui.test('i') + '-' + "
+                        + "/^[Kİ]$/ui.test('İ')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassBMPRange() {
+        // Test with BMP ranges around k (U+006B)
+        // Range [j-l] includes j (U+006A), k (U+006B), l (U+006C)
+        // K (U+212A KELVIN SIGN) should match when case-insensitive
+        Utils.assertWithAllModes_ES6(
+                "true-true-false",
+                "/^[j-l]$/ui.test('k') + '-' + "
+                        + "/^[j-l]$/ui.test('K') + '-' + "
+                        + "/^[j-l]$/ui.test('m')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassDeseret() {
+        // Test with non-BMP: DESERET CAPITAL LETTER LONG AH (U+10403) folds to U+1042B
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^[\uD801\uDC03]$/ui.test('\uD801\uDC03') + '-' + "
+                        + "/^[\uD801\uDC03]$/ui.test('\uD801\uDC2B')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassDeseretRange() {
+        // Test with non-BMP range including DESERET letters
+        // U+10400-10402 (DESERET CAPITAL A, B, C) should match U+10428-1042A (small a, b, c)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC00') + '-' + "
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC28') + '-' + "
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC29')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegatedCharacterClass() {
+        // Test negated character class with case folding
+        Utils.assertWithAllModes_ES6(
+                "false-false-true",
+                "/^[^Kİ]$/ui.test('k') + '-' + "
+                        + "/^[^Kİ]$/ui.test('İ') + '-' + "
+                        + "/^[^Kİ]$/ui.test('x')");
+    }
 }
