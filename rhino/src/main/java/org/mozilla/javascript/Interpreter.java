@@ -657,19 +657,18 @@ public final class Interpreter extends Icode implements Evaluator {
         return best;
     }
 
-    static void dumpICode(InterpreterData.Builder idata) {
+    static <T extends ScriptOrFn<T>> void dumpICode(
+            InterpreterData.Builder<T> idata, JSDescriptor.Builder<T> desc) {
         if (!Token.printICode) {
             return;
         }
-
-        JSDescriptor desc = null;
 
         byte[] iCode = idata.itsICode;
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
         BigInteger[] bigInts = idata.itsBigIntTable;
         PrintStream out = System.out;
-        out.println("ICode dump, for " + desc.getName() + ", length = " + iCodeLength);
+        out.println("ICode dump, for " + desc.name + ", length = " + iCodeLength);
         out.println("MaxStack = " + idata.itsMaxStack);
 
         int indexReg = 0;
