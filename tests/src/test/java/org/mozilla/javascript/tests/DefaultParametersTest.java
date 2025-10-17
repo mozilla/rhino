@@ -487,4 +487,20 @@ public class DefaultParametersTest {
 
         Utils.assertWithAllModes_ES6(1, script);
     }
+
+    @Test
+    public void functionLengthWithDefaultAndRestParameters() throws Exception {
+        // length should count params before first default (not affected by rest)
+        Utils.assertWithAllModes_ES6(1, "function f(a, b=1, ...c) {}; f.length");
+        Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, ...d) {}; f.length");
+        Utils.assertWithAllModes_ES6(0, "function f(a=1, b, ...c) {}; f.length");
+    }
+
+    @Test
+    public void functionLengthWithMultipleDefaults() throws Exception {
+        // when multiple defaults are present, we need only count up to the first one
+        Utils.assertWithAllModes_ES6(1, "function f(a, b=1, c=2) {}; f.length");
+        Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, d=2) {}; f.length");
+        Utils.assertWithAllModes_ES6(0, "function f(a=1, b=2, c=3) {}; f.length");
+    }
 }

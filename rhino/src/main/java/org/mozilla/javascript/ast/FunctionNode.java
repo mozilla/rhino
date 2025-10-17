@@ -526,10 +526,11 @@ public class FunctionNode extends ScriptNode {
                 // defaultParams stores pairs: [paramName (String), defaultValue (AstNode), ...]
                 // count up to the first parameter that has a default value
                 java.util.List<AstNode> params = fnNode.getParams();
+                String paramWithDefault = null;
                 if (params != null && !params.isEmpty()) {
                     for (int i = 0; i < defaultParams.size(); i += 2) {
                         if (defaultParams.get(i) instanceof String) {
-                            String paramWithDefault = (String) defaultParams.get(i);
+                            paramWithDefault = (String) defaultParams.get(i);
 
                             for (int paramIndex = 0; paramIndex < params.size(); paramIndex++) {
                                 AstNode param = params.get(paramIndex);
@@ -549,7 +550,7 @@ public class FunctionNode extends ScriptNode {
         }
 
         // Rest parameters don't count toward length
-        if (scriptOrFn.hasRestParameter()) {
+        if (scriptOrFn.hasRestParameter() && arity == paramCount) {
             arity = Math.max(0, arity - 1);
         }
 
