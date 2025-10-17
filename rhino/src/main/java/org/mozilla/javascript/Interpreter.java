@@ -657,6 +657,8 @@ public final class Interpreter extends Icode implements Evaluator {
         return best;
     }
 
+    static PrintStream interpreterBytecodePrintStream = System.out;
+
     static <T extends ScriptOrFn<T>> void dumpICode(
             InterpreterData.Builder<T> idata, JSDescriptor.Builder<T> desc) {
         if (!Token.printICode) {
@@ -667,7 +669,7 @@ public final class Interpreter extends Icode implements Evaluator {
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
         BigInteger[] bigInts = idata.itsBigIntTable;
-        PrintStream out = System.out;
+        PrintStream out = interpreterBytecodePrintStream;
         out.println("ICode dump, for " + desc.name + ", length = " + iCodeLength);
         out.println("MaxStack = " + idata.itsMaxStack);
 
