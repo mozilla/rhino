@@ -193,7 +193,7 @@ class ExecUtil {
         if (obj == Scriptable.NOT_FOUND) {
             return emptyArray;
         }
-        Scriptable s = Context.toObject(obj, Global.getTopLevelScope(scope));
+        Scriptable s = Context.toObject(obj, ScriptableObject.getTopLevelScope(scope));
         return ScriptRuntime.getArrayElements(s);
     }
 
