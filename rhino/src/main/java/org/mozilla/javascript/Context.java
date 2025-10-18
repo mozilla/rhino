@@ -1016,7 +1016,7 @@ public class Context implements Closeable {
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
-    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+    public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }
