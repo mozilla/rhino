@@ -51,7 +51,7 @@ final class NativeBoolean extends ScriptableObject {
     }
 
     private static boolean toValue(Scriptable thisObj) {
-        return LambdaConstructor.ensureType(thisObj, NativeBoolean.class, "Boolean").booleanValue;
+        return ScriptableObject.ensureType(thisObj, NativeBoolean.class, "Boolean").booleanValue;
     }
 
     @Override
