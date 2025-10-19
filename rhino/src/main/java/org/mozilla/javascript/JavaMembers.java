@@ -115,12 +115,16 @@ class JavaMembers {
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
+        var type = field.type();
+        if (scope instanceof NativeJavaObject) {
+            type = TypeInfoFactory.GLOBAL.consolidateType(type, ((NativeJavaObject) scope).staticType);
+        }
         // Need to wrap the object before we return it.
         return cx.getWrapFactory().wrap(
             cx,
             ScriptableObject.getTopLevelScope(scope),
             got,
-            field.type());
+            type);
     }
 
     void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
@@ -154,8 +158,12 @@ class JavaMembers {
                 throw Context.reportRuntimeErrorById(str, name);
             }
             var field = (NativeJavaField) member;
+            var type = field.type();
+            if (scope instanceof NativeJavaObject) {
+                type = TypeInfoFactory.GLOBAL.consolidateType(type, ((NativeJavaObject) scope).staticType);
+            }
             try {
-                field.set(javaObject, Context.jsToJava(value, field.type()));
+                field.set(javaObject, Context.jsToJava(value, type));
             } catch (IllegalAccessException accessEx) {
                 throw Context.throwAsScriptRuntimeEx(accessEx);
             } catch (IllegalArgumentException argEx) {
