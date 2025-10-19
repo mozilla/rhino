@@ -11,10 +11,12 @@ import java.lang.reflect.Modifier;
  */
 public final class NativeJavaField {
     private final Field field;
+    private final boolean isFinal;
     private final TypeInfo type;
 
     public NativeJavaField(Field field, TypeInfoFactory typeFactory) {
         this.field = field;
+        this.isFinal = Modifier.isFinal(field.getModifiers());
         this.type = typeFactory.create(field.getGenericType());
     }
 
@@ -34,7 +36,7 @@ public final class NativeJavaField {
      * Note: will do nothing when called on a final field
      */
     public void set(Object javaObject, Object value) throws IllegalAccessException {
-        if ((field.getModifiers() & Modifier.FINAL) != 0) {
+        if (isFinal) {
             // treat Java final the same as JavaScript [[READONLY]]
             return;
         }
