@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.mozilla.javascript.lc.member.NativeJavaField;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
@@ -106,18 +108,19 @@ class JavaMembers {
             return bean.getter.call(cx, scope, scope, ScriptRuntime.emptyArgs);
         }
 
-        Object rval;
-        Class<?> type;
+        var field = (NativeJavaField) member;
+        Object got;
         try {
-            var field = (Field) member;
-            rval = field.get(isStatic ? null : javaObject);
-            type = field.getType();
+            got = field.get(isStatic ? null : javaObject);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
         // Need to wrap the object before we return it.
-        scope = ScriptableObject.getTopLevelScope(scope);
-        return cx.getWrapFactory().wrap(cx, scope, rval, type);
+        return cx.getWrapFactory().wrap(
+            cx,
+            ScriptableObject.getTopLevelScope(scope),
+            got,
+            field.type());
     }
 
     void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
@@ -145,20 +148,15 @@ class JavaMembers {
                     scope,
                     new Object[] {value});
         } else {
-            if (!(member instanceof Field)) {
+            if (!(member instanceof NativeJavaField)) {
                 String str =
                         (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
                 throw Context.reportRuntimeErrorById(str, name);
             }
-            Field field = (Field) member;
-            Object javaValue = Context.jsToJava(value, field.getType());
+            var field = (NativeJavaField) member;
             try {
-                field.set(javaObject, javaValue);
+                field.set(javaObject, Context.jsToJava(value, field.type()));
             } catch (IllegalAccessException accessEx) {
-                if ((field.getModifiers() & Modifier.FINAL) != 0) {
-                    // treat Java final the same as JavaScript [[READONLY]]
-                    return;
-                }
                 throw Context.throwAsScriptRuntimeEx(accessEx);
             } catch (IllegalArgumentException argEx) {
                 throw Context.reportRuntimeErrorById(
@@ -491,10 +489,10 @@ class JavaMembers {
                 Map<String, Object> ht = isStatic ? staticMembers : members;
                 Object member = ht.get(name);
                 if (member == null) {
-                    ht.put(name, field);
+                    ht.put(name, new NativeJavaField(field, typeFactory));
                 } else if (member instanceof NativeJavaMethod) {
                     NativeJavaMethod method = (NativeJavaMethod) member;
-                    FieldAndMethods fam = new FieldAndMethods(scope, method.methods, field);
+                    FieldAndMethods fam = new FieldAndMethods(scope, method.methods, new NativeJavaField(field, typeFactory));
                     Map<String, FieldAndMethods> fmht =
                             isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
@@ -507,20 +505,19 @@ class JavaMembers {
                     }
                     fmht.put(name, fam);
                     ht.put(name, fam);
-                } else if (member instanceof Field) {
-                    Field oldField = (Field) member;
+                } else if (member instanceof NativeJavaField) {
+                    var oldField = (NativeJavaField) member;
                     // If this newly reflected field shadows an inherited field,
                     // then replace it. Otherwise, since access to the field
                     // would be ambiguous from Java, no field should be
                     // reflected.
                     // For now, the first field found wins, unless another field
                     // explicitly shadows it.
-                    if (oldField.getDeclaringClass().isAssignableFrom(field.getDeclaringClass())) {
-                        ht.put(name, field);
+                    if (oldField.raw().getDeclaringClass().isAssignableFrom(field.getDeclaringClass())) {
+                        ht.put(name, new NativeJavaField(field, typeFactory));
                     }
                 } else {
-                    // "unknown member type"
-                    Kit.codeBug();
+                    throw Kit.codeBug("unknown java member: " + member);
                 }
             } catch (SecurityException e) {
                 // skip this field
@@ -781,7 +778,7 @@ class JavaMembers {
         for (FieldAndMethods fam : ht.values()) {
             FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
             famNew.javaObject = javaObject;
-            result.put(fam.field.getName(), famNew);
+            result.put(fam.field.raw().getName(), famNew);
         }
         return result;
     }
@@ -894,7 +891,7 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field) {
+    FieldAndMethods(Scriptable scope, MemberBox[] methods, NativeJavaField field) {
         super(methods);
         this.field = field;
         setParentScope(scope);
@@ -905,21 +902,19 @@ class FieldAndMethods extends NativeJavaMethod {
     public Object getDefaultValue(Class<?> hint) {
         if (hint == ScriptRuntime.FunctionClass) return this;
         Object rval;
-        Class<?> type;
         try {
             rval = field.get(javaObject);
-            type = field.getType();
         } catch (IllegalAccessException accEx) {
-            throw Context.reportRuntimeErrorById("msg.java.internal.private", field.getName());
+            throw Context.reportRuntimeErrorById("msg.java.internal.private", field.raw().getName());
         }
         Context cx = Context.getContext();
-        rval = cx.getWrapFactory().wrap(cx, this, rval, type);
+        rval = cx.getWrapFactory().wrap(cx, this, rval, field.type());
         if (rval instanceof Scriptable) {
             rval = ((Scriptable) rval).getDefaultValue(hint);
         }
         return rval;
     }
 
-    Field field;
+    NativeJavaField field;
     Object javaObject;
 }
