@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import org.mozilla.javascript.lc.member.NativeJavaField;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -117,14 +116,12 @@ class JavaMembers {
         }
         var type = field.type();
         if (scope instanceof NativeJavaObject) {
-            type = TypeInfoFactory.GLOBAL.consolidateType(type, ((NativeJavaObject) scope).staticType);
+            type =
+                    TypeInfoFactory.GLOBAL.consolidateType(
+                            type, ((NativeJavaObject) scope).staticType);
         }
         // Need to wrap the object before we return it.
-        return cx.getWrapFactory().wrap(
-            cx,
-            ScriptableObject.getTopLevelScope(scope),
-            got,
-            type);
+        return cx.getWrapFactory().wrap(cx, ScriptableObject.getTopLevelScope(scope), got, type);
     }
 
     void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
@@ -151,16 +148,13 @@ class JavaMembers {
                     ScriptableObject.getTopLevelScope(scope),
                     scope,
                     new Object[] {value});
-        } else {
-            if (!(member instanceof NativeJavaField)) {
-                String str =
-                        (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
-                throw Context.reportRuntimeErrorById(str, name);
-            }
+        } else if (member instanceof NativeJavaField) {
             var field = (NativeJavaField) member;
             var type = field.type();
             if (scope instanceof NativeJavaObject) {
-                type = TypeInfoFactory.GLOBAL.consolidateType(type, ((NativeJavaObject) scope).staticType);
+                type =
+                        TypeInfoFactory.GLOBAL.consolidateType(
+                                type, ((NativeJavaObject) scope).staticType);
             }
             try {
                 field.set(javaObject, Context.jsToJava(value, type));
@@ -173,6 +167,9 @@ class JavaMembers {
                         field,
                         javaObject.getClass().getName());
             }
+        } else {
+            String str = (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
+            throw Context.reportRuntimeErrorById(str, name);
         }
     }
 
@@ -488,8 +485,7 @@ class JavaMembers {
         }
 
         // Reflect fields.
-        Field[] fields = getAccessibleFields(includeProtected, includePrivate);
-        for (Field field : fields) {
+        for (Field field : getAccessibleFields(includeProtected, includePrivate)) {
             String name = field.getName();
             int mods = field.getModifiers();
             try {
@@ -500,7 +496,9 @@ class JavaMembers {
                     ht.put(name, new NativeJavaField(field, typeFactory));
                 } else if (member instanceof NativeJavaMethod) {
                     NativeJavaMethod method = (NativeJavaMethod) member;
-                    FieldAndMethods fam = new FieldAndMethods(scope, method.methods, new NativeJavaField(field, typeFactory));
+                    FieldAndMethods fam =
+                            new FieldAndMethods(
+                                    scope, method.methods, new NativeJavaField(field, typeFactory));
                     Map<String, FieldAndMethods> fmht =
                             isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
@@ -521,7 +519,9 @@ class JavaMembers {
                     // reflected.
                     // For now, the first field found wins, unless another field
                     // explicitly shadows it.
-                    if (oldField.raw().getDeclaringClass().isAssignableFrom(field.getDeclaringClass())) {
+                    if (oldField.raw()
+                            .getDeclaringClass()
+                            .isAssignableFrom(field.getDeclaringClass())) {
                         ht.put(name, new NativeJavaField(field, typeFactory));
                     }
                 } else {
@@ -692,22 +692,19 @@ class JavaMembers {
         if (includePrivate || includeProtected) {
             try {
                 List<Field> fieldsList = new ArrayList<>();
-                Class<?> currentClass = cl;
 
-                while (currentClass != null) {
+                // walk up superclass chain and grab fields. No need to deal specially with
+                // interfaces, since they can't have fields
+                for (var c = cl; c != null; c = c.getSuperclass()) {
                     // get all declared fields in this class, make them
                     // accessible, and save
-                    Field[] declared = currentClass.getDeclaredFields();
-                    for (Field field : declared) {
+                    for (Field field : c.getDeclaredFields()) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
                             if (!field.isAccessible()) field.setAccessible(true);
                             fieldsList.add(field);
                         }
                     }
-                    // walk up superclass chain.  no need to deal specially with
-                    // interfaces, since they can't have fields
-                    currentClass = currentClass.getSuperclass();
                 }
 
                 return fieldsList.toArray(new Field[0]);
@@ -913,7 +910,8 @@ class FieldAndMethods extends NativeJavaMethod {
         try {
             rval = field.get(javaObject);
         } catch (IllegalAccessException accEx) {
-            throw Context.reportRuntimeErrorById("msg.java.internal.private", field.raw().getName());
+            throw Context.reportRuntimeErrorById(
+                    "msg.java.internal.private", field.raw().getName());
         }
         Context cx = Context.getContext();
         rval = cx.getWrapFactory().wrap(cx, this, rval, field.type());
