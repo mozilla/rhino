@@ -231,8 +231,6 @@ public class NativeArray extends ScriptableObject implements List {
         return "Array";
     }
 
-    private static final int Id_length = 1, MAX_INSTANCE_ID = 1;
-
     @Override
     public void setPrototype(Scriptable p) {
         super.setPrototype(p);
