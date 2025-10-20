@@ -1158,30 +1158,35 @@ public final class IRFactory {
         // instead of:
         //     goto labelDefault;
 
-        Node switchExpr = transform(node.getExpression());
-        node.addChildToBack(switchExpr);
+        parser.pushScope(node);
+        try {
+            Node switchExpr = transform(node.getExpression());
+            node.addChildToBack(switchExpr);
 
-        Node block = new Node(Token.BLOCK, node, node.getLineno(), node.getColumn());
+            Node block = new Node(Token.BLOCK, node, node.getLineno(), node.getColumn());
 
-        for (SwitchCase sc : node.getCases()) {
-            AstNode expr = sc.getExpression();
-            Node caseExpr = null;
+            for (SwitchCase sc : node.getCases()) {
+                AstNode expr = sc.getExpression();
+                Node caseExpr = null;
 
-            if (expr != null) {
-                caseExpr = transform(expr);
-            }
-
-            List<AstNode> stmts = sc.getStatements();
-            Node body = new Block();
-            if (stmts != null) {
-                for (AstNode kid : stmts) {
-                    body.addChildToBack(transform(kid));
+                if (expr != null) {
+                    caseExpr = transform(expr);
                 }
+
+                List<AstNode> stmts = sc.getStatements();
+                Node body = new Block();
+                if (stmts != null) {
+                    for (AstNode kid : stmts) {
+                        body.addChildToBack(transform(kid));
+                    }
+                }
+                addSwitchCase(block, caseExpr, body);
             }
-            addSwitchCase(block, caseExpr, body);
+            closeSwitch(block);
+            return block;
+        } finally {
+            parser.popScope();
         }
-        closeSwitch(block);
-        return block;
     }
 
     private Node transformThrow(ThrowStatement node) {

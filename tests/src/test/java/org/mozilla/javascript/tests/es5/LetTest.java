@@ -63,4 +63,18 @@ public class LetTest {
                         + "sum;";
         Utils.assertWithAllModes_1_8(4, script);
     }
+
+    @Test
+    public void letInsideBodyOfSwitch() {
+        String script =
+                "switch (0) {\n"
+                        + "  default:\n"
+                        + "    let f;\n"
+                        + "  {\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "\n"
+                        + "typeof f;\n";
+        Utils.assertWithAllModes_1_8("undefined", script);
+    }
 }

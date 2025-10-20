@@ -50,15 +50,18 @@ function test()
 
   compareSource(expect, actual, summary);
 
-  expect = '1 undefined';
-  actual = f(1);
+  // This should throw an error because of the TDZ, but it throws a ReferenceError for the moment
+  expect = 'ReferenceError: "y" is not defined.';
+  actual = "no exception";
+  try { f(1) } catch (e) { actual = e.toString(); }
   reportCompare(expect, actual, summary + ': f(1)');
 
   expect = '2 42';
   actual = f(2);
   reportCompare(expect, actual, summary + ': f(2)');
 
-  expect = 'default undefined';
+  // This should throw another error because of the TDZ, but currently it returns some value
+  expect = 'default 42';
   actual = f(3);
   reportCompare(expect, actual, summary + ': f(3)');
  

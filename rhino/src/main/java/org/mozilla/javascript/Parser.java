@@ -1481,90 +1481,92 @@ public class Parser {
 
         SwitchStatement pn = new SwitchStatement(pos);
         pn.setLineColumnNumber(lineNumber(), columnNumber());
-        if (mustMatchToken(Token.LP, "msg.no.paren.switch", true)) pn.setLp(ts.tokenBeg - pos);
-
-        AstNode discriminant = expr(false);
-        pn.setExpression(discriminant);
-
-        // a bit of a hack, but there is no separate scope for the switch statement
-        // therefore the check done in defineSymbol(int, java.lang.String, boolean)
-        // still thinks we are in a for loop if the 'switch' directly follow the 'for'
-        // without brackets
-        // therefore we (miss-)use the inForInit var to disable the check for the
-        // 'switch' body
-        boolean wasInForInit = inForInit;
-        inForInit = true;
-        enterSwitch(pn);
+        pushScope(pn);
         try {
-            if (mustMatchToken(Token.RP, "msg.no.paren.after.switch", true))
-                pn.setRp(ts.tokenBeg - pos);
+            if (mustMatchToken(Token.LP, "msg.no.paren.switch", true)) pn.setLp(ts.tokenBeg - pos);
 
-            mustMatchToken(Token.LC, "msg.no.brace.switch", true);
+            AstNode discriminant = expr(false);
+            pn.setExpression(discriminant);
 
-            boolean hasDefault = false;
-            int tt;
-            switchLoop:
-            for (; ; ) {
-                tt = nextToken();
-                int casePos = ts.tokenBeg;
-                int caseLineno = lineNumber(), caseColumn = columnNumber();
-                AstNode caseExpression = null;
-                switch (tt) {
-                    case Token.RC:
-                        pn.setLength(ts.tokenEnd - pos);
-                        break switchLoop;
+            // a bit of a hack, but there is no separate scope for the switch statement
+            // therefore the check done in defineSymbol(int, java.lang.String, boolean)
+            // still thinks we are in a for loop if the 'switch' directly follow the 'for'
+            // without brackets
+            // therefore we (miss-)use the inForInit var to disable the check for the
+            // 'switch' body
+            enterSwitch(pn);
+            try {
+                if (mustMatchToken(Token.RP, "msg.no.paren.after.switch", true))
+                    pn.setRp(ts.tokenBeg - pos);
 
-                    case Token.CASE:
-                        caseExpression = expr(false);
-                        mustMatchToken(Token.COLON, "msg.no.colon.case", true);
-                        break;
+                mustMatchToken(Token.LC, "msg.no.brace.switch", true);
 
-                    case Token.DEFAULT:
-                        if (hasDefault) {
-                            reportError("msg.double.switch.default");
-                        }
-                        hasDefault = true;
-                        mustMatchToken(Token.COLON, "msg.no.colon.case", true);
-                        break;
-                    case Token.COMMENT:
-                        AstNode n = scannedComments.get(scannedComments.size() - 1);
-                        pn.addChild(n);
-                        continue switchLoop;
-                    default:
-                        reportError("msg.bad.switch");
-                        break switchLoop;
-                }
+                boolean hasDefault = false;
+                int tt;
+                switchLoop:
+                for (; ; ) {
+                    tt = nextToken();
+                    int casePos = ts.tokenBeg;
+                    int caseLineno = lineNumber(), caseColumn = columnNumber();
+                    AstNode caseExpression = null;
+                    switch (tt) {
+                        case Token.RC:
+                            pn.setLength(ts.tokenEnd - pos);
+                            break switchLoop;
 
-                SwitchCase caseNode = new SwitchCase(casePos);
-                caseNode.setExpression(caseExpression);
-                caseNode.setLength(ts.tokenEnd - pos); // include colon
-                caseNode.setLineColumnNumber(caseLineno, caseColumn);
+                        case Token.CASE:
+                            caseExpression = expr(false);
+                            mustMatchToken(Token.COLON, "msg.no.colon.case", true);
+                            break;
 
-                while ((tt = peekToken()) != Token.RC
-                        && tt != Token.CASE
-                        && tt != Token.DEFAULT
-                        && tt != Token.EOF) {
-                    if (tt == Token.COMMENT) {
-                        Comment inlineComment = scannedComments.get(scannedComments.size() - 1);
-                        if (caseNode.getInlineComment() == null
-                                && inlineComment.getLineno() == caseNode.getLineno()) {
-                            caseNode.setInlineComment(inlineComment);
-                        } else {
-                            caseNode.addStatement(inlineComment);
-                        }
-                        consumeToken();
-                        continue;
+                        case Token.DEFAULT:
+                            if (hasDefault) {
+                                reportError("msg.double.switch.default");
+                            }
+                            hasDefault = true;
+                            mustMatchToken(Token.COLON, "msg.no.colon.case", true);
+                            break;
+                        case Token.COMMENT:
+                            AstNode n = scannedComments.get(scannedComments.size() - 1);
+                            pn.addChild(n);
+                            continue switchLoop;
+                        default:
+                            reportError("msg.bad.switch");
+                            break switchLoop;
                     }
-                    AstNode nextStmt = statement();
-                    caseNode.addStatement(nextStmt); // updates length
+
+                    SwitchCase caseNode = new SwitchCase(casePos);
+                    caseNode.setExpression(caseExpression);
+                    caseNode.setLength(ts.tokenEnd - pos); // include colon
+                    caseNode.setLineColumnNumber(caseLineno, caseColumn);
+
+                    while ((tt = peekToken()) != Token.RC
+                            && tt != Token.CASE
+                            && tt != Token.DEFAULT
+                            && tt != Token.EOF) {
+                        if (tt == Token.COMMENT) {
+                            Comment inlineComment = scannedComments.get(scannedComments.size() - 1);
+                            if (caseNode.getInlineComment() == null
+                                    && inlineComment.getLineno() == caseNode.getLineno()) {
+                                caseNode.setInlineComment(inlineComment);
+                            } else {
+                                caseNode.addStatement(inlineComment);
+                            }
+                            consumeToken();
+                            continue;
+                        }
+                        AstNode nextStmt = statement();
+                        caseNode.addStatement(nextStmt); // updates length
+                    }
+                    pn.addCase(caseNode);
                 }
-                pn.addCase(caseNode);
+            } finally {
+                exitSwitch();
             }
+            return pn;
         } finally {
-            inForInit = wasInForInit;
-            exitSwitch();
+            popScope();
         }
-        return pn;
     }
 
     private WhileLoop whileLoop() throws IOException {
