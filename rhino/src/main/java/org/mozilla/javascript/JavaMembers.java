@@ -12,7 +12,6 @@ import static java.lang.reflect.Modifier.isPublic;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessControlContext;
@@ -563,9 +562,10 @@ class JavaMembers {
 
         if (existed == null) { // no member
             return false;
-        } else if (existed instanceof Member) { // member is field
+        } else if (existed instanceof NativeJavaField) { // member is field
             // A private field shouldn't mask a public getter/setter
-            return !includePrivate || !Modifier.isPrivate(((Member) existed).getModifiers());
+            return !includePrivate
+                    || !Modifier.isPrivate(((NativeJavaField) existed).raw().getModifiers());
         }
         // member is NativeJavaMethod
         return true;
