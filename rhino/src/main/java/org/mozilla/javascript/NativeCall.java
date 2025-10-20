@@ -140,12 +140,6 @@ public final class NativeCall extends IdScriptableObject {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    public void defineAttributesForArguments() {
-        if (arguments != null) {
-            arguments.defineAttributesForStrictMode();
-        }
-    }
-
     public Scriptable getHomeObject() {
         return function.getHomeObject();
     }
