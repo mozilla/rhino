@@ -165,7 +165,7 @@ public class ImporterTopLevel extends TopLevel {
         }
         // set explicitly prototype and scope
         // as otherwise in top scope mode BaseFunction.construct
-        // would keep them set to null. It also allow to use
+        // would keep them set to null. It also allows to use
         // JavaImporter without new and still get properly
         // initialized object.
         result.setParentScope(scope);
@@ -275,7 +275,7 @@ public class ImporterTopLevel extends TopLevel {
     private ScriptableObject realScope(Scriptable scope, Scriptable thisObj, IdFunctionObject f) {
         if (topScopeFlag) {
             // when used as top scope importPackage and importClass are global
-            // function that ignore thisObj. We use the the top level scope
+            // function that ignore thisObj. We use the top level scope
             // which might not be the same as 'this' when used shared scopes
             thisObj = ScriptableObject.getTopLevelScope(scope);
         }

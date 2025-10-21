@@ -621,7 +621,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     }
                     if (getNonEnumerable || (attr & DONTENUM) == 0) {
                         if (count == 0) {
-                            // Need extra room for no more then [1..id] names
+                            // Need extra room for no more than [1..id] names
                             ids = new Object[id];
                         }
                         ids[count++] = name;
@@ -833,7 +833,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
      * @param obj the object to check/cast
      * @param clazz the target type
      * @param f function that is attempting to convert 'this' object.
-     * @return obj casted to the target type
+     * @return obj cast to the target type
      * @throws EcmaError if the cast failed.
      */
     protected static <T> T ensureType(Object obj, Class<T> clazz, IdFunctionObject f) {

@@ -1457,7 +1457,6 @@ public class NativeRegExp extends IdScriptableObject {
                 if (!parseLegacyOctalEscapeSequence(state)) {
                     throw Kit.codeBug("parseLegacyOctalEscapeSequence failed");
                 }
-                ;
                 break;
             /* Control escape */
             case 'f':
@@ -2503,7 +2502,7 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /*
-     *   Initialize the character set if it this is the first call.
+     *   Initialize the character set if it is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
@@ -4169,7 +4168,7 @@ public class NativeRegExp extends IdScriptableObject {
             }
 
             if (position >= nextSourcePosition) {
-                accumulatedResult.append(s.substring(nextSourcePosition, position));
+                accumulatedResult.append(s, nextSourcePosition, position);
                 accumulatedResult.append(replacementString);
                 nextSourcePosition = position + matchLength;
             }
