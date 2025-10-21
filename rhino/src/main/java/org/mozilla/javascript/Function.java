@@ -46,6 +46,13 @@ public interface Function extends Scriptable, Callable, Constructable {
     @Override
     Scriptable construct(Context cx, Scriptable scope, Object[] args);
 
+    /**
+     * Return the scope in which this function was declared or closed over. This is the
+     * "[[Environment]]" defined in https://tc39.es/ecma262/#sec-ecmascript-function-objects.
+     * Although this is currently precisely equal to the parent scope (or "__parent__") of an object
+     * it is useful to distinguish the two concepts as parent scopes are no longer supported by the
+     * spec in general and present a significant barrier to future optimisations.
+     */
     default Scriptable getDeclarationScope() {
         return this.getParentScope();
     }
