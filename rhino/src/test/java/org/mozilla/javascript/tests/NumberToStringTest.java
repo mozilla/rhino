@@ -116,10 +116,16 @@ public class NumberToStringTest {
             1e-7,
             1e-6,
             1e-21,
+            1e20,
             1e21,
             1e23,
+            Math.PI,
+            Math.PI * 1e23,
+            Math.PI / 1e11,
             1e308,
-            1e-308
+            1e-308,
+            9.9e-324,
+            9.9e-323
         };
         for (double v : constants) out.add(new Object[] {v});
 

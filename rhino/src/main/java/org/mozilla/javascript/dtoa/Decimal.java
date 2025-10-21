@@ -26,7 +26,7 @@ public class Decimal {
     That means we need 26 characters for the largest possible number.
     We will use 32 because powers of two are good.
     */
-    public final int MAX_CHARS = 32;
+    public static final int MAX_CHARS = 32;
 
     private final long digits;
     private final int exponent;
