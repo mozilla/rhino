@@ -78,18 +78,18 @@ public class LetTest {
         Utils.assertWithAllModes_1_8("undefined", script);
     }
 
-	@Test
-	public void letInsideSwitchShadowsOuterVariable() {
-		String script =
-				"var sum = 0;\n" +
-						"  let test = 0;\n" +
-						"  switch (test) {\n" +
-						"    case 0:\n" +
-						"      let test = 7;\n" +
-						"      sum += test;\n" +
-						"      break;\n" +
-						"    }\n" +
-						"sum";
-		Utils.assertWithAllModes_1_8(7, script);
-	}
+    @Test
+    public void letInsideSwitchShadowsOuterVariable() {
+        String script =
+                "var sum = 0;\n"
+                        + "  let test = 0;\n"
+                        + "  switch (test) {\n"
+                        + "    case 0:\n"
+                        + "      let test = 7;\n"
+                        + "      sum += test;\n"
+                        + "      break;\n"
+                        + "    }\n"
+                        + "sum";
+        Utils.assertWithAllModes_1_8(7, script);
+    }
 }
