@@ -463,4 +463,44 @@ public class DefaultParametersTest {
         Utils.assertEvaluatorException_1_8(
                 "Default values are only supported in version >= 200", script + "()");
     }
+
+    // Test that length property reflects the number of parameters without defaults
+    @Test
+    public void arrowFunctionLengthSimple() throws Exception {
+        Utils.assertWithAllModes_ES6(1, "var f = (a, b = 39) => a; f.length");
+    }
+
+    @Test
+    public void arrowFunctionLengthWithDefaultParameters() throws Exception {
+        final String script =
+                "var callCount = 0;\n"
+                        + "var ref;\n"
+                        + "ref = (a, b = 39,) => {\n"
+                        + "    if (a !== 42) throw 'a should be 42';\n"
+                        + "    if (b !== 39) throw 'b should be 39';\n"
+                        + "    callCount = callCount + 1;\n"
+                        + "};\n"
+                        + "\n"
+                        + "ref(42, undefined, 1);\n"
+                        + "if (callCount !== 1) throw 'arrow function not invoked exactly once';\n"
+                        + "ref.length;";
+
+        Utils.assertWithAllModes_ES6(1, script);
+    }
+
+    @Test
+    public void functionLengthWithDefaultAndRestParameters() throws Exception {
+        // length should count params before first default (not affected by rest)
+        Utils.assertWithAllModes_ES6(1, "function f(a, b=1, ...c) {}; f.length");
+        Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, ...d) {}; f.length");
+        Utils.assertWithAllModes_ES6(0, "function f(a=1, b, ...c) {}; f.length");
+    }
+
+    @Test
+    public void functionLengthWithMultipleDefaults() throws Exception {
+        // when multiple defaults are present, we need only count up to the first one
+        Utils.assertWithAllModes_ES6(1, "function f(a, b=1, c=2) {}; f.length");
+        Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, d=2) {}; f.length");
+        Utils.assertWithAllModes_ES6(0, "function f(a=1, b=2, c=3) {}; f.length");
+    }
 }

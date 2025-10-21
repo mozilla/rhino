@@ -45,6 +45,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final int languageVersion;
     private final int paramAndVarCount;
     private final int paramCount;
+    private final int arity; // number of params before first default for reporting as length
     private final SecurityController securityController;
     private final Object securityDomain;
     private final int functionType;
@@ -72,6 +73,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             int languageVersion,
             int paramAndVarCount,
             int paramCount,
+            int arity,
             boolean hasDefaultParameters,
             boolean requiresActivationFrame,
             boolean requiresArgumentObject,
@@ -109,6 +111,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.languageVersion = languageVersion;
         this.paramAndVarCount = paramAndVarCount;
         this.paramCount = paramCount;
+        this.arity = arity;
         this.securityController = securityController;
         this.securityDomain = securityDomain;
         this.functionType = functionType;
@@ -193,6 +196,10 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     @Override
     public int getParamCount() {
         return paramCount;
+    }
+
+    public int getArity() {
+        return arity;
     }
 
     public boolean getParamOrVarConst(int index) {
@@ -302,6 +309,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public int languageVersion;
         public int paramAndVarCount;
         public int paramCount;
+        public int arity; // number of params before first default for reporting as length
         public boolean hasDefaultParameters;
         public boolean requiresActivationFrame;
         public boolean requiresArgumentObject;
@@ -371,6 +379,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             languageVersion,
                             paramAndVarCount,
                             paramCount,
+                            arity,
                             hasDefaultParameters,
                             requiresActivationFrame,
                             requiresArgumentObject,
