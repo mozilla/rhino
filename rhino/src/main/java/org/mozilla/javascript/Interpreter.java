@@ -657,19 +657,20 @@ public final class Interpreter extends Icode implements Evaluator {
         return best;
     }
 
-    static void dumpICode(InterpreterData.Builder idata) {
+    static PrintStream interpreterBytecodePrintStream = System.out;
+
+    static <T extends ScriptOrFn<T>> void dumpICode(
+            InterpreterData.Builder<T> idata, JSDescriptor.Builder<T> desc) {
         if (!Token.printICode) {
             return;
         }
-
-        JSDescriptor desc = null;
 
         byte[] iCode = idata.itsICode;
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
         BigInteger[] bigInts = idata.itsBigIntTable;
-        PrintStream out = System.out;
-        out.println("ICode dump, for " + desc.getName() + ", length = " + iCodeLength);
+        PrintStream out = interpreterBytecodePrintStream;
+        out.println("ICode dump, for " + desc.name + ", length = " + iCodeLength);
         out.println("MaxStack = " + idata.itsMaxStack);
 
         int indexReg = 0;
@@ -752,7 +753,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_CLOSURE_EXPR:
                 case Icode_CLOSURE_STMT:
                 case Icode_METHOD_EXPR:
-                    out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
+                    out.println(tname + " #" + indexReg);
                     break;
                 case Token.CALL:
                 case Icode_CALL_ON_SUPER:
@@ -897,12 +898,17 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + indexReg);
                     ++pc;
                     break;
-                // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
                 case Icode_REG_BIGINT_C0:
+                    out.println(tname + " " + bigInts[0].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C1:
+                    out.println(tname + " " + bigInts[1].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C2:
+                    out.println(tname + " " + bigInts[2].toString() + 'n');
+                    break;
                 case Icode_REG_BIGINT_C3:
-                    Kit.codeBug();
+                    out.println(tname + " " + bigInts[3].toString() + 'n');
                     break;
                 case Icode_REG_BIGINT1:
                     {
