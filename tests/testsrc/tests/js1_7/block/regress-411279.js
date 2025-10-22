@@ -50,18 +50,15 @@ function test()
 
   compareSource(expect, actual, summary);
 
-  // This should throw an error because of the Temporal Dead Zone (TDZ), but it throws a ReferenceError for the moment
-  expect = 'ReferenceError: "y" is not defined.';
-  actual = "no exception";
-  try { f(1) } catch (e) { actual = e.toString(); }
+  expect = '1 undefined';
+  actual = f(1);
   reportCompare(expect, actual, summary + ': f(1)');
 
   expect = '2 42';
   actual = f(2);
   reportCompare(expect, actual, summary + ': f(2)');
 
-  // This should throw another error because of the TDZ, but currently it returns some value
-  expect = 'default 42';
+  expect = 'default undefined';
   actual = f(3);
   reportCompare(expect, actual, summary + ': f(3)');
  

@@ -77,4 +77,18 @@ class LetTest {
                         + "typeof f;\n";
         Utils.assertWithAllModes_1_8("undefined", script);
     }
+
+    @Test
+    void letInsideBodyOfSwitchES6Strict() {
+        String script =
+                "(function () {\n"
+                        + "  'use strict';\n"
+                        + "  switch (true) {\n"
+                        + "    case true:\n"
+                        + "      let x = 1;\n"
+                        + "      return x;\n"
+                        + "  }\n"
+                        + "})()\n";
+        Utils.assertWithAllModes_ES6(1, script);
+    }
 }

@@ -1158,12 +1158,14 @@ public final class IRFactory {
         // instead of:
         //     goto labelDefault;
 
+        Scope block = Scope.splitScope(node);
+        block.setLineColumnNumber(node.getLineno(), node.getColumn());
+        block.addChildToBack(node);
+
         parser.pushScope(node);
         try {
             Node switchExpr = transform(node.getExpression());
             node.addChildToBack(switchExpr);
-
-            Node block = new Node(Token.BLOCK, node, node.getLineno(), node.getColumn());
 
             for (SwitchCase sc : node.getCases()) {
                 AstNode expr = sc.getExpression();
