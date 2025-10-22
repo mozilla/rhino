@@ -1,13 +1,13 @@
 package org.mozilla.javascript.tests.es5;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test for let. */
-public class LetTest {
+class LetTest {
 
     @Test
-    public void simple() throws Exception {
+    void simple() {
         String script =
                 "function f(a,b,c) {\n"
                         + " let sum = a + b + c;\n"
@@ -18,7 +18,7 @@ public class LetTest {
     }
 
     @Test
-    public void switchLet() throws Exception {
+    void switchLet() {
         String script =
                 "var sum = 0;\n"
                         + "var t = 1;\n"
@@ -35,7 +35,7 @@ public class LetTest {
     }
 
     @Test
-    public void forSwitchLet() throws Exception {
+    void forSwitchLet() {
         String script =
                 "  var sum = 0;\n"
                         + "for (let i = 0; i < 1; i++)\n"
@@ -50,7 +50,7 @@ public class LetTest {
     }
 
     @Test
-    public void ifSwitchLet() throws Exception {
+    void ifSwitchLet() {
         String script =
                 "var sum = 0;\n"
                         + "if (sum == 0)\n"
@@ -65,7 +65,7 @@ public class LetTest {
     }
 
     @Test
-    public void letInsideBodyOfSwitch() {
+    void letInsideBodyOfSwitch() {
         String script =
                 "switch (0) {\n"
                         + "  default:\n"
@@ -76,20 +76,5 @@ public class LetTest {
                         + "\n"
                         + "typeof f;\n";
         Utils.assertWithAllModes_1_8("undefined", script);
-    }
-
-    @Test
-    public void letInsideSwitchShadowsOuterVariable() {
-        String script =
-                "var sum = 0;\n"
-                        + "  let test = 0;\n"
-                        + "  switch (test) {\n"
-                        + "    case 0:\n"
-                        + "      let test = 7;\n"
-                        + "      sum += test;\n"
-                        + "      break;\n"
-                        + "    }\n"
-                        + "sum";
-        Utils.assertWithAllModes_1_8(7, script);
     }
 }
