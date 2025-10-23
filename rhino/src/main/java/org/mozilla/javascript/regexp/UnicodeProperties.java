@@ -269,16 +269,81 @@ public class UnicodeProperties {
             Character.UnicodeScript.values();
 
     /**
-     * Tests if a code point has a specific Unicode property.
+     * Tests if a code point has a specific Unicode property with optional case-insensitive
+     * matching.
      *
      * @param property Encoded property (from lookup method)
      * @param codePoint Character code point to test
+     * @param caseInsensitive If true, check case variants for case-sensitive properties
      * @return true if the code point has the property
+     */
+    public static boolean hasProperty(int property, int codePoint, boolean caseInsensitive) {
+        byte propByte = (byte) ((property >> 8) & 0xFF);
+        int valueByte = (property & 0xFF);
+
+        if (!caseInsensitive) {
+            return hasPropertyDirect(propByte, valueByte, codePoint);
+        }
+
+        // Handle case-insensitive matching with specific logic for each property
+        switch (propByte) {
+            case LOWERCASE:
+                if (valueByte == TRUE) {
+                    // For \p{Lowercase}, check if lowercase of codepoint has the property
+                    return Character.isLowerCase(Character.toLowerCase(codePoint));
+                } else {
+                    return !Character.isLowerCase(Character.toLowerCase(codePoint));
+                }
+            case UPPERCASE:
+                if (valueByte == TRUE) {
+                    // For \p{Uppercase}, check if uppercase of codepoint has the property
+                    return Character.isUpperCase(Character.toUpperCase(codePoint));
+                } else {
+                    return !Character.isUpperCase(Character.toUpperCase(codePoint));
+                }
+            case GENERAL_CATEGORY:
+                switch (valueByte) {
+                    case LOWERCASE_LETTER:
+                        // For \p{Ll}, check if lowercase of codepoint is lowercase letter
+                        return Character.getType(Character.toLowerCase(codePoint))
+                                == Character.LOWERCASE_LETTER;
+                    case UPPERCASE_LETTER:
+                        // For \p{Lu}, check if uppercase of codepoint is uppercase letter
+                        return Character.getType(Character.toUpperCase(codePoint))
+                                == Character.UPPERCASE_LETTER;
+                    case TITLECASE_LETTER:
+                        // For \p{Lt}, check if titlecase of codepoint is titlecase letter
+                        return Character.getType(Character.toTitleCase(codePoint))
+                                == Character.TITLECASE_LETTER;
+                    case LETTER:
+                        // For \p{L}, check if any case variant is a letter
+                        int lower = Character.toLowerCase(codePoint);
+                        int upper = Character.toUpperCase(codePoint);
+                        int title = Character.toTitleCase(codePoint);
+                        return Character.isLetter(lower)
+                                || Character.isLetter(upper)
+                                || Character.isLetter(title);
+                    default:
+                        // For other general categories, case doesn't matter
+                        return hasPropertyDirect(propByte, valueByte, codePoint);
+                }
+            default:
+                // For other properties, case doesn't matter
+                return hasPropertyDirect(propByte, valueByte, codePoint);
+        }
+    }
+
+    /**
+     * Tests if a code point has a specific Unicode property (direct check without case handling).
      */
     public static boolean hasProperty(int property, int codePoint) {
         byte propByte = (byte) ((property >> 8) & 0xFF);
         int valueByte = (property & 0xFF);
+        return hasPropertyDirect(propByte, valueByte, codePoint);
+    }
 
+    /** Direct property check without any case handling. */
+    private static boolean hasPropertyDirect(byte propByte, int valueByte, int codePoint) {
         switch (propByte) {
             case ALPHABETIC:
                 return Character.isAlphabetic(codePoint) == (valueByte == TRUE);
