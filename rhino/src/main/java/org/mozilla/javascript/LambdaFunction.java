@@ -95,7 +95,7 @@ public class LambdaFunction extends BaseFunction {
 
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return target.call(cx, scope, thisObj, args);
+        return target.call(cx, getDeclarationScope(), thisObj, args);
     }
 
     @Override

@@ -543,7 +543,7 @@ public final class JavaAdapter implements IdFunctionCall {
             factory = ContextFactory.getGlobal();
         }
 
-        final Scriptable scope = f.getParentScope();
+        final Scriptable scope = f.getDeclarationScope();
         if (argsToWrap == 0) {
             return Context.call(factory, f, scope, thisObj, args);
         }

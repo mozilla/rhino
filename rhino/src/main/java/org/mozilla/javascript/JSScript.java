@@ -34,13 +34,13 @@ public class JSScript implements Script, ScriptOrFn<JSScript> {
         if (!ScriptRuntime.hasTopCall(cx)) {
             // It will go through "call" path. but they are equivalent
             ret = ScriptRuntime.doTopCall(this, cx, scope, thisObj, descriptor.isStrict());
+            cx.processMicrotasks();
         } else {
             ret =
                     descriptor
                             .getCode()
                             .execute(cx, this, null, scope, thisObj, ScriptRuntime.emptyArgs);
         }
-        cx.processMicrotasks();
         return ret;
     }
 }

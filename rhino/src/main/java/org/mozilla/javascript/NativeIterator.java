@@ -179,7 +179,7 @@ public final class NativeIterator extends IdScriptableObject {
             }
 
             // Otherwise, just call the runtime routine
-            Scriptable jsIterator = ScriptRuntime.toIterator(cx, scope, obj, keyOnly);
+            Scriptable jsIterator = ScriptRuntime.toIterator(cx, obj, keyOnly);
             if (jsIterator != null) {
                 return jsIterator;
             }

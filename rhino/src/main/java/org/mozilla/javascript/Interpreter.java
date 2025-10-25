@@ -266,7 +266,7 @@ public final class Interpreter extends Icode implements Evaluator {
             }
 
             if (desc.getFunctionType() != 0) {
-                scope = fnOrScript.getParentScope();
+                scope = fnOrScript.getDeclarationScope();
 
                 if (useActivation) {
                     if (desc.getFunctionType() == FunctionNode.ARROW_FUNCTION) {
@@ -3407,7 +3407,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                         boundArgs,
                                         state.stackTop + 1,
                                         state.indexReg,
-                                        fun,
+                                        (Function) fun,
                                         frame);
                         if (BaseFunction.isApply(kfun)) {
                             // Apply: second argument after new "this"
@@ -3469,7 +3469,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 } else if (fun instanceof LambdaConstructor) {
                     break;
                 } else if (fun instanceof LambdaFunction) {
-                    fun = ((LambdaFunction) fun).getTarget();
+                    break;
                 } else if (fun instanceof BoundFunction) {
                     BoundFunction bfun = (BoundFunction) fun;
                     fun = bfun.getTargetFunction();
@@ -4710,7 +4710,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Object[] boundArgs,
             int thisIdx,
             int indexReg,
-            Callable target,
+            Function target,
             CallFrame frame) {
         Object obj;
         if (indexReg != 0) {
@@ -4723,7 +4723,8 @@ public final class Interpreter extends Icode implements Evaluator {
         } else {
             obj = null;
         }
-        return ScriptRuntime.getApplyOrCallThis(cx, frame.scope, obj, indexReg, target);
+        return ScriptRuntime.getApplyOrCallThis(
+                cx, target.getDeclarationScope(), obj, indexReg, target);
     }
 
     private static CallFrame initFrame(

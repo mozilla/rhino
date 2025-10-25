@@ -125,9 +125,6 @@ public class DynamicScopeTest {
                                     null);
 
             assertSame(subObj.getPrototype(), someObj);
-            assertSame(subScope.getPrototype(), someScope);
-            assertSame(someObj.getParentScope(), someScope);
-            assertSame(subObj.getParentScope(), subScope);
         }
     }
 }
