@@ -30,13 +30,27 @@ public class Utils {
 
     /**
      * helper for joining multiple lines into one string, so that you don't need to do {@code
-     * "line1\n" + "line2\n" + "line3"} by yourself
+     * "line1\n" + "line2\n" + "line3"} by yourself. This should be used when creating strings to
+     * compare against output that has explicit "\n" separators.
      *
      * @param lines the lines to join
      * @return the joined lines
      */
     public static String lines(String... lines) {
         return String.join("\n", lines);
+    }
+
+    /**
+     * helper for joining multiple lines into one string, so that you don't need to do {@code
+     * "line1\n" + "line2\n" + "line3"} by yourself, that uses the system line break so that it will
+     * work across platforms. This must be used when comparing output written using "println" or
+     * other methods that use the system line separator rather than a constant "\n".
+     *
+     * @param lines the lines to join
+     * @return the joined lines
+     */
+    public static String portableLines(String... lines) {
+        return String.join(System.lineSeparator(), lines);
     }
 
     /** Make the ctor private; this is a utility classe. */
