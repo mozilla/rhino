@@ -306,8 +306,7 @@ public class ArgumentsTest {
                         + "test();\n"
                         + "res";
 
-        // Utils.assertWithAllModes_ES6("callee,length", code);
-        Utils.assertWithAllModes_ES6("callee,caller,length", code);
+        Utils.assertWithAllModes_ES6("callee,length", code);
         Utils.assertWithAllModes_1_8("callee,caller,length", code);
         Utils.assertWithAllModes(Context.VERSION_1_3, null, "callee,caller,length", code);
     }
@@ -779,12 +778,7 @@ public class ArgumentsTest {
                         + "test();\n"
                         + "res";
 
-        // Utils.assertWithAllModes_ES6("undefined", code);
-        Utils.assertException(
-                Context.VERSION_ES6,
-                EcmaError.class,
-                "TypeError: This operation is not allowed.",
-                code);
+        Utils.assertWithAllModes_ES6("undefined", code);
         Utils.assertException(
                 Context.VERSION_1_8,
                 EcmaError.class,
@@ -1309,9 +1303,7 @@ public class ArgumentsTest {
 
     @Test
     public void sealFunction() {
-        String code =
-                "'use strict';\n"
-                        + "'' + typeof Object.seal(new Function());";
+        String code = "'use strict';\n" + "'' + typeof Object.seal(new Function());";
 
         Utils.assertWithAllModes_ES6("function", code);
         Utils.assertWithAllModes_1_8("function", code);
