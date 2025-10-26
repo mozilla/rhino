@@ -102,7 +102,6 @@ public class GenericAccessTest {
     }
 
     @Test
-    @Disabled // TODO: generic support for field
     public void testGenericField() {
         String js =
                 "bean.intBean1.publicValue = 3;\n"
@@ -110,7 +109,7 @@ public class GenericAccessTest {
                         + "bean.intBean2.publicValue = 3;\n"
                         + "bean.dblBean2.publicValue = 3;\n"
                         + "classAndValue(bean.intBean1.publicValue, bean.dblBean1.publicValue, bean.intBean2.publicValue, bean.dblBean2.publicValue)";
-        expect(js, "Integer Double Integer Double");
+        expect(js, "Integer 3 Double 3.0 Integer 3 Double 3.0");
     }
 
     @Test
@@ -197,6 +196,10 @@ public class GenericAccessTest {
 
         // test member access via beaning
         bindings.put("bean", new MethodBasedBean());
+        expect(script, expected, bindings);
+
+        // test member access via field access
+        bindings.put("bean", new FieldBasedBean());
         expect(script, expected, bindings);
     }
 
