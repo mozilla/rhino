@@ -27,7 +27,7 @@ import org.mozilla.javascript.Token;
  * <i>DefaultClause</i> :
  *        <b>default</b> : [StatementList]</pre>
  */
-public class SwitchStatement extends Jump {
+public class SwitchStatement extends Scope {
 
     private static final List<SwitchCase> NO_CASES =
             Collections.unmodifiableList(new ArrayList<>());
@@ -44,13 +44,7 @@ public class SwitchStatement extends Jump {
     public SwitchStatement() {}
 
     public SwitchStatement(int pos) {
-        // can't call super (Jump) for historical reasons
         position = pos;
-    }
-
-    public SwitchStatement(int pos, int len) {
-        position = pos;
-        length = len;
     }
 
     /** Returns the switch discriminant expression */
