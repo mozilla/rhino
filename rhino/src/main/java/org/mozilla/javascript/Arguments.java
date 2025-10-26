@@ -39,7 +39,7 @@ final class Arguments extends IdScriptableObject {
     // it indicates deleted index, in which case super class is queried.
     private Object[] args;
 
-    public Arguments(NativeCall activation) {
+    public Arguments(NativeCall activation, Context cx) {
         this.activation = activation;
 
         Scriptable parent = activation.getParentScope();
@@ -75,10 +75,11 @@ final class Arguments extends IdScriptableObject {
             //   9. Perform DefinePropertyOrThrow(obj, "callee", PropertyDescriptor {[[Get]]:
             // %ThrowTypeError%,
             //      [[Set]]: %ThrowTypeError%, [[Enumerable]]: false, [[Configurable]]: false}).
-            setGetterOrSetter("caller", 0, new ThrowTypeError(parent, "caller"), true);
-            setGetterOrSetter("caller", 0, new ThrowTypeError(parent, "caller"), false);
-            setGetterOrSetter("callee", 0, new ThrowTypeError(parent, "callee"), true);
-            setGetterOrSetter("callee", 0, new ThrowTypeError(parent, "callee"), false);
+            BaseFunction typeErrorThrower = ScriptRuntime.typeErrorThrower(cx);
+            setGetterOrSetter("caller", 0, typeErrorThrower, true);
+            setGetterOrSetter("caller", 0, typeErrorThrower, false);
+            setGetterOrSetter("callee", 0, typeErrorThrower, true);
+            setGetterOrSetter("callee", 0, typeErrorThrower, false);
             setAttributes("caller", DONTENUM | PERMANENT);
             setAttributes("callee", DONTENUM | PERMANENT);
             callerObj = null;
@@ -426,30 +427,5 @@ final class Arguments extends IdScriptableObject {
             removeArg(index);
         }
         return true;
-    }
-
-    private static final class ThrowTypeError extends BaseFunction {
-        private static final long serialVersionUID = -744615873947395749L;
-        private String propertyName;
-
-        ThrowTypeError(Scriptable scope, String propertyName) {
-            this.propertyName = propertyName;
-            setPrototype(ScriptableObject.getFunctionPrototype(scope));
-
-            setAttributes("length", DONTENUM | PERMANENT | READONLY);
-            setAttributes("name", DONTENUM | PERMANENT | READONLY);
-
-            setAttributes("arity", DONTENUM);
-            delete("arity");
-            setAttributes("arguments", DONTENUM);
-            delete("arguments");
-
-            preventExtensions();
-        }
-
-        @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            throw ScriptRuntime.typeErrorById("msg.arguments.not.access.strict", propertyName);
-        }
     }
 }
