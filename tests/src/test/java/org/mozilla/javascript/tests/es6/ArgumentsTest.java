@@ -190,12 +190,14 @@ public class ArgumentsTest {
                         + "test();\n"
                         + "res";
 
-//        Utils.assertWithAllModes_ES6(
-//                "function/function () {\n\t[native code]\n}\n"
-//                        + " function/function () {\n\t[native code]\n}\n W-undefined C-false E-false",
-//                code);
-        Utils.assertEcmaErrorES6("TypeError: Cannot find default value for object.", code);
-        Utils.assertEcmaError_1_8("TypeError: Cannot find default value for object.", code);
+        Utils.assertWithAllModes_ES6(
+                "function/function () {\n\t[native code]\n}\n"
+                        + " function/function () {\n\t[native code]\n}\n W-undefined C-false E-false",
+                code);
+        Utils.assertWithAllModes_1_8(
+                "function/function () {\n\t[native code]\n}\n"
+                        + " function/function () {\n\t[native code]\n}\n W-undefined C-false E-false",
+                code);
     }
 
     @Test
@@ -701,12 +703,14 @@ public class ArgumentsTest {
                         + "calleeFoo();\n"
                         + "res";
 
-//        Utils.assertWithAllModes_ES6(
-//                "ex function/function () {\n\t[native code]\n}\n "
-//                        + "function/function () {\n\t[native code]\n}\n true",
-//                code);
-        Utils.assertEcmaErrorES6("TypeError: Cannot find default value for object.", code);
-        Utils.assertEcmaError_1_8("TypeError: Cannot find default value for object.", code);
+        Utils.assertWithAllModes_ES6(
+                "ex function/function () {\n\t[native code]\n}\n "
+                        + "function/function () {\n\t[native code]\n}\n true",
+                code);
+        Utils.assertWithAllModes_1_8(
+                "ex function/function () {\n\t[native code]\n}\n "
+                        + "function/function () {\n\t[native code]\n}\n true",
+                code);
     }
 
     @Test
@@ -746,9 +750,8 @@ public class ArgumentsTest {
                         + "res += ' ' + (desc1.set === desc2.set);\n"
                         + "res";
 
-        // Utils.assertWithAllModes_ES6("true true", code);
-        Utils.assertWithAllModes_ES6("false false", code);
-        Utils.assertWithAllModes_1_8("false false", code);
+        Utils.assertWithAllModes_ES6("true true", code);
+        Utils.assertWithAllModes_1_8("true true", code);
     }
 
     @Test
@@ -780,17 +783,17 @@ public class ArgumentsTest {
         Utils.assertException(
                 Context.VERSION_ES6,
                 EcmaError.class,
-                "TypeError: Cannot access \"caller\" property of the arguments object in strict mode.",
+                "TypeError: This operation is not allowed.",
                 code);
         Utils.assertException(
                 Context.VERSION_1_8,
                 EcmaError.class,
-                "TypeError: Cannot access \"caller\" property of the arguments object in strict mode.",
+                "TypeError: This operation is not allowed.",
                 code);
         Utils.assertException(
                 Context.VERSION_1_3,
                 EcmaError.class,
-                "TypeError: Cannot access \"caller\" property of the arguments object in strict mode.",
+                "TypeError: This operation is not allowed.",
                 code);
     }
 
