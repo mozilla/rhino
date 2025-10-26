@@ -361,8 +361,7 @@ public class ArgumentsTest {
                         + "test('hello', 'world');\n"
                         + "res";
 
-        // Utils.assertWithAllModes_ES6("2 hello world undefined undefined", code);
-        Utils.assertWithAllModes_ES6("2 hello hi undefined you", code);
+        Utils.assertWithAllModes_ES6("2 hello world undefined undefined", code);
         Utils.assertWithAllModes_1_8("2 hello hi undefined you", code);
     }
 
@@ -605,8 +604,7 @@ public class ArgumentsTest {
                         + "test('hello', 'world');\n"
                         + "res";
 
-        // Utils.assertWithAllModes_ES6("null false false", code);
-        Utils.assertWithAllModes_ES6("null true true", code);
+        Utils.assertWithAllModes_ES6("null false false", code);
         Utils.assertWithAllModes_1_8("null true true", code);
     }
 

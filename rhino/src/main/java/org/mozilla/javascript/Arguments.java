@@ -14,7 +14,7 @@ package org.mozilla.javascript;
  * @see org.mozilla.javascript.NativeCall
  * @author Norris Boyd
  */
-final class Arguments extends ScriptableObject {
+class Arguments extends ScriptableObject {
     private static final long serialVersionUID = 4275508002492040609L;
 
     private static final String CLASS_NAME = "Arguments";
@@ -310,5 +310,62 @@ final class Arguments extends ScriptableObject {
             removeArg(index);
         }
         return true;
+    }
+
+    static final class ReadonlyArguments extends Arguments {
+        private boolean initialized;
+
+        public ReadonlyArguments(Arguments arguments, Context cx) {
+            super(arguments.activation, cx);
+            initialized = true;
+        }
+
+        @Override
+        public void put(int index, Scriptable start, Object value) {
+            if (initialized) {
+                return;
+            }
+            super.put(index, start, value);
+        }
+
+        @Override
+        public void put(String name, Scriptable start, Object value) {
+            if (initialized) {
+                return;
+            }
+            super.put(name, start, value);
+        }
+
+        @Override
+        public void put(Symbol key, Scriptable start, Object value) {
+            if (initialized) {
+                return;
+            }
+            super.put(key, start, value);
+        }
+
+        @Override
+        public void delete(int index) {
+            if (initialized) {
+                return;
+            }
+            super.delete(index);
+        }
+
+        @Override
+        public void delete(String name) {
+            if (initialized) {
+                return;
+            }
+            super.delete(name);
+        }
+
+        @Override
+        public void delete(Symbol key) {
+            if (initialized) {
+                return;
+            }
+            super.delete(key);
+        }
     }
 }
