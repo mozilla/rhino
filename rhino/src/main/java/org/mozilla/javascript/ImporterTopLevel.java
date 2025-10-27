@@ -47,8 +47,6 @@ import java.util.ArrayList;
 public class ImporterTopLevel extends TopLevel {
     private static final long serialVersionUID = -9095380847465315412L;
 
-    private static final Object IMPORTER_TAG = "Importer";
-
     public ImporterTopLevel() {}
 
     public ImporterTopLevel(Context cx) {
@@ -65,8 +63,28 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        ImporterTopLevel obj = new ImporterTopLevel();
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        init(cx, scope, sealed, false);
+    }
+
+    public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
+        LambdaConstructor ctor =
+                new LambdaConstructor(scope, "ImporterTopLevel", 0, ImporterTopLevel::js_construct);
+
+        ctor.definePrototypeMethod(scope, "importClass", 1, ImporterTopLevel::js_importClass);
+        ctor.definePrototypeMethod(scope, "importPackage", 1, ImporterTopLevel::js_importPackage);
+
+        if (sealed) {
+            ctor.sealObject();
+        }
+
+        var proto = (Scriptable) ctor.getPrototypeProperty();
+
+        if (isTopScope) {
+            scope.put("importClass", scope, proto.get("importClass", proto));
+            scope.put("importPackage", scope, proto.get("importPackage", proto));
+        }
+
+        ScriptableObject.defineProperty(scope, "JavaImporter", ctor, DONTENUM);
     }
 
     public void initStandardObjects(Context cx, boolean sealed) {
@@ -77,10 +95,9 @@ public class ImporterTopLevel extends TopLevel {
         // If seal is true then exportAsJSClass(cx, seal) would seal
         // this obj. Since this is scope as well, it would not allow
         // to add variables.
-        IdFunctionObject ctor = exportAsJSClass(MAX_PROTOTYPE_ID, this, false);
-        if (sealed) {
-            ctor.sealObject();
-        }
+
+        init(cx, this, sealed, true);
+
         // delete "constructor" defined by exportAsJSClass so "constructor"
         // name would refer to Object.constructor
         // and not to JavaImporter.prototype.constructor.
@@ -147,10 +164,10 @@ public class ImporterTopLevel extends TopLevel {
      */
     @Deprecated
     public void importPackage(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        js_importPackage(this, args);
+        js_importPackage(cx, funObj.getDeclarationScope(), this, args);
     }
 
-    private Object js_construct(Scriptable scope, Object[] args) {
+    private static Scriptable js_construct(Context cx, Scriptable scope, Object[] args) {
         ImporterTopLevel result = new ImporterTopLevel();
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
@@ -169,28 +186,29 @@ public class ImporterTopLevel extends TopLevel {
         // JavaImporter without new and still get properly
         // initialized object.
         result.setParentScope(scope);
-        result.setPrototype(this);
         return result;
     }
 
-    private static Object js_importClass(Scriptable scope, Object[] args) {
+    private static Object js_importClass(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaClass)) {
                 throw Context.reportRuntimeErrorById("msg.not.class", Context.toString(arg));
             }
-            importClass(scope, (NativeJavaClass) arg);
+            importClass((ScriptableObject) thisObj, (NativeJavaClass) arg);
         }
         return Undefined.instance;
     }
 
-    private static Object js_importPackage(ScriptableObject scope, Object[] args) {
+    private static Object js_importPackage(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaPackage)) {
                 throw Context.reportRuntimeErrorById("msg.not.pkg", Context.toString(arg));
             }
-            importPackage(scope, (NativeJavaPackage) arg);
+            importPackage((ScriptableObject) thisObj, (NativeJavaPackage) arg);
         }
         return Undefined.instance;
     }
@@ -228,84 +246,6 @@ public class ImporterTopLevel extends TopLevel {
         // defineProperty(n, cl, DONTENUM);
         scope.put(n, scope, cl);
     }
-
-    @Override
-    protected void initPrototypeId(int id) {
-        String s;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 0;
-                s = "constructor";
-                break;
-            case Id_importClass:
-                arity = 1;
-                s = "importClass";
-                break;
-            case Id_importPackage:
-                arity = 1;
-                s = "importPackage";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(IMPORTER_TAG, id, s, arity);
-    }
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(IMPORTER_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-        switch (id) {
-            case Id_constructor:
-                return js_construct(scope, args);
-
-            case Id_importClass:
-                return js_importClass(realScope(scope, thisObj, f), args);
-
-            case Id_importPackage:
-                return js_importPackage(realScope(scope, thisObj, f), args);
-        }
-        throw new IllegalArgumentException(String.valueOf(id));
-    }
-
-    private ScriptableObject realScope(Scriptable scope, Scriptable thisObj, IdFunctionObject f) {
-        if (topScopeFlag) {
-            // when used as top scope importPackage and importClass are global
-            // function that ignore thisObj. We use the top level scope
-            // which might not be the same as 'this' when used shared scopes
-            thisObj = ScriptableObject.getTopLevelScope(scope);
-        }
-        return ensureType(thisObj, ScriptableObject.class, f);
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "constructor":
-                id = Id_constructor;
-                break;
-            case "importClass":
-                id = Id_importClass;
-                break;
-            case "importPackage":
-                id = Id_importPackage;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    private static final int Id_constructor = 1,
-            Id_importClass = 2,
-            Id_importPackage = 3,
-            MAX_PROTOTYPE_ID = 3;
 
     private static final String AKEY = "importedPackages";
     private boolean topScopeFlag;
