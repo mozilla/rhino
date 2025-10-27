@@ -17,6 +17,10 @@ public abstract class NewLiteralStorage {
     protected Object[] values;
     protected int index = 0;
 
+    // handling skip indexes with spreads
+    protected int[] skipIndexes = null;
+    protected int[] spreadAdjustments = null; // [sourcePosition] = adjustment
+
     protected NewLiteralStorage(Object[] ids, int length, boolean createKeys) {
         int l;
         if (ids != null) {
@@ -54,11 +58,18 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    public void spread(Context cx, Scriptable scope, Object source) {
+    public void spread(Context cx, Scriptable scope, Object source, int sourcePosition) {
+        int indexBefore = index;
         if (keys == null) {
             spreadArray(cx, scope, source);
         } else {
             spreadObject(cx, scope, source);
+        }
+
+        if (spreadAdjustments != null) {
+            if (sourcePosition < spreadAdjustments.length) {
+                spreadAdjustments[sourcePosition] = index - indexBefore - 1;
+            }
         }
     }
 
@@ -106,7 +117,7 @@ public abstract class NewLiteralStorage {
             getterSetters = Arrays.copyOf(getterSetters, newLen);
             values = Arrays.copyOf(values, newLen);
 
-            if (src instanceof NativeArray) {
+            if (src instanceof NativeArray) { // TODO: check if it's dense
                 NativeArray arr = (NativeArray) src;
                 long length = arr.getLength();
 
@@ -164,6 +175,43 @@ public abstract class NewLiteralStorage {
 
     public Object[] getValues() {
         return values;
+    }
+
+    public void setSkipIndexes(int[] skipIndexes) {
+        this.skipIndexes = skipIndexes;
+        // length is the number of children + skips
+        if (skipIndexes != null && skipIndexes.length > 0) {
+            spreadAdjustments = new int[values.length + skipIndexes.length];
+        }
+    }
+
+    public boolean hasSkipIndexes() {
+        return skipIndexes != null;
+    }
+
+    public int[] getAdjustedSkipIndexes() {
+        if (skipIndexes == null) {
+            return null;
+        }
+
+        // Adjust skip indexes based on spread operations
+        int[] adjusted = new int[skipIndexes.length];
+        for (int i = 0; i < skipIndexes.length; i++) {
+            int sourceSkip = skipIndexes[i];
+            int adjustment = 0;
+
+            // Sum up adjustments from all spreads that occurred before this skip position
+            if (spreadAdjustments != null) {
+                for (int sourcePos = 0;
+                        sourcePos < sourceSkip && sourcePos < spreadAdjustments.length;
+                        sourcePos++) {
+                    adjustment += spreadAdjustments[sourcePos];
+                }
+            }
+
+            adjusted[i] = sourceSkip + adjustment;
+        }
+        return adjusted;
     }
 
     private Object getPropertyById(Scriptable src, Object id) {

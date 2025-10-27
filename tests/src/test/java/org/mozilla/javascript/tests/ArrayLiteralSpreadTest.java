@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -136,7 +135,6 @@ class ArrayLiteralSpreadTest {
     }
 
     @Test
-    @Disabled("TODO: needs to be implemented, not passing currently")
     void testSpreadAndSkipIndexes() {
         String script =
                 "var arr = [1, 2, 3];" + "var result = [0, ,...arr, , 4];" + "result.join(',');";
@@ -155,5 +153,92 @@ class ArrayLiteralSpreadTest {
                         + "var arr = [...obj];\n"
                         + "arr.join(',')\n";
         Utils.assertWithAllModes_ES6("1,2", script);
+    }
+
+    @Test
+    void testSpreadIteratorWithSkipBefore() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 'a';\n"
+                        + "    yield 'b';\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var result = [1, , ...obj];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("1,,a,b", script);
+    }
+
+    @Test
+    void testSpreadIteratorWithSkipAfter() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 'x';\n"
+                        + "    yield 'y';\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var result = [...obj, , 99];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("x,y,,99", script);
+    }
+
+    @Test
+    void testSpreadIteratorWithSkipBoth() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 10;\n"
+                        + "    yield 20;\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var result = [0, , ...obj, , 30];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("0,,10,20,,30", script);
+    }
+
+    @Test
+    void testMultipleIteratorSpreadsWithSkips() {
+        String script =
+                "var obj1 = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 1;\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var obj2 = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 2;\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var result = [...obj1, , ...obj2, , 3];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("1,,2,,3", script);
+    }
+
+    @Test
+    void testEmptyIteratorWithSkips() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {}\n"
+                        + "};\n"
+                        + "var result = [1, , ...obj, , 2];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("1,,,2", script);
+    }
+
+    @Test
+    void testIteratorManyElementsWithSkips() {
+        String script =
+                "var obj = {\n"
+                        + "  *[Symbol.iterator]() {\n"
+                        + "    yield 'a';\n"
+                        + "    yield 'b';\n"
+                        + "    yield 'c';\n"
+                        + "    yield 'd';\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var result = [0, , ...obj, , , 5];\n"
+                        + "result.join(',');";
+        Utils.assertWithAllModes_ES6("0,,a,b,c,d,,,5", script);
     }
 }

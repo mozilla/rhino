@@ -2198,6 +2198,23 @@ class BodyCodegen {
 
     private void visitArrayLiteralWithSpread(Node node, Node child, int numberOfSpread) {
         int count = countArguments(child);
+        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+
+        // compute source positions if we have skip indexes
+        int[] sourcePositions = null;
+        if (skipIndexes != null) {
+            sourcePositions = new int[count];
+            int sourcePos = 0;
+            int skipIdx = 0;
+            for (int i = 0; i < count; i++) {
+                while (skipIdx < skipIndexes.length && skipIndexes[skipIdx] == sourcePos) {
+                    sourcePos++;
+                    skipIdx++;
+                }
+                sourcePositions[i] = sourcePos;
+                sourcePos++;
+            }
+        }
 
         // Create NewLiteralStorage for the array
         cfw.addALoad(contextLocal);
@@ -2209,14 +2226,39 @@ class BodyCodegen {
                 "create",
                 "(Lorg/mozilla/javascript/Context;IZ)Lorg/mozilla/javascript/NewLiteralStorage;");
 
+        // Set skip indexes if present
+        if (skipIndexes != null) {
+            cfw.add(ByteCode.DUP);
+            cfw.addLoadConstant(skipIndexes.length);
+            cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
+            for (int i = 0; i < skipIndexes.length; i++) {
+                cfw.add(ByteCode.DUP);
+                cfw.addLoadConstant(i);
+                cfw.addLoadConstant(skipIndexes[i]);
+                cfw.add(ByteCode.IASTORE);
+            }
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "org/mozilla/javascript/NewLiteralStorage",
+                    "setSkipIndexes",
+                    "([I)V");
+        }
+
         // Process each element
+        int childIdx = 0;
         while (child != null) {
             if (child.getType() == Token.DOTDOTDOT) {
                 // Handle spread element: push the expression and call spread
-                cfw.add(ByteCode.DUP); // Duplicate the NewLiteralStorage
+                cfw.add(ByteCode.DUP);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
                 generateExpression(child.getFirstChild(), node);
+                // Push source position (0 if no skip indexes)
+                if (skipIndexes != null) {
+                    cfw.addLoadConstant(sourcePositions[childIdx]);
+                } else {
+                    cfw.addLoadConstant(0);
+                }
                 cfw.addInvoke(
                         ByteCode.INVOKEVIRTUAL,
                         "org/mozilla/javascript/NewLiteralStorage",
@@ -2224,10 +2266,11 @@ class BodyCodegen {
                         "(Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + "Ljava/lang/Object;"
+                                + "I"
                                 + ")V");
             } else {
                 // Handle regular element: push the value
-                cfw.add(ByteCode.DUP); // Duplicate the NewLiteralStorage
+                cfw.add(ByteCode.DUP);
                 generateExpression(child, node);
                 cfw.addInvoke(
                         ByteCode.INVOKEVIRTUAL,
@@ -2236,17 +2279,32 @@ class BodyCodegen {
                         "(Ljava/lang/Object;)V");
             }
             child = child.getNext();
+            childIdx++;
         }
 
         // Convert NewLiteralStorage to array
+        int storageLocal = getNewWordLocal();
+        cfw.addAStore(storageLocal);
+        cfw.addALoad(storageLocal);
         cfw.addInvoke(
                 ByteCode.INVOKEVIRTUAL,
                 "org/mozilla/javascript/NewLiteralStorage",
                 "getValues",
                 "()[Ljava/lang/Object;");
 
-        // Create the final array
-        cfw.add(ByteCode.ACONST_NULL); // skipIndexes
+        // Get adjusted skip indexes
+        if (skipIndexes != null) {
+            cfw.addALoad(storageLocal);
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "org/mozilla/javascript/NewLiteralStorage",
+                    "getAdjustedSkipIndexes",
+                    "()[I");
+        } else {
+            cfw.add(ByteCode.ACONST_NULL); // skipIndexes
+        }
+        releaseWordLocal((short) storageLocal);
+
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         addOptRuntimeInvoke(
@@ -2299,12 +2357,14 @@ class BodyCodegen {
                     cfw.addALoad(local); // stack: [context, scope, sourceObj, store]
                     cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/NewLiteralStorage");
                     cfw.add(ByteCode.SWAP); // stack: [context, scope, store, sourceObj]
+                    cfw.addLoadConstant(0); // sourcePosition (unused for objects)
                     addOptRuntimeInvoke(
                             "spread",
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
+                                    + "I"
                                     + ")V"); // stack: []
                 } else {
                     addLoadPropertyId(node, properties, i); // stack: [ki]
@@ -2346,12 +2406,14 @@ class BodyCodegen {
                     generateExpression(
                             child.getFirstChild(),
                             node); // stack: [store, context, scope, store, sourceObj]
+                    cfw.addLoadConstant(0); // sourcePosition (not used for objects)
                     addOptRuntimeInvoke(
                             "spread",
                             "(Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
+                                    + "I"
                                     + ")V"); // stack: [store]
                 } else {
                     cfw.add(ByteCode.DUP); // Stack: [store, store]

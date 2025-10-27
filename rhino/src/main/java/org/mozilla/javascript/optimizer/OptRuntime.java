@@ -304,8 +304,12 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static void spread(
-            Context cx, Scriptable scope, NewLiteralStorage store, Object source) {
-        store.spread(cx, scope, source);
+            Context cx,
+            Scriptable scope,
+            NewLiteralStorage store,
+            Object source,
+            int sourcePosition) {
+        store.spread(cx, scope, source, sourcePosition);
     }
 
     public static class GeneratorState {

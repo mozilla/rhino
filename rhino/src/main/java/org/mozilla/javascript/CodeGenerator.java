@@ -1500,27 +1500,55 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
 
         int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+
+        // compute source positions if we have skip indexes
+        int[] sourcePositions = null;
+        if (skipIndexes != null) {
+            sourcePositions = new int[count];
+            int sourcePos = 0;
+            int skipIdx = 0;
+            for (int i = 0; i < count; i++) {
+                while (skipIdx < skipIndexes.length && skipIndexes[skipIdx] == sourcePos) {
+                    sourcePos++;
+                    skipIdx++;
+                }
+                sourcePositions[i] = sourcePos;
+                sourcePos++;
+            }
+        }
+
+        // Store skip indexes in literalIds if present
+        int skipIndexesId = -1;
+        if (skipIndexes != null) {
+            skipIndexesId = literalIds.size();
+            literalIds.add(skipIndexes);
+        }
+
         addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
+        addUint8(skipIndexesId + 1);
         stackChange(1);
 
+        int childIdx = 0;
         while (child != null) {
             if (child.getType() == Token.DOTDOTDOT) {
                 visitExpression(child.getFirstChild(), 0);
                 addIcode(Icode_SPREAD);
+                if (skipIndexes != null) {
+                    addUint8(sourcePositions[childIdx]);
+                }
                 stackChange(-1);
             } else {
                 visitLiteralValue(child);
             }
             child = child.getNext();
+            childIdx++;
         }
 
-        int[] skipIndexes = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
         if (skipIndexes == null) {
             addToken(Token.ARRAYLIT);
         } else {
-            int index = literalIds.size();
-            literalIds.add(skipIndexes);
-            addIndexOp(Icode_SPARE_ARRAYLIT, index);
+            addIndexOp(Icode_SPARE_ARRAYLIT, skipIndexesId);
         }
     }
 
