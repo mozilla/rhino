@@ -4311,7 +4311,17 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: number of values in the literal
-            frame.stack[++state.stackTop] = NewLiteralStorage.create(cx, state.indexReg, false);
+            NewLiteralStorage storage = NewLiteralStorage.create(cx, state.indexReg, false);
+
+            int skipIdx = 0xFF & frame.idata.itsICode[frame.pc];
+            ++frame.pc;
+
+            // fill in skip indexes in array literal storage
+            if (skipIdx > 0) { // 0 - no skip index, otherwise subtract 1 from idx
+                storage.setSkipIndexes((int[]) frame.idata.literalIds[skipIdx - 1]);
+            }
+
+            frame.stack[++state.stackTop] = storage;
             return null;
         }
     }
@@ -4369,7 +4379,14 @@ public final class Interpreter extends Icode implements Evaluator {
             Object source = frame.stack[state.stackTop];
             --state.stackTop;
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
-            store.spread(cx, frame.scope, source);
+
+            if (store.hasSkipIndexes()) {
+                int sourcePos = 0xFF & frame.idata.itsICode[frame.pc];
+                ++frame.pc;
+                store.spread(cx, frame.scope, source, sourcePos);
+            } else {
+                store.spread(cx, frame.scope, source, 0);
+            }
             return null;
         }
     }
@@ -4395,12 +4412,15 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             var store = (NewLiteralStorage) frame.stack[state.stackTop];
-            int[] skipIndexces = null;
+            int[] skipIndices = null;
             if (op == Icode_SPARE_ARRAYLIT) {
-                skipIndexces = (int[]) frame.idata.literalIds[state.indexReg];
+                skipIndices = store.getAdjustedSkipIndexes();
+                if (skipIndices == null) {
+                    skipIndices = (int[]) frame.idata.literalIds[state.indexReg];
+                }
             }
             frame.stack[state.stackTop] =
-                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexces, cx, frame.scope);
+                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndices, cx, frame.scope);
             return null;
         }
     }
