@@ -4646,7 +4646,35 @@ public class Parser {
                 destructuringNames.add(name);
             }
         } else {
-            // TODO: should handle other nested values on the lhs (ArrayLiteral, ObjectLiteral)
+            // Handle nested destructuring patterns with defaults, eg: [[x, y, z] = [4, 5, 6]]
+            if (left instanceof ArrayLiteral || left instanceof ObjectLiteral) {
+                right = (transformer != null) ? transformer.transform(n.getRight()) : n.getRight();
+
+                Node cond_default =
+                        new Node(
+                                Token.HOOK,
+                                new Node(
+                                        Token.SHEQ,
+                                        new KeywordLiteral().setType(Token.UNDEFINED),
+                                        rightElem),
+                                right,
+                                rightElem);
+
+                if (transformer == null) {
+                    currentScriptOrFn.putDestructuringRvalues(cond_default, right);
+                }
+
+                parent.addChildToBack(
+                        destructuringAssignmentHelper(
+                                variableType,
+                                left,
+                                cond_default,
+                                currentScriptOrFn.getNextTempName(),
+                                null,
+                                transformer));
+            } else {
+                reportError("msg.bad.assign.left");
+            }
         }
     }
 
