@@ -4412,15 +4412,15 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             var store = (NewLiteralStorage) frame.stack[state.stackTop];
-            int[] skipIndices = null;
+            int[] skipIndexes = null;
             if (op == Icode_SPARE_ARRAYLIT) {
-                skipIndices = store.getAdjustedSkipIndexes();
-                if (skipIndices == null) {
-                    skipIndices = (int[]) frame.idata.literalIds[state.indexReg];
+                skipIndexes = store.getAdjustedSkipIndexes();
+                if (skipIndexes == null) {
+                    skipIndexes = (int[]) frame.idata.literalIds[state.indexReg];
                 }
             }
             frame.stack[state.stackTop] =
-                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndices, cx, frame.scope);
+                    ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexes, cx, frame.scope);
             return null;
         }
     }

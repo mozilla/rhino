@@ -8,7 +8,9 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.NativeObject.PROTO_PROPERTY;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /** Used to store the support structures for a literal object (or array) being built. */
 public abstract class NewLiteralStorage {
@@ -81,34 +83,30 @@ public abstract class NewLiteralStorage {
             // Check if the object has Symbol.iterator
             Object iteratorProp = ScriptableObject.getProperty(src, SymbolKey.ITERATOR);
             if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
-                try {
-                    final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
-                    if (!Undefined.isUndefined(iterator)) {
-                        java.util.List<Object> spreadValues = new java.util.ArrayList<>();
-                        try (IteratorLikeIterable it =
-                                new IteratorLikeIterable(cx, scope, iterator)) {
-                            for (Object temp : it) {
-                                spreadValues.add(temp);
-                            }
+                // Per spec, if Symbol.iterator exists, use it. Let exceptions propagate.
+                final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
+                if (!Undefined.isUndefined(iterator)) {
+                    List<Object> spreadValues = new ArrayList<>();
+                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                        for (Object temp : it) {
+                            spreadValues.add(temp);
                         }
-
-                        // Resize arrays
-                        int spreadSize = spreadValues.size();
-                        int newLen = values.length + spreadSize;
-                        getterSetters = Arrays.copyOf(getterSetters, newLen);
-                        values = Arrays.copyOf(values, newLen);
-
-                        // Push all values
-                        for (Object value : spreadValues) {
-                            pushValue(value);
-                        }
-                        return;
                     }
-                } catch (Exception e) {
-                    // Fall through to non-iterator path
+
+                    // Resize arrays
+                    int spreadSize = spreadValues.size();
+                    int newLen = values.length + spreadSize;
+                    getterSetters = Arrays.copyOf(getterSetters, newLen);
+                    values = Arrays.copyOf(values, newLen);
+
+                    // Push all values
+                    for (Object value : spreadValues) {
+                        pushValue(value);
+                    }
+                    return;
                 }
             }
-            // Fallback for objects without Symbol.iterator or when iterator fails
+            // Fallback for objects without Symbol.iterator
             int spreadSize =
                     (src instanceof NativeArray)
                             ? (int) ((NativeArray) src).getLength()
