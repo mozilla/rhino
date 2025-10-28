@@ -1581,6 +1581,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
         instructionObjs[base + Token.REF_NAME] = new DoRefName();
         instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
+        instructionObjs[base + Token.TO_ITERABLE_ARRAY] = new DoToIterableArray();
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
@@ -4213,6 +4214,26 @@ public final class Interpreter extends Icode implements Evaluator {
             if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             frame.stack[state.stackTop] =
                     ScriptRuntime.nameRef(ns, name, cx, frame.scope, state.indexReg);
+            return null;
+        }
+    }
+
+    private static class DoToIterableArray extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object obj = frame.stack[state.stackTop];
+            // wrap the iterator
+            DestructuringIterator wrapper =
+                    (DestructuringIterator)
+                            ScriptRuntime.wrapDestructuringIterator(obj, cx, frame.scope);
+            // element count from bytecode
+            int elementsNeeded = frame.idata.itsICode[frame.pc] & 0xFF;
+            if (elementsNeeded == 0) {
+                elementsNeeded = Integer.MAX_VALUE; // Unknown, fetch as needed
+            }
+            wrapper.setElementsNeeded(elementsNeeded);
+            frame.stack[state.stackTop] = wrapper;
+            frame.pc++; // Skip the element count byte
             return null;
         }
     }
