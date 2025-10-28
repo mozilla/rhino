@@ -1207,6 +1207,28 @@ class BodyCodegen {
                 addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
                 break;
 
+            case Token.TO_ITERABLE_ARRAY:
+                generateExpression(child, node);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "wrapDestructuringIterator",
+                        "(Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + ")Lorg/mozilla/javascript/Scriptable;");
+                // Cast to DestructuringIterator and set count
+                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/DestructuringIterator");
+                cfw.add(ByteCode.DUP);
+                int elemCount = node.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, Integer.MAX_VALUE);
+                cfw.addPush(elemCount);
+                cfw.addInvoke(
+                        ByteCode.INVOKEVIRTUAL,
+                        "org/mozilla/javascript/DestructuringIterator",
+                        "setElementsNeeded",
+                        "(I)V");
+                break;
+
             case Token.TYPEOFNAME:
                 visitTypeofname(node);
                 break;
