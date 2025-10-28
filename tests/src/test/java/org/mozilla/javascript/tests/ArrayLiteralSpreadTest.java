@@ -241,4 +241,44 @@ class ArrayLiteralSpreadTest {
                         + "result.join(',');";
         Utils.assertWithAllModes_ES6("0,,a,b,c,d,,,5", script);
     }
+
+    @Test
+    void testSpreadIteratorThrowsException() {
+        // Per spec, if Symbol.iterator exists and throws, the exception should propagate
+        String script =
+                "var obj = {\n"
+                        + "  [Symbol.iterator]() {\n"
+                        + "    throw new Error('Iterator failed');\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "try {\n"
+                        + "  var result = [...obj];\n"
+                        + "  'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  e.message;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("Iterator failed", script);
+    }
+
+    @Test
+    void testSpreadIteratorNextThrows() {
+        // Exception thrown during iteration should also propagate
+        String script =
+                "var obj = {\n"
+                        + "  [Symbol.iterator]() {\n"
+                        + "    return {\n"
+                        + "      next() {\n"
+                        + "        throw new Error('Next failed');\n"
+                        + "      }\n"
+                        + "    };\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "try {\n"
+                        + "  var result = [...obj];\n"
+                        + "  'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  e.message;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("Next failed", script);
+    }
 }

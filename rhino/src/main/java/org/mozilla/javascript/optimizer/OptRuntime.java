@@ -230,8 +230,8 @@ public final class OptRuntime extends ScriptRuntime {
 
     public static Scriptable newArrayLiteral(
             Object[] objects, String encodedInts, int skipCount, Context cx, Scriptable scope) {
-        int[] skipIndexces = decodeIntArray(encodedInts, skipCount);
-        return newArrayLiteral(objects, skipIndexces, cx, scope);
+        int[] skipIndexes = decodeIntArray(encodedInts, skipCount);
+        return newArrayLiteral(objects, skipIndexes, cx, scope);
     }
 
     // Work around because our bytecode generator can't handle the
