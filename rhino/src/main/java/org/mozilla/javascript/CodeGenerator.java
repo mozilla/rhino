@@ -806,6 +806,14 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 }
                 break;
 
+            case Token.TO_ITERABLE_ARRAY:
+                visitExpression(child, 0);
+                addToken(type);
+                // count for iterator finalization
+                int elemCount = node.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, 0);
+                addUint8(Math.min(elemCount, 255));
+                break;
+
             case Token.GET_REF:
             case Token.DEL_REF:
                 visitExpression(child, 0);

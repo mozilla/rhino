@@ -3297,6 +3297,28 @@ public class ScriptRuntime {
     }
 
     /**
+     * Create iterator wrapper for array destructuring. This wraps the iterator so it can be drained
+     * during destructuring.
+     *
+     * @param obj the object to iterate
+     * @param cx the context
+     * @param scope the scope
+     * @return a DestructuringIterator wrapper
+     */
+    public static Scriptable wrapDestructuringIterator(Object obj, Context cx, Scriptable scope) {
+        // Check if obj has Symbol.iterator - will throw TypeError if not
+        final Callable getIterator =
+                ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
+        final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+
+        // Call the iterator to get the iterator object
+        final Object iteratorObj = getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
+
+        // Return a wrapper that can be consumed element-by-element
+        return new DestructuringIterator(cx, scope, iteratorObj);
+    }
+
+    /**
      * Given an iterator result, return true if and only if there is a "done" property that's true.
      */
     public static boolean isIteratorDone(Context cx, Object result) {

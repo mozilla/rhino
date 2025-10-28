@@ -4460,22 +4460,38 @@ public class Parser {
      * @return expression that performs a series of assignments to the variables defined in left
      */
     Node createDestructuringAssignment(
-            int type, Node left, Node right, AstNode defaultValue, Transformer transformer) {
+            int type,
+            Node left,
+            Node right,
+            AstNode defaultValue,
+            Transformer transformer,
+            boolean isFunctionParameter) {
         String tempName = currentScriptOrFn.getNextTempName();
         Node result =
                 destructuringAssignmentHelper(
-                        type, left, right, tempName, defaultValue, transformer);
+                        type,
+                        left,
+                        right,
+                        tempName,
+                        defaultValue,
+                        transformer,
+                        isFunctionParameter);
         Node comma = result.getLastChild();
         comma.addChildToBack(createName(tempName));
         return result;
     }
 
+    Node createDestructuringAssignment(
+            int type, Node left, Node right, AstNode defaultValue, Transformer transformer) {
+        return createDestructuringAssignment(type, left, right, defaultValue, transformer, true);
+    }
+
     Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
-        return createDestructuringAssignment(type, left, right, null, transformer);
+        return createDestructuringAssignment(type, left, right, null, transformer, false);
     }
 
     Node createDestructuringAssignment(int type, Node left, Node right, AstNode defaultValue) {
-        return createDestructuringAssignment(type, left, right, defaultValue, null);
+        return createDestructuringAssignment(type, left, right, defaultValue, null, true);
     }
 
     Node destructuringAssignmentHelper(
@@ -4484,7 +4500,8 @@ public class Parser {
             Node right,
             String tempName,
             AstNode defaultValue,
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         Scope result = createScopeNode(Token.LETEXPR, left.getLineno(), left.getColumn());
         result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
         try {
@@ -4506,7 +4523,8 @@ public class Parser {
                             comma,
                             destructuringNames,
                             defaultValue,
-                            transformer);
+                            transformer,
+                            isFunctionParameter);
         } else if (left instanceof ObjectLiteral) {
             empty =
                     destructuringObject(
@@ -4516,7 +4534,8 @@ public class Parser {
                             comma,
                             destructuringNames,
                             defaultValue,
-                            transformer);
+                            transformer,
+                            isFunctionParameter);
         } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
             switch (variableType) {
                 case Token.CONST:
@@ -4543,11 +4562,13 @@ public class Parser {
             Node parent,
             List<String> destructuringNames,
             AstNode defaultValue, /* defaultValue to use in function param decls */
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
         boolean defaultValuesSetup = false;
+        boolean iteratorConverted = false;
         for (AstNode n : array.getElements()) {
             if (n.getType() == Token.EMPTY) {
                 index++;
@@ -4558,6 +4579,27 @@ public class Parser {
             if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
                 defaultValuesSetup = true;
+            }
+
+            // make iterable array after default value is applied
+            if (isFunctionParameter && !iteratorConverted) {
+                // we need to know how many elements we actually need
+                int elementsNeeded = 0;
+                for (AstNode elem : array.getElements()) {
+                    if (elem.getType() != Token.EMPTY) {
+                        elementsNeeded++;
+                    }
+                }
+                Node toArrayOp = new Node(Token.TO_ITERABLE_ARRAY, createName(tempName));
+                toArrayOp.putIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, elementsNeeded);
+                Node reassign =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, tempName, null),
+                                toArrayOp);
+                parent.addChildToBack(reassign);
+                iteratorConverted = true;
+                empty = false;
             }
 
             if (n.getType() == Token.NAME) {
@@ -4578,7 +4620,8 @@ public class Parser {
                         (Assignment) n,
                         rightElem,
                         setOp,
-                        transformer);
+                        transformer,
+                        isFunctionParameter);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4587,7 +4630,8 @@ public class Parser {
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
                                 null,
-                                transformer));
+                                transformer,
+                                isFunctionParameter));
             }
             index++;
             empty = false;
@@ -4602,7 +4646,8 @@ public class Parser {
             Assignment n,
             Node rightElem,
             int setOp,
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         Node left = n.getLeft();
         Node right = null;
         if (left.getType() == Token.NAME) {
@@ -4671,7 +4716,8 @@ public class Parser {
                                 cond_default,
                                 currentScriptOrFn.getNextTempName(),
                                 null,
-                                transformer));
+                                transformer,
+                                isFunctionParameter));
             } else {
                 reportError("msg.bad.assign.left");
             }
@@ -4736,7 +4782,8 @@ public class Parser {
             Node parent,
             List<String> destructuringNames,
             AstNode defaultValue, /* defaultValue to use in function param decls */
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         boolean defaultValuesSetup = false;
@@ -4795,7 +4842,8 @@ public class Parser {
                         (Assignment) value,
                         rightElem,
                         setOp,
-                        transformer);
+                        transformer,
+                        isFunctionParameter);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4804,7 +4852,8 @@ public class Parser {
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
                                 null,
-                                transformer));
+                                transformer,
+                                isFunctionParameter));
             }
             empty = false;
         }
