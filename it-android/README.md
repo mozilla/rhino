@@ -1,15 +1,22 @@
 # Android integration tests
 
 Rhino runs with some restrictions on android platform. This project builds a very minimalistic app/testframework to run
-android tests either in an emulator or directly on your phone
+android tests either in an emulator or directly on your phone.
+
+The goal of these tests is to catch over time the kinds of incompatibilities that
+arise when we use APIs that are not supported on every Android SDK version.
+
+Android developers who want to ensure that specific cases work are encouraged to
+add new tests to the test case directory:
+
+    ./it-android/src/main/assets/tests
 
 ## Restrictions
 
 ### Rhino runtime
-- 
 
 - minSdk is 26 (see #1785 for background)
-- runs only in intermreted mode
+- runs only in interpreted mode
 - not all features may be available (JavaAdapter, ...)
 
 ### Emulator
@@ -27,29 +34,43 @@ These are simple javascript tests.
 
 ### Running tests on github
 
-This is done automatically on each PR (maybe changed as manual action, if it consumes too much resources)
+This is done automatically on each PR.
 
 ### Running tests locally
 
-You need an Android SDK installed
+#### Setting up the SDK
+
+You need an Android SDK installed in order for the tests to run
 
 - Either install Android-Studio with SDK https://developer.android.com/about/versions/14/setup-sdk
 
-  make sure that your `ANDROID_HOME` enviroment is set up properly
-- Or use the provided script in `<RHINO_ROOT>/install-android-sdk`
+- make sure that your `ANDROID_HOME` enviroment is set up properly
+- Or, use the provided script in `<RHINO_ROOT>/install-android-sdk`
 
   This will install the SDK in `<RHINO_ROOT>/android-sdk` and register it in the `local.properties` for this gradle
   build only. (This is the best option, if you do not want to mess up your system)
 
   <b>Note:</b> The script will automatically accept all license terms!
 
-Use `<RHINO_ROOT>/run-android-tests-locally.sh` to start an emulator in docker/podman, run the tests and install the
-APK.
+#### Starting an Emulator: Option 1
+
+On some environments, you can use `<RHINO_ROOT>/run-android-tests-locally.sh` to start an emulator in docker/podman, run the tests and install the APK. This test may not work in every case, but is an option on Linux for sure.
 
 This will download an emulator based on https://github.com/budtmo/docker-android and you can access the emulated phone
 on http://localhost:6080
 
 <b>Note:</b> The emulator will not terminate automatically. You will need to remove it from your docker/podman manually
+
+#### Starting the Emulator: Option 2
+
+Once the SDK is installed, you can download Android Studio and use the "Device Manager" in the UI to
+start an emulator.
+
+Once you have started the emulator, if you run:
+
+    ./gradlew :it-android:connectedAndroidTest
+
+it will connect to the emulator, install the test app, and run the tests.
 
 ### Debugging and troubleshooting
 
