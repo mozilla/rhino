@@ -3587,7 +3587,21 @@ public class Parser {
                 if (!after_lb_or_comma) {
                     reportError("msg.no.bracket.arg");
                 }
-                elements.add(assignExpr());
+                AstNode element;
+                if (tt == Token.DOTDOTDOT
+                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    consumeToken();
+                    int spreadPos = ts.tokenBeg;
+                    int spreadLineno = lineNumber();
+                    int spreadColumn = columnNumber();
+                    AstNode exprNode = assignExpr();
+                    element = new Spread(spreadPos, ts.tokenEnd - spreadPos);
+                    element.setLineColumnNumber(spreadLineno, spreadColumn);
+                    ((Spread) element).setExpression(exprNode);
+                } else {
+                    element = assignExpr();
+                }
+                elements.add(element);
                 after_lb_or_comma = false;
                 afterComma = -1;
             }
