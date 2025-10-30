@@ -1,0 +1,71 @@
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.9.3'
+    }
+}
+
+plugins {
+    id 'rhino.spotless-conventions'
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+spotless {
+    java {
+        target "src/*/java/**/*.java"
+    }
+}
+
+
+// read the (android specific) local.properties file
+def localPropertiesFile = rootProject.file("local.properties");
+Properties localProperties = new Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.newDataInputStream())
+}
+
+if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
+    System.out.println("No Android SDK found. Skipping build")
+} else {
+    apply plugin: 'com.android.application'
+
+    android {
+        namespace = "org.mozilla.javascript.android"
+
+        compileSdkVersion 33
+        defaultConfig {
+            minSdk = 26
+            targetSdk = 33
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        }
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_11
+            targetCompatibility JavaVersion.VERSION_11
+        }
+    }
+
+    dependencies {
+        // To test against other versions, replace the dependencies by
+        implementation 'org.mozilla:rhino:1.7.15'
+        //implementation project(':rhino')
+
+        /*implementation project(':examples')
+        implementation project(':rhino-engine')
+        implementation project(':rhino-tools')
+        implementation project(':rhino-xml')*/
+
+        testImplementation 'junit:junit:4.13.2'
+        androidTestImplementation 'androidx.test:runner:1.7.0'
+        androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    }
+}

@@ -9,12 +9,25 @@ on:
 permissions: read-all
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
-      # Some tests require more CPU, and all can use multiple CPUs
-      max-parallel: 1
-    name: Rhino Tests
+      fail-fast: false
+      matrix:
+        include:
+          - java-version: "11"
+            name: "Java 11"
+            multithread: false
+          - java-version: "17"
+            name: "Java 17"
+            multithread: false
+          - java-version: "21"
+            name: "Java 21"
+            multithread: false
+          - java-version: "21"
+            name: "Java 21 Multithreaded"
+            multithread: true
+    name: ${{ matrix.name }}
     steps:
     - name: Check out Rhino
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
@@ -23,59 +36,42 @@ jobs:
       run: git submodule update --init --single-branch
     - name: Set up Java
       uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
-      # By putting JVMs in reverse order, the last one is the one that
-      # will go in the path.
+      with:
+        java-version: |
+          ${{ matrix.java-version }}
+          21
+        distribution: 'adopt'
+    - name: Build and test ${{ matrix.name }}
+      env:
+        RHINO_TEST_JAVA_VERSION: ${{ matrix.java-version }}
+      run: >-
+        ./gradlew check ${{ matrix.multithread && '-Drhino.useThreadSafeObjectsByDefault=true' || '' }}
+    - name: Upload results ${{ matrix.name }}
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      if: ${{ always() }}
+      with:
+        name: reports-java-${{ matrix.java-version }}-${{ matrix.multithread }}
+        path: '*/build/reports'
+
+  test262:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out Rhino
+      uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
+    - name: Check out test262
+      run: git submodule update --init --single-branch
+    - name: Set up Java
+      uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
       with:
         java-version: |
           11
-          17
           21
         distribution: 'adopt'
-    - name: Build and test Java 21
-      run: >-
-        ./gradlew check
-    - name: Upload results Java 21
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-      if: ${{ always() }}
-      with:
-        name: reports-java-21
-        path: '*/build/reports'
-    - name: Build and test Java 17
-      env:
-        RHINO_TEST_JAVA_VERSION: "17"
-      run: >-
-        ./gradlew check
-    - name: Upload results Java 17
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-      if: ${{ always() }}
-      with:
-        name: reports-java-17
-        path: '*/build/reports'
-    - name: Build and test Java 11
-      env:
-        RHINO_TEST_JAVA_VERSION: "11"
-      run: >-
-        ./gradlew check
-    - name: Upload results Java 11
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-      if: ${{ always() }}
-      with:
-        name: reports-java-11
-        path: '*/build/reports'
-    - name: Build and test Java 21 - Multithread
-      timeout-minutes: 30
-      run: >-
-        ./gradlew check -Drhino.useThreadSafeObjectsByDefault=true
-    - name: Upload results Java 21 - Multithread
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-      if: ${{ always() }}
-      with:
-        name: reports-java-21-multithread
-        path: '*/build/reports'
     - name: Check current state of test262.properties
       id: hashBefore
       run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
     - name: Run test262 tests
+      # Currently Java 11 is required to have a reproducible result
       env:
         RHINO_TEST_JAVA_VERSION: "11"
       run: >-
