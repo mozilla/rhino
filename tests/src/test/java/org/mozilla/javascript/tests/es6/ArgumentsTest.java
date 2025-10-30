@@ -346,6 +346,26 @@ public class ArgumentsTest {
     }
 
     @Test
+    public void descWhenAccessedThroughFunction() {
+        String code =
+                "let res = '';\n"
+                        + "function test() {\n"
+                        + "  let desc = Object.getOwnPropertyDescriptor(test.arguments, '0');\n"
+                        + "  res += typeof desc.get + '/' + desc.get;\n"
+                        + "  res += ' ' + typeof desc.set + '/' + desc.set;\n"
+                        + "  res += ' W-' + desc.writable;\n"
+                        + "  res += ' C-' + desc.configurable;\n"
+                        + "  res += ' E-' + desc.enumerable;\n"
+                        + "}\n"
+                        + "test('hello', 'world');\n"
+                        + "res";
+
+        Utils.assertWithAllModes_ES6(
+                "undefined/undefined undefined/undefined W-true C-true E-true", code);
+        Utils.assertWithAllModes_1_8(
+                "undefined/undefined undefined/undefined W-true C-true E-true", code);
+    }
+
     public void readOnlyWhenAccessedThroughFunction() {
         String code =
                 "let res = '';\n"
