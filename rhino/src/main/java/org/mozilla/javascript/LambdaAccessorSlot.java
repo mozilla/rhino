@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
+
 /**
  * A specialized property accessor using lambda functions, similar to {@link LambdaSlot}, but allows
  * defining properties with getter and setter lambdas that require access to the owner object
@@ -60,7 +62,7 @@ public class LambdaAccessorSlot extends Slot {
     }
 
     @Override
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
         return buildPropertyDescriptor(cx);
     }
 
@@ -70,40 +72,36 @@ public class LambdaAccessorSlot extends Slot {
      * it can be problematic when called from inside ThreadSafeSlotMapContainer::compute lambda
      * which can lead to deadlocks.
      */
-    public ScriptableObject buildPropertyDescriptor(Context cx) {
-        ScriptableObject desc = new NativeObject();
-
+    public DescriptorInfo buildPropertyDescriptor(Context cx) {
         int attr = getAttributes();
+        DescriptorInfo desc;
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
         if (es6) {
+            desc = new DescriptorInfo(ScriptableObject.NOT_FOUND, attr, false);
             if (getterFunction == null && setterFunction == null) {
-                desc.defineProperty(
-                        "writable",
-                        (attr & ScriptableObject.READONLY) == 0,
-                        ScriptableObject.EMPTY);
+                desc.writable = (attr & ScriptableObject.READONLY) == 0;
             }
         } else {
-            desc.setCommonDescriptorProperties(
-                    attr, getterFunction == null && setterFunction == null);
+            desc =
+                    new DescriptorInfo(
+                            ScriptableObject.NOT_FOUND,
+                            attr,
+                            getterFunction == null && setterFunction == null);
         }
 
         if (getterFunction != null) {
-            desc.defineProperty("get", this.getterFunction, ScriptableObject.EMPTY);
+            desc.getter = this.getterFunction;
         }
 
         if (setterFunction != null) {
-            desc.defineProperty("set", this.setterFunction, ScriptableObject.EMPTY);
+            desc.setter = this.setterFunction;
         } else if (es6) {
-            desc.defineProperty("set", Undefined.instance, ScriptableObject.EMPTY);
+            desc.setter = Undefined.instance;
         }
 
         if (es6) {
-            desc.defineProperty(
-                    "enumerable", (attr & ScriptableObject.DONTENUM) == 0, ScriptableObject.EMPTY);
-            desc.defineProperty(
-                    "configurable",
-                    (attr & ScriptableObject.PERMANENT) == 0,
-                    ScriptableObject.EMPTY);
+            desc.enumerable = (attr & ScriptableObject.DONTENUM) == 0;
+            desc.configurable = (attr & ScriptableObject.PERMANENT) == 0;
         }
         return desc;
     }

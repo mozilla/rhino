@@ -246,7 +246,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         obj = (NativeObject) cx.newObject(scope);
 
-        ScriptableObject desc = ScriptableObject.buildDataDescriptor(obj, true, EMPTY);
+        var desc = ScriptableObject.buildDataDescriptor(true, EMPTY);
         for (var k : UNSCOPABLES) {
             obj.defineOwnProperty(cx, k, desc);
         }
@@ -464,16 +464,8 @@ public class NativeArray extends ScriptableObject implements List {
         return super.getDefaultValue(hint);
     }
 
-    private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
-        Scriptable scope = getParentScope();
-        if (scope == null) scope = this;
-        ScriptableObject desc = new NativeObject();
-        ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-        desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", Boolean.TRUE, EMPTY);
-        desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
-        desc.defineProperty("configurable", Boolean.TRUE, EMPTY);
-        return desc;
+    private DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
+        return new DescriptorInfo(true, true, true, NOT_FOUND, NOT_FOUND, value);
     }
 
     @Override
@@ -485,7 +477,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
         if (dense != null) {
             int index = toDenseIndex(id);
             if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
@@ -498,7 +490,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     protected boolean defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
         long index = toArrayIndex(id);
         if (index >= length) {
             length = index + 1;
@@ -748,9 +740,9 @@ public class NativeArray extends ScriptableObject implements List {
                 callConstructorOrCreateArray(cx, scope, thisObj, args.length, true);
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && result instanceof ScriptableObject) {
-            ScriptableObject desc = ScriptableObject.buildDataDescriptor(result, null, EMPTY);
+            var desc = ScriptableObject.buildDataDescriptor(null, EMPTY);
             for (int i = 0; i < args.length; i++) {
-                desc.put("value", desc, args[i]);
+                desc.value = args[i];
                 ((ScriptableObject) result).defineOwnProperty(cx, i, desc);
             }
         } else {

@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * This is a specialization of property access using some lambda functions. It behaves exactly like
@@ -47,15 +48,8 @@ public class LambdaSlot extends Slot {
     }
 
     @Override
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-        if (getter != null) {
-            desc.defineProperty("value", getter.get(), ScriptableObject.EMPTY);
-        } else {
-            desc.defineProperty("value", value, ScriptableObject.EMPTY);
-        }
-        desc.setCommonDescriptorProperties(getAttributes(), true);
-        return desc;
+    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+        return new DescriptorInfo(getter == null ? value : getter.get(), getAttributes(), true);
     }
 
     @Override
