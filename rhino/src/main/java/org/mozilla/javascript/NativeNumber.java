@@ -148,12 +148,7 @@ final class NativeNumber extends ScriptableObject {
             int precisionMin = cx.version < Context.VERSION_ES6 ? -20 : 0;
             /* We allow a larger range of precision than
             ECMA requires; this is permitted by ECMA. */
-            if (p < precisionMin || p > MAX_PRECISION) {
-                String msg =
-                        ScriptRuntime.getMessageById(
-                                "msg.bad.precision", ScriptRuntime.toString(args[0]));
-                throw ScriptRuntime.rangeError(msg);
-            }
+            checkPrecision(p, precisionMin, args[0]);
             fractionDigits = ScriptRuntime.toInt32(p);
         } else {
             fractionDigits = 0;
@@ -182,13 +177,7 @@ final class NativeNumber extends ScriptableObject {
         if (!Double.isFinite(value)) {
             return ScriptRuntime.toString(value);
         }
-
-        if (p < 0.0 || p > MAX_PRECISION) {
-            String msg =
-                    ScriptRuntime.getMessageById(
-                            "msg.bad.precision", ScriptRuntime.toString(args[0]));
-            throw ScriptRuntime.rangeError(msg);
-        }
+        checkPrecision(p, 0.0, args.length > 0 ? args[0] : Undefined.instance);
 
         // Trigger the special handling for undefined, which requires that
         // we hold off on this bit until the checks above,.
@@ -209,15 +198,18 @@ final class NativeNumber extends ScriptableObject {
         if (!Double.isFinite(value)) {
             return ScriptRuntime.toString(value);
         }
-        if (p < 1 || p > MAX_PRECISION) {
-            String msg =
-                    ScriptRuntime.getMessageById(
-                            "msg.bad.precision", ScriptRuntime.toString(args[0]));
-            throw ScriptRuntime.rangeError(msg);
-        }
+        checkPrecision(p, 1.0, args[0]);
         int precision = ScriptRuntime.toInt32(p);
 
         return DecimalFormatter.toPrecision(value, precision);
+    }
+
+    private static void checkPrecision(double p, double min, Object arg) {
+        if (p < min || p > MAX_PRECISION) {
+            String msg =
+                    ScriptRuntime.getMessageById("msg.bad.precision", ScriptRuntime.toString(arg));
+            throw ScriptRuntime.rangeError(msg);
+        }
     }
 
     private static NativeNumber toSelf(Scriptable thisObj) {

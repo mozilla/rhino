@@ -97,7 +97,13 @@ public class DoubleFormatter {
         return bits > 0 ? "Infinity" : "-Infinity";
     }
 
+    /**
+     * Convert a double to a Decimal object that may be output in various ways. Unlike toString, and
+     * since it always returns a Decimal, it must be used with finite numbers only or the result is
+     * undetermined.
+     */
     public static Decimal toDecimal(double v) {
+        assert Double.isFinite(v);
         long bits = Double.doubleToRawLongBits(v);
         long t = bits & T_MASK;
         int bq = (int) (bits >>> (P - 1)) & BQ_MASK;

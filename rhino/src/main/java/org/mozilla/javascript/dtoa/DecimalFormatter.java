@@ -26,10 +26,7 @@ public class DecimalFormatter {
         if (negative) {
             val = Math.abs(v);
         }
-        BigDecimal bd = new BigDecimal(val, MathContext.UNLIMITED);
-        if (bd.precision() > fractionDigits + 1) {
-            bd = bd.round(new MathContext(fractionDigits + 1, RoundingMode.HALF_UP));
-        }
+        var bd = new BigDecimal(val, new MathContext(fractionDigits + 1, RoundingMode.HALF_UP));
 
         int exponent;
         if (bd.scale() >= 0) {
@@ -72,10 +69,7 @@ public class DecimalFormatter {
         } else {
             val = v;
         }
-        var bd = new BigDecimal(val, MathContext.UNLIMITED);
-        if (bd.precision() > precision) {
-            bd = bd.round(new MathContext(precision, RoundingMode.HALF_UP));
-        }
+        var bd = new BigDecimal(val, new MathContext(precision, RoundingMode.HALF_UP));
 
         int scale = bd.scale();
         int numDigits = bd.precision();
