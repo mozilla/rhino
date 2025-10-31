@@ -294,7 +294,7 @@ class Arguments extends ScriptableObject {
         Object value = arg(index);
         if (value == NOT_FOUND) return true;
 
-        if (isAccessorDescriptor(desc)) {
+        if (desc.isAccessorDescriptor()) {
             removeArg(index);
             return true;
         }

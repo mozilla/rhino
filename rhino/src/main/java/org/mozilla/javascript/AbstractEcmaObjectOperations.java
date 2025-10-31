@@ -85,11 +85,10 @@ public class AbstractEcmaObjectOperations {
         }
         for (Object name : ids) {
             DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, name);
-            if (Boolean.TRUE.equals(desc.configurable)) return false;
+            if (desc.isConfigurable()) return false;
 
-            if (level == INTEGRITY_LEVEL.FROZEN
-                    && ScriptableObject.isDataDescriptor(desc)
-                    && Boolean.TRUE.equals(desc.writable)) return false;
+            if (level == INTEGRITY_LEVEL.FROZEN && desc.isDataDescriptor() && desc.isWritable())
+                return false;
         }
 
         return true;
@@ -154,16 +153,16 @@ public class AbstractEcmaObjectOperations {
             DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, key);
 
             if (level == INTEGRITY_LEVEL.SEALED) {
-                if (Boolean.TRUE.equals(desc.configurable)) {
+                if (desc.isConfigurable()) {
                     desc.configurable = false;
 
                     obj.defineOwnProperty(cx, key, desc, false);
                 }
             } else {
-                if (ScriptableObject.isDataDescriptor(desc) && Boolean.TRUE.equals(desc.writable)) {
+                if (desc.isDataDescriptor() && desc.isWritable()) {
                     desc.writable = false;
                 }
-                if (Boolean.TRUE.equals(desc.configurable)) {
+                if (desc.isConfigurable()) {
                     desc.configurable = false;
                 }
                 obj.defineOwnProperty(cx, key, desc, false);
@@ -431,8 +430,7 @@ public class AbstractEcmaObjectOperations {
                 return false;
             }
 
-            if (ScriptableObject.isGenericDescriptor(desc)
-                    || ScriptableObject.isDataDescriptor(desc)) {
+            if (desc.isGenericDescriptor() || desc.isDataDescriptor()) {
                 /*
                 i. i. If O is not undefined, create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attribute values are described by Desc.
                   If the value of an attribute field of Desc is absent, the attribute of the newly created property is set to its default value.
@@ -445,36 +443,35 @@ public class AbstractEcmaObjectOperations {
             return true;
         }
 
-        if (desc.enumerable == ScriptableObject.NOT_FOUND
-                && desc.configurable == ScriptableObject.NOT_FOUND
-                && desc.writable == ScriptableObject.NOT_FOUND
-                && desc.getter == ScriptableObject.NOT_FOUND
-                && desc.setter == ScriptableObject.NOT_FOUND
-                && desc.value == ScriptableObject.NOT_FOUND) {
+        if (!desc.hasEnumerable()
+                && !desc.hasConfigurable()
+                && !desc.hasWritable()
+                && !desc.hasGetter()
+                && !desc.hasSetter()
+                && !desc.hasValue()) {
             return true;
         }
 
-        if (Boolean.FALSE.equals(current.configurable)) {
-            if (Boolean.TRUE.equals(desc.configurable)) {
+        if (current.isConfigurable(false)) {
+            if (desc.isConfigurable()) {
                 return false;
             }
 
-            if (desc.enumerable != ScriptableObject.NOT_FOUND
-                    && !Objects.equals(desc.enumerable, current.enumerable)) {
+            if (desc.hasEnumerable() && !Objects.equals(desc.enumerable, current.enumerable)) {
                 return false;
             }
         }
 
-        if (ScriptableObject.isGenericDescriptor(desc)) {
+        if (desc.isGenericDescriptor()) {
             return true;
         }
 
-        if (ScriptableObject.isDataDescriptor(current) != ScriptableObject.isDataDescriptor(desc)) {
-            if (Boolean.FALSE.equals(current.configurable)) {
+        if (current.isDataDescriptor() != desc.isDataDescriptor()) {
+            if (current.isConfigurable(false)) {
                 return false;
             }
-            if (ScriptableObject.isDataDescriptor(current)) {
-                if (Boolean.FALSE.equals(current.configurable)) {
+            if (current.isDataDescriptor()) {
+                if (current.isConfigurable(false)) {
                     // i. i. If O is not undefined, convert the property named P of object O from a
                     // data property to an accessor property. Preserve the existing values of the
                     // converted property's [[Configurable]] and [[Enumerable]] attributes and set
@@ -486,27 +483,22 @@ public class AbstractEcmaObjectOperations {
                     // the rest of the property's attributes to their default values.
                 }
             }
-        } else if (ScriptableObject.isDataDescriptor(current)
-                && ScriptableObject.isDataDescriptor(desc)) {
-            if (Boolean.FALSE.equals(current.configurable)
-                    && Boolean.FALSE.equals(current.writable)) {
-                if (Boolean.TRUE.equals(desc.writable)) {
+        } else if (current.isDataDescriptor() && desc.isDataDescriptor()) {
+            if (current.isConfigurable(false) && current.isWritable(false)) {
+                if (desc.isWritable()) {
                     return false;
                 }
-                if (desc.value != ScriptableObject.NOT_FOUND
-                        && !Objects.equals(desc.value, current.value)) {
+                if (desc.hasValue() && !Objects.equals(desc.value, current.value)) {
                     return false;
                 }
                 return true;
             }
         } else {
-            if (Boolean.FALSE.equals(current.configurable)) {
-                if (desc.setter != ScriptableObject.NOT_FOUND
-                        && !Objects.equals(desc.setter, current.setter)) {
+            if (current.isConfigurable(false)) {
+                if (desc.hasSetter() && !Objects.equals(desc.setter, current.setter)) {
                     return false;
                 }
-                if (desc.getter != ScriptableObject.NOT_FOUND
-                        && !Objects.equals(desc.getter, current.getter)) {
+                if (desc.hasGetter() && !Objects.equals(desc.getter, current.getter)) {
                     return false;
                 }
                 return true;

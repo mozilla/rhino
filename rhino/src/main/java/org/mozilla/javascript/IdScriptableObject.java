@@ -858,7 +858,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             int info = findInstanceIdInfo(name);
             if (info != 0) {
                 int id = (info & 0xFFFF);
-                if (isAccessorDescriptor(desc)) {
+                if (desc.isAccessorDescriptor()) {
                     delete(id); // it will be replaced with a slot
                 } else {
                     checkPropertyDefinition(desc);
@@ -882,7 +882,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if (prototypeValues != null) {
                 int id = prototypeValues.findId(name);
                 if (id != 0) {
-                    if (isAccessorDescriptor(desc)) {
+                    if (desc.isAccessorDescriptor()) {
                         prototypeValues.delete(id); // it will be replaced with a slot
                     } else {
                         checkPropertyDefinition(desc);

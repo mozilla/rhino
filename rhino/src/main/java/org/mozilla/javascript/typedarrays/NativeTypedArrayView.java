@@ -153,21 +153,20 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                     return false;
                 }
 
-                if (Boolean.FALSE.equals(desc.configurable)) {
+                if (desc.isConfigurable(false)) {
                     return false;
                 }
-                if (Boolean.FALSE.equals(desc.enumerable)) {
+                if (desc.isEnumerable(false)) {
                     return false;
                 }
-                if (isAccessorDescriptor(desc)) {
+                if (desc.isAccessorDescriptor()) {
                     return false;
                 }
-                if (Boolean.FALSE.equals(desc.writable)) {
+                if (desc.isWritable(false)) {
                     return false;
                 }
-                Object value = desc.value;
-                if (value != NOT_FOUND) {
-                    js_set(idx, value);
+                if (desc.hasValue()) {
+                    js_set(idx, desc.value);
                 }
                 return true;
             }

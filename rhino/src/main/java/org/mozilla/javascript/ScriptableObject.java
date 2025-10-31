@@ -1632,10 +1632,10 @@ public abstract class ScriptableObject extends SlotMapOwner
         try (var map = props.startCompoundOp(false)) {
             ids = props.getIds(map, false, true);
         }
-        ScriptableObject[] descs = new ScriptableObject[ids.length];
+        DescriptorInfo[] descs = new DescriptorInfo[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
-            ScriptableObject desc = ensureScriptableObject(descObj);
+            var desc = new DescriptorInfo(ensureScriptableObject(descObj));
             checkPropertyDefinition(desc);
             descs[i] = desc;
         }
@@ -1727,7 +1727,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         public Object value = NOT_FOUND;
         boolean accessorDescriptor;
 
-        DescriptorInfo(ScriptableObject desc) {
+        public DescriptorInfo(ScriptableObject desc) {
             enumerable = getProperty(desc, "enumerable");
             writable = getProperty(desc, "writable");
             configurable = getProperty(desc, "configurable");
@@ -1737,7 +1737,18 @@ public abstract class ScriptableObject extends SlotMapOwner
             accessorDescriptor = getter != NOT_FOUND || setter != NOT_FOUND;
         }
 
-        DescriptorInfo(
+        public DescriptorInfo(
+                boolean enumerable, boolean writable, boolean configurable, Object value) {
+            this.enumerable = enumerable;
+            this.writable = writable;
+            this.configurable = configurable;
+            this.getter = NOT_FOUND;
+            this.setter = NOT_FOUND;
+            this.value = value;
+            accessorDescriptor = false;
+        }
+
+        public DescriptorInfo(
                 Object enumerable,
                 Object writable,
                 Object configurable,
@@ -1765,13 +1776,73 @@ public abstract class ScriptableObject extends SlotMapOwner
         Scriptable toObject(Scriptable scope) {
             ScriptableObject desc = new NativeObject();
             ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-            if (value != NOT_FOUND) desc.defineProperty("value", value, EMPTY);
-            if (writable != NOT_FOUND) desc.defineProperty("writable", writable, EMPTY);
-            if (getter != NOT_FOUND) desc.defineProperty("get", getter, EMPTY);
-            if (setter != NOT_FOUND) desc.defineProperty("set", setter, EMPTY);
-            if (enumerable != NOT_FOUND) desc.defineProperty("enumerable", enumerable, EMPTY);
-            if (configurable != NOT_FOUND) desc.defineProperty("configurable", configurable, EMPTY);
+            if (hasValue()) desc.defineProperty("value", value, EMPTY);
+            if (hasWritable()) desc.defineProperty("writable", writable, EMPTY);
+            if (hasGetter()) desc.defineProperty("get", getter, EMPTY);
+            if (hasSetter()) desc.defineProperty("set", setter, EMPTY);
+            if (hasEnumerable()) desc.defineProperty("enumerable", enumerable, EMPTY);
+            if (hasConfigurable()) desc.defineProperty("configurable", configurable, EMPTY);
             return desc;
+        }
+
+        public boolean isWritable() {
+            return Boolean.TRUE.equals(writable);
+        }
+
+        public boolean isWritable(boolean value) {
+            return ((Boolean) value).equals(writable);
+        }
+
+        public boolean hasWritable() {
+            return writable != NOT_FOUND;
+        }
+
+        public boolean isEnumerable() {
+            return Boolean.TRUE.equals(enumerable);
+        }
+
+        public boolean isEnumerable(boolean value) {
+            return ((Boolean) value).equals(enumerable);
+        }
+
+        public boolean hasEnumerable() {
+            return enumerable != NOT_FOUND;
+        }
+
+        public boolean isConfigurable() {
+            return Boolean.TRUE.equals(configurable);
+        }
+
+        public boolean isConfigurable(boolean value) {
+            return ((Boolean) value).equals(configurable);
+        }
+
+        public boolean hasConfigurable() {
+            return configurable != NOT_FOUND;
+        }
+
+        public boolean hasValue() {
+            return value != NOT_FOUND;
+        }
+
+        public boolean hasGetter() {
+            return getter != NOT_FOUND;
+        }
+
+        public boolean hasSetter() {
+            return setter != NOT_FOUND;
+        }
+
+        public boolean isDataDescriptor() {
+            return hasValue() || hasWritable();
+        }
+
+        public boolean isAccessorDescriptor() {
+            return hasGetter() || hasSetter();
+        }
+
+        public boolean isGenericDescriptor() {
+            return !isDataDescriptor() && !isAccessorDescriptor();
         }
     }
 
@@ -1869,7 +1940,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                 ((BuiltInSlot<?>) slot).setValueFromDescriptor(info.value, owner, owner, true);
             }
         } else {
-            if (!slot.isValueSlot() && isDataDescriptor(info)) {
+            if (!slot.isValueSlot() && info.isDataDescriptor()) {
                 // Replace a non-base slot with a regular slot
                 slot = new Slot(slot);
             }
@@ -2034,7 +2105,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
     }
 
-    protected void checkPropertyDefinition(DescriptorInfo desc) {
+    protected static void checkPropertyDefinition(DescriptorInfo desc) {
         Object getter = desc.getter;
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(getter);
@@ -2043,7 +2114,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(setter);
         }
-        if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
+        if (desc.isDataDescriptor() && desc.isAccessorDescriptor()) {
             throw ScriptRuntime.typeErrorById("msg.both.data.and.accessor.desc");
         }
     }
@@ -2064,7 +2135,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                 if (((current.getAttributes() & DONTENUM) == 0) != isTrue(info.enumerable))
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.enumerable.with.configurable.false", id);
-                boolean isData = isDataDescriptor(info);
+                boolean isData = info.isDataDescriptor();
                 boolean isBuiltIn = current instanceof BuiltInSlot;
                 boolean isAccessor = info.accessorDescriptor;
                 if (!isData && !isAccessor) {
@@ -2173,10 +2244,6 @@ public abstract class ScriptableObject extends SlotMapOwner
         return hasProperty(desc, "value") || hasProperty(desc, "writable");
     }
 
-    protected static boolean isDataDescriptor(DescriptorInfo info) {
-        return info.value != NOT_FOUND || info.writable != NOT_FOUND;
-    }
-
     /**
      * Implements IsAccessorDescriptor as described in ES5 8.10.1
      *
@@ -2188,7 +2255,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     protected static boolean isAccessorDescriptor(DescriptorInfo desc) {
-        return desc.getter != NOT_FOUND || desc.setter != NOT_FOUND;
+        return desc.hasGetter() || desc.hasSetter();
     }
 
     /**
@@ -2202,7 +2269,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     protected static boolean isGenericDescriptor(DescriptorInfo desc) {
-        return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
+        return desc.isDataDescriptor() && !desc.isAccessorDescriptor();
     }
 
     protected static Scriptable ensureScriptable(Object arg) {

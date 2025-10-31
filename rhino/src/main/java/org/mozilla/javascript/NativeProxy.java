@@ -173,7 +173,7 @@ final class NativeProxy extends ScriptableObject implements Function {
                 DescriptorInfo targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), name);
                 if (targetDesc != null) {
-                    if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+                    if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                         throw ScriptRuntime.typeError(
                                 "proxy can't report an existing own property '"
                                         + name
@@ -226,7 +226,7 @@ final class NativeProxy extends ScriptableObject implements Function {
                 DescriptorInfo targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), index);
                 if (targetDesc != null) {
-                    if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+                    if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                         throw ScriptRuntime.typeError(
                                 "proxy can't check an existing property ' + name + ' existance on an not configurable or not extensible object");
                     }
@@ -259,7 +259,7 @@ final class NativeProxy extends ScriptableObject implements Function {
                 DescriptorInfo targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), key);
                 if (targetDesc != null) {
-                    if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+                    if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                         throw ScriptRuntime.typeError(
                                 "proxy can't check an existing property ' + name + ' existance on an not configurable or not extensible object");
                     }
@@ -359,7 +359,7 @@ final class NativeProxy extends ScriptableObject implements Function {
             ArrayList<Object> targetNonconfigurableKeys = new ArrayList<>();
             for (Object targetKey : targetKeys) {
                 DescriptorInfo desc = target.getOwnPropertyDescriptor(cx, targetKey);
-                if (desc != null && Boolean.FALSE.equals(desc.configurable)) {
+                if (desc != null && desc.isConfigurable(false)) {
                     targetNonconfigurableKeys.add(targetKey);
                 } else {
                     targetConfigurableKeys.add(targetKey);
@@ -433,18 +433,14 @@ final class NativeProxy extends ScriptableObject implements Function {
             Object trapResult = callTrap(trap, new Object[] {target, name, this});
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
-            if (targetDesc != null
-                    && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+            if (targetDesc != null && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(trapResult, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.getter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.getter)) {
                     if (!Undefined.isUndefined(trapResult)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
@@ -496,16 +492,14 @@ final class NativeProxy extends ScriptableObject implements Function {
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+                    && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(trapResult, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.getter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.getter)) {
                     if (!Undefined.isUndefined(trapResult)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
@@ -555,16 +549,14 @@ final class NativeProxy extends ScriptableObject implements Function {
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+                    && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(trapResult, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.getter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.getter)) {
                     if (!Undefined.isUndefined(trapResult)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
@@ -620,16 +612,14 @@ final class NativeProxy extends ScriptableObject implements Function {
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+                    && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(value, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy set has to use the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.setter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.setter)) {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
@@ -685,16 +675,14 @@ final class NativeProxy extends ScriptableObject implements Function {
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+                    && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(value, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy set has to use the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.setter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.setter)) {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
@@ -746,16 +734,14 @@ final class NativeProxy extends ScriptableObject implements Function {
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
-                    && Boolean.FALSE.equals(targetDesc.configurable)) {
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.writable)) {
+                    && targetDesc.isConfigurable(false)) {
+                if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(value, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy set has to use the same value as the plain call");
                     }
                 }
-                if (ScriptableObject.isAccessorDescriptor(targetDesc)
-                        && Undefined.isUndefined(targetDesc.setter)) {
+                if (targetDesc.isAccessorDescriptor() && Undefined.isUndefined(targetDesc.setter)) {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
@@ -808,7 +794,7 @@ final class NativeProxy extends ScriptableObject implements Function {
             if (targetDesc == null) {
                 return; // true
             }
-            if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+            if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
@@ -860,7 +846,7 @@ final class NativeProxy extends ScriptableObject implements Function {
             if (targetDesc == null) {
                 return; // true
             }
-            if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+            if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
@@ -910,7 +896,7 @@ final class NativeProxy extends ScriptableObject implements Function {
             if (targetDesc == null) {
                 return; // true
             }
-            if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+            if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
@@ -981,7 +967,7 @@ final class NativeProxy extends ScriptableObject implements Function {
                     return null;
                 }
 
-                if (Boolean.FALSE.equals(targetDesc.configurable) || !target.isExtensible()) {
+                if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                     throw ScriptRuntime.typeError(
                             "proxy can't report an existing own property '"
                                     + id
@@ -1065,7 +1051,7 @@ final class NativeProxy extends ScriptableObject implements Function {
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), id);
             boolean extensibleTarget = target.isExtensible();
 
-            boolean settingConfigFalse = Boolean.FALSE.equals(desc.configurable);
+            boolean settingConfigFalse = desc.isConfigurable(false);
 
             if (targetDesc == null) {
                 if (!extensibleTarget || settingConfigFalse) {
@@ -1079,15 +1065,15 @@ final class NativeProxy extends ScriptableObject implements Function {
                             "proxy can't define an incompatible property descriptor");
                 }
 
-                if (settingConfigFalse && Boolean.TRUE.equals(targetDesc.configurable)) {
+                if (settingConfigFalse && targetDesc.isConfigurable()) {
                     throw ScriptRuntime.typeError(
                             "proxy can't define an incompatible property descriptor");
                 }
 
-                if (ScriptableObject.isDataDescriptor(targetDesc)
-                        && Boolean.FALSE.equals(targetDesc.configurable)
-                        && Boolean.TRUE.equals(targetDesc.writable)) {
-                    if (Boolean.FALSE.equals(desc.writable)) {
+                if (targetDesc.isDataDescriptor()
+                        && targetDesc.isConfigurable(false)
+                        && targetDesc.isWritable()) {
+                    if (desc.isWritable(false)) {
                         throw ScriptRuntime.typeError(
                                 "proxy can't define an incompatible property descriptor");
                     }
