@@ -68,26 +68,41 @@ public class ScriptRuntime {
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
     public static BaseFunction typeErrorThrower(Context cx) {
         if (cx.typeErrorThrower == null) {
-            BaseFunction thrower =
-                    new BaseFunction() {
-                        private static final long serialVersionUID = -5891740962154902286L;
-
-                        @Override
-                        public Object call(
-                                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                            throw typeErrorById("msg.op.not.allowed");
-                        }
-
-                        @Override
-                        public int getLength() {
-                            return 0;
-                        }
-                    };
-            ScriptRuntime.setFunctionProtoAndParent(thrower, cx, cx.topCallScope, false);
-            thrower.preventExtensions();
+            BaseFunction thrower = new ThrowTypeError(cx.topCallScope);
             cx.typeErrorThrower = thrower;
         }
         return cx.typeErrorThrower;
+    }
+
+    private static final class ThrowTypeError extends BaseFunction {
+        private static final long serialVersionUID = -5891740962154902286L;
+
+        ThrowTypeError(Scriptable scope) {
+            setPrototype(ScriptableObject.getFunctionPrototype(scope));
+
+            setAttributes("length", DONTENUM | PERMANENT | READONLY);
+            setAttributes("name", DONTENUM | PERMANENT | READONLY);
+
+            // delete arity and arguments (without further checking)
+            getMap().compute(this, "arity", 0, ThrowTypeError::removeWithoutChecking);
+            getMap().compute(this, "arguments", 0, ThrowTypeError::removeWithoutChecking);
+
+            preventExtensions();
+        }
+
+        private static Slot removeWithoutChecking(
+                Object key,
+                int index,
+                Slot slot,
+                CompoundOperationMap compoundOp,
+                SlotMapOwner owner) {
+            return null;
+        }
+
+        @Override
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            throw typeErrorById("msg.op.not.allowed");
+        }
     }
 
     public static Object concat(Object lhs, Object rhs) {

@@ -713,7 +713,15 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
         Context cx = Context.getContext();
         NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
-        return (activation == null) ? null : activation.get("arguments", activation);
+        // return (activation == null) ? null : activation.get("arguments", activation);
+        if (activation == null) {
+            return null;
+        }
+        Object arguments = activation.get("arguments", activation);
+        if (arguments instanceof Arguments && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            return new Arguments.ReadonlyArguments((Arguments) arguments, cx);
+        }
+        return arguments;
     }
 
     private static Scriptable jsConstructor(
