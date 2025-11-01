@@ -56,8 +56,8 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
 
     dependencies {
         // To test against other versions, replace the dependencies by
-        implementation 'org.mozilla:rhino:1.7.15'
-        //implementation project(':rhino')
+        //implementation 'org.mozilla:rhino:1.7.15'
+        implementation project(':rhino')
 
         /*implementation project(':examples')
         implementation project(':rhino-engine')
