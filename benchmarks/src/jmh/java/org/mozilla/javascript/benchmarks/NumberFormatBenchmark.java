@@ -2,6 +2,7 @@ package org.mozilla.javascript.benchmarks;
 
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.dtoa.DecimalFormatter;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 
@@ -33,5 +34,30 @@ public class NumberFormatBenchmark {
     @Benchmark
     public Object scriptRuntimeBig() {
         return ScriptRuntime.toString(314000000000000000000.0);
+    }
+
+    @Benchmark
+    public Object toFixedPi() {
+        return DecimalFormatter.toFixed(Math.PI, 20);
+    }
+
+    @Benchmark
+    public Object toExponentialPi() {
+        return DecimalFormatter.toExponential(Math.PI, 20);
+    }
+
+    @Benchmark
+    public Object toExponentialPiDefault() {
+        return DecimalFormatter.toExponential(Math.PI, -1);
+    }
+
+    @Benchmark
+    public Object toFixedDenormal() {
+        return DecimalFormatter.toFixed(DENORMAL, 20);
+    }
+
+    @Benchmark
+    public Object toExponentialDenormal() {
+        return DecimalFormatter.toExponential(DENORMAL, 20);
     }
 }
