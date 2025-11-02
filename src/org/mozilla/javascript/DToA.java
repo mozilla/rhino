@@ -354,6 +354,7 @@ class DToA {
 
         return buffer.toString();
     }
+<<<<<<< HEAD
 
     /* dtoa for IEEE arithmetic (dmg): convert double to ASCII string.
      *
@@ -1222,5 +1223,7 @@ class DToA {
         }
     }
 
+=======
+>>>>>>> b333c3ec7 (Replace number formatting operations on Number)
 }
 
