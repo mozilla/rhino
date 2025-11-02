@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.dtoa.DecimalFormatter;
+
 /**
  * This class implements the Number native object.
  *
@@ -156,49 +158,13 @@ final class NativeNumber extends IdScriptableObject {
                 return ScriptRuntime.wrapNumber(value);
 
             case Id_toFixed:
-                int precisionMin = cx.version < Context.VERSION_ES6 ? -20 : 0;
-                return num_to(value, args, DToA.DTOSTR_FIXED, DToA.DTOSTR_FIXED, precisionMin, 0);
+                return js_toFixed(cx, value, args);
 
             case Id_toExponential:
-                {
-                    // Handle special values before range check
-                    if (Double.isNaN(value)) {
-                        return "NaN";
-                    }
-                    if (Double.isInfinite(value)) {
-                        if (value >= 0) {
-                            return "Infinity";
-                        }
-                        return "-Infinity";
-                    }
-                    // General case
-                    return num_to(
-                            value,
-                            args,
-                            DToA.DTOSTR_STANDARD_EXPONENTIAL,
-                            DToA.DTOSTR_EXPONENTIAL,
-                            0,
-                            1);
-                }
+                return js_toExponential(value, args);
 
             case Id_toPrecision:
-                {
-                    // Undefined precision, fall back to ToString()
-                    if (args.length == 0 || Undefined.isUndefined(args[0])) {
-                        return ScriptRuntime.numberToString(value, 10);
-                    }
-                    // Handle special values before range check
-                    if (Double.isNaN(value)) {
-                        return "NaN";
-                    }
-                    if (Double.isInfinite(value)) {
-                        if (value >= 0) {
-                            return "Infinity";
-                        }
-                        return "-Infinity";
-                    }
-                    return num_to(value, args, DToA.DTOSTR_STANDARD, DToA.DTOSTR_PRECISION, 1, 0);
-                }
+                return js_toPrecision(value, args);
 
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
@@ -249,37 +215,75 @@ final class NativeNumber extends IdScriptableObject {
         }
     }
 
+    private static Object js_toFixed(Context cx, double value, Object[] args) {
+        int fractionDigits;
+        if (args.length > 0 && !Undefined.isUndefined(args[0])) {
+            double p = ScriptRuntime.toInteger(args[0]);
+            int precisionMin = cx.version < Context.VERSION_ES6 ? -20 : 0;
+            /* We allow a larger range of precision than
+            ECMA requires; this is permitted by ECMA. */
+            checkPrecision(p, precisionMin, args[0]);
+            fractionDigits = ScriptRuntime.toInt32(p);
+        } else {
+            fractionDigits = 0;
+        }
+
+        if (!Double.isFinite(value)) {
+            return ScriptRuntime.toString(value);
+        }
+        return DecimalFormatter.toFixed(value, fractionDigits);
+    }
+
+    private static Object js_toExponential(double value, Object[] args) {
+        double p;
+        boolean wasUndefined;
+        if (args.length > 0 && !Undefined.isUndefined(args[0])) {
+            wasUndefined = false;
+            p = ScriptRuntime.toInteger(args[0]);
+        } else {
+            wasUndefined = true;
+            p = 0.0;
+        }
+
+        if (!Double.isFinite(value)) {
+            return ScriptRuntime.toString(value);
+        }
+        checkPrecision(p, 0.0, args.length > 0 ? args[0] : Undefined.instance);
+
+        // Trigger the special handling for undefined, which requires that
+        // we hold off on this bit until the checks above,.
+        int fractionDigits = wasUndefined ? -1 : ScriptRuntime.toInt32(p);
+
+        return DecimalFormatter.toExponential(value, fractionDigits);
+    }
+
+    private static Object js_toPrecision(double value, Object[] args) {
+        // Undefined precision, fall back to ToString()
+        if (args.length == 0 || Undefined.isUndefined(args[0])) {
+            return ScriptRuntime.toString(value);
+        }
+
+        double p = ScriptRuntime.toInteger(args[0]);
+        if (!Double.isFinite(value)) {
+            return ScriptRuntime.toString(value);
+        }
+        checkPrecision(p, 1.0, args[0]);
+        int precision = ScriptRuntime.toInt32(p);
+
+        return DecimalFormatter.toPrecision(value, precision);
+    }
+
+    private static void checkPrecision(double p, double min, Object arg) {
+        if (p < min || p > MAX_PRECISION) {
+            String msg =
+                    ScriptRuntime.getMessageById("msg.bad.precision", ScriptRuntime.toString(arg));
+            throw ScriptRuntime.rangeError(msg);
+        }
+    }
+
     @Override
     public String toString() {
         return ScriptRuntime.numberToString(doubleValue, 10);
-    }
-
-    private static String num_to(
-            double val,
-            Object[] args,
-            int zeroArgMode,
-            int oneArgMode,
-            int precisionMin,
-            int precisionOffset) {
-        int precision;
-        if (args.length == 0) {
-            precision = 0;
-            oneArgMode = zeroArgMode;
-        } else {
-            /* We allow a larger range of precision than
-            ECMA requires; this is permitted by ECMA. */
-            double p = ScriptRuntime.toInteger(args[0]);
-            if (p < precisionMin || p > MAX_PRECISION) {
-                String msg =
-                        ScriptRuntime.getMessageById(
-                                "msg.bad.precision", ScriptRuntime.toString(args[0]));
-                throw ScriptRuntime.rangeError(msg);
-            }
-            precision = ScriptRuntime.toInt32(p);
-        }
-        StringBuilder sb = new StringBuilder();
-        DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
-        return sb.toString();
     }
 
     static Object isFinite(Object val) {
@@ -309,7 +313,7 @@ final class NativeNumber extends IdScriptableObject {
     }
 
     private static boolean isDoubleInteger(double d) {
-        return !Double.isInfinite(d) && !Double.isNaN(d) && (Math.floor(d) == d);
+        return Double.isFinite(d) && (Math.floor(d) == d);
     }
 
     private static boolean isSafeInteger(Number val) {
