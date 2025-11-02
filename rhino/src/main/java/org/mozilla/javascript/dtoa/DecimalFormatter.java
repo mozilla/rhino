@@ -116,7 +116,7 @@ public class DecimalFormatter {
             b.append('-');
         }
         if (scale >= numDigits) {
-            // 0.digits000
+            // 0.000digits000
             b.append("0.");
             fillZeroes(b, scale - numDigits);
             b.append(digits);
