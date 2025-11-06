@@ -852,20 +852,20 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     @Override
     protected boolean defineOwnProperty(
-            Context cx, Object key, ScriptableObject desc, boolean checkValid) {
+            Context cx, Object key, DescriptorInfo desc, boolean checkValid) {
         if (key instanceof CharSequence) {
             String name = key.toString();
             int info = findInstanceIdInfo(name);
             if (info != 0) {
                 int id = (info & 0xFFFF);
-                if (isAccessorDescriptor(desc)) {
+                if (desc.isAccessorDescriptor()) {
                     delete(id); // it will be replaced with a slot
                 } else {
                     checkPropertyDefinition(desc);
                     var slot = queryOrFakeSlot(cx, key);
                     checkPropertyChangeForSlot(name, slot, desc);
                     int attr = (info >>> 16);
-                    Object value = getProperty(desc, "value");
+                    Object value = desc.value;
                     if (value != NOT_FOUND && ((attr & READONLY) == 0 || (attr & PERMANENT) == 0)) {
                         Object currentValue = getInstanceIdValue(id);
                         if (!sameValue(value, currentValue)) {
@@ -874,10 +874,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     }
                     attr =
                             applyDescriptorToAttributeBitset(
-                                    attr,
-                                    getProperty(desc, "enumerable"),
-                                    getProperty(desc, "writable"),
-                                    getProperty(desc, "configurable"));
+                                    attr, desc.enumerable, desc.writable, desc.configurable);
                     setAttributes(name, attr);
                     return true;
                 }
@@ -885,14 +882,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if (prototypeValues != null) {
                 int id = prototypeValues.findId(name);
                 if (id != 0) {
-                    if (isAccessorDescriptor(desc)) {
+                    if (desc.isAccessorDescriptor()) {
                         prototypeValues.delete(id); // it will be replaced with a slot
                     } else {
                         checkPropertyDefinition(desc);
                         var slot = queryOrFakeSlot(cx, key);
                         checkPropertyChangeForSlot(name, slot, desc);
                         int attr = prototypeValues.getAttributes(id);
-                        Object value = getProperty(desc, "value");
+                        Object value = desc.value;
                         if (value != NOT_FOUND && (attr & READONLY) == 0) {
                             Object currentValue = prototypeValues.get(id);
                             if (!sameValue(value, currentValue)) {
@@ -902,10 +899,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         prototypeValues.setAttributes(
                                 id,
                                 applyDescriptorToAttributeBitset(
-                                        attr,
-                                        getProperty(desc, "enumerable"),
-                                        getProperty(desc, "writable"),
-                                        getProperty(desc, "configurable")));
+                                        attr, desc.enumerable, desc.writable, desc.configurable));
 
                         // Handle the regular slot that was created if this property was previously
                         // replaced
@@ -923,8 +917,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
+    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+        var desc = super.getOwnPropertyDescriptor(cx, id);
         if (desc == null) {
             if (id instanceof String) {
                 return getBuiltInDataDescriptor((String) id);
@@ -959,14 +953,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot;
     }
 
-    private ScriptableObject getBuiltInDataDescriptor(String name) {
-        Scriptable scope = getParentScope();
-        if (scope == null) {
-            scope = this;
-        }
-
+    private DescriptorInfo getBuiltInDataDescriptor(String name) {
         var slot = getBuiltInSlot(name);
-        return slot == null ? null : buildDataDescriptor(scope, slot.value, slot.getAttributes());
+        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
     }
 
     private Slot getBuiltInSlot(String name) {
@@ -992,14 +981,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return null;
     }
 
-    private ScriptableObject getBuiltInDataDescriptor(Symbol key) {
-        Scriptable scope = getParentScope();
-        if (scope == null) {
-            scope = this;
-        }
-
+    private DescriptorInfo getBuiltInDataDescriptor(Symbol key) {
         var slot = getBuiltInSlot(key);
-        return slot == null ? null : buildDataDescriptor(scope, slot.value, slot.getAttributes());
+        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
     }
 
     private Slot getBuiltInSlot(Symbol key) {

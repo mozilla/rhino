@@ -166,9 +166,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @Override
     @SuppressWarnings("unchecked")
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-        return ScriptableObject.buildDataDescriptor(
-                scope, getValue((T) this.value), getAttributes());
+    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+        return ScriptableObject.buildDataDescriptor(getValue((T) this.value), getAttributes());
     }
 
     @SuppressWarnings("unchecked")

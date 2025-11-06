@@ -94,8 +94,8 @@ public class Slot implements Serializable {
         attributes = (short) value;
     }
 
-    ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-        return ScriptableObject.buildDataDescriptor(scope, value, attributes);
+    ScriptableObject.DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+        return ScriptableObject.buildDataDescriptor(value, attributes);
     }
 
     protected void throwNoSetterException(Scriptable start, Object newValue) {

@@ -571,8 +571,8 @@ public class NativeObject extends ScriptableObject implements Map {
         Scriptable s = getCompatibleObject(cx, scope, arg);
         ScriptableObject obj = ensureScriptableObject(s);
         Object nameArg = args.length < 2 ? Undefined.instance : args[1];
-        Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
-        return desc == null ? Undefined.instance : desc;
+        var desc = obj.getOwnPropertyDescriptor(cx, nameArg);
+        return desc == null ? Undefined.instance : desc.toObject(scope);
     }
 
     private static Object js_getOwnPropDescs(
@@ -587,15 +587,15 @@ public class NativeObject extends ScriptableObject implements Map {
             ids = obj.getIds(map, true, true);
         }
         for (Object key : ids) {
-            Scriptable desc = obj.getOwnPropertyDescriptor(cx, key);
+            var desc = obj.getOwnPropertyDescriptor(cx, key);
             if (desc == null) {
                 continue;
             } else if (key instanceof Symbol) {
-                descs.put((Symbol) key, descs, desc);
+                descs.put((Symbol) key, descs, desc.toObject(scope));
             } else if (key instanceof Integer) {
-                descs.put((Integer) key, descs, desc);
+                descs.put((Integer) key, descs, desc.toObject(scope));
             } else {
-                descs.put(ScriptRuntime.toString(key), descs, desc);
+                descs.put(ScriptRuntime.toString(key), descs, desc.toObject(scope));
             }
         }
         return descs;
@@ -607,7 +607,8 @@ public class NativeObject extends ScriptableObject implements Map {
         ScriptableObject obj = ensureScriptableObject(arg);
         Object name = args.length < 2 ? Undefined.instance : args[1];
         Object descArg = args.length < 3 ? Undefined.instance : args[2];
-        ScriptableObject desc = ensureScriptableObject(descArg);
+        var desc = new DescriptorInfo(ensureScriptableObject(descArg));
+        ScriptableObject.checkPropertyDefinition(desc);
         obj.defineOwnProperty(cx, name, desc);
         return obj;
     }

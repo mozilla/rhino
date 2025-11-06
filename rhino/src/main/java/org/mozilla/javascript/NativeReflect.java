@@ -171,7 +171,7 @@ final class NativeReflect extends ScriptableObject {
         }
 
         ScriptableObject target = checkTarget(args);
-        ScriptableObject desc = ScriptableObject.ensureScriptableObject(args[2]);
+        DescriptorInfo desc = new DescriptorInfo(ScriptableObject.ensureScriptableObject(args[2]));
 
         Object key = args[1];
 
@@ -229,13 +229,12 @@ final class NativeReflect extends ScriptableObject {
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
-                ScriptableObject desc = target.getOwnPropertyDescriptor(cx, args[1]);
-                return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc;
+                var desc = target.getOwnPropertyDescriptor(cx, args[1]);
+                return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(scope);
             }
 
-            ScriptableObject desc =
-                    target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
-            return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc;
+            var desc = target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
+            return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(scope);
         }
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
@@ -308,15 +307,15 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject receiver =
                 args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
         if (receiver != target) {
-            ScriptableObject descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
+            DescriptorInfo descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
             if (descriptor != null) {
-                Object setter = descriptor.get("set");
+                Object setter = descriptor.setter;
                 if (setter != null && setter != NOT_FOUND) {
                     ((Function) setter).call(cx, scope, receiver, new Object[] {args[2]});
                     return true;
                 }
 
-                if (Boolean.FALSE.equals(descriptor.get("configurable"))) {
+                if (descriptor.isConfigurable(false)) {
                     return false;
                 }
             }
