@@ -29,6 +29,9 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 - **Mirth Connect 4.5** - Healthcare integration engine supporting HL7, EDI, and other healthcare standards
   [Source](https://docs.nextgen.com/bundle/Mirth_User_Guide_4_5_0/page/connect/connect/topics/c_The_mirth_properties_File_connect_ug.html)
 
+- **[Open Integration Engine (OIE)](https://openintegrationengine.org/)** - Open-source healthcare integration engine for HL7 message processing and healthcare data exchange
+  [Source](https://openintegrationengine.org/)
+
 ## IBM Enterprise Solutions
 
 - **IBM MobileFirst Platform Foundation 7.1.0** - Integrated platform for extending business applications to mobile devices (until release 7.1.0 on IBM Containers)
@@ -51,11 +54,17 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 - **[Adobe Experience Manager (AEM) 6.5](https://business.adobe.com/products/experience-manager/adobe-experience-manager.html)** - Comprehensive content management solution for marketing content and digital assets
   [Source](https://developer.adobe.com/experience-manager/reference-materials/6-5/javadoc/overview-summary.html)
 
-- **[MagicDraw 2024](https://www.3ds.com/products/catia/no-magic/magicdraw)** - Disual UML, SysML, BPMN, and UPDM modeling tool with team collaboration support
+- **[MagicDraw 2024](https://www.3ds.com/products/catia/no-magic/magicdraw)** - Visual UML, SysML, BPMN, and UPDM modeling tool with team collaboration support
   [Source](https://docs.nomagic.com/spaces/MD2024x/pages/136727575/Deprecated+JavaScript+Nashorn)
 
 - **[IntelliJ IDEA](https://www.jetbrains.com/idea/)** - IDE for Professional Development in Java and Kotlin
   [Source](https://www.jetbrains.com/legal/third-party-software/?product=IIU)
+
+- **[Pentaho Data Integration (Kettle)](https://www.hitachivantara.com/en-us/products/pentaho-plus-platform/data-integration-analytics.html)** - ETL (Extract, Transform, Load) tool that uses Rhino for JavaScript steps and transformations in data processing workflows
+  [Source](https://forums.pentaho.com/threads/64376-Can-we-upgrade-the-Rhino-Javascript-engine-to-1-7R1/)
+
+- **[Servoy Developer](https://docs.servoy.com/)** - Application development platform for professional developers
+  [Source](https://docs.servoy.com/release-notes/release-notes/2024.06#lib-upgrades)
 
 ## Data & Analytics
 
@@ -93,13 +102,10 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 - **[GeoGebra](https://www.geogebra.org/)** - Interactive mathematics software for learning and teaching geometry, algebra, statistics, and calculus
   [Source](https://github.com/geogebra/geogebra/blob/main/doc/Libraries.md)
 
-## Database & Development Platforms
+## Database
 
 - **[Memento Database 3.4.0](https://mementodatabase.com/)** - Customizable database application for tracking and organizing data
   [Source](https://wiki.mementodatabase.com/index.php/JavaScript_field)
-
-- **[Servoy Developer](https://docs.servoy.com/)** - Application development platform for professional developers
-  [Source](https://docs.servoy.com/release-notes/release-notes/2024.06#lib-upgrades)
 
 ## Security & Smart Card Development
 
