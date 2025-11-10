@@ -9,9 +9,9 @@ import java.util.List;
 
 /**
  * A wrapper around an iterator for use in array destructuring. This allows destructuring to consume
- * iterator values one-by-one on demand, rather draining values to an array in one shot.
+ * iterator values one-by-one on demand, rather than draining values to an array in one shot.
  */
-public class DestructuringIterator extends IdScriptableObject {
+public class DestructuringIterator extends ScriptableObject {
     private static final long serialVersionUID = 1L;
 
     private final Context cx;
@@ -58,6 +58,12 @@ public class DestructuringIterator extends IdScriptableObject {
     @Override
     public String getClassName() {
         return "DestructuringIterator";
+    }
+
+    @Override
+    public boolean has(int index, Scriptable start) {
+        // always true to support lazy fetching
+        return true;
     }
 
     /** Set the number of elements needed for destructuring. */
