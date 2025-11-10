@@ -1087,7 +1087,9 @@ public class ArgumentsTest {
                         + "test('hello', 'world');\n"
                         + "res";
 
-        Utils.assertEvaluatorExceptionES6("syntax error", code);
+        // spreading arguments works correctly with Symbol.iterator support in ES6
+        Utils.assertWithAllModes_ES6("hello,world", code);
+        // not available in version 1.8
         Utils.assertEvaluatorException_1_8("syntax error", code);
     }
 
@@ -1103,8 +1105,9 @@ public class ArgumentsTest {
                         + "test('hello', 'world');\n"
                         + "res";
 
-        // TODO Utils.assertWithAllModes_ES6("hello,world", code);
-        Utils.assertEvaluatorExceptionES6("syntax error", code);
+        // spreading arguments works correctly with Symbol.iterator support in ES6
+        Utils.assertWithAllModes_ES6("hello,world", code);
+        // not available in version 1.8
         Utils.assertEvaluatorException_1_8("syntax error", code);
     }
 

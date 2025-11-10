@@ -9,7 +9,7 @@ package org.mozilla.javascript.tests;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
-/** Tests for array literal spread syntax (...) functionality. */
+/** Tests for array literal spread functionality. */
 class ArrayLiteralSpreadTest {
     @Test
     void unsupportedInES5() {
