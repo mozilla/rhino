@@ -33,6 +33,21 @@ public class Symbol3Test {
     }
 
     @Test
+    public void hasOwnProperty() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = {\n"
+                        + "  [sym]: 'primSymVal',"
+                        + "  regularKey: 'regular value'\n"
+                        + "};\n"
+                        + "let res = '' + obj.hasOwnProperty(sym);\n"
+                        + "res += ' ' + obj.hasOwnProperty(wrappedSym);\n"
+                        + "res";
+        Utils.assertWithAllModes_ES6("true true", code);
+    }
+
+    @Test
     public void symbolProperty() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
