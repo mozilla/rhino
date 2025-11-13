@@ -47,13 +47,20 @@ import java.util.ArrayList;
 public class ImporterTopLevel extends TopLevel {
     private static final long serialVersionUID = -9095380847465315412L;
 
-    public ImporterTopLevel() {}
+    public ImporterTopLevel() {
+        this(true);
+    }
+
+    public ImporterTopLevel(boolean topLevel) {
+        topScopeFlag = topLevel;
+    }
 
     public ImporterTopLevel(Context cx) {
         this(cx, false);
     }
 
     public ImporterTopLevel(Context cx, boolean sealed) {
+        topScopeFlag = true;
         initStandardObjects(cx, sealed);
     }
 
@@ -91,7 +98,6 @@ public class ImporterTopLevel extends TopLevel {
         // Assume that Context.initStandardObjects initialize JavaImporter
         // property lazily so the above init call is not yet called
         cx.initStandardObjects(this, sealed);
-        topScopeFlag = true;
         // If seal is true then exportAsJSClass(cx, seal) would seal
         // this obj. Since this is scope as well, it would not allow
         // to add variables.
@@ -167,8 +173,11 @@ public class ImporterTopLevel extends TopLevel {
         js_importPackage(cx, funObj.getDeclarationScope(), this, args);
     }
 
+    // The result from the constructor needs to be an object rather
+    // than a scope, and then we need to work out to how make the
+    // import work on the correct thing.
     private static Scriptable js_construct(Context cx, Scriptable scope, Object[] args) {
-        ImporterTopLevel result = new ImporterTopLevel();
+        ImporterTopLevel result = new ImporterTopLevel(false);
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
             if (arg instanceof NativeJavaClass) {
@@ -208,7 +217,14 @@ public class ImporterTopLevel extends TopLevel {
             if (!(arg instanceof NativeJavaPackage)) {
                 throw Context.reportRuntimeErrorById("msg.not.pkg", Context.toString(arg));
             }
-            importPackage((ScriptableObject) thisObj, (NativeJavaPackage) arg);
+            ScriptableObject target;
+            if (thisObj instanceof ImporterTopLevel && !((ImporterTopLevel) thisObj).topScopeFlag) {
+                target = (ImporterTopLevel) thisObj;
+            } else {
+                target = (ScriptableObject) scope;
+            }
+
+            importPackage((ScriptableObject) target, (NativeJavaPackage) arg);
         }
         return Undefined.instance;
     }
@@ -247,6 +263,15 @@ public class ImporterTopLevel extends TopLevel {
         scope.put(n, scope, cl);
     }
 
+    @Override
+    public ScriptableObject getGlobalThis() {
+        if (topScopeFlag) {
+            return super.getGlobalThis();
+        } else {
+            return this;
+        }
+    }
+
     private static final String AKEY = "importedPackages";
-    private boolean topScopeFlag;
+    private final boolean topScopeFlag;
 }
