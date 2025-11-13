@@ -202,7 +202,7 @@ public class NativeSet extends ScriptableObject {
             Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
             if (thisObj == null && !isStrict) {
-                thisObj = scope;
+                thisObj = scope instanceof TopLevel ? ((TopLevel) scope).getGlobalThis() : scope;
             }
             if (thisObj == null) {
                 thisObj = Undefined.SCRIPTABLE_UNDEFINED;
