@@ -74,7 +74,7 @@ public class NativePromise extends ScriptableObject {
         if (!cx.isStrictMode()) {
             Scriptable tcs = cx.topCallScope;
             if (tcs != null) {
-                thisObj = tcs;
+                thisObj = tcs instanceof TopLevel ? ((TopLevel) tcs).getGlobalThis() : tcs;
             }
         }
 

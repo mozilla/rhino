@@ -46,7 +46,13 @@ public class NativeGlobal implements Serializable {
                 scope, "Infinity", Double.POSITIVE_INFINITY, READONLY | DONTENUM | PERMANENT);
         ScriptableObject.defineProperty(
                 scope, "undefined", Undefined.instance, READONLY | DONTENUM | PERMANENT);
-        ScriptableObject.defineProperty(scope, "globalThis", scope, DONTENUM);
+        var globalThis = scope instanceof TopLevel ? ((TopLevel) scope).getGlobalThis() : scope;
+
+        var obj = (Scriptable) scope.get("Object", scope);
+        var objProto = (Scriptable) obj.get("prototype", obj);
+        globalThis.setPrototype(objProto);
+
+        ScriptableObject.defineProperty(scope, "globalThis", globalThis, DONTENUM);
 
         /*
             Each error constructor gets its own Error object as a prototype,

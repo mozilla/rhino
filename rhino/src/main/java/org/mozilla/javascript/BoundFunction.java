@@ -115,6 +115,9 @@ public class BoundFunction extends BaseFunction {
         if (callThis == null) {
             callThis = getTopLevelScope(scope);
         }
+        if (callThis instanceof TopLevel) {
+            callThis = ((TopLevel) callThis).getGlobalThis();
+        }
         return callThis;
     }
 
