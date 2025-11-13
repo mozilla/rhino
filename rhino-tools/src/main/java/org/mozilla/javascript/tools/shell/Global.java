@@ -97,9 +97,12 @@ public class Global extends ImporterTopLevel {
     private static final String[] prompts = {"js> ", "  > "};
     private HashMap<String, String> doctestCanonicalizations;
 
-    public Global() {}
+    public Global() {
+        super(true);
+    }
 
     public Global(Context cx) {
+        super(true);
         init(cx);
     }
 
@@ -261,7 +264,7 @@ public class Global extends ImporterTopLevel {
         for (Object arg : args) {
             String file = Context.toString(arg);
             try {
-                Main.processFile(cx, thisObj, file);
+                Main.processFile(cx, funObj.getDeclarationScope(), file);
             } catch (IOException ioex) {
                 String msg =
                         ToolErrorReporter.getMessage(
@@ -348,7 +351,7 @@ public class Global extends ImporterTopLevel {
         Object obj = args[0];
         String filename = Context.toString(args[1]);
         FileOutputStream fos = new FileOutputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
+        Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
         try (ScriptableOutputStream out = new ScriptableOutputStream(fos, scope)) {
             out.writeObject(obj);
         }
