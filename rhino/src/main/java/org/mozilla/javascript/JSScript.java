@@ -31,6 +31,9 @@ public class JSScript implements Script, ScriptOrFn<JSScript> {
     @Override
     public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
         Object ret;
+        if (thisObj instanceof TopLevel) {
+            thisObj = ((TopLevel) thisObj).getGlobalThis();
+        }
         if (!ScriptRuntime.hasTopCall(cx)) {
             // It will go through "call" path. but they are equivalent
             ret = ScriptRuntime.doTopCall(this, cx, scope, thisObj, descriptor.isStrict());
