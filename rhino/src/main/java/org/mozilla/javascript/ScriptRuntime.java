@@ -3248,6 +3248,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         storeScriptable(cx, thisObj);
         return f;
     }
@@ -3289,6 +3290,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         return new LookupResult(f, thisObj, value);
     }
 
@@ -3457,6 +3459,10 @@ public class ScriptRuntime {
             if (missingCallThis && !isFunctionStrict) {
                 callThis = getTopCallScope(cx);
             }
+        }
+
+        if (callThis instanceof TopLevel) {
+            callThis = ((TopLevel) callThis).getGlobalThis();
         }
 
         return callThis;
@@ -6130,7 +6136,8 @@ public class ScriptRuntime {
 
         LookupResult(Object result, Scriptable thisObj, Object name) {
             this.result = result;
-            this.thisObj = thisObj;
+            this.thisObj =
+                    thisObj instanceof TopLevel ? ((TopLevel) thisObj).getGlobalThis() : thisObj;
             this.name = name;
         }
 
