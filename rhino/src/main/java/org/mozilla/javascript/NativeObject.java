@@ -397,7 +397,7 @@ public class NativeObject extends ScriptableObject implements Map {
                     Integer.toString(args.length));
         }
         Scriptable proto = (args[1] == null) ? null : ensureScriptable(args[1]);
-        if (proto instanceof Symbol) {
+        if (ScriptRuntime.isSymbol(proto)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
         }
 
@@ -409,10 +409,6 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object setPrototypeOf(Object thisObj, Scriptable proto) {
-        if (proto instanceof Symbol) {
-            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
-        }
-
         if (!(thisObj instanceof ScriptableObject)) {
             return thisObj;
         }

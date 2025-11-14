@@ -48,6 +48,26 @@ public class Symbol3Test {
     }
 
     @Test
+    public void setPrototypeOf() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = { name: 'test object' };\n"
+                        + "res = '';\n"
+                        + "try {\n"
+                        + "  Object.setPrototypeOf(obj, sym);\n"
+                        + "  res += 'works';\n"
+                        + "} catch (e) { res += 'failed'; }\n"
+                        + "try {\n"
+                        + "  Object.setPrototypeOf(obj, wrappedSym);\n"
+                        + "  res += ' works';\n"
+                        + "  res += ' ' + (Object.getPrototypeOf(obj) === wrappedSym);\n"
+                        + "} catch (e) { res += ' failed'; }\n"
+                        + "res";
+        Utils.assertWithAllModes_ES6("failed works true", code);
+    }
+
+    @Test
     public void symbolProperty() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
