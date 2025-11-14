@@ -68,6 +68,17 @@ public class Symbol3Test {
     }
 
     @Test
+    public void fromEntries() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = Object.fromEntries([[sym, 'symVal'], ['strKey', 'strVal']]);\n"
+                        + "obj = Object.fromEntries([[wrappedSym, 'symVal'], ['strKey', 'strVal']]);\n"
+                        + "'done'";
+        Utils.assertWithAllModes_ES6("done", code);
+    }
+
+    @Test
     public void symbolProperty() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
