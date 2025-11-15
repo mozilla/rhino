@@ -397,7 +397,7 @@ public class NativeObject extends ScriptableObject implements Map {
                     Integer.toString(args.length));
         }
         Scriptable proto = (args[1] == null) ? null : ensureScriptable(args[1]);
-        if (proto instanceof Symbol) {
+        if (ScriptRuntime.isSymbol(proto)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
         }
 
@@ -409,10 +409,6 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object setPrototypeOf(Object thisObj, Scriptable proto) {
-        if (proto instanceof Symbol) {
-            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
-        }
-
         if (!(thisObj instanceof ScriptableObject)) {
             return thisObj;
         }
@@ -488,6 +484,8 @@ public class NativeObject extends ScriptableObject implements Map {
                     if (key instanceof Integer) {
                         obj.put((Integer) key, obj, value);
                     } else if (key instanceof Symbol && obj instanceof SymbolScriptable) {
+                        // using instanceof is correct here
+                        // (see org.mozilla.javascript.tests.es6.Symbol3Test.fromEntries)
                         ((SymbolScriptable) obj).put((Symbol) key, obj, value);
                     } else {
                         obj.put(ScriptRuntime.toString(key), obj, value);
