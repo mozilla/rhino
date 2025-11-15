@@ -927,7 +927,7 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
-    private static Object getElem(Context cx, Scriptable target, long index) {
+    static Object getElem(Context cx, Scriptable target, long index) {
         Object elem = getRawElem(target, index);
         return (elem != Scriptable.NOT_FOUND ? elem : Undefined.instance);
     }

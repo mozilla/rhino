@@ -8,7 +8,9 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.NativeObject.PROTO_PROPERTY;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /** Used to store the support structures for a literal object (or array) being built. */
 public abstract class NewLiteralStorage {
@@ -16,6 +18,10 @@ public abstract class NewLiteralStorage {
     protected int[] getterSetters;
     protected Object[] values;
     protected int index = 0;
+
+    // handling skip indexes with spreads
+    protected int[] skipIndexes = null;
+    protected int[] spreadAdjustments = null; // [sourcePosition] = adjustment
 
     protected NewLiteralStorage(Object[] ids, int length, boolean createKeys) {
         int l;
@@ -54,8 +60,82 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    public void spread(Context cx, Scriptable scope, Object source) {
-        // See ECMAScript 13.2.5.5
+    public void spread(Context cx, Scriptable scope, Object source, int sourcePosition) {
+        int indexBefore = index;
+        if (keys == null) {
+            spreadArray(cx, scope, source);
+        } else {
+            spreadObject(cx, scope, source);
+        }
+
+        if (spreadAdjustments != null) {
+            if (sourcePosition < spreadAdjustments.length) {
+                spreadAdjustments[sourcePosition] = index - indexBefore - 1;
+            }
+        }
+    }
+
+    private void spreadArray(Context cx, Scriptable scope, Object source) {
+        // See ecma-262 2026, 13.2.5.5 (Array Spread)
+        if (source != null && !Undefined.isUndefined(source)) {
+            Scriptable src = ScriptRuntime.toObject(cx, scope, source);
+
+            // Check if the object has Symbol.iterator
+            Object iteratorProp = ScriptableObject.getProperty(src, SymbolKey.ITERATOR);
+            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
+                // Per spec, if Symbol.iterator exists, use it. Let exceptions propagate.
+                final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
+                if (!Undefined.isUndefined(iterator)) {
+                    List<Object> spreadValues = new ArrayList<>();
+                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                        for (Object temp : it) {
+                            spreadValues.add(temp);
+                        }
+                    }
+
+                    // Resize arrays
+                    int spreadSize = spreadValues.size();
+                    int newLen = values.length + spreadSize;
+                    getterSetters = Arrays.copyOf(getterSetters, newLen);
+                    values = Arrays.copyOf(values, newLen);
+
+                    // Push all values
+                    for (Object value : spreadValues) {
+                        pushValue(value);
+                    }
+                    return;
+                }
+            }
+            // Fallback for objects without Symbol.iterator
+            int spreadSize =
+                    (src instanceof NativeArray)
+                            ? (int) ((NativeArray) src).getLength()
+                            : src.getIds().length;
+            int newLen = values.length + spreadSize;
+            getterSetters = Arrays.copyOf(getterSetters, newLen);
+            values = Arrays.copyOf(values, newLen);
+
+            if (src instanceof NativeArray) { // TODO: check if it's dense
+                NativeArray arr = (NativeArray) src;
+                long length = arr.getLength();
+
+                for (int i = 0; i < length; i++) {
+                    Object value = NativeArray.getElem(cx, arr, i);
+                    pushValue(value);
+                }
+            } else {
+                Object[] ids = src.getIds();
+
+                for (Object id : ids) {
+                    Object value = getPropertyById(src, id);
+                    pushValue(value);
+                }
+            }
+        }
+    }
+
+    private void spreadObject(Context cx, Scriptable scope, Object source) {
+        // See ECMAScript 13.2.5.5 (Object Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
             Object[] ids;
@@ -76,17 +156,7 @@ public abstract class NewLiteralStorage {
 
             // getIds() can only return a string, int or a symbol
             for (Object id : ids) {
-                Object value;
-                if (id instanceof String) {
-                    value = ScriptableObject.getProperty(src, (String) id);
-                } else if (id instanceof Integer) {
-                    value = ScriptableObject.getProperty(src, (int) id);
-                } else if (ScriptRuntime.isSymbol(id)) {
-                    value = ScriptableObject.getProperty(src, (Symbol) id);
-                } else {
-                    throw Kit.codeBug();
-                }
-
+                Object value = getPropertyById(src, id);
                 pushKey(id);
                 pushValue(value);
             }
@@ -103,6 +173,55 @@ public abstract class NewLiteralStorage {
 
     public Object[] getValues() {
         return values;
+    }
+
+    public void setSkipIndexes(int[] skipIndexes) {
+        this.skipIndexes = skipIndexes;
+        // length is the number of children + skips
+        if (skipIndexes != null && skipIndexes.length > 0) {
+            spreadAdjustments = new int[values.length + skipIndexes.length];
+        }
+    }
+
+    public boolean hasSkipIndexes() {
+        return skipIndexes != null;
+    }
+
+    public int[] getAdjustedSkipIndexes() {
+        if (skipIndexes == null) {
+            return null;
+        }
+
+        // Adjust skip indexes based on spread operations
+        int[] adjusted = new int[skipIndexes.length];
+        for (int i = 0; i < skipIndexes.length; i++) {
+            int sourceSkip = skipIndexes[i];
+            int adjustment = 0;
+
+            // Sum up adjustments from all spreads that occurred before this skip position
+            if (spreadAdjustments != null) {
+                for (int sourcePos = 0;
+                        sourcePos < sourceSkip && sourcePos < spreadAdjustments.length;
+                        sourcePos++) {
+                    adjustment += spreadAdjustments[sourcePos];
+                }
+            }
+
+            adjusted[i] = sourceSkip + adjustment;
+        }
+        return adjusted;
+    }
+
+    private Object getPropertyById(Scriptable src, Object id) {
+        if (id instanceof String) {
+            return ScriptableObject.getProperty(src, (String) id);
+        } else if (id instanceof Integer) {
+            return ScriptableObject.getProperty(src, (int) id);
+        } else if (ScriptRuntime.isSymbol(id)) {
+            return ScriptableObject.getProperty(src, (Symbol) id);
+        } else {
+            throw Kit.codeBug();
+        }
     }
 
     public static NewLiteralStorage create(Context cx, Object[] ids) {
