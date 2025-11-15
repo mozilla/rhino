@@ -29,7 +29,7 @@ import java.util.EnumMap;
  * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable, boolean)} to
  * initialize the class cache for each top-level scope.
  */
-public class TopLevel extends IdScriptableObject {
+public class TopLevel extends ScriptableObject {
 
     private static final long serialVersionUID = -4648046356662472260L;
 
