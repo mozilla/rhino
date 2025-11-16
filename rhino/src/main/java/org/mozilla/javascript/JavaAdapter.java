@@ -125,8 +125,9 @@ public final class JavaAdapter {
 
         // next argument is implementation, must be scriptable
         Scriptable obj = ScriptableObject.ensureScriptable(args[classCount]);
+        sig.names = getObjectFunctionNames(obj);
 
-        Class<?> adapterClass = getAdapterClass(scope, sig, obj);
+        Class<?> adapterClass = getAdapterClass(scope, sig);
         Object adapter;
 
         int argsCount = N - classCount - 1;
@@ -270,8 +271,9 @@ public final class JavaAdapter {
             sig.interfaces[i] = Class.forName(interfaceNames[i]);
 
         Scriptable delegee = (Scriptable) in.readObject();
+        sig.names = getObjectFunctionNames(delegee);
 
-        Class<?> adapterClass = getAdapterClass(self, sig, delegee);
+        Class<?> adapterClass = getAdapterClass(self, sig);
 
         Class<?>[] ctorParms = {
             ScriptRuntime.ContextFactoryClass,
@@ -309,16 +311,15 @@ public final class JavaAdapter {
         return map;
     }
 
-    private static Class<?> getAdapterClass(
-        Scriptable scope, JavaAdapterSignature sig, Scriptable obj) {
+    private static Class<?> getAdapterClass(Scriptable scope, JavaAdapterSignature sig) {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
-        sig.names = getObjectFunctionNames(obj);
         Class<?> adapterClass = generated.get(sig);
         if (adapterClass == null) {
             String adapterName = "adapter" + cache.newClassSerialNumber();
-            byte[] code = createAdapterCode(sig.names, adapterName, sig.superClass, sig.interfaces, null);
+            byte[] code =
+                    createAdapterCode(sig.names, adapterName, sig.superClass, sig.interfaces, null);
 
             adapterClass = loadAdapterClass(adapterName, code);
             if (cache.isCachingEnabled()) {
