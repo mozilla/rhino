@@ -113,51 +113,20 @@ public final class JavaAdapter {
         // Any number of NativeJavaClass objects representing the super-class
         // and/or interfaces to implement, followed by one NativeObject providing
         // the implementation, followed by any number of arguments to pass on
-        // to the (super-class) constructor.
+        // to the (super-class) constructor:
+        // new JavaAdapter(
+        //     AbstractClazz, Interface1, Interface2,
+        //     { someMethod: function(args) {}, someOtherMethod: function(args) {} },
+        //     ["args for AbstractClazz ctor"]
+        // )
 
-        int classCount;
-        for (classCount = 0; classCount < N - 1; classCount++) {
-            Object arg = args[classCount];
-            // We explicitly test for NativeObject here since checking for
-            // instanceof ScriptableObject or !(instanceof NativeJavaClass)
-            // would fail for a Java class that isn't found in the class path
-            // as NativeJavaPackage extends ScriptableObject.
-            if (arg instanceof NativeObject) {
-                break;
-            }
-            if (!(arg instanceof NativeJavaClass)) {
-                throw ScriptRuntime.typeErrorById(
-                        "msg.not.java.class.arg",
-                        String.valueOf(classCount),
-                        ScriptRuntime.toString(arg));
-            }
-        }
-        Class<?> superClass = null;
-        Class<?>[] intfs = new Class[classCount];
-        int interfaceCount = 0;
-        for (int i = 0; i < classCount; ++i) {
-            Class<?> c = ((NativeJavaClass) args[i]).getClassObject();
-            if (!c.isInterface()) {
-                if (superClass != null) {
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.only.one.super", superClass.getName(), c.getName());
-                }
-                superClass = c;
-            } else {
-                intfs[interfaceCount++] = c;
-            }
-        }
+        var sig = new JavaAdapterSignature(null, null, null);
+        var classCount = fillAdapterInheritanceData(args, sig);
 
-        if (superClass == null) {
-            superClass = ScriptRuntime.ObjectClass;
-        }
-
-        Class<?>[] interfaces = new Class[interfaceCount];
-        System.arraycopy(intfs, 0, interfaces, 0, interfaceCount);
         // next argument is implementation, must be scriptable
         Scriptable obj = ScriptableObject.ensureScriptable(args[classCount]);
 
-        Class<?> adapterClass = getAdapterClass(scope, superClass, interfaces, obj);
+        Class<?> adapterClass = getAdapterClass(scope, sig.superClass, sig.interfaces, obj);
         Object adapter;
 
         int argsCount = N - classCount - 1;
@@ -175,9 +144,10 @@ public final class JavaAdapter {
                 NativeJavaMethod ctors = classWrapper.members.ctors;
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
-                    String sig = NativeJavaMethod.scriptSignature(args);
                     throw Context.reportRuntimeErrorById(
-                            "msg.no.java.ctor", adapterClass.getName(), sig);
+                            "msg.no.java.ctor",
+                            adapterClass.getName(),
+                            NativeJavaMethod.scriptSignature(args));
                 }
 
                 // Found the constructor, so try invoking it.
@@ -205,6 +175,56 @@ public final class JavaAdapter {
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
+    }
+
+    /**
+     * @param args JavaAdapter args to scan
+     * @param signature holder of collected information, {@link JavaAdapterSignature#superClass} and
+     *     {@link JavaAdapterSignature#interfaces} will be overwritten
+     * @return the index of JS implementation object
+     */
+    private static int fillAdapterInheritanceData(Object[] args, JavaAdapterSignature signature) {
+        var len = args.length;
+
+        int classCount;
+        for (classCount = 0; classCount < len - 1; classCount++) {
+            Object arg = args[classCount];
+            // We explicitly test for NativeObject here since checking for
+            // instanceof ScriptableObject or !(instanceof NativeJavaClass)
+            // would fail for a Java class that isn't found in the class path
+            // as NativeJavaPackage extends ScriptableObject.
+            if (arg instanceof NativeObject) {
+                break;
+            }
+            if (!(arg instanceof NativeJavaClass)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.not.java.class.arg",
+                        String.valueOf(classCount),
+                        ScriptRuntime.toString(arg));
+            }
+        }
+        Class<?> superClass = null;
+        Class<?>[] interfaces = new Class[classCount];
+        int interfaceCount = 0;
+        for (int i = 0; i < classCount; ++i) {
+            Class<?> c = ((NativeJavaClass) args[i]).getClassObject();
+            if (c.isInterface()) {
+                interfaces[interfaceCount++] = c;
+            } else {
+                if (superClass != null) {
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.only.one.super", superClass.getName(), c.getName());
+                }
+                superClass = c;
+            }
+        }
+
+        signature.superClass = superClass == null ? Object.class : superClass;
+        signature.interfaces =
+                interfaceCount == interfaces.length
+                        ? interfaces
+                        : Arrays.copyOf(interfaces, interfaceCount);
+        return classCount;
     }
 
     // Needed by NativeJavaObject serializer
