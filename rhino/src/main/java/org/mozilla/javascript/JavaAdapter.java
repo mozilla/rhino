@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -27,7 +29,7 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
-public final class JavaAdapter implements IdFunctionCall {
+public final class JavaAdapter {
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
      * hash table.
@@ -70,25 +72,13 @@ public final class JavaAdapter implements IdFunctionCall {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
-        JavaAdapter obj = new JavaAdapter();
-        IdFunctionObject ctor =
-                new IdFunctionObject(obj, FTAG, Id_JavaAdapter, "JavaAdapter", 1, scope);
-        ctor.markAsConstructor(null);
+        var ctor = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
+
         if (sealed) {
             ctor.sealObject();
         }
-        ctor.exportAsScopeProperty();
-    }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (f.hasTag(FTAG)) {
-            if (f.methodId() == Id_JavaAdapter) {
-                return js_createAdapter(cx, scope, args);
-            }
-        }
-        throw f.unknown();
+        ScriptableObject.defineProperty(scope, "JavaAdapter", ctor, DONTENUM);
     }
 
     public static Object convertResult(Object result, Class<?> c) {
@@ -113,7 +103,7 @@ public final class JavaAdapter implements IdFunctionCall {
         return self.get(adapter);
     }
 
-    static Object js_createAdapter(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable js_createAdapter(Context cx, Scriptable scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
@@ -200,7 +190,7 @@ public final class JavaAdapter implements IdFunctionCall {
                 adapter = adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
             }
 
-            Object self = getAdapterSelf(adapterClass, adapter);
+            var self = (Scriptable) getAdapterSelf(adapterClass, adapter);
             // Return unwrapped JavaAdapter if it implements Scriptable
             if (self instanceof Wrapper) {
                 Object unwrapped = ((Wrapper) self).unwrap();
@@ -208,7 +198,7 @@ public final class JavaAdapter implements IdFunctionCall {
                     if (unwrapped instanceof ScriptableObject) {
                         ScriptRuntime.setObjectProtoAndParent((ScriptableObject) unwrapped, scope);
                     }
-                    return unwrapped;
+                    return (Scriptable) unwrapped;
                 }
             }
             return self;
@@ -1130,7 +1120,4 @@ public final class JavaAdapter implements IdFunctionCall {
         }
         return array;
     }
-
-    private static final Object FTAG = "JavaAdapter";
-    private static final int Id_JavaAdapter = 1;
 }
