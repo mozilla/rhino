@@ -126,7 +126,7 @@ public final class JavaAdapter {
         // next argument is implementation, must be scriptable
         Scriptable obj = ScriptableObject.ensureScriptable(args[classCount]);
 
-        Class<?> adapterClass = getAdapterClass(scope, sig.superClass, sig.interfaces, obj);
+        Class<?> adapterClass = getAdapterClass(scope, sig, obj);
         Object adapter;
 
         int argsCount = N - classCount - 1;
@@ -260,17 +260,18 @@ public final class JavaAdapter {
             factory = null;
         }
 
-        Class<?> superClass = Class.forName((String) in.readObject());
+        var sig = new JavaAdapterSignature(null, null, null);
+        sig.superClass = Class.forName((String) in.readObject());
 
         String[] interfaceNames = (String[]) in.readObject();
-        Class<?>[] interfaces = new Class[interfaceNames.length];
+        sig.interfaces = new Class[interfaceNames.length];
 
         for (int i = 0; i < interfaceNames.length; i++)
-            interfaces[i] = Class.forName(interfaceNames[i]);
+            sig.interfaces[i] = Class.forName(interfaceNames[i]);
 
         Scriptable delegee = (Scriptable) in.readObject();
 
-        Class<?> adapterClass = getAdapterClass(self, superClass, interfaces, delegee);
+        Class<?> adapterClass = getAdapterClass(self, sig, delegee);
 
         Class<?>[] ctorParms = {
             ScriptRuntime.ContextFactoryClass,
@@ -309,17 +310,15 @@ public final class JavaAdapter {
     }
 
     private static Class<?> getAdapterClass(
-            Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
+        Scriptable scope, JavaAdapterSignature sig, Scriptable obj) {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
-        Map<String, Integer> names = getObjectFunctionNames(obj);
-        JavaAdapterSignature sig;
-        sig = new JavaAdapterSignature(superClass, interfaces, names);
+        sig.names = getObjectFunctionNames(obj);
         Class<?> adapterClass = generated.get(sig);
         if (adapterClass == null) {
             String adapterName = "adapter" + cache.newClassSerialNumber();
-            byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null);
+            byte[] code = createAdapterCode(sig.names, adapterName, sig.superClass, sig.interfaces, null);
 
             adapterClass = loadAdapterClass(adapterName, code);
             if (cache.isCachingEnabled()) {
