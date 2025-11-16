@@ -33,6 +33,10 @@ public final class JavaAdapter {
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
      * hash table.
+     *
+     * <p>JavaAdapter should cache the adapter class when input classes are the same, and
+     * implementation object are of "same shape", which means having same number of function
+     * properties, and same length for each function
      */
     static class JavaAdapterSignature {
         Class<?> superClass;

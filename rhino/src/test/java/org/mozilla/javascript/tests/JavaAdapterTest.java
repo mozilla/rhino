@@ -97,4 +97,20 @@ public class JavaAdapterTest {
         Assert.assertFalse(adapted.test(null));
         Assert.assertFalse(adapted.test(42));
     }
+
+    /**
+     * @see org.mozilla.javascript.JavaAdapter.JavaAdapterSignature
+     */
+    @Test
+    public void adapterCache() {
+        String testCode =
+                String.format(
+                        "JavaAdapter(Packages.%s,%s)",
+                        Predicate.class.getName(),
+                        "{ test: function(obj) { return 'rhino' == obj; } }");
+
+        var adapterObject1 = (NativeJavaObject) eval(testCode);
+        var adapterObject2 = (NativeJavaObject) eval(testCode);
+        Assert.assertSame(adapterObject1.unwrap().getClass(), adapterObject2.unwrap().getClass());
+    }
 }
