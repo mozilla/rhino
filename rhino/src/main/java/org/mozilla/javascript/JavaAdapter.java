@@ -37,37 +37,21 @@ public final class JavaAdapter {
     static class JavaAdapterSignature {
         Class<?> superClass;
         Class<?>[] interfaces;
+        // name -> function arg length
         Map<String, Integer> names;
-
-        JavaAdapterSignature(
-                Class<?> superClass, Class<?>[] interfaces, Map<String, Integer> names) {
-            this.superClass = superClass;
-            this.interfaces = interfaces;
-            this.names = names;
-        }
 
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof JavaAdapterSignature)) return false;
             JavaAdapterSignature sig = (JavaAdapterSignature) obj;
-            if (superClass != sig.superClass) return false;
-            if (interfaces != sig.interfaces) {
-                if (interfaces.length != sig.interfaces.length) return false;
-                for (int i = 0; i < interfaces.length; i++)
-                    if (interfaces[i] != sig.interfaces[i]) return false;
-            }
-            if (names.size() != sig.names.size()) return false;
-            for (Map.Entry<String, Integer> e : names.entrySet()) {
-                String name = e.getKey();
-                int arity = e.getValue();
-                if (arity != sig.names.getOrDefault(name, arity + 1)) return false;
-            }
-            return true;
+            return superClass == sig.superClass
+                    && Arrays.equals(interfaces, sig.interfaces)
+                    && names.equals(sig.names);
         }
 
         @Override
         public int hashCode() {
-            return (superClass.hashCode() + Arrays.hashCode(interfaces)) ^ names.size();
+            return (superClass.hashCode() * 31 + Arrays.hashCode(interfaces)) ^ names.size();
         }
     }
 
@@ -120,7 +104,7 @@ public final class JavaAdapter {
         //     ["args for AbstractClazz ctor"]
         // )
 
-        var sig = new JavaAdapterSignature(null, null, null);
+        var sig = new JavaAdapterSignature();
         var classCount = fillAdapterInheritanceData(args, sig);
 
         // next argument is implementation, must be scriptable
@@ -261,7 +245,7 @@ public final class JavaAdapter {
             factory = null;
         }
 
-        var sig = new JavaAdapterSignature(null, null, null);
+        var sig = new JavaAdapterSignature();
         sig.superClass = Class.forName((String) in.readObject());
 
         String[] interfaceNames = (String[]) in.readObject();
