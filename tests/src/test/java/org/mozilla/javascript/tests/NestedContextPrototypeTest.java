@@ -19,6 +19,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -110,8 +111,10 @@ public class NestedContextPrototypeTest {
                                     scope.setParentScope(null);
                                     break;
                                 case SEALED_OWN_OBJECTS:
-                                    scope = context.initStandardObjects(null);
-                                    scope.setPrototype(global);
+                                    scope = context.initStandardObjects(new TopLevel());
+                                    ((TopLevel) scope)
+                                            .getGlobalThis()
+                                            .setPrototype(((TopLevel) global).getGlobalThis());
                                     scope.setParentScope(null);
                                     break;
                                 default:
