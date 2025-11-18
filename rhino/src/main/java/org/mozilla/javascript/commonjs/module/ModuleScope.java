@@ -6,22 +6,32 @@ package org.mozilla.javascript.commonjs.module;
 
 import java.net.URI;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
 /**
  * A top-level module scope. This class provides methods to retrieve the module's source and base
  * URIs in order to resolve relative module IDs and check sandbox constraints.
  */
-public class ModuleScope extends TopLevel {
+public class ModuleScope extends TopLevel.GlobalThis {
     private static final long serialVersionUID = 1L;
     private final URI uri;
     private final URI base;
 
-    public ModuleScope(Scriptable prototype, URI uri, URI base) {
+    private ModuleScope(Scriptable prototype, URI uri, URI base) {
         this.uri = uri;
         this.base = base;
         setPrototype(prototype);
-        cacheBuiltins(prototype, false);
+    }
+
+    public static ScriptableObject createModuleScope(Scriptable prototype, URI uri, URI base) {
+        if (prototype instanceof TopLevel) {
+            prototype = ((TopLevel) prototype).getGlobalThis();
+        }
+        var global = new ModuleScope(prototype, uri, base);
+        var scope = new TopLevel(global);
+        scope.cacheBuiltins(global, false);
+        return scope;
     }
 
     public URI getUri() {
