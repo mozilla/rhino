@@ -109,7 +109,15 @@ public class TopLevel extends ScriptableObject {
 
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
-    private final ScriptableObject globalThis = new GlobalThis();
+    private final ScriptableObject globalThis;
+
+    public TopLevel() {
+        this(new GlobalThis());
+    }
+
+    public TopLevel(ScriptableObject customGlobal) {
+        globalThis = customGlobal;
+    }
 
     @Override
     public String getClassName() {
@@ -284,17 +292,17 @@ public class TopLevel extends ScriptableObject {
         if (res != NOT_FOUND) {
             return res;
         }
-        return globalThis.get(name, globalThis);
+        return ScriptableObject.getProperty(globalThis, name);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        globalThis.put(name, globalThis, value);
+        ScriptableObject.putProperty(globalThis, name, value);
     }
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return super.has(name, start) || globalThis.has(name, globalThis);
+        return super.has(name, start) || ScriptableObject.hasProperty(globalThis, name);
     }
 
     @Override
