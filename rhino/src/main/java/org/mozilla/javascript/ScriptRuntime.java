@@ -3297,25 +3297,34 @@ public class ScriptRuntime {
     }
 
     /**
-     * Create iterator wrapper for array destructuring. This wraps the iterator so it can be drained
-     * during destructuring.
+     * Close an iterator if it's not exhausted. Calls iterator.return() if present and result.done
+     * is false.
      *
-     * @param obj the object to iterate
+     * @param iterator the iterator object
+     * @param result the last iterator result
      * @param cx the context
      * @param scope the scope
-     * @return a DestructuringIterator wrapper
      */
-    public static Scriptable wrapDestructuringIterator(Object obj, Context cx, Scriptable scope) {
-        // Check if obj has Symbol.iterator - will throw TypeError if not
-        final Callable getIterator =
-                ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
-        final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+    public static void closeIterator(Object iterator, Object result, Context cx, Scriptable scope) {
+        // Check if iterator is exhausted
+        if (result instanceof Scriptable) {
+            Object done = getObjectProp((Scriptable) result, ES6Iterator.DONE_PROPERTY, cx);
+            if (toBoolean(done)) {
+                // Iterator exhausted, no need to close
+                return;
+            }
+        }
 
-        // Call the iterator to get the iterator object
-        final Object iteratorObj = getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
-
-        // Return a wrapper that can be consumed element-by-element
-        return new DestructuringIterator(cx, scope, iteratorObj);
+        // Get iterator.return method if present
+        Object returnMethod =
+                getObjectPropNoWarn(
+                        toObject(cx, scope, iterator), ES6Iterator.RETURN_PROPERTY, cx, scope);
+        if (returnMethod != null
+                && !Undefined.isUndefined(returnMethod)
+                && returnMethod instanceof Callable) {
+            // Call iterator.return()
+            ((Callable) returnMethod).call(cx, scope, toObject(cx, scope, iterator), emptyArgs);
+        }
     }
 
     /**

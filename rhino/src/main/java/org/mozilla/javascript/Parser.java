@@ -4514,8 +4514,10 @@ public class Parser {
         result.addChildToBack(comma);
         List<String> destructuringNames = new ArrayList<>();
         boolean empty = true;
+        String iteratorName = null;
+        String lastResultName = null;
         if (left instanceof ArrayLiteral) {
-            empty =
+            DestructuringArrayResult arrayResult =
                     destructuringArray(
                             (ArrayLiteral) left,
                             variableType,
@@ -4525,6 +4527,9 @@ public class Parser {
                             defaultValue,
                             transformer,
                             isFunctionParameter);
+            empty = arrayResult.empty;
+            iteratorName = arrayResult.iteratorName;
+            lastResultName = arrayResult.lastResultName;
         } else if (left instanceof ObjectLiteral) {
             empty =
                     destructuringObject(
@@ -4551,55 +4556,122 @@ public class Parser {
             // Don't want a COMMA node with no children. Just add a zero.
             comma.addChildToBack(createNumber(0));
         }
+
+        // Add iterator closing to the comma sequence if needed
+        if (isFunctionParameter && iteratorName != null && lastResultName != null) {
+            Node closeIterator = new Node(Token.CLOSE_ITERATOR);
+            closeIterator.addChildToBack(createName(iteratorName));
+            closeIterator.addChildToBack(createName(lastResultName));
+            comma.addChildToBack(closeIterator);
+        }
+
         result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
         return result;
     }
 
-    boolean destructuringArray(
+    private static class DestructuringArrayResult {
+        boolean empty;
+        String iteratorName;
+        String lastResultName;
+
+        DestructuringArrayResult(boolean empty, String iteratorName, String lastResultName) {
+            this.empty = empty;
+            this.iteratorName = iteratorName;
+            this.lastResultName = lastResultName;
+        }
+    }
+
+    DestructuringArrayResult destructuringArray(
             ArrayLiteral array,
             int variableType,
             String tempName,
             Node parent,
             List<String> destructuringNames,
-            AstNode defaultValue, /* defaultValue to use in function param decls */
+            AstNode defaultValue,
             Transformer transformer,
             boolean isFunctionParameter) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
         boolean defaultValuesSetup = false;
-        boolean iteratorConverted = false;
+        boolean iteratorSetup = false;
+        String iteratorName = null;
+        String lastResultName = null;
+
         for (AstNode n : array.getElements()) {
             if (n.getType() == Token.EMPTY) {
                 index++;
                 continue;
             }
-            Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+
+            Node rightElem;
 
             if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
                 defaultValuesSetup = true;
             }
 
-            // make iterable array after default value is applied
-            if (isFunctionParameter && !iteratorConverted) {
-                // we need to know how many elements we actually need
-                int elementsNeeded = 0;
-                for (AstNode elem : array.getElements()) {
-                    if (elem.getType() != Token.EMPTY) {
-                        elementsNeeded++;
-                    }
-                }
-                Node toArrayOp = new Node(Token.TO_ITERABLE_ARRAY, createName(tempName));
-                toArrayOp.putIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, elementsNeeded);
-                Node reassign =
+            // Set up iterator for function parameters (after default value is applied)
+            // Only use iterator protocol in ES6+; older versions use index-based access
+            if (isFunctionParameter
+                    && !iteratorSetup
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                // Allocate temp names for iterator tracking
+                iteratorName = currentScriptOrFn.getNextTempName();
+                lastResultName = currentScriptOrFn.getNextTempName();
+                // Define the iterator temp variables for strict mode
+                defineSymbol(Token.LET, iteratorName, true);
+                defineSymbol(Token.LET, lastResultName, true);
+
+                // Generate: iterator = tempName[Symbol.iterator]()
+                // Pure AST: CALL(GETELEM(tempName, GETPROP(NAME("Symbol"), "iterator")))
+                Node symbolName = createName("Symbol");
+                Node getIteratorProp =
+                        new Node(Token.GETPROP, symbolName, Node.newString("iterator"));
+                Node getIteratorMethod = new Node(Token.GETELEM, createName(tempName));
+                getIteratorMethod.addChildToBack(getIteratorProp);
+                Node callIterator = new Node(Token.CALL, getIteratorMethod);
+                Node iteratorAssign =
                         new Node(
                                 Token.SETNAME,
-                                createName(Token.BINDNAME, tempName, null),
-                                toArrayOp);
-                parent.addChildToBack(reassign);
-                iteratorConverted = true;
+                                createName(Token.BINDNAME, iteratorName, null),
+                                callIterator);
+                parent.addChildToBack(iteratorAssign);
+                iteratorSetup = true;
                 empty = false;
+            }
+
+            // Generate code to get element
+            if (isFunctionParameter && iteratorName != null) {
+                // ES6+: Call iterator.next() and store the full result to check done later
+                Node getNextProp =
+                        new Node(Token.GETPROP, createName(iteratorName), Node.newString("next"));
+                Node callNext = new Node(Token.CALL, getNextProp);
+                Node storeResult =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, lastResultName, null),
+                                callNext);
+                parent.addChildToBack(storeResult);
+                // Extract .value from the result
+                String elemTempName = currentScriptOrFn.getNextTempName();
+                // Define the element temp variable for strict mode
+                defineSymbol(Token.LET, elemTempName, true);
+                Node getValue =
+                        new Node(
+                                Token.GETPROP, createName(lastResultName), Node.newString("value"));
+                Node storeElem =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, elemTempName, null),
+                                getValue);
+                parent.addChildToBack(storeElem);
+                // Use the temp variable for element access
+                rightElem = createName(elemTempName);
+                empty = false;
+            } else {
+                // Regular index-based access for var/let/const
+                rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
             }
 
             if (n.getType() == Token.NAME) {
@@ -4636,7 +4708,8 @@ public class Parser {
             index++;
             empty = false;
         }
-        return empty;
+
+        return new DestructuringArrayResult(empty, iteratorName, lastResultName);
     }
 
     private void processDestructuringDefaults(

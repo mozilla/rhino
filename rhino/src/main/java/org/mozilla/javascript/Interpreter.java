@@ -1581,7 +1581,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
         instructionObjs[base + Token.REF_NAME] = new DoRefName();
         instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
-        instructionObjs[base + Token.TO_ITERABLE_ARRAY] = new DoToIterableArray();
+        instructionObjs[base + Token.CLOSE_ITERATOR] = new DoCloseIterator();
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
@@ -4218,22 +4218,14 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoToIterableArray extends InstructionClass {
+    private static class DoCloseIterator extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            final Object obj = frame.stack[state.stackTop];
-            // wrap the iterator
-            DestructuringIterator wrapper =
-                    (DestructuringIterator)
-                            ScriptRuntime.wrapDestructuringIterator(obj, cx, frame.scope);
-            // element count from bytecode
-            int elementsNeeded = frame.idata.itsICode[frame.pc] & 0xFF;
-            if (elementsNeeded == 0) {
-                elementsNeeded = Integer.MAX_VALUE; // Unknown, fetch as needed
-            }
-            wrapper.setElementsNeeded(elementsNeeded);
-            frame.stack[state.stackTop] = wrapper;
-            frame.pc++; // Skip the element count byte
+            // Pop lastResult and iterator from stack
+            final Object lastResult = frame.stack[state.stackTop--];
+            final Object iterator = frame.stack[state.stackTop--];
+            // Close iterator if not exhausted
+            ScriptRuntime.closeIterator(iterator, lastResult, cx, frame.scope);
             return null;
         }
     }

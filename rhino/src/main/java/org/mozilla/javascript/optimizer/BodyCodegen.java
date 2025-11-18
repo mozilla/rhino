@@ -1207,26 +1207,21 @@ class BodyCodegen {
                 addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
                 break;
 
-            case Token.TO_ITERABLE_ARRAY:
-                generateExpression(child, node);
+            case Token.CLOSE_ITERATOR:
+                // Generate: ScriptRuntime.closeIterator(iterator, lastResult, cx, scope)
+                generateExpression(child, node); // iterator
+                generateExpression(child.getNext(), node); // lastResult
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
                 addScriptRuntimeInvoke(
-                        "wrapDestructuringIterator",
+                        "closeIterator",
                         "(Ljava/lang/Object;"
+                                + "Ljava/lang/Object;"
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Lorg/mozilla/javascript/Scriptable;");
-                // Cast to DestructuringIterator and set count
-                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/DestructuringIterator");
-                cfw.add(ByteCode.DUP);
-                int elemCount = node.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, Integer.MAX_VALUE);
-                cfw.addPush(elemCount);
-                cfw.addInvoke(
-                        ByteCode.INVOKEVIRTUAL,
-                        "org/mozilla/javascript/DestructuringIterator",
-                        "setElementsNeeded",
-                        "(I)V");
+                                + ")V");
+                // Push Undefined since this might be in expression context (e.g., in COMMA)
+                Codegen.pushUndefined(cfw);
                 break;
 
             case Token.TYPEOFNAME:
