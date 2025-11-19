@@ -21,9 +21,7 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ImporterTopLevel;
-import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -43,12 +41,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        var scope1Global = new NativeObject();
-        scope1Global.setPrototype(sharedScope.getGlobalThis());
-        scope1 = new TopLevel(scope1Global);
-        var scope2Global = new NativeObject();
-        scope2Global.setPrototype(sharedScope.getGlobalThis());
-        scope2 = new TopLevel(scope2Global);
+        scope1 = sharedScope.createIsolate();
+        scope2 = sharedScope.createIsolate();
     }
 
     @After
