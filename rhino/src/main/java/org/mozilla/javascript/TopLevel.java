@@ -119,6 +119,23 @@ public class TopLevel extends ScriptableObject {
         globalThis = customGlobal;
     }
 
+    public TopLevel createIsolate() {
+        var newGlobal = new NativeObject();
+        newGlobal.setPrototype(getGlobalThis());
+        newGlobal.setParentScope(null);
+        var isolate = new TopLevel(newGlobal);
+        isolate.cacheBuiltins(newGlobal, false);
+        return isolate;
+    }
+
+    public TopLevel createIsolate(ScriptableObject customGlobal) {
+        customGlobal.setParentScope(null);
+        customGlobal.setPrototype(getGlobalThis());
+        var isolate = new TopLevel(customGlobal);
+        isolate.cacheBuiltins(customGlobal, false);
+        return isolate;
+    }
+
     @Override
     public String getClassName() {
         return "topLevel";
