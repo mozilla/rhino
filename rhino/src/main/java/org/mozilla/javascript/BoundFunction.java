@@ -109,14 +109,12 @@ public class BoundFunction extends BaseFunction {
 
     Scriptable getCallThis(Context cx, Scriptable scope) {
         Scriptable callThis = boundThis;
-        if (callThis == null && ScriptRuntime.hasTopCall(cx)) {
-            callThis = ScriptRuntime.getTopCallScope(cx);
-        }
         if (callThis == null) {
-            callThis = getTopLevelScope(scope);
-        }
-        if (callThis instanceof TopLevel) {
-            callThis = ((TopLevel) callThis).getGlobalThis();
+            if (ScriptRuntime.hasTopCall(cx)) {
+                callThis = ScriptRuntime.getTopCallScope(cx).getGlobalThis();
+            } else {
+                callThis = getTopLevelScope(scope).getGlobalThis();
+            }
         }
         return callThis;
     }
