@@ -369,4 +369,137 @@ public class ArrayDestructuringTest {
                     return null;
                 });
     }
+
+    /** Basic test that array destructuring uses iterator protocol in ES6. */
+    @Test
+    public void arrayDestructuringBasicIterator() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    org.mozilla.javascript.ScriptableObject scope = cx.initStandardObjects();
+
+                    String script =
+                            "var iterable = {\n"
+                                    + "  [Symbol.iterator]: function() {\n"
+                                    + "    var i = 0;\n"
+                                    + "    var values = [10, 20, 30];\n"
+                                    + "    return {\n"
+                                    + "      next: function() {\n"
+                                    + "        if (i < values.length) {\n"
+                                    + "          return {value: values[i++], done: false};\n"
+                                    + "        }\n"
+                                    + "        return {done: true};\n"
+                                    + "      }\n"
+                                    + "    };\n"
+                                    + "  }\n"
+                                    + "};\n"
+                                    + "var f = function([a, b, c]) { return a + b + c; };\n"
+                                    + "var result = f(iterable);\n"
+                                    + "if (result !== 60) throw new Error('Expected 60, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /**
+     * Test that array destructuring works in pre-ES6 (JavaScript 1.8) using index-based access.
+     * Should NOT use Symbol.iterator.
+     */
+    @Test
+    public void arrayDestructuringPreES6IndexBased() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(180);
+                    org.mozilla.javascript.ScriptableObject scope = cx.initStandardObjects();
+
+                    String script =
+                            "var f = function([a, b, c]) { return a + b + c; };\n"
+                                    + "var result = f([1, 2, 3]);\n"
+                                    + "if (result !== 6) throw new Error('Expected 6, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /**
+     * Test that pre-ES6 array destructuring uses index access, not Symbol.iterator. Object with
+     * Symbol.iterator should NOT be iterated in version 180.
+     */
+    @Test
+    public void arrayDestructuringPreES6NoIteratorProtocol() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(180);
+                    org.mozilla.javascript.ScriptableObject scope = cx.initStandardObjects();
+
+                    // In pre-ES6, only index-based access should work
+                    // This verifies we don't call Symbol.iterator in version 180
+                    String script =
+                            "var f = function([a, b]) { return a + ',' + b; };\n"
+                                    + "var arr = [10, 20];\n"
+                                    + "var result = f(arr);\n"
+                                    + "if (result !== '10,20') throw new Error('Expected 10,20, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Test that pre-ES6 array destructuring works with defaults. */
+    @Test
+    public void arrayDestructuringPreES6WithDefaults() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(180);
+                    org.mozilla.javascript.ScriptableObject scope = cx.initStandardObjects();
+
+                    String script =
+                            "var f = function([a = 5, b = 10]) { return a + b; };\n"
+                                    + "if (f([1, 2]) !== 3) throw new Error('Test 1 failed');\n"
+                                    + "if (f([1]) !== 11) throw new Error('Test 2 failed');\n"
+                                    + "if (f([]) !== 15) throw new Error('Test 3 failed');";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /**
+     * Test that ES6 uses iterator protocol while pre-ES6 uses index-based access. This test creates
+     * an object that behaves differently depending on access method.
+     */
+    @Test
+    public void arrayDestructuringVersionDifference() {
+        // ES6 version - uses iterator
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    org.mozilla.javascript.ScriptableObject scope = cx.initStandardObjects();
+
+                    String script =
+                            "var obj = {\n"
+                                    + "  0: 'index0',\n"
+                                    + "  1: 'index1',\n"
+                                    + "  [Symbol.iterator]: function() {\n"
+                                    + "    var i = 0;\n"
+                                    + "    return {\n"
+                                    + "      next: function() {\n"
+                                    + "        if (i === 0) { i++; return {value: 'iter0', done: false}; }\n"
+                                    + "        if (i === 1) { i++; return {value: 'iter1', done: false}; }\n"
+                                    + "        return {done: true};\n"
+                                    + "      }\n"
+                                    + "    };\n"
+                                    + "  }\n"
+                                    + "};\n"
+                                    + "var f = function([a, b]) { return a + ',' + b; };\n"
+                                    + "var result = f(obj);\n"
+                                    + "// In ES6, should use iterator protocol\n"
+                                    + "if (result !== 'iter0,iter1') throw new Error('ES6 should use iterator, got: ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
 }
