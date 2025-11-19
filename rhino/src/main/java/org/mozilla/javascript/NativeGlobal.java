@@ -23,7 +23,7 @@ import org.mozilla.javascript.xml.XMLLib;
 public class NativeGlobal implements Serializable {
     static final long serialVersionUID = 6080442165748707530L;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, TopLevel scope, boolean sealed) {
         defineGlobalFunction(scope, sealed, "decodeURI", 1, NativeGlobal::js_decodeURI);
         defineGlobalFunction(
                 scope, sealed, "decodeURIComponent", 1, NativeGlobal::js_decodeURIComponent);
@@ -46,7 +46,7 @@ public class NativeGlobal implements Serializable {
                 scope, "Infinity", Double.POSITIVE_INFINITY, READONLY | DONTENUM | PERMANENT);
         ScriptableObject.defineProperty(
                 scope, "undefined", Undefined.instance, READONLY | DONTENUM | PERMANENT);
-        var globalThis = scope instanceof TopLevel ? ((TopLevel) scope).getGlobalThis() : scope;
+        var globalThis = scope.getGlobalThis();
 
         var obj = (Scriptable) scope.get("Object", scope);
         var objProto = (Scriptable) obj.get("prototype", obj);

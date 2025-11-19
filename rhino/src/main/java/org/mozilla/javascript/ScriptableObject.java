@@ -2398,11 +2398,11 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param obj a JavaScript object
      * @return the corresponding global scope
      */
-    public static Scriptable getTopLevelScope(Scriptable obj) {
+    public static TopLevel getTopLevelScope(Scriptable obj) {
         for (; ; ) {
             Scriptable parent = obj.getParentScope();
             if (parent == null) {
-                return obj;
+                return (TopLevel) obj;
             }
             obj = parent;
         }
@@ -2950,20 +2950,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see #getAssociatedValue(Object key)
      */
     public static Object getTopScopeValue(Scriptable scope, Object key) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        for (; ; ) {
-            if (scope instanceof ScriptableObject) {
-                ScriptableObject so = (ScriptableObject) scope;
-                Object value = so.getAssociatedValue(key);
-                if (value != null) {
-                    return value;
-                }
-            }
-            scope = scope.getPrototype();
-            if (scope == null) {
-                return null;
-            }
-        }
+        var topScope = ScriptableObject.getTopLevelScope(scope);
+        return topScope.getAssociatedValue(key);
     }
 
     /**

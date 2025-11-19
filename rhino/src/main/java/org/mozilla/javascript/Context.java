@@ -1052,7 +1052,7 @@ public class Context implements Closeable {
      *
      * @return the initialized scope
      */
-    public final ScriptableObject initStandardObjects() {
+    public final TopLevel initStandardObjects() {
         return initStandardObjects(null, false);
     }
 
@@ -1095,7 +1095,7 @@ public class Context implements Closeable {
      * @return the initialized scope. The method returns the value of the scope argument if it is
      *     not null or newly allocated scope object which is an instance {@link ScriptableObject}.
      */
-    public final Scriptable initStandardObjects(ScriptableObject scope) {
+    public final TopLevel initStandardObjects(TopLevel scope) {
         return initStandardObjects(scope, false);
     }
 
@@ -1121,7 +1121,7 @@ public class Context implements Closeable {
      * @return the initialized scope. The method returns the value of the scope argument if it is
      *     not null or newly allocated scope object which is an instance {@link ScriptableObject}.
      */
-    public final Scriptable initSafeStandardObjects(ScriptableObject scope) {
+    public final TopLevel initSafeStandardObjects(TopLevel scope) {
         return initSafeStandardObjects(scope, false);
     }
 
@@ -1148,7 +1148,7 @@ public class Context implements Closeable {
      *     not null or newly allocated scope object.
      * @since 1.4R3
      */
-    public ScriptableObject initStandardObjects(ScriptableObject scope, boolean sealed) {
+    public TopLevel initStandardObjects(TopLevel scope, boolean sealed) {
         return ScriptRuntime.initStandardObjects(this, scope, sealed);
     }
 
@@ -1181,7 +1181,7 @@ public class Context implements Closeable {
      *     not null or newly allocated scope object.
      * @since 1.7.6
      */
-    public ScriptableObject initSafeStandardObjects(ScriptableObject scope, boolean sealed) {
+    public TopLevel initSafeStandardObjects(TopLevel scope, boolean sealed) {
         return ScriptRuntime.initSafeStandardObjects(this, scope, sealed);
     }
 
@@ -2788,7 +2788,7 @@ public class Context implements Closeable {
     private boolean sealed;
     private Object sealKey;
 
-    Scriptable topCallScope;
+    TopLevel topCallScope;
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;

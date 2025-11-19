@@ -7,6 +7,7 @@ package org.mozilla.javascript.tests;
 import org.junit.Test;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -62,13 +63,14 @@ public class PrimitiveTypeScopeResolutionTest {
     private void testWithTwoScopes(final String scriptScope1, final String scriptScope2) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope1 =
-                            cx.initStandardObjects(new MySimpleScriptableObject("scope1"));
-                    final Scriptable scope2 =
-                            cx.initStandardObjects(new MySimpleScriptableObject("scope2"));
+                    final TopLevel scope1 = new TopLevel(new MySimpleScriptableObject("scope1"));
+                    cx.initStandardObjects(scope1);
+                    final TopLevel scope2 = new TopLevel(new MySimpleScriptableObject("scope2"));
+                    cx.initStandardObjects(scope2);
+
                     cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-                    scope1.put("scope2", scope1, scope2);
+                    scope1.put("scope2", scope1, scope2.getGlobalThis());
 
                     return cx.evaluateString(scope1, scriptScope1, "source1", 1, null);
                 });
@@ -129,10 +131,10 @@ public class PrimitiveTypeScopeResolutionTest {
 
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope1 =
-                            cx.initStandardObjects(new MySimpleScriptableObject("scope1"));
-                    final Scriptable scope2 =
-                            cx.initStandardObjects(new MySimpleScriptableObject("scope2"));
+                    final TopLevel scope1 = new TopLevel(new MySimpleScriptableObject("scope1"));
+                    cx.initStandardObjects(scope1);
+                    final TopLevel scope2 = new TopLevel(new MySimpleScriptableObject("scope2"));
+                    cx.initStandardObjects(scope2);
 
                     scope2.put("myObject", scope2, myObject);
                     cx.evaluateString(scope2, scriptScope2, "source2", 1, null);

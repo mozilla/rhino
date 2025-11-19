@@ -30,7 +30,7 @@ public class ModuleScope extends TopLevel.GlobalThis {
         }
         var global = new ModuleScope(prototype, uri, base);
         var scope = new TopLevel(global);
-        scope.cacheBuiltins(global, false);
+        scope.cacheBuiltins(false);
         return scope;
     }
 

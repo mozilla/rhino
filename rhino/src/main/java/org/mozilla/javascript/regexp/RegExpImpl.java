@@ -14,13 +14,14 @@ import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /** */
 public class RegExpImpl implements RegExpProxy {
 
     @Override
-    public void register(ScriptableObject scope, boolean sealed) {
+    public void register(TopLevel scope, boolean sealed) {
         NativeRegExpStringIterator.init(scope, sealed);
         new LazilyLoadedCtor(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
