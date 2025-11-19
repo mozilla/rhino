@@ -381,7 +381,10 @@ class SuperTest {
                                             int line,
                                             String lineSource,
                                             int lineOffset) {
-                                        fail("should not have been called");
+                                        fail(
+                                                String.format(
+                                                        "should not have been called but was with %s",
+                                                        message));
                                     }
 
                                     @Override
@@ -391,7 +394,10 @@ class SuperTest {
                                             int line,
                                             String lineSource,
                                             int lineOffset) {
-                                        fail("should not have been called");
+                                        fail(
+                                                String.format(
+                                                        "should not have been called but was with %s",
+                                                        message));
                                         return null;
                                     }
                                 });
