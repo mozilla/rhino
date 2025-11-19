@@ -136,12 +136,10 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
             throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
         }
 
-        Map<String, SymbolKey> table = getGlobalMap();
-        for (var e : table.entrySet()) {
-            if (e.getValue() == sym) {
-                return e.getKey();
-            }
+        if (getGlobalMap().get(sym.getName()) == sym) {
+            return sym.getName();
         }
+
         return Undefined.instance;
     }
 
