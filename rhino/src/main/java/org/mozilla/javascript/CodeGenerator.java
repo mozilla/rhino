@@ -401,15 +401,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Token.CLOSE_ITERATOR:
-                // Close iterator if not exhausted
-                updateLineNumber(node);
-                visitExpression(child, 0); // Push iterator
-                visitExpression(child.getNext(), 0); // Push lastResult
-                addToken(type);
-                stackChange(-2); // Consumes both values
-                break;
-
             case Token.TRY:
                 {
                     Jump tryNode = (Jump) node;
@@ -813,17 +804,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 } else {
                     addToken(type);
                 }
-                break;
-
-            case Token.CLOSE_ITERATOR:
-                // Evaluate both children (iterator and lastResult)
-                visitExpression(child, 0);
-                visitExpression(child.getNext(), 0);
-                addToken(type); // Consumes both
-                stackChange(-2);
-                // Push undefined since we're in expression context
-                addIcode(Icode_UNDEF);
-                stackChange(1);
                 break;
 
             case Token.GET_REF:

@@ -1581,7 +1581,6 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
         instructionObjs[base + Token.REF_NAME] = new DoRefName();
         instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
-        instructionObjs[base + Token.CLOSE_ITERATOR] = new DoCloseIterator();
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
@@ -4214,18 +4213,6 @@ public final class Interpreter extends Icode implements Evaluator {
             if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             frame.stack[state.stackTop] =
                     ScriptRuntime.nameRef(ns, name, cx, frame.scope, state.indexReg);
-            return null;
-        }
-    }
-
-    private static class DoCloseIterator extends InstructionClass {
-        @Override
-        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            // Pop lastResult and iterator from stack
-            final Object lastResult = frame.stack[state.stackTop--];
-            final Object iterator = frame.stack[state.stackTop--];
-            // Close iterator if not exhausted
-            ScriptRuntime.closeIterator(iterator, lastResult, cx, frame.scope);
             return null;
         }
     }

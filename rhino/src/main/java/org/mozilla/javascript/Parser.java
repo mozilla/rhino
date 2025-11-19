@@ -4558,11 +4558,45 @@ public class Parser {
         }
 
         // Add iterator closing to the comma sequence if needed
+        // Generate: !lastResult.done ? ((f = iterator.return) !== undefined ? f.call(iterator) :
+        // undefined) : undefined
         if (isFunctionParameter && iteratorName != null && lastResultName != null) {
-            Node closeIterator = new Node(Token.CLOSE_ITERATOR);
-            closeIterator.addChildToBack(createName(iteratorName));
-            closeIterator.addChildToBack(createName(lastResultName));
-            comma.addChildToBack(closeIterator);
+            // Allocate temp for return method
+            String returnMethodName = currentScriptOrFn.getNextTempName();
+            defineSymbol(Token.LET, returnMethodName, true);
+
+            // Check if iterator is done: !lastResult.done
+            Node getDone =
+                    new Node(Token.GETPROP, createName(lastResultName), Node.newString("done"));
+            Node notDone = new Node(Token.NOT, getDone);
+
+            // Get iterator.return and store: f = iterator.return
+            Node getReturn =
+                    new Node(Token.GETPROP, createName(iteratorName), Node.newString("return"));
+            Node assignReturn =
+                    new Node(
+                            Token.SETNAME,
+                            createName(Token.BINDNAME, returnMethodName, null),
+                            getReturn);
+
+            // Check if return method is not undefined: (f = iterator.return) !== undefined
+            Node notUndefined = new Node(Token.NE, assignReturn, new Node(Token.UNDEFINED));
+
+            // Call return method: f.call(iterator)
+            Node getCall =
+                    new Node(Token.GETPROP, createName(returnMethodName), Node.newString("call"));
+            Node callReturn = new Node(Token.CALL, getCall);
+            callReturn.addChildToBack(createName(iteratorName)); // 'this' argument
+
+            // Inner ternary: (f = iterator.return) !== undefined ? f.call(iterator) : undefined
+            Node innerTernary =
+                    new Node(Token.HOOK, notUndefined, callReturn, new Node(Token.UNDEFINED));
+
+            // Outer ternary: !lastResult.done ? innerTernary : undefined
+            Node outerTernary =
+                    new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
+
+            comma.addChildToBack(outerTernary);
         }
 
         result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);

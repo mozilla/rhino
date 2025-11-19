@@ -1207,23 +1207,6 @@ class BodyCodegen {
                 addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
                 break;
 
-            case Token.CLOSE_ITERATOR:
-                // Generate: ScriptRuntime.closeIterator(iterator, lastResult, cx, scope)
-                generateExpression(child, node); // iterator
-                generateExpression(child.getNext(), node); // lastResult
-                cfw.addALoad(contextLocal);
-                cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                        "closeIterator",
-                        "(Ljava/lang/Object;"
-                                + "Ljava/lang/Object;"
-                                + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")V");
-                // Push Undefined since this might be in expression context (e.g., in COMMA)
-                Codegen.pushUndefined(cfw);
-                break;
-
             case Token.TYPEOFNAME:
                 visitTypeofname(node);
                 break;
