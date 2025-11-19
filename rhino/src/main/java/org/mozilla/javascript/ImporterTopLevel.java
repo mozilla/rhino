@@ -74,9 +74,6 @@ public class ImporterTopLevel extends TopLevel {
         private Object getPackageProperty(String name, Scriptable start) {
             Object result = NOT_FOUND;
             Scriptable scope = start;
-            if (topScopeFlag) {
-                scope = ScriptableObject.getTopLevelScope(scope);
-            }
             Object[] elements = getNativeJavaPackages(scope);
             if (elements == null) {
                 return result;
