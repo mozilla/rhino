@@ -71,9 +71,7 @@ public abstract class ScriptTestsBase {
             Global global = new Global(cx);
             loadNatives(global);
 
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
-            scope.setParentScope(null);
+            var scope = global.createIsolate();
 
             return cx.evaluateReader(scope, script, suiteName, 1, null);
         } catch (JavaScriptException ex) {
