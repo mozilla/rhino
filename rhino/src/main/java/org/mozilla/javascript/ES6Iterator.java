@@ -17,7 +17,7 @@ public abstract class ES6Iterator extends ScriptableObject {
     public static final String RETURN_METHOD = "return";
 
     protected static void init(
-            ScriptableObject scope, boolean sealed, ScriptableObject prototype, String tag) {
+            TopLevel scope, boolean sealed, ScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
