@@ -31,6 +31,9 @@ public final class ES6Generator extends IdScriptableObject {
         // approach instead.
         if (scope != null) {
             scope.associateValue(GENERATOR_TAG, prototype);
+            if (scope instanceof TopLevel) {
+                ((TopLevel) scope).getGlobalThis().associateValue(GENERATOR_TAG, prototype);
+            }
         }
 
         return prototype;

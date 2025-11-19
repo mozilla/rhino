@@ -27,6 +27,9 @@ public abstract class ES6Iterator extends IdScriptableObject {
         // approach instead.
         if (scope != null) {
             scope.associateValue(tag, prototype);
+            if (scope instanceof TopLevel) {
+                ((TopLevel) scope).getGlobalThis().associateValue(tag, prototype);
+            }
         }
     }
 

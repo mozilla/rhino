@@ -191,6 +191,10 @@ public class ScriptRuntime {
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
+        if (scope instanceof TopLevel) {
+            ((TopLevel) scope).getGlobalThis().associateValue(LIBRARY_SCOPE_KEY, scope);
+        }
+
         new ClassCache().associate(scope);
         new ConcurrentFactory().associate(scope);
 

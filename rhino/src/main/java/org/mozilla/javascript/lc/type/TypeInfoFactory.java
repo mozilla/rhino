@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
@@ -364,6 +365,9 @@ public interface TypeInfoFactory extends Serializable {
     default TypeInfoFactory associate(ScriptableObject topScope) {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
+        }
+        if (topScope instanceof TopLevel) {
+            topScope = ((TopLevel) topScope).getGlobalThis();
         }
         return (TypeInfoFactory) topScope.associateValue("TypeInfoFactory", this);
     }
