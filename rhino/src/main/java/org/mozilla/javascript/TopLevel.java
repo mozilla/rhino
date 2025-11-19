@@ -26,8 +26,8 @@ import java.util.EnumMap;
  * <p>Calling {@link org.mozilla.javascript.Context#initStandardObjects()} with an instance of this
  * class as argument will automatically cache built-in classes after initialization. For other
  * setups involving top-level scopes that inherit global properties from their prototypes (e.g. with
- * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable, boolean)} to
- * initialize the class cache for each top-level scope.
+ * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(boolean)} to initialize
+ * the class cache for each top-level scope.
  */
 public class TopLevel extends ScriptableObject {
 
@@ -107,9 +107,9 @@ public class TopLevel extends ScriptableObject {
         }
     }
 
+    private final ScriptableObject globalThis;
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
-    private final ScriptableObject globalThis;
 
     public TopLevel() {
         this(new GlobalThis());
@@ -124,7 +124,7 @@ public class TopLevel extends ScriptableObject {
         newGlobal.setPrototype(getGlobalThis());
         newGlobal.setParentScope(null);
         var isolate = new TopLevel(newGlobal);
-        isolate.cacheBuiltins(newGlobal, false);
+        isolate.copyBuiltins(this, false);
         return isolate;
     }
 
@@ -132,7 +132,7 @@ public class TopLevel extends ScriptableObject {
         customGlobal.setParentScope(null);
         customGlobal.setPrototype(getGlobalThis());
         var isolate = new TopLevel(customGlobal);
-        isolate.cacheBuiltins(customGlobal, false);
+        isolate.copyBuiltins(this, false);
         return isolate;
     }
 
@@ -147,8 +147,16 @@ public class TopLevel extends ScriptableObject {
      * ScriptRuntime.initStandardObjects} if the scope argument is an instance of this class. It
      * only has to be called by the embedding if a top-level scope is not initialized through {@code
      * initStandardObjects()}.
+     *
+     * <p>This method is deprecated and kept for compatibility. Please use either {@link
+     * cacheBuiltins(boolean)} or {@link copyBuiltins(TopLevel, boolean)} instead.
      */
-    public void cacheBuiltins(Scriptable scope, boolean sealed) {
+    @Deprecated
+    public void cacheBuiltins(TopLevel scope, boolean sealed) {
+        cacheBuiltins(sealed);
+    }
+
+    public void cacheBuiltins(boolean sealed) {
         ctors = new EnumMap<>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
@@ -158,8 +166,7 @@ public class TopLevel extends ScriptableObject {
                 // Handle weird situation of "GeneratorFunction" being a real constructor
                 // which is never registered in the top-level scope
                 ctors.put(
-                        builtin,
-                        (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
+                        builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(this, sealed));
             }
         }
         errors = new EnumMap<>(NativeErrors.class);
@@ -169,6 +176,11 @@ public class TopLevel extends ScriptableObject {
                 errors.put(error, (BaseFunction) value);
             }
         }
+    }
+
+    public void copyBuiltins(TopLevel other, boolean sealed) {
+        ctors = other.ctors;
+        errors = other.errors;
     }
 
     /** Clears the cache; this is necessary, when standard objects are reinitialized. */
@@ -265,8 +277,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached built-in object constructor from this scope with the given {@code type}.
-     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
-     * object.
+     * Returns null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the built-in type
      * @return the built-in constructor
@@ -277,7 +288,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached native error constructor from this scope with the given {@code type}. Returns
-     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
+     * null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the native error type
      * @return the native error constructor
@@ -288,7 +299,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached built-in object prototype from this scope with the given {@code type}. Returns
-     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
+     * null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the built-in type
      * @return the built-in prototype
@@ -349,6 +360,15 @@ public class TopLevel extends ScriptableObject {
             super.setAttributes(name, attributes);
         } else {
             globalThis.setAttributes(name, attributes);
+        }
+    }
+
+    @Override
+    public int getAttributes(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.getAttributes(name);
+        } else {
+            return globalThis.getAttributes(name);
         }
     }
 
