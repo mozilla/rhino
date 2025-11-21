@@ -15,6 +15,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.WrappedException;
 
 /**
@@ -49,7 +50,8 @@ public class Shell extends ScriptableObject {
             // Initialize the standard objects (Object, Function, etc.)
             // This must be done before scripts can be executed.
             Shell shell = new Shell();
-            cx.initStandardObjects(shell);
+            TopLevel topLevel = new TopLevel(shell);
+            cx.initStandardObjects(topLevel);
 
             // Define some global functions particular to the shell. Note
             // that these functions are not part of ECMA.

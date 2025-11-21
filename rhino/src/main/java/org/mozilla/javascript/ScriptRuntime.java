@@ -182,20 +182,15 @@ public class ScriptRuntime {
                 || ScriptableClass.isAssignableFrom(cl));
     }
 
-    public static ScriptableObject initSafeStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
+    public static TopLevel initSafeStandardObjects(Context cx, TopLevel scope, boolean sealed) {
         if (scope == null) {
             scope = new TopLevel();
-        } else if (scope instanceof TopLevel) {
-            ((TopLevel) scope).clearCache();
-        } else {
-            throw new Error();
         }
 
+        scope.clearCache();
+
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-        if (scope instanceof TopLevel) {
-            ((TopLevel) scope).getGlobalThis().associateValue(LIBRARY_SCOPE_KEY, scope);
-        }
+        scope.getGlobalThis().associateValue(LIBRARY_SCOPE_KEY, scope);
 
         new ClassCache().associate(scope);
         new ConcurrentFactory().associate(scope);
@@ -287,23 +282,20 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
-        if (scope instanceof TopLevel) {
-            ((TopLevel) scope).cacheBuiltins(scope, sealed);
-        }
+        scope.cacheBuiltins(scope, sealed);
 
         return scope;
     }
 
-    private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
+    private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
             regExpProxy.register(scope, sealed);
         }
     }
 
-    public static ScriptableObject initStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
-        ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+    public static TopLevel initStandardObjects(Context cx, TopLevel scope, boolean sealed) {
+        TopLevel s = initSafeStandardObjects(cx, scope, sealed);
 
         NativeJavaObject.init(s, sealed);
         NativeJavaMap.init(s, sealed);
