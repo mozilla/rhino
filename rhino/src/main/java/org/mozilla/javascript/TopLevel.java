@@ -106,9 +106,9 @@ public class TopLevel extends ScriptableObject {
         }
     }
 
+    private final ScriptableObject globalThis;
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
-    private final ScriptableObject globalThis;
 
     public TopLevel() {
         this(new GlobalThis());
@@ -348,6 +348,15 @@ public class TopLevel extends ScriptableObject {
             super.setAttributes(name, attributes);
         } else {
             globalThis.setAttributes(name, attributes);
+        }
+    }
+
+    @Override
+    public int getAttributes(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.getAttributes(name);
+        } else {
+            return globalThis.getAttributes(name);
         }
     }
 

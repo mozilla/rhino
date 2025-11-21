@@ -2944,6 +2944,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see #getAssociatedValue(Object key)
      */
     public static Object getTopScopeValue(Scriptable scope, Object key) {
+        var originalScope = scope;
         scope = ScriptableObject.getTopLevelScope(scope);
         if (scope instanceof ScriptableObject) {
             ScriptableObject so = (ScriptableObject) scope;
@@ -2955,7 +2956,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (scope instanceof TopLevel) {
             scope = ((TopLevel) scope).getGlobalThis();
         }
-        for (; ; ) {
+        while (scope != null) {
             if (scope instanceof ScriptableObject) {
                 ScriptableObject so = (ScriptableObject) scope;
                 Object value = so.getAssociatedValue(key);
@@ -2964,10 +2965,9 @@ public abstract class ScriptableObject extends SlotMapOwner
                 }
             }
             scope = scope.getPrototype();
-            if (scope == null) {
-                return null;
-            }
         }
+        new Error(originalScope.getClass().getName()).printStackTrace();
+        return null;
     }
 
     /**

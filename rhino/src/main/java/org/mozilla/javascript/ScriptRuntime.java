@@ -185,9 +185,11 @@ public class ScriptRuntime {
     public static ScriptableObject initSafeStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         if (scope == null) {
-            scope = new NativeObject();
+            scope = new TopLevel();
         } else if (scope instanceof TopLevel) {
             ((TopLevel) scope).clearCache();
+        } else {
+            throw new Error();
         }
 
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
