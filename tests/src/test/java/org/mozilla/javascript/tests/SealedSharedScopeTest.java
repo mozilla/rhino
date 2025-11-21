@@ -41,12 +41,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        scope1 = ctx.newObject(sharedScope);
-        scope1.setPrototype(sharedScope);
-        scope1.setParentScope(null);
-        scope2 = ctx.newObject(sharedScope);
-        scope2.setPrototype(sharedScope);
-        scope2.setParentScope(null);
+        scope1 = sharedScope.createIsolate();
+        scope2 = sharedScope.createIsolate();
     }
 
     @After
@@ -114,19 +110,26 @@ public class SealedSharedScopeTest {
 
     @Test
     public void globalScope() throws FileNotFoundException, IOException {
-        evaluateString(scope1, "importPackage(Packages.java.io);");
+        System.err.println("Start");
+        try {
 
-        // Loading object via direct class type evaluate and then checking with typeof
-        // works
-        Object o = evaluateString(scope1, "File");
-        assertEquals(java.io.File.class, o);
-        o = evaluateString(scope1, "typeof File");
-        assertEquals("function", o);
+            evaluateString(scope1, "importPackage(Packages.java.io);");
 
-        // Direct checking with typeof fails
-        evaluateString(scope2, "importPackage(Packages.java.io);");
-        o = evaluateString(scope2, "typeof File");
-        assertEquals("function", o);
+            // Loading object via direct class type evaluate and then checking with typeof
+            // works
+            Object o = evaluateString(scope1, "File");
+            assertEquals(java.io.File.class, o);
+            o = evaluateString(scope1, "typeof File");
+            assertEquals("function", o);
+
+            // Direct checking with typeof fails
+            evaluateString(scope2, "importPackage(Packages.java.io);");
+            o = evaluateString(scope2, "typeof File");
+            assertEquals("function", o);
+
+        } finally {
+            System.err.println("Finish");
+        }
     }
 
     @Test

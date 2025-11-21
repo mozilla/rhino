@@ -457,7 +457,7 @@ public class Test262SuiteTest {
         }
 
         public static Object getGlobal(Scriptable scriptable) {
-            return scriptable.getParentScope();
+            return ((TopLevel) scriptable.getParentScope()).getGlobalThis();
         }
 
         public static $262 createRealm(

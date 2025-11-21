@@ -11,7 +11,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
     private static final long serialVersionUID = 2438373029140003950L;
 
     protected static void init(
-            ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+            TopLevel scope, boolean sealed, IdScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
@@ -27,6 +27,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
         // approach instead.
         if (scope != null) {
             scope.associateValue(tag, prototype);
+            scope.getGlobalThis().associateValue(tag, prototype);
         }
     }
 

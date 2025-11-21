@@ -18,7 +18,7 @@ public final class NativeIterator extends IdScriptableObject {
     private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = "Iterator";
 
-    static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, TopLevel scope, boolean sealed) {
         // Iterator
         NativeIterator iterator = new NativeIterator();
         iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -42,6 +42,7 @@ public final class NativeIterator extends IdScriptableObject {
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
         scope.associateValue(ITERATOR_TAG, obj);
+        scope.getGlobalThis().associateValue(ITERATOR_TAG, obj);
     }
 
     /** Only for constructing the prototype object. */

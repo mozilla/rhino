@@ -13,7 +13,7 @@ public final class ES6Generator extends IdScriptableObject {
 
     static final Object GENERATOR_TAG = "Generator";
 
-    static ES6Generator init(ScriptableObject scope, boolean sealed) {
+    static ES6Generator init(TopLevel scope, boolean sealed) {
 
         ES6Generator prototype = new ES6Generator();
         if (scope != null) {
@@ -31,6 +31,7 @@ public final class ES6Generator extends IdScriptableObject {
         // approach instead.
         if (scope != null) {
             scope.associateValue(GENERATOR_TAG, prototype);
+            scope.getGlobalThis().associateValue(GENERATOR_TAG, prototype);
         }
 
         return prototype;

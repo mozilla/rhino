@@ -98,12 +98,46 @@ public class TopLevel extends ScriptableObject {
         JavaException
     }
 
+    public static class GlobalThis extends ScriptableObject {
+
+        @Override
+        public String getClassName() {
+            return "global";
+        }
+    }
+
+    private final ScriptableObject globalThis;
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
 
+    public TopLevel() {
+        this(new GlobalThis());
+    }
+
+    public TopLevel(ScriptableObject customGlobal) {
+        globalThis = customGlobal;
+    }
+
+    public TopLevel createIsolate() {
+        var newGlobal = new NativeObject();
+        newGlobal.setPrototype(getGlobalThis());
+        newGlobal.setParentScope(null);
+        var isolate = new TopLevel(newGlobal);
+        isolate.cacheBuiltins(newGlobal, false);
+        return isolate;
+    }
+
+    public TopLevel createIsolate(ScriptableObject customGlobal) {
+        customGlobal.setParentScope(null);
+        customGlobal.setPrototype(getGlobalThis());
+        var isolate = new TopLevel(customGlobal);
+        isolate.cacheBuiltins(customGlobal, false);
+        return isolate;
+    }
+
     @Override
     public String getClassName() {
-        return "global";
+        return "topLevel";
     }
 
     /**
@@ -262,5 +296,92 @@ public class TopLevel extends ScriptableObject {
         BaseFunction func = getBuiltinCtor(type);
         Object proto = func != null ? func.getPrototypeProperty() : null;
         return proto instanceof Scriptable ? (Scriptable) proto : null;
+    }
+
+    public ScriptableObject getGlobalThis() {
+        return globalThis;
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        var res = super.get(name, start);
+        if (res != NOT_FOUND) {
+            return res;
+        }
+        return ScriptableObject.getProperty(globalThis, name);
+    }
+
+    @Override
+    public void put(String name, Scriptable start, Object value) {
+        ScriptableObject.putProperty(globalThis, name, value);
+    }
+
+    @Override
+    public boolean has(String name, Scriptable start) {
+        return super.has(name, start) || ScriptableObject.hasProperty(globalThis, name);
+    }
+
+    @Override
+    public void delete(String name) {
+        globalThis.delete(name);
+    }
+
+    @Override
+    public void sealObject() {
+        globalThis.sealObject();
+        super.sealObject();
+    }
+
+    @Override
+    public void defineProperty(String propertyName, Object value, int attributes) {
+        globalThis.defineProperty(propertyName, value, attributes);
+    }
+
+    @Override
+    void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+        globalThis.addLazilyInitializedValue(name, index, init, attributes);
+    }
+
+    @Override
+    public void setAttributes(String name, int attributes) {
+        if (super.get(name, this) != NOT_FOUND) {
+            super.setAttributes(name, attributes);
+        } else {
+            globalThis.setAttributes(name, attributes);
+        }
+    }
+
+    @Override
+    public int getAttributes(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.getAttributes(name);
+        } else {
+            return globalThis.getAttributes(name);
+        }
+    }
+
+    // Technically this is wrong, but there are currently tests that
+    // depend const variable being defined on globalThis.
+    //
+    // In a compliant implementation const declarations should bind
+    // the values on the global scope but not on the global object.
+
+    @Override
+    public boolean isConst(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.isConst(name);
+        } else {
+            return globalThis.isConst(name);
+        }
+    }
+
+    @Override
+    public void putConst(String name, Scriptable start, Object value) {
+        globalThis.putConst(name, globalThis, value);
+    }
+
+    @Override
+    public void defineConst(String name, Scriptable start) {
+        globalThis.defineConst(name, globalThis);
     }
 }
