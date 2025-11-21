@@ -2802,7 +2802,7 @@ public class Context implements Closeable {
     private boolean sealed;
     private Object sealKey;
 
-    Scriptable topCallScope;
+    TopLevel topCallScope;
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;

@@ -3428,7 +3428,7 @@ public class ScriptRuntime {
             }
             if (callThis == null) {
                 // This covers the case of args[0] == (null|undefined) as well.
-                callThis = getTopCallScope(cx);
+                callThis = getTopCallScope(cx).getGlobalThis();
             }
         } else {
             // Spec-compliant behavior
@@ -3447,12 +3447,8 @@ public class ScriptRuntime {
             boolean isFunctionStrict =
                     !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
             if (missingCallThis && !isFunctionStrict) {
-                callThis = getTopCallScope(cx);
+                callThis = getTopCallScope(cx).getGlobalThis();
             }
-        }
-
-        if (callThis instanceof TopLevel) {
-            callThis = ((TopLevel) callThis).getGlobalThis();
         }
 
         return callThis;
@@ -4757,8 +4753,8 @@ public class ScriptRuntime {
         return (cx.topCallScope != null);
     }
 
-    public static Scriptable getTopCallScope(Context cx) {
-        Scriptable scope = cx.topCallScope;
+    public static TopLevel getTopCallScope(Context cx) {
+        var scope = cx.topCallScope;
         if (scope == null) {
             throw new IllegalStateException();
         }

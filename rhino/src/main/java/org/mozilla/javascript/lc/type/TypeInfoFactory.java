@@ -362,14 +362,11 @@ public interface TypeInfoFactory extends Serializable {
      * @throws IllegalArgumentException if provided scope is not top scope
      * @see #get(Scriptable scope)
      */
-    default TypeInfoFactory associate(ScriptableObject topScope) {
+    default TypeInfoFactory associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
         }
-        if (topScope instanceof TopLevel) {
-            topScope = ((TopLevel) topScope).getGlobalThis();
-        }
-        return (TypeInfoFactory) topScope.associateValue("TypeInfoFactory", this);
+        return (TypeInfoFactory) topScope.getGlobalThis().associateValue("TypeInfoFactory", this);
     }
 
     /**

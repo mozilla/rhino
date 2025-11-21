@@ -204,7 +204,7 @@ public class Shell extends ScriptableObject {
      * @param funObj the function object of the invoked JavaScript function
      */
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Shell shell = (Shell) getTopLevelScope(thisObj);
+        Shell shell = (Shell) getTopLevelScope(thisObj).getGlobalThis();
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }
