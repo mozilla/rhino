@@ -33,6 +33,52 @@ public class Symbol3Test {
     }
 
     @Test
+    public void hasOwnProperty() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = {\n"
+                        + "  [sym]: 'primSymVal',"
+                        + "  regularKey: 'regular value'\n"
+                        + "};\n"
+                        + "let res = '' + obj.hasOwnProperty(sym);\n"
+                        + "res += ' ' + obj.hasOwnProperty(wrappedSym);\n"
+                        + "res";
+        Utils.assertWithAllModes_ES6("true true", code);
+    }
+
+    @Test
+    public void setPrototypeOf() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = { name: 'test object' };\n"
+                        + "res = '';\n"
+                        + "try {\n"
+                        + "  Object.setPrototypeOf(obj, sym);\n"
+                        + "  res += 'works';\n"
+                        + "} catch (e) { res += 'failed'; }\n"
+                        + "try {\n"
+                        + "  Object.setPrototypeOf(obj, wrappedSym);\n"
+                        + "  res += ' works';\n"
+                        + "  res += ' ' + (Object.getPrototypeOf(obj) === wrappedSym);\n"
+                        + "} catch (e) { res += ' failed'; }\n"
+                        + "res";
+        Utils.assertWithAllModes_ES6("failed works true", code);
+    }
+
+    @Test
+    public void fromEntries() {
+        final String code =
+                "let sym = Symbol('myKey');\n"
+                        + "let wrappedSym = Object(sym);\n"
+                        + "let obj = Object.fromEntries([[sym, 'symVal'], ['strKey', 'strVal']]);\n"
+                        + "obj = Object.fromEntries([[wrappedSym, 'symVal'], ['strKey', 'strVal']]);\n"
+                        + "'done'";
+        Utils.assertWithAllModes_ES6("done", code);
+    }
+
+    @Test
     public void symbolProperty() throws Exception {
         Utils.runWithAllModes(
                 cx -> {

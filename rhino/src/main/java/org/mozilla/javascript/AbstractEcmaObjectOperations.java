@@ -49,19 +49,17 @@ public class AbstractEcmaObjectOperations {
      */
     static boolean hasOwnProperty(Context cx, Object o, Object property) {
         Scriptable obj = ScriptableObject.ensureScriptable(o);
-        boolean result;
-        if (property instanceof Symbol) {
-            result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
-        } else {
-            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);
-            if (s.stringId == null) {
-                result = obj.has(s.index, obj);
-            } else {
-                result = obj.has(s.stringId, obj);
-            }
-        }
 
-        return result;
+        // using instanceof is correct here
+        // (see org.mozilla.javascript.tests.es6.Symbol3Test.hasOwnProperty)
+        if (property instanceof Symbol) {
+            return ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
+        }
+        ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);
+        if (s.stringId == null) {
+            return obj.has(s.index, obj);
+        }
+        return obj.has(s.stringId, obj);
     }
 
     /**
