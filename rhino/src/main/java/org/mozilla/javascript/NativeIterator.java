@@ -19,6 +19,8 @@ public final class NativeIterator extends ScriptableObject {
     private static final Object ITERATOR_TAG = "Iterator";
     private static final String CLASS_NAME = "Iterator";
 
+    private Object objectIterator;
+
     static void init(Context cx, ScriptableObject scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
@@ -219,6 +221,9 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     public static class WrappedJavaIterator {
+        private final Iterator<?> iterator;
+        private final Scriptable scope;
+
         WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
             this.iterator = iterator;
             this.scope = scope;
@@ -236,10 +241,5 @@ public final class NativeIterator extends ScriptableObject {
         public Object __iterator__(boolean b) {
             return this;
         }
-
-        private Iterator<?> iterator;
-        private Scriptable scope;
     }
-
-    private Object objectIterator;
 }
