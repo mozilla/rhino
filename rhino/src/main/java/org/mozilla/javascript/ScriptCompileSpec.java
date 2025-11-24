@@ -1,0 +1,88 @@
+package org.mozilla.javascript;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.util.function.Consumer;
+
+/**
+ * Parameters for compiling a JavaScript script (i.e. top-level program source). Build instances via
+ * {@link #fromSource(String)} or {@link #fromReader(Reader)} and pass them to {@link
+ * Context#compileScript(ScriptCompileSpec)} or {@link Context#evaluateScript(ScriptCompileSpec,
+ * VarScope)}.
+ *
+ * @see FunctionCompileSpec
+ */
+public record ScriptCompileSpec(
+        String source,
+        String sourceName,
+        int lineno,
+        Object securityDomain,
+        Evaluator compiler,
+        ErrorReporter compilationErrorReporter,
+        Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+
+    public static Builder fromSource(String source) {
+        return new Builder(source);
+    }
+
+    public static Builder fromReader(Reader reader) throws IOException {
+        return new Builder(Kit.readReader(reader));
+    }
+
+    public static final class Builder {
+        private final String source;
+        private String sourceName;
+        private int lineno = 0;
+        private Object securityDomain;
+        private Evaluator compiler;
+        private ErrorReporter compilationErrorReporter;
+        private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+
+        private Builder(String source) {
+            this.source = source;
+        }
+
+        public Builder sourceName(String sourceName) {
+            this.sourceName = sourceName;
+            return this;
+        }
+
+        public Builder lineno(int lineno) {
+            this.lineno = lineno;
+            return this;
+        }
+
+        public Builder securityDomain(Object securityDomain) {
+            this.securityDomain = securityDomain;
+            return this;
+        }
+
+        public Builder compiler(Evaluator compiler) {
+            this.compiler = compiler;
+            return this;
+        }
+
+        public Builder compilationErrorReporter(ErrorReporter compilationErrorReporter) {
+            this.compilationErrorReporter = compilationErrorReporter;
+            return this;
+        }
+
+        public Builder compilerEnvironsProcessor(
+                Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+            this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+            return this;
+        }
+
+        public ScriptCompileSpec build() {
+            int normalizedLineno = Math.max(lineno, 0);
+            return new ScriptCompileSpec(
+                    source,
+                    sourceName,
+                    normalizedLineno,
+                    securityDomain,
+                    compiler,
+                    compilationErrorReporter,
+                    compilerEnvironsProcessor);
+        }
+    }
+}

@@ -1,0 +1,101 @@
+package org.mozilla.javascript;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.util.function.Consumer;
+
+/**
+ * Parameters for compiling a JavaScript function (a single function definition). The parent scope
+ * is required, so it must be supplied to {@link #fromSource(String, VarScope)} or {@link
+ * #fromReader(Reader, VarScope)}. Pass instances to {@link
+ * Context#compileFunction(FunctionCompileSpec)}.
+ *
+ * @see ScriptCompileSpec
+ */
+public record FunctionCompileSpec(
+        String source,
+        VarScope scope,
+        String sourceName,
+        int lineno,
+        Object securityDomain,
+        Evaluator compiler,
+        ErrorReporter compilationErrorReporter,
+        Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+
+    public FunctionCompileSpec {
+        if (scope == null) {
+            throw new IllegalArgumentException("scope is required for FunctionCompileSpec");
+        }
+    }
+
+    public static Builder fromSource(String source, VarScope scope) {
+        return new Builder(source, scope);
+    }
+
+    public static Builder fromReader(Reader reader, VarScope scope) throws IOException {
+        return new Builder(Kit.readReader(reader), scope);
+    }
+
+    public static final class Builder {
+        private final String source;
+        private final VarScope scope;
+        private String sourceName;
+        private int lineno = 0;
+        private Object securityDomain;
+        private Evaluator compiler;
+        private ErrorReporter compilationErrorReporter;
+        private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+
+        private Builder(String source, VarScope scope) {
+            if (scope == null) {
+                throw new IllegalArgumentException("scope is required for FunctionCompileSpec");
+            }
+            this.source = source;
+            this.scope = scope;
+        }
+
+        public Builder sourceName(String sourceName) {
+            this.sourceName = sourceName;
+            return this;
+        }
+
+        public Builder lineno(int lineno) {
+            this.lineno = lineno;
+            return this;
+        }
+
+        public Builder securityDomain(Object securityDomain) {
+            this.securityDomain = securityDomain;
+            return this;
+        }
+
+        public Builder compiler(Evaluator compiler) {
+            this.compiler = compiler;
+            return this;
+        }
+
+        public Builder compilationErrorReporter(ErrorReporter compilationErrorReporter) {
+            this.compilationErrorReporter = compilationErrorReporter;
+            return this;
+        }
+
+        public Builder compilerEnvironsProcessor(
+                Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+            this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+            return this;
+        }
+
+        public FunctionCompileSpec build() {
+            int normalizedLineno = Math.max(lineno, 0);
+            return new FunctionCompileSpec(
+                    source,
+                    scope,
+                    sourceName,
+                    normalizedLineno,
+                    securityDomain,
+                    compiler,
+                    compilationErrorReporter,
+                    compilerEnvironsProcessor);
+        }
+    }
+}
