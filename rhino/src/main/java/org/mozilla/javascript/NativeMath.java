@@ -297,7 +297,7 @@ final class NativeMath extends ScriptableObject {
 
         // Special case: slightly above 2^-25 rounds to 2^-24
         if (exponent == -10 && mantissa > 0) {
-            double smallestSubnormal = 5.960464477539063e-8; // 2^-24
+            double smallestSubnormal = 5.9604644775390625E-8; // 2^-24
             return ScriptRuntime.wrapNumber((sign != 0) ? -smallestSubnormal : smallestSubnormal);
         }
 
