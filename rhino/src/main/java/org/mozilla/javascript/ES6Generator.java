@@ -6,12 +6,17 @@
 
 package org.mozilla.javascript;
 
-import java.util.Objects;
-
-public final class ES6Generator extends IdScriptableObject {
+public final class ES6Generator extends ScriptableObject {
     private static final long serialVersionUID = 1645892441041347273L;
 
     static final Object GENERATOR_TAG = "Generator";
+
+    private JSFunction function;
+    private Object savedState;
+    private String lineSource;
+    private int lineNumber;
+    private State state = State.SUSPENDED_START;
+    private Object delegee;
 
     static ES6Generator init(ScriptableObject scope, boolean sealed) {
 
@@ -20,7 +25,21 @@ public final class ES6Generator extends IdScriptableObject {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
         }
-        prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
+
+        // Define prototype methods using LambdaFunction
+        LambdaFunction next = new LambdaFunction(scope, "next", 1, ES6Generator::js_next);
+        ScriptableObject.defineProperty(prototype, "next", next, DONTENUM);
+
+        LambdaFunction returnFunc = new LambdaFunction(scope, "return", 1, ES6Generator::js_return);
+        ScriptableObject.defineProperty(prototype, "return", returnFunc, DONTENUM);
+
+        LambdaFunction throwFunc = new LambdaFunction(scope, "throw", 1, ES6Generator::js_throw);
+        ScriptableObject.defineProperty(prototype, "throw", throwFunc, DONTENUM);
+
+        LambdaFunction iterator =
+                new LambdaFunction(scope, "[Symbol.iterator]", 0, ES6Generator::js_iterator);
+        prototype.defineProperty(SymbolKey.ITERATOR, iterator, DONTENUM);
+
         if (sealed) {
             prototype.sealObject();
         }
@@ -57,68 +76,42 @@ public final class ES6Generator extends IdScriptableObject {
         return "Generator";
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        if (id == SymbolId_iterator) {
-            initPrototypeMethod(GENERATOR_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
-            return;
-        }
-
-        String s;
-        int arity;
-        switch (id) {
-            case Id_next:
-                arity = 1;
-                s = "next";
-                break;
-            case Id_return:
-                arity = 1;
-                s = "return";
-                break;
-            case Id_throw:
-                arity = 1;
-                s = "throw";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(GENERATOR_TAG, id, s, arity);
+    private static ES6Generator realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, ES6Generator.class);
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(GENERATOR_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-
-        ES6Generator generator = ensureType(thisObj, ES6Generator.class, f);
+    private static Object js_return(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
-
-        switch (id) {
-            case Id_return:
-                if (generator.delegee == null) {
-                    return generator.resumeAbruptLocal(
-                            cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
-                }
-                return generator.resumeDelegeeReturn(cx, scope, value);
-            case Id_next:
-                if (generator.delegee == null) {
-                    return generator.resumeLocal(cx, scope, value);
-                }
-                return generator.resumeDelegee(cx, scope, value);
-            case Id_throw:
-                if (generator.delegee == null) {
-                    return generator.resumeAbruptLocal(
-                            cx, scope, NativeGenerator.GENERATOR_THROW, value);
-                }
-                return generator.resumeDelegeeThrow(cx, scope, value);
-            case SymbolId_iterator:
-                return thisObj;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
+        if (generator.delegee == null) {
+            return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
         }
+        return generator.resumeDelegeeReturn(cx, scope, value);
+    }
+
+    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        ES6Generator generator = realThis(thisObj);
+        Object value = args.length >= 1 ? args[0] : Undefined.instance;
+        if (generator.delegee == null) {
+            return generator.resumeLocal(cx, scope, value);
+        }
+        return generator.resumeDelegee(cx, scope, value);
+    }
+
+    private static Object js_throw(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        ES6Generator generator = realThis(thisObj);
+        Object value = args.length >= 1 ? args[0] : Undefined.instance;
+        if (generator.delegee == null) {
+            return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, value);
+        }
+        return generator.resumeDelegeeThrow(cx, scope, value);
+    }
+
+    private static Object js_iterator(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return thisObj;
     }
 
     private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
@@ -396,51 +389,6 @@ public final class ES6Generator extends IdScriptableObject {
         }
         return null;
     }
-
-    @Override
-    protected int findPrototypeId(Symbol k) {
-        if (SymbolKey.ITERATOR.equals(k)) {
-            return SymbolId_iterator;
-        }
-        return 0;
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        L0:
-        {
-            id = 0;
-            String X = null;
-            int s_length = s.length();
-            if (s_length == 4) {
-                X = "next";
-                id = Id_next;
-            } else if (s_length == 5) {
-                X = "throw";
-                id = Id_throw;
-            } else if (s_length == 6) {
-                X = "return";
-                id = Id_return;
-            }
-            if (!Objects.equals(X, s)) id = 0;
-            break L0;
-        }
-        return id;
-    }
-
-    private static final int Id_next = 1,
-            Id_return = 2,
-            Id_throw = 3,
-            SymbolId_iterator = 4,
-            MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-    private JSFunction function;
-    private Object savedState;
-    private String lineSource;
-    private int lineNumber;
-    private State state = State.SUSPENDED_START;
-    private Object delegee;
 
     enum State {
         SUSPENDED_START,
