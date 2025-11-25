@@ -14,10 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NativeConsole extends IdScriptableObject {
+public class NativeConsole extends ScriptableObject {
     private static final long serialVersionUID = 5694613212458273057L;
 
-    private static final Object CONSOLE_TAG = "Console";
+    private static final String CLASS_NAME = "Console";
 
     private static final String DEFAULT_LABEL = "default";
 
@@ -48,9 +48,120 @@ public class NativeConsole extends IdScriptableObject {
 
     public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
         NativeConsole obj = new NativeConsole(printer);
-        obj.activatePrototypeMap(MAX_ID);
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);
+
+        obj.defineProperty(
+                "toSource",
+                new LambdaFunction(
+                        scope,
+                        "toSource",
+                        0,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "toSource").js_toSource()),
+                DONTENUM);
+        obj.defineProperty(
+                "trace",
+                new LambdaFunction(
+                        scope,
+                        "trace",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "trace").js_trace(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "debug",
+                new LambdaFunction(
+                        scope,
+                        "debug",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "debug").js_debug(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "log",
+                new LambdaFunction(
+                        scope,
+                        "log",
+                        1,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "log").js_log_info(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "info",
+                new LambdaFunction(
+                        scope,
+                        "info",
+                        1,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "info").js_log_info(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "warn",
+                new LambdaFunction(
+                        scope,
+                        "warn",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "warn").js_warn(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "error",
+                new LambdaFunction(
+                        scope,
+                        "error",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "error").js_error(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "assert",
+                new LambdaFunction(
+                        scope,
+                        "assert",
+                        2,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "assert").js_assert(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "count",
+                new LambdaFunction(
+                        scope,
+                        "count",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "count").js_count(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "countReset",
+                new LambdaFunction(
+                        scope,
+                        "countReset",
+                        1,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "countReset").js_countReset(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "time",
+                new LambdaFunction(
+                        scope,
+                        "time",
+                        1,
+                        (cx, s, thisObj, args) -> realThis(thisObj, "time").js_time(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "timeEnd",
+                new LambdaFunction(
+                        scope,
+                        "timeEnd",
+                        1,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "timeEnd").js_timeEnd(cx, s, args)),
+                DONTENUM);
+        obj.defineProperty(
+                "timeLog",
+                new LambdaFunction(
+                        scope,
+                        "timeLog",
+                        2,
+                        (cx, s, thisObj, args) ->
+                                realThis(thisObj, "timeLog").js_timeLog(cx, s, args)),
+                DONTENUM);
+
         if (sealed) {
             obj.sealObject();
         }
@@ -63,141 +174,70 @@ public class NativeConsole extends IdScriptableObject {
 
     @Override
     public String getClassName() {
-        return "Console";
+        return CLASS_NAME;
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        if (id > LAST_METHOD_ID) {
-            throw new IllegalStateException(String.valueOf(id));
-        }
-
-        String name;
-        int arity;
-        switch (id) {
-            case Id_toSource:
-                arity = 0;
-                name = "toSource";
-                break;
-            case Id_trace:
-                arity = 1;
-                name = "trace";
-                break;
-            case Id_debug:
-                arity = 1;
-                name = "debug";
-                break;
-            case Id_log:
-                arity = 1;
-                name = "log";
-                break;
-            case Id_info:
-                arity = 1;
-                name = "info";
-                break;
-            case Id_warn:
-                arity = 1;
-                name = "warn";
-                break;
-            case Id_error:
-                arity = 1;
-                name = "error";
-                break;
-            case Id_assert:
-                arity = 2;
-                name = "assert";
-                break;
-            case Id_count:
-                arity = 1;
-                name = "count";
-                break;
-            case Id_countReset:
-                arity = 1;
-                name = "countReset";
-                break;
-            case Id_time:
-                arity = 1;
-                name = "time";
-                break;
-            case Id_timeEnd:
-                arity = 1;
-                name = "timeEnd";
-                break;
-            case Id_timeLog:
-                arity = 2;
-                name = "timeLog";
-                break;
-            default:
-                throw new IllegalStateException(String.valueOf(id));
-        }
-        initPrototypeMethod(CONSOLE_TAG, id, name, arity);
+    private static NativeConsole realThis(Scriptable thisObj, String methodName) {
+        return LambdaConstructor.ensureType(thisObj, NativeConsole.class, methodName);
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(CONSOLE_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
+    private Object js_toSource() {
+        return CLASS_NAME;
+    }
 
-        int methodId = f.methodId();
-        switch (methodId) {
-            case Id_toSource:
-                return "Console";
+    private Object js_trace(Context cx, Scriptable scope, Object[] args) {
+        ScriptStackElement[] stack = new EvaluatorException("[object Object]").getScriptStack();
+        printer.print(cx, scope, Level.TRACE, args, stack);
+        return Undefined.instance;
+    }
 
-            case Id_trace:
-                {
-                    ScriptStackElement[] stack =
-                            new EvaluatorException("[object Object]").getScriptStack();
-                    printer.print(cx, scope, Level.TRACE, args, stack);
-                    break;
-                }
+    private Object js_debug(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.DEBUG, args, null);
+        return Undefined.instance;
+    }
 
-            case Id_debug:
-                printer.print(cx, scope, Level.DEBUG, args, null);
-                break;
+    private Object js_log_info(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.INFO, args, null);
+        return Undefined.instance;
+    }
 
-            case Id_log:
-            case Id_info:
-                printer.print(cx, scope, Level.INFO, args, null);
-                break;
+    private Object js_warn(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.WARN, args, null);
+        return Undefined.instance;
+    }
 
-            case Id_warn:
-                printer.print(cx, scope, Level.WARN, args, null);
-                break;
+    private Object js_error(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.ERROR, args, null);
+        return Undefined.instance;
+    }
 
-            case Id_error:
-                printer.print(cx, scope, Level.ERROR, args, null);
-                break;
+    private Object js_assert(Context cx, Scriptable scope, Object[] args) {
+        jsAssert(cx, scope, args);
+        return Undefined.instance;
+    }
 
-            case Id_assert:
-                jsAssert(cx, scope, args);
-                break;
+    private Object js_count(Context cx, Scriptable scope, Object[] args) {
+        count(cx, scope, args);
+        return Undefined.instance;
+    }
 
-            case Id_count:
-                count(cx, scope, args);
-                break;
+    private Object js_countReset(Context cx, Scriptable scope, Object[] args) {
+        countReset(cx, scope, args);
+        return Undefined.instance;
+    }
 
-            case Id_countReset:
-                countReset(cx, scope, args);
-                break;
+    private Object js_time(Context cx, Scriptable scope, Object[] args) {
+        time(cx, scope, args);
+        return Undefined.instance;
+    }
 
-            case Id_time:
-                time(cx, scope, args);
-                break;
+    private Object js_timeEnd(Context cx, Scriptable scope, Object[] args) {
+        timeEnd(cx, scope, args);
+        return Undefined.instance;
+    }
 
-            case Id_timeEnd:
-                timeEnd(cx, scope, args);
-                break;
-
-            case Id_timeLog:
-                timeLog(cx, scope, args);
-                break;
-
-            default:
-                throw new IllegalStateException(String.valueOf(methodId));
-        }
-
+    private Object js_timeLog(Context cx, Scriptable scope, Object[] args) {
+        timeLog(cx, scope, args);
         return Undefined.instance;
     }
 
@@ -461,70 +501,4 @@ public class NativeConsole extends IdScriptableObject {
     private double nano2Milli(Long nano) {
         return nano / 1000000D;
     }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        switch (s) {
-            case "log":
-                id = Id_log;
-                break;
-            case "info":
-                id = Id_info;
-                break;
-            case "time":
-                id = Id_time;
-                break;
-            case "warn":
-                id = Id_warn;
-                break;
-            case "count":
-                id = Id_count;
-                break;
-            case "debug":
-                id = Id_debug;
-                break;
-            case "error":
-                id = Id_error;
-                break;
-            case "trace":
-                id = Id_trace;
-                break;
-            case "assert":
-                id = Id_assert;
-                break;
-            case "timeEnd":
-                id = Id_timeEnd;
-                break;
-            case "timeLog":
-                id = Id_timeLog;
-                break;
-            case "toSource":
-                id = Id_toSource;
-                break;
-            case "countReset":
-                id = Id_countReset;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-        return id;
-    }
-
-    private static final int Id_toSource = 1,
-            Id_trace = 2,
-            Id_debug = 3,
-            Id_log = 4,
-            Id_info = 5,
-            Id_warn = 6,
-            Id_error = 7,
-            Id_assert = 8,
-            Id_count = 9,
-            Id_countReset = 10,
-            Id_time = 11,
-            Id_timeEnd = 12,
-            Id_timeLog = 13,
-            LAST_METHOD_ID = 13,
-            MAX_ID = 13;
 }
