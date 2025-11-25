@@ -6,17 +6,28 @@
 
 package org.mozilla.javascript;
 
-public abstract class ES6Iterator extends IdScriptableObject {
+public abstract class ES6Iterator extends ScriptableObject {
 
     private static final long serialVersionUID = 2438373029140003950L;
 
     protected static void init(
-            ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+            ScriptableObject scope, boolean sealed, ScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
         }
-        prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
+
+        // Define prototype methods using LambdaFunction
+        LambdaFunction next = new LambdaFunction(scope, NEXT_METHOD, 0, ES6Iterator::js_next);
+        ScriptableObject.defineProperty(prototype, NEXT_METHOD, next, DONTENUM);
+
+        LambdaFunction iterator =
+                new LambdaFunction(scope, "[Symbol.iterator]", 1, ES6Iterator::js_iterator);
+        prototype.defineProperty(SymbolKey.ITERATOR, iterator, DONTENUM);
+
+        prototype.defineProperty(
+                SymbolKey.TO_STRING_TAG, prototype.getClassName(), DONTENUM | READONLY);
+
         if (sealed) {
             prototype.sealObject();
         }
@@ -46,64 +57,18 @@ public abstract class ES6Iterator extends IdScriptableObject {
         setPrototype(prototype);
     }
 
-    @Override
-    protected void initPrototypeId(int id) {
-        switch (id) {
-            case Id_next:
-                initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
-                return;
-            case SymbolId_iterator:
-                initPrototypeMethod(
-                        getTag(), id, SymbolKey.ITERATOR, "[Symbol.iterator]", DONTENUM | READONLY);
-                return;
-            case SymbolId_toStringTag:
-                initPrototypeValue(
-                        SymbolId_toStringTag,
-                        SymbolKey.TO_STRING_TAG,
-                        getClassName(),
-                        DONTENUM | READONLY);
-                return;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
+    private static ES6Iterator realThis(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, ES6Iterator.class);
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(getTag())) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-
-        ES6Iterator iterator = ensureType(thisObj, ES6Iterator.class, f);
-
-        switch (id) {
-            case Id_next:
-                return iterator.next(cx, scope);
-            case SymbolId_iterator:
-                return iterator;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
+    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        ES6Iterator iterator = realThis(thisObj);
+        return iterator.next(cx, scope);
     }
 
-    @Override
-    protected int findPrototypeId(Symbol k) {
-        if (SymbolKey.ITERATOR.equals(k)) {
-            return SymbolId_iterator;
-        } else if (SymbolKey.TO_STRING_TAG.equals(k)) {
-            return SymbolId_toStringTag;
-        }
-        return 0;
-    }
-
-    @Override
-    protected int findPrototypeId(String s) {
-        if (NEXT_METHOD.equals(s)) {
-            return Id_next;
-        }
-        return 0;
+    private static Object js_iterator(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return thisObj;
     }
 
     protected abstract boolean isDone(Context cx, Scriptable scope);
@@ -136,11 +101,6 @@ public abstract class ES6Iterator extends IdScriptableObject {
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
         return iteratorResult;
     }
-
-    private static final int Id_next = 1,
-            SymbolId_iterator = 2,
-            SymbolId_toStringTag = 3,
-            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
     public static final String NEXT_METHOD = "next";
     public static final String DONE_PROPERTY = "done";
