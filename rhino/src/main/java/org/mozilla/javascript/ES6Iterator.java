@@ -8,6 +8,12 @@ package org.mozilla.javascript;
 
 public abstract class ES6Iterator extends ScriptableObject {
 
+    public static final String NEXT_METHOD = "next";
+    public static final String DONE_PROPERTY = "done";
+    public static final String RETURN_PROPERTY = "return";
+    public static final String VALUE_PROPERTY = "value";
+    public static final String RETURN_METHOD = "return";
+
     private static final long serialVersionUID = 2438373029140003950L;
 
     protected static void init(
@@ -101,10 +107,4 @@ public abstract class ES6Iterator extends ScriptableObject {
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
         return iteratorResult;
     }
-
-    public static final String NEXT_METHOD = "next";
-    public static final String DONE_PROPERTY = "done";
-    public static final String RETURN_PROPERTY = "return";
-    public static final String VALUE_PROPERTY = "value";
-    public static final String RETURN_METHOD = "return";
 }
