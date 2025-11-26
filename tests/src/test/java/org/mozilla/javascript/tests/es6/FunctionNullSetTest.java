@@ -38,6 +38,7 @@ public class FunctionNullSetTest {
                             final Method setterMethod =
                                     MyHostObject.class.getMethod("jsxSet_onclick", Object.class);
                             prototype.defineProperty(
+                                    scope,
                                     "onclick",
                                     null,
                                     getterMethod,
