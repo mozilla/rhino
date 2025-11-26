@@ -79,10 +79,10 @@ public class FunctionObject extends BaseFunction {
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor);
+            member = new MemberBox(getDeclarationScope(), (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor);
+            member = new MemberBox(getDeclarationScope(), (Method) methodOrConstructor);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
