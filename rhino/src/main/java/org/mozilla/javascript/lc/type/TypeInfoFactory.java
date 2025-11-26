@@ -353,7 +353,7 @@ public interface TypeInfoFactory extends Serializable {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
         }
-        return (TypeInfoFactory) topScope.getGlobalThis().associateValue("TypeInfoFactory", this);
+        return (TypeInfoFactory) topScope.associateValue("TypeInfoFactory", this);
     }
 
     /**
