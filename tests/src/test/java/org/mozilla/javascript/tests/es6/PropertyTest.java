@@ -33,7 +33,7 @@ public class PropertyTest {
                         final Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -70,7 +70,7 @@ public class PropertyTest {
                         final Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -107,7 +107,7 @@ public class PropertyTest {
                         Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -146,7 +146,8 @@ public class PropertyTest {
                 // define custom getter method
                 final Method getter = MyHostObject.class.getMethod("getFoo");
                 final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
-                myHostObject.defineProperty("foo", null, getter, setter, ScriptableObject.EMPTY);
+                myHostObject.defineProperty(
+                        scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                 scope.put("MyHostObject", scope, myHostObject);
             } catch (Exception e) {
             }
