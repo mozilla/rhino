@@ -206,8 +206,21 @@ public class Test262SuiteTest {
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
                     "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
-                            + "(?:strict|non-strict|compiled-strict|compiled-non-strict|interpreted-strict|interpreted-non-strict|compiled|interpreted|"
+                            + "(?:" + buildTestModeNames()
                             + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+
+    private static String buildTestModeNames() {
+        var sb = new StringBuilder();
+        sb.append("strict|non-strict|");
+        for (var mode : TestMode.values()) {
+            if (mode.shouldRun()) {
+                sb.append(mode.keyPart()).append('|');
+                sb.append(mode.keyPart()).append("-strict").append('|');
+                sb.append(mode.keyPart()).append("-non-strict").append('|');
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
@@ -297,7 +310,7 @@ public class Test262SuiteTest {
         ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
-            String harnessKey = harnessFile + '-' + mode.keySuffix();
+            String harnessKey = harnessFile + '-' + mode.keyPart();
             Script harnessScript =
                     HARNESS_SCRIPT_CACHE.computeIfAbsent(
                             harnessKey,
@@ -789,35 +802,45 @@ public class Test262SuiteTest {
 
     private enum TestMode {
         INTERPRETED(
-                "interpretd",
+            "interpreted",
+            true,
                 cx -> {
                     cx.setInterpretedMode(true);
                 }),
         COMPILED(
-                "compiled",
+            "compiled",
+            true,
                 cx -> {
                     cx.setInterpretedMode(false);
                 }),
-        DEBUGGER_INTERPRETED("true", cx -> {
+        DEBUGGER_INTERPRETED("debugger", true, cx -> {
             cx.setInterpretedMode(true);
             cx.setDebugger(new NoOpDebugger(), null);
                 }),
-        SKIPPED("skipped", cx -> {});
+        SKIPPED("skipped", false, cx -> {});
 
-        private final String keySuffix;
+        private final String keyPart;
+        private final boolean shouldRun;
         private final Consumer<Context> setup;
 
-        TestMode(String suffix, Consumer<Context> setup) {
-            this.keySuffix = suffix;
+        TestMode(String name, boolean shouldRun, Consumer<Context> setup) {
+            this.shouldRun = shouldRun;
+            this.keyPart = name;
             this.setup = setup;
         }
 
-        public String keySuffix() {
-            return keySuffix;
+        public String keyPart() {
+            return keyPart;
         }
 
         public void setup(Context cx) {
             setup.accept(cx);
+        }
+
+        public boolean shouldRun() { return shouldRun; }
+
+        public String trackerName(boolean strict) {
+            return keyPart() + "-" + (strict ? "strict" : "non-strict");
         }
     }
 
@@ -833,7 +856,7 @@ public class Test262SuiteTest {
         }
 
         private static String makeKey(TestMode mode, boolean useStrict) {
-            return mode.name().toLowerCase() + '-' + (useStrict ? "strict" : "non-strict");
+            return mode.trackerName(useStrict);
         }
 
         public void setExpectations(
@@ -887,37 +910,70 @@ public class Test262SuiteTest {
             }
 
             // failure on all optLevels in both strict and non-strict mode
-            if (modes.size() == 4) {
+            if (modes.size() == TestMode.values().length * 2 - 2) {
                 return "";
             }
 
             // simplify the output for some cases
             ArrayList<String> res = new ArrayList<>(modes);
-            if (res.contains("compiled-non-strict") && res.contains("interpreted-non-strict")) {
-                res.remove("compiled-non-strict");
-                res.remove("interpreted-non-strict");
+            if (containsAllModes(res, false)) {
+                removeAllModes(res, false);
                 res.add("non-strict");
             }
-            if (res.contains("compiled-strict") && res.contains("interpreted-strict")) {
-                res.remove("compiled-strict");
-                res.remove("interpreted-strict");
+            if (containsAllModes(res, true)) {
+                removeAllModes(res, true);
                 res.add("strict");
             }
-            if (res.contains("compiled-strict") && res.contains("compiled-non-strict")) {
-                res.remove("compiled-strict");
-                res.remove("compiled-non-strict");
-                res.add("compiled");
-            }
-            if (res.contains("interpreted-strict") && res.contains("interpreted-non-strict")) {
-                res.remove("interpreted-strict");
-                res.remove("interpreted-non-strict");
-                res.add("interpreted");
+
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun()) {
+                    if (containsAllStrictType(res, mode)) {
+                        removeAllStrictType(res, mode);
+                        res.add(mode.keyPart());
+                    }
+                }
             }
 
             if (res.size() > 1) {
                 return '{' + String.join(",", res) + '}';
             }
             return String.join(",", res);
+        }
+
+        public boolean containsAllStrictType(List<String> desc, TestMode mode) {
+            return desc.contains(mode.trackerName(false)) && desc.contains(mode.trackerName(true));
+        }
+
+        public void removeAllStrictType(List<String> desc, TestMode mode) {
+            desc.remove(mode.trackerName(false));
+            desc.remove(mode.trackerName(true));
+        }
+
+        public boolean containsAllModes(List<String> desc, boolean useStrict) {
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun) {
+                    if (!desc.contains(mode.trackerName(useStrict))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public boolean containsAllModes(List<String> desc) {
+            return containsAllModes(desc, true) && containsAllModes(desc, false);
+        }
+
+        public void removeAllModes(List<String> desc, boolean useStrict) {
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun) {
+                    desc.remove(mode.trackerName(useStrict));
+                }
+            }
+        }
+        public void removeAllModes(List<String> desc) {
+            removeAllModes(desc, true);
+            removeAllModes(desc, false);
         }
     }
 
