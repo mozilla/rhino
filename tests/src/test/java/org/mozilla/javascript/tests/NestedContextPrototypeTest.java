@@ -106,16 +106,13 @@ public class NestedContextPrototypeTest {
                                     scope = context.newObject(global);
                                     break;
                                 case SEALED:
-                                    scope = context.newObject(global);
-                                    scope.setPrototype(global);
-                                    scope.setParentScope(null);
+                                    scope = global.createIsolate();
                                     break;
                                 case SEALED_OWN_OBJECTS:
                                     scope = context.initStandardObjects(new TopLevel());
                                     ((TopLevel) scope)
                                             .getGlobalThis()
                                             .setPrototype(((TopLevel) global).getGlobalThis());
-                                    scope.setParentScope(null);
                                     break;
                                 default:
                                     throw new UnsupportedOperationException();
