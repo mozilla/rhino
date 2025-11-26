@@ -52,7 +52,8 @@ public class CustomSetterAcceptNullScriptableTest {
 
             // define custom setter method
             final Method setMyPropMethod = Foo.class.getMethod("setMyProp", Foo2.class);
-            foo.defineProperty("myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
+            foo.defineProperty(
+                    topScope, "myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
 
             topScope.put("foo", topScope, foo);
 

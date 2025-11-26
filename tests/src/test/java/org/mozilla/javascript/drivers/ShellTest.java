@@ -320,6 +320,7 @@ public class ShellTest {
                                 // invoke after init(...) to make sure ClassCache is available for
                                 // FunctionObject
                                 global.defineFunctionProperties(
+                                        global,
                                         new String[] {"options"},
                                         ShellTest.class,
                                         ScriptableObject.DONTENUM
@@ -429,6 +430,7 @@ public class ShellTest {
 
             // invoke after init(...) to make sure ClassCache is available for FunctionObject
             global.defineFunctionProperties(
+                    global,
                     new String[] {"options"},
                     ShellTest.class,
                     ScriptableObject.DONTENUM
