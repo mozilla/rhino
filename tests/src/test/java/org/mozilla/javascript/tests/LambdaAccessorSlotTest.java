@@ -127,12 +127,14 @@ public class LambdaAccessorSlotTest {
 
                     sh.defineProperty("value", "oldValueOfValue", DONTENUM);
 
-                    sh.defineProperty(cx, "value", (thisObj) -> "valueOfValue", null, DONTENUM);
+                    sh.defineProperty(
+                            cx, scope, "value", (thisObj) -> "valueOfValue", null, DONTENUM);
 
-                    sh.defineProperty(cx, "status", (thisObj) -> 42, null, DONTENUM);
+                    sh.defineProperty(cx, scope, "status", (thisObj) -> 42, null, DONTENUM);
 
                     sh.defineProperty(
                             cx,
+                            scope,
                             "status",
                             (thisObj) -> self(thisObj).getStatus(),
                             (thisObj, value) -> self(thisObj).setStatus(value),
@@ -398,6 +400,7 @@ public class LambdaAccessorSlotTest {
                                     () ->
                                             sh.defineProperty(
                                                     cx,
+                                                    scope,
                                                     "status",
                                                     (thisObj) -> self(thisObj).getStatus(),
                                                     (thisObj, value) ->
@@ -434,6 +437,7 @@ public class LambdaAccessorSlotTest {
                                     () ->
                                             sh.defineProperty(
                                                     cx,
+                                                    scope,
                                                     "status",
                                                     (thisObj) -> self(thisObj).getStatus(),
                                                     (thisObj, value) ->
