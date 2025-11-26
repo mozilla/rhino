@@ -36,7 +36,6 @@ public final class NativeCall extends IdScriptableObject {
             boolean argsHasRest,
             boolean requiresArgumentObject) {
         this.function = function;
-        this.isArrow = isArrow;
 
         setParentScope(scope);
         // leave prototype null
@@ -75,13 +74,10 @@ public final class NativeCall extends IdScriptableObject {
             }
         }
 
-        if (requiresArgumentObject) {
-            // initialize "arguments" property but only if it was not overridden by
-            // the parameter with the same name
-            if (!super.has("arguments", this) && !isArrow) {
-                arguments = new Arguments(this, cx);
-                defineProperty("arguments", arguments, PERMANENT);
-            }
+        // initialize "arguments" property but only if it was not overridden by
+        // the parameter with the same name
+        if (requiresArgumentObject && !isArrow && !super.has("arguments", this)) {
+            defineProperty("arguments", new Arguments(this, cx), PERMANENT);
         }
 
         if (paramAndVarCount != 0) {
@@ -149,8 +145,6 @@ public final class NativeCall extends IdScriptableObject {
     JSFunction function;
     Object[] originalArgs;
     boolean isStrict;
-    private Arguments arguments;
-    boolean isArrow;
 
     transient NativeCall parentActivationCall;
 }
