@@ -1210,7 +1210,8 @@ public class Context implements Closeable {
             Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
         Script script = compileString(source, sourceName, lineno, securityDomain);
         if (script != null) {
-            return script.exec(this, scope, scope);
+            return script.exec(
+                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         }
         return null;
     }
