@@ -124,6 +124,7 @@ public class TopLevel extends ScriptableObject {
         newGlobal.setPrototype(getGlobalThis());
         newGlobal.setParentScope(null);
         var isolate = new TopLevel(newGlobal);
+        isolate.copyAssociatedValue(this);
         isolate.copyBuiltins(this, false);
         return isolate;
     }
@@ -132,6 +133,7 @@ public class TopLevel extends ScriptableObject {
         customGlobal.setParentScope(null);
         customGlobal.setPrototype(getGlobalThis());
         var isolate = new TopLevel(customGlobal);
+        isolate.copyAssociatedValue(this);
         isolate.copyBuiltins(this, false);
         return isolate;
     }

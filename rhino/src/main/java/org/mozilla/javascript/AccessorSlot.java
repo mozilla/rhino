@@ -169,7 +169,7 @@ public class AccessorSlot extends Slot {
 
         @Override
         public Function asGetterFunction(String name, Scriptable scope) {
-            return member.asGetterFunction(name, scope);
+            return member.asGetterFunction(name);
         }
 
         @Override
@@ -246,7 +246,7 @@ public class AccessorSlot extends Slot {
 
         @Override
         public Function asSetterFunction(String name, Scriptable scope) {
-            return member.asSetterFunction(name, scope);
+            return member.asSetterFunction(name);
         }
 
         @Override

@@ -63,7 +63,8 @@ public class ConsStringTest {
             // define custom getter method
             final Method getter = MyHostObject.class.getMethod("getFoo");
             final Method setter = MyHostObject.class.getMethod("setFoo", Object.class);
-            myHostObject.defineProperty("foo", null, getter, setter, ScriptableObject.EMPTY);
+            myHostObject.defineProperty(
+                    topScope, "foo", null, getter, setter, ScriptableObject.EMPTY);
             topScope.put("MyHostObject", topScope, myHostObject);
 
             final String script =

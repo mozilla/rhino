@@ -35,7 +35,7 @@ public class DefineFunctionPropertiesTest {
             global = (TopLevel) cx.initStandardObjects();
             String[] names = {"f", "g"};
             global.defineFunctionProperties(
-                    names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
+                    global, names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
         }
     }
 

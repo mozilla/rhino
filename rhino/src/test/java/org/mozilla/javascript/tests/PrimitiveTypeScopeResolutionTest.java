@@ -125,7 +125,6 @@ public class PrimitiveTypeScopeResolutionTest {
         // define object with custom method
         final MyObject myObject = new MyObject();
         final String[] functionNames = {"readPropFoo"};
-        myObject.defineFunctionProperties(functionNames, MyObject.class, ScriptableObject.EMPTY);
 
         final String scriptScope1 = "String.prototype.foo = 'from 1'; scope2.f()";
 
@@ -136,6 +135,8 @@ public class PrimitiveTypeScopeResolutionTest {
                     final TopLevel scope2 = new TopLevel(new MySimpleScriptableObject("scope2"));
                     cx.initStandardObjects(scope2);
 
+                    myObject.defineFunctionProperties(
+                            scope2, functionNames, MyObject.class, ScriptableObject.EMPTY);
                     scope2.put("myObject", scope2, myObject);
                     cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 

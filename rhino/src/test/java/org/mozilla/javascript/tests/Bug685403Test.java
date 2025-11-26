@@ -53,7 +53,8 @@ public class Bug685403Test {
         source += "state";
 
         String[] functions = new String[] {"continuation"};
-        scope.defineFunctionProperties(functions, Bug685403Test.class, ScriptableObject.DONTENUM);
+        scope.defineFunctionProperties(
+                scope, functions, Bug685403Test.class, ScriptableObject.DONTENUM);
 
         Object state = null;
         Script script = cx.compileString(source, "", 1, null);
