@@ -131,7 +131,7 @@ public class Global extends ImporterTopLevel {
             "version",
             "write"
         };
-        defineFunctionProperties(names, Global.class, ScriptableObject.DONTENUM);
+        defineFunctionProperties(this, names, Global.class, ScriptableObject.DONTENUM);
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
@@ -290,7 +290,8 @@ public class Global extends ImporterTopLevel {
         if (!Scriptable.class.isAssignableFrom(clazz)) {
             throw reportRuntimeError("msg.must.implement.Scriptable");
         }
-        ScriptableObject.defineClass(thisObj, (Class<? extends Scriptable>) clazz);
+        ScriptableObject.defineClass(
+                funObj.getDeclarationScope(), (Class<? extends Scriptable>) clazz);
     }
 
     /**
@@ -356,7 +357,7 @@ public class Global extends ImporterTopLevel {
         }
         String filename = Context.toString(args[0]);
         try (FileInputStream fis = new FileInputStream(filename)) {
-            Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
+            Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
             try (ObjectInputStream in = new ScriptableInputStream(fis, scope)) {
                 Object deserialized = in.readObject();
                 return Context.toObject(deserialized, scope);
