@@ -52,6 +52,9 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.debug.DebugFrame;
+import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -650,7 +653,7 @@ public class Test262SuiteTest {
                 continue;
             }
 
-            for (TestMode testMode : new TestMode[] {TestMode.INTERPRETED, TestMode.COMPILED}) {
+            for (TestMode testMode : new TestMode[] {TestMode.INTERPRETED, TestMode.COMPILED, TestMode.DEBUGGER_INTERPRETED}) {
                 if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
@@ -794,6 +797,10 @@ public class Test262SuiteTest {
                 "compiled",
                 cx -> {
                     cx.setInterpretedMode(false);
+                }),
+        DEBUGGER_INTERPRETED("true", cx -> {
+            cx.setInterpretedMode(true);
+            cx.setDebugger(new NoOpDebugger(), null);
                 }),
         SKIPPED("skipped", cx -> {});
 
@@ -1155,5 +1162,35 @@ public class Test262SuiteTest {
             }
             writer.write('\n');
         }
+    }
+
+    private static class NoOpDebugger implements Debugger {
+        @Override
+        public DebugFrame getFrame(Context cx, DebuggableScript fnOrScript) {
+            return new NoOpDebugFrame();
+        }
+
+        @Override
+        public void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
+    private static class NoOpDebugFrame implements DebugFrame {
+        @Override
+        public void onDebuggerStatement(Context cx) { }
+
+        @Override
+        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) { }
+
+        @Override
+        public void onExit(Context cx, boolean byThrow, Object resultOrException) { }
+
+        @Override
+        public void onExceptionThrown(Context cx, Throwable ex) { }
+
+        @Override
+        public void onLineChange(Context cx, int lineNumber) { }
     }
 }
