@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -296,11 +297,11 @@ public class Test262SuiteTest {
         }
     }
 
-    private TopLevel buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
+    private TopLevel buildScope(Context cx, Test262Case testCase, TestMode mode) {
         TopLevel scope = cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
-            String harnessKey = harnessFile + '-' + interpretedMode;
+            String harnessKey = harnessFile + '-' + mode.keySuffix();
             Script harnessScript =
                     HARNESS_SCRIPT_CACHE.computeIfAbsent(
                             harnessKey,
@@ -346,14 +347,15 @@ public class Test262SuiteTest {
             Test262Case testCase,
             boolean markedAsFailing) {
         try (Context cx = Context.enter()) {
-            cx.setInterpretedMode(testMode == TestMode.INTERPRETED);
             // Ensure maximum compatibility, including future strict mode and "const" checks
             cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
             cx.setGeneratingDebug(true);
 
+            testMode.setup(cx);
+
             boolean failedEarly = false;
             try {
-                TopLevel scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
+                TopLevel scope = buildScope(cx, testCase, testMode);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -805,9 +807,33 @@ public class Test262SuiteTest {
     }
 
     private enum TestMode {
-        INTERPRETED,
-        COMPILED,
-        SKIPPED,
+        INTERPRETED(
+                "interpretd",
+                cx -> {
+                    cx.setInterpretedMode(true);
+                }),
+        COMPILED(
+                "compiled",
+                cx -> {
+                    cx.setInterpretedMode(false);
+                }),
+        SKIPPED("skipped", cx -> {});
+
+        private final String keySuffix;
+        private final Consumer<Context> setup;
+
+        TestMode(String suffix, Consumer<Context> setup) {
+            this.keySuffix = suffix;
+            this.setup = setup;
+        }
+
+        public String keySuffix() {
+            return keySuffix;
+        }
+
+        public void setup(Context cx) {
+            setup.accept(cx);
+        }
     }
 
     private static class TestResultTracker {
