@@ -206,7 +206,8 @@ public class Test262SuiteTest {
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
                     "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
-                            + "(?:" + buildTestModeNames()
+                            + "(?:"
+                            + buildTestModeNames()
                             + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
     private static String buildTestModeNames() {
@@ -666,7 +667,10 @@ public class Test262SuiteTest {
                 continue;
             }
 
-            for (TestMode testMode : new TestMode[] {TestMode.INTERPRETED, TestMode.COMPILED, TestMode.DEBUGGER_INTERPRETED}) {
+            for (TestMode testMode :
+                    new TestMode[] {
+                        TestMode.INTERPRETED, TestMode.COMPILED, TestMode.DEBUGGER_INTERPRETED
+                    }) {
                 if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
@@ -802,20 +806,23 @@ public class Test262SuiteTest {
 
     private enum TestMode {
         INTERPRETED(
-            "interpreted",
-            true,
+                "interpreted",
+                true,
                 cx -> {
                     cx.setInterpretedMode(true);
                 }),
         COMPILED(
-            "compiled",
-            true,
+                "compiled",
+                true,
                 cx -> {
                     cx.setInterpretedMode(false);
                 }),
-        DEBUGGER_INTERPRETED("debugger", true, cx -> {
-            cx.setInterpretedMode(true);
-            cx.setDebugger(new NoOpDebugger(), null);
+        DEBUGGER_INTERPRETED(
+                "debugger",
+                true,
+                cx -> {
+                    cx.setInterpretedMode(true);
+                    cx.setDebugger(new NoOpDebugger(), null);
                 }),
         SKIPPED("skipped", false, cx -> {});
 
@@ -837,7 +844,9 @@ public class Test262SuiteTest {
             setup.accept(cx);
         }
 
-        public boolean shouldRun() { return shouldRun; }
+        public boolean shouldRun() {
+            return shouldRun;
+        }
 
         public String trackerName(boolean strict) {
             return keyPart() + "-" + (strict ? "strict" : "non-strict");
@@ -971,6 +980,7 @@ public class Test262SuiteTest {
                 }
             }
         }
+
         public void removeAllModes(List<String> desc) {
             removeAllModes(desc, true);
             removeAllModes(desc, false);
@@ -1235,18 +1245,18 @@ public class Test262SuiteTest {
 
     private static class NoOpDebugFrame implements DebugFrame {
         @Override
-        public void onDebuggerStatement(Context cx) { }
+        public void onDebuggerStatement(Context cx) {}
 
         @Override
-        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) { }
+        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) {}
 
         @Override
-        public void onExit(Context cx, boolean byThrow, Object resultOrException) { }
+        public void onExit(Context cx, boolean byThrow, Object resultOrException) {}
 
         @Override
-        public void onExceptionThrown(Context cx, Throwable ex) { }
+        public void onExceptionThrown(Context cx, Throwable ex) {}
 
         @Override
-        public void onLineChange(Context cx, int lineNumber) { }
+        public void onLineChange(Context cx, int lineNumber) {}
     }
 }
