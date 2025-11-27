@@ -114,23 +114,34 @@ public class NativeNumber2Test {
                 "\u0661", "let n = 1.0; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "\u0663\u066b\u0661\u0664", "let n = 3.14; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u0663\u066b\u0661\u0664",
+                "let n = 3.14; n.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
                 "\u061c\u002d\u0660\u066b\u0660\u0660\u0667",
                 "let n = -0.007; n.toLocaleString('ar-SA')",
                 Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "\u0661\u0660\u066c\u0660\u0660\u0660", "1e4.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u0661\u0660\u066c\u0660\u0660\u0660",
+                "1e4.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "\u0660", "let n = 1e-10; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
-        assertWithAllModes402("\u0660", "1e-10.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u0660",
+                "let n = 1e-10; n.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
+        assertWithAllModes402(
+                "\u0660", "1e-10.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "\u0660\u066b\u0660\u0661", "1e-2.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u0660\u066b\u0660\u0661",
+                "1e-2.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645",
+                "NaN.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
                 "\u221e", "Infinity.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
     }
@@ -194,16 +205,21 @@ public class NativeNumber2Test {
         assertWithAllModes402("\u0661", "let n = 1; n.toLocaleString('ar-SA')");
         assertWithAllModes402("\u0661", "let n = 1.0; n.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("\u0663\u066b\u0661\u0664", "let n = 3.14; n.toLocaleString('ar-SA')");
-        assertWithAllModes402("\u061c\u002d\u0660\u066b\u0660\u0660\u0667", "let n = -0.007; n.toLocaleString('ar-SA')");
+        assertWithAllModes402(
+                "\u0663\u066b\u0661\u0664", "let n = 3.14; n.toLocaleString('ar-SA')");
+        assertWithAllModes402(
+                "\u061c\u002d\u0660\u066b\u0660\u0660\u0667",
+                "let n = -0.007; n.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("\u0661\u0660\u066c\u0660\u0660\u0660", "1e4.toLocaleString('ar-SA')");
+        assertWithAllModes402(
+                "\u0661\u0660\u066c\u0660\u0660\u0660", "1e4.toLocaleString('ar-SA')");
         assertWithAllModes402("\u0660", "let n = 1e-10; n.toLocaleString('ar-SA')");
         assertWithAllModes402("\u0660", "1e-10.toLocaleString('ar-SA')");
 
         assertWithAllModes402("\u0660\u066b\u0660\u0661", "1e-2.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
+        assertWithAllModes402(
+                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
         assertWithAllModes402("\u221e", "Infinity.toLocaleString('ar-SA')");
     }
 
@@ -230,7 +246,8 @@ public class NativeNumber2Test {
 
                     final StringBuilder hex = new StringBuilder();
                     for (final char c : res.toString().toCharArray()) {
-                        hex.append("\\u").append(String.format("%04X", (int) c).toLowerCase(Locale.ROOT));
+                        hex.append("\\u")
+                                .append(String.format("%04X", (int) c).toLowerCase(Locale.ROOT));
                     }
                     System.out.println(hex.toString());
 
