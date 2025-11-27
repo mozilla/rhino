@@ -40,6 +40,8 @@ public final class ES6Generator extends ScriptableObject {
                 new LambdaFunction(scope, "[Symbol.iterator]", 0, ES6Generator::js_iterator);
         prototype.defineProperty(SymbolKey.ITERATOR, iterator, DONTENUM);
 
+        prototype.defineProperty(SymbolKey.TO_STRING_TAG, "Generator", DONTENUM | READONLY);
+
         if (sealed) {
             prototype.sealObject();
         }
