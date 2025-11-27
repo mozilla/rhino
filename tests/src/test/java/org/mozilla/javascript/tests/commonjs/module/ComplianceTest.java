@@ -17,6 +17,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -45,7 +46,7 @@ public class ComplianceTest {
         return retval;
     }
 
-    private static Require createRequire(File dir, Context cx, Scriptable scope)
+    private static Require createRequire(File dir, Context cx, TopLevel scope)
             throws URISyntaxException {
         return new Require(
                 cx,
@@ -68,7 +69,7 @@ public class ComplianceTest {
     public void require() throws Throwable {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    final TopLevel scope = cx.initStandardObjects();
                     ScriptableObject.putProperty(scope, "print", new Print(scope));
                     try {
                         createRequire(testDir, cx, scope).requireMain(cx, "program");
