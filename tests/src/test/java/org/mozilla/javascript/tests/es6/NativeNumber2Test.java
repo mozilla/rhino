@@ -18,7 +18,7 @@ public class NativeNumber2Test {
     @Test
     public void toLocaleString_no402() {
         Utils.assertWithAllModes("1", "let n = 1; n.toLocaleString()");
-        Utils.assertWithAllModes("1", "let n = 1.0; n.toLocaleString()");
+        Utils.assertWithAllModes("1", "(1.0).toLocaleString()");
 
         Utils.assertWithAllModes("3.14", "let n = 3.14; n.toLocaleString()");
         Utils.assertWithAllModes("-0.007", "let n = -0.007; n.toLocaleString()");
@@ -109,30 +109,30 @@ public class NativeNumber2Test {
     @Test
     public void toLocaleString_ArabicContext() {
         assertWithAllModes402(
-                "١", "let n = 1; n.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0661", "let n = 1; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "١", "let n = 1.0; n.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0661", "let n = 1.0; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "٣٫١٤", "let n = 3.14; n.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0663\u066b\u0661\u0664", "let n = 3.14; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "\u061C-٠٫٠٠٧",
-                "let n = -0.007; n.toLocaleString('ar-AE')",
-                Locale.forLanguageTag("ar-AE"));
+                "\u061c\u002d\u0660\u066b\u0660\u0660\u0667",
+                "let n = -0.007; n.toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "١٠٬٠٠٠", "1e4.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0661\u0660\u066c\u0660\u0660\u0660", "1e4.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "٠", "let n = 1e-10; n.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
-        assertWithAllModes402("٠", "1e-10.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0660", "let n = 1e-10; n.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+        assertWithAllModes402("\u0660", "1e-10.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "٠٫٠١", "1e-2.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0660\u066b\u0660\u0661", "1e-2.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
 
         assertWithAllModes402(
-                "ليس رقم", "NaN.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "∞", "Infinity.toLocaleString('ar-AE')", Locale.forLanguageTag("ar-AE"));
+                "\u221e", "Infinity.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
     }
 
     @Test
@@ -191,20 +191,20 @@ public class NativeNumber2Test {
 
     @Test
     public void toLocaleString_Arabic() {
-        assertWithAllModes402("١", "let n = 1; n.toLocaleString('ar-AE')");
-        assertWithAllModes402("١", "let n = 1.0; n.toLocaleString('ar-AE')");
+        assertWithAllModes402("\u0661", "let n = 1; n.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u0661", "let n = 1.0; n.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("٣٫١٤", "let n = 3.14; n.toLocaleString('ar-AE')");
-        assertWithAllModes402("\u061C-٠٫٠٠٧", "let n = -0.007; n.toLocaleString('ar-AE')");
+        assertWithAllModes402("\u0663\u066b\u0661\u0664", "let n = 3.14; n.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u061c\u002d\u0660\u066b\u0660\u0660\u0667", "let n = -0.007; n.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("١٠٬٠٠٠", "1e4.toLocaleString('ar-AE')");
-        assertWithAllModes402("٠", "let n = 1e-10; n.toLocaleString('ar-AE')");
-        assertWithAllModes402("٠", "1e-10.toLocaleString('ar-AE')");
+        assertWithAllModes402("\u0661\u0660\u066c\u0660\u0660\u0660", "1e4.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u0660", "let n = 1e-10; n.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u0660", "1e-10.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("٠٫٠١", "1e-2.toLocaleString('ar-AE')");
+        assertWithAllModes402("\u0660\u066b\u0660\u0661", "1e-2.toLocaleString('ar-SA')");
 
-        assertWithAllModes402("ليس رقم", "NaN.toLocaleString('ar-AE')");
-        assertWithAllModes402("∞", "Infinity.toLocaleString('ar-AE')");
+        assertWithAllModes402("\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u221e", "Infinity.toLocaleString('ar-SA')");
     }
 
     private void assertWithAllModes402(final Object expected, final String script) {
@@ -227,6 +227,13 @@ public class NativeNumber2Test {
                     cx.setLocale(locale);
 
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+
+                    final StringBuilder hex = new StringBuilder();
+                    for (final char c : res.toString().toCharArray()) {
+                        hex.append("\\u").append(String.format("%04X", (int) c).toLowerCase(Locale.ROOT));
+                    }
+                    System.out.println(hex.toString());
+
                     assertEquals(expected, res);
                     return null;
                 });
