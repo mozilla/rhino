@@ -52,42 +52,27 @@ public class NativeConsole extends ScriptableObject {
         obj.setParentScope(scope);
 
         obj.defineProperty(
-                "toSource",
-                new LambdaFunction(scope, "toSource", 0, NativeConsole::js_toSource),
-                DONTENUM);
-        obj.defineProperty(
-                "trace", new LambdaFunction(scope, "trace", 1, NativeConsole::js_trace), DONTENUM);
-        obj.defineProperty(
-                "debug", new LambdaFunction(scope, "debug", 1, NativeConsole::js_debug), DONTENUM);
-        obj.defineProperty(
-                "log", new LambdaFunction(scope, "log", 1, NativeConsole::js_log), DONTENUM);
-        obj.defineProperty(
-                "info", new LambdaFunction(scope, "info", 1, NativeConsole::js_info), DONTENUM);
-        obj.defineProperty(
-                "warn", new LambdaFunction(scope, "warn", 1, NativeConsole::js_warn), DONTENUM);
-        obj.defineProperty(
-                "error", new LambdaFunction(scope, "error", 1, NativeConsole::js_error), DONTENUM);
-        obj.defineProperty(
-                "assert",
-                new LambdaFunction(scope, "assert", 2, NativeConsole::js_assert),
-                DONTENUM);
-        obj.defineProperty(
-                "count", new LambdaFunction(scope, "count", 1, NativeConsole::js_count), DONTENUM);
-        obj.defineProperty(
-                "countReset",
-                new LambdaFunction(scope, "countReset", 1, NativeConsole::js_countReset),
-                DONTENUM);
-        obj.defineProperty(
-                "time", new LambdaFunction(scope, "time", 1, NativeConsole::js_time), DONTENUM);
-        obj.defineProperty(
-                "timeEnd",
-                new LambdaFunction(scope, "timeEnd", 1, NativeConsole::js_timeEnd),
-                DONTENUM);
-        obj.defineProperty(
-                "timeLog",
-                new LambdaFunction(scope, "timeLog", 2, NativeConsole::js_timeLog),
-                DONTENUM);
-
+                scope, "toSource", 0, NativeConsole::js_toSource, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "trace", 1, NativeConsole::js_trace, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "debug", 1, NativeConsole::js_debug, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "log", 1, NativeConsole::js_log, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "info", 1, NativeConsole::js_info, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "warn", 1, NativeConsole::js_warn, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "error", 1, NativeConsole::js_error, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "assert", 2, NativeConsole::js_assert, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "count", 1, NativeConsole::js_count, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "countReset", 1, NativeConsole::js_countReset, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "time", 1, NativeConsole::js_time, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "timeEnd", 1, NativeConsole::js_timeEnd, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope, "timeLog", 2, NativeConsole::js_timeLog, 0, DONTENUM | READONLY);
         if (sealed) {
             obj.sealObject();
         }
