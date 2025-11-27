@@ -9,7 +9,6 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ES6Generator;
-import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeGenerator;
@@ -268,38 +267,13 @@ public final class OptRuntime extends ScriptRuntime {
         throw new JavaScriptException(si, "", 0);
     }
 
-    /**
-     * Evaluate default parameters for a generator function before creating the generator object.
-     * Ref: Ecma 2026 14.4.10, FunctionDeclarationInstantiation
-     */
-    public static void evaluateGeneratorDefaultParams(
-            JSFunction funObj, Scriptable activationScope) {
-        Context cx = Context.getCurrentContext();
-        JSDescriptor<JSFunction> desc = funObj.getDescriptor();
-        String[] generatorDefaultParams = desc.getGeneratorDefaultParams();
-
-        if (generatorDefaultParams == null || generatorDefaultParams.length == 0) {
-            return;
-        }
-
-        // Process pairs of [paramName, sourceCode]
-        for (int i = 0; i < generatorDefaultParams.length; i += 2) {
-            String paramName = generatorDefaultParams[i];
-            String sourceCode = generatorDefaultParams[i + 1];
-
-            Object paramValue = ScriptableObject.getProperty(activationScope, paramName);
-            if (Undefined.isUndefined(paramValue)) {
-                Object defaultValue =
-                        cx.evaluateString(
-                                activationScope, sourceCode, "<generator-default-param>", 1, null);
-                ScriptableObject.putProperty(activationScope, paramName, defaultValue);
-            }
-        }
-    }
-
     public static Scriptable createNativeGenerator(
-            JSFunction funObj, Scriptable scope, Scriptable thisObj, int maxLocals, int maxStack) {
-        Context cx = Context.getCurrentContext();
+            JSFunction funObj,
+            Scriptable scope,
+            Scriptable thisObj,
+            int maxLocals,
+            int maxStack,
+            Context cx) {
         GeneratorState gs = new GeneratorState(scope, thisObj, maxLocals, maxStack);
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             return new ES6Generator(scope, funObj, gs);

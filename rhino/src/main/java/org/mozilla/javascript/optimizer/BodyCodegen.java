@@ -134,10 +134,12 @@ class BodyCodegen {
         // See Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
         cfw.addALoad(funObjLocal);
         cfw.addALoad(variableObjectLocal);
-        addOptRuntimeInvoke(
+        cfw.addALoad(contextLocal);
+        addScriptRuntimeInvoke(
                 "evaluateGeneratorDefaultParams",
                 "(Lorg/mozilla/javascript/JSFunction;"
                         + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/Context;"
                         + ")V");
 
         generateNestedFunctionInits();
@@ -148,11 +150,13 @@ class BodyCodegen {
         cfw.addALoad(thisObjLocal);
         cfw.addLoadConstant(maxLocals);
         cfw.addLoadConstant(maxStack);
+        cfw.addALoad(contextLocal);
         addOptRuntimeInvoke(
                 "createNativeGenerator",
                 "(Lorg/mozilla/javascript/JSFunction;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "Lorg/mozilla/javascript/Scriptable;II"
+                        + "Lorg/mozilla/javascript/Context;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.ARETURN);

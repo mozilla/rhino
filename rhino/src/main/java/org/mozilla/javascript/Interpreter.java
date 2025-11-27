@@ -301,28 +301,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // This ensures that references to 'arguments' in default params get the arguments
             // object, not a function declaration that might shadow it.
             if (fnOrScript instanceof JSFunction) {
-                JSFunction jsFunc = (JSFunction) fnOrScript;
-                String[] generatorDefaultParams =
-                        jsFunc.getDescriptor().getGeneratorDefaultParams();
-                if (generatorDefaultParams != null && generatorDefaultParams.length > 0) {
-                    for (int i = 0; i < generatorDefaultParams.length; i += 2) {
-                        String paramName = generatorDefaultParams[i];
-                        String sourceCode = generatorDefaultParams[i + 1];
-
-                        // Check if the parameter is undefined in the activation scope
-                        Object paramValue = ScriptableObject.getProperty(scope, paramName);
-                        if (Undefined.isUndefined(paramValue)) {
-                            Object defaultValue =
-                                    cx.evaluateString(
-                                            scope,
-                                            sourceCode,
-                                            "<generator-default-param>",
-                                            1,
-                                            null);
-                            ScriptableObject.putProperty(scope, paramName, defaultValue);
-                        }
-                    }
-                }
+                ScriptRuntime.evaluateGeneratorDefaultParams((JSFunction) fnOrScript, scope, cx);
             }
 
             if (desc.getFunctionCount() != 0) {
