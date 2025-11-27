@@ -5,7 +5,6 @@
 package org.mozilla.javascript.commonjs.module;
 
 import java.net.URI;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
@@ -18,19 +17,14 @@ public class ModuleScope extends TopLevel.GlobalThis {
     private final URI uri;
     private final URI base;
 
-    private ModuleScope(Scriptable prototype, URI uri, URI base) {
+    private ModuleScope(URI uri, URI base) {
         this.uri = uri;
         this.base = base;
-        setPrototype(prototype);
     }
 
-    public static ScriptableObject createModuleScope(Scriptable prototype, URI uri, URI base) {
-        if (prototype instanceof TopLevel) {
-            prototype = ((TopLevel) prototype).getGlobalThis();
-        }
-        var global = new ModuleScope(prototype, uri, base);
-        var scope = new TopLevel(global);
-        scope.cacheBuiltins(false);
+    public static ScriptableObject createModuleScope(TopLevel global, URI uri, URI base) {
+        var moduleScope = new ModuleScope(uri, base);
+        var scope = global.createIsolate(moduleScope);
         return scope;
     }
 

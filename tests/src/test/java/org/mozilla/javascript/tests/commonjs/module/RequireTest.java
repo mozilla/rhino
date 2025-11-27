@@ -16,6 +16,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -75,13 +76,12 @@ public class RequireTest {
     @Test
     public void customGlobal() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            final TopLevel scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, CustomGlobal.class);
 
-            final Scriptable global = cx.newObject(scope, "CustomGlobal", null);
-
-            global.getPrototype().setPrototype(scope);
-            global.setParentScope(null);
+            var obj = cx.newObject(scope, "CustomGlobal", null);
+            obj.getPrototype().setPrototype(scope.getGlobalThis());
+            final TopLevel global = scope.createIsolateCustomPrototypeChain((ScriptableObject) obj);
 
             final Require require =
                     new Require(

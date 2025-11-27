@@ -151,6 +151,19 @@ public class TopLevel extends ScriptableObject {
         return isolate;
     }
 
+    /**
+     * Only use this function if you have already set the customGlobal's prototype chain to point to
+     * this top level's global object. This should only be done if you know for certain that no
+     * other use will be made of this prototype chain.
+     */
+    public TopLevel createIsolateCustomPrototypeChain(ScriptableObject customGlobal) {
+        customGlobal.setParentScope(null);
+        var isolate = new TopLevel(customGlobal);
+        isolate.copyAssociatedValue(this);
+        isolate.copyBuiltins(this, false);
+        return isolate;
+    }
+
     @Override
     public String getClassName() {
         return "topLevel";

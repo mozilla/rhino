@@ -16,6 +16,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Implements the require() function as defined by <a
@@ -44,7 +45,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class Require extends BaseFunction {
     private static final long serialVersionUID = 1L;
     private final ModuleScriptProvider moduleScriptProvider;
-    private final Scriptable nativeScope;
+    private final TopLevel nativeScope;
     private final Scriptable paths;
     private final boolean sandboxed;
     private final Script preExec;
@@ -79,7 +80,7 @@ public class Require extends BaseFunction {
      */
     public Require(
             Context cx,
-            Scriptable nativeScope,
+            TopLevel nativeScope,
             ModuleScriptProvider moduleScriptProvider,
             Script preExec,
             Script postExec,
