@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.text.NumberFormat;
+import java.util.IllformedLocaleException;
+import java.util.Locale;
 import org.mozilla.javascript.dtoa.DecimalFormatter;
 
 /**
@@ -98,8 +101,8 @@ final class NativeNumber extends ScriptableObject {
         }
 
         constructor.definePrototypeMethod(scope, "toString", 1, NativeNumber::js_toString);
-        // Alias toLocaleString to toString
-        constructor.definePrototypeMethod(scope, "toLocaleString", 0, NativeNumber::js_toString);
+        constructor.definePrototypeMethod(
+                scope, "toLocaleString", 0, NativeNumber::js_toLocaleString);
         constructor.definePrototypeMethod(scope, "toSource", 0, NativeNumber::js_toSource);
         constructor.definePrototypeMethod(scope, "valueOf", 0, NativeNumber::js_valueOf);
         constructor.definePrototypeMethod(scope, "toFixed", 1, NativeNumber::js_toFixed);
@@ -223,6 +226,25 @@ final class NativeNumber extends ScriptableObject {
                         ? 10
                         : ScriptRuntime.toInt32(args[0]);
         return ScriptRuntime.numberToString(toSelf(thisObj).doubleValue, base);
+    }
+
+    private static Object js_toLocaleString(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (!cx.hasFeature(Context.FEATURE_INTL_402)) {
+            return js_toString(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+        }
+
+        if (args.length != 0 && args[0] instanceof String) {
+            final String localeStr = (String) args[0];
+            try {
+                final Locale locale = new Locale.Builder().setLanguageTag(localeStr).build();
+                return NumberFormat.getInstance(locale).format(toSelf(thisObj).doubleValue);
+            } catch (final IllformedLocaleException e) {
+                throw ScriptRuntime.rangeError("Invalid language tag: " + localeStr);
+            }
+        }
+
+        return NumberFormat.getInstance(cx.getLocale()).format(toSelf(thisObj).doubleValue);
     }
 
     private static Object js_toSource(
