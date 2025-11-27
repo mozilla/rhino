@@ -656,7 +656,21 @@ public final class IRFactory {
 
             /* Process simple default parameters */
             List<Object> defaultParams = fn.getDefaultParams();
-            if (defaultParams != null) {
+            // For generators: only add default params to body if they contain 'super'
+            boolean addToBody = !fn.isGenerator();
+            if (fn.isGenerator() && defaultParams != null) {
+                // if any default param contains super it needs to done in bytecode
+                for (int i = 0; i < defaultParams.size() - 1; i += 2) {
+                    if (defaultParams.get(i + 1) instanceof AstNode) {
+                        String source = ((AstNode) defaultParams.get(i + 1)).toSource();
+                        if (source.contains("super")) {
+                            addToBody = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (defaultParams != null && addToBody) {
                 for (int i = defaultParams.size() - 1; i > 0; ) {
                     if (defaultParams.get(i) instanceof AstNode
                             && defaultParams.get(i - 1) instanceof String) {

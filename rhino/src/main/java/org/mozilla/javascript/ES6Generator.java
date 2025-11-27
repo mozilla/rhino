@@ -61,14 +61,22 @@ public final class ES6Generator extends ScriptableObject {
     public ES6Generator(Scriptable scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
-        // Set parent and prototype properties. Since we don't have a
-        // "Generator" constructor in the top scope, we stash the
-        // prototype in the top scope's associated value.
+        // Set parent and prototype properties.
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
-        ES6Generator prototype =
-                (ES6Generator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
-        this.setPrototype(prototype);
+        // Per ES6 spec, generator instance's [[Prototype]] should be
+        // the generator function's .prototype property.
+        Object functionPrototype = ScriptableObject.getProperty(function, "prototype");
+        if (functionPrototype instanceof Scriptable) {
+            this.setPrototype((Scriptable) functionPrototype);
+        } else {
+            // If function.prototype is not an Object, use the intrinsic default prototype
+            // Ref: Ecma 2026, 10.1.14 GetPrototypeFromConstructor step 4.
+            // See test262: language/statements/generators/default-proto.js
+            ES6Generator prototype =
+                    (ES6Generator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
+            this.setPrototype(prototype);
+        }
     }
 
     @Override

@@ -689,7 +689,21 @@ public class BaseFunction extends ScriptableObject implements Function {
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.
         prototypeProperty = obj;
-        Scriptable proto = getObjectPrototype(this);
+        Scriptable proto;
+        if (isGeneratorFunction()) {
+            // For generator functions, the .prototype property's [[Prototype]]
+            // should be %GeneratorPrototype%, not Object.prototype
+            Scriptable top = ScriptableObject.getTopLevelScope(scope);
+            Object generatorProto =
+                    ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
+            if (generatorProto instanceof Scriptable) {
+                proto = (Scriptable) generatorProto;
+            } else {
+                proto = getObjectPrototype(this); // fallback
+            }
+        } else {
+            proto = getObjectPrototype(this);
+        }
         if (proto != obj) {
             // not the one we just made, it must remain grounded
             obj.setPrototype(proto);

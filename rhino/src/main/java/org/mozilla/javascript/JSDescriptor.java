@@ -37,6 +37,8 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     public List<JSDescriptor<JSFunction>> nestedFunctions;
     private final String[] paramAndVarNames;
     private final boolean[] paramIsConst;
+    // For generators: alternating [paramName, sourceCode, paramName, sourceCode, ...]
+    String[] generatorDefaultParams;
     private final int flags;
     private final String sourceFile;
     private final String rawSource;
@@ -216,6 +218,10 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return (flags & HAS_DEFAULT_PARAMETERS_FLAG) != 0;
     }
 
+    public String[] getGeneratorDefaultParams() {
+        return generatorDefaultParams;
+    }
+
     public boolean hasFunctionNamed(String name) {
         for (int f = 0; f < getFunctionCount(); f++) {
             var functionData = getFunction(f);
@@ -315,6 +321,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public boolean requiresActivationFrame;
         public boolean requiresArgumentObject;
         public boolean declaredAsFunctionExpression;
+        public String[] generatorDefaultParams;
         public SecurityController securityController;
         public Object securityDomain;
         public int functionType;
@@ -388,6 +395,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             securityController,
                             securityDomain,
                             functionType);
+            result.generatorDefaultParams = generatorDefaultParams;
             consumer.accept(result);
             result.nestedFunctions =
                     Collections.unmodifiableList(
