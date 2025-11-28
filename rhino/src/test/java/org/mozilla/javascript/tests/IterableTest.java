@@ -28,14 +28,14 @@ public class IterableTest {
 
     public static final class FooWithoutSymbols extends FooBoilerplate {
 
-        public FooWithoutSymbols(final Scriptable scope) {
+        public FooWithoutSymbols(TopLevel scope) {
             super(scope);
         }
     }
 
     public static final class FooWithSymbols extends SymbolFooBoilerplate {
 
-        public FooWithSymbols(final Scriptable scope) {
+        public FooWithSymbols(TopLevel scope) {
             super(scope);
         }
 
@@ -47,7 +47,7 @@ public class IterableTest {
 
     public static final class FooWithArrayIterator extends SymbolFooBoilerplate {
 
-        public FooWithArrayIterator(final Scriptable scope) {
+        public FooWithArrayIterator(TopLevel scope) {
             super(scope);
         }
 
@@ -97,7 +97,7 @@ public class IterableTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Scriptable foo = new FooWithoutSymbols(scope);
                     ScriptableObject.putProperty(scope, "foo", foo);
@@ -131,7 +131,7 @@ public class IterableTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Scriptable foo = new FooWithSymbols(scope);
                     ScriptableObject.putProperty(scope, "foo", foo);
@@ -161,7 +161,7 @@ public class IterableTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Scriptable foo = new FooWithArrayIterator(scope);
                     ScriptableObject.putProperty(scope, "foo", foo);
@@ -191,9 +191,9 @@ public class IterableTest {
     // Explicitly not a ScriptableObject
     public static class FooBoilerplate implements Scriptable {
 
-        protected final Scriptable scope;
+        protected final TopLevel scope;
 
-        public FooBoilerplate(final Scriptable scope) {
+        public FooBoilerplate(TopLevel scope) {
             this.scope = scope;
         }
 
@@ -283,7 +283,7 @@ public class IterableTest {
 
     public static class SymbolFooBoilerplate extends FooBoilerplate implements SymbolScriptable {
 
-        public SymbolFooBoilerplate(final Scriptable scope) {
+        public SymbolFooBoilerplate(TopLevel scope) {
             super(scope);
         }
 
