@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.EnumMap;
 
 /**
@@ -107,9 +110,19 @@ public class TopLevel extends ScriptableObject {
         }
     }
 
-    private final ScriptableObject globalThis;
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
+    private transient ScriptableObject globalThis;
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeObject(globalThis);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        globalThis = (ScriptableObject) in.readObject();
+    }
 
     public TopLevel() {
         this(new GlobalThis());
@@ -255,15 +268,13 @@ public class TopLevel extends ScriptableObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
-    public static Scriptable getBuiltinPrototype(Scriptable scope, Builtins type) {
+    public static Scriptable getBuiltinPrototype(TopLevel scope, Builtins type) {
         // must be called with top level scope
-        assert scope.getParentScope() == null;
-        if (scope instanceof TopLevel) {
-            Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
-            if (result != null) {
-                return result;
-            }
+        Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
+        if (result != null) {
+            return result;
         }
+
         // fall back to normal prototype lookup
         String typeName;
         if (type == Builtins.GeneratorFunction) {
