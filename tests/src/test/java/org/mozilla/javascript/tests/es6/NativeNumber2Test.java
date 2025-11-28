@@ -149,7 +149,9 @@ public class NativeNumber2Test {
         assertWithAllModes402(
                 "\u221e", "Infinity.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
-                "\u061c\u002d\u221e", "(-Infinity).toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+                "\u061c\u002d\u221e",
+                "(-Infinity).toLocaleString('ar-SA')",
+                Locale.forLanguageTag("ar-SA"));
     }
 
     @Test
