@@ -34,9 +34,6 @@ public class DebuggerTest {
         }
 
         @Override
-        public void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source) {}
-
-        @Override
         public DebugFrame getFrame(Context cx, DebuggableScript fnOrScript) {
             return frame;
         }
@@ -55,9 +52,6 @@ public class DebuggerTest {
         }
 
         @Override
-        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) {}
-
-        @Override
         public void onLineChange(Context cx, int line) {
             // decide to break on a line and evaluate a command similar to what GlideScriptDebugger
             // does
@@ -65,15 +59,6 @@ public class DebuggerTest {
                 incrementBreakPointsHit();
             }
         }
-
-        @Override
-        public void onExceptionThrown(Context cx, Throwable ex) {}
-
-        @Override
-        public void onExit(Context cx, boolean byThrow, Object resultOrException) {}
-
-        @Override
-        public void onDebuggerStatement(Context cx) {}
     }
 
     @Test
