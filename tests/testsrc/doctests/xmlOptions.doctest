@@ -9,7 +9,7 @@ js> x
     <baz>1</baz>
   </bar>
 </foo>
-js> var xmlLib = org.mozilla.javascript.xml.XMLLib.extractFromScope(this);
+js> var xmlLib = __xml_lib__;
 js> xmlLib.isPrettyPrinting();
 true
 js> xmlLib.setPrettyPrinting(false);
