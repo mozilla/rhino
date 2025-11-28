@@ -5425,9 +5425,9 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject object, Scriptable scope, TopLevel.Builtins type) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        object.setParentScope(scope);
-        object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        object.setParentScope(top);
+        object.setPrototype(TopLevel.getBuiltinPrototype(top, type));
     }
 
     public static void setBuiltinProtoAndParent(
