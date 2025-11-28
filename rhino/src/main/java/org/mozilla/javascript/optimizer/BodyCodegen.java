@@ -132,31 +132,31 @@ class BodyCodegen {
         // Evaluate default params for generators after creating activation scope
         // so defaults have access to arguments and prior params.
         // See Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
-        cfw.addALoad(funObjLocal);
-        cfw.addALoad(variableObjectLocal);
         cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        cfw.addALoad(funObjLocal);
         addScriptRuntimeInvoke(
                 "evaluateGeneratorDefaultParams",
-                "(Lorg/mozilla/javascript/JSFunction;"
+                "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/JSFunction;"
                         + ")V");
 
         generateNestedFunctionInits();
 
         // create the NativeGenerator object that we return
-        cfw.addALoad(funObjLocal);
+        cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
+        cfw.addALoad(funObjLocal);
         cfw.addLoadConstant(maxLocals);
         cfw.addLoadConstant(maxStack);
-        cfw.addALoad(contextLocal);
         addOptRuntimeInvoke(
                 "createNativeGenerator",
-                "(Lorg/mozilla/javascript/JSFunction;"
+                "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;II"
-                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSFunction;II"
                         + ")Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.ARETURN);

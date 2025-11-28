@@ -301,7 +301,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // This ensures that references to 'arguments' in default params get the arguments
             // object, not a function declaration that might shadow it.
             if (fnOrScript instanceof JSFunction) {
-                ScriptRuntime.evaluateGeneratorDefaultParams((JSFunction) fnOrScript, scope, cx);
+                ScriptRuntime.evaluateGeneratorDefaultParams(cx, scope, (JSFunction) fnOrScript);
             }
 
             if (desc.getFunctionCount() != 0) {

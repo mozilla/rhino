@@ -5354,7 +5354,7 @@ public class ScriptRuntime {
      * Ref: Ecma 2026 14.4.10, FunctionDeclarationInstantiation
      */
     public static void evaluateGeneratorDefaultParams(
-            JSFunction funObj, Scriptable activationScope, Context cx) {
+            Context cx, Scriptable activationScope, JSFunction funObj) {
         JSDescriptor<JSFunction> desc = funObj.getDescriptor();
         String[] generatorDefaultParams = desc.getGeneratorDefaultParams();
 
