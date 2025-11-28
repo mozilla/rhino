@@ -31,6 +31,7 @@ public class NativeNumber2Test {
 
         Utils.assertWithAllModes("NaN", "NaN.toLocaleString()");
         Utils.assertWithAllModes("Infinity", "Infinity.toLocaleString()");
+        Utils.assertWithAllModes("-Infinity", "(-Infinity).toLocaleString()");
     }
 
     @Test
@@ -56,6 +57,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString()");
         assertWithAllModes402("∞", "Infinity.toLocaleString()");
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString()");
     }
 
     @Test
@@ -86,6 +88,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString()", Locale.GERMAN);
         assertWithAllModes402("∞", "Infinity.toLocaleString()", Locale.GERMAN);
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString()", Locale.GERMAN);
     }
 
     @Test
@@ -104,6 +107,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString()", Locale.JAPAN);
         assertWithAllModes402("∞", "Infinity.toLocaleString()", Locale.JAPAN);
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString()", Locale.JAPAN);
     }
 
     @Test
@@ -144,6 +148,8 @@ public class NativeNumber2Test {
                 Locale.forLanguageTag("ar-SA"));
         assertWithAllModes402(
                 "\u221e", "Infinity.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
+        assertWithAllModes402(
+                "\u061c\u002d\u221e", "(-Infinity).toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
     }
 
     @Test
@@ -162,6 +168,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString('de')");
         assertWithAllModes402("∞", "Infinity.toLocaleString('de')");
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString('de')");
     }
 
     @Test
@@ -180,6 +187,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString('de-DE')");
         assertWithAllModes402("∞", "Infinity.toLocaleString('de-DE')");
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString('de-DE')");
     }
 
     @Test
@@ -198,6 +206,7 @@ public class NativeNumber2Test {
 
         assertWithAllModes402("NaN", "NaN.toLocaleString('japan')");
         assertWithAllModes402("∞", "Infinity.toLocaleString('japan')");
+        assertWithAllModes402("-∞", "(-Infinity).toLocaleString('japan')");
     }
 
     @Test
@@ -221,6 +230,7 @@ public class NativeNumber2Test {
         assertWithAllModes402(
                 "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
         assertWithAllModes402("\u221e", "Infinity.toLocaleString('ar-SA')");
+        assertWithAllModes402("\u061c\u002d\u221e", "(-Infinity).toLocaleString('ar-SA')");
     }
 
     private void assertWithAllModes402(final Object expected, final String script) {
@@ -243,14 +253,6 @@ public class NativeNumber2Test {
                     cx.setLocale(locale);
 
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
-
-                    final StringBuilder hex = new StringBuilder();
-                    for (final char c : res.toString().toCharArray()) {
-                        hex.append("\\u")
-                                .append(String.format("%04X", (int) c).toLowerCase(Locale.ROOT));
-                    }
-                    System.out.println(hex.toString());
-
                     assertEquals(expected, res);
                     return null;
                 });
