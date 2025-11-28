@@ -138,6 +138,13 @@ public class CodeGenUtils {
      * Disambiguate all variable names after the parameters. We avoid disambiguating the parameters
      * themselves because those names can be repeated and are not unique even if an activation frame
      * is used.
+     *
+     * <p>This is only required when an interpreted function might have duplicate local variable
+     * names and might be run under the debugger. This can only occur if the function has nested
+     * blocks, uses `let` with a variable name in that nested block which is also used outside that
+     * block, and does not require the use of an activation frame for any other reason. When running
+     * under the debugger variables are accessed by name rather than by index, and hence those names
+     * must not include duplicates.
      */
     private static String[] disambiguateNames(String[] names, int paramCount) {
         String[] result = new String[names.length];
