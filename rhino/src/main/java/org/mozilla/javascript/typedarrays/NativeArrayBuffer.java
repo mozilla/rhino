@@ -29,6 +29,8 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static final byte[] EMPTY_BUF = new byte[0];
 
     byte[] buffer;
+    // ES2024: maxByteLength for resizable buffers (null = fixed-length)
+    private Integer maxByteLength;
 
     @Override
     public String getClassName() {
@@ -50,8 +52,12 @@ public class NativeArrayBuffer extends ScriptableObject {
         constructor.definePrototypeMethod(scope, "transfer", 0, NativeArrayBuffer::js_transfer);
         constructor.definePrototypeMethod(
                 scope, "transferToFixedLength", 0, NativeArrayBuffer::js_transferToFixedLength);
+        constructor.definePrototypeMethod(scope, "resize", 1, NativeArrayBuffer::js_resize);
         constructor.definePrototypeProperty(cx, "byteLength", NativeArrayBuffer::js_byteLength);
         constructor.definePrototypeProperty(cx, "detached", NativeArrayBuffer::js_detached);
+        constructor.definePrototypeProperty(cx, "resizable", NativeArrayBuffer::js_resizable);
+        constructor.definePrototypeProperty(
+                cx, "maxByteLength", NativeArrayBuffer::js_maxByteLength);
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, "ArrayBuffer", DONTENUM | READONLY);
 
@@ -144,7 +150,41 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     private static NativeArrayBuffer js_constructor(Context cx, Scriptable scope, Object[] args) {
         double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-        return new NativeArrayBuffer(length);
+
+        // ES2024: Check for options parameter with maxByteLength
+        Integer maxByteLength = null;
+        if (isArg(args, 1) && args[1] instanceof Scriptable) {
+            Scriptable options = (Scriptable) args[1];
+            Object maxByteLengthValue = ScriptableObject.getProperty(options, "maxByteLength");
+            if (maxByteLengthValue != Scriptable.NOT_FOUND
+                    && !Undefined.instance.equals(maxByteLengthValue)) {
+                double maxLen = ScriptRuntime.toNumber(maxByteLengthValue);
+
+                // Validate maxByteLength
+                if (Double.isNaN(maxLen)) {
+                    maxLen = 0;
+                }
+                if (maxLen < 0 || Double.isInfinite(maxLen)) {
+                    throw ScriptRuntime.rangeError("Invalid maxByteLength");
+                }
+                if (maxLen >= Integer.MAX_VALUE) {
+                    throw ScriptRuntime.rangeError("maxByteLength too large");
+                }
+
+                int maxLenInt = (int) maxLen;
+
+                // Check that length <= maxByteLength
+                if (length > maxLenInt) {
+                    throw ScriptRuntime.rangeError("ArrayBuffer length exceeds maxByteLength");
+                }
+
+                maxByteLength = maxLenInt;
+            }
+        }
+
+        NativeArrayBuffer buffer = new NativeArrayBuffer(length);
+        buffer.maxByteLength = maxByteLength;
+        return buffer;
     }
 
     private static Boolean js_isView(
@@ -351,5 +391,104 @@ public class NativeArrayBuffer extends ScriptableObject {
         }
 
         return (int) newLength;
+    }
+
+    // ES2024 ArrayBuffer.prototype.resize
+    private static Object js_resize(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeArrayBuffer self = getSelf(thisObj);
+
+        // 1. Let O be the this value
+        // 2. Perform ? RequireInternalSlot(O, [[ArrayBufferData]])
+        // (getSelf handles this validation)
+
+        // 3. If IsDetachedBuffer(O) is true, throw a TypeError exception
+        if (self.isDetached()) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
+        }
+
+        // 4. If IsResizableArrayBuffer(O) is false, throw a TypeError exception
+        if (self.maxByteLength == null) {
+            throw ScriptRuntime.typeError("ArrayBuffer is not resizable");
+        }
+
+        // 5. Let newByteLength be ? ToIntegerOrInfinity(newLength)
+        if (!isArg(args, 0)) {
+            throw ScriptRuntime.typeError("Missing required argument: newLength");
+        }
+
+        double newLengthDouble = ScriptRuntime.toNumber(args[0]);
+
+        // ToIntegerOrInfinity: Handle NaN (convert to 0)
+        if (Double.isNaN(newLengthDouble)) {
+            newLengthDouble = 0;
+        }
+
+        // 6. If newByteLength < 0 or newByteLength > O.[[ArrayBufferMaxByteLength]], throw a
+        // RangeError exception
+        if (newLengthDouble < 0 || Double.isInfinite(newLengthDouble)) {
+            throw ScriptRuntime.rangeError("Invalid newLength");
+        }
+
+        if (newLengthDouble >= Integer.MAX_VALUE) {
+            throw ScriptRuntime.rangeError("newLength too large");
+        }
+
+        int newLength = (int) newLengthDouble;
+
+        if (newLength > self.maxByteLength) {
+            throw ScriptRuntime.rangeError(
+                    "newLength exceeds maxByteLength (" + self.maxByteLength + ")");
+        }
+
+        // 7. Let hostHandled be ? HostResizeArrayBuffer(O, newByteLength)
+        // 8. If hostHandled is handled, return undefined
+        // 9. Let oldBlock be O.[[ArrayBufferData]]
+        // 10. Let newBlock be ? CreateByteDataBlock(newByteLength)
+        // 11. Let copyLength be min(newByteLength, O.[[ArrayBufferByteLength]])
+        // 12. Perform CopyDataBlockBytes(newBlock, 0, oldBlock, 0, copyLength)
+        // 13. NOTE: Neither creation of the new Data Block nor copying from the old Data Block
+        // are observable
+        // 14. Set O.[[ArrayBufferData]] to newBlock
+        // 15. Set O.[[ArrayBufferByteLength]] to newByteLength
+
+        int oldLength = self.getLength();
+        if (newLength == oldLength) {
+            // No resize needed
+            return Undefined.instance;
+        }
+
+        byte[] newBuffer = new byte[newLength];
+        int copyLength = Math.min(newLength, oldLength);
+
+        // Copy existing data
+        if (copyLength > 0) {
+            System.arraycopy(self.buffer, 0, newBuffer, 0, copyLength);
+        }
+
+        // New bytes are automatically initialized to 0 in Java
+        self.buffer = newBuffer;
+
+        // 16. Return undefined
+        return Undefined.instance;
+    }
+
+    // ES2024 ArrayBuffer.prototype.resizable getter
+    private static Object js_resizable(Scriptable thisObj) {
+        NativeArrayBuffer self = getSelf(thisObj);
+        // A buffer is resizable if maxByteLength was specified in constructor
+        return self.maxByteLength != null;
+    }
+
+    // ES2024 ArrayBuffer.prototype.maxByteLength getter
+    private static Object js_maxByteLength(Scriptable thisObj) {
+        NativeArrayBuffer self = getSelf(thisObj);
+        // For fixed-length buffers, maxByteLength = byteLength
+        // For resizable buffers, return the maxByteLength
+        if (self.maxByteLength != null) {
+            return self.maxByteLength;
+        } else {
+            return self.getLength();
+        }
     }
 }
