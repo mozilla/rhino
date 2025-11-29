@@ -272,4 +272,28 @@ public class RegExpHasIndicesTest {
                         + "}";
         Utils.assertWithAllModes(true, script);
     }
+
+    // String literal tests using \q{} syntax
+    @Test
+    public void testVFlagStringLiteralBasic() {
+        String script =
+                "var re = /[\\q{abc}]/v;" + "re.test('abc') && !re.test('ab') && !re.test('a')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testVFlagStringLiteralWithCharacter() {
+        String script =
+                "var re = /[\\q{foo}bar]/v;"
+                        + "re.test('foo') && re.test('b') && re.test('a') && re.test('r')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testVFlagStringLiteralMultipleAlternatives() {
+        String script =
+                "var re = /[\\q{abc|def}]/v;"
+                        + "re.test('abc') && re.test('def') && !re.test('ab')";
+        Utils.assertWithAllModes(true, script);
+    }
 }

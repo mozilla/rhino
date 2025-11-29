@@ -1627,6 +1627,7 @@ public class NativeRegExp extends IdScriptableObject {
                 new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
         ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
         ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
+        ArrayList<String> stringLiterals = new ArrayList<>(); // For 'v' flag \q{...} syntax
     }
 
     private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
@@ -1663,7 +1664,76 @@ public class NativeRegExp extends IdScriptableObject {
 
             if (src[state.cp] == '\\') {
                 state.cp++;
-                if (state.cp < state.cpend && src[state.cp] == 'b') {
+                // Handle \q{...} string literals in v flag mode
+                if ((state.flags & JSREG_UNICODESETS) != 0
+                        && params.unicodeMode
+                        && state.cp < state.cpend
+                        && src[state.cp] == 'q') {
+                    state.cp++; // Skip 'q'
+                    if (state.cp >= state.cpend || src[state.cp] != '{') {
+                        reportError("msg.bad.regexp", "\\q must be followed by {");
+                        return null;
+                    }
+                    state.cp++; // Skip '{'
+
+                    // Parse string literal(s) within braces
+                    StringBuilder literal = new StringBuilder();
+                    while (state.cp < state.cpend && src[state.cp] != '}') {
+                        if (src[state.cp] == '|') {
+                            // Multiple alternatives: \q{abc|def}
+                            if (literal.length() > 0) {
+                                contents.stringLiterals.add(literal.toString());
+                                literal = new StringBuilder();
+                            }
+                            state.cp++;
+                        } else if (src[state.cp] == '\\') {
+                            // Handle escape sequences within \q{}
+                            state.cp++;
+                            if (state.cp >= state.cpend) {
+                                reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                                return null;
+                            }
+                            char escapeChar = src[state.cp];
+                            if (escapeChar == 'u' || escapeChar == 'x') {
+                                // Parse unicode/hex escape
+                                if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                                    reportError("msg.invalid.escape", "");
+                                    return null;
+                                }
+                                if (state.result.op != REOP_FLAT) {
+                                    reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                                    return null;
+                                }
+                                // Append the parsed character(s)
+                                literal.append(state.result.chr);
+                                if (state.result.lowSurrogate != 0) {
+                                    literal.append(state.result.lowSurrogate);
+                                }
+                            } else {
+                                // Simple escape
+                                literal.append(escapeChar);
+                                state.cp++;
+                            }
+                        } else {
+                            // Regular character
+                            literal.appendCodePoint(
+                                    Character.codePointAt(src, state.cp, state.cpend));
+                            state.cp += Character.charCount(src[state.cp]);
+                        }
+                    }
+
+                    if (state.cp >= state.cpend) {
+                        reportError("msg.bad.regexp", "Unclosed \\q{");
+                        return null;
+                    }
+                    state.cp++; // Skip '}'
+
+                    if (literal.length() > 0) {
+                        contents.stringLiterals.add(literal.toString());
+                    }
+
+                    continue; // Skip to next iteration
+                } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
                     thisCodePoint = (char) 0x08;
                 } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
@@ -2608,6 +2678,29 @@ public class NativeRegExp extends IdScriptableObject {
      *   Initialize the character set if it is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
+    /**
+     * Check if any string literal in the character class matches at the current position. Returns
+     * the length of the matched string, or 0 if no match.
+     */
+    private static int stringLiteralMatcher(RECharSet charSet, CharSequence input, int position) {
+        if (charSet.classContents == null || charSet.classContents.stringLiterals.isEmpty()) {
+            return 0;
+        }
+
+        // Try to match each string literal, return longest match for greedy matching
+        int maxMatch = 0;
+        String inputStr = input.toString();
+        for (String literal : charSet.classContents.stringLiterals) {
+            if (position + literal.length() <= input.length()
+                    && inputStr.regionMatches(position, literal, 0, literal.length())
+                    && literal.length() > maxMatch) {
+                maxMatch = literal.length();
+            }
+        }
+
+        return maxMatch;
+    }
+
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
         if (!charSet.converted) {
             processCharSet(gData, charSet);
@@ -2992,6 +3085,18 @@ public class NativeRegExp extends IdScriptableObject {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
+                        // First, try to match string literals (v flag feature)
+                        int stringLiteralLen =
+                                stringLiteralMatcher(
+                                        gData.regexp.classList[index], input, cpToMatch);
+                        if (stringLiteralLen > 0) {
+                            // String literal matched
+                            gData.cp += stringLiteralLen;
+                            result = true;
+                            break;
+                        }
+
+                        // Fall back to single codepoint matching
                         int inputCodePoint =
                                 (gData.regexp.flags & JSREG_UNICODE) != 0
                                         ? input.codePointAt(cpToMatch)
