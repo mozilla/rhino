@@ -735,8 +735,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /**
-     * ES2024 Array.fromAsync implementation.
-     * Context-safe: Uses BaseFunction instead of LambdaFunction to avoid Context capture.
+     * ES2024 Array.fromAsync implementation. Context-safe: Uses BaseFunction instead of
+     * LambdaFunction to avoid Context capture.
      *
      * @param cx Current context (never stored)
      * @param scope Current scope
@@ -759,60 +759,66 @@ public class NativeArray extends ScriptableObject implements List {
         Function promiseFunc = (Function) promiseCtor;
 
         // Create promise executor using BaseFunction to avoid Context capture
-        Function executor = new BaseFunction() {
-            @Override
-            public Object call(Context lcx, Scriptable lscope, Scriptable lthisObj, Object[] executorArgs) {
-                // lcx is FRESH Context from Promise - never stored
-                if (executorArgs.length < 2) {
-                    return Undefined.instance;
-                }
-
-                Function resolveFunc = (Function) executorArgs[0];
-                Function rejectFunc = (Function) executorArgs[1];
-
-                try {
-                    // Validate mapfn if provided
-                    Function mapFunction = null;
-                    Scriptable mapThis = null;
-
-                    if (!Undefined.isUndefined(mapfn)) {
-                        if (!(mapfn instanceof Function)) {
-                            throw ScriptRuntime.typeErrorById("msg.map.function.not");
+        Function executor =
+                new BaseFunction() {
+                    @Override
+                    public Object call(
+                            Context lcx,
+                            Scriptable lscope,
+                            Scriptable lthisObj,
+                            Object[] executorArgs) {
+                        // lcx is FRESH Context from Promise - never stored
+                        if (executorArgs.length < 2) {
+                            return Undefined.instance;
                         }
-                        mapFunction = (Function) mapfn;
-                        mapThis = ScriptRuntime.getApplyOrCallThis(
-                                lcx, lscope, thisArg, 1, mapFunction);
+
+                        Function resolveFunc = (Function) executorArgs[0];
+                        Function rejectFunc = (Function) executorArgs[1];
+
+                        try {
+                            // Validate mapfn if provided
+                            Function mapFunction = null;
+                            Scriptable mapThis = null;
+
+                            if (!Undefined.isUndefined(mapfn)) {
+                                if (!(mapfn instanceof Function)) {
+                                    throw ScriptRuntime.typeErrorById("msg.map.function.not");
+                                }
+                                mapFunction = (Function) mapfn;
+                                mapThis =
+                                        ScriptRuntime.getApplyOrCallThis(
+                                                lcx, lscope, thisArg, 1, mapFunction);
+                            }
+
+                            // Process items with fresh Context
+                            processAsyncItems(
+                                    lcx,
+                                    lscope,
+                                    thisObj,
+                                    items,
+                                    mapFunction,
+                                    mapThis,
+                                    resolveFunc,
+                                    rejectFunc);
+
+                        } catch (RhinoException re) {
+                            rejectFunc.call(
+                                    lcx,
+                                    lscope,
+                                    null,
+                                    new Object[] {getErrorObject(lcx, lscope, re)});
+                        }
+
+                        return Undefined.instance;
                     }
-
-                    // Process items with fresh Context
-                    processAsyncItems(
-                            lcx,
-                            lscope,
-                            thisObj,
-                            items,
-                            mapFunction,
-                            mapThis,
-                            resolveFunc,
-                            rejectFunc);
-
-                } catch (RhinoException re) {
-                    rejectFunc.call(
-                            lcx,
-                            lscope,
-                            null,
-                            new Object[] {getErrorObject(lcx, lscope, re)});
-                }
-
-                return Undefined.instance;
-            }
-        };
+                };
 
         return promiseFunc.construct(cx, scope, new Object[] {executor});
     }
 
     /**
-     * Process items for Array.fromAsync - Context-safe implementation.
-     * Simplified version that only handles array-like objects (no iterator support yet).
+     * Process items for Array.fromAsync - Context-safe implementation. Simplified version that only
+     * handles array-like objects (no iterator support yet).
      */
     private static void processAsyncItems(
             Context cx,
@@ -839,8 +845,9 @@ public class NativeArray extends ScriptableObject implements List {
             }
 
             // Process array-like object with Context-safe async processor
-            AsyncArrayLikeProcessor processor = new AsyncArrayLikeProcessor(
-                result, itemsObj, len, mapFn, mapThis, resolve, reject);
+            AsyncArrayLikeProcessor processor =
+                    new AsyncArrayLikeProcessor(
+                            result, itemsObj, len, mapFn, mapThis, resolve, reject);
             processor.processNext(cx, scope, 0);
 
         } catch (RhinoException re) {
@@ -1049,8 +1056,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     /**
-     * Context-safe async array-like processor.
-     * Never stores Context - receives fresh Context on each call.
+     * Context-safe async array-like processor. Never stores Context - receives fresh Context on
+     * each call.
      */
     private static class AsyncArrayLikeProcessor {
         private final Scriptable result;
@@ -1090,38 +1097,56 @@ public class NativeArray extends ScriptableObject implements List {
 
                 // Apply mapping function if provided
                 if (mapFn != null) {
-                    value = mapFn.call(cx, scope, mapThis, new Object[] {value, Long.valueOf(index)});
+                    value =
+                            mapFn.call(
+                                    cx, scope, mapThis, new Object[] {value, Long.valueOf(index)});
                 }
 
                 // Check if value is a promise/thenable
                 if (isThenable(value)) {
                     // Handle promise resolution with Context-safe callbacks
-                    Function onFulfilled = new BaseFunction() {
-                        @Override
-                        public Object call(Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
-                            // lcx is FRESH Context when promise resolves
-                            Object resolvedValue = args.length > 0 ? args[0] : Undefined.instance;
-                            ArrayLikeAbstractOperations.defineElem(lcx, result, index, resolvedValue);
-                            processNext(lcx, lscope, index + 1);
-                            return Undefined.instance;
-                        }
-                    };
+                    Function onFulfilled =
+                            new BaseFunction() {
+                                @Override
+                                public Object call(
+                                        Context lcx,
+                                        Scriptable lscope,
+                                        Scriptable thisObj,
+                                        Object[] args) {
+                                    // lcx is FRESH Context when promise resolves
+                                    Object resolvedValue =
+                                            args.length > 0 ? args[0] : Undefined.instance;
+                                    ArrayLikeAbstractOperations.defineElem(
+                                            lcx, result, index, resolvedValue);
+                                    processNext(lcx, lscope, index + 1);
+                                    return Undefined.instance;
+                                }
+                            };
 
-                    Function onRejected = new BaseFunction() {
-                        @Override
-                        public Object call(Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
-                            // lcx is FRESH Context when promise rejects
-                            Object error = args.length > 0 ? args[0] : Undefined.instance;
-                            reject.call(lcx, lscope, null, new Object[] {error});
-                            return Undefined.instance;
-                        }
-                    };
+                    Function onRejected =
+                            new BaseFunction() {
+                                @Override
+                                public Object call(
+                                        Context lcx,
+                                        Scriptable lscope,
+                                        Scriptable thisObj,
+                                        Object[] args) {
+                                    // lcx is FRESH Context when promise rejects
+                                    Object error = args.length > 0 ? args[0] : Undefined.instance;
+                                    reject.call(lcx, lscope, null, new Object[] {error});
+                                    return Undefined.instance;
+                                }
+                            };
 
                     // Attach callbacks to promise
                     Object thenMethod = ScriptableObject.getProperty((Scriptable) value, "then");
                     if (thenMethod instanceof Function) {
-                        ((Function) thenMethod).call(cx, scope, (Scriptable) value,
-                            new Object[] {onFulfilled, onRejected});
+                        ((Function) thenMethod)
+                                .call(
+                                        cx,
+                                        scope,
+                                        (Scriptable) value,
+                                        new Object[] {onFulfilled, onRejected});
                     }
                 } else {
                     // Synchronous value - store and continue
