@@ -1648,7 +1648,19 @@ public class NativeRegExp extends IdScriptableObject {
             contents.sense = false;
         }
 
+        // Main loop: parse characters until we hit ']' or a set operation (-- or &&)
         while (state.cp != state.cpend && src[state.cp] != ']') {
+            // Check for set operations in v flag mode
+            if ((state.flags & JSREG_UNICODESETS) != 0
+                    && params.unicodeMode
+                    && state.cp + 1 < state.cpend) {
+                char c1 = src[state.cp];
+                char c2 = src[state.cp + 1];
+                if ((c1 == '-' && c2 == '-') || (c1 == '&' && c2 == '&')) {
+                    break; // Stop main loop, parse set operation after
+                }
+            }
+
             if (src[state.cp] == '\\') {
                 state.cp++;
                 if (state.cp < state.cpend && src[state.cp] == 'b') {
@@ -1687,10 +1699,18 @@ public class NativeRegExp extends IdScriptableObject {
                                 }
                             } else {
                                 // if we have a '-' after this and we're in unicode mode, we fail
+                                // UNLESS it's '--' or '&&' for v flag set operations
                                 if (state.cp < state.cpend
                                         && src[state.cp] == '-'
                                         && params.unicodeMode) {
-                                    reportError("msg.invalid.class", "");
+                                    // Allow '--' for v flag set operations
+                                    if ((state.flags & JSREG_UNICODESETS) != 0
+                                            && state.cp + 1 < state.cpend
+                                            && src[state.cp + 1] == '-') {
+                                        // This is a set operation, allow it
+                                    } else {
+                                        reportError("msg.invalid.class", "");
+                                    }
                                 }
                             }
                             // multi-character character escapes can't be part of ranges
@@ -1729,17 +1749,48 @@ public class NativeRegExp extends IdScriptableObject {
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
                     char currentChar = src[state.cp];
 
-                    // TODO: ES2024 'v' flag set operations (-- and &&) parsing
-                    // Requires comprehensive rewrite of character class parser to properly handle
-                    // ES2024 set notation syntax with correct precedence and nesting.
-                    // Data structures and matching logic are in place, but parsing is incomplete.
-
                     if (currentChar == '-') {
                         state.cp++;
                         inRange = true;
                         rangeStart = thisCodePoint;
                     }
                 }
+            }
+        }
+
+        // Parse set operations (-- and &&) for 'v' flag
+        if ((state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode) {
+            while (state.cp + 1 < state.cpend) {
+                char c1 = src[state.cp];
+                char c2 = src[state.cp + 1];
+
+                SetOperationType opType = null;
+                if (c1 == '-' && c2 == '-') {
+                    opType = SetOperationType.SUBTRACT;
+                } else if (c1 == '&' && c2 == '&') {
+                    opType = SetOperationType.INTERSECT;
+                } else {
+                    break; // No more set operations
+                }
+
+                state.cp += 2; // Skip the operator (-- or &&)
+
+                // Expect opening bracket for nested class
+                if (state.cp >= state.cpend || src[state.cp] != '[') {
+                    reportError("msg.bad.regexp", "Set operation requires nested character class");
+                    return null;
+                }
+                state.cp++; // Skip '['
+
+                // Parse the nested character class
+                ClassContents operand = parseClassContents(state, params);
+                if (operand == null) {
+                    reportError(
+                            "msg.bad.regexp", "Invalid nested character class in set operation");
+                    return null;
+                }
+
+                contents.setOperations.add(new SetOperation(opType, operand));
             }
         }
 
