@@ -51,10 +51,7 @@ public class NativeWeakRef extends ScriptableObject {
     private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById(
-                    "msg.method.missing.parameter",
-                    CLASS_NAME,
-                    "1",
-                    String.valueOf(args.length));
+                    "msg.method.missing.parameter", CLASS_NAME, "1", String.valueOf(args.length));
         }
 
         Object target = args[0];
@@ -87,10 +84,9 @@ public class NativeWeakRef extends ScriptableObject {
     /**
      * Check if the given object can be used as a WeakRef target.
      *
-     * <p>Per ECMAScript spec, WeakRef targets can be:
-     * - Any object (Scriptable)
-     * - Unregistered symbols (created with Symbol(), not Symbol.for())
-     * - Registered symbols (Symbol.for()) cannot be held weakly as they persist globally
+     * <p>Per ECMAScript spec, WeakRef targets can be: - Any object (Scriptable) - Unregistered
+     * symbols (created with Symbol(), not Symbol.for()) - Registered symbols (Symbol.for()) cannot
+     * be held weakly as they persist globally
      *
      * @param target the target object to validate
      * @return true if target is a valid object or unregistered symbol that can be weakly referenced

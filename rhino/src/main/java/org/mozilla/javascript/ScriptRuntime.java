@@ -277,7 +277,8 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "WeakMap", sealed, true, NativeWeakMap::init);
             new LazilyLoadedCtor(scope, "WeakSet", sealed, true, NativeWeakSet::init);
             new LazilyLoadedCtor(scope, "WeakRef", sealed, true, NativeWeakRef::init);
-            new LazilyLoadedCtor(scope, "FinalizationRegistry", sealed, true, NativeFinalizationRegistry::init);
+            new LazilyLoadedCtor(
+                    scope, "FinalizationRegistry", sealed, true, NativeFinalizationRegistry::init);
             new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
             new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);

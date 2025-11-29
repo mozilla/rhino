@@ -19,8 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * collected. Uses {@link PhantomReference} for GC detection, which is available on all platforms
  * including Android.
  *
- * @see <a
- *     href="https://tc39.es/ecma262/#sec-finalization-registry-objects">ECMAScript
+ * @see <a href="https://tc39.es/ecma262/#sec-finalization-registry-objects">ECMAScript
  *     FinalizationRegistry Objects</a>
  */
 public class NativeFinalizationRegistry extends ScriptableObject {
@@ -33,8 +32,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     private final Function cleanupCallback;
     private final Scriptable parentScope;
     private final Set<RegistrationReference> activeRegistrations = ConcurrentHashMap.newKeySet();
-    private final Map<TokenKey, Set<RegistrationReference>> tokenIndex =
-            new ConcurrentHashMap<>();
+    private final Map<TokenKey, Set<RegistrationReference>> tokenIndex = new ConcurrentHashMap<>();
 
     /** Initialize FinalizationRegistry constructor and prototype. */
     static Object init(Context cx, Scriptable scope, boolean sealed) {
@@ -208,18 +206,16 @@ public class NativeFinalizationRegistry extends ScriptableObject {
             cleanupCallback.call(cx, parentScope, this, new Object[] {heldValue});
         } catch (RhinoException e) {
             // Per spec, errors in cleanup callbacks don't propagate
-            Context.reportWarning(
-                    "FinalizationRegistry cleanup callback threw: " + e.getMessage());
+            Context.reportWarning("FinalizationRegistry cleanup callback threw: " + e.getMessage());
         }
     }
 
     /**
      * Check if the given object can be used as a FinalizationRegistry target.
      *
-     * <p>Per ECMAScript spec, FinalizationRegistry targets can be:
-     * - Any object (Scriptable)
-     * - Unregistered symbols (created with Symbol(), not Symbol.for())
-     * - Registered symbols (Symbol.for()) cannot be registered as they persist globally
+     * <p>Per ECMAScript spec, FinalizationRegistry targets can be: - Any object (Scriptable) -
+     * Unregistered symbols (created with Symbol(), not Symbol.for()) - Registered symbols
+     * (Symbol.for()) cannot be registered as they persist globally
      *
      * @param target the target object to validate
      * @return true if target is a valid object or unregistered symbol that can be registered
@@ -239,8 +235,8 @@ public class NativeFinalizationRegistry extends ScriptableObject {
     /**
      * Check if the given value can be used as an unregister token.
      *
-     * <p>Per ECMAScript spec, registered symbols (created with Symbol.for()) cannot be held
-     * weakly because they persist in the global registry.
+     * <p>Per ECMAScript spec, registered symbols (created with Symbol.for()) cannot be held weakly
+     * because they persist in the global registry.
      *
      * @param token the token to validate
      * @return true if token can be used as an unregister token
