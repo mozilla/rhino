@@ -714,7 +714,8 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            boolean unicodeMode = (flags & JSREG_UNICODE) != 0;
+            // 'v' flag (ES2024 unicodeSets) implies Unicode mode
+            boolean unicodeMode = (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
             // if unicode mode is on, named capture groups are always on
             ParserParameters params = new ParserParameters(unicodeMode, unicodeMode);
 
@@ -1601,6 +1602,21 @@ public class NativeRegExp extends IdScriptableObject {
         doFlat(state, c);
     }
 
+    enum SetOperationType {
+        SUBTRACT, // -- operator
+        INTERSECT // && operator
+    }
+
+    static class SetOperation {
+        SetOperationType type;
+        ClassContents operand;
+
+        SetOperation(SetOperationType type, ClassContents operand) {
+            this.type = type;
+            this.operand = operand;
+        }
+    }
+
     static class ClassContents {
         boolean sense = true;
         ArrayList<Character> chars = new ArrayList<>();
@@ -1610,6 +1626,7 @@ public class NativeRegExp extends IdScriptableObject {
         ArrayList<Integer> nonBMPRanges =
                 new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
         ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
+        ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
     }
 
     private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
@@ -1710,7 +1727,14 @@ public class NativeRegExp extends IdScriptableObject {
                     contents.chars.add((char) thisCodePoint);
                 }
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
-                    if (src[state.cp] == '-') {
+                    char currentChar = src[state.cp];
+
+                    // TODO: ES2024 'v' flag set operations (-- and &&) parsing
+                    // Requires comprehensive rewrite of character class parser to properly handle
+                    // ES2024 set notation syntax with correct precedence and nesting.
+                    // Data structures and matching logic are in place, but parsing is incomplete.
+
+                    if (currentChar == '-') {
                         state.cp++;
                         inRange = true;
                         rangeStart = thisCodePoint;
@@ -2538,33 +2562,138 @@ public class NativeRegExp extends IdScriptableObject {
             processCharSet(gData, charSet);
         }
 
+        // Check base character class membership
+        boolean matches = false;
+
         if (codePoint <= 0xFFFF) {
             int byteIndex = codePoint >> 3;
             if (!(charSet.length == 0
                     || codePoint >= charSet.length
-                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0))
-                return charSet.classContents.sense;
-        }
-
-        if (charSet.classContents.nonBMPCodepoints.contains(codePoint))
-            return charSet.classContents.sense;
-
-        for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
-            if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
-                    && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
-                return charSet.classContents.sense;
+                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
+                matches = true;
             }
         }
 
-        for (int encodedProp : charSet.unicodeProps) {
-            if (UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+        if (!matches && charSet.classContents.nonBMPCodepoints.contains(codePoint)) {
+            matches = true;
         }
-        for (int encodedProp : charSet.negUnicodeProps) {
-            if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+
+        if (!matches) {
+            for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
+                if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
+                        && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
+                    matches = true;
+                    break;
+                }
+            }
         }
-        return !charSet.classContents.sense;
+
+        if (!matches) {
+            for (int encodedProp : charSet.unicodeProps) {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : charSet.negUnicodeProps) {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        // Apply set operations for 'v' flag
+        if (!charSet.classContents.setOperations.isEmpty()) {
+            for (SetOperation op : charSet.classContents.setOperations) {
+                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
+
+                if (op.type == SetOperationType.SUBTRACT) {
+                    // Remove from result if in subtract operand
+                    if (operandMatches) {
+                        matches = false;
+                    }
+                } else if (op.type == SetOperationType.INTERSECT) {
+                    // Keep only if also in intersect operand
+                    matches = matches && operandMatches;
+                }
+            }
+        }
+
+        return matches == charSet.classContents.sense;
+    }
+
+    // Helper method to check if codePoint matches a ClassContents
+    private static boolean checkClassContentsMatch(
+            REGlobalData gData, ClassContents contents, int codePoint) {
+        // Build a temporary RECharSet for the operand
+        RECharSet tempCharSet = new RECharSet(contents, 65536); // Standard BMP length
+
+        // Process and match
+        processCharSet(gData, tempCharSet);
+
+        boolean matches = false;
+
+        if (codePoint <= 0xFFFF) {
+            int byteIndex = codePoint >> 3;
+            if (!(tempCharSet.length == 0
+                    || codePoint >= tempCharSet.length
+                    || (tempCharSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
+                matches = true;
+            }
+        }
+
+        if (!matches && contents.nonBMPCodepoints.contains(codePoint)) {
+            matches = true;
+        }
+
+        if (!matches) {
+            for (int i = 0; i < contents.nonBMPRanges.size(); i += 2) {
+                if (codePoint >= contents.nonBMPRanges.get(i)
+                        && codePoint <= contents.nonBMPRanges.get(i + 1)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : tempCharSet.unicodeProps) {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : tempCharSet.negUnicodeProps) {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        // Recursively apply nested set operations
+        if (!contents.setOperations.isEmpty()) {
+            for (SetOperation op : contents.setOperations) {
+                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
+
+                if (op.type == SetOperationType.SUBTRACT) {
+                    if (operandMatches) {
+                        matches = false;
+                    }
+                } else if (op.type == SetOperationType.INTERSECT) {
+                    matches = matches && operandMatches;
+                }
+            }
+        }
+
+        return matches == contents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -3538,6 +3667,7 @@ public class NativeRegExp extends IdScriptableObject {
     Object executeRegExp(
             Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
+        String[] namedCaptureGroups = null; // for indices and groups
 
         int start = indexp[0];
         int end = str.length();
@@ -3585,7 +3715,6 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             SubString parsub = null;
             int num;
-            String[] namedCaptureGroups = null; // to ensure groups appear in source order
 
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
@@ -3638,6 +3767,46 @@ public class NativeRegExp extends IdScriptableObject {
             obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
             obj.put("groups", obj, groups);
+
+            // ES2022 hasIndices support ('d' flag)
+            if ((re.flags & JSREG_HASINDICES) != 0) {
+                Scriptable indices = cx.newArray(scope, re.parenCount + 1);
+                Scriptable indicesGroups = cx.newObject(scope);
+
+                // Index 0: overall match indices
+                Scriptable overallIndices = cx.newArray(scope, 2);
+                overallIndices.put(0, overallIndices, Integer.valueOf(start + gData.skipped));
+                overallIndices.put(
+                        1, overallIndices, Integer.valueOf(start + gData.skipped + matchlen));
+                indices.put(0, indices, overallIndices);
+
+                // Indices for each capture group
+                for (int num = 0; num < re.parenCount; num++) {
+                    int cap_index = gData.parensIndex(num);
+                    if (cap_index != -1) {
+                        int cap_length = gData.parensLength(num);
+                        Scriptable groupIndices = cx.newArray(scope, 2);
+                        groupIndices.put(0, groupIndices, Integer.valueOf(cap_index));
+                        groupIndices.put(1, groupIndices, Integer.valueOf(cap_index + cap_length));
+                        indices.put(num + 1, indices, groupIndices);
+
+                        // Add to indicesGroups for named captures
+                        if (namedCaptureGroups[num] != null) {
+                            indicesGroups.put(namedCaptureGroups[num], indicesGroups, groupIndices);
+                        }
+                    } else {
+                        indices.put(num + 1, indices, Undefined.instance);
+                        if (namedCaptureGroups[num] != null
+                                && !indicesGroups.has(namedCaptureGroups[num], indicesGroups)) {
+                            indicesGroups.put(
+                                    namedCaptureGroups[num], indicesGroups, Undefined.instance);
+                        }
+                    }
+                }
+
+                indices.put("groups", indices, indicesGroups);
+                obj.put("indices", obj, indices);
+            }
         }
 
         if (res.lastMatch == null) {
