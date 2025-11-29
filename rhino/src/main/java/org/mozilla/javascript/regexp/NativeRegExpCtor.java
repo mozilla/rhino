@@ -6,7 +6,9 @@
 
 package org.mozilla.javascript.regexp;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
@@ -81,6 +83,11 @@ class NativeRegExpCtor {
                     null,
                     PERMANENT);
         }
+
+        // ES2025: RegExp.escape
+        ctor.defineConstructorMethod(
+                scope, "escape", 1, NativeRegExpCtor::escape, DONTENUM, DONTENUM | READONLY);
+
         return ctor;
     }
 
@@ -112,5 +119,156 @@ class NativeRegExpCtor {
     private static RegExpImpl getImpl() {
         Context cx = Context.getCurrentContext();
         return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
+    }
+
+    /**
+     * ES2025 RegExp.escape ( string )
+     *
+     * <p>This method escapes special regex characters in the input string.
+     *
+     * @param cx the current context
+     * @param scope the scope
+     * @param thisObj the this object
+     * @param args the arguments (first arg must be a string)
+     * @return escaped string
+     */
+    private static Object escape(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        // RegExp.escape requires a string argument - throw TypeError if not string (no coercion)
+        if (args.length == 0) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        Object arg = args[0];
+        // Check if argument is NOT a string - throw TypeError (no coercion per spec)
+        if (arg == null
+                || arg == Undefined.instance
+                || arg == Undefined.SCRIPTABLE_UNDEFINED
+                || !(arg instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        String input = ScriptRuntime.toString(arg);
+        if (input.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean isFirst = true;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            // SPEC STEP 1: Escape initial character if it's a decimal digit or ASCII letter
+            if (isFirst && (isDecimalDigit(c) || isAsciiLetter(c))) {
+                result.append(String.format("\\x%02x", (int) c));
+                isFirst = false;
+                continue;
+            }
+            isFirst = false;
+
+            // SPEC: Surrogates must be escaped as unicode
+            if (Character.isSurrogate(c)) {
+                result.append(String.format("\\u%04x", (int) c));
+                continue;
+            }
+
+            // SPEC STEP 2: Control escapes (Table 64)
+            switch (c) {
+                case '\t':
+                    result.append("\\t");
+                    continue;
+                case '\n':
+                    result.append("\\n");
+                    continue;
+                case '\u000B': // vertical tab
+                    result.append("\\v");
+                    continue;
+                case '\f':
+                    result.append("\\f");
+                    continue;
+                case '\r':
+                    result.append("\\r");
+                    continue;
+            }
+
+            // SPEC STEP 3: Syntax characters (backslash escape)
+            if (isSyntaxCharacter(c)) {
+                result.append('\\').append(c);
+                continue;
+            }
+
+            // SPEC STEP 4-5: Other punctuators, WhiteSpace, LineTerminator (hex/unicode escape)
+            if (isOtherPunctuator(c) || isWhiteSpace(c) || isLineTerminator(c)) {
+                if (c <= 0xFF) {
+                    result.append(String.format("\\x%02x", (int) c));
+                } else {
+                    result.append(String.format("\\u%04x", (int) c));
+                }
+                continue;
+            }
+
+            // SPEC STEP 6: Return code point as-is (including underscore, other letters, digits)
+            result.append(c);
+        }
+
+        return result.toString();
+    }
+
+    /** Check if character is a decimal digit (0-9) */
+    private static boolean isDecimalDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    /** Check if character is an ASCII letter (a-z, A-Z) */
+    private static boolean isAsciiLetter(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    /**
+     * Check if character is a RegExp syntax character. These characters are: . * + ? ^ $ | ( ) [ ]
+     * { } \ /
+     */
+    private static boolean isSyntaxCharacter(char c) {
+        return c == '.' || c == '*' || c == '+' || c == '?' || c == '^' || c == '$' || c == '|'
+                || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == '\\'
+                || c == '/';
+    }
+
+    /**
+     * Check if character is in "other punctuators" list per spec: ,-=<>#&!%:;@~'`" These are the
+     * exact characters from the ES2025 spec that must be escaped with \xNN format
+     */
+    private static boolean isOtherPunctuator(char c) {
+        // Spec: otherPunctuators = ",-=<>#&!%:;@~'`" + code unit 0x0022 (QUOTATION MARK)
+        return c == 0x002c // , COMMA
+                || c == 0x002d // - HYPHEN-MINUS
+                || c == 0x003d // = EQUALS SIGN
+                || c == 0x003c // < LESS-THAN SIGN
+                || c == 0x003e // > GREATER-THAN SIGN
+                || c == 0x0023 // # NUMBER SIGN
+                || c == 0x0026 // & AMPERSAND
+                || c == 0x0021 // ! EXCLAMATION MARK
+                || c == 0x0025 // % PERCENT SIGN
+                || c == 0x003a // : COLON
+                || c == 0x003b // ; SEMICOLON
+                || c == 0x0040 // @ COMMERCIAL AT
+                || c == 0x007e // ~ TILDE
+                || c == 0x0027 // ' APOSTROPHE
+                || c == 0x0060 // ` GRAVE ACCENT
+                || c == 0x0022; // " QUOTATION MARK
+    }
+
+    /** Check if character is WhiteSpace (excluding control escapes already handled) */
+    private static boolean isWhiteSpace(char c) {
+        return c == '\u0020' // SPACE
+                || c == '\u00A0' // NO-BREAK SPACE
+                || c == '\uFEFF' // ZERO WIDTH NO-BREAK SPACE
+                || c == '\u202F'; // NARROW NO-BREAK SPACE
+    }
+
+    /** Check if character is LineTerminator */
+    private static boolean isLineTerminator(char c) {
+        return c == '\u2028' // LINE SEPARATOR
+                || c == '\u2029'; // PARAGRAPH SEPARATOR
     }
 }
