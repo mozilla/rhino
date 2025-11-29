@@ -222,10 +222,6 @@ public class RegExpHasIndicesTest {
 
     // ES2024 unicodeSets ('v' flag) functionality tests
 
-    // TODO: Set operations (-- and &&) require a complete rewrite of the character class parser
-    // to properly handle ES2024 set notation syntax. These tests are disabled pending that work.
-    @org.junit.Ignore(
-            "Set operations not yet implemented - requires character class parser rewrite")
     @Test
     public void testVFlagSetSubtraction() {
         String script =
@@ -234,8 +230,6 @@ public class RegExpHasIndicesTest {
         Utils.assertWithAllModes(true, script);
     }
 
-    @org.junit.Ignore(
-            "Set operations not yet implemented - requires character class parser rewrite")
     @Test
     public void testVFlagSetIntersection() {
         String script =
@@ -244,8 +238,6 @@ public class RegExpHasIndicesTest {
         Utils.assertWithAllModes(true, script);
     }
 
-    @org.junit.Ignore(
-            "Set operations not yet implemented - requires character class parser rewrite")
     @Test
     public void testVFlagMultipleOperations() {
         String script =
@@ -254,8 +246,6 @@ public class RegExpHasIndicesTest {
         Utils.assertWithAllModes(true, script);
     }
 
-    @org.junit.Ignore(
-            "Set operations not yet implemented - requires character class parser rewrite")
     @Test
     public void testVFlagWithDigits() {
         String script =
@@ -263,8 +253,6 @@ public class RegExpHasIndicesTest {
         Utils.assertWithAllModes(true, script);
     }
 
-    @org.junit.Ignore(
-            "Set operations not yet implemented - requires character class parser rewrite")
     @Test
     public void testVFlagComplexExpression() {
         String script =
