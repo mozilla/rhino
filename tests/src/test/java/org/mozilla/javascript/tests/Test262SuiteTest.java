@@ -102,7 +102,6 @@ public class Test262SuiteTest {
                             "object-rest",
                             "regexp-dotall",
                             "regexp-unicode-property-escapes",
-                            "resizable-arraybuffer",
                             "SharedArrayBuffer",
                             "tail-call-optimization",
                             "Temporal",
