@@ -900,66 +900,137 @@ public class NativeArray extends ScriptableObject implements List {
             }
 
             try {
+                // Step 10.7.2: Get(arrayLike, Pk)
                 Object value = getElem(cx, items, index);
 
-                // Apply mapping function if provided
+                // Step 10.7.3: Await(kValue) - ALWAYS await the retrieved value
+                awaitValue(cx, scope, value, index);
+
+            } catch (Exception e) {
+                reject.call(cx, scope, null, new Object[] {e});
+            }
+        }
+
+        /** Step 10.7.3: Await the retrieved value before any mapping */
+        private void awaitValue(Context cx, Scriptable scope, Object value, final long index) {
+            if (isThenable(value)) {
+                // Value is a promise - await it
+                Function onFulfilled =
+                        new BaseFunction() {
+                            @Override
+                            public Object call(
+                                    Context lcx,
+                                    Scriptable lscope,
+                                    Scriptable thisObj,
+                                    Object[] args) {
+                                Object awaitedValue =
+                                        args.length > 0 ? args[0] : Undefined.instance;
+                                // Now apply mapper to the awaited value
+                                applyMapperAndStore(lcx, lscope, awaitedValue, index);
+                                return Undefined.instance;
+                            }
+                        };
+
+                Function onRejected =
+                        new BaseFunction() {
+                            @Override
+                            public Object call(
+                                    Context lcx,
+                                    Scriptable lscope,
+                                    Scriptable thisObj,
+                                    Object[] args) {
+                                Object error = args.length > 0 ? args[0] : Undefined.instance;
+                                reject.call(lcx, lscope, null, new Object[] {error});
+                                return Undefined.instance;
+                            }
+                        };
+
+                Object thenMethod = ScriptableObject.getProperty((Scriptable) value, "then");
+                if (thenMethod instanceof Function) {
+                    ((Function) thenMethod)
+                            .call(
+                                    cx,
+                                    scope,
+                                    (Scriptable) value,
+                                    new Object[] {onFulfilled, onRejected});
+                }
+            } else {
+                // Value is not a promise - already "awaited" (synchronous)
+                applyMapperAndStore(cx, scope, value, index);
+            }
+        }
+
+        /** Steps 10.7.4-10.7.6: Apply mapper (if present), await result, and store */
+        private void applyMapperAndStore(
+                Context cx, Scriptable scope, Object awaitedValue, final long index) {
+            try {
+                Object finalValue = awaitedValue;
+
+                // Step 10.7.4-10.7.5: If mapping, apply mapper and await the result
                 if (mapFn != null) {
-                    value =
+                    Object mappedValue =
                             mapFn.call(
-                                    cx, scope, mapThis, new Object[] {value, Long.valueOf(index)});
-                }
+                                    cx,
+                                    scope,
+                                    mapThis,
+                                    new Object[] {awaitedValue, Long.valueOf(index)});
 
-                // Check if value is a promise/thenable
-                if (isThenable(value)) {
-                    // Handle promise resolution with Context-safe callbacks
-                    Function onFulfilled =
-                            new BaseFunction() {
-                                @Override
-                                public Object call(
-                                        Context lcx,
-                                        Scriptable lscope,
-                                        Scriptable thisObj,
-                                        Object[] args) {
-                                    // lcx is FRESH Context when promise resolves
-                                    Object resolvedValue =
-                                            args.length > 0 ? args[0] : Undefined.instance;
-                                    ArrayLikeAbstractOperations.defineElem(
-                                            lcx, result, index, resolvedValue);
-                                    processNext(lcx, lscope, index + 1);
-                                    return Undefined.instance;
-                                }
-                            };
+                    // Step 10.7.5: Await(mappedValue)
+                    if (isThenable(mappedValue)) {
+                        // Mapped value is a promise - await it
+                        Function onFulfilled =
+                                new BaseFunction() {
+                                    @Override
+                                    public Object call(
+                                            Context lcx,
+                                            Scriptable lscope,
+                                            Scriptable thisObj,
+                                            Object[] args) {
+                                        Object awaitedMappedValue =
+                                                args.length > 0 ? args[0] : Undefined.instance;
+                                        // Step 10.7.6: Store and continue
+                                        ArrayLikeAbstractOperations.defineElem(
+                                                lcx, result, index, awaitedMappedValue);
+                                        processNext(lcx, lscope, index + 1);
+                                        return Undefined.instance;
+                                    }
+                                };
 
-                    Function onRejected =
-                            new BaseFunction() {
-                                @Override
-                                public Object call(
-                                        Context lcx,
-                                        Scriptable lscope,
-                                        Scriptable thisObj,
-                                        Object[] args) {
-                                    // lcx is FRESH Context when promise rejects
-                                    Object error = args.length > 0 ? args[0] : Undefined.instance;
-                                    reject.call(lcx, lscope, null, new Object[] {error});
-                                    return Undefined.instance;
-                                }
-                            };
+                        Function onRejected =
+                                new BaseFunction() {
+                                    @Override
+                                    public Object call(
+                                            Context lcx,
+                                            Scriptable lscope,
+                                            Scriptable thisObj,
+                                            Object[] args) {
+                                        Object error =
+                                                args.length > 0 ? args[0] : Undefined.instance;
+                                        reject.call(lcx, lscope, null, new Object[] {error});
+                                        return Undefined.instance;
+                                    }
+                                };
 
-                    // Attach callbacks to promise
-                    Object thenMethod = ScriptableObject.getProperty((Scriptable) value, "then");
-                    if (thenMethod instanceof Function) {
-                        ((Function) thenMethod)
-                                .call(
-                                        cx,
-                                        scope,
-                                        (Scriptable) value,
-                                        new Object[] {onFulfilled, onRejected});
+                        Object thenMethod =
+                                ScriptableObject.getProperty((Scriptable) mappedValue, "then");
+                        if (thenMethod instanceof Function) {
+                            ((Function) thenMethod)
+                                    .call(
+                                            cx,
+                                            scope,
+                                            (Scriptable) mappedValue,
+                                            new Object[] {onFulfilled, onRejected});
+                        }
+                        return; // Exit - continuation happens in promise callback
+                    } else {
+                        // Mapped value is synchronous
+                        finalValue = mappedValue;
                     }
-                } else {
-                    // Synchronous value - store and continue
-                    ArrayLikeAbstractOperations.defineElem(cx, result, index, value);
-                    processNext(cx, scope, index + 1);
                 }
+
+                // Step 10.7.6: CreateDataPropertyOrThrow(A, Pk, mappedValue)
+                ArrayLikeAbstractOperations.defineElem(cx, result, index, finalValue);
+                processNext(cx, scope, index + 1);
 
             } catch (Exception e) {
                 reject.call(cx, scope, null, new Object[] {e});
