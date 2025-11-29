@@ -4460,22 +4460,38 @@ public class Parser {
      * @return expression that performs a series of assignments to the variables defined in left
      */
     Node createDestructuringAssignment(
-            int type, Node left, Node right, AstNode defaultValue, Transformer transformer) {
+            int type,
+            Node left,
+            Node right,
+            AstNode defaultValue,
+            Transformer transformer,
+            boolean isFunctionParameter) {
         String tempName = currentScriptOrFn.getNextTempName();
         Node result =
                 destructuringAssignmentHelper(
-                        type, left, right, tempName, defaultValue, transformer);
+                        type,
+                        left,
+                        right,
+                        tempName,
+                        defaultValue,
+                        transformer,
+                        isFunctionParameter);
         Node comma = result.getLastChild();
         comma.addChildToBack(createName(tempName));
         return result;
     }
 
+    Node createDestructuringAssignment(
+            int type, Node left, Node right, AstNode defaultValue, Transformer transformer) {
+        return createDestructuringAssignment(type, left, right, defaultValue, transformer, true);
+    }
+
     Node createDestructuringAssignment(int type, Node left, Node right, Transformer transformer) {
-        return createDestructuringAssignment(type, left, right, null, transformer);
+        return createDestructuringAssignment(type, left, right, null, transformer, false);
     }
 
     Node createDestructuringAssignment(int type, Node left, Node right, AstNode defaultValue) {
-        return createDestructuringAssignment(type, left, right, defaultValue, null);
+        return createDestructuringAssignment(type, left, right, defaultValue, null, true);
     }
 
     Node destructuringAssignmentHelper(
@@ -4484,7 +4500,8 @@ public class Parser {
             Node right,
             String tempName,
             AstNode defaultValue,
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         Scope result = createScopeNode(Token.LETEXPR, left.getLineno(), left.getColumn());
         result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
         try {
@@ -4497,8 +4514,10 @@ public class Parser {
         result.addChildToBack(comma);
         List<String> destructuringNames = new ArrayList<>();
         boolean empty = true;
+        String iteratorName = null;
+        String lastResultName = null;
         if (left instanceof ArrayLiteral) {
-            empty =
+            DestructuringArrayResult arrayResult =
                     destructuringArray(
                             (ArrayLiteral) left,
                             variableType,
@@ -4506,7 +4525,11 @@ public class Parser {
                             comma,
                             destructuringNames,
                             defaultValue,
-                            transformer);
+                            transformer,
+                            isFunctionParameter);
+            empty = arrayResult.empty;
+            iteratorName = arrayResult.iteratorName;
+            lastResultName = arrayResult.lastResultName;
         } else if (left instanceof ObjectLiteral) {
             empty =
                     destructuringObject(
@@ -4516,7 +4539,8 @@ public class Parser {
                             comma,
                             destructuringNames,
                             defaultValue,
-                            transformer);
+                            transformer,
+                            isFunctionParameter);
         } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
             switch (variableType) {
                 case Token.CONST:
@@ -4532,32 +4556,156 @@ public class Parser {
             // Don't want a COMMA node with no children. Just add a zero.
             comma.addChildToBack(createNumber(0));
         }
+
+        // Add iterator closing to the comma sequence if needed
+        // Generate: !lastResult.done ? ((f = iterator.return) !== undefined ? f.call(iterator) :
+        // undefined) : undefined
+        if (isFunctionParameter && iteratorName != null && lastResultName != null) {
+            // Allocate temp for return method
+            String returnMethodName = currentScriptOrFn.getNextTempName();
+            defineSymbol(Token.LET, returnMethodName, true);
+
+            // Check if iterator is done: !lastResult.done
+            Node getDone =
+                    new Node(Token.GETPROP, createName(lastResultName), Node.newString("done"));
+            Node notDone = new Node(Token.NOT, getDone);
+
+            // Get iterator.return and store: f = iterator.return
+            Node getReturn =
+                    new Node(Token.GETPROP, createName(iteratorName), Node.newString("return"));
+            Node assignReturn =
+                    new Node(
+                            Token.SETNAME,
+                            createName(Token.BINDNAME, returnMethodName, null),
+                            getReturn);
+
+            // Check if return method is not undefined: (f = iterator.return) !== undefined
+            Node notUndefined = new Node(Token.NE, assignReturn, new Node(Token.UNDEFINED));
+
+            // Call return method: f.call(iterator)
+            Node getCall =
+                    new Node(Token.GETPROP, createName(returnMethodName), Node.newString("call"));
+            Node callReturn = new Node(Token.CALL, getCall);
+            callReturn.addChildToBack(createName(iteratorName)); // 'this' argument
+
+            // Inner ternary: (f = iterator.return) !== undefined ? f.call(iterator) : undefined
+            Node innerTernary =
+                    new Node(Token.HOOK, notUndefined, callReturn, new Node(Token.UNDEFINED));
+
+            // Outer ternary: !lastResult.done ? innerTernary : undefined
+            Node outerTernary =
+                    new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
+
+            comma.addChildToBack(outerTernary);
+        }
+
         result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
         return result;
     }
 
-    boolean destructuringArray(
+    private static class DestructuringArrayResult {
+        boolean empty;
+        String iteratorName;
+        String lastResultName;
+
+        DestructuringArrayResult(boolean empty, String iteratorName, String lastResultName) {
+            this.empty = empty;
+            this.iteratorName = iteratorName;
+            this.lastResultName = lastResultName;
+        }
+    }
+
+    DestructuringArrayResult destructuringArray(
             ArrayLiteral array,
             int variableType,
             String tempName,
             Node parent,
             List<String> destructuringNames,
-            AstNode defaultValue, /* defaultValue to use in function param decls */
-            Transformer transformer) {
+            AstNode defaultValue,
+            Transformer transformer,
+            boolean isFunctionParameter) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         int index = 0;
         boolean defaultValuesSetup = false;
+        boolean iteratorSetup = false;
+        String iteratorName = null;
+        String lastResultName = null;
+
         for (AstNode n : array.getElements()) {
             if (n.getType() == Token.EMPTY) {
                 index++;
                 continue;
             }
-            Node rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+
+            Node rightElem;
 
             if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
                 defaultValuesSetup = true;
+            }
+
+            // Set up iterator for function parameters (after default value is applied)
+            // Only use iterator protocol in ES6+; older versions use index-based access
+            if (isFunctionParameter
+                    && !iteratorSetup
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                // Allocate temp names for iterator tracking
+                iteratorName = currentScriptOrFn.getNextTempName();
+                lastResultName = currentScriptOrFn.getNextTempName();
+                // Define the iterator temp variables for strict mode
+                defineSymbol(Token.LET, iteratorName, true);
+                defineSymbol(Token.LET, lastResultName, true);
+
+                // Generate: iterator = tempName[Symbol.iterator]()
+                // Pure AST: CALL(GETELEM(tempName, GETPROP(NAME("Symbol"), "iterator")))
+                Node symbolName = createName("Symbol");
+                Node getIteratorProp =
+                        new Node(Token.GETPROP, symbolName, Node.newString("iterator"));
+                Node getIteratorMethod = new Node(Token.GETELEM, createName(tempName));
+                getIteratorMethod.addChildToBack(getIteratorProp);
+                Node callIterator = new Node(Token.CALL, getIteratorMethod);
+                Node iteratorAssign =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, iteratorName, null),
+                                callIterator);
+                parent.addChildToBack(iteratorAssign);
+                iteratorSetup = true;
+                empty = false;
+            }
+
+            // Generate code to get element
+            if (isFunctionParameter && iteratorName != null) {
+                // ES6+: Call iterator.next() and store the full result to check done later
+                Node getNextProp =
+                        new Node(Token.GETPROP, createName(iteratorName), Node.newString("next"));
+                Node callNext = new Node(Token.CALL, getNextProp);
+                Node storeResult =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, lastResultName, null),
+                                callNext);
+                parent.addChildToBack(storeResult);
+                // Extract .value from the result
+                String elemTempName = currentScriptOrFn.getNextTempName();
+                // Define the element temp variable for strict mode
+                defineSymbol(Token.LET, elemTempName, true);
+                Node getValue =
+                        new Node(
+                                Token.GETPROP, createName(lastResultName), Node.newString("value"));
+                Node storeElem =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, elemTempName, null),
+                                getValue);
+                parent.addChildToBack(storeElem);
+                // Use the temp variable for element access
+                rightElem = createName(elemTempName);
+                empty = false;
+            } else {
+                // Regular index-based access for var/let/const
+                rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
             }
 
             if (n.getType() == Token.NAME) {
@@ -4578,7 +4726,8 @@ public class Parser {
                         (Assignment) n,
                         rightElem,
                         setOp,
-                        transformer);
+                        transformer,
+                        isFunctionParameter);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4587,12 +4736,14 @@ public class Parser {
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
                                 null,
-                                transformer));
+                                transformer,
+                                isFunctionParameter));
             }
             index++;
             empty = false;
         }
-        return empty;
+
+        return new DestructuringArrayResult(empty, iteratorName, lastResultName);
     }
 
     private void processDestructuringDefaults(
@@ -4602,7 +4753,8 @@ public class Parser {
             Assignment n,
             Node rightElem,
             int setOp,
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         Node left = n.getLeft();
         Node right = null;
         if (left.getType() == Token.NAME) {
@@ -4646,7 +4798,36 @@ public class Parser {
                 destructuringNames.add(name);
             }
         } else {
-            // TODO: should handle other nested values on the lhs (ArrayLiteral, ObjectLiteral)
+            // Handle nested destructuring patterns with defaults, eg: [[x, y, z] = [4, 5, 6]]
+            if (left instanceof ArrayLiteral || left instanceof ObjectLiteral) {
+                right = (transformer != null) ? transformer.transform(n.getRight()) : n.getRight();
+
+                Node cond_default =
+                        new Node(
+                                Token.HOOK,
+                                new Node(
+                                        Token.SHEQ,
+                                        new KeywordLiteral().setType(Token.UNDEFINED),
+                                        rightElem),
+                                right,
+                                rightElem);
+
+                if (transformer == null) {
+                    currentScriptOrFn.putDestructuringRvalues(cond_default, right);
+                }
+
+                parent.addChildToBack(
+                        destructuringAssignmentHelper(
+                                variableType,
+                                left,
+                                cond_default,
+                                currentScriptOrFn.getNextTempName(),
+                                null,
+                                transformer,
+                                isFunctionParameter));
+            } else {
+                reportError("msg.bad.assign.left");
+            }
         }
     }
 
@@ -4708,7 +4889,8 @@ public class Parser {
             Node parent,
             List<String> destructuringNames,
             AstNode defaultValue, /* defaultValue to use in function param decls */
-            Transformer transformer) {
+            Transformer transformer,
+            boolean isFunctionParameter) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         boolean defaultValuesSetup = false;
@@ -4767,7 +4949,8 @@ public class Parser {
                         (Assignment) value,
                         rightElem,
                         setOp,
-                        transformer);
+                        transformer,
+                        isFunctionParameter);
             } else {
                 parent.addChildToBack(
                         destructuringAssignmentHelper(
@@ -4776,7 +4959,8 @@ public class Parser {
                                 rightElem,
                                 currentScriptOrFn.getNextTempName(),
                                 null,
-                                transformer));
+                                transformer,
+                                isFunctionParameter));
             }
             empty = false;
         }
