@@ -622,6 +622,18 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(x);
     }
 
+    /**
+     * ES2026 Math.sumPrecise implementation. Phase 1: Array-like objects only.
+     *
+     * <p>Uses Shewchuk's algorithm for precise floating-point summation. Iterator support deferred
+     * to Phase 2 (requires Context-safe iterator from PR #2078).
+     *
+     * @param cx Current context (never stored)
+     * @param scope Current scope
+     * @param thisObj Math object
+     * @param args Arguments [items]
+     * @return Precise sum of numbers
+     */
     private static Object sumPrecise(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length == 0) {
@@ -629,10 +641,25 @@ final class NativeMath extends ScriptableObject {
                     ScriptRuntime.getMessageById("msg.no.arg", "Math.sumPrecise"));
         }
 
-        Object arg = args[0];
-        Scriptable iterable = ScriptRuntime.toObject(cx, scope, arg);
+        // Convert to object (per spec step 1)
+        Scriptable items = ScriptRuntime.toObject(cx, scope, args[0]);
 
-        // Collect values from iterable or array-like
+        // Phase 1: Array-like objects only
+        // TODO Phase 2: Add iterator support after PR #2078 (Context-safe IteratorLikeIterable)
+        if (!items.has("length", items)) {
+            throw ScriptRuntime.typeError(
+                    "Math.sumPrecise: array-like object required (iterator support coming in Phase 2)");
+        }
+
+        // Get length
+        long length = ScriptRuntime.toLength(items.get("length", items));
+
+        // Check length limit (per spec: count must not exceed 2^53)
+        if (length > (1L << 53)) {
+            throw ScriptRuntime.rangeError("Math.sumPrecise: array length exceeds maximum");
+        }
+
+        // Initialize state for Shewchuk's algorithm
         double[] partials = new double[32]; // Initial capacity
         int partialsSize = 0;
 
@@ -641,134 +668,71 @@ final class NativeMath extends ScriptableObject {
         boolean allZeros = true;
         boolean hasNegativeZero = false;
 
-        // Check if array-like or iterable
-        boolean isArrayLike = iterable.has("length", iterable);
-        boolean isIterable =
-                ScriptableObject.hasProperty(iterable, SymbolKey.ITERATOR)
-                        && !Undefined.isUndefined(
-                                ScriptableObject.getProperty(iterable, SymbolKey.ITERATOR));
-
-        if (!isArrayLike && !isIterable) {
-            throw ScriptRuntime.typeError("Math.sumPrecise called on non-iterable");
-        }
-
-        if (isArrayLike) {
-            int length = ScriptRuntime.toInt32(iterable.get("length", iterable));
-            for (int i = 0; i < length; i++) {
-                if (iterable.has(i, iterable)) {
-                    Object element = iterable.get(i, iterable);
-                    String type = ScriptRuntime.typeof(element);
-                    if (!"number".equals(type)) {
-                        throw ScriptRuntime.typeError(
-                                "Math.sumPrecise requires all elements to be numbers, got " + type);
-                    }
-                    double x = ScriptRuntime.toNumber(element);
-
-                    // Handle special values
-                    if (Double.isNaN(x)) {
-                        return ScriptRuntime.wrapNumber(Double.NaN);
-                    }
-                    if (x == Double.POSITIVE_INFINITY) {
-                        hasPositiveInf = true;
-                    } else if (x == Double.NEGATIVE_INFINITY) {
-                        hasNegativeInf = true;
-                    } else if (x != 0.0) {
-                        allZeros = false;
-                    } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
-                        hasNegativeZero = true;
-                    }
-
-                    // Shewchuk's algorithm inline
-                    if (!Double.isInfinite(x)) {
-                        int writeIdx = 0;
-                        for (int j = 0; j < partialsSize; j++) {
-                            double y = partials[j];
-                            if (Math.abs(x) < Math.abs(y)) {
-                                double temp = x;
-                                x = y;
-                                y = temp;
-                            }
-                            double hi = x + y;
-                            double lo = y - (hi - x);
-                            if (lo != 0.0) {
-                                partials[writeIdx++] = lo;
-                            }
-                            x = hi;
-                        }
-                        partialsSize = writeIdx;
-                        if (x != 0.0) {
-                            if (partialsSize >= partials.length) {
-                                double[] newPartials = new double[partials.length * 2];
-                                System.arraycopy(partials, 0, newPartials, 0, partialsSize);
-                                partials = newPartials;
-                            }
-                            partials[partialsSize++] = x;
-                        }
-                    }
-                }
+        // Process array-like object
+        for (long i = 0; i < length; i++) {
+            if (!items.has((int) i, items)) {
+                continue; // Skip holes
             }
-        } else {
-            final Object iterator = ScriptRuntime.callIterator(iterable, cx, scope);
-            if (!Undefined.isUndefined(iterator)) {
-                try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                    for (Object value : it) {
-                        String type = ScriptRuntime.typeof(value);
-                        if (!"number".equals(type)) {
-                            throw ScriptRuntime.typeError(
-                                    "Math.sumPrecise requires all elements to be numbers, got "
-                                            + type);
-                        }
-                        double x = ScriptRuntime.toNumber(value);
 
-                        // Handle special values
-                        if (Double.isNaN(x)) {
-                            return ScriptRuntime.wrapNumber(Double.NaN);
-                        }
-                        if (x == Double.POSITIVE_INFINITY) {
-                            hasPositiveInf = true;
-                        } else if (x == Double.NEGATIVE_INFINITY) {
-                            hasNegativeInf = true;
-                        } else if (x != 0.0) {
-                            allZeros = false;
-                        } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
-                            hasNegativeZero = true;
-                        }
+            Object element = items.get((int) i, items);
 
-                        // Shewchuk's algorithm inline
-                        if (!Double.isInfinite(x)) {
-                            int writeIdx = 0;
-                            for (int j = 0; j < partialsSize; j++) {
-                                double y = partials[j];
-                                if (Math.abs(x) < Math.abs(y)) {
-                                    double temp = x;
-                                    x = y;
-                                    y = temp;
-                                }
-                                double hi = x + y;
-                                double lo = y - (hi - x);
-                                if (lo != 0.0) {
-                                    partials[writeIdx++] = lo;
-                                }
-                                x = hi;
-                            }
-                            partialsSize = writeIdx;
-                            if (x != 0.0) {
-                                if (partialsSize >= partials.length) {
-                                    double[] newPartials = new double[partials.length * 2];
-                                    System.arraycopy(partials, 0, newPartials, 0, partialsSize);
-                                    partials = newPartials;
-                                }
-                                partials[partialsSize++] = x;
-                            }
-                        }
+            // Type check: must be Number (per spec)
+            if (!(element instanceof Number)) {
+                String type = ScriptRuntime.typeof(element);
+                throw ScriptRuntime.typeError(
+                        "Math.sumPrecise: all elements must be numbers, got " + type);
+            }
+
+            double x = ScriptRuntime.toNumber(element);
+
+            // Handle NaN (per spec: return NaN immediately)
+            if (Double.isNaN(x)) {
+                return ScriptRuntime.wrapNumber(Double.NaN);
+            }
+
+            // Track infinity states (per spec)
+            if (x == Double.POSITIVE_INFINITY) {
+                hasPositiveInf = true;
+            } else if (x == Double.NEGATIVE_INFINITY) {
+                hasNegativeInf = true;
+            } else if (x != 0.0) {
+                allZeros = false;
+            } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
+                hasNegativeZero = true;
+            }
+
+            // Shewchuk's algorithm for finite values
+            if (!Double.isInfinite(x)) {
+                int writeIdx = 0;
+                for (int j = 0; j < partialsSize; j++) {
+                    double y = partials[j];
+                    // Ensure |x| >= |y| for numerical stability
+                    if (Math.abs(x) < Math.abs(y)) {
+                        double temp = x;
+                        x = y;
+                        y = temp;
                     }
-                } catch (Exception e) {
-                    throw ScriptRuntime.typeError("Iterator error: " + e.getMessage());
+                    double hi = x + y;
+                    double lo = y - (hi - x);
+                    if (lo != 0.0) {
+                        partials[writeIdx++] = lo;
+                    }
+                    x = hi;
+                }
+                partialsSize = writeIdx;
+                if (x != 0.0) {
+                    // Grow array if needed
+                    if (partialsSize >= partials.length) {
+                        double[] newPartials = new double[partials.length * 2];
+                        System.arraycopy(partials, 0, newPartials, 0, partialsSize);
+                        partials = newPartials;
+                    }
+                    partials[partialsSize++] = x;
                 }
             }
         }
 
-        // Handle infinities
+        // Handle conflicting infinities (per spec: +∞ and -∞ → NaN)
         if (hasPositiveInf && hasNegativeInf) {
             return ScriptRuntime.wrapNumber(Double.NaN);
         }
@@ -779,17 +743,13 @@ final class NativeMath extends ScriptableObject {
             return ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY);
         }
 
-        // Handle all zeros (including empty input)
+        // Handle all zeros (per spec)
         if (allZeros) {
-            // Empty input should always return -0
-            if (partialsSize == 0) {
-                return ScriptRuntime.wrapNumber(-0.0);
-            }
-            // All zeros - return -0 if any negative zeros, otherwise +0
+            // Empty input or all zeros: return -0 if any -0, else +0
             return ScriptRuntime.wrapNumber(hasNegativeZero ? -0.0 : 0.0);
         }
 
-        // Sum partials
+        // Sum partials for final result
         double sum = 0.0;
         for (int i = 0; i < partialsSize; i++) {
             sum += partials[i];
