@@ -484,6 +484,7 @@ public class NativeES2025Iterator extends ScriptableObject {
 
     /** Base class for iterators that inherit from Iterator.prototype */
     abstract static class ES2025IteratorPrototype extends ScriptableObject {
+        private boolean isExecuting = false;
 
         ES2025IteratorPrototype() {
             defineProperty(
@@ -495,7 +496,17 @@ public class NativeES2025Iterator extends ScriptableObject {
                             if (!(thisObj instanceof ES2025IteratorPrototype)) {
                                 throw ScriptRuntime.typeError("next called on incompatible object");
                             }
-                            return ((ES2025IteratorPrototype) thisObj).next(cx, scope);
+                            ES2025IteratorPrototype self = (ES2025IteratorPrototype) thisObj;
+                            if (self.isExecuting) {
+                                throw ScriptRuntime.typeError(
+                                        "Iterator Helper generator is already running");
+                            }
+                            self.isExecuting = true;
+                            try {
+                                return self.next(cx, scope);
+                            } finally {
+                                self.isExecuting = false;
+                            }
                         }
 
                         @Override
