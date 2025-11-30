@@ -132,11 +132,17 @@ public class NativeES2025Iterator extends ScriptableObject {
         return new ConcatIterator(cx, scope, iterables, iteratorMethods);
     }
 
-    private static Callable getNextMethod(Object thisObj) {
+    /** Validates that thisObj is a Scriptable, throws TypeError if not */
+    private static Scriptable requireObjectCoercible(Object thisObj, String methodName) {
         if (thisObj == null || !(thisObj instanceof Scriptable)) {
-            throw ScriptRuntime.typeError("Iterator method called on non-object");
+            throw ScriptRuntime.typeError(
+                    "Iterator.prototype." + methodName + " called on non-object");
         }
-        Object next = ScriptableObject.getProperty((Scriptable) thisObj, "next");
+        return (Scriptable) thisObj;
+    }
+
+    private static Callable getNextMethod(Scriptable thisObj) {
+        Object next = ScriptableObject.getProperty(thisObj, "next");
         if (!(next instanceof Callable)) {
             throw ScriptRuntime.typeError("Iterator must have a next method");
         }
@@ -163,12 +169,13 @@ public class NativeES2025Iterator extends ScriptableObject {
 
     private static Object js_toArray(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Callable nextMethod = getNextMethod(thisObj);
+        Scriptable iterator = requireObjectCoercible(thisObj, "toArray");
+        Callable nextMethod = getNextMethod(iterator);
         Scriptable array = cx.newArray(scope, 0);
         int index = 0;
 
         while (true) {
-            Scriptable result = callNext(cx, scope, thisObj, nextMethod);
+            Scriptable result = callNext(cx, scope, iterator, nextMethod);
             if (isDone(result)) {
                 break;
             }
@@ -178,26 +185,21 @@ public class NativeES2025Iterator extends ScriptableObject {
         return array;
     }
 
-    // Iterator.prototype.forEach(fn)
     private static Object js_forEach(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "forEach");
+
         Object fn = args.length > 0 ? args[0] : Undefined.instance;
         if (!(fn instanceof Callable)) {
             throw ScriptRuntime.typeError("forEach requires a function argument");
         }
         Callable callback = (Callable) fn;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-        Callable nextMethod = (Callable) next;
+        Callable nextMethod = getNextMethod(iterator);
 
-        // Iterate and call function for each value
         long counter = 0;
         while (true) {
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -216,27 +218,21 @@ public class NativeES2025Iterator extends ScriptableObject {
         return Undefined.instance;
     }
 
-    // Iterator.prototype.some(predicate)
     private static Object js_some(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "some");
+
         Object predicate = args.length > 0 ? args[0] : Undefined.instance;
         if (!(predicate instanceof Callable)) {
             throw ScriptRuntime.typeError("some requires a function argument");
         }
         Callable predicateFn = (Callable) predicate;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-        Callable nextMethod = (Callable) next;
-
-        // Check iterator return method for cleanup
-        Object returnMethod = ScriptableObject.getProperty(thisObj, "return");
+        Callable nextMethod = getNextMethod(iterator);
+        Object returnMethod = ScriptableObject.getProperty(iterator, "return");
 
         long counter = 0;
         while (true) {
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -256,9 +252,8 @@ public class NativeES2025Iterator extends ScriptableObject {
                             new Object[] {value, counter});
 
             if (ScriptRuntime.toBoolean(testResult)) {
-                // Call return method to close iterator
                 if (returnMethod instanceof Callable) {
-                    ((Callable) returnMethod).call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+                    ((Callable) returnMethod).call(cx, scope, iterator, ScriptRuntime.emptyArgs);
                 }
                 return Boolean.TRUE;
             }
@@ -266,28 +261,22 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
     }
 
-    // Iterator.prototype.every(predicate)
     private static Object js_every(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "every");
+
         Object predicate = args.length > 0 ? args[0] : Undefined.instance;
         if (!(predicate instanceof Callable)) {
             throw ScriptRuntime.typeError("every requires a function argument");
         }
         Callable predicateFn = (Callable) predicate;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-        Callable nextMethod = (Callable) next;
-
-        // Check iterator return method for cleanup
-        Object returnMethod = ScriptableObject.getProperty(thisObj, "return");
+        Callable nextMethod = getNextMethod(iterator);
+        Object returnMethod = ScriptableObject.getProperty(iterator, "return");
 
         long counter = 0;
         while (true) {
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -307,9 +296,8 @@ public class NativeES2025Iterator extends ScriptableObject {
                             new Object[] {value, counter});
 
             if (!ScriptRuntime.toBoolean(testResult)) {
-                // Call return method to close iterator
                 if (returnMethod instanceof Callable) {
-                    ((Callable) returnMethod).call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+                    ((Callable) returnMethod).call(cx, scope, iterator, ScriptRuntime.emptyArgs);
                 }
                 return Boolean.FALSE;
             }
@@ -317,27 +305,21 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
     }
 
-    // Iterator.prototype.find(predicate)
     private static Object js_find(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "find");
+
         Object predicate = args.length > 0 ? args[0] : Undefined.instance;
         if (!(predicate instanceof Callable)) {
             throw ScriptRuntime.typeError("find requires a function argument");
         }
         Callable predicateFn = (Callable) predicate;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-        Callable nextMethod = (Callable) next;
-
-        // Check iterator return method for cleanup
-        Object returnMethod = ScriptableObject.getProperty(thisObj, "return");
+        Callable nextMethod = getNextMethod(iterator);
+        Object returnMethod = ScriptableObject.getProperty(iterator, "return");
 
         long counter = 0;
         while (true) {
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -357,9 +339,8 @@ public class NativeES2025Iterator extends ScriptableObject {
                             new Object[] {value, counter});
 
             if (ScriptRuntime.toBoolean(testResult)) {
-                // Call return method to close iterator
                 if (returnMethod instanceof Callable) {
-                    ((Callable) returnMethod).call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+                    ((Callable) returnMethod).call(cx, scope, iterator, ScriptRuntime.emptyArgs);
                 }
                 return value;
             }
@@ -367,32 +348,26 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
     }
 
-    // Iterator.prototype.reduce(reducer, initialValue)
     private static Object js_reduce(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "reduce");
+
         Object reducer = args.length > 0 ? args[0] : Undefined.instance;
         if (!(reducer instanceof Callable)) {
             throw ScriptRuntime.typeError("reduce requires a function argument");
         }
         Callable reducerFn = (Callable) reducer;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-        Callable nextMethod = (Callable) next;
+        Callable nextMethod = getNextMethod(iterator);
 
         Object accumulator;
         long counter;
 
-        // Check if initial value was provided
         if (args.length >= 2) {
             accumulator = args[1];
             counter = 0;
         } else {
-            // No initial value - use first value from iterator
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -407,9 +382,8 @@ public class NativeES2025Iterator extends ScriptableObject {
             counter = 1;
         }
 
-        // Iterate and reduce
         while (true) {
-            Object result = nextMethod.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            Object result = nextMethod.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
             }
@@ -433,43 +407,36 @@ public class NativeES2025Iterator extends ScriptableObject {
         return accumulator;
     }
 
-    // Iterator.prototype.map(mapper)
     private static Object js_map(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "map");
+
         Object mapper = args.length > 0 ? args[0] : Undefined.instance;
         if (!(mapper instanceof Callable)) {
             throw ScriptRuntime.typeError("map requires a function argument");
         }
         Callable mapperFn = (Callable) mapper;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-
-        return new MapIterator(cx, scope, thisObj, (Callable) next, mapperFn);
+        Callable nextMethod = getNextMethod(iterator);
+        return new MapIterator(cx, scope, iterator, nextMethod, mapperFn);
     }
 
-    // Iterator.prototype.filter(predicate)
     private static Object js_filter(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "filter");
+
         Object predicate = args.length > 0 ? args[0] : Undefined.instance;
         if (!(predicate instanceof Callable)) {
             throw ScriptRuntime.typeError("filter requires a function argument");
         }
         Callable predicateFn = (Callable) predicate;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-
-        return new FilterIterator(cx, scope, thisObj, (Callable) next, predicateFn);
+        Callable nextMethod = getNextMethod(iterator);
+        return new FilterIterator(cx, scope, iterator, nextMethod, predicateFn);
     }
 
-    // Iterator.prototype.take(limit)
     private static Object js_take(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "take");
+
         double limit = args.length > 0 ? ScriptRuntime.toNumber(args[0]) : Double.NaN;
 
         if (Double.isNaN(limit)) {
@@ -480,18 +447,13 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
 
         long remaining = (long) Math.floor(limit);
-
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-
-        return new TakeIterator(cx, scope, thisObj, (Callable) next, remaining);
+        Callable nextMethod = getNextMethod(iterator);
+        return new TakeIterator(cx, scope, iterator, nextMethod, remaining);
     }
 
-    // Iterator.prototype.drop(limit)
     private static Object js_drop(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "drop");
+
         double limit = args.length > 0 ? ScriptRuntime.toNumber(args[0]) : Double.NaN;
 
         if (Double.isNaN(limit)) {
@@ -502,39 +464,28 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
 
         long toSkip = (long) Math.floor(limit);
-
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-
-        return new DropIterator(cx, scope, thisObj, (Callable) next, toSkip);
+        Callable nextMethod = getNextMethod(iterator);
+        return new DropIterator(cx, scope, iterator, nextMethod, toSkip);
     }
 
-    // Iterator.prototype.flatMap(mapper)
     private static Object js_flatMap(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Scriptable iterator = requireObjectCoercible(thisObj, "flatMap");
+
         Object mapper = args.length > 0 ? args[0] : Undefined.instance;
         if (!(mapper instanceof Callable)) {
             throw ScriptRuntime.typeError("flatMap requires a function argument");
         }
         Callable mapperFn = (Callable) mapper;
 
-        // Get the iterator's next method
-        Object next = ScriptableObject.getProperty(thisObj, "next");
-        if (!(next instanceof Callable)) {
-            throw ScriptRuntime.typeError("Iterator must have a next method");
-        }
-
-        return new FlatMapIterator(cx, scope, thisObj, (Callable) next, mapperFn);
+        Callable nextMethod = getNextMethod(iterator);
+        return new FlatMapIterator(cx, scope, iterator, nextMethod, mapperFn);
     }
 
     /** Base class for iterators that inherit from Iterator.prototype */
     abstract static class ES2025IteratorPrototype extends ScriptableObject {
 
         ES2025IteratorPrototype() {
-            // Define next() method that calls the abstract next() implementation
             defineProperty(
                     "next",
                     new BaseFunction() {
@@ -563,7 +514,6 @@ public class NativeES2025Iterator extends ScriptableObject {
         abstract Object next(Context cx, Scriptable scope);
 
         Object doReturn(Context cx, Scriptable scope, Object value) {
-            // Default implementation - just return done: true, value
             Scriptable result = cx.newObject(scope);
             ScriptableObject.putProperty(result, "done", Boolean.TRUE);
             ScriptableObject.putProperty(result, "value", value);
@@ -571,7 +521,6 @@ public class NativeES2025Iterator extends ScriptableObject {
         }
 
         Object doThrow(Context cx, Scriptable scope, Object value) {
-            // Default implementation - throw the value
             if (value instanceof JavaScriptException) {
                 throw (JavaScriptException) value;
             } else if (value instanceof RhinoException) {
@@ -621,7 +570,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                     this.throwMethod = (Callable) thr;
                 }
 
-                // Set up prototype chain to inherit from Iterator.prototype
                 Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
                 Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
                 if (iteratorProto != null) {
@@ -678,7 +626,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.nextMethod = nextMethod;
             this.mapper = mapper;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -689,7 +636,6 @@ public class NativeES2025Iterator extends ScriptableObject {
 
         @Override
         Object next(Context cx, Scriptable scope) {
-            // Get next value from source iterator
             Object result = nextMethod.call(cx, scope, sourceIterator, ScriptRuntime.emptyArgs);
             if (!(result instanceof Scriptable)) {
                 throw ScriptRuntime.typeError("Iterator result must be an object");
@@ -701,7 +647,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                 return result;
             }
 
-            // Map the value
             Object value = ScriptableObject.getProperty(resultObj, "value");
             Object mappedValue =
                     mapper.call(
@@ -711,7 +656,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                             new Object[] {value, counter});
             counter++;
 
-            // Return new result with mapped value
             Scriptable newResult = cx.newObject(scope);
             ScriptableObject.putProperty(newResult, "done", Boolean.FALSE);
             ScriptableObject.putProperty(newResult, "value", mappedValue);
@@ -736,7 +680,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.nextMethod = nextMethod;
             this.predicate = predicate;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -791,7 +734,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.nextMethod = nextMethod;
             this.remaining = remaining;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -803,14 +745,12 @@ public class NativeES2025Iterator extends ScriptableObject {
         @Override
         Object next(Context cx, Scriptable scope) {
             if (remaining <= 0) {
-                // Close the underlying iterator
                 Object returnMethod = ScriptableObject.getProperty(sourceIterator, "return");
                 if (returnMethod instanceof Callable) {
                     ((Callable) returnMethod)
                             .call(cx, scope, sourceIterator, ScriptRuntime.emptyArgs);
                 }
 
-                // Return done result
                 Scriptable result = cx.newObject(scope);
                 ScriptableObject.putProperty(result, "done", Boolean.TRUE);
                 ScriptableObject.putProperty(result, "value", Undefined.instance);
@@ -839,7 +779,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.nextMethod = nextMethod;
             this.toSkip = toSkip;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -850,7 +789,6 @@ public class NativeES2025Iterator extends ScriptableObject {
 
         @Override
         Object next(Context cx, Scriptable scope) {
-            // Skip the required number of items
             while (toSkip > 0) {
                 Object result = nextMethod.call(cx, scope, sourceIterator, ScriptRuntime.emptyArgs);
                 if (!(result instanceof Scriptable)) {
@@ -865,7 +803,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                 toSkip--;
             }
 
-            // Return next value from source
             return nextMethod.call(cx, scope, sourceIterator, ScriptRuntime.emptyArgs);
         }
     }
@@ -889,7 +826,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.nextMethod = nextMethod;
             this.mapper = mapper;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -901,7 +837,6 @@ public class NativeES2025Iterator extends ScriptableObject {
         @Override
         Object next(Context cx, Scriptable scope) {
             while (true) {
-                // If we have an inner iterator, try to get next value from it
                 if (innerIterator != null) {
                     Object innerResult =
                             innerNextMethod.call(cx, scope, innerIterator, ScriptRuntime.emptyArgs);
@@ -915,12 +850,10 @@ public class NativeES2025Iterator extends ScriptableObject {
                         return innerResult;
                     }
 
-                    // Inner iterator exhausted, move to next source value
                     innerIterator = null;
                     innerNextMethod = null;
                 }
 
-                // Get next value from source iterator
                 Object result = nextMethod.call(cx, scope, sourceIterator, ScriptRuntime.emptyArgs);
                 if (!(result instanceof Scriptable)) {
                     throw ScriptRuntime.typeError("Iterator result must be an object");
@@ -932,7 +865,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                     return result;
                 }
 
-                // Map the value to an iterator
                 Object value = ScriptableObject.getProperty(resultObj, "value");
                 Object mapped =
                         mapper.call(
@@ -942,12 +874,10 @@ public class NativeES2025Iterator extends ScriptableObject {
                                 new Object[] {value, counter});
                 counter++;
 
-                // Reject strings (they're iterable but shouldn't be flattened)
                 if (mapped instanceof String || mapped instanceof ConsString) {
                     throw ScriptRuntime.typeError("flatMap mapper cannot return a string");
                 }
 
-                // Get the iterator from the mapped value
                 if (mapped instanceof Scriptable) {
                     Scriptable mappedObj = (Scriptable) mapped;
                     Object iteratorMethod =
@@ -986,7 +916,6 @@ public class NativeES2025Iterator extends ScriptableObject {
             this.iterables = iterables;
             this.iteratorMethods = iteratorMethods;
 
-            // Set up prototype chain
             Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
             Scriptable iteratorProto = ScriptableObject.getClassPrototype(topScope, "Iterator");
             if (iteratorProto != null) {
@@ -998,17 +927,14 @@ public class NativeES2025Iterator extends ScriptableObject {
         @Override
         Object next(Context cx, Scriptable scope) {
             while (true) {
-                // If we don't have a current iterator, get the next one
                 if (currentIterator == null) {
                     if (currentIndex >= iterables.length) {
-                        // All iterables exhausted
                         Scriptable result = cx.newObject(scope);
                         ScriptableObject.putProperty(result, "done", Boolean.TRUE);
                         ScriptableObject.putProperty(result, "value", Undefined.instance);
                         return result;
                     }
 
-                    // Get iterator for current iterable
                     Scriptable iterable = iterables[currentIndex];
                     Callable iteratorMethod = iteratorMethods[currentIndex];
 
@@ -1026,7 +952,6 @@ public class NativeES2025Iterator extends ScriptableObject {
                     currentNextMethod = (Callable) next;
                 }
 
-                // Get next value from current iterator
                 Object result =
                         currentNextMethod.call(cx, scope, currentIterator, ScriptRuntime.emptyArgs);
                 if (!(result instanceof Scriptable)) {
@@ -1036,7 +961,6 @@ public class NativeES2025Iterator extends ScriptableObject {
 
                 Object done = ScriptableObject.getProperty(resultObj, "done");
                 if (ScriptRuntime.toBoolean(done)) {
-                    // Current iterator exhausted, move to next
                     currentIterator = null;
                     currentNextMethod = null;
                     currentIndex++;
@@ -1049,7 +973,6 @@ public class NativeES2025Iterator extends ScriptableObject {
 
         @Override
         Object doReturn(Context cx, Scriptable scope, Object value) {
-            // Close current iterator if active
             if (currentIterator != null) {
                 Object returnMethod = ScriptableObject.getProperty(currentIterator, "return");
                 if (returnMethod instanceof Callable) {
