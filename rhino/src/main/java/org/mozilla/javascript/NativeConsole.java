@@ -54,25 +54,89 @@ public class NativeConsole extends ScriptableObject {
         obj.defineProperty(
                 scope, "toSource", 0, NativeConsole::js_toSource, 0, DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "trace", 1, NativeConsole::js_trace, 0, DONTENUM | READONLY);
+                scope,
+                "trace",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_trace(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "debug", 1, NativeConsole::js_debug, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "log", 1, NativeConsole::js_log, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "info", 1, NativeConsole::js_info, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "warn", 1, NativeConsole::js_warn, 0, DONTENUM | READONLY);
+                scope,
+                "debug",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_debug(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "error", 1, NativeConsole::js_error, 0, DONTENUM | READONLY);
+                scope,
+                "log",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_log(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "assert", 2, NativeConsole::js_assert, 0, DONTENUM | READONLY);
+                scope,
+                "info",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_info(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "count", 1, NativeConsole::js_count, 0, DONTENUM | READONLY);
+                scope,
+                "warn",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_warn(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "countReset", 1, NativeConsole::js_countReset, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "time", 1, NativeConsole::js_time, 0, DONTENUM | READONLY);
+                scope,
+                "error",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_error(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "timeEnd", 1, NativeConsole::js_timeEnd, 0, DONTENUM | READONLY);
+                scope,
+                "assert",
+                2,
+                (cx, callScope, ignoredThis, args) -> obj.js_assert(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "timeLog", 2, NativeConsole::js_timeLog, 0, DONTENUM | READONLY);
+                scope,
+                "count",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_count(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope,
+                "countReset",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_countReset(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope,
+                "time",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_time(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope,
+                "timeEnd",
+                1,
+                (cx, callScope, ignoredThis, args) -> obj.js_timeEnd(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
+        obj.defineBuiltinProperty(
+                scope,
+                "timeLog",
+                2,
+                (cx, callScope, ignoredThis, args) -> obj.js_timeLog(cx, callScope, args),
+                0,
+                DONTENUM | READONLY);
         if (sealed) {
             obj.sealObject();
         }
@@ -88,88 +152,69 @@ public class NativeConsole extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static NativeConsole realThis(Scriptable thisObj, String methodName) {
-        return LambdaConstructor.ensureType(thisObj, NativeConsole.class, methodName);
-    }
-
     private static Object js_toSource(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "toSource");
         return CLASS_NAME;
     }
 
-    private static Object js_trace(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "trace");
+    private Object js_trace(Context cx, Scriptable scope, Object[] args) {
         ScriptStackElement[] stack = new EvaluatorException("[object Object]").getScriptStack();
-        console.printer.print(cx, scope, Level.TRACE, args, stack);
+        printer.print(cx, scope, Level.TRACE, args, stack);
         return Undefined.instance;
     }
 
-    private static Object js_debug(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "debug");
-        console.printer.print(cx, scope, Level.DEBUG, args, null);
+    private Object js_debug(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.DEBUG, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_log(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "log");
-        console.printer.print(cx, scope, Level.INFO, args, null);
+    private Object js_log(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_info(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "info");
-        console.printer.print(cx, scope, Level.INFO, args, null);
+    private Object js_info(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_warn(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "warn");
-        console.printer.print(cx, scope, Level.WARN, args, null);
+    private Object js_warn(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.WARN, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_error(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "error");
-        console.printer.print(cx, scope, Level.ERROR, args, null);
+    private Object js_error(Context cx, Scriptable scope, Object[] args) {
+        printer.print(cx, scope, Level.ERROR, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_assert(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "assert").jsAssert(cx, scope, args);
+    private Object js_assert(Context cx, Scriptable scope, Object[] args) {
+        jsAssert(cx, scope, args);
         return Undefined.instance;
     }
 
-    private static Object js_count(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "assert").count(cx, scope, args);
+    private Object js_count(Context cx, Scriptable scope, Object[] args) {
+        count(cx, scope, args);
         return Undefined.instance;
     }
 
-    private static Object js_countReset(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "countReset").countReset(cx, scope, args);
+    private Object js_countReset(Context cx, Scriptable scope, Object[] args) {
+        countReset(cx, scope, args);
         return Undefined.instance;
     }
 
-    private static Object js_time(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "time").time(cx, scope, args);
+    private Object js_time(Context cx, Scriptable scope, Object[] args) {
+        time(cx, scope, args);
         return Undefined.instance;
     }
 
-    private static Object js_timeEnd(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "timeEnd").timeEnd(cx, scope, args);
+    private Object js_timeEnd(Context cx, Scriptable scope, Object[] args) {
+        timeEnd(cx, scope, args);
         return Undefined.instance;
     }
 
-    private static Object js_timeLog(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "timeLog").timeLog(cx, scope, args);
+    private Object js_timeLog(Context cx, Scriptable scope, Object[] args) {
+        timeLog(cx, scope, args);
         return Undefined.instance;
     }
 

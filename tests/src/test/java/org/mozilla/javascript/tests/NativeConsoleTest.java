@@ -18,6 +18,7 @@ import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -341,6 +342,7 @@ public class NativeConsoleTest {
                 "console.log('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
         assertPrintMsg("console.log('abc', 123)", "abc 123");
+        assertPrintMsg("fn = console.log; fn('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.trace('abc', 123)",
@@ -352,26 +354,31 @@ public class NativeConsoleTest {
                                     new ScriptStackElement("source", null, 1)
                                 })));
         assertPrintMsg("console.trace('abc', 123)", "abc 123\n@source:1");
+        assertPrintMsg("fn = console.trace; fn('abc', 123)", "abc 123\n@source:1");
 
         assertPrintCalls(
                 "console.debug('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.DEBUG, new Object[] {"abc", 123})));
         assertPrintMsg("console.debug('abc', 123)", "abc 123");
+        assertPrintMsg("fn = console.debug; fn('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.info('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
         assertPrintMsg("console.info('abc', 123)", "abc 123");
+        assertPrintMsg("fn = console.info; fn('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.warn('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.WARN, new Object[] {"abc", 123})));
         assertPrintMsg("console.warn('abc', 123)", "abc 123");
+        assertPrintMsg("fn = console.warn; fn('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.error('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.ERROR, new Object[] {"abc", 123})));
         assertPrintMsg("console.error('abc', 123)", "abc 123");
+        assertPrintMsg("fn = console.error; fn('abc', 123)", "abc 123");
     }
 
     @Test
@@ -416,6 +423,7 @@ public class NativeConsoleTest {
     @Test
     public void testAssert() {
         assertPrintCalls("console.assert(true)", Collections.emptyList());
+        assertPrintCalls("fn = console.assert; fn(true)", Collections.emptyList());
 
         assertPrintCalls(
                 "console.assert(false)",
@@ -473,7 +481,9 @@ public class NativeConsoleTest {
                         + "console.countReset('b');\n"
                         + "console.countReset('c');\n"
                         + "console.count('b');\n"
-                        + "console.count();\n",
+                        + "console.count();\n"
+                        + "fn = console.count; fn('d');\n"
+                        + "fn = console.countReset('d');\n",
                 Arrays.asList(
                         new PrinterCall(Level.INFO, new String[] {"default: 1"}),
                         new PrinterCall(Level.INFO, new String[] {"a: 1"}),
@@ -482,7 +492,8 @@ public class NativeConsoleTest {
                         new PrinterCall(Level.INFO, new String[] {"b: 2"}),
                         new PrinterCall(Level.WARN, new String[] {"Count for 'c' does not exist."}),
                         new PrinterCall(Level.INFO, new String[] {"b: 1"}),
-                        new PrinterCall(Level.INFO, new String[] {"default: 3"})));
+                        new PrinterCall(Level.INFO, new String[] {"default: 3"}),
+                        new PrinterCall(Level.INFO, new String[] {"d: 1"})));
     }
 
     @Test
@@ -495,10 +506,10 @@ public class NativeConsoleTest {
                         + "console.timeLog('b');\n"
                         + "console.timeEnd('b');\n"
                         + "console.timeLog('b');\n"
-                        + "console.time('b');\n"
-                        + "console.timeLog('b', 'abc', 123);\n"
-                        + "console.timeLog();\n"
-                        + "console.timeEnd('c');\n",
+                        + "fn = console.time; fn('b');\n"
+                        + "fn = console.timeLog; fn('b', 'abc', 123);\n"
+                        + "fn = console.timeLog; fn();\n"
+                        + "fn = console.timeEnd; fn('c');\n",
                 Arrays.asList(
                         new PrinterCall(
                                 Level.WARN, new Object[] {"Timer 'default' already exists."}),
@@ -544,6 +555,12 @@ public class NativeConsoleTest {
                 "{\"msg\":\"Something is wrong\",\"err\":{\"fileName\":\"source\",\"lineNumber\":2}}");
     }
 
+    @Test
+    public void testToSource() {
+        assertEquals("Console", evaluate("console.toSource()"));
+        assertEquals("Console", evaluate("fn = console.toSource; fn()"));
+    }
+
     private static void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
@@ -571,6 +588,17 @@ public class NativeConsoleTest {
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);
             printer.assertMsf(expectedMsg);
+        }
+    }
+
+    private static Object evaluate(String js) {
+        DummyConsolePrinter printer = new DummyConsolePrinter();
+
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_DEFAULT);
+            ScriptableObject scope = cx.initStandardObjects();
+            NativeConsole.init(scope, false, printer);
+            return cx.evaluateString(scope, js, "source", 1, null);
         }
     }
 }
