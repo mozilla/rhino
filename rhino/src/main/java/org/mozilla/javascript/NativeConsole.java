@@ -188,36 +188,6 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private Object js_assert(Context cx, Scriptable scope, Object[] args) {
-        jsAssert(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private Object js_count(Context cx, Scriptable scope, Object[] args) {
-        count(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private Object js_countReset(Context cx, Scriptable scope, Object[] args) {
-        countReset(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private Object js_time(Context cx, Scriptable scope, Object[] args) {
-        time(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private Object js_timeEnd(Context cx, Scriptable scope, Object[] args) {
-        timeEnd(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private Object js_timeLog(Context cx, Scriptable scope, Object[] args) {
-        timeLog(cx, scope, args);
-        return Undefined.instance;
-    }
-
     private void print(Context cx, Scriptable scope, Level level, String msg) {
         printer.print(cx, scope, level, new String[] {msg}, null);
     }
@@ -395,9 +365,9 @@ public class NativeConsole extends ScriptableObject {
         }
     }
 
-    private void jsAssert(Context cx, Scriptable scope, Object[] args) {
+    private Object js_assert(Context cx, Scriptable scope, Object[] args) {
         if (args != null && args.length > 0 && ScriptRuntime.toBoolean(args[0])) {
-            return;
+            return Undefined.instance;
         }
 
         if (args == null || args.length < 2) {
@@ -407,7 +377,7 @@ public class NativeConsole extends ScriptableObject {
                     Level.ERROR,
                     new String[] {"Assertion failed: console.assert"},
                     null);
-            return;
+            return Undefined.instance;
         }
 
         Object first = args[1];
@@ -421,48 +391,53 @@ public class NativeConsole extends ScriptableObject {
         }
 
         printer.print(cx, scope, Level.ERROR, args, null);
+        return Undefined.instance;
     }
 
-    private void count(Context cx, Scriptable scope, Object[] args) {
+    private Object js_count(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
         print(cx, scope, Level.INFO, label + ": " + count);
+        return Undefined.instance;
     }
 
-    private void countReset(Context cx, Scriptable scope, Object[] args) {
+    private Object js_countReset(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
             print(cx, scope, Level.WARN, "Count for '" + label + "' does not exist.");
         }
+        return Undefined.instance;
     }
 
-    private void time(Context cx, Scriptable scope, Object[] args) {
+    private Object js_time(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' already exists.");
-            return;
+            return Undefined.instance;
         }
         timers.put(label, System.nanoTime());
+        return Undefined.instance;
     }
 
-    private void timeEnd(Context cx, Scriptable scope, Object[] args) {
+    private Object js_timeEnd(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
-            return;
+            return Undefined.instance;
         }
         print(cx, scope, Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
+        return Undefined.instance;
     }
 
-    private void timeLog(Context cx, Scriptable scope, Object[] args) {
+    private Object js_timeLog(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
-            return;
+            return Undefined.instance;
         }
         StringBuilder msg =
                 new StringBuilder(label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
@@ -473,6 +448,7 @@ public class NativeConsole extends ScriptableObject {
             }
         }
         print(cx, scope, Level.INFO, msg.toString());
+        return Undefined.instance;
     }
 
     private double nano2Milli(Long nano) {
