@@ -94,4 +94,35 @@ class LetTest {
                         + "})()\n";
         Utils.assertWithAllModes_ES6(1, script);
     }
+
+    @Test
+    void letInsideFunctionSwitchIf() {
+        String script =
+                "(function () {\n"
+                        + "    switch (0) {\n"
+                        + "        default:\n"
+                        + "            let a = 0;\n"
+                        + "            if (a == 0) {\n"
+                        + "                a++;\n"
+                        + "            }\n"
+                        + "            return a;\n"
+                        + "    }\n"
+                        + "})();\n";
+        Utils.assertWithAllModes_1_8(1, script);
+    }
+
+    @Test
+    void letInsideFunctionWhileIf() {
+        String script =
+                "(function () {\n"
+                        + "    while (true) {\n"
+                        + "            let a = 0;\n"
+                        + "            if (a == 0) {\n"
+                        + "                a++;\n"
+                        + "            }\n"
+                        + "            return a;\n"
+                        + "    }\n"
+                        + "})();\n";
+        Utils.assertWithAllModes_1_8(1, script);
+    }
 }
