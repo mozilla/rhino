@@ -53,26 +53,19 @@ public class NativeConsole extends ScriptableObject {
 
         obj.defineProperty(
                 scope, "toSource", 0, NativeConsole::js_toSource, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "trace", 1, obj::js_trace, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "debug", 1, obj::js_debug, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "log", 1, obj::js_log, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "info", 1, obj::js_info, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "warn", 1, obj::js_warn, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "error", 1, obj::js_error, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "assert", 2, obj::js_assert, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "count", 1, obj::js_count, 0, DONTENUM | READONLY);
         obj.defineBuiltinProperty(
-                scope, "trace", 1, NativeConsole::js_trace, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "debug", 1, NativeConsole::js_debug, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "log", 1, NativeConsole::js_log, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "info", 1, NativeConsole::js_info, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "warn", 1, NativeConsole::js_warn, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "error", 1, NativeConsole::js_error, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "assert", 2, NativeConsole::js_assert, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "count", 1, NativeConsole::js_count, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "countReset", 1, NativeConsole::js_countReset, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(scope, "time", 1, NativeConsole::js_time, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "timeEnd", 1, NativeConsole::js_timeEnd, 0, DONTENUM | READONLY);
-        obj.defineBuiltinProperty(
-                scope, "timeLog", 2, NativeConsole::js_timeLog, 0, DONTENUM | READONLY);
+                scope, "countReset", 1, obj::js_countReset, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "time", 1, obj::js_time, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "timeEnd", 1, obj::js_timeEnd, 0, DONTENUM | READONLY);
+        obj.defineBuiltinProperty(scope, "timeLog", 2, obj::js_timeLog, 0, DONTENUM | READONLY);
         if (sealed) {
             obj.sealObject();
         }
@@ -88,88 +81,39 @@ public class NativeConsole extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static NativeConsole realThis(Scriptable thisObj, String methodName) {
-        return LambdaConstructor.ensureType(thisObj, NativeConsole.class, methodName);
-    }
-
     private static Object js_toSource(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "toSource");
         return CLASS_NAME;
     }
 
-    private static Object js_trace(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "trace");
+    private Object js_trace(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ScriptStackElement[] stack = new EvaluatorException("[object Object]").getScriptStack();
-        console.printer.print(cx, scope, Level.TRACE, args, stack);
+        printer.print(cx, scope, Level.TRACE, args, stack);
         return Undefined.instance;
     }
 
-    private static Object js_debug(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "debug");
-        console.printer.print(cx, scope, Level.DEBUG, args, null);
+    private Object js_debug(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        printer.print(cx, scope, Level.DEBUG, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_log(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "log");
-        console.printer.print(cx, scope, Level.INFO, args, null);
+    private Object js_log(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_info(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "info");
-        console.printer.print(cx, scope, Level.INFO, args, null);
+    private Object js_info(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_warn(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "warn");
-        console.printer.print(cx, scope, Level.WARN, args, null);
+    private Object js_warn(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        printer.print(cx, scope, Level.WARN, args, null);
         return Undefined.instance;
     }
 
-    private static Object js_error(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        var console = realThis(thisObj, "error");
-        console.printer.print(cx, scope, Level.ERROR, args, null);
-        return Undefined.instance;
-    }
-
-    private static Object js_assert(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "assert").jsAssert(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private static Object js_count(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "assert").count(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private static Object js_countReset(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "countReset").countReset(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private static Object js_time(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "time").time(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private static Object js_timeEnd(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "timeEnd").timeEnd(cx, scope, args);
-        return Undefined.instance;
-    }
-
-    private static Object js_timeLog(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        realThis(thisObj, "timeLog").timeLog(cx, scope, args);
+    private Object js_error(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        printer.print(cx, scope, Level.ERROR, args, null);
         return Undefined.instance;
     }
 
@@ -350,9 +294,9 @@ public class NativeConsole extends ScriptableObject {
         }
     }
 
-    private void jsAssert(Context cx, Scriptable scope, Object[] args) {
+    private Object js_assert(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args != null && args.length > 0 && ScriptRuntime.toBoolean(args[0])) {
-            return;
+            return Undefined.instance;
         }
 
         if (args == null || args.length < 2) {
@@ -362,7 +306,7 @@ public class NativeConsole extends ScriptableObject {
                     Level.ERROR,
                     new String[] {"Assertion failed: console.assert"},
                     null);
-            return;
+            return Undefined.instance;
         }
 
         Object first = args[1];
@@ -376,48 +320,53 @@ public class NativeConsole extends ScriptableObject {
         }
 
         printer.print(cx, scope, Level.ERROR, args, null);
+        return Undefined.instance;
     }
 
-    private void count(Context cx, Scriptable scope, Object[] args) {
+    private Object js_count(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
         print(cx, scope, Level.INFO, label + ": " + count);
+        return Undefined.instance;
     }
 
-    private void countReset(Context cx, Scriptable scope, Object[] args) {
+    private Object js_countReset(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
             print(cx, scope, Level.WARN, "Count for '" + label + "' does not exist.");
         }
+        return Undefined.instance;
     }
 
-    private void time(Context cx, Scriptable scope, Object[] args) {
+    private Object js_time(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' already exists.");
-            return;
+            return Undefined.instance;
         }
         timers.put(label, System.nanoTime());
+        return Undefined.instance;
     }
 
-    private void timeEnd(Context cx, Scriptable scope, Object[] args) {
+    private Object js_timeEnd(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
-            return;
+            return Undefined.instance;
         }
         print(cx, scope, Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
+        return Undefined.instance;
     }
 
-    private void timeLog(Context cx, Scriptable scope, Object[] args) {
+    private Object js_timeLog(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {
             print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
-            return;
+            return Undefined.instance;
         }
         StringBuilder msg =
                 new StringBuilder(label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
@@ -428,6 +377,7 @@ public class NativeConsole extends ScriptableObject {
             }
         }
         print(cx, scope, Level.INFO, msg.toString());
+        return Undefined.instance;
     }
 
     private double nano2Milli(Long nano) {
