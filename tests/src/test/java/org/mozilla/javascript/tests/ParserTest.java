@@ -1490,10 +1490,12 @@ public class ParserTest {
         expectParseErrors("`\\u{8", new String[] {"syntax error"});
     }
 
-	@Test
-	public void errorOnInvalidDestructuringDeclaration() {
-		expectParseErrors("for(var {};;) {}", new String[] {"Missing = in destructuring declaration", "syntax error"});
-	}
+    @Test
+    public void errorOnInvalidDestructuringDeclaration() {
+        expectParseErrors(
+                "for(var {};;) {}",
+                new String[] {"Missing = in destructuring declaration", "syntax error"});
+    }
 
     private void expectParseErrors(String string, String[] errors) {
         parse(string, errors, null, false);
