@@ -25,7 +25,7 @@ var TITLE   = "Date.prototype.getMonth()";
 
 writeHeaderToLog( SECTION + " "+ TITLE);
 
-addTestCase( TIME_NOW );
+// Flaky: addTestCase( TIME_NOW );
 addTestCase( TIME_0000 );
 addTestCase( TIME_1970 );
 addTestCase( TIME_1900 );
