@@ -1179,8 +1179,15 @@ public final class IRFactory {
         Scope block = Scope.splitScope(node);
         block.setLineColumnNumber(node.getLineno(), node.getColumn());
         block.addChildToBack(node);
+        node.setParentScope(block);
 
-        parser.pushScope(node);
+        // Can't use pushScope/popScope here since splitScope moves the symbol table
+        // We set currentScope to 'node' (not 'block') so nested scopes can be pushed,
+        // since their parent pointers were set to 'node' during parsing. Variable resolution
+        // works correctly because it walks up the parentScope chain, where node.parentScope =
+        // block.
+        Scope savedScope = parser.currentScope;
+        parser.currentScope = node;
         try {
             Node switchExpr = transform(node.getExpression());
             node.addChildToBack(switchExpr);
@@ -1205,7 +1212,7 @@ public final class IRFactory {
             closeSwitch(block);
             return block;
         } finally {
-            parser.popScope();
+            parser.currentScope = savedScope;
         }
     }
 
