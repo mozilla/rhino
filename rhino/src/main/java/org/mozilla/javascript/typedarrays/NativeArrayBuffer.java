@@ -29,8 +29,8 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static final byte[] EMPTY_BUF = new byte[0];
 
     byte[] buffer;
-    // ES2024: maxByteLength for resizable buffers (null = fixed-length)
-    private Integer maxByteLength;
+    // ES2024: maxByteLength for resizable buffers (-1 = fixed-length)
+    private int maxByteLength = -1;
 
     @Override
     public String getClassName() {
@@ -152,7 +152,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
 
         // ES2024: Check for options parameter with maxByteLength
-        Integer maxByteLength = null;
+        int maxByteLength = -1;
         if (isArg(args, 1) && args[1] instanceof Scriptable) {
             Scriptable options = (Scriptable) args[1];
             Object maxByteLengthValue = ScriptableObject.getProperty(options, "maxByteLength");
@@ -408,7 +408,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         }
 
         // 4. If IsResizableArrayBuffer(O) is false, throw a TypeError exception
-        if (self.maxByteLength == null) {
+        if (self.maxByteLength < 0) {
             throw ScriptRuntime.typeError("ArrayBuffer is not resizable");
         }
 
@@ -477,7 +477,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static Object js_resizable(Scriptable thisObj) {
         NativeArrayBuffer self = getSelf(thisObj);
         // A buffer is resizable if maxByteLength was specified in constructor
-        return self.maxByteLength != null;
+        return self.maxByteLength >= 0;
     }
 
     // ES2024 ArrayBuffer.prototype.maxByteLength getter
@@ -485,7 +485,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         NativeArrayBuffer self = getSelf(thisObj);
         // For fixed-length buffers, maxByteLength = byteLength
         // For resizable buffers, return the maxByteLength
-        if (self.maxByteLength != null) {
+        if (self.maxByteLength >= 0) {
             return self.maxByteLength;
         } else {
             return self.getLength();
