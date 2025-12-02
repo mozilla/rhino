@@ -1,12 +1,9 @@
 package org.mozilla.javascript;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 
@@ -111,34 +108,6 @@ public class CodeGenUtils {
         builder.hasRestArg = scriptOrFn.hasRestParameter();
         builder.hasDefaultParameters = scriptOrFn.getDefaultParams() != null;
 
-        // For generators, store default param source for runtime evaluation
-        // (but not if they contain super - those are compiled as bytecode)
-        if (scriptOrFn instanceof FunctionNode) {
-            FunctionNode fn = (FunctionNode) scriptOrFn;
-            if (fn.isGenerator() && scriptOrFn.getDefaultParams() != null) {
-                List<Object> defaultParams = scriptOrFn.getDefaultParams();
-                ArrayList<String> sourceList = new ArrayList<>();
-                boolean hasSuper = false;
-                for (int i = 0; i < defaultParams.size() - 1; i += 2) {
-                    if (defaultParams.get(i) instanceof String
-                            && defaultParams.get(i + 1) instanceof AstNode) {
-                        String paramName = (String) defaultParams.get(i);
-                        AstNode expr = (AstNode) defaultParams.get(i + 1);
-                        if (containsSuper(expr)) {
-                            hasSuper = true;
-                            break;
-                        }
-                        sourceList.add(paramName);
-                        sourceList.add(expr.toSource());
-                    }
-                }
-                // Only store if no super (super cases are handled as bytecode)
-                if (!hasSuper && !sourceList.isEmpty()) {
-                    builder.generatorDefaultParams = sourceList.toArray(new String[0]);
-                }
-            }
-        }
-
         // Calculate arity (function.length) - count params before first default
         builder.arity = FunctionNode.calculateFunctionArity(scriptOrFn);
 
@@ -160,44 +129,5 @@ public class CodeGenUtils {
         } else {
             builder.constructor = new JSCode.NullBuilder<T>();
         }
-    }
-
-    /**
-     * Check if an AST node contains any super references.
-     *
-     * @param node the AST node to check
-     * @return true if the node or any of its children contain super references
-     */
-    private static boolean containsSuper(AstNode node) {
-        int type = node.getType();
-        // Check if this node is a super-related token
-        if (type == Token.SUPER
-                || type == Token.GETPROP_SUPER
-                || type == Token.GETPROPNOWARN_SUPER
-                || type == Token.SETPROP_SUPER
-                || type == Token.GETELEM_SUPER
-                || type == Token.SETELEM_SUPER) {
-            return true;
-        }
-
-        // For InfixExpression nodes (like PropertyGet), check left and right fields
-        if (node instanceof InfixExpression) {
-            InfixExpression infix = (InfixExpression) node;
-            if (infix.getLeft() != null && containsSuper(infix.getLeft())) {
-                return true;
-            }
-            if (infix.getRight() != null && containsSuper(infix.getRight())) {
-                return true;
-            }
-        }
-
-        // Recursively check all children
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            if (child instanceof AstNode && containsSuper((AstNode) child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

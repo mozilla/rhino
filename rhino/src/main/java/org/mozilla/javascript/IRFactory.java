@@ -656,27 +656,14 @@ public final class IRFactory {
 
             /* Process simple default parameters */
             List<Object> defaultParams = fn.getDefaultParams();
-            // For generators: only add default params to body if they contain 'super'
-            boolean addToBody = !fn.isGenerator();
-            if (fn.isGenerator() && defaultParams != null) {
-                // if any default param contains super it needs to done in bytecode
-                for (int i = 0; i < defaultParams.size() - 1; i += 2) {
-                    if (defaultParams.get(i + 1) instanceof AstNode) {
-                        String source = ((AstNode) defaultParams.get(i + 1)).toSource();
-                        if (source.contains("super")) {
-                            addToBody = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (defaultParams != null && addToBody) {
+            if (defaultParams != null) {
+                Node paramInitBlock = null;
                 for (int i = defaultParams.size() - 1; i > 0; ) {
                     if (defaultParams.get(i) instanceof AstNode
                             && defaultParams.get(i - 1) instanceof String) {
                         AstNode rhs = (AstNode) defaultParams.get(i);
                         String name = (String) defaultParams.get(i - 1);
-                        body.addChildToFront(
+                        Node paramInit =
                                 createIf(
                                         createBinary(
                                                 Token.SHEQ,
@@ -692,9 +679,20 @@ public final class IRFactory {
                                                 body.getColumn()),
                                         null,
                                         body.getLineno(),
-                                        body.getColumn()));
+                                        body.getColumn());
+                        if (fn.isGenerator()) {
+                            if (paramInitBlock == null) {
+                                paramInitBlock = new Node(Token.BLOCK);
+                            }
+                            paramInitBlock.addChildToFront(paramInit);
+                        } else {
+                            body.addChildToFront(paramInit);
+                        }
                     }
                     i -= 2;
+                }
+                if (fn.isGenerator() && paramInitBlock != null) {
+                    fn.setGeneratorParamInitBlock(paramInitBlock);
                 }
             }
 

@@ -296,15 +296,11 @@ public final class Interpreter extends Icode implements Evaluator {
                 ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope, desc.isEvalFunction());
             }
 
-            // For generators with default parameters, evaluate them after activation scope
-            // is created but BEFORE nested function declarations are added to the scope.
-            // This ensures that references to 'arguments' in default params get the arguments
-            // object, not a function declaration that might shadow it.
-            if (fnOrScript instanceof JSFunction) {
-                ScriptRuntime.evaluateGeneratorDefaultParams(cx, scope, (JSFunction) fnOrScript);
-            }
+            // Defer default parameters and nested function declarations until activation scope
+            // creation
+            // Ref: Ecma 2026, 10.2.11, FunctionDeclarationInstantiation
 
-            if (desc.getFunctionCount() != 0) {
+            if (desc.getFunctionCount() != 0 && !desc.isES6Generator()) {
                 if (desc.getFunctionType() != 0 && !desc.requiresActivationFrame()) Kit.codeBug();
                 for (int i = 0; i < desc.getFunctionCount(); i++) {
                     JSDescriptor fdesc = desc.getFunction(i);

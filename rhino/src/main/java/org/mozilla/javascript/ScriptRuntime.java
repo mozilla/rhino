@@ -5349,34 +5349,6 @@ public class ScriptRuntime {
         }
     }
 
-    /**
-     * Evaluate default parameters for a generator function before creating the generator object.
-     * Ref: Ecma 2026 14.4.10, FunctionDeclarationInstantiation
-     */
-    public static void evaluateGeneratorDefaultParams(
-            Context cx, Scriptable activationScope, JSFunction funObj) {
-        JSDescriptor<JSFunction> desc = funObj.getDescriptor();
-        String[] generatorDefaultParams = desc.getGeneratorDefaultParams();
-
-        if (generatorDefaultParams == null || generatorDefaultParams.length == 0) {
-            return;
-        }
-
-        // Process pairs of [paramName, sourceCode]
-        for (int i = 0; i < generatorDefaultParams.length; i += 2) {
-            String paramName = generatorDefaultParams[i];
-            String sourceCode = generatorDefaultParams[i + 1];
-
-            Object paramValue = ScriptableObject.getProperty(activationScope, paramName);
-            if (Undefined.isUndefined(paramValue)) {
-                Object defaultValue =
-                        cx.evaluateString(
-                                activationScope, sourceCode, "<generator-default-param>", 1, null);
-                ScriptableObject.putProperty(activationScope, paramName, defaultValue);
-            }
-        }
-    }
-
     public static Scriptable newArrayLiteral(
             Object[] objects, int[] skipIndices, Context cx, Scriptable scope) {
         final int SKIP_DENSITY = 2;

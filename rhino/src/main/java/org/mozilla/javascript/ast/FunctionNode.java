@@ -120,6 +120,7 @@ public class FunctionNode extends ScriptNode {
     private boolean isES6Generator;
     private List<Node> generatorResumePoints;
     private Map<Node, int[]> liveLocals;
+    private Node generatorParamInitBlock; // IR block for default parameters init in generators
     private AstNode memberExprNode;
 
     {
@@ -360,6 +361,14 @@ public class FunctionNode extends ScriptNode {
     public void addLiveLocals(Node node, int[] locals) {
         if (liveLocals == null) liveLocals = new HashMap<>();
         liveLocals.put(node, locals);
+    }
+
+    public Node getGeneratorParamInitBlock() {
+        return generatorParamInitBlock;
+    }
+
+    public void setGeneratorParamInitBlock(Node block) {
+        generatorParamInitBlock = block;
     }
 
     @Override

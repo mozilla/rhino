@@ -132,15 +132,14 @@ class BodyCodegen {
         // Evaluate default params for generators after creating activation scope
         // so defaults have access to arguments and prior params.
         // See Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
-        cfw.addALoad(contextLocal);
-        cfw.addALoad(variableObjectLocal);
-        cfw.addALoad(funObjLocal);
-        addScriptRuntimeInvoke(
-                "evaluateGeneratorDefaultParams",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/JSFunction;"
-                        + ")V");
+        Node paramInitBlock = ((FunctionNode) scriptOrFn).getGeneratorParamInitBlock();
+        if (paramInitBlock != null) {
+            Node paramInit = paramInitBlock.getFirstChild();
+            while (paramInit != null) {
+                generateStatement(paramInit);
+                paramInit = paramInit.getNext();
+            }
+        }
 
         generateNestedFunctionInits();
 
