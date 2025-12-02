@@ -127,9 +127,9 @@ public class Bug782363Test {
 
     @Test
     public void maxLocals() throws IOException {
-        test(339);
+        test(338);
         try {
-            test(340);
+            test(339);
         } catch (EvaluatorException e) {
             // may fail with 'out of locals' exception
         }

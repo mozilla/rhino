@@ -210,6 +210,7 @@ class BodyCodegen {
         enterAreaStartLabel = -1;
         generatorStateLocal = -1;
         savedHomeObjectLocal = -1;
+        parentStrictnessLocal = -1;
     }
 
     /** Generate the prologue for a function or script. */
@@ -312,6 +313,15 @@ class BodyCodegen {
         // activation record required by a generator has already been created
         // in generateGenerator().
         if (isGenerator) return;
+
+        if (fnCurrent != null) {
+            parentStrictnessLocal = getNewWordLocal();
+            cfw.addALoad(contextLocal);
+            cfw.addPush(scriptOrFn.isInStrictMode());
+            addScriptRuntimeInvoke(
+                    "enterFunctionStrictness", "(Lorg/mozilla/javascript/Context;Z)Z");
+            cfw.addIStore(parentStrictnessLocal);
+        }
 
         if (hasVarsInRegs) {
             // No need to create activation. Pad arguments if need be.
@@ -592,6 +602,7 @@ class BodyCodegen {
             cfw.add(ByteCode.ARETURN);
 
         } else if (hasVarsInRegs) {
+            generateFunctionStrictnessExit();
             cfw.add(ByteCode.ARETURN);
 
         } else if (fnCurrent == null) {
@@ -599,6 +610,7 @@ class BodyCodegen {
             cfw.add(ByteCode.ARETURN);
 
         } else {
+            generateFunctionStrictnessExit();
             generateActivationExit();
             cfw.add(ByteCode.ARETURN);
 
@@ -640,6 +652,13 @@ class BodyCodegen {
         if (fnCurrent == null || hasVarsInRegs) throw Kit.codeBug();
         cfw.addALoad(contextLocal);
         addScriptRuntimeInvoke("exitActivationFunction", "(Lorg/mozilla/javascript/Context;)V");
+    }
+
+    private void generateFunctionStrictnessExit() {
+        if (fnCurrent == null) throw Kit.codeBug();
+        cfw.addALoad(contextLocal);
+        cfw.addILoad(parentStrictnessLocal);
+        addScriptRuntimeInvoke("exitFunctionStrictness", "(Lorg/mozilla/javascript/Context;Z)V");
     }
 
     private void generateStatement(Node node) {
@@ -4893,6 +4912,7 @@ class BodyCodegen {
     private int generatorStateLocal;
     private int savedHomeObjectLocal;
     private int newTargetLocal;
+    private int parentStrictnessLocal;
 
     private boolean isGenerator;
     private int generatorSwitch;

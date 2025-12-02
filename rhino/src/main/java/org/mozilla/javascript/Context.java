@@ -2772,8 +2772,7 @@ public class Context implements Closeable {
     }
 
     public final boolean isStrictMode() {
-        return isTopLevelStrict
-                || (currentActivationCall != null && currentActivationCall.isStrict);
+        return isTopLevelStrict || isCurrentFunctionStrict;
     }
 
     public static boolean isCurrentContextStrict() {
@@ -2791,6 +2790,7 @@ public class Context implements Closeable {
     Scriptable topCallScope;
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
+    public boolean isCurrentFunctionStrict;
     XMLLib cachedXMLLib;
     BaseFunction typeErrorThrower;
 
