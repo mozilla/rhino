@@ -29,5 +29,6 @@ assertEquals(obj.b, 345);
 
 assertThrows("(1 ? {} : 490) = 1", SyntaxError);
 assertThrows("(1 ? [] : 490) = 1", SyntaxError);
+assertThrows("for (var {};;) {}", SyntaxError);
 
 "success";
