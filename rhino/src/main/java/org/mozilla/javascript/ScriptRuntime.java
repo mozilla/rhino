@@ -4916,7 +4916,7 @@ public class ScriptRuntime {
 
     /**
      * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean)} instead
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
@@ -5012,6 +5012,16 @@ public class ScriptRuntime {
         NativeCall call = cx.currentActivationCall;
         cx.currentActivationCall = call.parentActivationCall;
         call.parentActivationCall = null;
+    }
+
+    public static boolean enterFunctionStrictness(Context cx, boolean functionIsStrict) {
+        boolean parent = cx.isCurrentFunctionStrict;
+        cx.isCurrentFunctionStrict = functionIsStrict;
+        return parent;
+    }
+
+    public static void exitFunctionStrictness(Context cx, boolean parentWasStrict) {
+        cx.isCurrentFunctionStrict = parentWasStrict;
     }
 
     static NativeCall findFunctionActivation(Context cx, Function f) {
