@@ -1,3 +1,15 @@
+# Rhino 1.8.1, Rhino 1.7.15.1, Rhino 1.7.14.1
+## December 2, 2025
+
+These releases fix a bug in the code that formats floating-point numbers into strings
+that could result in very bad performance in some cases.
+
+We recommend that all users of Rhino upgrade to release 1.8.1 if possible,
+and upgrade to Java 17 or 21. 
+
+Users who need an older release, or who cannot yet leave Java 8, can also
+use 1.7.15.1 or 1.7.14.1.
+
 # Rhino 1.8.0
 ## January 2, 2025
 
